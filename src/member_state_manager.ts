@@ -72,12 +72,12 @@ export class MemberState {
         this.current_queue = null
     } 
 
-    OnDequeue(target: GuildMember) {
+    OnDequeue(target: GuildMember): void {
         // Run when this member has dequeued another member
         this.helped_members.push(target)
     }
 
-    GetHelpTime() {
+    GetHelpTime(): number {
         if(this.start_helping_timestamp === null) {
             console.error(`Cannot get help time for ${this.member.user.username}.`)
             return 0

@@ -37,7 +37,7 @@ class EnqueueCommandHandler implements CommandHandler {
         const user = interaction.options.getMember('user')
 
         // Workaround for discord bug https://bugs.discord.com/T2703
-        // Ensure that a user does not invoke this command with a channel they canot view.
+        // Ensure that a user does not invoke this command with a channel they cannot view.
         if (channel.type === 'GUILD_CATEGORY') {
             const unviewable_channel = (channel as CategoryChannel).children
                 .find(child => !child.permissionsFor(interaction.member as GuildMember).has('VIEW_CHANNEL'))
@@ -177,6 +177,20 @@ class ListHelpersCommandHandler implements CommandHandler {
     }
 }
 
+class AnnounceCommandHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.STAFF
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        const message_option = interaction.options.getString('message')
+        if(message_option === null) {
+            throw new UserError('You must provide a message.')
+        }
+
+        const queue_option = interaction.options.getChannel('queue_name')
+        const response = await server.Announce(queue_option as GuildChannel | null, message_option, interaction.member as GuildMember)
+        await interaction.editReply(response)
+    }
+}
+
 
 const handlers = new Map<string, CommandHandler>([
     ['queue', new QueueCommandHandler()],
@@ -187,6 +201,7 @@ const handlers = new Map<string, CommandHandler>([
     ['leave', new LeaveCommandHandler()],
     ['clear', new ClearCommandHandler()],
     ['list_helpers', new ListHelpersCommandHandler()],
+    ['announce', new AnnounceCommandHandler()]
 ])
 
 export async function ProcessCommand(server: AttendingServer, interaction: CommandInteraction): Promise<void> {

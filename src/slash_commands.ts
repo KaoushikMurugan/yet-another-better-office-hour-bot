@@ -69,6 +69,18 @@ const clear_command = new SlashCommandBuilder()
         .setDescription('Clear all queues?')
         .setRequired(false))
 
+const announce_command = new SlashCommandBuilder()
+    .setName('announce')
+    .setDescription('Announce a message to all of the waiting students in a queue.')
+    .addStringOption(option => option
+        .setName('message')
+        .setDescription('The message to announce')
+        .setRequired(true))
+    .addChannelOption(option => option
+        .setName('queue_name')
+        .setDescription('The queue to announce in, or all queues if none is specified')
+        .setRequired(false))
+
 const list_helpers_command = new SlashCommandBuilder()
     .setName('list_helpers')
     .setDescription('See who is online and helping.')
@@ -82,7 +94,8 @@ const commandData = [
     stop_command.toJSON(),
     leave_command.toJSON(),
     clear_command.toJSON(),
-    list_helpers_command.toJSON()
+    list_helpers_command.toJSON(),
+    announce_command.toJSON()
 ]
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {

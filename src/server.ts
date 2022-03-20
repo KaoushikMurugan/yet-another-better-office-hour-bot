@@ -155,11 +155,55 @@ export class AttendingServer {
         if (target_queue.length == 0) {
             throw new UserError('There is no one left to help. Now might be a good time for a coffee.')
         } 
-        let target_member_state = await target_queue.Dequeue()
+        const target_member_state = await target_queue.Dequeue()
         this.member_states.GetMemberState(helper).OnDequeue(target_member_state.member)
         return target_member_state
     }
     
+    async Announce(queue_option: GuildChannel | null, message: string, author: GuildMember): Promise<string> {
+        const queue_name = queue_option !== null ? queue_option.name : null
+
+        // If a queue name is specified, check that a queue with that name exists
+        if(queue_name !== null) {
+            const queue = this.queues.find(queue => queue.name == queue_name)
+            if (queue === undefined) {
+                throw new UserError(`There is not a queue with the name ${queue_name}`)
+            }
+        }
+
+        // Find the members to announce to
+        const targets: GuildMember[] = []
+        this.member_states.forEach(member_state => {
+            // If the user is not in a queue, don't announce to them
+            if (member_state.queue === null)
+                return
+
+            if(queue_name !== null) {
+                if (member_state.queue.name == queue_name) {
+                    targets.push(member_state.member)
+                }
+            } else {
+                targets.push(member_state.member)
+            }
+        })
+
+        // Send the message
+        const message_string = `<@${author.id}> says: ${message}`
+        const failed_targets: GuildMember[] = []
+        await Promise.all(
+            targets.map(target => target.send(message_string).catch(() => {
+                failed_targets.push(target)
+            }
+        )))
+
+        // Report any failures to the message author
+        if(failed_targets.length > 0) {
+            const failed_targets_str = failed_targets.map(target => `<@${target.id}>`).join(', ')
+            return `Failed to send message to ${failed_targets.length}/${targets.length} members. I could not reach: ${failed_targets_str}.`
+        } else {
+            return `Message sent to ${targets.length} members.`
+        }
+    }
 
     async EnqueueUser(queue_name: string, member: GuildMember): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
@@ -291,7 +335,7 @@ export class AttendingServer {
     GetHelpingMemberStates(): Map<MemberState, string[]> {
         // Get a mapping between active helpers and the names of the queues
         // they are subscribed to
-        let helping_members = new Map<MemberState, string[]>()
+        const helping_members = new Map<MemberState, string[]>()
         this.member_states.forEach(state => {
             if(state.is_helping) {
                 const queue_names = this.GetHelpableQueues(state.member)
