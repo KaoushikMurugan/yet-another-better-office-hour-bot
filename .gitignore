@@ -1,0 +1,7 @@
+test/*.js
+dist/
+node_modules/
+.env
+.nyc_output/
+.vscode/
+gcs_service_account_key.json
