@@ -139,9 +139,9 @@ describe('Help Queue', () => {
         const user2 = mock<GuildMember>()
         const user3 = mock<GuildMember>()
 
-        await queue.Enqueue(user1)
-        await queue.Enqueue(user2)
-        await queue.Enqueue(user3)
+        await queue.Enqueue(user1, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user2, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user3, 'APPLICATION_COMMAND')
 
         await expect(queue.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user1)
         await expect(queue.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user2)
@@ -155,11 +155,11 @@ describe('Help Queue', () => {
         const user2 = mock<GuildMember>()
         const user3 = mock<GuildMember>()
 
-        await queue.Enqueue(user1)
-        await queue.Enqueue(user2)
-        await queue.Enqueue(user3)
+        await queue.Enqueue(user1, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user2, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user3, 'APPLICATION_COMMAND')
 
-        await queue.Remove(user2)
+        await queue.Remove(user2, 'APPLICATION_COMMAND')
 
         await expect(queue.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user1)
         await expect(queue.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user3)
@@ -170,29 +170,29 @@ describe('Help Queue', () => {
         const user1 = mock<GuildMember>()
         const user2 = mock<GuildMember>()
 
-        await queue.Enqueue(user1)
-        await queue.Enqueue(user2)
+        await queue.Enqueue(user1, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user2, 'APPLICATION_COMMAND')
 
-        await expect(queue.Enqueue(user1)).to.eventually.be.rejectedWith('Already')
-        await expect(queue.Enqueue(user2)).to.eventually.be.rejectedWith('Already')
+        await expect(queue.Enqueue(user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Already')
+        await expect(queue.Enqueue(user2, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Already')
 
         await queue.Dequeue()
         await queue.Dequeue()
 
-        await expect(queue.Enqueue(user1)).to.not.eventually.be.rejectedWith('Already')
-        return expect(queue.Enqueue(user2)).to.not.eventually.rejectedWith('Already')
+        await expect(queue.Enqueue(user1, 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith('Already')
+        return expect(queue.Enqueue(user2, 'APPLICATION_COMMAND')).to.not.eventually.rejectedWith('Already')
     })
 
     it('should not allow a user to join multiple queues on same server', async () => {
         const queue_2 = new HelpQueue('Queue 2', mock(), member_state_manager)
         const user1 = mock<GuildMember>()
 
-        await expect(queue.Enqueue(user1)).to.not.eventually.be.rejectedWith()
-        await expect(queue_2.Enqueue(user1)).to.eventually.be.rejectedWith('Already')
-        await expect(queue_2.Remove(user1)).to.eventually.be.rejectedWith('Not in')
+        await expect(queue.Enqueue(user1, 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
+        await expect(queue_2.Enqueue(user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Already')
+        await expect(queue_2.Remove(user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Not in')
         await expect(queue_2.Dequeue()).to.eventually.be.rejectedWith('Empty')
         await expect(queue.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user1)
-        await expect(queue_2.Enqueue(user1)).to.not.eventually.be.rejectedWith()
+        await expect(queue_2.Enqueue(user1, 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
         await expect(queue_2.Dequeue()).to.eventually.satisfy((m: MemberState) => m.member == user1)
     })
 
@@ -200,13 +200,13 @@ describe('Help Queue', () => {
         const user1 = mock<GuildMember>()
         const user2 = mock<GuildMember>()
 
-        await queue.Enqueue(user1)
-        await queue.Enqueue(user2)
+        await queue.Enqueue(user1, 'APPLICATION_COMMAND')
+        await queue.Enqueue(user2, 'APPLICATION_COMMAND')
         await queue.Dequeue()
         // Queue actions that result in user errors should not update the display
-        await expect(queue.Enqueue(user2)).to.eventually.be.rejectedWith('Already')
-        await expect(queue.Remove(user1)).to.eventually.be.rejectedWith('Not in')
-        await queue.Remove(user2)
+        await expect(queue.Enqueue(user2, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Already')
+        await expect(queue.Remove(user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('Not in')
+        await queue.Remove(user2, 'APPLICATION_COMMAND')
         await expect(queue.Dequeue()).to.eventually.be.rejectedWith('Empty')
         verify(mock_display_manager.OnQueueUpdate(anything(), anything())).times(4)
     })

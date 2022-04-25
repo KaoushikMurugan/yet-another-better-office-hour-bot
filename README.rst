@@ -115,6 +115,7 @@ Requirements
    -  `Pip <https://pip.pypa.io/en/stable/installing/>`__
 
 -  `Discord <https://discordapp.com/>`__ app & account
+- `Google Cloud `__ account & service account
 
 Quick Start
 --------------------------
@@ -128,17 +129,35 @@ Clone the source code
 
 .. code:: bash
 
-   git clone https://github.com/ECS-OH-Bot/OH-Bot/tree/master && cd OH-Bot
+   git clone https://github.com/KMMineCube/BOB && cd BOB
 
 Follow the instructions
 `here <https://discordpy.readthedocs.io/en/v1.3.3/discord.html#creating-a-bot-account>`__
 for obtaining a token for your instance of the Bot
 
-Run the setup script
+Make a ``.env`` file in the current directory with the following format:
+
+.. code:: 
+
+   BOB_GOOGLE_SHEET_ID=[Insert Google Sheets Token ID here]
+   BOB_APP_ID=[Insert Discord Application ID here]
+   BOB_BOT_TOKEN=[Insert Discord BOT Token here]
+
+Also create a .json file in the current directory named ``gcs_service_account_key.json`` which you get get from the Google Cloud website
+
+Run the following command to setup the bot locally
 
 .. code:: bash
 
-   ./setup.sh --name {ENV_FILE_NAME}
+   npm run build
+
+If the build succeeds, run the next command to run the bot
+
+.. code:: bash
+
+   npm run start
+
+``npm run test`` and ``npm run lint`` are also available. run ``npm run`` at anytime to view the available npm commands
 
 Adjust the role hierarchy.
 

@@ -1,4 +1,5 @@
-import { Client, GuildMember, TextChannel } from "discord.js";
+import { channelMention } from "@discordjs/builders";
+import { ButtonInteraction, Client, Collector, GuildMember, MessageActionRow, MessageButton, TextChannel } from "discord.js";
 import { MemberState, MemberStateManager } from "./member_state_manager";
 import { UserError } from "./user_action_error";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -34,10 +35,36 @@ export class HelpQueueDisplayManager {
                     messages.clear()
                 }
                 const message_text = this.GetQueueText(queue, queue_members)
+                const buttons = new MessageActionRow()
+                    .addComponents(
+                        new MessageButton()
+                        .setCustomId('joinn' + queue.name) 
+                        //intentional misspelling to make the part of the id before queue name to have the same length. 
+                        // didn't shorten into single character like 'j' and 'l' incase we want to add more buttons
+                        //.setEmoji('➕') // U+2795 plus sign emoji
+                        .setDisabled(!queue.is_open)
+                        .setLabel('Join Queue')
+                        .setStyle('SUCCESS')
+                    )
+                    .addComponents(
+                        new MessageButton()
+                        .setCustomId('leave' + queue.name)
+                        //.setEmoji('➖') // U+2795 minus sign emoji
+                        .setDisabled(!queue.is_open)
+                        .setLabel('Leave Queue')
+                        .setStyle('DANGER')
+                    )
+
                 if (messages.size == 0) {
-                    return this.display_channel.send(message_text).then(message => message.pin())
+                    return this.display_channel.send({
+                        content: message_text,
+                        components: [buttons]
+                    }).then(message => message.pin())
                 } else {
-                    return messages.first()?.edit(message_text)
+                    return messages.first()?.edit({
+                        content: message_text,
+                        components: [buttons]
+                    })
                 }
             }).then(() => undefined)
 
@@ -70,7 +97,7 @@ export class HelpQueue {
     }
 
     async Clear(): Promise<void> {
-        this.queue.forEach(member => member.TryRemoveFromQueue())
+        this.queue.forEach(member => member.TryRemoveFromQueue(this, 'APPLICATION_COMMAND'))
         this.queue = []
         await this.UpdateDisplay()
     }
@@ -97,9 +124,10 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    async Enqueue(member: GuildMember): Promise<void> {
+    async Enqueue(member: GuildMember, interaction_type: string): Promise<void | string> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        user_state.TryAddToQueue(this)
+        const strreturn = user_state.TryAddToQueue(this, interaction_type)
+        if(strreturn !== undefined) { return strreturn }
         this.queue.push(user_state)
 
         if (this.queue.length == 1) {
@@ -111,14 +139,17 @@ export class HelpQueue {
         }
 
         await this.UpdateDisplay()
+        //return undefined
     }
 
-    async Remove(member: GuildMember): Promise<void> {
+    async Remove(member: GuildMember, interaction_type: string): Promise<void | string> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        user_state.TryRemoveFromQueue(this)
+        const strreturn = user_state.TryRemoveFromQueue(this, interaction_type)
+        if(strreturn !== undefined) {return strreturn}
         this.queue = this.queue.filter(waiting_user => waiting_user != user_state)
 
         await this.UpdateDisplay()
+        //return undefined
     }
 
     async Dequeue(): Promise<MemberState> {
@@ -126,7 +157,7 @@ export class HelpQueue {
         if(user_state === undefined) {
             throw new UserError('Empty queue')
         }
-        user_state.TryRemoveFromQueue()
+        user_state.TryRemoveFromQueue(this, 'APPLICATION_COMMAND')
 
         await this.UpdateDisplay()
         return user_state
