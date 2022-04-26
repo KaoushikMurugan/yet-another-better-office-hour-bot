@@ -45,6 +45,8 @@ get started.
 
 The standard OH-Session protocol that we follow: 
 
+> Helpers refer to Instructors, TAs, and Tutors
+
 #. Helpers Opens Queues for which they help for
 #. Students enter the queue of their choice
 #. Helpers issues a dequeue command
@@ -107,7 +109,7 @@ Commands
    -  Option ``queue_name`` : Removes a student from a particular queue
    -  Option ``user`` : Removes a particular user from the queue(s)
 
-- ``/announce [message] (queue_name)`` - Access Role: [Admin, Helper]
+-  ``/announce [message] (queue_name)`` - Access Role: [Admin, Helper]
 
    - Sends a messeage ``message`` to all of the students in the sender's queues
    - Option ``queue_name``: Sends the message to only those in ``queue_name``
@@ -118,11 +120,11 @@ Commands
       for which they help for and how long it's been since they
       started helping
 
-- ``/queue add [queue_name]`` - Access Role: [Admin]
+-  ``/queue add [queue_name]`` - Access Role: [Admin]
 
    - Creates a new category with the name ``queue_name`` and creates a #queue and #chat text channels within it
 
-- ``/queue remove [queue_name]`` - Access Role: [Admin]
+-  ``/queue remove [queue_name]`` - Access Role: [Admin]
 
    - Deletes the category with the name ``queue_name``, if it exists, and the channels within it
 
