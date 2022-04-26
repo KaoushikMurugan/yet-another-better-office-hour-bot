@@ -1,10 +1,10 @@
 .. |DiscordLogo| image:: https://img.icons8.com/color/48/000000/discord-logo.png
    :target: https://discordapp.com
 
-|DiscordLogo| OH-Bot
+|DiscordLogo| BOB
 ======================================
 
-The Discord Office Hour Butler
+The "Better" Office Hours Bot
 ------------------------------
 
 .. raw:: html
@@ -35,34 +35,36 @@ their peers for help while they wait.
 Overview
 --------
 
-**OH-Bot** is a server managment automation bot. This means that tasks
-like notifying and moving students when they are ready to been seen are
-handled by **OH-Bot**
+**BOB** is a server managment automation bot. This means that tasks
+like queue management and notifying students are
+handled by **BOB**
 
-**OH-Bot** is a *self-hotsted* bot - meaning that you will need to host
+**BOB** is a *self-hotsted* bot - meaning that you will need to host
 and maintain your own instance. See `Quick Start <#quickstart>`__ to
 get started.
 
 The standard OH-Session protocol that we follow: 
 
-#. Instructors Opens OH-Queue 
-#. Students enter queue and enter waiting room 
-#. Instructors dequeue students 
-#. Instructors close queue when OH-Session is over
+#. Helpers Opens Queues for which they help for
+#. Students enter the queue of their choice
+#. Helpers issues a dequeue command
+#. Helpers close their queues when their OH-Session is over
+#. Multiple Helpers can help for the same queue. A Queue will only
+   close if there are no helpers for that queue.
 
 Waiting Queue System
 --------------------
 
-**OH-Bot** implements a simple *first come first serve* queue where
+**BOB** implements a simple *first come first serve* queue where
 student are allowed to enter and leave the queue whenever they like
 while OH is being held.
 
-Server `Template <https://discord.new/kVY9nyrwzV2N>`__
+Server Template: **TODO**
 ------------------------------------------------------
 
-**OH-Bot** makes use of Discord’s Server Template feature
+**BOB** makes use of Discord’s Server Template feature
 
-There are three roles in the **OH-Bot** server
+There are three roles in the **BOB** server
 
 -  Admin - total control of bot functionality and server interfaces
 -  Instructor - control over OH sessions and locked channels
@@ -71,48 +73,64 @@ There are three roles in the **OH-Bot** server
 Commands
 ~~~~~~~~
 
-**OH-Bot** commands have access level based on sender roles
+**BOB** commands have access level based on sender roles
 
--  ``/open`` - Access Role: [Admin, Instructor]
+-  ``/start`` - Access Role: [Admin, Helper]
 
-   -  Open the OH-queue for students to join using ``/eq``
+   -  Open queues that the Helper is assigned to help for
 
--  ``/close`` - Access Role: [Admin, Instructor]
+-  ``/stop`` - Access Role: [Admin, Helper]
 
    -  Close the OH-queue, stop students from entering the queue
    -  Students that were in the queue before closing will still be
       regisitered for OH
 
--  ``/clear /cq`` - Access Role: [Admin, Instructor]
+-  ``/clear (queue_name) (all)`` - Access Role: [Admin, Helper]
 
-   -  Empties the OH-queue of students
+   -  Empties a queue of students
+   -  Option ``queue_name`` : Clears only the queue ``queue_name``
+   -  Option ``all`` : Clears all queues
 
--  ``/enterqueue /eq`` - Access Role: [Admin, Instructor, Student]
+-  ``/enqueue [queue_name] (user)`` - Access Role: [Admin, Helper, Student]
 
-   -  Enter sender into the OH-queue
+   -  Adds sender to the back of the queue ``queue_name``
+   -  Option ``user`` : Adds ``user`` to the end of the queue ``queue_name``. Access Role: [Admin, Helper]
 
--  ``/leavequeue /lq`` - Access Role: [Admin, Instructor, Student]
+-  ``/leave`` - Access Role: [Admin, Helper, Student]
 
-   -  Removes sender from the OH-queue
+   -  Removes sender from the queue in which they are in
 
--  ``/dequeue /dq`` - Access Role: [Admin, Instructor, Student]
+-  ``/next (queue_name) (user)`` - Access Role: [Admin, Helper]
 
-   -  Removes next student from the queue and moves them into the voice
-      channel the sender is currently connected to.
-   -  Removes self from queue if student.
+   -  Removes next student from the sender's queue(s) and sends them 
+      an invite to the voice channel.
+   -  Option ``queue_name`` : Removes a student from a particular queue
+   -  Option ``user`` : Removes a particular user from the queue(s)
 
--  ``/help`` - Access Role: [Admin, Instructor]
+- ``/announce [message] (queue_name)`` - Access Role: [Admin, Helper]
 
-   -  Sends a DM to the sender containing the above commands and their
-      behavior relative to sender access level
+   - Sends a messeage ``message`` to all of the students in the sender's queues
+   - Option ``queue_name``: Sends the message to only those in ``queue_name``
+
+-  ``/list-helpers`` - Access Role: [Admin, Helper, Student]
+
+   -  Shows a list of Helpers that are currently helping, the queues 
+      for which they help for and how long it's been since they
+      started helping
+
+- ``/queue add [queue_name]`` - Access Role: [Admin]
+
+   - Creates a new category with the name ``queue_name`` and creates a #queue and #chat text channels within it
+
+- ``/queue remove [queue_name]`` - Access Role: [Admin]
+
+   - Deletes the category with the name ``queue_name``, if it exists, and the channels within it
 
 Requirements
 ------------
 
 -  `Git <https://git-scm.com/>`__ (Optional if using packaged release)
--  `Python 3.7 <https://www.python.org/downloads/>`__ (or higher)
-
-   -  `Pip <https://pip.pypa.io/en/stable/installing/>`__
+-  `Node.js (includes npm) <https://nodejs.org/en/download/>`__ 
 
 -  `Discord <https://discordapp.com/>`__ app & account
 - `Google Cloud `__ account & service account
@@ -120,7 +138,7 @@ Requirements
 Quick Start
 --------------------------
 
-Instantiate an instance of the server `Template <https://discord.new/kVY9nyrwzV2N>`__ in Discord 
+Instantiate an instance of a server in Discord 
 
 
 Follow discord.py `docs <https://discordpy.readthedocs.io/en/latest/discord.html>`__ on creating and adding a bot to your server.
@@ -129,7 +147,7 @@ Clone the source code
 
 .. code:: bash
 
-   git clone https://github.com/KMMineCube/BOB && cd BOB
+   git clone https://github.com/ECS-OH-Bot/BOB && cd BOB
 
 Follow the instructions
 `here <https://discordpy.readthedocs.io/en/v1.3.3/discord.html#creating-a-bot-account>`__

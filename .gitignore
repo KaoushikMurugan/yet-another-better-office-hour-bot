@@ -6,3 +6,5 @@ node_modules/
 .vscode/
 gcs_service_account_key.json
 botkey.txt
+ideas.txt
+src/server_test.ts

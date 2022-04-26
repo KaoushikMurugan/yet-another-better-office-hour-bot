@@ -92,35 +92,32 @@ client.on('interactionCreate', async interaction => {
         await ProcessCommand(server, interaction)
     }
     if(interaction.isButton()) {
-        //first 5 characters is the type of interaction, remaining is the name of the queue channel
-        const type = interaction.customId.substring(0,5)
-        const queue_name = interaction.customId.substring(5)
-        //console.log(queue_name + ' app.ts')
-        //console.log(interaction.member?.toString())
+        //a space separates the type of interaction and the name of the queue channel
+        const type = interaction.customId.split(" ")[0]
+        const queue_name = interaction.customId.split(" ")[1]
+
         if(!(interaction.member instanceof GuildMember)) {
             await interaction.reply({content: `Erm. Somethings wrong, this shouldn't happen. I'll inform the humaniod that maintains me`, ephemeral: true})
             console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
             return;
         }
-        //console.log(interaction.type + "in app.ts")
-            var errstr = undefined
-        if(type === 'joinn') {
-            errstr = await server.EnqueueUser(queue_name, interaction.member, interaction.type)
-            //console.log('enqueue function ended')
+
+        if(type === 'join') {
+            await server.EnqueueUser(queue_name, interaction.member, interaction.type).catch((errstr) => {
+                if(interaction.member instanceof GuildMember) {
+                    interaction.member.send(errstr)
+                }
+            })
         } else if(type === 'leave') {
-            errstr = await server.RemoveMember(queue_name, interaction.member, interaction.type)
-            //console.log('remove function ended')
+             await server.RemoveMember(queue_name, interaction.member, interaction.type).catch((errstr2) => {
+                if(interaction.member instanceof GuildMember) {
+                    interaction.member.send(errstr2)
+                }
+             })
         } else {
-            console.log('Received invalid button interaction')
+            console.error('Received invalid button interaction')
         }
         //interaction.deferUpdate()
-        if(errstr !== undefined)
-        {
-            interaction.channel?.send(interaction.member.toString() + ' ' + errstr).then(msg => {
-                setTimeout(() => msg.delete(), 5000)
-              })
-            
-        }
         return
     }
 });

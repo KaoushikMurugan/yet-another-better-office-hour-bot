@@ -12,18 +12,13 @@ export class AttendingServer {
     private server: Guild
     private attendance_doc: GoogleSpreadsheet | null
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null
-    //private settings_doc: GoogleSpreadsheet | null
-    //private settings_sheet: GoogleSpreadsheetWorksheet | null = null
-    //private notifs_queue_doc: GoogleSpreadsheet | null
-    //private notifs_queue_sheet: GoogleSpreadsheetWorksheet | null = null
 
-    private constructor(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null/*, settings_doc: GoogleSpreadsheet | null, notifs_queue_doc: GoogleSpreadsheet | null*/) {
+
+    private constructor(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null) {
         this.client = client
         this.server = server
         this.member_states = new MemberStateManager()
         this.attendance_doc = attendance_doc
-        //this.settings_doc = settings_doc
-        //this.notifs_queue_doc = notifs_queue_doc
     }
 
     static async Create(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null = null): Promise<AttendingServer> {
@@ -70,9 +65,8 @@ export class AttendingServer {
         return queue_count
     }
 
-    async RemoveMember(queue_name: string, member: GuildMember, interaction_type: string): Promise<void | string> {
+    async RemoveMember(queue_name: string, member: GuildMember, interaction_type: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
-        //console.log(interaction_type)
         if(interaction_type === 'APPLICATION_COMMAND'){
             if (queue === undefined) {
                 throw new UserError(`There is not a queue with the name ${queue_name}`)
@@ -82,14 +76,12 @@ export class AttendingServer {
             }
         }
         if (queue === undefined) {
-            return `There is not a queue with the name ${queue_name}`
-            //throw new UserError(`There is not a queue with the name ${queue_name}`)
+            throw `There is not a queue with the name ${queue_name}`
         }
         if (!queue.is_open) {
-            return `The queue "${queue_name}" is currently closed.`
-            //throw new UserError(`The queue "${queue_name}" is currently closed.`)
+            throw `The queue "${queue_name}" is currently closed.`
         }
-        return queue.Remove(member, interaction_type)
+        await queue.Remove(member, interaction_type)
     }
 
     async AddHelper(member: GuildMember): Promise<void> {
@@ -126,66 +118,6 @@ export class AttendingServer {
         const helped_students = JSON.stringify(this.member_states.GetMemberState(member).members_helped.map(member => new Object({nick: member.nickname, username: member.user.username})))
         await this.attendance_sheet.addRow({'username': member.user.username, 'time in': start_time_str, 'time out': end_time_str, 'helped students': helped_students})
     }
-
-    /*private async UpdateSettings(member: GuildMember, tutor_notifs: number): Promise<void> {
-        if(this.settings_doc === null) {
-            return
-        }
-        // Make sure there is a settings sheet
-        if(this.settings_sheet === null) {
-            await this.settings_doc.loadInfo()
-            for(let i = 0; i < this.settings_doc.sheetCount; i++) {
-                const current_sheet = this.settings_doc.sheetsByIndex[i]
-                if(current_sheet.title == this.server.name) {
-                    this.settings_sheet = current_sheet
-                }
-            }
-            if(this.settings_sheet === null) {
-                this.settings_sheet = await this.settings_doc.addSheet({
-                    'title': this.server.name, 'headerValues': [
-                        'username', 
-                        'tutor_notifs', ] //only one setting so far
-                })
-            }
-        }
-        // Update with this info
- 
-        //await this.settings_sheet.addRow({'username': member.user.username, 'tutor_notifs': tutor_notifs})
-        //instead of adding a new row, need to check for existing row
-        //if row exists, modify
-        //else change
-        //option 2: delete existing row, add new row
-    }
-
-private async UpdateNotifQueue(member: GuildMember, queue_name: number): Promise<void> {
-        if(this.notifs_queue_doc === null) {
-            return
-        }
-        // Make sure there is a notifs_queue sheet
-        if(this.notifs_queue_sheet === null) {
-            await this.notifs_queue_doc.loadInfo()
-            for(let i = 0; i < this.notifs_queue_doc.sheetCount; i++) {
-                const current_sheet = this.notifs_queue_doc.sheetsByIndex[i]
-                if(current_sheet.title == this.server.name) {
-                    this.notifs_queue_sheet = current_sheet
-                }
-            }
-            if(this.notifs_queue_sheet === null) {
-                this.notifs_queue_sheet = await this.notifs_queue_doc.addSheet({
-                    'title': this.server.name, 'headerValues': [
-                        'username', 
-                        'tutor_notifs', ] //only one setting so far
-                })
-            }
-        }
-        // Update with this info
- 
-        //await this.notifs_queue_sheet.addRow({'username': member.user.username, 'tutor_notifs': tutor_notifs})
-        //instead of adding a new row, need to check for existing row
-        //if row exists, modify
-        //else change
-        //option 2: delete existing row, add new row
-    }*/
 
     async RemoveHelper(member: GuildMember): Promise<number> {
         // Remove a helper and return the time they spent helping in ms
@@ -293,9 +225,8 @@ private async UpdateNotifQueue(member: GuildMember, queue_name: number): Promise
         }
     }
 
-    async EnqueueUser(queue_name: string, member: GuildMember, interaction_type: string): Promise<void | string> {
+    async EnqueueUser(queue_name: string, member: GuildMember, interaction_type: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
-        //console.log(interaction_type)
         if(interaction_type === 'APPLICATION_COMMAND'){
             if (queue === undefined) {
                 throw new UserError(`There is not a queue with the name ${queue_name}`)
@@ -305,13 +236,13 @@ private async UpdateNotifQueue(member: GuildMember, queue_name: number): Promise
             }
         }
         if (queue === undefined) {
-            return `There is not a queue with the name ${queue_name}`
+            throw `There is not a queue with the name ${queue_name}`
 
         }
         if (!queue.is_open) {
-            return `The queue "${queue_name}" is currently closed.`
+            throw `The queue "${queue_name}" is currently closed.`
         }
-        return await queue.Enqueue(member, interaction_type)
+        await queue.Enqueue(member, interaction_type)
     }
 
     async CreateQueue(name: string): Promise<void> {

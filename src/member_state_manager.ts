@@ -51,7 +51,7 @@ export class MemberState {
         return Date.now() - this.start_wait_timestamp
     }
 
-    TryAddToQueue(queue: HelpQueue, interaction_type: string): string | void {
+    TryAddToQueue(queue: HelpQueue, interaction_type: string): void {
         if(interaction_type === 'APPLICATION_COMMAND'){
             if(this.current_queue !== null) {
                 throw new UserError('Already enqueued')
@@ -59,22 +59,16 @@ export class MemberState {
                 throw new UserError('You can\'t join a queue while hosting')
             }
         }
-        //console.log('enqueuetest')
         if(this.current_queue !== null) {
-            //console.log('enqueuetest-case1')
-            return 'Already enqueued'
-            //throw new UserError('Already enqueued')
+            throw 'Already enqueued'
         } else if (this.start_helping_timestamp !== null) {
-            //console.log('enqueuetest-case2')
-            return 'You can\'t join a queue while hosting'
-            //throw new UserError('You can\'t join a queue while hosting')
+            throw 'You can\'t join a queue while hosting'
         }
         this.start_wait_timestamp = Date.now()
         this.current_queue = queue
-        //return undefined
     }
 
-    TryRemoveFromQueue(queue: HelpQueue | null = null, interaction_type: string): void | string {
+    TryRemoveFromQueue(queue: HelpQueue | null = null, interaction_type: string): void {
         if(interaction_type === 'APPLICATION_COMMAND') {
             if(this.current_queue === null) {
                 throw new UserError('Not in queue')
@@ -84,16 +78,13 @@ export class MemberState {
             }
         }
         if(this.current_queue === null) {
-            return 'You are not in the queue'
-            //throw new UserError('Not in queue')
+            throw 'You are not in the queue'
         }
         if(queue !== null && queue !== this.current_queue) {
-            return 'You are not in the requested queue'
-            //throw new UserError('Not in requested queue')
+            throw 'You are not in the requested queue'
         }
         this.start_wait_timestamp = null
         this.current_queue = null
-        return undefined
     } 
 
     OnDequeue(target: GuildMember): void {

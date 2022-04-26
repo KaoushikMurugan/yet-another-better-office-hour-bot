@@ -38,18 +38,16 @@ export class HelpQueueDisplayManager {
                 const buttons = new MessageActionRow()
                     .addComponents(
                         new MessageButton()
-                        .setCustomId('joinn' + queue.name) 
-                        //intentional misspelling to make the part of the id before queue name to have the same length. 
-                        // didn't shorten into single character like 'j' and 'l' incase we want to add more buttons
-                        //.setEmoji('➕') // U+2795 plus sign emoji
+                        .setCustomId('join ' + queue.name) 
+                        //.setEmoji('➕') // Need to decide on emoji
                         .setDisabled(!queue.is_open)
                         .setLabel('Join Queue')
                         .setStyle('SUCCESS')
                     )
                     .addComponents(
                         new MessageButton()
-                        .setCustomId('leave' + queue.name)
-                        //.setEmoji('➖') // U+2795 minus sign emoji
+                        .setCustomId('leave ' + queue.name)
+                        //.setEmoji('➖') // Need to decide on emoji
                         .setDisabled(!queue.is_open)
                         .setLabel('Leave Queue')
                         .setStyle('DANGER')
@@ -124,10 +122,9 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    async Enqueue(member: GuildMember, interaction_type: string): Promise<void | string> {
+    async Enqueue(member: GuildMember, interaction_type: string): Promise<void> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        const strreturn = user_state.TryAddToQueue(this, interaction_type)
-        if(strreturn !== undefined) { return strreturn }
+        user_state.TryAddToQueue(this, interaction_type)
         this.queue.push(user_state)
 
         if (this.queue.length == 1) {
@@ -139,17 +136,14 @@ export class HelpQueue {
         }
 
         await this.UpdateDisplay()
-        //return undefined
     }
 
-    async Remove(member: GuildMember, interaction_type: string): Promise<void | string> {
+    async Remove(member: GuildMember, interaction_type: string): Promise<void> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        const strreturn = user_state.TryRemoveFromQueue(this, interaction_type)
-        if(strreturn !== undefined) {return strreturn}
+        user_state.TryRemoveFromQueue(this, interaction_type)
         this.queue = this.queue.filter(waiting_user => waiting_user != user_state)
 
         await this.UpdateDisplay()
-        //return undefined
     }
 
     async Dequeue(): Promise<MemberState> {
