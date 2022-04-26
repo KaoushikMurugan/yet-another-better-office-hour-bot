@@ -103,15 +103,15 @@ client.on('interactionCreate', async interaction => {
         }
 
         if(type === 'join') {
-            await server.EnqueueUser(queue_name, interaction.member, interaction.type).catch((errstr) => {
+            await server.EnqueueUser(queue_name, interaction.member, interaction.type).catch((errstr : Error) => {
                 if(interaction.member instanceof GuildMember) {
-                    interaction.member.send(errstr)
+                    interaction.member.send(errstr.message)
                 }
             })
         } else if(type === 'leave') {
-             await server.RemoveMember(queue_name, interaction.member, interaction.type).catch((errstr2) => {
-                if(interaction.member instanceof GuildMember) {
-                    interaction.member.send(errstr2)
+             await server.RemoveMember(queue_name, interaction.member, interaction.type).catch((errstr : Error) => {
+                if(interaction.member instanceof GuildMember && errstr.name == 'UserError') {
+                    interaction.member.send(errstr.message)
                 }
              })
         } else {

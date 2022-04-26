@@ -76,10 +76,10 @@ export class AttendingServer {
             }
         }
         if (queue === undefined) {
-            throw `There is not a queue with the name ${queue_name}`
+            throw new UserError(`There is not a queue with the name ${queue_name}`)
         }
         if (!queue.is_open) {
-            throw `The queue "${queue_name}" is currently closed.`
+            throw new UserError(`The queue "${queue_name}" is currently closed.`)
         }
         await queue.Remove(member, interaction_type)
     }
@@ -236,11 +236,11 @@ export class AttendingServer {
             }
         }
         if (queue === undefined) {
-            throw `There is not a queue with the name ${queue_name}`
+            throw new UserError(`There is not a queue with the name ${queue_name}`)
 
         }
         if (!queue.is_open) {
-            throw `The queue "${queue_name}" is currently closed.`
+            throw new UserError(`The queue "${queue_name}" is currently closed.`)
         }
         await queue.Enqueue(member, interaction_type)
     }

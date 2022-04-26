@@ -60,9 +60,9 @@ export class MemberState {
             }
         }
         if(this.current_queue !== null) {
-            throw 'Already enqueued'
+            throw new UserError('Already enqueued')
         } else if (this.start_helping_timestamp !== null) {
-            throw 'You can\'t join a queue while hosting'
+            throw new UserError('You can\'t join a queue while hosting')
         }
         this.start_wait_timestamp = Date.now()
         this.current_queue = queue
@@ -78,10 +78,10 @@ export class MemberState {
             }
         }
         if(this.current_queue === null) {
-            throw 'You are not in the queue'
+            throw new UserError('You are not in the queue')
         }
         if(queue !== null && queue !== this.current_queue) {
-            throw 'You are not in the requested queue'
+            throw new UserError('You are not in the requested queue')
         }
         this.start_wait_timestamp = null
         this.current_queue = null

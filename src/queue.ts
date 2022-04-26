@@ -39,7 +39,7 @@ export class HelpQueueDisplayManager {
                     .addComponents(
                         new MessageButton()
                         .setCustomId('join ' + queue.name) 
-                        //.setEmoji('➕') // Need to decide on emoji
+                        .setEmoji('✅')
                         .setDisabled(!queue.is_open)
                         .setLabel('Join Queue')
                         .setStyle('SUCCESS')
@@ -47,7 +47,7 @@ export class HelpQueueDisplayManager {
                     .addComponents(
                         new MessageButton()
                         .setCustomId('leave ' + queue.name)
-                        //.setEmoji('➖') // Need to decide on emoji
+                        .setEmoji('❎')
                         .setDisabled(!queue.is_open)
                         .setLabel('Leave Queue')
                         .setStyle('DANGER')
