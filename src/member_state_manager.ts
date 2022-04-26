@@ -51,14 +51,8 @@ export class MemberState {
         return Date.now() - this.start_wait_timestamp
     }
 
-    TryAddToQueue(queue: HelpQueue, interaction_type: string): void {
-        if(interaction_type === 'APPLICATION_COMMAND'){
-            if(this.current_queue !== null) {
-                throw new UserError('Already enqueued')
-            } else if (this.start_helping_timestamp !== null) {
-                throw new UserError('You can\'t join a queue while hosting')
-            }
-        }
+    TryAddToQueue(queue: HelpQueue): void {
+
         if(this.current_queue !== null) {
             throw new UserError('Already enqueued')
         } else if (this.start_helping_timestamp !== null) {
@@ -68,15 +62,7 @@ export class MemberState {
         this.current_queue = queue
     }
 
-    TryRemoveFromQueue(queue: HelpQueue | null = null, interaction_type: string): void {
-        if(interaction_type === 'APPLICATION_COMMAND') {
-            if(this.current_queue === null) {
-                throw new UserError('Not in queue')
-            }
-            if(queue !== null && queue !== this.current_queue) {
-                throw new UserError('Not in requested queue')
-            }
-        }
+    TryRemoveFromQueue(queue: HelpQueue | null = null): void {
         if(this.current_queue === null) {
             throw new UserError('You are not in the queue')
         }

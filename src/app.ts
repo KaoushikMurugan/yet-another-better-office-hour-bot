@@ -91,25 +91,27 @@ client.on('interactionCreate', async interaction => {
     if(interaction.isCommand()) {
         await ProcessCommand(server, interaction)
     }
-    if(interaction.isButton()) {
+    else if(interaction.isButton()) {
         //a space separates the type of interaction and the name of the queue channel
         const type = interaction.customId.split(" ")[0]
         const queue_name = interaction.customId.split(" ")[1]
 
         if(!(interaction.member instanceof GuildMember)) {
+            interaction.deferUpdate()
             await interaction.reply({content: `Erm. Somethings wrong, this shouldn't happen. I'll inform the humaniod that maintains me`, ephemeral: true})
             console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
             return;
         }
 
         if(type === 'join') {
-            await server.EnqueueUser(queue_name, interaction.member, interaction.type).catch((errstr : Error) => {
+            await server.EnqueueUser(queue_name, interaction.member).catch((errstr : Error) => {
                 if(interaction.member instanceof GuildMember) {
                     interaction.member.send(errstr.message)
                 }
             })
         } else if(type === 'leave') {
-             await server.RemoveMember(queue_name, interaction.member, interaction.type).catch((errstr : Error) => {
+            interaction.deferUpdate()
+             await server.RemoveMemberFromQueues(interaction.member).catch((errstr : Error) => {
                 if(interaction.member instanceof GuildMember && errstr.name == 'UserError') {
                     interaction.member.send(errstr.message)
                 }
@@ -117,7 +119,6 @@ client.on('interactionCreate', async interaction => {
         } else {
             console.error('Received invalid button interaction')
         }
-        //interaction.deferUpdate()
         return
     }
 });

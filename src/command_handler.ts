@@ -52,11 +52,11 @@ class EnqueueCommandHandler implements CommandHandler {
             if(admin_role === undefined) {
                 await interaction.editReply(`No can do. You don't have access to this command.`)
             } else {
-                await server.EnqueueUser(channel.name, user, interaction.type)
+                await server.EnqueueUser(channel.name, user)
                 await interaction.editReply(`<@${user.id}> has been added to "${channel.name}"`)
             }
         } else {
-            await server.EnqueueUser(channel.name, interaction.member as GuildMember, interaction.type)
+            await server.EnqueueUser(channel.name, interaction.member as GuildMember)
             await interaction.editReply(`You have been added to the ${channel.name} queue.`)
         }
     }
@@ -122,7 +122,7 @@ class StopCommandHandler implements CommandHandler {
 class LeaveCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.ANYONE
     async Process(server: AttendingServer, interaction: CommandInteraction) {
-        const queue_count = await server.RemoveMemberFromQueues(interaction.member as GuildMember, 'APPLICATION_COMMAND')
+        const queue_count = await server.RemoveMemberFromQueues(interaction.member as GuildMember)
         if(queue_count == 0) {
             await interaction.editReply('You are not in any queues')
         } else {

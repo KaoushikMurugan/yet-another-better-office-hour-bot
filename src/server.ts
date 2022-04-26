@@ -13,7 +13,6 @@ export class AttendingServer {
     private attendance_doc: GoogleSpreadsheet | null
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null
 
-
     private constructor(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null) {
         this.client = client
         this.server = server
@@ -54,34 +53,23 @@ export class AttendingServer {
             member.roles.cache.find(role => role.name == queue.name) !== undefined)
     }
 
-    async RemoveMemberFromQueues(member: GuildMember, interaction_type: string): Promise<number> {
+    async RemoveMemberFromQueues(member: GuildMember): Promise<number> {
         let queue_count = 0
         await Promise.all(this.queues.map(queue => {
             if (queue.Has(member)) {
                 queue_count++
-                return queue.Remove(member, interaction_type)
+                return queue.Remove(member)
             }
         }))
         return queue_count
     }
 
-    async RemoveMember(queue_name: string, member: GuildMember, interaction_type: string): Promise<void> {
+    async RemoveMember(queue_name: string, member: GuildMember): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
-        if(interaction_type === 'APPLICATION_COMMAND'){
-            if (queue === undefined) {
-                throw new UserError(`There is not a queue with the name ${queue_name}`)
-            }
-            if (!queue.is_open) {
-                throw new UserError(`The queue "${queue_name}" is currently closed.`)
-            }
-        }
         if (queue === undefined) {
             throw new UserError(`There is not a queue with the name ${queue_name}`)
         }
-        if (!queue.is_open) {
-            throw new UserError(`The queue "${queue_name}" is currently closed.`)
-        }
-        await queue.Remove(member, interaction_type)
+        await queue.Remove(member)
     }
 
     async AddHelper(member: GuildMember): Promise<void> {
@@ -151,7 +139,7 @@ export class AttendingServer {
             } else if (!helpable_queues.includes(member_queue)) {
                 throw new UserError(`You are not registered as a helper for "${member_queue.name}" which <@${member.id}> is in.`)
             }
-            await this.RemoveMemberFromQueues(member, 'APPLICATION_COMMAND')
+            await this.RemoveMemberFromQueues(member)
             this.member_states.GetMemberState(helper).OnDequeue(member)
             return member_state
         }
@@ -225,16 +213,8 @@ export class AttendingServer {
         }
     }
 
-    async EnqueueUser(queue_name: string, member: GuildMember, interaction_type: string): Promise<void> {
+    async EnqueueUser(queue_name: string, member: GuildMember): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
-        if(interaction_type === 'APPLICATION_COMMAND'){
-            if (queue === undefined) {
-                throw new UserError(`There is not a queue with the name ${queue_name}`)
-            }
-            if (!queue.is_open) {
-                throw new UserError(`The queue "${queue_name}" is currently closed.`)
-            }
-        }
         if (queue === undefined) {
             throw new UserError(`There is not a queue with the name ${queue_name}`)
 
@@ -242,7 +222,7 @@ export class AttendingServer {
         if (!queue.is_open) {
             throw new UserError(`The queue "${queue_name}" is currently closed.`)
         }
-        await queue.Enqueue(member, interaction_type)
+        await queue.Enqueue(member)
     }
 
     async CreateQueue(name: string): Promise<void> {

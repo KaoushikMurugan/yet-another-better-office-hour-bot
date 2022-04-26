@@ -127,10 +127,10 @@ describe('AttendingServer', () => {
         instance(user2)['roles'] = instance(mock_user2_role_manager)
 
         await server.AddHelper(instance(user2))
-        await server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')
+        await server.EnqueueUser('office hours', instance(user1))
         await server.ClearQueue(instance(mock_category_channel))
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
-        await server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')
+        await server.EnqueueUser('office hours', instance(user1))
         await expect(server.Dequeue(instance(user2))).to.eventually.satisfy((m: MemberState) => m.member == instance(user1))
 
         const fake_queue = mock<CategoryChannel>()
@@ -236,19 +236,19 @@ describe('AttendingServer', () => {
         const user4 = createMockUser(4)
 
         // Queues are closed, users can't join
-        await expect(server.EnqueueUser('bar', instance(user3), 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('closed')
-        await expect(server.EnqueueUser('foo', instance(user1), 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('closed')
+        await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.be.rejectedWith('closed')
+        await expect(server.EnqueueUser('foo', instance(user1))).to.eventually.be.rejectedWith('closed')
         // Queues are closed, helpers can't dequeue
         await expect(server.Dequeue(instance(user1))).to.eventually.be.rejectedWith('started helping yet')
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('started helping yet')
         // Open the 'foo' queue (user1 helping)
         await expect(server.AddHelper(instance(user1))).to.eventually.not.be.rejectedWith()
         // 'bar' should still be closed
-        await expect(server.EnqueueUser('bar', instance(user3), 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('closed')
+        await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.be.rejectedWith('closed')
         // Add users to 'foo' queue
-        await expect(server.EnqueueUser('foo', instance(user2), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
-        await expect(server.EnqueueUser('foo', instance(user3), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
-        await expect(server.EnqueueUser('foo', instance(user4), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user2))).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user3))).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user4))).to.eventually.not.be.rejectedWith()
         // User 2 should not be able to start helping while they are in the 'foo' queue
         await expect(server.AddHelper(instance(user2))).to.eventually.be.rejectedWith('while in a queue')
         // Dequeue user 2 from 'foo'
@@ -258,26 +258,26 @@ describe('AttendingServer', () => {
         // Have user 2 dequeue user 3 from 'foo'
         await expect(server.Dequeue(instance(user2))).to.eventually.satisfy((m: MemberState) => m.member == instance(user3))
         // Add user 3 to 'bar' queue
-        await expect(server.EnqueueUser('bar', instance(user3), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.not.be.rejectedWith()
         // Have user 1 dequeue user 4 from 'foo'
         await expect(server.Dequeue(instance(user1))).to.eventually.satisfy((m: MemberState) => m.member == instance(user4))
         // User 4 re-joins 'foo' after a short break
         await new Promise(resolve => setTimeout(resolve, 3))
-        await expect(server.EnqueueUser('foo', instance(user4), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user4))).to.eventually.not.be.rejectedWith()
         // User 2 can pull from either 'foo' or 'bar', but user 3 joined 'bar' before user 4 joined 'foo'
         await expect(server.Dequeue(instance(user2))).to.eventually.satisfy((m: MemberState) => m.member == instance(user3))
         // Re-queue user3 and clear all of the queues
-        await expect(server.EnqueueUser('bar', instance(user3), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.not.be.rejectedWith()
         await expect(server.ClearAllQueues()).to.not.eventually.be.rejectedWith()
-        await expect(server.EnqueueUser('foo', instance(user3), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
-        await expect(server.EnqueueUser('foo', instance(user4), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user3))).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('foo', instance(user4))).to.eventually.not.be.rejectedWith()
         // Have user1 dequeue user3 by name
         await expect(server.Dequeue(instance(user1), null, instance(user3)))
             .to.eventually.satisfy((m: MemberState) => m.member == instance(user3))
         // User1 should not be able to dequeue user3 now that they are not in a queue
         await expect(server.Dequeue(instance(user1), null, instance(user3))).to.eventually.be.rejectedWith('not in a queue')
         // User1 should not be able to dequeue from 'bar'
-        await expect(server.EnqueueUser('bar', instance(user3), 'APPLICATION_COMMAND')).to.eventually.not.be.rejectedWith()
+        await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.not.be.rejectedWith()
         await expect(server.Dequeue(instance(user1), instance(bar_category_channel))).to.eventually.be.rejectedWith('are not registered as')
         await expect(server.Dequeue(instance(user1), null, instance(user3))).to.eventually.be.rejectedWith('are not registered as')
         // User1 should not be able to dequeue from an unknown queue
@@ -346,8 +346,8 @@ describe('AttendingServer', () => {
         // @ts-ignore Overwite readonly value for testing
         instance(user2)['roles'] = instance(mock_user2_role_manager)
 
-        await expect(server.EnqueueUser('missing_queue', user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('There is not a queue')
-        await expect(server.EnqueueUser('office hours', user1, 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('closed')
+        await expect(server.EnqueueUser('missing_queue', user1)).to.eventually.be.rejectedWith('There is not a queue')
+        await expect(server.EnqueueUser('office hours', user1)).to.eventually.be.rejectedWith('closed')
         // Ensure staff can't help if they dont have any queues assigned
         await expect(server.AddHelper(instance(user2))).to.eventually.be.rejectedWith('any queue roles assigned')
         // Add a queue role and try again
@@ -361,25 +361,25 @@ describe('AttendingServer', () => {
         // The queue is empty. Dequeues should fail
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
         // The first user should be able to join the queue now
-        await expect(server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
+        await expect(server.EnqueueUser('office hours', instance(user1))).to.not.eventually.be.rejectedWith()
         // But they shouldn't be able to join again
-        await expect(server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith()
+        await expect(server.EnqueueUser('office hours', instance(user1))).to.eventually.be.rejectedWith()
         // The second user should be able to dequeue the first user
         await expect(server.Dequeue(instance(user2))).to.eventually.satisfy((state: MemberState) => state.member == instance(user1))
         // The queue should now be empty
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
         // The first user should be able to join the queue again
-        await expect(server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
+        await expect(server.EnqueueUser('office hours', instance(user1))).to.not.eventually.be.rejectedWith()
         // And leave on their own free will
-        await expect(server.RemoveMemberFromQueues(instance(user1), 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
-        verify(spied_queue.Remove(instance(user1), 'APPLICATION_COMMAND')).once()
+        await expect(server.RemoveMemberFromQueues(instance(user1))).to.not.eventually.be.rejectedWith()
+        verify(spied_queue.Remove(instance(user1))).once()
         // And the queue should be empty
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
         // The staff shouldn't be able to enter the queue while they're hosting
-        await expect(server.EnqueueUser('office hours', instance(user2), 'APPLICATION_COMMAND')).to.eventually.be.rejectedWith('while hosting')
+        await expect(server.EnqueueUser('office hours', instance(user2))).to.eventually.be.rejectedWith('while hosting')
 
         // Have the first user join the queue
-        await expect(server.EnqueueUser('office hours', instance(user1), 'APPLICATION_COMMAND')).to.not.eventually.be.rejectedWith()
+        await expect(server.EnqueueUser('office hours', instance(user1))).to.not.eventually.be.rejectedWith()
         // Remove the staff's queue role
         user2_roles.delete('2')
         // They should not be able to dequeue

@@ -95,7 +95,7 @@ export class HelpQueue {
     }
 
     async Clear(): Promise<void> {
-        this.queue.forEach(member => member.TryRemoveFromQueue(this, 'APPLICATION_COMMAND'))
+        this.queue.forEach(member => member.TryRemoveFromQueue(this))
         this.queue = []
         await this.UpdateDisplay()
     }
@@ -122,9 +122,9 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    async Enqueue(member: GuildMember, interaction_type: string): Promise<void> {
+    async Enqueue(member: GuildMember): Promise<void> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        user_state.TryAddToQueue(this, interaction_type)
+        user_state.TryAddToQueue(this)
         this.queue.push(user_state)
 
         if (this.queue.length == 1) {
@@ -138,9 +138,9 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    async Remove(member: GuildMember, interaction_type: string): Promise<void> {
+    async Remove(member: GuildMember): Promise<void> {
         const user_state = this.member_state_manager.GetMemberState(member)
-        user_state.TryRemoveFromQueue(this, interaction_type)
+        user_state.TryRemoveFromQueue(this)
         this.queue = this.queue.filter(waiting_user => waiting_user != user_state)
 
         await this.UpdateDisplay()
@@ -151,7 +151,7 @@ export class HelpQueue {
         if(user_state === undefined) {
             throw new UserError('Empty queue')
         }
-        user_state.TryRemoveFromQueue(this, 'APPLICATION_COMMAND')
+        user_state.TryRemoveFromQueue(this)
 
         await this.UpdateDisplay()
         return user_state
