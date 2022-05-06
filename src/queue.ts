@@ -27,7 +27,7 @@ export class HelpQueueDisplayManager {
         if (queue.length > 0) {
             const table = new AsciiTable()
             table.setHeading('Position', 'Username', 'Nickname')
-            queue_members.forEach((state, idx) => table.addRow(idx + 1, state.member.user.id, state.member.user.username))
+            queue_members.forEach((state, idx) => table.addRow(idx + 1, state.member.user.tag, state.member.user.username))
             return status_line + '```\n' + table.toString() + '\n```'
         }
         return status_line
