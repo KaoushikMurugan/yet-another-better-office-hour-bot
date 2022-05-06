@@ -137,7 +137,8 @@ class ClearCommandHandler implements CommandHandler {
         const channel_option = interaction.options.getChannel('queue_name')
         const all_option = interaction.options.getBoolean('all')
 
-        if (all_option === true) {
+        //might want this only for admins not tutors
+        if (all_option === true) { 
             await server.ClearAllQueues()
             await interaction.editReply('All queues have been cleared.')
         } else if (channel_option instanceof GuildChannel) {

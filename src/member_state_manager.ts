@@ -94,8 +94,8 @@ export class MemberState {
         this.up_next = newVal
     }
 
-    // Returns the amount of time a helper has been helping
     GetHelpTime(): number {
+        // Returns the amount of time a helper has been helping
         if (this.start_helping_timestamp === null) {
             console.error(`Cannot get help time for ${this.member.user.username}.`)
             return 0

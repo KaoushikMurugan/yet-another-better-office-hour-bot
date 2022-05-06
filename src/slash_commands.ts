@@ -6,7 +6,7 @@ import { Guild } from 'discord.js';
 /*************************************************************************
  * This file defines the structure of the slash commands
  * .setName is the name of the command as it appears on Discord
- * options are the arguments of the command
+ * options are the arguments of the command 
  * .setRequired defines where the argument is required or not
  *************************************************************************/
 

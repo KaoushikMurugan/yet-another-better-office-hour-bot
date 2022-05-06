@@ -389,6 +389,7 @@ export class AttendingServer {
         this.member_states.GetMemberState(member).OnJoin()
     }
     UpdateMemberLeftVC(member: GuildMember, dmMessage: string): void {
+        //mayube here?
         this.member_states.GetMemberState(member).OnLeave(dmMessage)
     }
 }

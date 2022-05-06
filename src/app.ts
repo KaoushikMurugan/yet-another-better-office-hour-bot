@@ -163,6 +163,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         let dmMessage = "Thanks for stopping by the UCD CS Tutoring! We hope you found our services helpful!\n\n\
 Feel free to fill out our feedback form!\n" + process.env.BOB_FEEDBACK_FORM_LINK + " \n\nDon't forget to put the \
 following comment in your code if you received help for programming: \n`Got help from [tutor_name] via CS Tutoring`" 
+        //need to work on making this text easy to change
 
         server.UpdateMemberLeftVC(member as GuildMember, dmMessage)
     }

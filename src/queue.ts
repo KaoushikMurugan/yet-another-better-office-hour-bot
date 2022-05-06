@@ -146,16 +146,19 @@ export class HelpQueue {
 
         await this.UpdateDisplay()
     }
+    
+    // Removes a user from this queue, called by /leave
     async Remove(member: GuildMember): Promise<void> {
-        // Removes a user from this queue, called by /leave
+        
         const user_state = this.member_state_manager.GetMemberState(member)
         user_state.TryRemoveFromQueue(this)
         this.queue = this.queue.filter(waiting_user => waiting_user != user_state)
 
         await this.UpdateDisplay()
     }
+
+    // Removes next user from this queue, called by /next
     async Dequeue(): Promise<MemberState> {
-        // Removes next user from this queue, called by /next
         const user_state = this.queue.shift()
         if (user_state === undefined) {
             throw new UserError('Empty queue')
