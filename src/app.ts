@@ -123,6 +123,43 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+// updates user status of either joining a vc or leaving one
+client.on('voiceStateUpdate', async (oldState, newState) => {
+    if (oldState.member?.id !== newState.member?.id)
+        console.error('voiceStateUpdate: members don\'t match')
+
+    let member = oldState.member
+
+    if (oldState.guild.id !== newState.guild.id)
+        console.error('voiceStateUpdate: servers don\'t match')
+
+    let server = servers.get(oldState.guild as Guild)
+
+    if (server === undefined) {
+        server = await JoinGuild(oldState.guild)
+    }
+    await server.EnsureHasRole(member as GuildMember)
+
+    // if a user joins a vc
+    if (oldState.channel === null && newState.channel !== null) {
+        // if not a helper, mark as being helped
+        //server.UpdateMemberJoinedVC(member as GuildMember)
+    }
+
+    // if a user leaves a vc
+
+    if (oldState.channel !== null && newState.channel === null) {
+        // if not a helper and marked as being helped
+        // send the person who left vc a dm to fill out a form
+        // mark as not currently being helped
+        let dmMessage = "Thanks for stopping by the UCD CS Tutoring! We hope you found our services helpful!\n\n\
+Feel free to fill out our feedback form!\n" + process.env.BOB_FEEDBACK_FORM_LINK + " \n\nDon't forget to put the \
+following comment in your code if you received help for programming: \n`Got help from [tutor_name] via CS Tutoring`" 
+
+        //server.UpdateMemberLeftVC(member as GuildMember, dmMessage)
+    }
+})
+
 client.on('guildMemberAdd', async member => {
     let server = servers.get(member.guild as Guild)
     if(server === undefined) {
