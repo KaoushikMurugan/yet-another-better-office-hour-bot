@@ -6,3 +6,4 @@ node_modules/
 .vscode/
 gcs_service_account_key.json
 .DS_Store
+src/.DS_Store
