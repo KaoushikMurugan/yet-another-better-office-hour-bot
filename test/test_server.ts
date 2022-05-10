@@ -126,7 +126,7 @@ describe('AttendingServer', () => {
         // @ts-ignore Overwite readonly value for testing
         instance(user2)['roles'] = instance(mock_user2_role_manager)
 
-        await server.AddHelper(instance(user2))
+        await server.AddHelper(instance(user2), false)
         await server.EnqueueUser('office hours', instance(user1))
         await server.ClearQueue(instance(mock_category_channel))
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
@@ -242,7 +242,7 @@ describe('AttendingServer', () => {
         await expect(server.Dequeue(instance(user1))).to.eventually.be.rejectedWith('started helping yet')
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('started helping yet')
         // Open the 'foo' queue (user1 helping)
-        await expect(server.AddHelper(instance(user1))).to.eventually.not.be.rejectedWith()
+        await expect(server.AddHelper(instance(user1), false)).to.eventually.not.be.rejectedWith()
         // 'bar' should still be closed
         await expect(server.EnqueueUser('bar', instance(user3))).to.eventually.be.rejectedWith('closed')
         // Add users to 'foo' queue
@@ -250,11 +250,11 @@ describe('AttendingServer', () => {
         await expect(server.EnqueueUser('foo', instance(user3))).to.eventually.not.be.rejectedWith()
         await expect(server.EnqueueUser('foo', instance(user4))).to.eventually.not.be.rejectedWith()
         // User 2 should not be able to start helping while they are in the 'foo' queue
-        await expect(server.AddHelper(instance(user2))).to.eventually.be.rejectedWith('while in a queue')
+        await expect(server.AddHelper(instance(user2), false)).to.eventually.be.rejectedWith('while in a queue')
         // Dequeue user 2 from 'foo'
         await expect(server.Dequeue(instance(user1))).to.eventually.satisfy((m: MemberState) => m.member == instance(user2))
         // User 2 should be able to start helping. Opens 'bar' queue and adds helper to 'foo' queue
-        await expect(server.AddHelper(instance(user2))).to.eventually.not.be.rejectedWith()
+        await expect(server.AddHelper(instance(user2), false)).to.eventually.not.be.rejectedWith()
         // Have user 2 dequeue user 3 from 'foo'
         await expect(server.Dequeue(instance(user2))).to.eventually.satisfy((m: MemberState) => m.member == instance(user3))
         // Add user 3 to 'bar' queue
@@ -349,15 +349,15 @@ describe('AttendingServer', () => {
         await expect(server.EnqueueUser('missing_queue', user1)).to.eventually.be.rejectedWith('There is not a queue')
         await expect(server.EnqueueUser('office hours', user1)).to.eventually.be.rejectedWith('closed')
         // Ensure staff can't help if they dont have any queues assigned
-        await expect(server.AddHelper(instance(user2))).to.eventually.be.rejectedWith('any queue roles assigned')
+        await expect(server.AddHelper(instance(user2), false)).to.eventually.be.rejectedWith('any queue roles assigned')
         // Add a queue role and try again
         user2_roles.set('2', instance(mock_oh_role))
         // Spy on the queue object to verify it was notified of the helper
         expect(server['queues'].length).to.equal(1)
         const spied_queue = spy(server['queues'].find(() => true)) as HelpQueue
         // Open the queue
-        await expect(server.AddHelper(instance(user2))).to.not.eventually.be.rejectedWith()
-        verify(spied_queue.AddHelper(instance(user2))).once()
+        await expect(server.AddHelper(instance(user2), false)).to.not.eventually.be.rejectedWith()
+        verify(spied_queue.AddHelper(instance(user2), false)).once()
         // The queue is empty. Dequeues should fail
         await expect(server.Dequeue(instance(user2))).to.eventually.be.rejectedWith('There is no one')
         // The first user should be able to join the queue now
