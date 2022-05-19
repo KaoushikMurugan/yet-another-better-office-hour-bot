@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 /* eslint-disable @typescript-eslint/ban-ts-comment */
-import "mocha"
+/*import "mocha"
 import chai, { expect } from 'chai'
 import chaiAsPromised from "chai-as-promised"
 import { AttendingServer } from "../src/server"
@@ -596,3 +596,4 @@ describe('AttendingServer', () => {
         
     })
 })
+*/

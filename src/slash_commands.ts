@@ -1,14 +1,14 @@
-import { SlashCommandBuilder } from '@discordjs/builders';
-import { REST } from '@discordjs/rest'
-import { Routes } from 'discord-api-types/v9';
-import { Guild } from 'discord.js';
-
 /*************************************************************************
  * This file defines the structure of the slash commands
  * .setName is the name of the command as it appears on Discord
  * options are the arguments of the command
  * .setRequired defines where the argument is required or not
  *************************************************************************/
+
+import { SlashCommandBuilder } from '@discordjs/builders';
+import { REST } from '@discordjs/rest'
+import { Routes } from 'discord-api-types/v9';
+import { Guild } from 'discord.js';
 
 const queue_command = new SlashCommandBuilder()         // /queue
     .setName('queue')
@@ -96,13 +96,13 @@ const list_helpers_command = new SlashCommandBuilder()  // /list_helpers
     .setName('list_helpers')
     .setDescription('See who is online and helping.')
 
-const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_name)
+/*const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_name)
     .setName('when_next')
     .setDescription('View the upcoming tutoring hours')
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The course for which you want to view the next tutoring hours')
-        .setRequired(false))
+        .setRequired(false))*/
 
 const get_notifcations = new SlashCommandBuilder()      // /get_notifs [queue_name]
     .setName('notify_me')
@@ -111,6 +111,27 @@ const get_notifcations = new SlashCommandBuilder()      // /get_notifs [queue_na
         .setName('queue_name')
         .setDescription('The course for which you want be notifed when its queue becomes open')
         .setRequired(true))
+
+const msg_after_leave_VC = new SlashCommandBuilder()
+    .setName('after_tutor_message')
+    .setDescription('Edit the message that is sent to the tutee once their session is over')
+    .addSubcommand(subcommand => subcommand             // /queue add [queue_name]
+        .setName('edit')
+        .setDescription('enable/disable this feature and change the message that is sent')
+        .addBooleanOption(option => option
+            .setName('enable')
+            .setDescription('if false, then BOB will not send any message to the tutee after their session [Default: false]')
+            .setRequired(true))
+        .addBooleanOption(option => option
+            .setName('change_message')
+            .setDescription('if true, grabs the previous message sent by you in this chat and set it as the new message')
+            .setRequired(false)))
+    .addSubcommand(subcommand => subcommand
+        .setName('revert')
+        .setDescription('reverts the message to the previous one'))
+    
+    
+
 
 // Get the raw data that can be sent to Discord
 const commandData = [
@@ -123,8 +144,9 @@ const commandData = [
     clear_command.toJSON(),
     list_helpers_command.toJSON(),
     announce_command.toJSON(),
-    list_next_hours.toJSON(),
-    get_notifcations.toJSON()
+    //list_next_hours.toJSON(),
+    get_notifcations.toJSON(),
+    msg_after_leave_VC.toJSON()
 ]
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {

@@ -1,11 +1,14 @@
 import Collection from '@discordjs/collection';
-import { Client, Guild, GuildMember, Intents } from 'discord.js';
+import { Client, Guild, GuildMember, Intents, TextChannel } from 'discord.js';
 import { ProcessCommand } from './command_handler';
 import { AttendingServer } from './server';
 import * as dotenv from 'dotenv'
 import { PostSlashCommands } from './slash_commands';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import * as gcs_creds from '../gcs_service_account_key.json'
+import * as fbs_creds from '../fbs_service_account_key.json'
+const { initializeApp, cert } = require('firebase-admin/app');
+const { getFirestore } = require('firebase-admin/firestore');
 
 dotenv.config()
 
@@ -35,7 +38,7 @@ client.on('error', (error) => {
 })
 
 client.on('ready', async () => {
-    console.log('B.O.B. V1.0')
+    console.log('B.O.B. V2.1')
     if (client.user !== null) {
         console.log(`Logged in as ${client.user.tag}!`);
     }
@@ -52,8 +55,17 @@ client.on('ready', async () => {
         console.log('Connected to Google sheets.')
     }
 
+    //Connect to the firebase database
+
+    initializeApp({
+        credential: cert(fbs_creds)
+    })
+
+    const db = getFirestore()
+    console.log('Connected to Firebase database')
+
     await Promise.all(full_guilds.map(guild =>
-        AttendingServer.Create(client, guild, attendance_doc)
+        AttendingServer.Create(client, guild, db, attendance_doc)
             .then(server => servers.set(guild, server))
             .then(() => PostSlashCommands(guild))
             .catch((err: Error) => {
@@ -66,7 +78,11 @@ client.on('ready', async () => {
 
 async function JoinGuild(guild: Guild): Promise<AttendingServer> {
     console.log(`Joining guild ${guild.name}`)
-    const server = await AttendingServer.Create(client, guild)
+    initializeApp({
+        credential: cert(fbs_creds)
+    })
+    const db = getFirestore()
+    const server = await AttendingServer.Create(client, guild, db)
     await PostSlashCommands(guild)
     servers.set(guild, server)
     return server
@@ -107,7 +123,7 @@ client.on('interactionCreate', async interaction => {
 
         if (!(interaction.member instanceof GuildMember)) {
             console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
-            return;
+            return
         }
 
         if (type === 'join') {
@@ -158,7 +174,7 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
     // if a user joins a vc
     if (oldState.channel === null && newState.channel !== null) {
         // if not a helper, mark as being helped
-        server.UpdateMemberJoinedVC(member as GuildMember)
+        await server.UpdateMemberJoinedVC(member as GuildMember)
     }
 
     // if a user leaves a vc
@@ -167,12 +183,39 @@ client.on('voiceStateUpdate', async (oldState, newState) => {
         // if not a helper and marked as being helped
         // send the person who left vc a dm to fill out a form
         // mark as not currently being helped
-        let dmMessage = "Thanks for stopping by the UCD CS Tutoring Discord! We hope you found our services helpful!\n\n\
-Feel free to fill out our feedback form!\n" + process.env.BOB_FEEDBACK_FORM_LINK + " \n\nDon't forget to put the \
-following comment in your code if you received help for programming: `Got help from [tutor_name] via CS Tutoring`" 
 
-        server.UpdateMemberLeftVC(member as GuildMember, dmMessage)
+        await server.UpdateMemberLeftVC(member as GuildMember)
     }
+})
+
+//incase queue message gets deleted
+client.on('messageDelete', async message => {
+    if (message === null) {
+        console.error("Recognized a message deletion without a message")
+        return
+    }
+    if (message.author?.id !== process.env.BOB_APP_ID) {
+        return
+    }
+    if (message.guild === null) {
+        console.error("Recognized a message deletion without a guild")
+        return
+    }
+    let server = servers.get(message.guild as Guild)
+    if (server === undefined) {
+        server = await JoinGuild(message.guild)
+    }
+    await server.EnsureHasRole(message.member as GuildMember)
+    const channel = message.channel as TextChannel
+    const category = channel.parent
+    if (category === null)
+        return
+    await server.EnsureQueueSafe(category.name)
+})
+
+//incase someone sends a message in the queue channel
+client.on('messageCreate', async messsage => {
+
 })
 
 client.on('guildMemberAdd', async member => {

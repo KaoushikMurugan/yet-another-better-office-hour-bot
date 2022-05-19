@@ -1,16 +1,16 @@
-import { CategoryChannel, Client, Guild, GuildChannel, Role, TextChannel, User, Collection, GuildMember } from "discord.js";
-import { HelpQueue, HelpQueueDisplayManager } from "./queue";
-import { MemberStateManager } from "./member_state_manager";
-import { UserError } from "./user_action_error";
-import { MemberState } from "./member_state_manager";
-import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from "google-spreadsheet";
-
 /**************************************************************
  * This file implements the AttendingServer class
  * defines an instance of a server which the bot is connected to
  * implements various functions used by app.ts and 
  * command_handler.ts
  **************************************************************/
+
+import { CategoryChannel, Client, Guild, GuildChannel, Role, TextChannel, User, Collection, GuildMember, Message } from "discord.js";
+import { HelpQueue, HelpQueueDisplayManager } from "./queue";
+import { MemberStateManager } from "./member_state_manager";
+import { UserError } from "./user_action_error";
+import { MemberState } from "./member_state_manager";
+import { GoogleSpreadsheet, GoogleSpreadsheetWorksheet } from "google-spreadsheet";
 
 export class AttendingServer {
     private queues: HelpQueue[] = []
@@ -19,22 +19,50 @@ export class AttendingServer {
     private server: Guild
     private attendance_doc: GoogleSpreadsheet | null
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null
+    private firebase_db: any
 
-    private constructor(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null) {
+    private msgAfterLeaveVC: string | null = null
+    private oldMsgALVC: string | null = null
+    private msgEnable: boolean = false
+
+    private constructor(client: Client, server: Guild, firebase_db: any, attendance_doc: GoogleSpreadsheet | null) {
         this.client = client
         this.server = server
         this.member_states = new MemberStateManager()
         this.attendance_doc = attendance_doc
+        this.firebase_db = firebase_db
     }
 
-    static async Create(client: Client, server: Guild, attendance_doc: GoogleSpreadsheet | null = null): Promise<AttendingServer> {
+    static async Create(client: Client, server: Guild, firebase_db: any, attendance_doc: GoogleSpreadsheet | null = null): Promise<AttendingServer> {
         if (server.me === null || !server.me.permissions.has("ADMINISTRATOR")) {
             await server.fetchOwner().then(owner =>
                 owner.send(`Sorry. I need full administrator permission to join and manage "${server.name}"`))
             await server.leave()
             throw new UserError('Invalid permissions.')
         }
-        const me = new AttendingServer(client, server, attendance_doc)
+
+        const me = new AttendingServer(client, server, firebase_db, attendance_doc)
+        const doc = await firebase_db.collection('msgAfterLeaveVC').doc(server.id).get()
+        if (doc.exists) {
+            me.msgEnable = doc.data()["enable"]
+            if (me.msgEnable === undefined) {
+                me.msgEnable = true
+            }
+            me.msgAfterLeaveVC = doc.data()["msgAfterLeaveVC"]
+            if (me.msgAfterLeaveVC === undefined) {
+                me.msgAfterLeaveVC = null
+            }
+            me.oldMsgALVC = doc.data()["oldMsgALVC"]
+            if (me.oldMsgALVC === undefined) {
+                me.oldMsgALVC = null
+            }
+            
+        } else {
+            me.msgAfterLeaveVC = null
+            me.msgEnable = true
+            me.oldMsgALVC = null
+        }
+
         await me.DiscoverQueues()
         await me.UpdateRoles()
         await Promise.all(me.queues.map(queue => queue.UpdateDisplay()))
@@ -90,7 +118,17 @@ export class AttendingServer {
             throw new UserError('You are a staff member but do not have any queue roles assigned. I don\'t know where you are allowed to help :(')
         }
         this.member_states.GetMemberState(member).StartHelping()
-        await Promise.all(this.GetHelpableQueues(member).map(queue => queue.AddHelper(member, mute_notif)))
+        var some_queue_open = false
+        await Promise.all(this.GetHelpableQueues(member).map(queue => {
+            queue.AddHelper(member, mute_notif)
+            // if the queue already has people, notify the the tutor that there is a queue that isn't empty
+        }))
+        this.GetHelpableQueues(member).forEach(queue => {
+            if (queue.length > 0) {
+                member.send("There are some students in the queues already")
+                return
+            }
+        })
     }
 
     // consequence of /stop, stores the log of member onto the Attendance Sheet
@@ -127,6 +165,7 @@ export class AttendingServer {
         // add new row to the sheet
         await this.attendance_sheet.addRow({ 'username': member.user.username, 'time in': start_time_str, 'time out': end_time_str, 'helped students': helped_students })
     }
+
     // consequence of /stop, removes "member" from the list of avaiable helpers
     async RemoveHelper(member: GuildMember): Promise<number> {
         // Remove a helper and return the time they spent helping in ms
@@ -151,6 +190,7 @@ export class AttendingServer {
         if (helpable_queues.length == 0) {
             throw new UserError('You are not registered as a helper for any queues.')
         }
+
         // if user entered a particular user to dequeue
         if (user_option !== null) {
             const member = user_option instanceof User ? await this.server.members.fetch(user_option) : user_option
@@ -166,6 +206,7 @@ export class AttendingServer {
             member_state.SetUpNext(true)
             return member_state
         }
+
         // if user entered a particular queue to remove from
         let target_queue: HelpQueue
         if (queue_option !== null) {
@@ -263,7 +304,7 @@ export class AttendingServer {
 
         await this.server.channels.create(name, { type: 'GUILD_CATEGORY' })
             .then(category => this.server.channels.create('queue', { type: 'GUILD_TEXT', parent: category }).then(queue_channel => {
-                this.queues.push(new HelpQueue(name, new HelpQueueDisplayManager(this.client, queue_channel), this.member_states))
+                this.queues.push(new HelpQueue(name, new HelpQueueDisplayManager(this.client, queue_channel, null), this.member_states))
                 return Promise.all([
                     queue_channel.permissionOverwrites.create(this.server.roles.everyone, { SEND_MESSAGES: false }),
                     queue_channel.permissionOverwrites.create(this.client.user as User, { SEND_MESSAGES: true })])
@@ -303,20 +344,39 @@ export class AttendingServer {
         await this.server.channels.fetch()
             .then(channels => channels.filter(channel => channel.type == 'GUILD_CATEGORY'))
             .then(channels => channels.map(channel => channel as CategoryChannel))
-            .then(categories => {
-                categories.forEach(category => {
-                    const queue_channel = category.children.find(child => child.name == 'queue')
+            .then(categories =>
+                Promise.all(categories.map(category => {
+                    let queue_channel = category.children.find(child => child.name == 'queue') as TextChannel
                     if (queue_channel !== undefined && queue_channel.type == "GUILD_TEXT") {
                         if (this.queues.find(queue => queue.name == category.name) === undefined) {
-                            this.queues.push(
-                                new HelpQueue(category.name, new HelpQueueDisplayManager(this.client, queue_channel as TextChannel),
-                                    this.member_states))
+                            //get the queue message if it already exists
+                            return queue_channel.messages.fetchPinned()
+                                .then(messages => messages.filter(msg => msg.author == this.client.user))
+                                .then(messages => {
+                                    if (messages.size > 1) {
+                                        messages.forEach(message => message.delete())
+                                        messages.clear()
+                                        return null
+                                    } else if (messages.size === 1) {
+                                        let first_message = messages.first()
+                                        if (first_message === undefined)
+                                            return null
+                                        return first_message
+                                    } else {
+                                        return null
+                                    }
+                                }).then(queue_message => {
+
+                                    this.queues.push(
+                                        new HelpQueue(category.name, new HelpQueueDisplayManager(this.client, queue_channel, queue_message),
+                                            this.member_states))
+                                })
                         } else {
                             console.warn(`The server "${this.server.name}" contains multiple queues with the name "${category.name}"`)
                         }
                     }
-                })
-            })
+                }))
+            )
     }
 
     //If roles don't exist already, create the roles
@@ -380,6 +440,61 @@ export class AttendingServer {
             })
     }
 
+    async EnsureQueueSafe(queue_name: string): Promise<void> {
+        const queue = this.queues.find(queue => queue.name == queue_name)
+        if (queue === undefined) {
+            // if the channel where the message was deleted wasn't a queue channel
+            return
+        }
+        await queue.EnsureQueueSafe()
+    }
+
+    async EditDmMessage(message: string | null, enable: boolean): Promise<string> {
+        // update local instance of message
+        this.oldMsgALVC = this.msgAfterLeaveVC
+        this.msgEnable = enable
+        this.msgAfterLeaveVC = message
+
+        // update database with new value, only if it's new
+        if (this.oldMsgALVC !== message) {
+            const data = {
+                msgAfterLeaveVC: message,
+                oldMsgALVC: this.oldMsgALVC,
+                enable: enable
+            }
+            await this.firebase_db.collection('msgAfterLeaveVC').doc(this.server.id).set(data)
+        }
+        let response: string
+        if (enable === true && this.msgAfterLeaveVC !== null) {
+            response = "BOB will now send the following message to students once they finish recieving tutoring: \n\n" + this.msgAfterLeaveVC
+        } else if (enable === true && this.msgAfterLeaveVC === null) {
+            response = "BOB has enabled the sending a message after a session feature, but there is no message saved for this server"
+        } else {
+            response = "BOB will no longer send a messages to tutees after the finish recieving tutoring. \
+If you wish to enable this feature later, just set the enable option to true."
+        }
+        return response
+    }
+
+    async RevertDmMessage(): Promise<string> {
+        let temp = this.oldMsgALVC
+        this.oldMsgALVC = this.msgAfterLeaveVC
+        this.msgAfterLeaveVC = temp
+        
+        let response: string
+        if (this.msgEnable === true && this.msgAfterLeaveVC !== null) {
+            response = "BOB will now send the following message to students once they finish receiving tutoring: \n\n" + this.msgAfterLeaveVC
+        } else if (this.msgEnable === true && this.msgAfterLeaveVC === null) {
+            response = "BOB has enabled the sending a message after a session feature, but there is no message saved for this server"
+        } else if (this.msgAfterLeaveVC !== null) {
+            response = "The message has been reverted to: \n\n" + this.msgAfterLeaveVC + "\n\n but the dm feature is currently\
+disabled. To enable it, do `/after_tutor_message enable: true`"
+        } else {
+            response = "The message has been reverted to `null` and the dm feature is currently disabled"
+        }
+        return response
+    }
+
     GetHelpingMemberStates(): Map<MemberState, string[]> {
         // Get a mapping between active helpers and the names of the queues
         // they are subscribed to
@@ -397,7 +512,14 @@ export class AttendingServer {
     UpdateMemberJoinedVC(member: GuildMember): void {
         this.member_states.GetMemberState(member).OnJoin()
     }
-    UpdateMemberLeftVC(member: GuildMember, dmMessage: string): void {
-        this.member_states.GetMemberState(member).OnLeave(dmMessage)
+
+    UpdateMemberLeftVC(member: GuildMember): void {
+        if (this.msgAfterLeaveVC === null || this.msgEnable === false)
+            return
+        this.member_states.GetMemberState(member).OnLeave(this.msgAfterLeaveVC)
+    }
+
+    getMsgAfterLeaveVC(): string | null {
+        return this.msgAfterLeaveVC
     }
 }

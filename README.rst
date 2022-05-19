@@ -116,9 +116,7 @@ Commands
 
 -  ``/list-helpers`` - Access Role: [Admin, Helper, Student]
 
-   -  Shows a list of Helpers that are currently helping, the queues 
-      for which they help for and how long it's been since they
-      started helping
+   -  Shows a list of Helpers that are currently helping, the queues for which they help for and how long it's been since they started helping
 
 -  ``/queue add [queue_name]`` - Access Role: [Admin]
 
@@ -127,6 +125,37 @@ Commands
 -  ``/queue remove [queue_name]`` - Access Role: [Admin]
 
    - Deletes the category with the name ``queue_name``, if it exists, and the channels within it
+
+-  ``/notify_me [queue_name]`` - Access Role : [Admin, Helper, Student]
+
+   - Adds the member to the notifcation list for a queue. They will be sent a message once the queue they listed for is open
+
+-  ``/after_tutor_message edit [enable] (change_message)`` - Access Role : [Admin]
+
+   - Edits the message that's sent to a helpee after their session with a helper is over
+   - Option ``enable``: If set to true, will send the message to a helpee after their session. If set to false, doesn't send the message
+   - Option ``change_message``: If set to true, grabs the last message, and if sent by the user, sets that message as the new message that BOB will send to the helpee
+
+-  ``/after_tutor_message revert [setTrue]`` - Access Role: [Admin]
+
+   - Reverts the message that BOB sends to helpee to the one it used previously. BOB doesn't not hold more than one previous message at a time.
+
+Queue Buttons
+~~~~~~~~~~~~~
+
+TODO: add queue buttons gif
+
+-  ``Join Queue`` : 
+   
+   - Adds the person who clicked the button to the queue. Works like ``/enqueue```, where the queue to which the person is added is the active category
+
+-  ``Leave Queue`` :
+
+   - Removes the person who clicked the button form the queue. Works like ``/leave``
+
+-  ``Notify When Open`` :
+
+   - Adds the person who clicked the button to the notification queue. Works like ``/notify_me``, where the queue is the active category
 
 Requirements
 ------------

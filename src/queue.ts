@@ -1,9 +1,3 @@
-import { Client, Guild, GuildMember, MessageActionRow, MessageButton, TextChannel } from "discord.js";
-import { MemberState, MemberStateManager } from "./member_state_manager";
-import { UserError } from "./user_action_error";
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const AsciiTable = require('ascii-table');
-
 /**********************************************************************************
  * This file defines the HelpQueueDisplayManager and the Help Queue class
  * HelpQueueDisplayManager manages the message that's in the #queue channels
@@ -11,13 +5,21 @@ const AsciiTable = require('ascii-table');
  * .setRequired defines where the argument is required or ont
  **********************************************************************************/
 
+import { Client, GuildMember, Message, MessageActionRow, MessageButton, TextChannel } from "discord.js";
+import { MemberState, MemberStateManager } from "./member_state_manager";
+import { UserError } from "./user_action_error";
+// eslint-disable-next-line @typescript-eslint/no-var-requires
+const AsciiTable = require('ascii-table');
+
 export class HelpQueueDisplayManager {
     private client: Client
     private display_channel: TextChannel
+    private queue_message: Message | null
 
-    constructor(client: Client, display_channel: TextChannel) {
+    constructor(client: Client, display_channel: TextChannel, queue_message: Message | null) {
         this.client = client
         this.display_channel = display_channel
+        this.queue_message = queue_message
     }
 
     // Returns a table of the list of people in queue in text form that can be used in a message
@@ -33,56 +35,64 @@ export class HelpQueueDisplayManager {
         return status_line
     }
 
-    // Updates the queue text. Called when queue is open or closed, or when someone joins or leaves the queue
-    OnQueueUpdate(queue: HelpQueue, queue_members: MemberState[]): Promise<void> {
+    EnsureQueueSafe(): Promise<void> {
         return this.display_channel.messages.fetchPinned()
             .then(messages => messages.filter(msg => msg.author == this.client.user))
             .then(messages => {
                 if (messages.size > 1) {
                     messages.forEach(message => message.delete())
                     messages.clear()
-                }
-                const message_text = this.GetQueueText(queue, queue_members)
-                const buttons = new MessageActionRow()
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('join ' + queue.name)
-                            .setEmoji('✅')
-                            .setDisabled(!queue.is_open)
-                            .setLabel('Join Queue')
-                            .setStyle('SUCCESS')
-                    )
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('leave ' + queue.name)
-                            .setEmoji('❎')
-                            .setDisabled(!queue.is_open)
-                            .setLabel('Leave Queue')
-                            .setStyle('DANGER')
-                    )
-                    .addComponents(
-                        new MessageButton()
-                            .setCustomId('notif ' + queue.name)
-                            .setEmoji('🔔')
-                            .setDisabled(queue.is_open)
-                            .setLabel('Notify When Open')
-                            .setStyle('PRIMARY')
-                    )
-                // If the bot has already sent a message, edit it
-                // Else, send a new message
-                if (messages.size == 0) {
-                    return this.display_channel.send({
-                        content: message_text,
-                        components: [buttons]
-                    }).then(message => message.pin())
-                } else {
-                    return messages.first()?.edit({
-                        content: message_text,
-                        components: [buttons]
-                    })
-                }
-            }).then(() => undefined)
+                    this.queue_message = null
 
+                } else if (messages.size === 0) {
+                    this.queue_message = null
+                }
+            })
+    }
+
+    // Updates the queue text. Called when queue is open or closed, or when someone joins or leaves the queue
+    async OnQueueUpdate(queue: HelpQueue, queue_members: MemberState[]): Promise<void> {
+        const message_text = this.GetQueueText(queue, queue_members)
+        const buttons = new MessageActionRow()
+            .addComponents(
+                new MessageButton()
+                    .setCustomId('join ' + queue.name)
+                    .setEmoji('✅')
+                    .setDisabled(!queue.is_open)
+                    .setLabel('Join Queue')
+                    .setStyle('SUCCESS')
+            )
+            .addComponents(
+                new MessageButton()
+                    .setCustomId('leave ' + queue.name)
+                    .setEmoji('❎')
+                    .setDisabled(!queue.is_open)
+                    .setLabel('Leave Queue')
+                    .setStyle('DANGER')
+            )
+            .addComponents(
+                new MessageButton()
+                    .setCustomId('notif ' + queue.name)
+                    .setEmoji('🔔')
+                    .setDisabled(queue.is_open)
+                    .setLabel('Notify When Open')
+                    .setStyle('PRIMARY')
+            )
+
+        // If queue_message exists, edit it
+        // Else, send a new message
+        if (this.queue_message === null) {
+            this.EnsureQueueSafe()
+            await this.display_channel.send({
+                content: message_text,
+                components: [buttons]
+            }).then(message => message.pin()).then(message => this.queue_message = message)
+        } else {
+            await this.queue_message.edit({
+                content: message_text,
+                components: [buttons]
+            }).catch()
+        }
     }
 }
 
@@ -122,6 +132,10 @@ export class HelpQueue {
         await this.display_manager.OnQueueUpdate(this, this.queue)
     }
 
+    async EnsureQueueSafe(): Promise<void> {
+        await this.display_manager.EnsureQueueSafe()
+    }
+
     // Adds a Helper to the list of available helpers for this queue. called by /start
     async AddHelper(member: GuildMember, mute_notifs: boolean): Promise<void> {
         if (this.helpers.has(member)) {
@@ -154,7 +168,6 @@ export class HelpQueue {
         const user_state = this.member_state_manager.GetMemberState(member)
         user_state.TryAddToQueue(this)
         this.queue.push(user_state)
-
         if (this.queue.length == 1) {
             // The queue went from having 0 people to having 1.
             // Notify helpers of this queue that someone has joined.
@@ -162,7 +175,6 @@ export class HelpQueue {
                 Array.from(this.helpers)
                     .map(helper => helper.send(`Heads up! <@${member.user.id}> has joined "${this.name}".`)))
         }
-
         await this.UpdateDisplay()
     }
 

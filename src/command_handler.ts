@@ -25,7 +25,7 @@ class QueueCommandHandler implements CommandHandler {
             await server.RemoveQueue(channel as GuildChannel)
             await interaction.editReply(`Removed queue "${channel.name}"`)
         } else {
-            throw new UserError(`The subcommand ${subcommand}`)
+            throw new UserError(`The subcommand ${subcommand} is not valid`)
         }
     }
 }
@@ -95,7 +95,7 @@ class DequeueCommandHandler implements CommandHandler {
         let invite_sent = false
         await helpee.member.send(`It's your turn! Join the call: ${invite.toString()}`).then(() => { invite_sent = true })
         if (invite_sent) {
-            await interaction.editReply(`<@${helpee.member.user.id}> was sent an invite to your voice channel, for the course ${queue_option?.name}.`)
+            await interaction.editReply(`<@${helpee.member.user.id}> was sent an invite to your voice channel.`)
         } else {
             console.error(`Could not send a message to ${helpee.member.user.username}.`)
             await interaction.editReply(`I could not send <@${helpee.member.user.id}> an invite to your voice channel. Can you try to get in touch with them?`)
@@ -213,6 +213,45 @@ class GetNotifcationsHandler implements CommandHandler {
     }
 }
 
+class MsgAfterLeaveVCHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.ADMIN
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        const subcommand = interaction.options.getSubcommand()
+        if (subcommand === 'edit') {
+            const change_message_option = interaction.options.getBoolean('change_message')
+            const enable_option = interaction.options.getBoolean('enable')
+            if (enable_option === null) {
+                throw new UserError('You must provide a value for the enable option.')
+            }
+            if (interaction === null || interaction.channel === null) {
+                return
+            } else if (!interaction.channel.isText()) {
+                return
+            }
+            let dmMessage: string | null = server.getMsgAfterLeaveVC()
+            if (change_message_option === true) {
+                await interaction.channel.messages.fetch({ limit: 1 }).then(messages => {
+                    let lastMessage = messages.first();
+                    if (lastMessage == undefined)
+                        return
+                    if (lastMessage.author.id === interaction.member?.user.id) {
+                        dmMessage = lastMessage.content
+                    }
+                })
+            }
+            let response = await server.EditDmMessage(dmMessage, enable_option)
+            await interaction.editReply(response)
+
+        } else if (subcommand === 'revert') {
+            let response = await server.RevertDmMessage()
+            await interaction.editReply(response)
+        } else {
+            throw new UserError(`The subcommand ${subcommand} is not valid`)
+        }
+        
+    }
+}
+
 const handlers = new Map<string, CommandHandler>([
     ['queue', new QueueCommandHandler()],
     ['enqueue', new EnqueueCommandHandler()],
@@ -223,7 +262,8 @@ const handlers = new Map<string, CommandHandler>([
     ['clear', new ClearCommandHandler()],
     ['list_helpers', new ListHelpersCommandHandler()],
     ['announce', new AnnounceCommandHandler()],
-    ['notify_me', new GetNotifcationsHandler()]
+    ['notify_me', new GetNotifcationsHandler()],
+    ['after_tutor_message', new MsgAfterLeaveVCHandler()]
 ])
 
 export async function ProcessCommand(server: AttendingServer, interaction: CommandInteraction): Promise<void> {
