@@ -7,6 +7,7 @@ const AsciiTable = require('ascii-table');
 enum CommandAccessLevel {
     ANYONE, STAFF, ADMIN
 }
+
 interface CommandHandler {
     readonly permission: CommandAccessLevel
     Process(server: AttendingServer, interaction: CommandInteraction): Promise<void>
@@ -153,6 +154,20 @@ class ClearCommandHandler implements CommandHandler {
     }
 }
 
+class AnnounceCommandHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.STAFF
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        const message_option = interaction.options.getString('message')
+        if (message_option === null) {
+            throw new UserError('You must provide a message.')
+        }
+
+        const queue_option = interaction.options.getChannel('queue_name')
+        const response = await server.Announce(queue_option as GuildChannel | null, message_option, interaction.member as GuildMember)
+        await interaction.editReply(response)
+    }
+}
+
 class ListHelpersCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.ANYONE
     async Process(server: AttendingServer, interaction: CommandInteraction) {
@@ -178,16 +193,16 @@ class ListHelpersCommandHandler implements CommandHandler {
     }
 }
 
-class AnnounceCommandHandler implements CommandHandler {
-    readonly permission = CommandAccessLevel.STAFF
+class ListNextHoursCommandHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.ANYONE
     async Process(server: AttendingServer, interaction: CommandInteraction) {
-        const message_option = interaction.options.getString('message')
-        if (message_option === null) {
-            throw new UserError('You must provide a message.')
+        const queue_option = interaction.options.getChannel('queue_name')
+        // Get all the members of the tutors for this course
+        if (queue_option === null) {
+            throw new UserError("Invalid queue name")
         }
 
-        const queue_option = interaction.options.getChannel('queue_name')
-        const response = await server.Announce(queue_option as GuildChannel | null, message_option, interaction.member as GuildMember)
+        let response = await server.getUpcomingHoursTable(queue_option.name)
         await interaction.editReply(response)
     }
 }
@@ -207,8 +222,29 @@ class GetNotifcationsHandler implements CommandHandler {
             }
         }
 
-        await server.JoinNotifcations(interaction.member as GuildMember, channel.name)
+        await server.JoinNotifications(channel.name, interaction.member as GuildMember)
         const response = "You will be notified once the `" + channel.name + "` queue becomes open"
+        await interaction.editReply(response)
+    }
+}
+
+class RemoveNotifcationsHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.ANYONE
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        const channel = interaction.options.getChannel('queue_name', true)
+
+        // Workaround for discord bug https://bugs.discord.com/T2703
+        // Ensure that a user does not invoke this command with a channel they cannot view.
+        if (channel.type === 'GUILD_CATEGORY') {
+            const unviewable_channel = (channel as CategoryChannel).children
+                .find(child => !child.permissionsFor(interaction.member as GuildMember).has('VIEW_CHANNEL'))
+            if (unviewable_channel !== undefined) {
+                throw new UserError(`You do not have access to ${channel.name}`)
+            }
+        }
+
+        await server.RemoveNotifications(channel.name, interaction.member as GuildMember)
+        const response = "You will no longer be notified once the `" + channel.name + "` queue becomes open"
         await interaction.editReply(response)
     }
 }
@@ -248,9 +284,75 @@ class MsgAfterLeaveVCHandler implements CommandHandler {
         } else {
             throw new UserError(`The subcommand ${subcommand} is not valid`)
         }
-        
+
     }
 }
+
+class SetCalendarHandler implements CommandHandler {
+    readonly permission = CommandAccessLevel.ADMIN
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        const subcommand = interaction.options.getSubcommand()
+        if (subcommand === 'set_calendar') {
+            let calendar_link = interaction.options.getString('calendar_link')
+            if (calendar_link === null) {
+                throw new UserError('You must provide a string for calendar_link.')
+            }
+            if (interaction === null || interaction.channel === null) {
+                return
+            } else if (!interaction.channel.isText()) {
+                return
+            }
+
+            //https://calendar.google.com/calendar/embed?src=[calendar_id]&[otherstuff]
+
+            let header: string = "https://calendar.google.com/calendar/embed?src="
+            calendar_link = calendar_link.split('&')[0]
+            const posHeader = calendar_link.indexOf(header)
+            if (posHeader === 0) {
+                const calendar_id = calendar_link.substring(header.length)
+                let response = await server.setTutorCalendar(calendar_id)
+                await interaction.editReply(response)
+            } else {
+                await interaction.editReply("Link is invalid")
+            }
+
+        } else if (subcommand === 'set_sheets') {
+            const sheets_link = interaction.options.getString('sheets_link')
+            if (sheets_link === null) {
+                throw new UserError('You must provide a string for sheets_link.')
+            }
+            if (interaction === null || interaction.channel === null) {
+                return
+            } else if (!interaction.channel.isText()) {
+                return
+            }
+
+            //https://docs.google.com/spreadsheets/d/[doc_id]/edit#gid=[sheet_id]
+            //find substring/pos after 'https://docs.google.com/spreadsheets/d/'
+            //split by /edit#gid=
+
+            let header: string = "https://docs.google.com/spreadsheets/d/"
+            let gidSep: string = "/edit#gid="
+            const posHeader = sheets_link.indexOf(header)
+            const posGidSep = sheets_link.indexOf(gidSep)
+            if (posHeader === 0 && posGidSep > header.length) {
+                const doc_id = sheets_link.substring(header.length, posGidSep)
+                const sheets_id = sheets_link.substring(posGidSep + gidSep.length)
+                let response = await server.setTutorSheets(doc_id, sheets_id)
+                await interaction.editReply(response)
+            } else {
+                await interaction.editReply("Link is invalid")
+            }
+        } else if (subcommand === 'format_help') {
+            await interaction.editReply("This command is being worked on. For the time being, please contact the developers of the bot for assitence on how to connect the bot with a calendar and sheets")
+        } else {
+            throw new UserError(`The subcommand ${subcommand} is not valid`)
+        }
+
+    }
+}
+
+
 
 const handlers = new Map<string, CommandHandler>([
     ['queue', new QueueCommandHandler()],
@@ -260,10 +362,13 @@ const handlers = new Map<string, CommandHandler>([
     ['stop', new StopCommandHandler()],
     ['leave', new LeaveCommandHandler()],
     ['clear', new ClearCommandHandler()],
-    ['list_helpers', new ListHelpersCommandHandler()],
     ['announce', new AnnounceCommandHandler()],
+    ['list_helpers', new ListHelpersCommandHandler()],
+    ['when_next', new ListNextHoursCommandHandler()],
     ['notify_me', new GetNotifcationsHandler()],
-    ['after_tutor_message', new MsgAfterLeaveVCHandler()]
+    ['remove_notif', new RemoveNotifcationsHandler()],
+    ['post_session_msg', new MsgAfterLeaveVCHandler()],
+    ['calendar', new SetCalendarHandler()]
 ])
 
 export async function ProcessCommand(server: AttendingServer, interaction: CommandInteraction): Promise<void> {

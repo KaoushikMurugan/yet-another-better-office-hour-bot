@@ -7,6 +7,7 @@ import { PostSlashCommands } from './slash_commands';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import * as gcs_creds from '../gcs_service_account_key.json'
 import * as fbs_creds from '../fbs_service_account_key.json'
+import { ProcessButtonPress } from './button_handler';
 const { initializeApp, cert } = require('firebase-admin/app');
 const { getFirestore } = require('firebase-admin/firestore');
 
@@ -30,6 +31,8 @@ const client = new Client({
 })
 
 const servers: Collection<Guild, AttendingServer> = new Collection()
+
+var firebase_db: any = null
 
 void client.login(process.env.BOB_BOT_TOKEN)
 
@@ -56,16 +59,19 @@ client.on('ready', async () => {
     }
 
     //Connect to the firebase database
-
     initializeApp({
         credential: cert(fbs_creds)
     })
 
-    const db = getFirestore()
+    firebase_db = getFirestore()
     console.log('Connected to Firebase database')
 
+    let minDate = new Date()
+        let maxDate = new Date()
+        maxDate.setDate(minDate.getDate() + 14)
+
     await Promise.all(full_guilds.map(guild =>
-        AttendingServer.Create(client, guild, db, attendance_doc)
+        AttendingServer.Create(client, guild, firebase_db, attendance_doc)
             .then(server => servers.set(guild, server))
             .then(() => PostSlashCommands(guild))
             .catch((err: Error) => {
@@ -78,11 +84,13 @@ client.on('ready', async () => {
 
 async function JoinGuild(guild: Guild): Promise<AttendingServer> {
     console.log(`Joining guild ${guild.name}`)
-    initializeApp({
-        credential: cert(fbs_creds)
-    })
-    const db = getFirestore()
-    const server = await AttendingServer.Create(client, guild, db)
+    if (firebase_db === null) {
+        initializeApp({
+            credential: cert(fbs_creds)
+        })
+        firebase_db = getFirestore()
+    }
+    const server = await AttendingServer.Create(client, guild, firebase_db)
     await PostSlashCommands(guild)
     servers.set(guild, server)
     return server
@@ -113,44 +121,9 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isCommand()) {
         await ProcessCommand(server, interaction)
     }
-
     //if the interaction is a button
     else if (interaction.isButton()) {
-        //a space separates the type of interaction and the name of the queue channel
-        const pos = interaction.customId.indexOf(" ")
-        const type = interaction.customId.substring(0, pos)
-        const queue_name = interaction.customId.substring(pos + 1)
-
-        if (!(interaction.member instanceof GuildMember)) {
-            console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
-            return
-        }
-
-        if (type === 'join') {
-            interaction.deferUpdate()
-            await server.EnqueueUser(queue_name, interaction.member).catch((errstr: Error) => {
-                if (interaction.member instanceof GuildMember) {
-                    interaction.member.send(errstr.message)
-                }
-            })
-        } else if (type === 'leave') {
-            interaction.deferUpdate()
-            await server.RemoveMemberFromQueues(interaction.member).catch((errstr: Error) => {
-                if (interaction.member instanceof GuildMember && errstr.name == 'UserError') {
-                    interaction.member.send(errstr.message)
-                }
-            })
-        } else if (type === 'notif') {
-            interaction.deferUpdate()
-            await server.JoinNotifcations(interaction.member, queue_name).catch((errstr: Error) => {
-                if (interaction.member instanceof GuildMember && errstr.name == 'UserError') {
-                    interaction.member.send(errstr.message)
-                }
-            })
-        } else {
-            console.error('Received invalid button interaction')
-        }
-        return
+        await ProcessButtonPress(server, interaction)
     }
 });
 
@@ -211,6 +184,7 @@ client.on('messageDelete', async message => {
     if (category === null)
         return
     await server.EnsureQueueSafe(category.name)
+    await server.ForceQueueUpdate(category.name)
 })
 
 //incase someone sends a message in the queue channel

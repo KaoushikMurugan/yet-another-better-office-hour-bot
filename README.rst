@@ -40,7 +40,7 @@ like queue management and notifying students are
 handled by **BOB**
 
 **BOB** is a *self-hotsted* bot - meaning that you will need to host
-and maintain your own instance. See `Quick Start <#quickstart>`__ to
+and maintain your own instance. See `Quick Start <#quick-start>`__ to
 get started.
 
 The standard OH-Session protocol that we follow: 
@@ -64,7 +64,7 @@ while OH is being held.
 Server Template: **TODO**
 ------------------------------------------------------
 
-**BOB** makes use of Discord’s Server Template feature
+**BOB** makes use of Discord's Server Template feature
 
 There are three roles in the **BOB** server
 
@@ -73,9 +73,38 @@ There are three roles in the **BOB** server
 -  Student - ability to interface with OH-Queue
 
 Commands
-~~~~~~~~
+--------
 
 **BOB** commands have access level based on sender roles
+
+**Commands available to everyone:**
+
+-  ``/enqueue [queue_name] (user)`` - Access Role: [Admin, Helper, Student]
+
+   -  Adds sender to the back of the queue ``queue_name``
+   -  Option ``user`` : Adds ``user`` to the end of the queue ``queue_name``. Access Role: [Admin, Helper]
+
+-  ``/leave`` - Access Role: [Admin, Helper, Student]
+
+   -  Removes sender from the queue in which they are in
+
+-  ``/list-helpers`` - Access Role: [Admin, Helper, Student]
+
+   -  Shows a list of Helpers that are currently helping, the queues for which they help for and how long it's been since they started helping
+
+-  ``/notify_me [queue_name]`` - Access Role : [Admin, Helper, Student]
+
+   - Adds the member to the notifcation list for a queue. They will be sent a message once the queue they listed for is open
+
+-  ``/remove_notif [queue_name]`` - Access Role : [Admin, Helper, Student]
+
+   - Removes the member from the notification list for a queue
+
+-  ``/when_next [queue_name]`` - Access Role : [Admin, Helper, Student]
+
+   - Lists up to 5 upcoming office hours in the next 7 days listed on the calendar (which is set using `/calendar set_calendar`)
+
+**Commands available to helpers:**
 
 -  ``/start`` - Access Role: [Admin, Helper]
 
@@ -86,21 +115,6 @@ Commands
    -  Close the OH-queue, stop students from entering the queue
    -  Students that were in the queue before closing will still be
       regisitered for OH
-
--  ``/clear (queue_name) (all)`` - Access Role: [Admin, Helper]
-
-   -  Empties a queue of students
-   -  Option ``queue_name`` : Clears only the queue ``queue_name``
-   -  Option ``all`` : Clears all queues
-
--  ``/enqueue [queue_name] (user)`` - Access Role: [Admin, Helper, Student]
-
-   -  Adds sender to the back of the queue ``queue_name``
-   -  Option ``user`` : Adds ``user`` to the end of the queue ``queue_name``. Access Role: [Admin, Helper]
-
--  ``/leave`` - Access Role: [Admin, Helper, Student]
-
-   -  Removes sender from the queue in which they are in
 
 -  ``/next (queue_name) (user)`` - Access Role: [Admin, Helper]
 
@@ -114,9 +128,13 @@ Commands
    - Sends a messeage ``message`` to all of the students in the sender's queues
    - Option ``queue_name``: Sends the message to only those in ``queue_name``
 
--  ``/list-helpers`` - Access Role: [Admin, Helper, Student]
+-  ``/clear (queue_name) (all)`` - Access Role: [Admin, Helper]
 
-   -  Shows a list of Helpers that are currently helping, the queues for which they help for and how long it's been since they started helping
+   -  Empties a queue of students
+   -  Option ``queue_name`` : Clears only the queue ``queue_name``
+   -  Option ``all`` : Clears all queues
+
+**Commands available to admins:**
 
 -  ``/queue add [queue_name]`` - Access Role: [Admin]
 
@@ -126,22 +144,28 @@ Commands
 
    - Deletes the category with the name ``queue_name``, if it exists, and the channels within it
 
--  ``/notify_me [queue_name]`` - Access Role : [Admin, Helper, Student]
-
-   - Adds the member to the notifcation list for a queue. They will be sent a message once the queue they listed for is open
-
 -  ``/after_tutor_message edit [enable] (change_message)`` - Access Role : [Admin]
 
    - Edits the message that's sent to a helpee after their session with a helper is over
    - Option ``enable``: If set to true, will send the message to a helpee after their session. If set to false, doesn't send the message
    - Option ``change_message``: If set to true, grabs the last message, and if sent by the user, sets that message as the new message that BOB will send to the helpee
 
--  ``/after_tutor_message revert [setTrue]`` - Access Role: [Admin]
+-  ``/after_tutor_message revert`` - Access Role: [Admin]
 
    - Reverts the message that BOB sends to helpee to the one it used previously. BOB doesn't not hold more than one previous message at a time.
 
+-  ``/calendar set_calendar [calendar_link]`` - Access Role: [Admin]
+
+   - Sets the calendar for the server that lists the helper's office hours. Must be a public calendar. \
+   Read `How to set up when_next <#how-to-set-up-when_next>`__ for more details
+
+-  ``/calendar set_sheets [sheets_link]`` - Access Role: [Admin]
+
+   - Sets the google sheets for the server that lists the Calendar names and their corresponding Discord IDs. Must be a public calendar. \ 
+   Read `How to set up when_next <#how-to-set-up-when_next>`__ for more details.
+
 Queue Buttons
-~~~~~~~~~~~~~
+-------------
 
 TODO: add queue buttons gif
 
@@ -157,6 +181,10 @@ TODO: add queue buttons gif
 
    - Adds the person who clicked the button to the notification queue. Works like ``/notify_me``, where the queue is the active category
 
+-  ``Remove Notificatoins`` : 
+
+   - Removes the person who clicked the button from the notification queue. Works like ``/remove_notif``, where the queue is the active category
+
 Requirements
 ------------
 
@@ -164,10 +192,11 @@ Requirements
 -  `Node.js (includes npm) <https://nodejs.org/en/download/>`__ 
 
 -  `Discord <https://discordapp.com/>`__ app & account
-- `Google Cloud `__ account & service account
+-  `Google Cloud ` account, service account & Google Calendar API KEY
+-  `Firebase (Google)`  Firestore Database & assosciated service account
 
 Quick Start
---------------------------
+-----------
 
 Instantiate an instance of a server in Discord 
 
@@ -191,8 +220,11 @@ Make a ``.env`` file in the current directory with the following format:
    BOB_GOOGLE_SHEET_ID=[Insert Google Sheets Token ID here]
    BOB_APP_ID=[Insert Discord Application ID here]
    BOB_BOT_TOKEN=[Insert Discord BOT Token here]
+   BOB_GOOGLE_CALENDAR_API_KEY=[Insert Google Calendar API key here]
 
-Also create a .json file in the current directory named ``gcs_service_account_key.json`` which you get get from the Google Cloud website
+Create a .json file in the current directory named ``gcs_service_account_key.json`` which you get get from the Google Cloud website
+
+Create a .json file in the current directory named ``fbs_service_account_key.json`` which you can get from your Firebase Project -> Settings -> Service account
 
 Run the following command to setup the bot locally
 
@@ -214,11 +246,29 @@ For security/privacy purposes, bot/scripts are not allowed to adjust themselves 
 
 .. image:: ./assets/adjustRole.gif
 
-Run the script to start up the bot
+How to set up when_next
+-----------------------
 
-.. code:: bash
+For the ``when_next`` command to work, two things are required:
 
-   ./run{ENV_FILE_NAME}.sh
+-  A Public Google Calendar shows the office hours of the helpers
+
+   -  The Calendar must be PUBLIC
+   -  Each office hour event on the calendar must start with a "calendar name", which is a unique identifier for each Helper. They may use their own names, or something else. But it must be consistant across all their events.
+   -  A space must be present after the "calendar name" to seperate it from other text in the event title
+
+-  A Google Sheets that lists "calendar names" and their corresponding discord IDs
+
+   -  The sheets must have the following two columns. The sheet may have other columns, but the titles (i.e. the cells on the first row), must each be unique
+     
+      -  A column titled "Calendar Name" that lists calendar names for users.
+      -  A column titled "Discord ID" that lists the corresponding discord (snowflake) IDs of the calendar name
+      Note: Discord ID is NOT your discord username or nickname. Read to know how to get the snowflake ID of a discord user: <https://support.discord.com/hc/en-us/articles/206346498-Where-can-I-find-my-User-Server-Message-ID->
+
+   -  The bot must have access to read the google sheets. This can be done either by
+     
+      -  Setting the google sheets to public. i.e. allow anyone with the link can (at least) view the document
+      -  If the sheet is private, sending the bot an invite to access the sheet.
 
 `Docs <https://ecs-oh-bot.github.io/OH-Bot/docs/build/html/index.html>`__
 =========================================================================
@@ -229,4 +279,4 @@ License
 Released under the `GNU GPL
 v3 <https://www.gnu.org/licenses/gpl-3.0.en.html>`__ license.
 
-``Copyright (C) 2020  Grant Gilson, Noah Rose Ledesma, Stephen Ott``
+``Copyright (C) 2022  Grant Gilson, Noah Rose Ledesma, Stephen Ott, Kaoushik Murugan``

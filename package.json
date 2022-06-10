@@ -13,6 +13,7 @@
     "@types/chai-as-promised": "^7.1.4",
     "@types/google-spreadsheet": "^3.1.5",
     "@types/mocha": "^9.0.0",
+    "@types/node-fetch": "^2.6.1",
     "@types/y18n": "^5.0.0",
     "@typescript-eslint/eslint-plugin": "^4.29.3",
     "@typescript-eslint/parser": "^4.29.3",
@@ -29,11 +30,14 @@
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.0-canary.0",
     "ascii-table": "^0.0.9",
+    "discord-api": "^0.0.1",
     "discord-api-types": "^0.22.0",
-    "discord.js": "^13.1.0",
+    "discord.js": "^13.7.0",
     "dotenv": "^10.0.0",
     "firebase-admin": "^10.2.0",
     "google-spreadsheet": "^3.1.15",
+    "googleapis": "^100.0.0",
+    "node-fetch": "^2.6.6",
     "y18n": "^5.0.8"
   },
   "engines": {

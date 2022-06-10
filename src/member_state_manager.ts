@@ -65,7 +65,7 @@ export class MemberState {
     //Add a user to queue, and set start of waitinf time
     TryAddToQueue(queue: HelpQueue): void {
         if (this.current_queue !== null) {
-            throw new UserError('Already enqueued')
+            throw new UserError(`You are already enqueued in \`${queue.name}\``)
         } else if (this.start_helping_timestamp !== null) {
             throw new UserError('You can\'t join a queue while hosting')
         }
@@ -76,7 +76,7 @@ export class MemberState {
     // Remove a user from the queue, set start_wait to null
     TryRemoveFromQueue(queue: HelpQueue | null = null): void {
         if (this.current_queue === null) {
-            throw new UserError('You are not in the queue')
+            throw new UserError(`You are not in the queue \`${queue?.name}\``)
         }
         if (queue !== null && queue !== this.current_queue) {
             throw new UserError('You are not in the requested queue')
@@ -115,11 +115,13 @@ export class MemberState {
         this.start_being_helped_timestamp = Date.now()
     }
 
-    OnLeave(dmMessage: string): void {
+    OnLeave(dmMessage: string | null): void {
         // if a helper, don't update
         if (this.start_being_helped_timestamp == null)
             return
-        this.member.send(dmMessage)
+        if(dmMessage !== null) {
+            this.member.send(dmMessage)
+        }
         this.start_being_helped_timestamp = null
     }
 

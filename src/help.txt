@@ -1,6 +1,8 @@
 Commands
 ~~~~~~~~
 
+[this means that file wasn't changed]
+
 **BOB** commands have access level based on sender roles
 
 -  ``/start`` - Access Role: [Admin, Helper]
@@ -62,7 +64,7 @@ Commands
    - Option ``enable``: If set to true, will send the message to a helpee after their session. If set to false, doesn't send the message
    - Option ``change_message``: If set to true, grabs the last message, and if sent by the user, sets that message as the new message that BOB will send to the helpee
 
--  ``/after_tutor_message revert [setTrue]`` - Access Role: [Admin]
+-  ``/after_tutor_message revert`` - Access Role: [Admin]
 
    - Reverts the message that BOB sends to helpee to the one it used previously. BOB doesn't not hold more than one previous message at a time.
 

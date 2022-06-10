@@ -53,7 +53,7 @@ export class HelpQueueDisplayManager {
     // Updates the queue text. Called when queue is open or closed, or when someone joins or leaves the queue
     async OnQueueUpdate(queue: HelpQueue, queue_members: MemberState[]): Promise<void> {
         const message_text = this.GetQueueText(queue, queue_members)
-        const buttons = new MessageActionRow()
+        const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
                     .setCustomId('join ' + queue.name)
@@ -70,12 +70,21 @@ export class HelpQueueDisplayManager {
                     .setLabel('Leave Queue')
                     .setStyle('DANGER')
             )
+        const notifButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
                     .setCustomId('notif ' + queue.name)
                     .setEmoji('🔔')
                     .setDisabled(queue.is_open)
                     .setLabel('Notify When Open')
+                    .setStyle('PRIMARY')
+            )
+            .addComponents(
+                new MessageButton()
+                    .setCustomId('removeN ' + queue.name)
+                    .setEmoji('🔕')
+                    .setDisabled(queue.is_open)
+                    .setLabel('Remove Notifications')
                     .setStyle('PRIMARY')
             )
 
@@ -85,12 +94,12 @@ export class HelpQueueDisplayManager {
             this.EnsureQueueSafe()
             await this.display_channel.send({
                 content: message_text,
-                components: [buttons]
+                components: [joinLeaveButtons, notifButtons]
             }).then(message => message.pin()).then(message => this.queue_message = message)
         } else {
             await this.queue_message.edit({
                 content: message_text,
-                components: [buttons]
+                components: [joinLeaveButtons, notifButtons]
             }).catch()
         }
     }
@@ -202,6 +211,11 @@ export class HelpQueue {
     async AddToNotifQueue(member: GuildMember): Promise<void> {
         //Adds member to notification queue
         this.notif_queue.add(member)
+    }
+
+    async RemoveFromNotifQueue(member: GuildMember): Promise<void> {
+        //Adds member to notification queue
+        this.notif_queue.delete(member)
     }
 
     async NotifyUsers(): Promise<void> {

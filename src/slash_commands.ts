@@ -96,15 +96,15 @@ const list_helpers_command = new SlashCommandBuilder()  // /list_helpers
     .setName('list_helpers')
     .setDescription('See who is online and helping.')
 
-/*const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_name)
+const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_name)
     .setName('when_next')
     .setDescription('View the upcoming tutoring hours')
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The course for which you want to view the next tutoring hours')
-        .setRequired(false))*/
+        .setRequired(false))
 
-const get_notifcations = new SlashCommandBuilder()      // /get_notifs [queue_name]
+const get_notifications = new SlashCommandBuilder()      // /get_notifs [queue_name]
     .setName('notify_me')
     .setDescription('Get notified when the queue opens (not permanent)')
     .addChannelOption(option => option
@@ -112,10 +112,18 @@ const get_notifcations = new SlashCommandBuilder()      // /get_notifs [queue_na
         .setDescription('The course for which you want be notifed when its queue becomes open')
         .setRequired(true))
 
+const remove_notifications = new SlashCommandBuilder()
+    .setName('remove_notif')
+    .setDescription('Remove yourself from a notification queue for a particular channel')
+    .addChannelOption(option => option
+        .setName('queue_name')
+        .setDescription('The course for which you no longer want to be notified for')
+        .setRequired(true))
+
 const msg_after_leave_VC = new SlashCommandBuilder()
-    .setName('after_tutor_message')
-    .setDescription('Edit the message that is sent to the tutee once their session is over')
-    .addSubcommand(subcommand => subcommand             // /queue add [queue_name]
+    .setName('post_session_msg')
+    .setDescription('Commands to modify the message that is sent to tutees after their session')
+    .addSubcommand(subcommand => subcommand             // /post_session_msg edit [enable] (change_message)
         .setName('edit')
         .setDescription('enable/disable this feature and change the message that is sent')
         .addBooleanOption(option => option
@@ -126,11 +134,30 @@ const msg_after_leave_VC = new SlashCommandBuilder()
             .setName('change_message')
             .setDescription('if true, grabs the previous message sent by you in this chat and set it as the new message')
             .setRequired(false)))
-    .addSubcommand(subcommand => subcommand
+    .addSubcommand(subcommand => subcommand             // /post_session_msg revert
         .setName('revert')
         .setDescription('reverts the message to the previous one'))
-    
-    
+
+const set_calendar = new SlashCommandBuilder()
+    .setName('calendar')
+    .setDescription('Commands to modify the resources connected to the /when_next command')
+    .addSubcommand(subcommand => subcommand             // /set_calendar calendar [Calendar ID]
+        .setName('set_calendar')
+        .setDescription('Connect the bot to a Google Calendar that lists tutoring hours')
+        .addStringOption(option => option
+            .setName('calendar_link')
+            .setDescription('The link to the calendar')
+            .setRequired(true)))
+    .addSubcommand(subcommand => subcommand             // /set_calendar sheets [sheetsLink]
+        .setName('set_sheets')
+        .setDescription('Connect the bot to a Google sheets document that contains Discord IDs and corresponding First Names')
+        .addStringOption(option => option
+            .setName('sheets_link')
+            .setDescription('The link to the google sheets')
+            .setRequired(true)))
+    .addSubcommand(subcommand => subcommand
+        .setName('format_help')
+        .setDescription('Get an explanation of how the calendar and sheets have to be formatted'))
 
 
 // Get the raw data that can be sent to Discord
@@ -144,9 +171,11 @@ const commandData = [
     clear_command.toJSON(),
     list_helpers_command.toJSON(),
     announce_command.toJSON(),
-    //list_next_hours.toJSON(),
-    get_notifcations.toJSON(),
-    msg_after_leave_VC.toJSON()
+    list_next_hours.toJSON(),
+    get_notifications.toJSON(),
+    remove_notifications.toJSON(),
+    msg_after_leave_VC.toJSON(),
+    set_calendar.toJSON()
 ]
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {
