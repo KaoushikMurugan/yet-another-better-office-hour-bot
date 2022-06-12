@@ -603,7 +603,6 @@ export class AttendingServer {
     async EnsureQueueSafe(queue_name: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
         if (queue === undefined) {
-            // if the channel where the message was deleted wasn't a queue channel
             return
         }
         await queue.EnsureQueueSafe()
@@ -617,7 +616,6 @@ export class AttendingServer {
     async ForceQueueUpdate(queue_name: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
         if (queue === undefined) {
-            // if the channel where the message was deleted wasn't a queue channel
             return
         }
         await queue.UpdateDisplay()
