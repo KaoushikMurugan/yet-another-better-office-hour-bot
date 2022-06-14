@@ -26,7 +26,7 @@ We wanted to implement a way to help instructors efficiently automate
 the process of their Office Hours through Discord.
 
 So, we created **BOB**, the **"Better" Office Hours Bot**, with the goal of allowing 
-students to effectively communicate with their instructors, with the option to be 
+students to effectively communicate with their instructors with the option to be 
 able to ask their peers for help while they wait to ensure they receive the help they need.
 
 Overview
@@ -49,12 +49,12 @@ Below is the standard Office Hours (OH) Session Protocol we follow:
 #. Students enter the queue of their choice.
 #. Helpers issues a dequeue command, which invites a student to join their voice channel.
 #. Once their Office Hours session is over, Helpers close their queues.
-#. Multiple Helpers can help for the same queue. A Queue will only close if there are no helpers for that queue.
+#. Multiple Helpers can help for the same queue. A queue will only close if there are no helpers for that queue.
 
 Waiting Queue System
 --------------------
 
-**BOB** implements a simple *first come first serve* queue where
+**BOB** implements a simple *first come first serve* queue system where
 student are allowed to enter and leave the queue whenever they like
 while OH is being held.
 
