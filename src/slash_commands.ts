@@ -112,7 +112,7 @@ const get_notifications = new SlashCommandBuilder()      // /get_notifs [queue_n
         .setDescription('The course for which you want be notifed when its queue becomes open')
         .setRequired(true))
 
-const remove_notifications = new SlashCommandBuilder()
+const remove_notifications = new SlashCommandBuilder()  // /remove_notif [queue_name]
     .setName('remove_notif')
     .setDescription('Remove yourself from a notification queue for a particular channel')
     .addChannelOption(option => option
@@ -132,7 +132,7 @@ const msg_after_leave_VC = new SlashCommandBuilder()
             .setRequired(true))
         .addBooleanOption(option => option
             .setName('change_message')
-            .setDescription('if true, grabs the previous message sent by you in this chat and set it as the new message')
+            .setDescription('if true, grabs your previous message sent in this chat and sets it as the new message')
             .setRequired(false)))
     .addSubcommand(subcommand => subcommand             // /post_session_msg revert
         .setName('revert')

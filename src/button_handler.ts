@@ -6,7 +6,7 @@ export async function ProcessButtonPress(server: AttendingServer, interaction: B
     const pos = interaction.customId.indexOf(" ")
     const type = interaction.customId.substring(0, pos)
     const queue_name = interaction.customId.substring(pos + 1)
-    
+
     if (!(interaction.member instanceof GuildMember)) {
         console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
         return

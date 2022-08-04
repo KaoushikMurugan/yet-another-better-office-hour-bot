@@ -1,4 +1,6 @@
-import { CategoryChannel, CommandInteraction, GuildChannel, GuildMember } from "discord.js";
+import { time } from "@discordjs/builders";
+import { CategoryChannel, CommandInteraction, GuildChannel, GuildMember, MessageEmbed, TextChannel } from "discord.js";
+import { EmbedColor, SimpleEmbed } from "./embed_helper";
 import { AttendingServer } from "./server";
 import { UserError } from "./user_action_error";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
@@ -20,11 +22,11 @@ class QueueCommandHandler implements CommandHandler {
         if (subcommand === 'add') {
             const name = interaction.options.getString('queue_name', true)
             await server.CreateQueue(name)
-            await interaction.editReply(`Created queue "${name}"`)
+            await interaction.editReply(SimpleEmbed(`Created queue "${name}"`, EmbedColor.Success))
         } else if (subcommand === 'remove') {
             const channel = interaction.options.getChannel('queue_name', true)
             await server.RemoveQueue(channel as GuildChannel)
-            await interaction.editReply(`Removed queue "${channel.name}"`)
+            await interaction.editReply(SimpleEmbed(`Removed queue "${channel.name}"`, EmbedColor.Success))
         } else {
             throw new UserError(`The subcommand ${subcommand} is not valid`)
         }
@@ -51,14 +53,14 @@ class EnqueueCommandHandler implements CommandHandler {
             // Sort of a hack, do a permission check for the user option
             const admin_role = (interaction.member as GuildMember).roles.cache.find(role => role.name == 'Admin')
             if (admin_role === undefined) {
-                await interaction.editReply(`No can do. You don't have access to this command.`)
+                await interaction.editReply(SimpleEmbed(`No can do. You don't have access to this command.`, EmbedColor.Error))
             } else {
                 await server.EnqueueUser(channel.name, user)
-                await interaction.editReply(`<@${user.id}> has been added to "${channel.name}"`)
+                await interaction.editReply(SimpleEmbed(`<@${user.id}> has been added to "${channel.name}"`, EmbedColor.Success))
             }
         } else {
             await server.EnqueueUser(channel.name, interaction.member as GuildMember)
-            await interaction.editReply(`You have been added to the ${channel.name} queue.`)
+            await interaction.editReply(SimpleEmbed(`You have been added to the ${channel.name} queue.`, EmbedColor.Success))
         }
     }
 }
@@ -94,12 +96,13 @@ class DequeueCommandHandler implements CommandHandler {
         })
         const invite = await helper.voice.channel.createInvite()
         let invite_sent = false
-        await helpee.member.send(`It's your turn! Join the call: ${invite.toString()}`).then(() => { invite_sent = true })
+        await helpee.member.send(SimpleEmbed(`It's your turn! Join the call: ${invite.toString()}`, EmbedColor.Success)).then(() => { invite_sent = true })
         if (invite_sent) {
-            await interaction.editReply(`<@${helpee.member.user.id}> was sent an invite to your voice channel.`)
+            await interaction.editReply(SimpleEmbed(`<@${helpee.member.user.id}> was sent an invite to your voice channel.`, EmbedColor.Success))
         } else {
             console.error(`Could not send a message to ${helpee.member.user.username}.`)
-            await interaction.editReply(`I could not send <@${helpee.member.user.id}> an invite to your voice channel. Can you try to get in touch with them?`)
+            await interaction.editReply(SimpleEmbed(`I could not send <@${helpee.member.user.id}> an invite to your voice channel. \
+            Can you try to get in touch with them?`, EmbedColor.Error))
         }
     }
 }
@@ -109,7 +112,7 @@ class StartCommandHandler implements CommandHandler {
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const mute_notif_option = (interaction.options.getBoolean('mute_notif') === true) //if null, then set to false
         await server.AddHelper(interaction.member as GuildMember, mute_notif_option)
-        await interaction.editReply('You have started helping. Have fun!')
+        await interaction.editReply(SimpleEmbed('You have started helping. Have fun!', EmbedColor.Success))
     }
 }
 
@@ -117,7 +120,7 @@ class StopCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.STAFF
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const help_time = await server.RemoveHelper(interaction.member as GuildMember)
-        await interaction.editReply(`You helped for ${help_time / 60000} minutes. See you later!`)
+        await interaction.editReply(SimpleEmbed(`You helped for ${help_time / 60000} minutes. See you later!`, EmbedColor.Success))
     }
 }
 
@@ -126,9 +129,9 @@ class LeaveCommandHandler implements CommandHandler {
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const queue_count = await server.RemoveMemberFromQueues(interaction.member as GuildMember)
         if (queue_count == 0) {
-            await interaction.editReply('You are not in any queues')
+            await interaction.editReply(SimpleEmbed('You are not in any queues', EmbedColor.Error))
         } else {
-            await interaction.editReply(`You have been removed from the queue(s)`)
+            await interaction.editReply(SimpleEmbed(`You have been removed from the queue(s)`, EmbedColor.Success))
         }
     }
 }
@@ -141,13 +144,13 @@ class ClearCommandHandler implements CommandHandler {
 
         if (all_option === true) {
             await server.ClearAllQueues()
-            await interaction.editReply('All queues have been cleared.')
+            await interaction.editReply(SimpleEmbed('All queues have been cleared.', EmbedColor.Success))
         } else if (channel_option instanceof GuildChannel) {
             if (channel_option.type != 'GUILD_CATEGORY') {
                 throw new UserError(`${channel_option.name} is not a queue.`)
             }
             await server.ClearQueue(channel_option as CategoryChannel)
-            await interaction.editReply(`"${channel_option.name}" has been cleared.`)
+            await interaction.editReply(SimpleEmbed(`"${channel_option.name}" has been cleared.`, EmbedColor.Success))
         } else {
             throw new UserError('Either "all" or "queue_name" must be provided')
         }
@@ -163,8 +166,8 @@ class AnnounceCommandHandler implements CommandHandler {
         }
 
         const queue_option = interaction.options.getChannel('queue_name')
-        const response = await server.Announce(queue_option as GuildChannel | null, message_option, interaction.member as GuildMember)
-        await interaction.editReply(response)
+        const [response, successValue] = await server.Announce(queue_option as GuildChannel | null, message_option, interaction.member as GuildMember)
+        await interaction.editReply(SimpleEmbed(response, successValue ? EmbedColor.Success : EmbedColor.Error))
     }
 }
 
@@ -173,7 +176,7 @@ class ListHelpersCommandHandler implements CommandHandler {
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const helpers = server.GetHelpingMemberStates()
         if (helpers.size === 0) {
-            await interaction.editReply('No one is helping right now.')
+            await interaction.editReply(SimpleEmbed('No one is helping right now.', 0xFF4444))
             return
         }
 
@@ -188,8 +191,7 @@ class ListHelpersCommandHandler implements CommandHandler {
             const secs = String(Math.round((help_time % 60000) / 1000)).padStart(2, '0')
             table.addRow(name, queues.join(', '), `${mins}:${secs}`)
         })
-
-        await interaction.editReply('```' + table.toString() + '```')
+        await interaction.editReply(SimpleEmbed('```' + table.toString() + '```', EmbedColor.Success))
     }
 }
 
@@ -197,13 +199,27 @@ class ListNextHoursCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.ANYONE
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const queue_option = interaction.options.getChannel('queue_name')
-        // Get all the members of the tutors for this course
+        let response: string
+        let queue_name: string
         if (queue_option === null) {
-            throw new UserError("Invalid queue name")
+            let curChannel = interaction.channel as TextChannel
+            if (curChannel.parent === null) {
+                throw new UserError("You can not use this command on this channel. Try specificing a particular \
+                course for which you wish to view the upcoming tutoring hours")
+            }
+            queue_name = curChannel.parent.name
+        } else {
+            queue_name = queue_option.name
         }
-
-        let response = await server.getUpcomingHoursTable(queue_option.name)
-        await interaction.editReply(response)
+        [response, ] = await server.getUpcomingHoursTable(queue_name)
+        await interaction.editReply({
+            embeds: [{
+                title: "Schedule for " + queue_name,
+                color: EmbedColor.Neutral,
+                description: response,
+                timestamp: new Date()
+            }]
+        })
     }
 }
 
@@ -223,8 +239,7 @@ class GetNotifcationsHandler implements CommandHandler {
         }
 
         await server.JoinNotifications(channel.name, interaction.member as GuildMember)
-        const response = "You will be notified once the `" + channel.name + "` queue becomes open"
-        await interaction.editReply(response)
+        await interaction.editReply(SimpleEmbed("You will be notified once the `" + channel.name + "` queue becomes open", EmbedColor.Success))
     }
 }
 
@@ -244,8 +259,8 @@ class RemoveNotifcationsHandler implements CommandHandler {
         }
 
         await server.RemoveNotifications(channel.name, interaction.member as GuildMember)
-        const response = "You will no longer be notified once the `" + channel.name + "` queue becomes open"
-        await interaction.editReply(response)
+        await interaction.editReply(SimpleEmbed("You will no longer be notified once the `" + channel.name + "` queue \
+        becomes open", EmbedColor.Success))
     }
 }
 
@@ -276,11 +291,11 @@ class MsgAfterLeaveVCHandler implements CommandHandler {
                 })
             }
             let response = await server.EditDmMessage(dmMessage, enable_option)
-            await interaction.editReply(response)
+            await interaction.editReply(SimpleEmbed(response, EmbedColor.Success))
 
         } else if (subcommand === 'revert') {
             let response = await server.RevertDmMessage()
-            await interaction.editReply(response)
+            await interaction.editReply(SimpleEmbed(response, EmbedColor.Success))
         } else {
             throw new UserError(`The subcommand ${subcommand} is not valid`)
         }
@@ -310,10 +325,10 @@ class SetCalendarHandler implements CommandHandler {
             const posHeader = calendar_link.indexOf(header)
             if (posHeader === 0) {
                 const calendar_id = calendar_link.substring(header.length)
-                let response = await server.setTutorCalendar(calendar_id)
-                await interaction.editReply(response)
+                let [response, successValue] = await server.setTutorCalendar(calendar_id)
+                await interaction.editReply(SimpleEmbed(response, successValue ? EmbedColor.Success : EmbedColor.Error))
             } else {
-                await interaction.editReply("Link is invalid")
+                await interaction.editReply(SimpleEmbed("Link is invalid", EmbedColor.Error))
             }
 
         } else if (subcommand === 'set_sheets') {
@@ -338,13 +353,14 @@ class SetCalendarHandler implements CommandHandler {
             if (posHeader === 0 && posGidSep > header.length) {
                 const doc_id = sheets_link.substring(header.length, posGidSep)
                 const sheets_id = sheets_link.substring(posGidSep + gidSep.length)
-                let response = await server.setTutorSheets(doc_id, sheets_id)
-                await interaction.editReply(response)
+                let [response, successValue] = await server.setTutorSheets(doc_id, sheets_id)
+                await interaction.editReply(SimpleEmbed(response, successValue ? EmbedColor.Success : EmbedColor.Error))
             } else {
-                await interaction.editReply("Link is invalid")
+                await interaction.editReply(SimpleEmbed("Link is invalid", EmbedColor.Error))
             }
         } else if (subcommand === 'format_help') {
-            await interaction.editReply("This command is being worked on. For the time being, please contact the developers of the bot for assitence on how to connect the bot with a calendar and sheets")
+            await interaction.editReply(SimpleEmbed("This command is being worked on. For the time being, please \
+            contact the developers of the bot for assitence on how to connect the bot with a calendar and sheets", EmbedColor.Neutral))
         } else {
             throw new UserError(`The subcommand ${subcommand} is not valid`)
         }
@@ -375,13 +391,14 @@ export async function ProcessCommand(server: AttendingServer, interaction: Comma
     try {
         const handler = handlers.get(interaction.commandName)
         if (handler === undefined) {
-            await interaction.reply({ content: `The command "${interaction.commandName}" is unrecognized.`, ephemeral: true })
-            console.error(`Recieved an unknown slash-command "${interaction.commandName}" from user "${interaction.user.username}" on server "${interaction.guild?.name}"`)
+            await interaction.reply({ embeds: SimpleEmbed(`The command "${interaction.commandName}" is unrecognized.`, EmbedColor.Error).embed, ephemeral: true })
+            console.error(`Recieved an unknown slash-command "${interaction.commandName}" from user "${interaction.user.username}" on \
+            server "${interaction.guild?.name}"`)
             return;
         }
 
         if (!(interaction.member instanceof GuildMember)) {
-            await interaction.reply({ content: `Erm. Somethings wrong, this shouldn't happen. I'll inform the humaniod that maintains me`, ephemeral: true })
+            await interaction.reply({ embeds: SimpleEmbed(`Erm. Somethings wrong, this shouldn't happen. I'll inform the humaniod that maintains me`, EmbedColor.Error).embed, ephemeral: true })
             console.error(`Recieved an interaction without a member from user ${interaction.user} on server ${interaction.guild}`)
             return;
         }
@@ -390,17 +407,17 @@ export async function ProcessCommand(server: AttendingServer, interaction: Comma
 
         if ((handler.permission == CommandAccessLevel.ADMIN && admin_role === undefined) ||
             (handler.permission == CommandAccessLevel.STAFF && staff_role == undefined)) {
-            await interaction.reply({ content: `No can do. You don't have access to this command.`, ephemeral: true })
+            await interaction.reply({ embeds: SimpleEmbed(`No can do. You don't have access to this command.`, EmbedColor.Error).embed, ephemeral: true })
             return;
         }
 
         await interaction.deferReply({ ephemeral: true })
         await handler.Process(server, interaction).catch((err: Error) => {
             if (err.name == 'UserError') {
-                return interaction.editReply(err.message)
+                return interaction.editReply(SimpleEmbed(err.message, EmbedColor.Error))
             } else {
                 console.error(`Encountered an internal error when processing "${interaction.commandName}" for user "${interaction.user.username}" on server "${interaction.guild?.name}": "${err.stack}"`)
-                return interaction.editReply('Oh noez! I ran into an internal error.')
+                return interaction.editReply(SimpleEmbed('Oh noez! I ran into an internal error.', EmbedColor.Error))
             }
         }).catch((err) => {
             console.error(`An error occurred during error handling: ${err}`)

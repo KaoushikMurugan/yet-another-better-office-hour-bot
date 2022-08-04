@@ -5,7 +5,7 @@
  * command_handler.ts
  **************************************************************/
 
-import { CategoryChannel, Client, Guild, GuildChannel, Role, TextChannel, User, Collection, GuildMember, Channel } from "discord.js";
+import { CategoryChannel, Client, Guild, GuildChannel, Role, TextChannel, User, Collection, GuildMember, Channel, Message } from "discord.js";
 import { HelpQueue, HelpQueueDisplayManager } from "./queue";
 import { MemberStateManager } from "./member_state_manager";
 import { UserError } from "./user_action_error";
@@ -14,7 +14,8 @@ import { GoogleSpreadsheet, GoogleSpreadsheetRow, GoogleSpreadsheetWorksheet } f
 import * as gcs_creds from '../gcs_service_account_key.json'
 
 import fetch from 'node-fetch'
-const AsciiTable = require('ascii-table');
+import { EmbedColor, SimpleEmbed } from "./embed_helper";
+import { Embed } from "@discordjs/builders";
 
 export class AttendingServer {
     private queues: HelpQueue[] = []
@@ -51,7 +52,7 @@ export class AttendingServer {
     static async Create(client: Client, server: Guild, firebase_db: any, attendance_doc: GoogleSpreadsheet | null = null): Promise<AttendingServer> {
         if (server.me === null || !server.me.permissions.has("ADMINISTRATOR")) {
             await server.fetchOwner().then(owner =>
-                owner.send(`Sorry. I need full administrator permission to join and manage "${server.name}"`))
+                owner.send(SimpleEmbed(`Sorry. I need full administrator permission to join and manage "${server.name}"`, EmbedColor.Error)))
             await server.leave()
             throw new UserError('Invalid permissions.')
         }
@@ -113,7 +114,9 @@ export class AttendingServer {
 
         await me.DiscoverQueues()
         await me.UpdateRoles()
-        await Promise.all(me.queues.map(queue => queue.UpdateDisplay()))
+        await Promise.all(me.queues.map(async queue => {
+            await me.ForceQueueUpdate(queue.name)
+        }))
         await server.members.fetch().then(members => members.map(member => me.EnsureHasRole(member)))
         return me
     }
@@ -203,14 +206,14 @@ export class AttendingServer {
             throw new UserError('You are a staff member but do not have any queue roles assigned. I don\'t know where you are allowed to help :(')
         }
         this.member_states.GetMemberState(member).StartHelping()
-        var some_queue_open = false
-        await Promise.all(this.GetHelpableQueues(member).map(queue => {
+        await Promise.all(this.GetHelpableQueues(member).map(async queue => {
             queue.AddHelper(member, mute_notif)
-            // if the queue already has people, notify the the tutor that there is a queue that isn't empty
+            await queue.UpdateSchedule(await this.getUpcomingHoursTable(queue.name))
         }))
+        // if the queue already has people, notify the the tutor that there is a queue that isn't empty
         this.GetHelpableQueues(member).forEach(queue => {
             if (queue.length > 0) {
-                member.send("There are some students in the queues already")
+                member.send(SimpleEmbed("There are some students in the queues already", EmbedColor.Warning))
                 return
             }
         })
@@ -263,7 +266,10 @@ export class AttendingServer {
      */
     async RemoveHelper(member: GuildMember): Promise<number> {
         // Remove a helper and return the time they spent helping in ms
-        await Promise.all(this.GetHelpableQueues(member).map(queue => queue.RemoveHelper(member)))
+        await Promise.all(this.GetHelpableQueues(member).map(async queue => {
+            queue.RemoveHelper(member)
+            await queue.UpdateSchedule(await this.getUpcomingHoursTable(queue.name))
+        }))
         const start_time = this.member_states.GetMemberState(member).StopHelping()
         // Update the attendance log in the background
         void this.UpdateAttendanceLog(member, start_time).catch(err => {
@@ -339,9 +345,9 @@ export class AttendingServer {
      * @param queue_option ***Optional*** The queue who's members the announcement has to be sent to. Default: null
      * @param message The message that is to be sent
      * @param author The helper for whose queues the message is to be sent to
-     * @returns A `string`. To be used in `interaction.editReply()`
+     * @returns `string`: A message that is to be sent to the user, and a `boolean`: true if the command succeeds
      */
-    async Announce(queue_option: GuildChannel | null, message: string, author: GuildMember): Promise<string> {
+    async Announce(queue_option: GuildChannel | null, message: string, author: GuildMember): Promise<[string, boolean]> {
         const queue_name = queue_option !== null ? queue_option.name : null
 
         // If a queue name is specified, check that a queue with that name exists
@@ -372,7 +378,7 @@ export class AttendingServer {
         const message_string = `<@${author.id}> says: ${message}`
         const failed_targets: GuildMember[] = []
         await Promise.all(
-            targets.map(target => target.send(message_string).catch(() => {
+            targets.map(target => target.send(SimpleEmbed(message_string, EmbedColor.Warning)).catch(() => {
                 failed_targets.push(target)
             }
             )))
@@ -380,9 +386,9 @@ export class AttendingServer {
         // Report any failures to the message author
         if (failed_targets.length > 0) {
             const failed_targets_str = failed_targets.map(target => `<@${target.id}>`).join(', ')
-            return `Failed to send message to ${failed_targets.length}/${targets.length} members. I could not reach: ${failed_targets_str}.`
+            return [`Failed to send message to ${failed_targets.length}/${targets.length} members. I could not reach: ${failed_targets_str}.`, false]
         } else {
-            return `Message sent to ${targets.length} members.`
+            return [`Message sent to ${targets.length} members.`, true]
         }
     }
 
@@ -418,7 +424,7 @@ export class AttendingServer {
 
         await this.server.channels.create(name, { type: 'GUILD_CATEGORY' })
             .then(category => this.server.channels.create('queue', { type: 'GUILD_TEXT', parent: category }).then(queue_channel => {
-                this.queues.push(new HelpQueue(name, new HelpQueueDisplayManager(this.client, queue_channel, null), this.member_states))
+                this.queues.push(new HelpQueue(name, new HelpQueueDisplayManager(this.client, queue_channel, null, null), this.member_states))
                 return Promise.all([
                     queue_channel.permissionOverwrites.create(this.server.roles.everyone, { SEND_MESSAGES: false }),
                     queue_channel.permissionOverwrites.create(this.client.user as User, { SEND_MESSAGES: true })])
@@ -478,7 +484,8 @@ export class AttendingServer {
     }
 
     /**
-     * Goes through all the channls in the server, finds all the queue categories and adds them to the list of queues associated with this server
+     * Goes through all the channls in the server, finds all the queue categories and adds them to the list of queues 
+     * associated with this server. Also stores the messages (ids) of the queue and schedule messages for each queue object.
      */
     async DiscoverQueues(): Promise<void> {
         await this.server.channels.fetch()
@@ -489,26 +496,24 @@ export class AttendingServer {
                     let queue_channel = category.children.find(child => child.name == 'queue') as TextChannel
                     if (queue_channel !== undefined && queue_channel.type == "GUILD_TEXT") {
                         if (this.queues.find(queue => queue.name == category.name) === undefined) {
-                            //get the queue message if it already exists
+                            //get the queue message and schedule message if they already exists
                             return queue_channel.messages.fetchPinned()
                                 .then(messages => messages.filter(msg => msg.author == this.client.user))
                                 .then(messages => {
-                                    if (messages.size > 1) {
+                                    if (messages.size === 2) {
+                                        let first_message = messages.first()
+                                        let second_message = messages.last()
+                                        if (first_message === undefined || second_message === undefined)
+                                            return [null, null]
+                                        return [first_message, second_message]
+                                    } else {
                                         messages.forEach(message => message.delete())
                                         messages.clear()
-                                        return null
-                                    } else if (messages.size === 1) {
-                                        let first_message = messages.first()
-                                        if (first_message === undefined)
-                                            return null
-                                        return first_message
-                                    } else {
-                                        return null
+                                        return [null, null]
                                     }
-                                }).then(queue_message => {
-
+                                }).then(messages => {
                                     this.queues.push(
-                                        new HelpQueue(category.name, new HelpQueueDisplayManager(this.client, queue_channel, queue_message),
+                                        new HelpQueue(category.name, new HelpQueueDisplayManager(this.client, queue_channel, messages[0], messages[1]),
                                             this.member_states))
                                 })
                         } else {
@@ -581,7 +586,7 @@ export class AttendingServer {
 
     /**
      * Update the roles list on the server with respect to the queues in the server
-     * @returns ???
+     * @returns TODO: returns something, however it is never used
      */
     async UpdateRoles(): Promise<void | Role> {
         return this.server.roles.fetch()
@@ -590,7 +595,7 @@ export class AttendingServer {
             .catch(async (err) => {
                 const owner = await this.server.fetchOwner();
                 console.error(`Failed to update roles on "${this.server.name}". Error: ${err}`)
-                await owner.send(`I can't update the roles on "${this.server.name}". You should check that my role is the highest on this server.`);
+                await owner.send(SimpleEmbed(`I can't update the roles on "${this.server.name}". You should check that my role is the highest on this server.`, EmbedColor.Error));
                 return undefined;
             })
     }
@@ -598,7 +603,6 @@ export class AttendingServer {
     /**
      * Ensures that the queue in the category `queue_name` has a valid message that can show the queue in text form
      * @param queue_name The name of the category
-     * @returns A Promise<void>
      */
     async EnsureQueueSafe(queue_name: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
@@ -611,21 +615,31 @@ export class AttendingServer {
     /**
      * Forces the queue in the category `queue_name` to be updated, causing it to post a new queue message or edit an existing one
      * @param queue_name The queue that needs to be updated
-     * @returns A Promise<void>
      */
     async ForceQueueUpdate(queue_name: string): Promise<void> {
         const queue = this.queues.find(queue => queue.name == queue_name)
         if (queue === undefined) {
             return
         }
-        await queue.UpdateDisplay()
+        let queue_message = await queue.UpdateDisplay()
+        let schedule_message = await queue.UpdateSchedule(await this.getUpcomingHoursTable(queue_name))
+        if (queue_message !== null && queue_message !== undefined) { // if not void, new messages was created
+            if (schedule_message === null || schedule_message === undefined) {
+                console.log("queue_message for " + queue_name + " was not void, but it's schedule message was void")
+                return
+            } else {
+                // Discord orders pin list by newest first
+                await schedule_message.pin()
+                await queue_message.pin()
+            }
+        }
     }
 
     /**
      * Edit the message that is sent to a member after they finish a session with a helper. Updates the database with the new message
      * @param message The new message that is to be sent to users
      * @param enable Whether or not to send the message
-     * @returns `string`: an message to be used with `interaction.editReply()`
+     * @returns `string`: A message that is to be sent to the user
      */
     async EditDmMessage(message: string | null, enable: boolean): Promise<string> {
         // update local instance of message
@@ -656,7 +670,7 @@ If you wish to enable this feature later, just set the enable option to true."
 
     /**
      * Swaps the message that woud be sent to members after they finish a session with a helper, with the previous version.
-     * @returns `string`: an message to be used with `interaction.editReply()`
+     * @returns `string`: A message that is to be sent to the user
      */
     async RevertDmMessage(): Promise<string> {
         let temp = this.oldMsgALVC
@@ -688,8 +702,7 @@ disabled. To enable it, do `/post_session_msg enable: true`"
     }
 
     /**
-     * Returns a Collection of Calendar names to discord user ids
-     * @returns 
+     * @returns a Collection of Calendar names to discord user ids
      */
     private async getQueueHelpersFirstNames(): Promise<Collection<string, string> | null> {
         let HelperNames = new Collection<string, string>([])
@@ -715,9 +728,9 @@ disabled. To enable it, do `/post_session_msg enable: true`"
     /**
      * Sets the calendar that contains the schedule of the helpers
      * @param calendar_id 
-     * @returns Response for interaction.editReply()
+     * @returns `string`: A message that is to be sent to the user, and a `boolean`: true if the command succeeds
      */
-    async setTutorCalendar(calendar_id: string): Promise<string> {
+    async setTutorCalendar(calendar_id: string): Promise<[string, boolean]> {
         var calendarName: string | null = null
 
         //attempt a connection to the calendar. If successful, send the name of the calendar back as confirmation
@@ -732,9 +745,9 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         }
 
         if (calendarName === undefined) {
-            return "Something went wrong. Please try again"
+            return ["Something went wrong. Please try again", false]
         } else if (calendarName === null) {
-            return "Calendar link was invalid, or wasn't able to connect to calendar"
+            return ["Calendar link was invalid, or wasn't able to connect to calendar", false]
         } else {
             //update the database (if new value)
             if (this.tutor_info_calendar !== calendar_id) {
@@ -748,7 +761,7 @@ disabled. To enable it, do `/post_session_msg enable: true`"
 
             this.tutor_info_calendar = calendar_id
 
-            return "Connected to the Google calendar: " + calendarName
+            return ["Connected to the Google calendar: " + calendarName, true]
         }
     }
 
@@ -756,9 +769,9 @@ disabled. To enable it, do `/post_session_msg enable: true`"
      * Sets the sheets that contains the list of names and their discord IDs
      * @param doc_id 
      * @param sheets_id 
-     * @returns 
+     * @returns `string`: A message that is to be sent to the user, and a `boolean`: true if the command succeeds
      */
-    async setTutorSheets(doc_id: string, sheets_id: string): Promise<string> {
+    async setTutorSheets(doc_id: string, sheets_id: string): Promise<[string, boolean]> {
 
         let tutor_doc: GoogleSpreadsheet | null = null
         let tutor_sheet: GoogleSpreadsheetWorksheet | null = null
@@ -770,9 +783,9 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         tutor_sheet = tutor_doc.sheetsById[parseInt(sheets_id)]
 
         if (tutor_doc === undefined || tutor_sheet === undefined) {
-            return "Something went wrong. Please try again"
+            return ["Something went wrong. Please try again", false]
         } else if (tutor_doc === null || tutor_sheet === null) {
-            return "Sheets link was invalid, or wasn't able to connect to sheets"
+            return ["Sheets link was invalid, or wasn't able to connect to sheets", false]
         } else {
             //update the database (if new value)
             if (this.tutor_info_doc !== tutor_doc || this.tutor_info_sheet !== tutor_sheet) {
@@ -787,18 +800,23 @@ disabled. To enable it, do `/post_session_msg enable: true`"
             this.tutor_info_doc = tutor_doc
             this.tutor_info_sheet = tutor_sheet
 
-            return "Connected to the Google Sheet document: " + tutor_doc.title + " -> " + tutor_sheet.title
+            return ["Connected to the Google Sheet document: " + tutor_doc.title + " -> " + tutor_sheet.title, true]
         }
     }
 
     /**
      * Returns a table that lists the start and end times of upcoming events for this queue
      * @param queue_name 
-     * @returns 
+     * @returns `string`: A message that is to be sent to the user, and a `Date`: the next update time for the queue
      */
-    async getUpcomingHoursTable(queue_name: string): Promise<string> {
+    async getUpcomingHoursTable(queue_name: string): Promise<[string, Date]> {
         if (this.tutor_info_calendar === null || this.tutor_info_doc === null || this.tutor_info_sheet === null) {
-            return "The necessary resources for this command to work have not been set up. Please contact an admin to set it up"
+            throw new UserError("The necessary resources for this command to work have not been set up. Please contact an admin to set it up")
+        }
+
+        const queue = this.queues.find(queue => queue.name == queue_name)
+        if (queue === undefined) {
+            throw new UserError("Invalid queue channel")
         }
 
         let helpersMap = await this.GetHelpersForQueue(queue_name)
@@ -811,6 +829,8 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         let maxDate = new Date()
         maxDate.setDate(minDate.getDate() + 7)
 
+        // Fetch the events in the calendar that end after the current time upto a week and sort by start time
+
         const response = await fetch('https://www.googleapis.com/calendar/v3/calendars/' + this.tutor_info_calendar +
             '/events?orderBy=startTime&singleEvents=true&timeMax=' + maxDate.toISOString()
             + '&timeMin=' + minDate.toISOString()
@@ -822,50 +842,64 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         const maxItems: number = 5
 
         let table = new String
-        table = "Upcoming Hours for **" + queue_name + "** : \n\n"
-        //table.setHeading('Name', 'ST', 'ET', 'RST', 'RET')
+
+        let update_time = new Date(0)
 
         await data.items.forEach((event: { summary: string; start: { dateTime: string; }; end: { dateTime: string; }; }) => {
             const helperName = event.summary.split(' ')[0]
             let discordID = helpersNameMap?.get(helperName)
             if (discordID !== undefined && discordID !== null) {
-                
+
                 let helper = helpersMap.get(discordID)
 
                 //use https://hammertime.cyou/en-GB for reference on how to display dynamic time on discord
 
                 if (helper !== undefined && discordID !== null && numItems < maxItems) {
                     let userPing = '<@' + helper.id + '>'
-                    
-                    let startTime = new Date()
-                    startTime.setTime(Date.parse(event.start.dateTime))
+
+                    let startTime = new Date(Date.parse(event.start.dateTime))
                     let startTimeEpoch = startTime.getTime().toString()
                     startTimeEpoch = startTimeEpoch.substring(0, startTimeEpoch.length - 3)
-                    
+                    //Discord dynamic time doesn't use milliseconds, so need to trim off the last 3 digits of the epoch time
+
                     let startTimeString = '<t:' + startTimeEpoch + ':f>'
                     let relativeStartTime = "<t:" + startTimeEpoch + ":R>"
 
-                    let endTime = new Date()
-                    endTime.setTime(Date.parse(event.end.dateTime))
+                    let endTime = new Date(Date.parse(event.end.dateTime))
+                    //if it's the first event, set schedule update time to end of this event
+                    if (update_time.getTime() !== 0) {
+                        update_time = endTime
+                    }
+
                     let endTimeEpoch = endTime.getTime().toString()
                     endTimeEpoch = endTimeEpoch.substring(0, endTimeEpoch.length - 3)
-                    
+
                     let endTimeString = '<t:' + endTimeEpoch + ':f>'
                     let relativeEndTime = "<t:" + endTimeEpoch + ":R>"
-                    
-                    table = table + userPing + " | Starts at " + startTimeString + " which is " + relativeStartTime 
-                    + " | Ends at: " + endTimeString + " which is " + relativeEndTime + "\n"
-                    
+
+                    table = table + userPing + " | Starts at " + startTimeString + " which is " + relativeStartTime
+                        + " | Ends at: " + endTimeString + " which is " + relativeEndTime + "\n"
+
                     numItems++
                 }
             }
         })
-        let moreInfo = "You can view the full calendar here: " + "https://calendar.google.com/calendar/embed?src=" + this.tutor_info_calendar
-        if(numItems === 0) {
-            return 'There are no scheduled hours for this queue in next 7 days.' + '\n\n' + moreInfo
+        let current_helpers = new String()
+        if (queue.helpers_set.size > 0) {
+            current_helpers = "Currently available: "
+            queue.helpers_set.forEach(helper => {
+                current_helpers += "<@" + helper.id + ">, "
+            })
+            current_helpers = current_helpers.slice(0, -2)
         } else {
-            return '\n' + table + '\n\n' + moreInfo
+            current_helpers = "No-one is currently helping for **" + queue_name + "**"
         }
+        let moreInfo = "You can view the full calendar here: " + "https://calendar.google.com/calendar/embed?src=" + this.tutor_info_calendar
+        if (numItems === 0) {
+            table = 'There are no scheduled hours for this queue in next 7 days.'
+            update_time.setDate(new Date().getDate() + 3)
+        }
+        return [current_helpers + "\n\n" + table + '\n\n' + moreInfo, update_time]
     }
 
     /**
@@ -888,7 +922,7 @@ disabled. To enable it, do `/post_session_msg enable: true`"
      * @param member 
      */
     UpdateMemberJoinedVC(member: GuildMember): void {
-        this.member_states.GetMemberState(member).OnJoin()
+        this.member_states.GetMemberState(member).OnJoinVC()
     }
 
     /**
@@ -899,11 +933,11 @@ disabled. To enable it, do `/post_session_msg enable: true`"
      */
     UpdateMemberLeftVC(member: GuildMember): void {
         if (this.msgAfterLeaveVC === null || this.msgEnable === false) {
-            this.member_states.GetMemberState(member).OnLeave(null)
+            this.member_states.GetMemberState(member).OnLeaveVC(null)
             return
         }
         else {
-            this.member_states.GetMemberState(member).OnLeave(this.msgAfterLeaveVC)
+            this.member_states.GetMemberState(member).OnLeaveVC(this.msgAfterLeaveVC)
         }
     }
 
@@ -913,6 +947,19 @@ disabled. To enable it, do `/post_session_msg enable: true`"
      */
     getMsgAfterLeaveVC(): string | null {
         return this.msgAfterLeaveVC
+    }
+
+    ProcessForever(): void {
+        //Update Schedule table when the event at the top gets over
+        Promise.all(this.queues.map(async queue => {
+            while (true) {
+                console.log("qwer")
+                while (queue.update_time > new Date() && queue.update_time.getTime() !== 0){;}
+                console.log("asdf")
+                queue.UpdateSchedule(await this.getUpcomingHoursTable(queue.name))
+                console.log("zxcv")
+            }
+        }))
     }
 
 }

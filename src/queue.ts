@@ -5,24 +5,48 @@
  * .setRequired defines where the argument is required or ont
  **********************************************************************************/
 
-import { Client, GuildMember, Message, MessageActionRow, MessageButton, TextChannel } from "discord.js";
+import { Client, GuildMember, Message, MessageActionRow, MessageButton, TextChannel, MessageEmbed } from "discord.js";
 import { MemberState, MemberStateManager } from "./member_state_manager";
 import { UserError } from "./user_action_error";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AsciiTable = require('ascii-table');
+import "./embed_helper"
 
 export class HelpQueueDisplayManager {
+
     private client: Client
     private display_channel: TextChannel
     private queue_message: Message | null
+    private schedule_message: Message | null
+    private schedule_update: Date
 
-    constructor(client: Client, display_channel: TextChannel, queue_message: Message | null) {
+    constructor(client: Client, display_channel: TextChannel, queue_message: Message | null, schedule_message: Message | null) {
         this.client = client
         this.display_channel = display_channel
         this.queue_message = queue_message
+        this.schedule_message = schedule_message
+        this.schedule_update = new Date()
     }
 
-    // Returns a table of the list of people in queue in text form that can be used in a message
+    get update_time(): Date {
+        return this.schedule_update
+    }
+
+    public setScheduleUpdateTime(time: Date): void {
+        if(time > new Date()){
+            this.schedule_update = time
+        } else {
+            this.schedule_update.setDate(new Date().getDate() + 1)
+        }
+
+    }
+
+    /**
+     * 
+     * @param queue 
+     * @param queue_members 
+     * @returns a table of the list of people in queue in text form that can be used in a message
+     */
     private GetQueueText(queue: HelpQueue, queue_members: MemberState[]): string {
         const quant_prase = queue.length == 1 ? 'is 1 person' : `are ${queue.length} people`
         const status_line = `The queue is **${queue.is_open ? 'OPEN' : 'CLOSED'}**. There ${quant_prase} in the queue.\n`
@@ -35,24 +59,44 @@ export class HelpQueueDisplayManager {
         return status_line
     }
 
+    /**
+     * Checks the channel if the bot has sent exactly two messages, which should be the queue_message and the schedule_message.
+     * If not, then clear the channel and set queue_message and schedule_message to null
+     * @returns 
+     */
     EnsureQueueSafe(): Promise<void> {
         return this.display_channel.messages.fetchPinned()
             .then(messages => messages.filter(msg => msg.author == this.client.user))
             .then(messages => {
-                if (messages.size > 1) {
+                if (messages.size === 0) {
+                    this.queue_message = null
+                    this.schedule_message = null
+                } else if (messages.size !== 2) {
                     messages.forEach(message => message.delete())
                     messages.clear()
                     this.queue_message = null
-
-                } else if (messages.size === 0) {
-                    this.queue_message = null
+                    this.schedule_message = null
                 }
             })
     }
 
-    // Updates the queue text. Called when queue is open or closed, or when someone joins or leaves the queue
-    async OnQueueUpdate(queue: HelpQueue, queue_members: MemberState[]): Promise<void> {
+    /**
+     * Updates the queue text. Called when queue is open or closed, or when someone joins or leaves the queue
+     * @param queue 
+     * @param queue_members 
+     * @returns The queue_message, if a new one was created
+     */
+    async OnQueueUpdate(queue: HelpQueue, queue_members: MemberState[]): Promise<Message<boolean> | undefined> {
         const message_text = this.GetQueueText(queue, queue_members)
+        let embedColor = 0x000000
+        if (queue.is_open === true) {
+            embedColor = 0x00FF00
+        } else {
+            embedColor = 0xFF0000
+        }
+        const embedTable = new MessageEmbed()
+            .setColor(embedColor)
+            .setTitle('Queue for ' + queue.name + "\n" + message_text)
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -92,20 +136,54 @@ export class HelpQueueDisplayManager {
         // Else, send a new message
         if (this.queue_message === null) {
             this.EnsureQueueSafe()
-            await this.display_channel.send({
-                content: message_text,
+            return await this.display_channel.send({
+                embeds: [embedTable],
                 components: [joinLeaveButtons, notifButtons]
-            }).then(message => message.pin()).then(message => this.queue_message = message)
+            }).then(message => {
+                this.queue_message = message
+                return message
+            })
         } else {
             await this.queue_message.edit({
-                content: message_text,
+                embeds: [embedTable],
                 components: [joinLeaveButtons, notifButtons]
             }).catch()
         }
     }
+    /**
+     * Updates the schedule_message
+     * @param message_text 
+     * @returns The schedule_message, if a new one was created
+     */
+    async UpdateSchedule([message_text, update_time]: [string, Date]): Promise<Message<boolean> | undefined> {
+        this.setScheduleUpdateTime(update_time)
+        let old_schedule_message = this.schedule_message
+        const scheduleEmbed = new MessageEmbed()
+            .setTitle("Schedule")
+            .setColor(0xFBA736)
+            .setDescription(message_text)
+            .setTimestamp()
+        if (this.schedule_message === null) {
+            this.EnsureQueueSafe()
+            await this.display_channel.send({
+                embeds: [scheduleEmbed]
+            }).then(message => {
+                this.schedule_message = message
+            })
+        } else {
+            await this.schedule_message.edit({
+                embeds: [scheduleEmbed]
+            }).catch()
+        }
+        if (old_schedule_message !== this.schedule_message && this.schedule_message !== null) {
+            return this.schedule_message
+        }
+
+    }
 }
 
 export class HelpQueue {
+
     private queue: MemberState[] = []
     readonly name: string
     private display_manager: HelpQueueDisplayManager
@@ -130,22 +208,53 @@ export class HelpQueue {
     Has(member: GuildMember): boolean {
         return this.queue.find(queue_member => queue_member.member == member) !== undefined
     }
+    
+    get helpers_set(): Set<GuildMember> {
+        return this.helpers
+    }
 
+    get update_time(): Date {
+        return this.display_manager.update_time
+    }
+
+    /**
+     * Removes all people from this queue
+     */
     async Clear(): Promise<void> {
         this.queue.forEach(member => member.TryRemoveFromQueue(this))
         this.queue = []
         await this.UpdateDisplay()
     }
 
-    async UpdateDisplay(): Promise<void> {
-        await this.display_manager.OnQueueUpdate(this, this.queue)
+    /**
+     * Updates the queue_message
+     * @returns The queue_message if a new one was created
+     */
+    async UpdateDisplay(): Promise<Message<boolean> | undefined> {
+        return await this.display_manager.OnQueueUpdate(this, this.queue)
     }
 
+    /**
+     * Updates the schedule_message to display the string `ScheduleMessage`
+     * @param ScheduleMessage 
+     * @returns The schedule_message if a new one was created
+     */
+    async UpdateSchedule(ScheduleMessage: [string, Date]): Promise<Message<boolean> | undefined> {
+        return await this.display_manager.UpdateSchedule(ScheduleMessage)
+    }
+
+    /**
+     * Ensure the queue is sage
+     */
     async EnsureQueueSafe(): Promise<void> {
         await this.display_manager.EnsureQueueSafe()
     }
 
-    // Adds a Helper to the list of available helpers for this queue. called by /start
+    /**
+     * Adds a Helper to the list of available helpers for this queue. Calls `Notify()` if `mute_notifs` is false
+     * @param member 
+     * @param mute_notifs 
+     */
     async AddHelper(member: GuildMember, mute_notifs: boolean): Promise<void> {
         if (this.helpers.has(member)) {
             console.warn(`Queue ${this.name} already has helper ${member.user.username}. Ignoring call to AddHelper`)
@@ -162,7 +271,10 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    // Removes a Helper to the list of available helpers for this queue. called by /stop
+    /**
+     * Removes a Helper to the list of available helpers for this queue.
+     * @param member 
+     */
     async RemoveHelper(member: GuildMember): Promise<void> {
         if (!this.helpers.has(member)) {
             console.warn(`Queue ${this.name} does not have helper ${member.user.username}. Ignoring call to RemoveHelper`)
@@ -172,7 +284,10 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
-    // Adds a user to this queue
+    /**
+     * Adds `member` to this queue
+     * @param member 
+     */
     async Enqueue(member: GuildMember): Promise<void> {
         const user_state = this.member_state_manager.GetMemberState(member)
         user_state.TryAddToQueue(this)
@@ -187,6 +302,10 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
+    /**
+     * Removes `member` from this queue
+     * @param member 
+     */
     async Remove(member: GuildMember): Promise<void> {
         // Removes a user from this queue, called by /leave
         const user_state = this.member_state_manager.GetMemberState(member)
@@ -196,6 +315,10 @@ export class HelpQueue {
         await this.UpdateDisplay()
     }
 
+    /**
+     * Removes the member at the front of this queue
+     * @returns `MemberState` object associated with the member at the front of the queue
+     */
     async Dequeue(): Promise<MemberState> {
         // Removes next user from this queue, called by /next
         const user_state = this.queue.shift()
@@ -208,16 +331,27 @@ export class HelpQueue {
         return user_state
     }
 
+    /**
+     * Adds `member` to the notification queue for this queue
+     * @param member 
+     */
     async AddToNotifQueue(member: GuildMember): Promise<void> {
         //Adds member to notification queue
         this.notif_queue.add(member)
     }
 
+    /**
+     * Removes `member` from the notification queue for this queue
+     * @param member 
+     */
     async RemoveFromNotifQueue(member: GuildMember): Promise<void> {
         //Adds member to notification queue
         this.notif_queue.delete(member)
     }
 
+    /**
+     * Notifys all the users in the notification queue for this queue
+     */
     async NotifyUsers(): Promise<void> {
         //Notifys the users in the notification queue that the queue is now open
         if (this.notif_queue.size == 0)
@@ -226,7 +360,9 @@ export class HelpQueue {
         this.notif_queue.clear();
     }
 
-    // Returns the person at the front of this queue
+    /**
+     * @returns the person at the front of this queue
+     */
     Peek(): MemberState | undefined {
         if (this.queue.length == 0) {
             return undefined

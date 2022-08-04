@@ -67,8 +67,8 @@ client.on('ready', async () => {
     console.log('Connected to Firebase database')
 
     let minDate = new Date()
-        let maxDate = new Date()
-        maxDate.setDate(minDate.getDate() + 14)
+    let maxDate = new Date()
+    maxDate.setDate(minDate.getDate() + 14)
 
     await Promise.all(full_guilds.map(guild =>
         AttendingServer.Create(client, guild, firebase_db, attendance_doc)
@@ -78,8 +78,10 @@ client.on('ready', async () => {
                 console.error(`An error occured in processing servers during startup. ${err.stack}`)
             })
     ))
-
     console.log('Ready to go!')
+    /*Promise.all(full_guilds.map(guild => {
+        servers.get(guild)?.ProcessForever()
+    }))*/
 });
 
 async function JoinGuild(guild: Guild): Promise<AttendingServer> {
@@ -185,11 +187,6 @@ client.on('messageDelete', async message => {
         return
     await server.EnsureQueueSafe(category.name)
     await server.ForceQueueUpdate(category.name)
-})
-
-//incase someone sends a message in the queue channel
-client.on('messageCreate', async messsage => {
-
 })
 
 client.on('guildMemberAdd', async member => {

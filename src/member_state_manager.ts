@@ -31,7 +31,9 @@ export class MemberState {
         return this.helped_members
     }
 
-    // Check if user can help, set the start time, and clear helped members
+    /**
+     * Check if user can help, set the start time, and clear helped members
+     */
     StartHelping(): void {
         if (this.current_queue !== null) {
             throw new UserError('You can\'t host while in a queue yourself.')
@@ -42,8 +44,11 @@ export class MemberState {
         this.helped_members = []
     }
 
+    /**
+     * Remove this member from thier helper-queues
+     * @returns the time they started helping
+     */
     StopHelping(): number {
-        // Remove a helper from thier queues. Returns the time they started helping
         if (this.start_helping_timestamp === null) {
             throw new UserError('You are not currently hosting.')
         }
@@ -52,8 +57,10 @@ export class MemberState {
         return start
     }
 
-    // Get the time a student has been waiting in queue. Used to determine who is next in the queue
-    // when multiple queues are available to dequeue from
+    // Used to determine who is next in the queue when multiple queues are available to dequeue from
+    /**
+     * @returns the time this member has been waiting in queue
+     */
     GetWaitTime(): number {
         if (this.current_queue === null || this.start_wait_timestamp === null) {
             console.error(`User ${this.member.user.username} is not in a queue. Can't get wait time.`)
@@ -62,7 +69,10 @@ export class MemberState {
         return Date.now() - this.start_wait_timestamp
     }
 
-    //Add a user to queue, and set start of waitinf time
+    /**
+     * Add a user to `queue`, and set start of waiting time
+     * @param queue 
+     */
     TryAddToQueue(queue: HelpQueue): void {
         if (this.current_queue !== null) {
             throw new UserError(`You are already enqueued in \`${queue.name}\``)
@@ -73,7 +83,10 @@ export class MemberState {
         this.current_queue = queue
     }
 
-    // Remove a user from the queue, set start_wait to null
+    /**
+     * Remove this member from `queue`, set start_wait to null
+     * @param queue 
+     */
     TryRemoveFromQueue(queue: HelpQueue | null = null): void {
         if (this.current_queue === null) {
             throw new UserError(`You are not in the queue \`${queue?.name}\``)
@@ -85,16 +98,25 @@ export class MemberState {
         this.current_queue = null
     }
 
+    /**
+     * Run when `target` is dequeued from a queue by this member. Adds `target` to the list of members that this member has helped 
+     * @param target 
+     */
     OnDequeue(target: GuildMember): void {
-        // Run when this member has dequeued another member
         this.helped_members.push(target)
     }
 
+    /**
+     * Sets the `up_next` value to `newVal`
+     * @param newVal 
+     */
     SetUpNext(newVal: boolean): void {
         this.up_next = newVal
     }
 
-    // Returns the amount of time a helper has been helping
+    /**
+     * @returns the amount of time this member has been helping
+     */
     GetHelpTime(): number {
         if (this.start_helping_timestamp === null) {
             console.error(`Cannot get help time for ${this.member.user.username}.`)
@@ -103,23 +125,31 @@ export class MemberState {
         return Date.now() - this.start_helping_timestamp
     }
 
-    OnJoin(): void {
+    /**
+     * Updates interal values to say that this member has joined a vc for tutoring hours.
+     */
+    OnJoinVC(): void {
         // if a helper, don't update
         if (this.start_helping_timestamp !== null)
             return
         // prevent sending a user this if they accidently join vc and leave
-        if (this.up_next !== true){
+        if (this.up_next !== true) {
             return
         }
         this.up_next = false
         this.start_being_helped_timestamp = Date.now()
     }
 
-    OnLeave(dmMessage: string | null): void {
+    /**
+     * Updates internal values to say that this member is no longer in a vc. If the user was in vc for tutoring and just left, then send
+     * the user in dms `dmMessage` if `dmMessage is not null
+     * @param dmMessage
+     */
+    OnLeaveVC(dmMessage: string | null): void {
         // if a helper, don't update
         if (this.start_being_helped_timestamp == null)
             return
-        if(dmMessage !== null) {
+        if (dmMessage !== null) {
             this.member.send(dmMessage)
         }
         this.start_being_helped_timestamp = null
