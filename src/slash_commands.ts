@@ -159,6 +159,10 @@ const set_calendar = new SlashCommandBuilder()
         .setName('format_help')
         .setDescription('Get an explanation of how the calendar and sheets have to be formatted'))
 
+const force_update_queues = new SlashCommandBuilder()
+    .setName('force_update_queues')
+    .setDescription('Debug feature: Forces updates of the queue and the schedule messages in all #queue channel')
+
 
 // Get the raw data that can be sent to Discord
 const commandData = [
@@ -175,7 +179,8 @@ const commandData = [
     get_notifications.toJSON(),
     remove_notifications.toJSON(),
     msg_after_leave_VC.toJSON(),
-    set_calendar.toJSON()
+    set_calendar.toJSON(),
+    force_update_queues.toJSON()
 ]
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {

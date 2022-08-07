@@ -18,27 +18,26 @@ export class HelpQueueDisplayManager {
     private display_channel: TextChannel
     private queue_message: Message | null
     private schedule_message: Message | null
-    private schedule_update: Date
+    private schedule_update_time: Date
 
     constructor(client: Client, display_channel: TextChannel, queue_message: Message | null, schedule_message: Message | null) {
         this.client = client
         this.display_channel = display_channel
         this.queue_message = queue_message
         this.schedule_message = schedule_message
-        this.schedule_update = new Date()
+        this.schedule_update_time = new Date()
     }
 
     get update_time(): Date {
-        return this.schedule_update
+        return this.schedule_update_time
     }
 
-    public setScheduleUpdateTime(time: Date): void {
-        if(time > new Date()){
-            this.schedule_update = time
+    public async setScheduleUpdateTime(time: Date): Promise<void> {
+        if (time.getTime() >= (new Date()).getTime()) {
+            this.schedule_update_time.setTime(time.getTime())
         } else {
-            this.schedule_update.setDate(new Date().getDate() + 1)
+            this.schedule_update_time.setDate(new Date().getDate() + 1)
         }
-
     }
 
     /**
@@ -156,7 +155,7 @@ export class HelpQueueDisplayManager {
      * @returns The schedule_message, if a new one was created
      */
     async UpdateSchedule([message_text, update_time]: [string, Date]): Promise<Message<boolean> | undefined> {
-        this.setScheduleUpdateTime(update_time)
+        await this.setScheduleUpdateTime(update_time)
         let old_schedule_message = this.schedule_message
         const scheduleEmbed = new MessageEmbed()
             .setTitle("Schedule")
@@ -208,7 +207,7 @@ export class HelpQueue {
     Has(member: GuildMember): boolean {
         return this.queue.find(queue_member => queue_member.member == member) !== undefined
     }
-    
+
     get helpers_set(): Set<GuildMember> {
         return this.helpers
     }

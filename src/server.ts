@@ -635,6 +635,16 @@ export class AttendingServer {
         }
     }
 
+    async ForceUpdateAllQueues(): Promise<void> {
+        if (this.queues.length > 0) {
+            Promise.all(this.queues.map(queue => {
+                this.ForceQueueUpdate(queue.name)
+            }))
+        } else {
+            throw new UserError("There are no queues to update")
+        }
+    }
+
     /**
      * Edit the message that is sent to a member after they finish a session with a helper. Updates the database with the new message
      * @param message The new message that is to be sent to users
@@ -846,7 +856,12 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         let update_time = new Date(0)
 
         await data.items.forEach((event: { summary: string; start: { dateTime: string; }; end: { dateTime: string; }; }) => {
-            const helperName = event.summary.split(' ')[0]
+            let pos = event.summary.indexOf(" - ")
+            if ( pos === -1 ) {
+                pos = event.summary.length
+            }
+            const helperName = event.summary.substring(0, pos)
+            const eventTitle = event.summary.substring(pos + 3)
             let discordID = helpersNameMap?.get(helperName)
             if (discordID !== undefined && discordID !== null) {
 
@@ -855,7 +870,7 @@ disabled. To enable it, do `/post_session_msg enable: true`"
                 //use https://hammertime.cyou/en-GB for reference on how to display dynamic time on discord
 
                 if (helper !== undefined && discordID !== null && numItems < maxItems) {
-                    let userPing = '<@' + helper.id + '>'
+                    let userPing = '<@' + helper.id + '> | ' + eventTitle
 
                     let startTime = new Date(Date.parse(event.start.dateTime))
                     let startTimeEpoch = startTime.getTime().toString()
@@ -863,21 +878,21 @@ disabled. To enable it, do `/post_session_msg enable: true`"
                     //Discord dynamic time doesn't use milliseconds, so need to trim off the last 3 digits of the epoch time
 
                     let startTimeString = '<t:' + startTimeEpoch + ':f>'
-                    let relativeStartTime = "<t:" + startTimeEpoch + ":R>"
+                    let relativeStartTime = '<t:' + startTimeEpoch + ':R>'
 
                     let endTime = new Date(Date.parse(event.end.dateTime))
                     //if it's the first event, set schedule update time to end of this event
-                    if (update_time.getTime() !== 0) {
-                        update_time = endTime
+                    if (update_time.getTime() === 0) {
+                        update_time.setTime(endTime.getTime())
                     }
 
                     let endTimeEpoch = endTime.getTime().toString()
                     endTimeEpoch = endTimeEpoch.substring(0, endTimeEpoch.length - 3)
 
                     let endTimeString = '<t:' + endTimeEpoch + ':f>'
-                    let relativeEndTime = "<t:" + endTimeEpoch + ":R>"
+                    let relativeEndTime = '<t:' + endTimeEpoch + ':R>'
 
-                    table = table + userPing + " | Starts at " + startTimeString + " which is " + relativeStartTime
+                    table = table + userPing + "\nStarts at " + startTimeString + " which is " + relativeStartTime
                         + " | Ends at: " + endTimeString + " which is " + relativeEndTime + "\n"
 
                     numItems++
@@ -899,7 +914,7 @@ disabled. To enable it, do `/post_session_msg enable: true`"
             table = 'There are no scheduled hours for this queue in next 7 days.'
             update_time.setDate(new Date().getDate() + 3)
         }
-        return [current_helpers + "\n\n" + table + '\n\n' + moreInfo, update_time]
+        return [current_helpers + "\n\n" + table + '\n' + moreInfo, update_time]
     }
 
     /**
@@ -949,17 +964,16 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         return this.msgAfterLeaveVC
     }
 
-    ProcessForever(): void {
-        //Update Schedule table when the event at the top gets over
-        Promise.all(this.queues.map(async queue => {
-            while (true) {
-                console.log("qwer")
-                while (queue.update_time > new Date() && queue.update_time.getTime() !== 0){;}
-                console.log("asdf")
-                queue.UpdateSchedule(await this.getUpcomingHoursTable(queue.name))
-                console.log("zxcv")
-            }
-        }))
+    async AutoScheduleUpdates(server: AttendingServer): Promise<void[]> {
+        // Thanks to @tomli380576 for providing most of the code and logic for this
+        return this.queues.map(queue => {
+            let timerID = setTimeout(async function tick() {
+                await queue.UpdateSchedule(await server.getUpcomingHoursTable(queue.name))
+                const newTimeDelta = Math.abs(queue.update_time.getTime() - (new Date()).getTime())
+                // immediately schedule a new async call
+                timerID = setTimeout(tick, newTimeDelta)
+            }, 0)
+        })
     }
 
 }

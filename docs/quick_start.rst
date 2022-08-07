@@ -19,7 +19,7 @@ Quick Start
 
 .. code:: bash
 
-   git clone https://github.com/ECS-OH-Bot/BOB && cd BOB
+   git clone https://github.com/KaoushikMurugan/BOB && cd BOB
    
 
 4. Follow the instructions `here <https://discordpy.readthedocs.io/en/v1.3.3/discord.html#creating-a-bot-account>`__
@@ -34,7 +34,7 @@ for obtaining a token for your instance of the Bot.
    BOB_BOT_TOKEN=[Insert Discord BOT Token here]
    BOB_GOOGLE_CALENDAR_API_KEY=[Insert Google Calendar API key here]
 
-6. Create a .json file in the current directory named ``gcs_service_account_key.json`` which you get get from the Google Cloud website.
+6. Create a .json file in the current directory named ``gcs_service_account_key.json`` which you can get from the Google Cloud website.
 
 7. Create a .json file in the current directory named ``fbs_service_account_key.json`` which you can get from your Firebase Project -> Settings -> Service account.
 
@@ -56,5 +56,5 @@ If the build succeeds, run the next command to run the bot.
 
 .. image:: ./assets/adjustRole.gif
 
-`Go back to docs front page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
 -----------------------------------------------------------------------------------------------

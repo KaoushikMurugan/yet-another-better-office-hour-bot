@@ -1,6 +1,6 @@
 {
   "name": "better-oh-bot",
-  "version": "1.0.0",
+  "version": "3.1.0",
   "description": "A (better) discord bot for managing office hours",
   "scripts": {
     "lint": "eslint . --ext .ts",

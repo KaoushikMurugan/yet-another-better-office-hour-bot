@@ -23,5 +23,5 @@ TODO: **(optional suggestion from Ashley)** add gif under each queue button
    - Removes the person who clicked the button from the notification queue.
    - **Note**: *This button’s functionality is similar to the ``/remove_notif`` command where the queue is an active category.*
 
-`Go back to docs front page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
 -----------------------------------------------------------------------------------------------

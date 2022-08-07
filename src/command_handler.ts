@@ -1,5 +1,5 @@
 import { time } from "@discordjs/builders";
-import { CategoryChannel, CommandInteraction, GuildChannel, GuildMember, MessageEmbed, TextChannel } from "discord.js";
+import { CategoryChannel, Collection, CommandInteraction, GuildChannel, GuildMember, MessageEmbed, TextChannel } from "discord.js";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
 import { AttendingServer } from "./server";
 import { UserError } from "./user_action_error";
@@ -211,7 +211,7 @@ class ListNextHoursCommandHandler implements CommandHandler {
         } else {
             queue_name = queue_option.name
         }
-        [response, ] = await server.getUpcomingHoursTable(queue_name)
+        [response,] = await server.getUpcomingHoursTable(queue_name)
         await interaction.editReply({
             embeds: [{
                 title: "Schedule for " + queue_name,
@@ -368,7 +368,14 @@ class SetCalendarHandler implements CommandHandler {
     }
 }
 
-
+class ForceUpdateQueues implements CommandHandler {
+    readonly permission = CommandAccessLevel.ADMIN
+    async Process(server: AttendingServer, interaction: CommandInteraction) {
+        console.log
+        await server.ForceUpdateAllQueues()
+        await interaction.editReply(SimpleEmbed("Successfully updated all the queues", EmbedColor.Success))
+    }
+}
 
 const handlers = new Map<string, CommandHandler>([
     ['queue', new QueueCommandHandler()],
@@ -384,7 +391,8 @@ const handlers = new Map<string, CommandHandler>([
     ['notify_me', new GetNotifcationsHandler()],
     ['remove_notif', new RemoveNotifcationsHandler()],
     ['post_session_msg', new MsgAfterLeaveVCHandler()],
-    ['calendar', new SetCalendarHandler()]
+    ['calendar', new SetCalendarHandler()],
+    ['force_update_queues', new ForceUpdateQueues()]
 ])
 
 export async function ProcessCommand(server: AttendingServer, interaction: CommandInteraction): Promise<void> {

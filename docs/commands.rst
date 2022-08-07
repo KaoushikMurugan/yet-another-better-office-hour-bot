@@ -101,5 +101,5 @@ Commands
    - **Note:** *The calendar used in this command must be a public calendar.*
    *Read* `the /when_next guide <https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst>`__ *for more details.*
 
-`Go back to docs front page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
 -----------------------------------------------------------------------------------------------

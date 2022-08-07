@@ -79,9 +79,11 @@ client.on('ready', async () => {
             })
     ))
     console.log('Ready to go!')
-    /*Promise.all(full_guilds.map(guild => {
-        servers.get(guild)?.ProcessForever()
-    }))*/
+    Promise.all(full_guilds.map(guild => {
+        let server = servers.get(guild)
+        if (server !== undefined)
+            server.AutoScheduleUpdates(server)
+    }))
 });
 
 async function JoinGuild(guild: Guild): Promise<AttendingServer> {

@@ -43,6 +43,7 @@ Below is the standard Office Hours (OH) Session Protocol we follow:
 
 
 **Office Hours (OH) Session Protocol**
+
 **Note**: *Helpers refer to Instructors, TAs, and Tutors.*
 
 #. Helpers open queues that correspond to a course/office hours slot they help for.
