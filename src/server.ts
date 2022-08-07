@@ -821,12 +821,12 @@ disabled. To enable it, do `/post_session_msg enable: true`"
      */
     async getUpcomingHoursTable(queue_name: string): Promise<[string, Date]> {
         if (this.tutor_info_calendar === null || this.tutor_info_doc === null || this.tutor_info_sheet === null) {
-            throw new UserError("The necessary resources for this command to work have not been set up. Please contact an admin to set it up")
+            return ["The necessary resources for this command to work have not been set up. Please contact an admin to set it up", new Date(0)]
         }
 
         const queue = this.queues.find(queue => queue.name == queue_name)
         if (queue === undefined) {
-            throw new UserError("Invalid queue channel")
+            return ["Invalid queue channel", new Date(0)]
         }
 
         let helpersMap = await this.GetHelpersForQueue(queue_name)
