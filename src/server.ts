@@ -468,6 +468,7 @@ export class AttendingServer {
             throw new UserError(`There is not a queue with the name ${queue_name}`)
         }
         await queue.AddToNotifQueue(member)
+        member.send(SimpleEmbed("You will be notified when the queue becomes open.", EmbedColor.Success))
     }
 
     /**
@@ -481,6 +482,7 @@ export class AttendingServer {
             throw new UserError(`There is not a queue with the name ${queue_name}`)
         }
         await queue.RemoveFromNotifQueue(member)
+        member.send(SimpleEmbed("You will no longer be notified when the queue becomes open.", EmbedColor.Success))
     }
 
     /**
@@ -496,7 +498,7 @@ export class AttendingServer {
                     let queue_channel = category.children.find(child => child.name == 'queue') as TextChannel
                     if (queue_channel !== undefined && queue_channel.type == "GUILD_TEXT") {
                         if (this.queues.find(queue => queue.name == category.name) === undefined) {
-                            //get the queue message and schedule message if they already exists
+                            // get the queue message and schedule message if they already exists
                             return queue_channel.messages.fetchPinned()
                                 .then(messages => messages.filter(msg => msg.author == this.client.user))
                                 .then(messages => {
@@ -511,10 +513,14 @@ export class AttendingServer {
                                         messages.clear()
                                         return [null, null]
                                     }
-                                }).then(messages => {
+                                }).then(async messages => {
                                     this.queues.push(
                                         new HelpQueue(category.name, new HelpQueueDisplayManager(this.client, queue_channel, messages[0], messages[1]),
                                             this.member_states))
+                                    await (await queue_channel.messages.fetch()).forEach(message => {
+                                        if(message.pinned === false)
+                                            message.delete()
+                                    })
                                 })
                         } else {
                             console.warn(`The server "${this.server.name}" contains multiple queues with the name "${category.name}"`)
@@ -631,6 +637,10 @@ export class AttendingServer {
                 // Discord orders pin list by newest first
                 await schedule_message.pin()
                 await queue_message.pin()
+                ;(await queue_message.channel.messages.fetch()).forEach(message => {
+                    if(message.pinned !== true)
+                        message.delete()
+                })
             }
         }
     }
