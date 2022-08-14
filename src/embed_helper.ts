@@ -13,6 +13,7 @@ export function SimpleEmbed(message: string, color = EmbedColor.Neutral): any {
                 color: color,
                 title: message,
                 timestamp: new Date(),
+                // TODO: author: { name: 'BOBv3', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' },
             }]
         }
     } else {
@@ -22,6 +23,7 @@ export function SimpleEmbed(message: string, color = EmbedColor.Neutral): any {
                 color: color,
                 description: message,
                 timestamp: new Date(),
+                // TODO author: { name: 'BOBv3', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' },
             }]
         }
     }

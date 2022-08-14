@@ -11,6 +11,7 @@ import { UserError } from "./user_action_error";
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const AsciiTable = require('ascii-table');
 import "./embed_helper"
+import { embedFieldPredicate } from "@discordjs/builders/dist/messages/embed/Assertions";
 
 export class HelpQueueDisplayManager {
 
@@ -46,16 +47,16 @@ export class HelpQueueDisplayManager {
      * @param queue_members 
      * @returns a table of the list of people in queue in text form that can be used in a message
      */
-    private GetQueueText(queue: HelpQueue, queue_members: MemberState[]): string {
+    private GetQueueText(queue: HelpQueue, queue_members: MemberState[]): string[] {
         const quant_prase = queue.length == 1 ? 'is 1 person' : `are ${queue.length} people`
         const status_line = `The queue is **${queue.is_open ? 'OPEN' : 'CLOSED'}**. There ${quant_prase} in the queue.\n`
         if (queue.length > 0) {
             const table = new AsciiTable()
             table.setHeading('Position', 'Username')
             queue_members.forEach((state, idx) => table.addRow(idx + 1, state.member.user.username))
-            return status_line + '```\n' + table.toString() + '\n```'
+            return [status_line, '```\n' + table.toString() + '\n```']
         }
-        return status_line
+        return [status_line]
     }
 
     /**
@@ -95,7 +96,14 @@ export class HelpQueueDisplayManager {
         }
         const embedTable = new MessageEmbed()
             .setColor(embedColor)
-            .setTitle('Queue for ' + queue.name + "\n" + message_text)
+            .setTimestamp()
+            //TODO: .setAuthor({ name: 'BOB', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' })
+        if(message_text.length === 1) {
+            embedTable.setTitle('Queue for ' + queue.name + "\n" + message_text[0])
+        } else {
+            embedTable.setTitle('Queue for ' + queue.name + "\n" + message_text[0])
+            embedTable.setDescription(message_text[1])
+        }
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -162,6 +170,7 @@ export class HelpQueueDisplayManager {
             .setColor(0xFBA736)
             .setDescription(message_text)
             .setTimestamp()
+            // TODO: .setAuthor({ name: 'BOB', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' })
         if (this.schedule_message === null) {
             this.EnsureQueueSafe()
             await this.display_channel.send({
