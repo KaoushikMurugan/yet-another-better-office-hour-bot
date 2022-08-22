@@ -1,18 +1,18 @@
 .. |DiscordLogo| image:: https://img.icons8.com/color/48/000000/discord-logo.png
    :target: https://discordapp.com
 
-|DiscordLogo| BOB
+|DiscordLogo| YABOB
 ======================================
 
-The "Better" Office Hours Bot
-------------------------------
+Yet Another Better Office-hours Bot
+-----------------------------------
 
 .. raw:: html
 
    <p align=center style="font-size:large">
       <a href=#purpose>Purpose</a> • 
       <a href=#overview>Overview</a> •  
-      <a href=https://github.com/KaoushikMurugan/BOB/blob/main/docs>Docs</a> •
+      <a href=https://github.com/KaoushikMurugan/YABOB/blob/main/docs>Docs</a> •
       <a href=#license>License</a>
    </p>
 .. raw:: html
@@ -25,18 +25,18 @@ Purpose
 We wanted to implement a way to help instructors efficiently automate 
 the process of their Office Hours through Discord.
 
-So, we created **BOB**, the **"Better" Office Hours Bot**, with the goal of allowing 
+So, we created **YABOB**, the **Yet Another Better Office-hours Bot**, with the goal of allowing 
 students to effectively communicate with their instructors with the option to be 
 able to ask their peers for help while they wait to ensure they receive the help they need.
 
 Overview
 ========
 
-**BOB** is a *server managment automation* bot. This means that **BOB** handles logistical 
+**YABOB** is a *server managment automation* bot. This means that **YABOB** handles logistical 
 tasks like queue management and queue notifications for students.
 
-**BOB** is also a *self-hosted* bot meaning that you will need to host
-and maintain your own instance. See `Quick Start <https://github.com/KaoushikMurugan/BOB/blob/main/docs/quick_start.rst>`__ to
+**YABOB** is also a *self-hosted* bot meaning that you will need to host
+and maintain your own instance. See `Quick Start <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/quick_start.rst>`__ to
 get started.
 
 Below is the standard Office Hours (OH) Session Protocol we follow:
@@ -55,34 +55,34 @@ Below is the standard Office Hours (OH) Session Protocol we follow:
 Waiting Queue System
 --------------------
 
-**BOB** implements a simple *first come first serve* queue system where
+**YABOB** implements a simple *first come first serve* queue system where
 student are allowed to enter and leave the queue whenever they like
 while OH is being held.
 
 Server Template: **TODO**
 -------------------------
 
-**BOB** makes use of Discord's Server Template feature
+**YABOB** makes use of Discord's Server Template feature
 
-There are three roles in the **BOB** server
+There are three roles in the **YABOB** server
 
 -  **Admin**: The Admin Role has total control of bot functionality and server interfaces.
 -  **Helper**: The Instructor Role allows control over OH sessions and locked channels.
 -  **Student**: The Student Role allows for the ability to interface with OH-Queue.
 
-`Docs <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Docs <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/main.rst>`__
 =========================================================================
 
-`Commands <https://github.com/KaoushikMurugan/BOB/blob/main/docs/commands.rst>`__
+`Commands <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/commands.rst>`__
 ---------------------------------------------------------------------------------
 
-`Queue Buttons <https://github.com/KaoushikMurugan/BOB/blob/main/docs/queue_buttons.rst>`__
+`Queue Buttons <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/queue_buttons.rst>`__
 -------------------------------------------------------------------------------------------
 
-`Quick Start <https://github.com/KaoushikMurugan/BOB/blob/main/docs/quick_start.rst>`__
+`Quick Start <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/quick_start.rst>`__
 ---------------------------------------------------------------------------------------
 
-`/when_next guide <https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst>`__
+`/when_next guide <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/when_next_guide.rst>`__
 ------------------------------------------------------------------------------------------------
 
 License
