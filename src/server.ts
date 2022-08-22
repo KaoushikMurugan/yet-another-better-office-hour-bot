@@ -15,7 +15,8 @@ import * as gcs_creds from '../gcs_service_account_key.json'
 
 import fetch from 'node-fetch'
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
-import { Embed } from "@discordjs/builders";
+
+import * as fs from 'fs'
 
 export class AttendingServer {
     private queues: HelpQueue[] = []
@@ -33,6 +34,8 @@ export class AttendingServer {
     private msgAfterLeaveVC: string | null = null
     private oldMsgALVC: string | null = null
     private msgEnable: boolean = false
+
+    private updating_bot_command_channels: boolean = false
 
     private constructor(client: Client, server: Guild, firebase_db: any, attendance_doc: GoogleSpreadsheet | null) {
         this.client = client
@@ -114,6 +117,7 @@ export class AttendingServer {
 
         await me.DiscoverQueues()
         await me.UpdateRoles()
+        await me.UpdateCommandHelpChannels()
         await Promise.all(me.queues.map(async queue => {
             await me.ForceQueueUpdate(queue.name)
         }))
@@ -986,4 +990,108 @@ disabled. To enable it, do `/post_session_msg enable: true`"
         })
     }
 
+    async UpdateCommandHelpChannels(channel_name: string | null = null): Promise<void> {
+        if (this.updating_bot_command_channels === true) {
+            // * console.log("canceled")
+            return
+        }
+        
+        if (channel_name !== null) {
+            if (channel_name !== 'admin-commands' && channel_name !== 'helper-commands' && channel_name !== 'student-commands') {
+                return
+            }
+        }
+
+        this.updating_bot_command_channels = true
+
+        await this.server.channels.fetch()
+            .then(channels => channels.filter(channel => channel.type == 'GUILD_CATEGORY'))
+            .then(channels => {
+                return channels.find(channel => channel.name == 'Bot Commands Help') as CategoryChannel
+            })
+            .then(async category => {
+                if (category === null || category === undefined) {
+                    category = await this.server.channels.create("Bot Commands Help", { type: "GUILD_CATEGORY" })
+                    
+                    let admin_command_channel = await category.createChannel('admin-commands')
+                    admin_command_channel.permissionOverwrites.create(this.server.roles.everyone, { SEND_MESSAGES: false })
+                    admin_command_channel.permissionOverwrites.create(this.client.user as User, { SEND_MESSAGES: true })
+                    //admin_command_channel.permissionOverwrites.create(this.server.roles.everyone, { VIEW_CHANNEL: false })
+                    // TODO following function doesn't regocnize 'Admin' as a role, even though it accepts string as a parameter
+                    //admin_command_channel.permissionOverwrites.create('Admin', { VIEW_CHANNEL: true })
+                    
+                    let helper_command_channel = await category.createChannel('helper-commands')
+                    helper_command_channel.permissionOverwrites.create(this.server.roles.everyone, { SEND_MESSAGES: false })
+                    helper_command_channel.permissionOverwrites.create(this.client.user as User, { SEND_MESSAGES: true })
+                    //helper_command_channel.permissionOverwrites.create(this.server.roles.everyone, { VIEW_CHANNEL: false })
+                    // TODO following function doesn't regocnize 'Staff' as a role, even though it accepts string as a parameter
+                    //helper_command_channel.permissionOverwrites.create('Staff', { VIEW_CHANNEL: true })
+                    
+                    let student_command_channel = await category.createChannel('student-commands')
+                    student_command_channel.permissionOverwrites.create(this.server.roles.everyone, { SEND_MESSAGES: false })
+                    student_command_channel.permissionOverwrites.create(this.client.user as User, { SEND_MESSAGES: true })
+                    
+                    this.updating_bot_command_channels = false
+
+                    return category
+                } else {
+                    return category
+                }
+            })
+            .then(category => {
+                this.newfunction(category, channel_name)
+            })
+
+        this.updating_bot_command_channels = false
+    }
+
+    async newfunction(category: CategoryChannel, channel_name: string | null) {
+        //ADMIN
+        let admin_commands_channel = category.children.find(channel => channel.name == 'admin-commands') as TextChannel
+        if (admin_commands_channel === null || admin_commands_channel === undefined) {
+            category.createChannel('admin-commands').then(channel => {
+                admin_commands_channel = channel
+            })
+        }
+        if(admin_commands_channel.name === channel_name || channel_name === null) {
+            admin_commands_channel.messages.fetch().then(messages => {
+                if (messages.size > 0) {
+                    messages.forEach(message => message.delete())
+                }
+            })
+            admin_commands_channel.send({ embeds: SimpleEmbed(fs.readFileSync(__dirname + '/../../help-channel-messages/admin-commands.txt', { "encoding": 'utf8' })).embeds })
+        }
+
+        //HELPER
+        let helper_commands_channel = category.children.find(channel => channel.name == 'helper-commands') as TextChannel
+        if (helper_commands_channel === null || helper_commands_channel === undefined) {
+            category.createChannel('helper-commands').then(channel => {
+                helper_commands_channel = channel
+            })
+        }
+        if(helper_commands_channel.name === channel_name || channel_name === null) {
+            helper_commands_channel.messages.fetch().then(messages => {
+                if (messages.size > 0) {
+                    messages.forEach(message => message.delete())
+                }
+            })
+            helper_commands_channel.send({ embeds: SimpleEmbed(fs.readFileSync(__dirname + '/../../help-channel-messages/helper-commands.txt', { "encoding": 'utf8' })).embeds })
+        }
+
+        //STUDENT
+        let student_commands_channel = category.children.find(channel => channel.name == 'student-commands') as TextChannel
+        if (student_commands_channel === null || student_commands_channel === undefined) {
+            category.createChannel('student-commands').then(channel => {
+                student_commands_channel = channel
+            })
+        }
+        if(student_commands_channel.name === channel_name || channel_name === null) {
+            student_commands_channel.messages.fetch().then(messages => {
+                if (messages.size > 0) {
+                    messages.forEach(message => message.delete())
+                }
+            })
+            student_commands_channel.send({ embeds: SimpleEmbed(fs.readFileSync(__dirname + '/../../help-channel-messages/student-commands.txt', { "encoding": 'utf8' })).embeds })
+        }
+    }
 }

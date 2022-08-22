@@ -7,7 +7,7 @@ export class EmbedColor {
 }
 
 export function SimpleEmbed(message: string, color = EmbedColor.Neutral): any {
-    if (message.length > 256) {
+    if (message.length <= 256) {
         return {
             embeds: [{
                 color: color,

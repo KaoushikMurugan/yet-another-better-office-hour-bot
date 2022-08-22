@@ -41,7 +41,7 @@ client.on('error', (error) => {
 })
 
 client.on('ready', async () => {
-    console.log('B.O.B. V2.1')
+    console.log('B.O.B. V3.1')
     if (client.user !== null) {
         console.log(`Logged in as ${client.user.tag}!`);
     }
@@ -180,13 +180,17 @@ client.on('messageDelete', async message => {
     }
     let server = servers.get(message.guild as Guild)
     if (server === undefined) {
-        server = await JoinGuild(message.guild)
+        return
     }
     await server.EnsureHasRole(message.member as GuildMember)
     const channel = message.channel as TextChannel
     const category = channel.parent
     if (category === null)
         return
+    if (category.name === 'Bot Commands Help') {
+        // * console.log(channel.name)
+        server.UpdateCommandHelpChannels(channel.name)
+    }
     await server.EnsureQueueSafe(category.name)
     await server.ForceQueueUpdate(category.name)
 })

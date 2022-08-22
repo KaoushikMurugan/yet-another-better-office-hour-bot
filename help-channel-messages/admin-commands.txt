@@ -1,0 +1,32 @@
+**__Commands Available To Everyone (Admin, Helper, Student)__**
+
+`/queue add [queue_name]`
+
+✻  Creates a new category with the name entered in `queue_name` and creates the #queue and #chat text channels within it.
+
+`/queue remove [queue_name]`
+
+✻  Deletes an existing category with the name entered in `queue_name` and the channels within it.
+
+`/after_tutor_message edit [enable] (change_message)`
+
+✻  Edits the message that's sent to a helpee after their session with a Helper is over.
+✻  Option `enable`: If set to true, this option will send the message to a student after their session, and does not send the message when set to false.
+✻  Option `change_message`: If set to true, this option will take the last message, and if sent by the user, sets that message as the new message that BOB will send to the student.
+
+`/after_tutor_message revert`
+
+✻  Reverts the message that BOB sends to a student to the one it used previously. 
+✻  **Note: BOB does not hold more than one previous message at a time.**
+
+`/calendar set_calendar [calendar_link]`
+
+✻  Sets the calendar for a server that lists Helper Office Hours.  
+✻  **Note:** **The calendar used in this command must be a public calendar.**
+   **Read** https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst **for more details.**
+
+`/calendar set_sheets [sheets_link]`
+
+✻  Sets the Google Sheet for a server that lists the Calendar names and their corresponding Discord IDs.
+✻  **Note:** **The calendar used in this command must be a public calendar.**
+   **Read** https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst **for more details.**
