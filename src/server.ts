@@ -215,16 +215,25 @@ export class AttendingServer {
     /**
      * Removes `member` from all queues on this server
      * @param member The member to be removed
-     * @returns The new number of people in the queue
+     * @returns The new number of people in the queue 
+     * ? Shouldn't it be the number of queues the member is in
      */
     async RemoveMemberFromAllQueues(member: GuildMember): Promise<number> {
         let queue_count = 0;
+
+        // TODO: change to const
+        /**
+         * const queues_with_member = this.queue.filter(...)
+         * 
+         * then do the rest on queues_with_member
+         * 
+        */
         await Promise.all(
-            this.queues.map((queue) => {
+            this.queues.map(async (queue) => {
                 if (queue.Has(member)) {
                     queue_count++;
                     return queue.Remove(member);
-                }
+                } 
             })
         );
         return queue_count;
@@ -357,7 +366,7 @@ export class AttendingServer {
         // Remove a helper and return the time they spent helping in ms
         await Promise.all(
             this.GetHelpableQueues(member).map(async (queue) => {
-                queue.RemoveHelper(member);
+                await queue.RemoveHelper(member);
                 await queue.UpdateSchedule(
                     await this.getUpcomingHoursTable(queue.name)
                 );
@@ -390,8 +399,8 @@ export class AttendingServer {
      */
     async Dequeue(
         helper: GuildMember,
-        queue_option: CategoryChannel | null = null,
-        user_option: User | GuildMember | null = null
+        queue_option?: CategoryChannel,
+        user_option?: User | GuildMember
     ): Promise<MemberState> {
         // Get the next member for a helper to assist
         if (!this.member_states.GetMemberState(helper).is_helping) {
@@ -408,7 +417,7 @@ export class AttendingServer {
         }
 
         // if user entered a particular user to dequeue
-        if (user_option !== null) {
+        if (user_option) {
             const member =
                 user_option instanceof User
                     ? await this.server.members.fetch(user_option)
@@ -430,7 +439,7 @@ export class AttendingServer {
 
         // if user entered a particular queue to remove from
         let target_queue: HelpQueue;
-        if (queue_option !== null) {
+        if (queue_option) {
             const queue = this.queues.find(
                 (queue) => queue.name === queue_option.name
             );
@@ -1342,12 +1351,12 @@ disabled. To enable it, do `/post_session_msg enable: true`";
      * feature has been enabled
      * @param member The member which has just left a session with a tutor
      */
-    UpdateMemberLeftVC(member: GuildMember): void {
+    async UpdateMemberLeftVC(member: GuildMember): void {
         if (this.msgAfterLeaveVC === null || this.msgEnable === false) {
-            this.member_states.GetMemberState(member).OnLeaveVC(null);
+            await this.member_states.GetMemberState(member).OnLeaveVC(null);
             return;
         } else {
-            this.member_states
+            await this.member_states
                 .GetMemberState(member)
                 .OnLeaveVC(this.msgAfterLeaveVC);
         }
@@ -1478,7 +1487,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             admin_commands_channel === null ||
             admin_commands_channel === undefined
         ) {
-            category.createChannel("admin-commands").then((channel) => {
+            await category.createChannel("admin-commands").then((channel) => {
                 admin_commands_channel = channel;
             });
         }
@@ -1486,12 +1495,12 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             admin_commands_channel.name === channel_name ||
             channel_name === null
         ) {
-            admin_commands_channel.messages.fetch().then((messages) => {
+            await admin_commands_channel.messages.fetch().then((messages) => {
                 if (messages.size > 0) {
                     messages.forEach((message) => message.delete());
                 }
             });
-            admin_commands_channel.send({
+            await admin_commands_channel.send({
                 embeds: SimpleEmbed(
                     fs.readFileSync(
                         __dirname +
@@ -1510,7 +1519,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             helper_commands_channel === null ||
             helper_commands_channel === undefined
         ) {
-            category.createChannel("helper-commands").then((channel) => {
+            await category.createChannel("helper-commands").then((channel) => {
                 helper_commands_channel = channel;
             });
         }
@@ -1518,13 +1527,15 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             helper_commands_channel.name === channel_name ||
             channel_name === null
         ) {
-            helper_commands_channel.messages.fetch().then((messages) => {
+            await helper_commands_channel.messages.fetch().then((messages) => {
                 if (messages.size > 0) {
                     messages.forEach((message) => message.delete());
                 }
             });
-            helper_commands_channel.send({
+            await helper_commands_channel.send({
                 embeds: SimpleEmbed(
+                    // Don't use file system here
+                    // use node js fecth or ajax call
                     fs.readFileSync(
                         __dirname +
                             "/../../help-channel-messages/helper-commands.txt",
@@ -1534,7 +1545,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             });
         }
 
-        //STUDENT
+        // STUDENT
         let student_commands_channel = category.children.find(
             (channel) => channel.name === "student-commands"
         ) as TextChannel;
@@ -1542,7 +1553,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             student_commands_channel === null ||
             student_commands_channel === undefined
         ) {
-            category.createChannel("student-commands").then((channel) => {
+            await category.createChannel("student-commands").then((channel) => {
                 student_commands_channel = channel;
             });
         }
@@ -1550,12 +1561,12 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             student_commands_channel.name === channel_name ||
             channel_name === null
         ) {
-            student_commands_channel.messages.fetch().then((messages) => {
+            await student_commands_channel.messages.fetch().then((messages) => {
                 if (messages.size > 0) {
                     messages.forEach((message) => message.delete());
                 }
             });
-            student_commands_channel.send({
+            await student_commands_channel.send({
                 embeds: SimpleEmbed(
                     fs.readFileSync(
                         __dirname +
