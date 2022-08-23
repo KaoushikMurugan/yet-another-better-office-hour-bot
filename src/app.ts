@@ -73,6 +73,8 @@ client.on("ready", async () => {
         attendance_doc = new GoogleSpreadsheet(process.env.BOB_GOOGLE_SHEET_ID);
         await attendance_doc.useServiceAccountAuth(gcs_creds);
         console.log("Connected to Google sheets.");
+    } else {
+        console.log(`No google sheets ID found. Creating BOB without attendance logging.`);
     }
 
     await Promise.all(
@@ -89,6 +91,7 @@ client.on("ready", async () => {
     );
 
     console.log("Ready to go!");
+    console.log(full_guilds.map((guild) => guild.name));
 
     await Promise.all(
         full_guilds.map(async (guild) => {
@@ -113,6 +116,7 @@ client.on("interactionCreate", async (interaction) => {
         await interaction.reply("Sorry, I dont respond to direct messages.");
         return;
     }
+    console.log("interaction create");
 
     const server =
         servers.get(interaction.guild) ?? (await JoinGuild(interaction.guild));
@@ -140,6 +144,10 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 
     const server =
         servers.get(oldState.guild) ?? (await JoinGuild(oldState.guild));
+    // let server = servers.get(oldState.guild);
+    // if (server === undefined) {
+    //     server = await JoinGuild(oldState.guild);
+    // }
     const member = oldState.member;
     await server.EnsureHasRole(member as GuildMember);
 
@@ -197,6 +205,7 @@ async function JoinGuild(guild: Guild): Promise<AttendingServer> {
     console.log(`Joining guild ${guild.name}`);
     const server = await AttendingServer.Create(client, guild, firebase_db);
     await PostSlashCommands(guild);
+    console.log(guild.name);
     servers.set(guild, server);
     return server;
 }

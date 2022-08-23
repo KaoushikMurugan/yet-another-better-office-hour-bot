@@ -4,6 +4,7 @@ import {
     GuildChannel,
     GuildMember,
     TextChannel,
+    User
 } from "discord.js";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
 import { AttendingServer } from "./server";
@@ -120,14 +121,14 @@ class DequeueCommandHandler implements CommandHandler {
             );
         }
 
-        if (queue_option !== null && queue_option.type != "GUILD_CATEGORY") {
+        if (queue_option !== null && queue_option.type !== "GUILD_CATEGORY") {
             throw new UserError(`${queue_option.name} is not a queue.`);
         }
 
         const helper = interaction.member as GuildMember;
         if (
             helper.voice.channel === null ||
-            helper.voice.channel.type != "GUILD_VOICE"
+            helper.voice.channel.type !== "GUILD_VOICE"
         ) {
             throw new UserError("You need to be connected to a voice channel.");
         }
@@ -140,8 +141,8 @@ class DequeueCommandHandler implements CommandHandler {
         );
         const helpee = await server.Dequeue(
             helper,
-            queue_option as CategoryChannel | null,
-            user_option
+            queue_option as CategoryChannel,
+            user_option as User
         );
         await helper.voice.channel.permissionOverwrites.create(helpee.member, {
             VIEW_CHANNEL: true,
@@ -247,7 +248,7 @@ class ClearCommandHandler implements CommandHandler {
                 SimpleEmbed("All queues have been cleared.", EmbedColor.Success)
             );
         } else if (channel_option instanceof GuildChannel) {
-            if (channel_option.type != "GUILD_CATEGORY") {
+            if (channel_option.type !== "GUILD_CATEGORY") {
                 throw new UserError(`${channel_option.name} is not a queue.`);
             }
             await server.ClearQueue(channel_option as CategoryChannel);
@@ -324,7 +325,6 @@ class ListNextHoursCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.ANYONE;
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const queue_option = interaction.options.getChannel("queue_name");
-        let response: string;
         let queue_name: string;
         if (queue_option === null) {
             const curChannel = interaction.channel as TextChannel;
@@ -338,7 +338,7 @@ class ListNextHoursCommandHandler implements CommandHandler {
         } else {
             queue_name = queue_option.name;
         }
-        [response] = await server.getUpcomingHoursTable(queue_name);
+        const response = (await server.getUpcomingHoursTable(queue_name))[0];
         await interaction.editReply({
             embeds: [
                 {

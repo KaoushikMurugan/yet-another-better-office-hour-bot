@@ -23,7 +23,6 @@ import { UserError } from "./user_action_error";
 import { MemberState } from "./member_state_manager";
 import {
     GoogleSpreadsheet,
-    GoogleSpreadsheetRow,
     GoogleSpreadsheetWorksheet,
 } from "google-spreadsheet";
 import gcs_creds from "../gcs_service_account_key.json";
@@ -31,8 +30,6 @@ import fetch from "node-fetch";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
 import * as fs from "fs";
 import { Firestore } from "firebase-admin/firestore";
-import { TutorInfo } from "./models/tutor_info";
-import { MsgAfterLeaveVCDoc } from "./models/msg_after_leave_vc";
 
 // This represents a single server
 export class AttendingServer {
@@ -44,9 +41,6 @@ export class AttendingServer {
     private attendance_doc: GoogleSpreadsheet | null;
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null;
     private firebase_db: Firestore;
-
-    private tutor_info?: TutorInfo;
-    private msgAfterLeaveVCDoc?: MsgAfterLeaveVCDoc;
 
     private tutor_info_doc: GoogleSpreadsheet | null = null;
     private tutor_info_sheet?: GoogleSpreadsheetWorksheet;
@@ -99,7 +93,7 @@ export class AttendingServer {
             throw new UserError("Invalid qpermissions.");
         }
 
-        // ? why use a singleton if we are always calling the constructor?
+        // simulate async constructor
         const me = new AttendingServer(
             client,
             server,
@@ -215,7 +209,7 @@ export class AttendingServer {
     /**
      * Removes `member` from all queues on this server
      * @param member The member to be removed
-     * @returns The new number of people in the queue 
+     * @returns The new number of people in the queue
      * ? Shouldn't it be the number of queues the member is in
      */
     async RemoveMemberFromAllQueues(member: GuildMember): Promise<number> {
@@ -224,16 +218,16 @@ export class AttendingServer {
         // TODO: change to const
         /**
          * const queues_with_member = this.queue.filter(...)
-         * 
+         *
          * then do the rest on queues_with_member
-         * 
-        */
+         *
+         */
         await Promise.all(
             this.queues.map(async (queue) => {
                 if (queue.Has(member)) {
                     queue_count++;
                     return queue.Remove(member);
-                } 
+                }
             })
         );
         return queue_count;
@@ -462,10 +456,10 @@ export class AttendingServer {
                     state === undefined ? -Infinity : state.GetWaitTime()
                 );
             const index_of_max = wait_times.indexOf(Math.max(...wait_times));
-            target_queue = helpable_queues[index_of_max];
+            target_queue = helpable_queues[index_of_max]!; // TODO: remove non null assertion
         }
         // if there's no-one to dequeue
-        if (target_queue.length === 0) {
+        if (target_queue && target_queue.length === 0) {
             throw new UserError(
                 "There is no one left to help. Now might be a good time for a coffee."
             );
@@ -634,7 +628,7 @@ export class AttendingServer {
             );
         }
 
-        this.queues = this.queues.filter((x) => x != queue);
+        this.queues = this.queues.filter((x) => x !== queue);
         const x = await Promise.all<Channel | void>(
             (channel as CategoryChannel).children.map((child) => {
                 return child.delete();
@@ -771,11 +765,11 @@ export class AttendingServer {
                                                 this.member_states
                                             )
                                         );
-                                        await (
+                                        (
                                             await queue_channel.messages.fetch()
-                                        ).forEach((message) => {
+                                        ).forEach(async (message) => {
                                             if (message.pinned === false)
-                                                message.delete();
+                                                await message.delete();
                                         });
                                     });
                             } else {
@@ -926,8 +920,10 @@ export class AttendingServer {
                 await schedule_message.pin();
                 await queue_message.pin();
                 (await queue_message.channel.messages.fetch()).forEach(
-                    (message) => {
-                        if (message.pinned !== true) message.delete();
+                    async (message) => {
+                        if (message.pinned !== true) {
+                            await message.delete();
+                        }
                     }
                 );
             }
@@ -936,9 +932,9 @@ export class AttendingServer {
 
     async ForceUpdateAllQueues(): Promise<void> {
         if (this.queues.length > 0) {
-            Promise.all(
-                this.queues.map((queue) => {
-                    this.ForceQueueUpdate(queue.name);
+            await Promise.all(
+                this.queues.map(async (queue) => {
+                    await this.ForceQueueUpdate(queue.name);
                 })
             );
         } else {
@@ -1045,16 +1041,17 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             return null;
         }
 
-        let IDColNum = -1;
-        let NameColNum = -1;
-
-        let rows: GoogleSpreadsheetRow[];
-        rows = await this.tutor_info_sheet.getRows();
-        NameColNum =
-            this.tutor_info_sheet.headerValues.indexOf("Calendar Name");
-        IDColNum = this.tutor_info_sheet.headerValues.indexOf("Discord ID");
-        await rows.forEach((row) => {
-            HelperNames.set(row._rawData[NameColNum], row._rawData[IDColNum]);
+        // TODO: Remove non null assertion
+        const rows = await this.tutor_info_sheet!.getRows();
+        const name_col_num =
+            this.tutor_info_sheet!.headerValues.indexOf("Calendar Name");
+        const ID_col_num =
+            this.tutor_info_sheet!.headerValues.indexOf("Discord ID");
+        rows.forEach((row) => {
+            HelperNames.set(
+                row._rawData[name_col_num],
+                row._rawData[ID_col_num]
+            );
         });
 
         return HelperNames;
@@ -1351,7 +1348,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
      * feature has been enabled
      * @param member The member which has just left a session with a tutor
      */
-    async UpdateMemberLeftVC(member: GuildMember): void {
+    async UpdateMemberLeftVC(member: GuildMember): Promise<void> {
         if (this.msgAfterLeaveVC === null || this.msgEnable === false) {
             await this.member_states.GetMemberState(member).OnLeaveVC(null);
             return;
@@ -1426,11 +1423,11 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                     const admin_command_channel = await category.createChannel(
                         "admin-commands"
                     );
-                    admin_command_channel.permissionOverwrites.create(
+                    await admin_command_channel.permissionOverwrites.create(
                         this.server.roles.everyone,
                         { SEND_MESSAGES: false }
                     );
-                    admin_command_channel.permissionOverwrites.create(
+                    await admin_command_channel.permissionOverwrites.create(
                         this.client.user as User,
                         { SEND_MESSAGES: true }
                     );
@@ -1441,11 +1438,11 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                     const helper_command_channel = await category.createChannel(
                         "helper-commands"
                     );
-                    helper_command_channel.permissionOverwrites.create(
+                    await helper_command_channel.permissionOverwrites.create(
                         this.server.roles.everyone,
                         { SEND_MESSAGES: false }
                     );
-                    helper_command_channel.permissionOverwrites.create(
+                    await helper_command_channel.permissionOverwrites.create(
                         this.client.user as User,
                         { SEND_MESSAGES: true }
                     );
@@ -1455,11 +1452,11 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
                     const student_command_channel =
                         await category.createChannel("student-commands");
-                    student_command_channel.permissionOverwrites.create(
+                    await student_command_channel.permissionOverwrites.create(
                         this.server.roles.everyone,
                         { SEND_MESSAGES: false }
                     );
-                    student_command_channel.permissionOverwrites.create(
+                    await student_command_channel.permissionOverwrites.create(
                         this.client.user as User,
                         { SEND_MESSAGES: true }
                     );
@@ -1471,14 +1468,17 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                     return category;
                 }
             })
-            .then((category) => {
-                this.newfunction(category, channel_name);
+            .then(async (category) => {
+                await this.newfunction(category, channel_name);
             });
 
         this.updating_bot_command_channels = false;
     }
 
-    async newfunction(category: CategoryChannel, channel_name: string | null) {
+    async newfunction(
+        category: CategoryChannel,
+        channel_name: string | null
+    ): Promise<void> {
         //ADMIN
         let admin_commands_channel = category.children.find(
             (channel) => channel.name === "admin-commands"
