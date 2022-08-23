@@ -13,6 +13,13 @@
     "plugin:@typescript-eslint/recommended"
   ],
   "rules": {
-    "@typescript-eslint/no-floating-promises": ["error"]
+    "@typescript-eslint/no-floating-promises": [
+      "error"
+    ],
+    "semi": [
+      2,
+      "always"
+    ],
+    "eqeqeq": 2
   }
 }

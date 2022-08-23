@@ -7,3 +7,4 @@ node_modules/
 gcs_service_account_key.json
 fbs_service_account_key.json
 test_dir/
+.DS_Store
