@@ -19,6 +19,7 @@
     "semi": [
       2,
       "always"
-    ]
+    ],
+    "eqeqeq": 2
   }
 }
