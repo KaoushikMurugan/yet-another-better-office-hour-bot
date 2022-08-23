@@ -3,6 +3,7 @@ import {
     CommandInteraction,
     GuildChannel,
     GuildMember,
+    GuildMemberRoleManager,
     TextChannel,
 } from "discord.js";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
@@ -236,19 +237,29 @@ class LeaveCommandHandler implements CommandHandler {
 }
 
 class ClearCommandHandler implements CommandHandler {
-    readonly permission = CommandAccessLevel.STAFF;
+    permission = CommandAccessLevel.STAFF;
     async Process(server: AttendingServer, interaction: CommandInteraction) {
         const channel_option = interaction.options.getChannel("queue_name");
         const all_option = interaction.options.getBoolean("all");
 
         if (all_option === true) {
-            await server.ClearAllQueues();
+            let member_roles = interaction.member?.roles as GuildMemberRoleManager
+            if (member_roles.cache.find((role) => role.name === "Admin") === undefined) {
+                throw new UserError("Only Admins can clear all queues")
+            }
+                await server.ClearAllQueues();
             await interaction.editReply(
                 SimpleEmbed("All queues have been cleared.", EmbedColor.Success)
             );
         } else if (channel_option instanceof GuildChannel) {
             if (channel_option.type != "GUILD_CATEGORY") {
                 throw new UserError(`${channel_option.name} is not a queue.`);
+            }
+            let member_roles = interaction.member?.roles as GuildMemberRoleManager
+            if (member_roles.cache.find((role) => role.name === "Admin") === undefined) {
+                if (!(await server.IsHelperFor(interaction.member as GuildMember, channel_option.name))) {
+                    throw new UserError("You can not clear `" + channel_option.name + "` as you are not a helper for it")
+                }
             }
             await server.ClearQueue(channel_option as CategoryChannel);
             await interaction.editReply(
@@ -382,8 +393,8 @@ class GetNotifcationsHandler implements CommandHandler {
         await interaction.editReply(
             SimpleEmbed(
                 "You will be notified once the `" +
-                    channel.name +
-                    "` queue becomes open",
+                channel.name +
+                "` queue becomes open",
                 EmbedColor.Success
             )
         );
@@ -420,8 +431,8 @@ class RemoveNotifcationsHandler implements CommandHandler {
         await interaction.editReply(
             SimpleEmbed(
                 "You will no longer be notified once the `" +
-                    channel.name +
-                    "` queue \
+                channel.name +
+                "` queue \
         becomes open",
                 EmbedColor.Success
             )
@@ -616,7 +627,7 @@ export async function ProcessCommand(
                 embeds: SimpleEmbed(
                     `The command "${interaction.commandName}" is unrecognized.`,
                     EmbedColor.Error
-                ).embed,
+                ).embeds,
                 ephemeral: true,
             });
             console.error(`Recieved an unknown slash-command "${interaction.commandName}" from user "${interaction.user.username}" on \
@@ -629,7 +640,7 @@ export async function ProcessCommand(
                 embeds: SimpleEmbed(
                     `Erm. Somethings wrong, this shouldn't happen. I'll inform the humaniod that maintains me`,
                     EmbedColor.Error
-                ).embed,
+                ).embeds,
                 ephemeral: true,
             });
             console.error(
@@ -654,7 +665,7 @@ export async function ProcessCommand(
                 embeds: SimpleEmbed(
                     `No can do. You don't have access to this command.`,
                     EmbedColor.Error
-                ).embed,
+                ).embeds,
                 ephemeral: true,
             });
             return;

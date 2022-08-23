@@ -226,6 +226,20 @@ export class AttendingServer {
     }
 
     /**
+     * Returns true if `member` is a helper for `queue_name`
+     * @param member 
+     * @param queue_name 
+     * @returns 
+     */
+    async IsHelperFor(member: GuildMember, queue_name: string): Promise<boolean> {
+        const queue = this.queues.find((queue) => queue.name === queue_name);
+        if(queue === undefined) {
+            throw new UserError("Invalid queue")
+        }
+        return member.roles.cache.find((role) => role.name === queue_name) !== undefined
+    }
+
+    /**
      * Removes `member` from all queues on this server
      * @param member The member to be removed
      * @returns The new number of people in the queue
@@ -1478,13 +1492,13 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 }
             })
             .then((category) => {
-                this.newfunction(category, channel_name);
+                this.RefreshCommandHelpChannels(category, channel_name);
             });
 
         this.updating_bot_command_channels = false;
     }
 
-    async newfunction(category: CategoryChannel, channel_name: string | null) {
+    async RefreshCommandHelpChannels(category: CategoryChannel, channel_name: string | null) {
         //ADMIN
         let admin_commands_channel = category.children.find(
             (channel) => channel.name === "admin-commands"
