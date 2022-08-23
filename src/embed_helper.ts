@@ -24,14 +24,14 @@ export function SimpleEmbed(
             ],
         };
     } else {
-        // For future: if longer than 4096 characters break up into more than one message/embed
+        // TODO: if longer than 4096 characters break up into more than one message/embed
         return {
             embeds: [
                 {
                     color: color,
                     description: message,
                     timestamp: new Date(),
-                    // TODO author: { name: 'BOBv3', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' },
+                    // TODO: author: { name: 'BOBv3', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' },
                 },
             ],
         };

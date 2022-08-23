@@ -1,7 +1,7 @@
 Commands 
 --------
 
-**BOB** commands are access level based on roles.
+**YABOB** commands are access level based on roles.
 
 **Commands Available To Everyone (Admin, Helper, Student)**
 ============================================================
@@ -82,24 +82,24 @@ Commands
 
    - Edits the message that's sent to a helpee after their session with a Helper is over.
    - Option ``enable``: If set to true, this option will send the message to a student after their session, and does not send the message when set to false.
-   - Option ``change_message``: If set to true, this option will take the last message, and if sent by the user, sets that message as the new message that BOB will send to the student.
+   - Option ``change_message``: If set to true, this option will take the last message, and if sent by the user, sets that message as the new message that YABOB will send to the student.
 
 -  ``/after_tutor_message revert``
 
-   - Reverts the message that BOB sends to a student to the one it used previously. 
-   - **Note:** *BOB does not hold more than one previous message at a time.*
+   - Reverts the message that YABOB sends to a student to the one it used previously. 
+   - **Note:** *YABOB does not hold more than one previous message at a time.*
 
 -  ``/calendar set_calendar [calendar_link]``
 
    - Sets the calendar for a server that lists Helper Office Hours.  
    - **Note:** *The calendar used in this command must be a public calendar.*
-   *Read* `the /when_next guide <https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst>`__ *for more details.*
+   *Read* `the /when_next guide <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/when_next_guide.rst>`__ *for more details.*
 
 -  ``/calendar set_sheets [sheets_link]``
 
    - Sets the Google Sheet for a server that lists the Calendar names and their corresponding Discord IDs.\
    - **Note:** *The calendar used in this command must be a public calendar.*
-   *Read* `the /when_next guide <https://github.com/KaoushikMurugan/BOB/blob/main/docs/when_next_guide.rst>`__ *for more details.*
+   *Read* `the /when_next guide <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/when_next_guide.rst>`__ *for more details.*
 
-`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/main.rst>`__
 -----------------------------------------------------------------------------------------------
