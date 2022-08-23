@@ -217,7 +217,7 @@ class StopCommandHandler implements CommandHandler {
 class LeaveCommandHandler implements CommandHandler {
     readonly permission = CommandAccessLevel.ANYONE;
     async Process(server: AttendingServer, interaction: CommandInteraction) {
-        const queue_count = await server.RemoveMemberFromQueues(
+        const queue_count = await server.RemoveMemberFromAllQueues(
             interaction.member as GuildMember
         );
         if (queue_count === 0) {

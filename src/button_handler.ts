@@ -1,6 +1,12 @@
 import { ButtonInteraction, GuildMember } from "discord.js";
 import { AttendingServer } from "./server";
 
+type InteractionValue = "join" | "leave" | "notif" | "removeN";
+
+function IsValidInteraction(str: string): str is InteractionValue {
+    return ["join", "leave", "notif", "removeN"].includes(str);
+}
+
 export async function ProcessButtonPress(
     server: AttendingServer,
     interaction: ButtonInteraction
@@ -8,7 +14,7 @@ export async function ProcessButtonPress(
     // TODO: extract interaction as type
     // a space separates the type of interaction and the name of the queue channel
     const pos = interaction.customId.indexOf(" ");
-    const type = interaction.customId.substring(0, pos);
+    const raw_interaction_type = interaction.customId.substring(0, pos);
     const queue_name = interaction.customId.substring(pos + 1);
 
     if (!(interaction.member instanceof GuildMember)) {
@@ -17,6 +23,13 @@ export async function ProcessButtonPress(
         );
         return;
     }
+
+    if (!IsValidInteraction(raw_interaction_type)) {
+        console.error(`Interaction not parsed correctly.`);
+        return;
+    }
+
+    const type = raw_interaction_type as InteractionValue;
 
     if (type === "join") {
         await interaction.deferUpdate();
@@ -30,7 +43,7 @@ export async function ProcessButtonPress(
     } else if (type === "leave") {
         await interaction.deferUpdate();
         await server
-            .RemoveMemberFromQueues(interaction.member)
+            .RemoveMemberFromAllQueues(interaction.member)
             .catch(async (errstr: Error) => {
                 if (
                     interaction.member instanceof GuildMember &&

@@ -31,18 +31,25 @@ import fetch from "node-fetch";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
 import * as fs from "fs";
 import { Firestore } from "firebase-admin/firestore";
+import { TutorInfo } from "./models/tutor_info";
+import { MsgAfterLeaveVCDoc } from "./models/msg_after_leave_vc";
 
+// This represents a single server
 export class AttendingServer {
     private queues: HelpQueue[] = [];
     private member_states: MemberStateManager;
     private client: Client;
     private server: Guild;
+
     private attendance_doc: GoogleSpreadsheet | null;
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null;
     private firebase_db: Firestore;
 
+    private tutor_info?: TutorInfo;
+    private msgAfterLeaveVCDoc?: MsgAfterLeaveVCDoc;
+
     private tutor_info_doc: GoogleSpreadsheet | null = null;
-    private tutor_info_sheet: GoogleSpreadsheetWorksheet | null = null;
+    private tutor_info_sheet?: GoogleSpreadsheetWorksheet;
     private tutor_info_calendar: string | null = null;
 
     private msgAfterLeaveVC: string | null = null;
@@ -89,9 +96,10 @@ export class AttendingServer {
                     )
                 );
             await server.leave();
-            throw new UserError("Invalid permissions.");
+            throw new UserError("Invalid qpermissions.");
         }
 
+        // ? why use a singleton if we are always calling the constructor?
         const me = new AttendingServer(
             client,
             server,
@@ -100,59 +108,38 @@ export class AttendingServer {
         );
 
         //Collect server data from the database
-        let doc = await firebase_db
+        const msgAfterLeaveVCDoc = await firebase_db
             .collection("msgAfterLeaveVC")
             .doc(server.id)
             .get();
-        if (doc.exists) {
-            me.msgEnable = doc.data()["enable"];
-            if (me.msgEnable === undefined) {
-                me.msgEnable = true;
-            }
-            me.msgAfterLeaveVC = doc.data()["msgAfterLeaveVC"];
-            if (me.msgAfterLeaveVC === undefined) {
-                me.msgAfterLeaveVC = null;
-            }
-            me.oldMsgALVC = doc.data()["oldMsgALVC"];
-            if (me.oldMsgALVC === undefined) {
-                me.oldMsgALVC = null;
-            }
-        } else {
-            me.msgAfterLeaveVC = null;
-            me.msgEnable = true;
-            me.oldMsgALVC = null;
+        if (msgAfterLeaveVCDoc.exists) {
+            me.msgEnable = msgAfterLeaveVCDoc.data()?.enable ?? true;
+            me.msgAfterLeaveVC =
+                msgAfterLeaveVCDoc.data()?.msgAfterLeaveVC ?? null;
+            me.oldMsgALVC = msgAfterLeaveVCDoc.data()?.oldMsgALVC ?? null;
         }
 
-        let sheets_id: string | null = null;
-        let doc_id: string | null = null;
+        const tutorInfoDoc = await firebase_db
+            .collection("tutor_info")
+            .doc(server.id)
+            .get();
 
-        doc = await firebase_db.collection("tutor_info").doc(server.id).get();
-        if (doc.exists) {
-            doc_id = doc.data()["tutor_info_doc"];
-            if (doc_id === undefined) {
-                doc_id = null;
-            }
-            sheets_id = doc.data()["tutor_info_sheet"];
-            if (sheets_id === undefined) {
-                sheets_id = null;
-            }
-            me.tutor_info_calendar = doc.data()["tutor_info_calendar"];
-            if (me.tutor_info_calendar === undefined) {
-                me.tutor_info_calendar = null;
-            }
-        } else {
-            me.tutor_info_doc = null;
-            me.tutor_info_sheet = null;
-            me.tutor_info_calendar = null;
-        }
+        // TODO: non of them will be null
+        // If the doc exists it's going to be a full object
+        if (tutorInfoDoc.exists) {
+            const doc_id = tutorInfoDoc.data()?.tutor_info_doc ?? null;
+            const sheets_id = tutorInfoDoc.data()?.tutor_info_sheet ?? null;
+            me.tutor_info_calendar =
+                tutorInfoDoc.data()?.tutor_info_calendar ?? null;
 
-        if (doc_id !== null) {
-            me.tutor_info_doc = new GoogleSpreadsheet(doc_id);
-            await me.tutor_info_doc.useServiceAccountAuth(gcs_creds);
-            await me.tutor_info_doc.loadInfo();
-            if (sheets_id !== null) {
-                me.tutor_info_sheet =
-                    me.tutor_info_doc.sheetsById[parseInt(sheets_id)];
+            if (doc_id !== null) {
+                me.tutor_info_doc = new GoogleSpreadsheet(doc_id);
+                await me.tutor_info_doc.useServiceAccountAuth(gcs_creds);
+                await me.tutor_info_doc.loadInfo();
+                if (sheets_id !== null) {
+                    me.tutor_info_sheet =
+                        me.tutor_info_doc.sheetsById[parseInt(sheets_id)];
+                }
             }
         }
 
@@ -230,7 +217,7 @@ export class AttendingServer {
      * @param member The member to be removed
      * @returns The new number of people in the queue
      */
-    async RemoveMemberFromQueues(member: GuildMember): Promise<number> {
+    async RemoveMemberFromAllQueues(member: GuildMember): Promise<number> {
         let queue_count = 0;
         await Promise.all(
             this.queues.map((queue) => {
@@ -248,7 +235,10 @@ export class AttendingServer {
      * @param queue_name The queue from which `member` is removed
      * @param member The member that is to be removed
      */
-    async RemoveMember(queue_name: string, member: GuildMember): Promise<void> {
+    async RemoveMemberFromQueue(
+        queue_name: string,
+        member: GuildMember
+    ): Promise<void> {
         const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             throw new UserError(
@@ -274,16 +264,16 @@ export class AttendingServer {
         this.member_states.GetMemberState(member).StartHelping();
         await Promise.all(
             this.GetHelpableQueues(member).map(async (queue) => {
-                queue.AddHelper(member, mute_notif);
+                await queue.AddHelper(member, mute_notif);
                 await queue.UpdateSchedule(
                     await this.getUpcomingHoursTable(queue.name)
                 );
             })
         );
         // if the queue already has people, notify the the tutor that there is a queue that isn't empty
-        this.GetHelpableQueues(member).forEach((queue) => {
+        this.GetHelpableQueues(member).forEach(async (queue) => {
             if (queue.length > 0) {
-                member.send(
+                await member.send(
                     SimpleEmbed(
                         "There are some students in the queues already",
                         EmbedColor.Warning
@@ -432,7 +422,7 @@ export class AttendingServer {
                     `You are not registered as a helper for "${member_queue.name}" which <@${member.id}> is in.`
                 );
             }
-            await this.RemoveMemberFromQueues(member);
+            await this.RemoveMemberFromAllQueues(member);
             this.member_states.GetMemberState(helper).OnDequeue(member);
             member_state.SetUpNext(true);
             return member_state;
@@ -495,7 +485,9 @@ export class AttendingServer {
 
         // If a queue name is specified, check that a queue with that name exists
         if (queue_name !== null) {
-            const queue = this.queues.find((queue) => queue.name === queue_name);
+            const queue = this.queues.find(
+                (queue) => queue.name === queue_name
+            );
             if (queue === undefined) {
                 throw new UserError(
                     `There is not a queue with the name ${queue_name}`
