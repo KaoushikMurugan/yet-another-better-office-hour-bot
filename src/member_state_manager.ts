@@ -16,19 +16,19 @@ export class MemberState {
     private helped_members: GuildMember[] = []
 
     get is_helping(): boolean {
-        return this.start_helping_timestamp !== null
+        return this.start_helping_timestamp !== null;
     }
 
     get is_being_helped(): boolean {
-        return this.start_being_helped_timestamp !== null
+        return this.start_being_helped_timestamp !== null;
     }
 
     get queue(): HelpQueue | null {
-        return this.current_queue
+        return this.current_queue;
     }
 
     get members_helped(): GuildMember[] {
-        return this.helped_members
+        return this.helped_members;
     }
 
     /**
@@ -36,12 +36,12 @@ export class MemberState {
      */
     StartHelping(): void {
         if (this.current_queue !== null) {
-            throw new UserError('You can\'t host while in a queue yourself.')
+            throw new UserError('You can\'t host while in a queue yourself.');
         } else if (this.start_helping_timestamp !== null) {
-            throw new UserError('You are already hosting.')
+            throw new UserError('You are already hosting.');
         }
-        this.start_helping_timestamp = Date.now()
-        this.helped_members = []
+        this.start_helping_timestamp = Date.now();
+        this.helped_members = [];
     }
 
     /**
@@ -50,11 +50,11 @@ export class MemberState {
      */
     StopHelping(): number {
         if (this.start_helping_timestamp === null) {
-            throw new UserError('You are not currently hosting.')
+            throw new UserError('You are not currently hosting.');
         }
-        const start = this.start_helping_timestamp
-        this.start_helping_timestamp = null
-        return start
+        const start = this.start_helping_timestamp;
+        this.start_helping_timestamp = null;
+        return start;
     }
 
     // Used to determine who is next in the queue when multiple queues are available to dequeue from
@@ -63,10 +63,10 @@ export class MemberState {
      */
     GetWaitTime(): number {
         if (this.current_queue === null || this.start_wait_timestamp === null) {
-            console.error(`User ${this.member.user.username} is not in a queue. Can't get wait time.`)
-            return -Infinity
+            console.error(`User ${this.member.user.username} is not in a queue. Can't get wait time.`);
+            return -Infinity;
         }
-        return Date.now() - this.start_wait_timestamp
+        return Date.now() - this.start_wait_timestamp;
     }
 
     /**
@@ -75,12 +75,12 @@ export class MemberState {
      */
     TryAddToQueue(queue: HelpQueue): void {
         if (this.current_queue !== null) {
-            throw new UserError(`You are already enqueued in \`${queue.name}\``)
+            throw new UserError(`You are already enqueued in \`${queue.name}\``);
         } else if (this.start_helping_timestamp !== null) {
-            throw new UserError('You can\'t join a queue while hosting')
+            throw new UserError('You can\'t join a queue while hosting');
         }
-        this.start_wait_timestamp = Date.now()
-        this.current_queue = queue
+        this.start_wait_timestamp = Date.now();
+        this.current_queue = queue;
     }
 
     /**
@@ -89,13 +89,13 @@ export class MemberState {
      */
     TryRemoveFromQueue(queue: HelpQueue | null = null): void {
         if (this.current_queue === null) {
-            throw new UserError(`You are not in the queue \`${queue?.name}\``)
+            throw new UserError(`You are not in the queue \`${queue?.name}\``);
         }
         if (queue !== null && queue !== this.current_queue) {
-            throw new UserError('You are not in the requested queue')
+            throw new UserError('You are not in the requested queue');
         }
-        this.start_wait_timestamp = null
-        this.current_queue = null
+        this.start_wait_timestamp = null;
+        this.current_queue = null;
     }
 
     /**
@@ -103,7 +103,7 @@ export class MemberState {
      * @param target 
      */
     OnDequeue(target: GuildMember): void {
-        this.helped_members.push(target)
+        this.helped_members.push(target);
     }
 
     /**
@@ -111,7 +111,7 @@ export class MemberState {
      * @param newVal 
      */
     SetUpNext(newVal: boolean): void {
-        this.up_next = newVal
+        this.up_next = newVal;
     }
 
     /**
@@ -119,10 +119,10 @@ export class MemberState {
      */
     GetHelpTime(): number {
         if (this.start_helping_timestamp === null) {
-            console.error(`Cannot get help time for ${this.member.user.username}.`)
-            return 0
+            console.error(`Cannot get help time for ${this.member.user.username}.`);
+            return 0;
         }
-        return Date.now() - this.start_helping_timestamp
+        return Date.now() - this.start_helping_timestamp;
     }
 
     /**
@@ -131,13 +131,13 @@ export class MemberState {
     OnJoinVC(): void {
         // if a helper, don't update
         if (this.start_helping_timestamp !== null)
-            return
+            return;
         // prevent sending a user this if they accidently join vc and leave
         if (this.up_next !== true) {
-            return
+            return;
         }
-        this.up_next = false
-        this.start_being_helped_timestamp = Date.now()
+        this.up_next = false;
+        this.start_being_helped_timestamp = Date.now();
     }
 
     /**
@@ -148,15 +148,15 @@ export class MemberState {
     OnLeaveVC(dmMessage: string | null): void {
         // if a helper, don't update
         if (this.start_being_helped_timestamp == null)
-            return
+            return;
         if (dmMessage !== null) {
-            this.member.send(dmMessage)
+            this.member.send(dmMessage);
         }
-        this.start_being_helped_timestamp = null
+        this.start_being_helped_timestamp = null;
     }
 
     constructor(member: GuildMember) {
-        this.member = member
+        this.member = member;
     }
 }
 
@@ -164,12 +164,12 @@ export class MemberStateManager {
     private member_map = new Map<GuildMember, MemberState>()
 
     GetMemberState(member: GuildMember): MemberState {
-        let member_state = this.member_map.get(member)
+        let member_state = this.member_map.get(member);
         if (member_state === undefined) {
             member_state = new MemberState(member);
-            this.member_map.set(member, member_state)
+            this.member_map.set(member, member_state);
         }
-        return member_state
+        return member_state;
     }
 
     Reset(): void {
@@ -177,6 +177,6 @@ export class MemberStateManager {
     }
 
     forEach(callback: (member_state: MemberState) => void): void {
-        this.member_map.forEach(member_state => callback(member_state))
+        this.member_map.forEach(member_state => callback(member_state));
     }
 }

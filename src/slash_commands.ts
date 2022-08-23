@@ -6,7 +6,7 @@
  *************************************************************************/
 
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { REST } from '@discordjs/rest'
+import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { Guild } from 'discord.js';
 
@@ -26,7 +26,7 @@ const queue_command = new SlashCommandBuilder()         // /queue
         .addChannelOption(option => option
             .setName('queue_name')
             .setDescription('The name of the queue to remove')
-            .setRequired(true)))
+            .setRequired(true)));
 
 const enqueue_command = new SlashCommandBuilder()       // /enqueue [queue_name] (user)
     .setName('enqueue')
@@ -38,7 +38,7 @@ const enqueue_command = new SlashCommandBuilder()       // /enqueue [queue_name]
     .addUserOption(option => option
         .setName('user')
         .setDescription('The user to add to the queue (staff only).')
-        .setRequired(false))
+        .setRequired(false));
 
 const dequeue_command = new SlashCommandBuilder()       // /next (queue_name) (user)
     .setName('next')
@@ -50,7 +50,7 @@ const dequeue_command = new SlashCommandBuilder()       // /next (queue_name) (u
     .addUserOption(option => option
         .setName('user')
         .setDescription('A user to dequeue')
-        .setRequired(false))
+        .setRequired(false));
 
 const start_command = new SlashCommandBuilder()         // /start (mute_notif)
     .setName('start')
@@ -58,15 +58,15 @@ const start_command = new SlashCommandBuilder()         // /start (mute_notif)
     .addBooleanOption(option => option
         .setName('mute_notif')
         .setDescription('Set to true if you do not want to ping those who have enabled notifications. Default: False')
-        .setRequired(false))
+        .setRequired(false));
 
 const stop_command = new SlashCommandBuilder()          // /stop
     .setName('stop')
-    .setDescription('Stop helping students')
+    .setDescription('Stop helping students');
 
 const leave_command = new SlashCommandBuilder()         // /leave
     .setName('leave')
-    .setDescription('Leave your current queue')
+    .setDescription('Leave your current queue');
 
 const clear_command = new SlashCommandBuilder()         // /clear (queue_name) (all)
     .setName('clear')
@@ -78,7 +78,7 @@ const clear_command = new SlashCommandBuilder()         // /clear (queue_name) (
     .addBooleanOption(option => option
         .setName('all')
         .setDescription('Clear all queues?')
-        .setRequired(false))
+        .setRequired(false));
 
 const announce_command = new SlashCommandBuilder()      // /announce [message] (queue_name)
     .setName('announce')
@@ -90,11 +90,11 @@ const announce_command = new SlashCommandBuilder()      // /announce [message] (
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The queue to announce in, or all queues if none is specified')
-        .setRequired(false))
+        .setRequired(false));
 
 const list_helpers_command = new SlashCommandBuilder()  // /list_helpers
     .setName('list_helpers')
-    .setDescription('See who is online and helping.')
+    .setDescription('See who is online and helping.');
 
 const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_name)
     .setName('when_next')
@@ -102,7 +102,7 @@ const list_next_hours = new SlashCommandBuilder()       // /when_next (queue_nam
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The course for which you want to view the next tutoring hours')
-        .setRequired(false))
+        .setRequired(false));
 
 const get_notifications = new SlashCommandBuilder()      // /get_notifs [queue_name]
     .setName('notify_me')
@@ -110,7 +110,7 @@ const get_notifications = new SlashCommandBuilder()      // /get_notifs [queue_n
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The course for which you want be notifed when its queue becomes open')
-        .setRequired(true))
+        .setRequired(true));
 
 const remove_notifications = new SlashCommandBuilder()  // /remove_notif [queue_name]
     .setName('remove_notif')
@@ -118,7 +118,7 @@ const remove_notifications = new SlashCommandBuilder()  // /remove_notif [queue_
     .addChannelOption(option => option
         .setName('queue_name')
         .setDescription('The course for which you no longer want to be notified for')
-        .setRequired(true))
+        .setRequired(true));
 
 const msg_after_leave_VC = new SlashCommandBuilder()
     .setName('post_session_msg')
@@ -136,7 +136,7 @@ const msg_after_leave_VC = new SlashCommandBuilder()
             .setRequired(false)))
     .addSubcommand(subcommand => subcommand             // /post_session_msg revert
         .setName('revert')
-        .setDescription('reverts the message to the previous one'))
+        .setDescription('reverts the message to the previous one'));
 
 const set_calendar = new SlashCommandBuilder()
     .setName('calendar')
@@ -157,11 +157,11 @@ const set_calendar = new SlashCommandBuilder()
             .setRequired(true)))
     .addSubcommand(subcommand => subcommand
         .setName('format_help')
-        .setDescription('Get an explanation of how the calendar and sheets have to be formatted'))
+        .setDescription('Get an explanation of how the calendar and sheets have to be formatted'));
 
 const force_update_queues = new SlashCommandBuilder()
     .setName('force_update_queues')
-    .setDescription('Debug feature: Forces updates of the queue and the schedule messages in all #queue channel')
+    .setDescription('Debug feature: Forces updates of the queue and the schedule messages in all #queue channel');
 
 
 // Get the raw data that can be sent to Discord
@@ -181,10 +181,10 @@ const commandData = [
     msg_after_leave_VC.toJSON(),
     set_calendar.toJSON(),
     force_update_queues.toJSON()
-]
+];
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {
-    const rest = new REST({ version: '9' }).setToken(process.env.BOB_BOT_TOKEN as string)
-    await rest.put(Routes.applicationGuildCommands(process.env.BOB_APP_ID as string, guild.id), { body: commandData }).catch(console.error)
-    console.log(`Updated slash commands on "${guild.name}"`)
+    const rest = new REST({ version: '9' }).setToken(process.env.BOB_BOT_TOKEN as string);
+    await rest.put(Routes.applicationGuildCommands(process.env.BOB_APP_ID as string, guild.id), { body: commandData }).catch(console.error);
+    console.log(`Updated slash commands on "${guild.name}"`);
 }
