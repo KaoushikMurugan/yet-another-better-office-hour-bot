@@ -56,7 +56,6 @@ client.on("ready", async () => {
     console.log("B.O.B. V3");
 
     if (client.user === null) {
-        // ? what's the difference between null and error in client.login
         throw new Error("Login Unsuccessful. Check BOB's Discord Credentials");
     }
 
@@ -106,10 +105,10 @@ client.on("guildCreate", async (guild) => {
 });
 
 client.on("interactionCreate", async (interaction) => {
-    //Only care about if the interaction was a command or a button
+    // Only care about if the interaction was a command or a button
     if (!interaction.isCommand() && !interaction.isButton()) return;
 
-    //Don't care about the interaction if done through dms
+    // Don't care about the interaction if done through dms
     if (interaction.guild === null) {
         await interaction.reply("Sorry, I dont respond to direct messages.");
         return;
@@ -162,7 +161,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 
 // incase queue message gets deleted
 client.on("messageDelete", async (message) => {
-    if (message === null) {
+    if (message === null || message?.member === null) {
         console.error("Recognized a message deletion without a message");
         return;
     }
@@ -177,8 +176,6 @@ client.on("messageDelete", async (message) => {
     const server =
         servers.get(message.guild) ?? (await JoinGuild(message.guild));
 
-    // ? non null assertion or typecasting
-    // ? also what if message.member is actually null?
     await server.EnsureHasRole(message.member as GuildMember);
 
     const channel = message.channel as TextChannel;

@@ -410,7 +410,7 @@ export class HelpQueue {
      * Removes `member` from the notification queue for this queue
      * @param member
      */
-    async RemoveFromNotifQueue(member: GuildMember): Promise<void> {
+    RemoveFromNotifQueue(member: GuildMember): void {
         //Adds member to notification queue
         this.notif_queue.delete(member);
     }

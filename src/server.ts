@@ -74,7 +74,7 @@ export class AttendingServer {
     static async Create(
         client: Client,
         server: Guild,
-        firebase_db: any,
+        firebase_db: Firestore,
         attendance_doc: GoogleSpreadsheet | null = null
     ): Promise<AttendingServer> {
         if (server.me === null || !server.me.permissions.has("ADMINISTRATOR")) {
@@ -184,7 +184,7 @@ export class AttendingServer {
      * @param channel
      */
     async ClearQueue(channel: CategoryChannel): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == channel.name);
+        const queue = this.queues.find((queue) => queue.name === channel.name);
         if (queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${channel.name}.`
@@ -201,7 +201,7 @@ export class AttendingServer {
     private GetHelpableQueues(member: GuildMember) {
         return this.queues.filter(
             (queue) =>
-                member.roles.cache.find((role) => role.name == queue.name) !==
+                member.roles.cache.find((role) => role.name === queue.name) !==
                 undefined
         );
     }
@@ -215,7 +215,7 @@ export class AttendingServer {
         queue_name: string
     ): Promise<Collection<string, GuildMember>> {
         return this.server.roles.fetch().then((roles) => {
-            const queue_role = roles.find((role) => role.name == queue_name);
+            const queue_role = roles.find((role) => role.name === queue_name);
             if (queue_role === undefined) {
                 throw new UserError(
                     `There exists no queue with the name \`${queue_name}\``
@@ -249,7 +249,7 @@ export class AttendingServer {
      * @param member The member that is to be removed
      */
     async RemoveMember(queue_name: string, member: GuildMember): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${queue_name}`
@@ -266,7 +266,7 @@ export class AttendingServer {
      */
     async AddHelper(member: GuildMember, mute_notif: boolean): Promise<void> {
         const helpable_queues = this.GetHelpableQueues(member);
-        if (helpable_queues.length == 0) {
+        if (helpable_queues.length === 0) {
             throw new UserError(
                 "You are a staff member but do not have any queue roles assigned. I don't know where you are allowed to help :("
             );
@@ -312,7 +312,7 @@ export class AttendingServer {
             //find the sheet whose name is the same as the server's name
             for (let i = 0; i < this.attendance_doc.sheetCount; i++) {
                 const current_sheet = this.attendance_doc.sheetsByIndex[i];
-                if (current_sheet.title == this.server.name) {
+                if (current_sheet.title === this.server.name) {
                     this.attendance_sheet = current_sheet;
                 }
             }
@@ -411,7 +411,7 @@ export class AttendingServer {
         }
 
         const helpable_queues = this.GetHelpableQueues(helper);
-        if (helpable_queues.length == 0) {
+        if (helpable_queues.length === 0) {
             throw new UserError(
                 "You are not registered as a helper for any queues."
             );
@@ -442,7 +442,7 @@ export class AttendingServer {
         let target_queue: HelpQueue;
         if (queue_option !== null) {
             const queue = this.queues.find(
-                (queue) => queue.name == queue_option.name
+                (queue) => queue.name === queue_option.name
             );
             if (queue === undefined) {
                 throw new UserError(
@@ -466,7 +466,7 @@ export class AttendingServer {
             target_queue = helpable_queues[index_of_max];
         }
         // if there's no-one to dequeue
-        if (target_queue.length == 0) {
+        if (target_queue.length === 0) {
             throw new UserError(
                 "There is no one left to help. Now might be a good time for a coffee."
             );
@@ -495,7 +495,7 @@ export class AttendingServer {
 
         // If a queue name is specified, check that a queue with that name exists
         if (queue_name !== null) {
-            const queue = this.queues.find((queue) => queue.name == queue_name);
+            const queue = this.queues.find((queue) => queue.name === queue_name);
             if (queue === undefined) {
                 throw new UserError(
                     `There is not a queue with the name ${queue_name}`
@@ -510,7 +510,7 @@ export class AttendingServer {
             if (member_state.queue === null) return;
 
             if (queue_name !== null) {
-                if (member_state.queue.name == queue_name) {
+                if (member_state.queue.name === queue_name) {
                     targets.push(member_state.member);
                 }
             } else {
@@ -551,7 +551,7 @@ export class AttendingServer {
      * @param member
      */
     async EnqueueUser(queue_name: string, member: GuildMember): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${queue_name}`
@@ -570,11 +570,11 @@ export class AttendingServer {
      * @param name The name of the category
      */
     async CreateQueue(name: string): Promise<void> {
-        if (name.toLowerCase() == "admin" || name.toLowerCase() == "staff") {
+        if (name.toLowerCase() === "admin" || name.toLowerCase() === "staff") {
             throw new UserError(`Queues cannot be named "admin" or "staff"`);
         }
 
-        if (this.queues.find((queue) => queue.name == name) !== undefined) {
+        if (this.queues.find((queue) => queue.name === name) !== undefined) {
             throw new UserError(
                 `A queue with the name ${name} already exists on this server.`
             );
@@ -626,7 +626,7 @@ export class AttendingServer {
      * @param channel The name of the category to be removed
      */
     async RemoveQueue(channel: GuildChannel): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == channel.name);
+        const queue = this.queues.find((queue) => queue.name === channel.name);
         if (channel.type !== "GUILD_CATEGORY" || queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${channel.name}`
@@ -642,7 +642,7 @@ export class AttendingServer {
         await channel.delete();
 
         const role = this.server.roles.cache.find(
-            (role) => role.name == channel.name
+            (role) => role.name === channel.name
         );
         if (role !== undefined) {
             await role.delete();
@@ -658,14 +658,14 @@ export class AttendingServer {
         queue_name: string,
         member: GuildMember
     ): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${queue_name}`
             );
         }
         await queue.AddToNotifQueue(member);
-        member.send(
+        await member.send(
             SimpleEmbed(
                 "You will be notified when the queue becomes open.",
                 EmbedColor.Success
@@ -682,14 +682,14 @@ export class AttendingServer {
         queue_name: string,
         member: GuildMember
     ): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             throw new UserError(
                 `There is not a queue with the name ${queue_name}`
             );
         }
-        await queue.RemoveFromNotifQueue(member);
-        member.send(
+        queue.RemoveFromNotifQueue(member);
+        await member.send(
             SimpleEmbed(
                 "You will no longer be notified when the queue becomes open.",
                 EmbedColor.Success
@@ -705,7 +705,7 @@ export class AttendingServer {
         await this.server.channels
             .fetch()
             .then((channels) =>
-                channels.filter((channel) => channel.type == "GUILD_CATEGORY")
+                channels.filter((channel) => channel.type === "GUILD_CATEGORY")
             )
             .then((channels) =>
                 channels.map((channel) => channel as CategoryChannel)
@@ -714,15 +714,15 @@ export class AttendingServer {
                 Promise.all(
                     categories.map((category) => {
                         const queue_channel = category.children.find(
-                            (child) => child.name == "queue"
+                            (child) => child.name === "queue"
                         ) as TextChannel;
                         if (
                             queue_channel !== undefined &&
-                            queue_channel.type == "GUILD_TEXT"
+                            queue_channel.type === "GUILD_TEXT"
                         ) {
                             if (
                                 this.queues.find(
-                                    (queue) => queue.name == category.name
+                                    (queue) => queue.name === category.name
                                 ) === undefined
                             ) {
                                 // get the queue message and schedule message if they already exists
@@ -731,7 +731,7 @@ export class AttendingServer {
                                     .then((messages) =>
                                         messages.filter(
                                             (msg) =>
-                                                msg.author == this.client.user
+                                                msg.author === this.client.user
                                         )
                                     )
                                     .then((messages) => {
@@ -797,7 +797,7 @@ export class AttendingServer {
      * @returns `Role`: the student role
      */
     private async EnsureRolesExist(roles: Collection<string, Role>) {
-        let student_role = roles.find((role) => role.name == "Student");
+        let student_role = roles.find((role) => role.name === "Student");
         if (student_role === undefined) {
             student_role = await this.server.roles.create({
                 name: "Student",
@@ -806,7 +806,7 @@ export class AttendingServer {
         }
         await student_role.setHoist(true);
 
-        let staff_role = roles.find((role) => role.name == "Staff");
+        let staff_role = roles.find((role) => role.name === "Staff");
         if (staff_role === undefined) {
             staff_role = await this.server.roles.create({
                 name: "Staff",
@@ -815,7 +815,7 @@ export class AttendingServer {
         }
         await staff_role.setHoist(true);
 
-        let admin_role = roles.find((role) => role.name == "Admin");
+        let admin_role = roles.find((role) => role.name === "Admin");
         if (admin_role === undefined) {
             admin_role = await this.server.roles.create({
                 name: "Admin",
@@ -833,7 +833,7 @@ export class AttendingServer {
         }
 
         for (const queue of this.queues) {
-            let queue_role = roles.find((role) => role.name == queue.name);
+            let queue_role = roles.find((role) => role.name === queue.name);
             if (queue_role === undefined) {
                 queue_role = await this.server.roles.create({
                     name: queue.name,
@@ -853,7 +853,7 @@ export class AttendingServer {
      * @param member
      */
     async EnsureHasRole(member: GuildMember): Promise<void> {
-        if (member.roles.highest == this.server.roles.everyone) {
+        if (member.roles.highest === this.server.roles.everyone) {
             const roles = await this.server.roles.fetch();
             const student_role = await this.EnsureRolesExist(roles);
             await member.roles.add(student_role);
@@ -891,7 +891,7 @@ export class AttendingServer {
      * @param queue_name The name of the category
      */
     async EnsureQueueSafe(queue_name: string): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             return;
         }
@@ -903,7 +903,7 @@ export class AttendingServer {
      * @param queue_name The queue that needs to be updated
      */
     async ForceQueueUpdate(queue_name: string): Promise<void> {
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             return;
         }
@@ -1183,7 +1183,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             ];
         }
 
-        const queue = this.queues.find((queue) => queue.name == queue_name);
+        const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             return ["Invalid queue channel", new Date(0)];
         }
@@ -1408,11 +1408,11 @@ disabled. To enable it, do `/post_session_msg enable: true`";
         await this.server.channels
             .fetch()
             .then((channels) =>
-                channels.filter((channel) => channel.type == "GUILD_CATEGORY")
+                channels.filter((channel) => channel.type === "GUILD_CATEGORY")
             )
             .then((channels) => {
                 return channels.find(
-                    (channel) => channel.name == "Bot Commands Help"
+                    (channel) => channel.name === "Bot Commands Help"
                 ) as CategoryChannel;
             })
             .then(async (category) => {
@@ -1480,7 +1480,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
     async newfunction(category: CategoryChannel, channel_name: string | null) {
         //ADMIN
         let admin_commands_channel = category.children.find(
-            (channel) => channel.name == "admin-commands"
+            (channel) => channel.name === "admin-commands"
         ) as TextChannel;
         if (
             admin_commands_channel === null ||
@@ -1512,7 +1512,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
         //HELPER
         let helper_commands_channel = category.children.find(
-            (channel) => channel.name == "helper-commands"
+            (channel) => channel.name === "helper-commands"
         ) as TextChannel;
         if (
             helper_commands_channel === null ||
@@ -1544,7 +1544,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
         //STUDENT
         let student_commands_channel = category.children.find(
-            (channel) => channel.name == "student-commands"
+            (channel) => channel.name === "student-commands"
         ) as TextChannel;
         if (
             student_commands_channel === null ||
