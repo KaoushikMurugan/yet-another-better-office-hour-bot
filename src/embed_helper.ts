@@ -1,3 +1,5 @@
+import { MessageEmbedOptions } from "discord.js";
+
 export enum EmbedColor {
     Success = 0x00ff00, // Green
     Error = 0xff0000, // Red
@@ -6,7 +8,10 @@ export enum EmbedColor {
     NeedName = 0x0000ff, // Blue
 }
 
-export function SimpleEmbed(message: string, color = EmbedColor.Neutral): any {
+export function SimpleEmbed(
+    message: string,
+    color = EmbedColor.Neutral
+): { embeds: MessageEmbedOptions[] } {
     if (message.length <= 256) {
         return {
             embeds: [

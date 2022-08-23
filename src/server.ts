@@ -27,11 +27,10 @@ import {
     GoogleSpreadsheetWorksheet,
 } from "google-spreadsheet";
 import gcs_creds from "../gcs_service_account_key.json";
-
 import fetch from "node-fetch";
 import { EmbedColor, SimpleEmbed } from "./embed_helper";
-
 import * as fs from "fs";
+import { Firestore } from "firebase-admin/firestore";
 
 export class AttendingServer {
     private queues: HelpQueue[] = [];
@@ -40,7 +39,7 @@ export class AttendingServer {
     private server: Guild;
     private attendance_doc: GoogleSpreadsheet | null;
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null;
-    private firebase_db: any;
+    private firebase_db: Firestore;
 
     private tutor_info_doc: GoogleSpreadsheet | null = null;
     private tutor_info_sheet: GoogleSpreadsheetWorksheet | null = null;
@@ -55,7 +54,7 @@ export class AttendingServer {
     private constructor(
         client: Client,
         server: Guild,
-        firebase_db: any,
+        firebase_db: Firestore,
         attendance_doc: GoogleSpreadsheet | null
     ) {
         this.client = client;
