@@ -15,9 +15,9 @@ import { HelpQueue, HelpQueueDisplayManager } from "../queue";
 import { MemberStateManager } from "../member_state_manager";
 import { UserError } from "../user_action_error";
 import { MemberState } from "../member_state_manager";
-
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
 import { Firestore } from "firebase-admin/firestore";
+import { CommandChConfig } from "./command-ch-constants";
 
 // Wrapper for TextChannel
 // Guarantees that a queue_name exists
@@ -64,6 +64,7 @@ class AttendingServerV2 {
 
         console.log(`Creating new YABOB for server: ${server.name}`);
         const me = new AttendingServerV2(user, server, firebaseDB);
+        await me.updateCommandHelpChannels();
 
         return me;
     }
@@ -130,7 +131,7 @@ class AttendingServerV2 {
 
     async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
-        const existingHelpCh = allChannels
+        const existingHelpCategory = allChannels
             .filter(
                 ch =>
                     ch.type === "GUILD_CATEGORY" &&
@@ -138,26 +139,57 @@ class AttendingServerV2 {
             )
             .map(ch => ch as CategoryChannel);
 
-        if (existingHelpCh.length === 0) {
-            console.log("Creating new help channels");
+        // If no help category is found, initialize
+        // do initialization only in this if block
+        // messages are handled separately
+        if (existingHelpCategory.length === 0) {
+            console.log("\x1b[33mFound no help channels. Creating new ones.");
+
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
                 { type: "GUILD_CATEGORY" }
             );
+            existingHelpCategory.push(helpCategory);
 
-            const adminCommandCh = await helpCategory.createChannel(
-                "admin-commands"
-            );
-            await adminCommandCh.permissionOverwrites.create(
-                this.guild.roles.everyone,
-                { SEND_MESSAGES: false }
-            );
-            await adminCommandCh.permissionOverwrites.create(
-                this.user,
-                { SEND_MESSAGES: true }
-            );
+            for (const role of Object.values(CommandChConfig)) {
+                const commandCh = await helpCategory.createChannel(
+                    role.name
+                );
 
+                // ? doesn't block server owner
+                await commandCh.permissionOverwrites.create(
+                    this.guild.roles.everyone,
+                    { SEND_MESSAGES: false });
+                await commandCh.permissionOverwrites.create(
+                    this.user,
+                    { SEND_MESSAGES: true });
+
+                // ** Change the config object and add more function calls if necessary
+            }
+        } else {
+            console.log('\x1b[33mFound existing help channel, updating command help file\x1b[0m');
         }
+
+        const allHelpChannels = existingHelpCategory
+            .flatMap(cat => [...cat.children.values()]
+                .filter(ch => ch.type === 'GUILD_TEXT') as TextChannel[]);
+
+        // delete all existing messages
+        await Promise.all(allHelpChannels
+            .map(async ch => {
+                await ch.messages.fetch()
+                    .then(messages => messages.map(msg => msg.delete()));
+            }));
+
+        // now send new ones
+        await Promise.all(allHelpChannels
+            .map(async ch => {
+                const file = Object.values(CommandChConfig)
+                    .find(val => val.name === ch.name)?.file;
+                if (file) {
+                    await ch.send(SimpleEmbed(file));
+                }
+            }));
     }
 }
 

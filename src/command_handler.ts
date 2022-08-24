@@ -12,7 +12,7 @@ import { AttendingServer } from "./server";
 import { UserError } from "./user_action_error";
 import AsciiTable from "ascii-table";
 
-enum CommandAccessLevel {
+export enum CommandAccessLevel {
     ANYONE,
     STAFF,
     ADMIN,

@@ -1402,6 +1402,8 @@ disabled. To enable it, do `/post_session_msg enable: true`";
         });
     }
 
+
+    // Only called in create()
     async UpdateCommandHelpChannels(
         channel_name: string | null = null
     ): Promise<void> {
@@ -1452,6 +1454,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                     );
                     //admin_command_channel.permissionOverwrites.create(this.server.roles.everyone, { VIEW_CHANNEL: false })
                     // TODO following function doesn't regocnize 'Admin' as a role, even though it accepts string as a parameter
+                    // ? Convert ENUM
                     //admin_command_channel.permissionOverwrites.create('Admin', { VIEW_CHANNEL: true })
 
                     const helper_command_channel = await category.createChannel(
