@@ -162,7 +162,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
         // if not a helper and marked as being helped
         // send the person who left vc a dm to fill out a form
         // mark as not currently being helped
-        server.UpdateMemberLeftVC(member as GuildMember);
+        await server.UpdateMemberLeftVC(member as GuildMember);
     }
 });
 

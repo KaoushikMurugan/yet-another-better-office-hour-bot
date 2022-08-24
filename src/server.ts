@@ -305,8 +305,8 @@ export class AttendingServer {
             //find the sheet whose name is the same as the server's name
             for (let i = 0; i < this.attendance_doc.sheetCount; i++) {
                 const current_sheet = this.attendance_doc.sheetsByIndex[i];
-                if (current_sheet.title === this.server.name) {
-                    this.attendance_sheet = current_sheet;
+                if (current_sheet!.title === this.server.name) {
+                    this.attendance_sheet = current_sheet!;
                 }
             }
             // if sheet doesn't exist for the discord server already, make a new one
@@ -629,7 +629,7 @@ export class AttendingServer {
         }
 
         this.queues = this.queues.filter((x) => x !== queue);
-        const x = await Promise.all<Channel | void>(
+        await Promise.all<Channel | void>(
             (channel as CategoryChannel).children.map((child) => {
                 return child.delete();
             })
@@ -759,8 +759,8 @@ export class AttendingServer {
                                                 new HelpQueueDisplayManager(
                                                     this.client,
                                                     queue_channel,
-                                                    messages[0],
-                                                    messages[1]
+                                                    messages[0] ?? null,
+                                                    messages[1] ?? null
                                                 ),
                                                 this.member_states
                                             )
@@ -1118,14 +1118,11 @@ disabled. To enable it, do `/post_session_msg enable: true`";
         doc_id: string,
         sheets_id: string
     ): Promise<[string, boolean]> {
-        let tutor_doc: GoogleSpreadsheet | null = null;
-        let tutor_sheet: GoogleSpreadsheetWorksheet | null = null;
-
-        tutor_doc = new GoogleSpreadsheet(doc_id);
+        const tutor_doc = new GoogleSpreadsheet(doc_id);
         await tutor_doc.useServiceAccountAuth(gcs_creds);
         await tutor_doc.loadInfo();
 
-        tutor_sheet = tutor_doc.sheetsById[parseInt(sheets_id)];
+        const tutor_sheet = tutor_doc.sheetsById[parseInt(sheets_id)];
 
         if (tutor_doc === undefined || tutor_sheet === undefined) {
             return ["Something went wrong. Please try again", false];
@@ -1386,7 +1383,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
     async UpdateCommandHelpChannels(
         channel_name: string | null = null
     ): Promise<void> {
-        if (this.updating_bot_command_channels === true) {
+        if (this.updating_bot_command_channels) {
             // * console.log("canceled")
             return;
         }

@@ -651,12 +651,12 @@ export async function ProcessCommand(
                 staff_role === undefined)
         ) {
             await interaction.reply({
-                embeds: SimpleEmbed(
+                ...SimpleEmbed(
                     `No can do. You don't have access to this command.`,
                     EmbedColor.Error
-                ).embed,
-                ephemeral: true,
-            });
+                ),
+                ephemeral: true,}
+            );
             return;
         }
 
