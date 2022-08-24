@@ -40,12 +40,13 @@ export class AttendingServer {
 
     private attendance_doc: GoogleSpreadsheet | null;
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null;
+    
     private firebase_db: Firestore;
-
+    // in firebase
     private tutor_info_doc: GoogleSpreadsheet | null = null;
     private tutor_info_sheet?: GoogleSpreadsheetWorksheet;
     private tutor_info_calendar: string | null = null;
-
+    // in firebase
     private msgAfterLeaveVC: string | null = null;
     private oldMsgALVC: string | null = null;
     private msgEnable = false;
@@ -1549,8 +1550,6 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             });
             await helper_commands_channel.send({
                 embeds: SimpleEmbed(
-                    // Don't use file system here
-                    // use node js fecth or ajax call
                     fs.readFileSync(
                         __dirname +
                             "/../../help-channel-messages/helper-commands.txt",

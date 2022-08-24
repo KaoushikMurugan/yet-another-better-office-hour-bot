@@ -14,6 +14,8 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
+import { AttendingServerV2 } from "./attending-server/base-attending-server";
+
 dotenv.config();
 
 if (
@@ -48,7 +50,7 @@ client.login(process.env.YABOB_BOT_TOKEN).catch((e: Error) => {
     throw e;
 });
 
-client.on("error", (error) => {
+client.on("error", error => {
     console.error(error);
 });
 
@@ -56,7 +58,9 @@ client.on("ready", async () => {
     console.log("YABOB V3");
 
     if (client.user === null) {
-        throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
+        throw new Error(
+            "Login Unsuccessful. Check YABOB's Discord Credentials"
+        );
     }
 
     console.log(`Logged in as ${client.user.tag}!`);
@@ -64,23 +68,30 @@ client.on("ready", async () => {
 
     const guilds = await client.guilds.fetch(); // guild is a server
     console.log(`Found ${guilds.size} server(s)`);
-    const full_guilds = await Promise.all(guilds.map((guild) => guild.fetch()));
+    const full_guilds = await Promise.all(guilds.map(guild => guild.fetch()));
     // * full guild is all the servers this YABOB instance is part of
 
     // Connecting to the attendance sheet
     let attendance_doc: GoogleSpreadsheet | null = null;
     if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined) {
-        attendance_doc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
+        attendance_doc = new GoogleSpreadsheet(
+            process.env.YABOB_GOOGLE_SHEET_ID
+        );
         await attendance_doc.useServiceAccountAuth(gcs_creds);
         console.log("Connected to Google sheets.");
     } else {
-        console.log(`No google sheets ID found. Creating BOB without attendance logging.`);
+        console.log(
+            `No google sheets ID found. Creating BOB without attendance logging.`
+        );
     }
 
+    await AttendingServerV2.create(client, full_guilds[0], firebase_db);
+
+    process.exit(0);
     await Promise.all(
-        full_guilds.map((guild) =>
+        full_guilds.map(guild =>
             AttendingServer.Create(client, guild, firebase_db, attendance_doc)
-                .then((server) => servers.set(guild, server))
+                .then(server => servers.set(guild, server))
                 .then(() => PostSlashCommands(guild))
                 .catch((err: Error) => {
                     console.error(
@@ -91,10 +102,10 @@ client.on("ready", async () => {
     );
 
     console.log("Ready to go!");
-    console.log(full_guilds.map((guild) => guild.name));
+    console.log(full_guilds.map(guild => guild.name));
 
     await Promise.all(
-        full_guilds.map(async (guild) => {
+        full_guilds.map(async guild => {
             const server = servers.get(guild);
             if (server !== undefined) {
                 await server.AutoScheduleUpdates(server);
@@ -103,11 +114,11 @@ client.on("ready", async () => {
     );
 });
 
-client.on("guildCreate", async (guild) => {
+client.on("guildCreate", async guild => {
     await JoinGuild(guild);
 });
 
-client.on("interactionCreate", async (interaction) => {
+client.on("interactionCreate", async interaction => {
     // Only care about if the interaction was a command or a button
     if (!interaction.isCommand() && !interaction.isButton()) return;
 
@@ -118,8 +129,10 @@ client.on("interactionCreate", async (interaction) => {
     }
     console.log("interaction create");
 
-    const server =
-        servers.get(interaction.guild) ?? (await JoinGuild(interaction.guild));
+    const server = servers.get(interaction.guild)!;
+    if (server === undefined) {
+        console.log(`undefined server`);
+    }
 
     await server.EnsureHasRole(interaction.member as GuildMember);
 
@@ -144,10 +157,6 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 
     const server =
         servers.get(oldState.guild) ?? (await JoinGuild(oldState.guild));
-    // let server = servers.get(oldState.guild);
-    // if (server === undefined) {
-    //     server = await JoinGuild(oldState.guild);
-    // }
     const member = oldState.member;
     await server.EnsureHasRole(member as GuildMember);
 
@@ -167,7 +176,7 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
 });
 
 // incase queue message gets deleted
-client.on("messageDelete", async (message) => {
+client.on("messageDelete", async message => {
     if (message === null || message?.member === null) {
         console.error("Recognized a message deletion without a message");
         return;
@@ -182,7 +191,7 @@ client.on("messageDelete", async (message) => {
 
     const server = servers.get(message.guild);
 
-    if(server === undefined) {
+    if (server === undefined) {
         // Calling JoinGuild() here causes issues involving duplicate of the
         // same server being stored in fullGuilds
         return;
@@ -201,7 +210,7 @@ client.on("messageDelete", async (message) => {
     await server.ForceQueueUpdate(category.name);
 });
 
-client.on("guildMemberAdd", async (member) => {
+client.on("guildMemberAdd", async member => {
     const server = servers.get(member.guild) ?? (await JoinGuild(member.guild));
     await server.EnsureHasRole(member as GuildMember);
 });
