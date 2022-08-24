@@ -207,6 +207,20 @@ export class AttendingServer {
     }
 
     /**
+     * Returns true if `member` is a helper for `queue_name`
+     * @param member 
+     * @param queue_name 
+     * @returns 
+     */
+    async IsHelperFor(member: GuildMember, queue_name: string): Promise<boolean> {
+        const queue = this.queues.find((queue) => queue.name === queue_name);
+        if(queue === undefined) {
+            throw new UserError("Invalid queue")
+        }
+        return member.roles.cache.find((role) => role.name === queue_name) !== undefined
+    }
+
+    /**
      * Removes `member` from all queues on this server
      * @param member The member to be removed
      * @returns The new number of people in the queue
@@ -972,14 +986,14 @@ export class AttendingServer {
         let response: string;
         if (enable === true && this.msgAfterLeaveVC !== null) {
             response =
-                "BOB will now send the following message to students once they finish recieving tutoring: \n\n" +
+                "YABOB will now send the following message to students once they finish recieving tutoring: \n\n" +
                 this.msgAfterLeaveVC;
         } else if (enable === true && this.msgAfterLeaveVC === null) {
             response =
-                "BOB has enabled the sending a message after a session feature, but there is no message saved for this server";
+                "YABOB has enabled the sending a message after a session feature, but there is no message saved for this server";
         } else {
             response =
-                "BOB will no longer send a messages to tutees after the finish recieving tutoring. \
+                "YABOB will no longer send a messages to tutees after the finish recieving tutoring. \
 If you wish to enable this feature later, just set the enable option to true.";
         }
         return response;
@@ -1010,11 +1024,11 @@ If you wish to enable this feature later, just set the enable option to true.";
         let response: string;
         if (this.msgEnable === true && this.msgAfterLeaveVC !== null) {
             response =
-                "BOB will now send the following message to students once they finish receiving tutoring: \n\n" +
+                "YABOB will now send the following message to students once they finish receiving tutoring: \n\n" +
                 this.msgAfterLeaveVC;
         } else if (this.msgEnable === true && this.msgAfterLeaveVC === null) {
             response =
-                "BOB has enabled the sending a message after a session feature, but there is no message saved for this server";
+                "YABOB has enabled the sending a message after a session feature, but there is no message saved for this server";
         } else if (this.msgAfterLeaveVC !== null) {
             response =
                 "The message has been reverted to: \n\n" +
@@ -1071,7 +1085,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             "https://www.googleapis.com/calendar/v3/calendars/" +
                 calendar_id +
                 "/events?key=" +
-                process.env.BOB_GOOGLE_CALENDAR_API_KEY
+                process.env.YABOB_GOOGLE_CALENDAR_API_KEY
         );
         const data = await response.json();
 
@@ -1181,6 +1195,9 @@ disabled. To enable it, do `/post_session_msg enable: true`";
         const queue = this.queues.find((queue) => queue.name === queue_name);
         if (queue === undefined) {
             return ["Invalid queue channel", new Date(0)];
+        } else if (queue === null) {
+            console.log("queue was null");
+            return ["Invalid queue channel", new Date(0)];
         }
 
         const helpersMap = await this.GetHelpersForQueue(queue_name);
@@ -1203,7 +1220,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 "&timeMin=" +
                 minDate.toISOString() +
                 "&key=" +
-                process.env.BOB_GOOGLE_CALENDAR_API_KEY
+                process.env.YABOB_GOOGLE_CALENDAR_API_KEY
         );
 
         const data = await response.json();
@@ -1214,6 +1231,10 @@ disabled. To enable it, do `/post_session_msg enable: true`";
         let table = new String();
 
         const update_time = new Date(0);
+
+        if(data.items === undefined){
+            console.log("no data for " + queue_name)
+        }
 
         await data.items.forEach(
             (event: {
@@ -1466,16 +1487,13 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 }
             })
             .then(async (category) => {
-                await this.newfunction(category, channel_name);
+                await this.RefreshCommandHelpChannels(category, channel_name);
             });
 
         this.updating_bot_command_channels = false;
     }
 
-    async newfunction(
-        category: CategoryChannel,
-        channel_name: string | null
-    ): Promise<void> {
+    async RefreshCommandHelpChannels(category: CategoryChannel, channel_name: string | null) {
         //ADMIN
         let admin_commands_channel = category.children.find(
             (channel) => channel.name === "admin-commands"

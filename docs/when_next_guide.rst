@@ -27,5 +27,5 @@ Setting up the ``when_next`` command requires the following:
       -  Setting the Google Sheet to **Public** (i.e. allow anyone with the link can view the document).
       -  If the sheet is private, sending the bot an invite to access the sheet.
 
-`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/BOB/blob/main/docs/main.rst>`__
+`Go Back To The Docs Main Page <https://github.com/KaoushikMurugan/YABOB/blob/main/docs/main.rst>`__
 -----------------------------------------------------------------------------------------------

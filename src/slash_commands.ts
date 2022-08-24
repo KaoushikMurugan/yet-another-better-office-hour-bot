@@ -183,7 +183,7 @@ const msg_after_leave_VC = new SlashCommandBuilder()
                 option
                     .setName("enable")
                     .setDescription(
-                        "if false, then BOB will not send any message to the tutee after their session [Default: false]"
+                        "if false, then YABOB will not send any message to the tutee after their session [Default: false]"
                     )
                     .setRequired(true)
             )
@@ -268,12 +268,12 @@ const commandData = [
 
 export async function PostSlashCommands(guild: Guild): Promise<void> {
     const rest = new REST({ version: "9" }).setToken(
-        process.env.BOB_BOT_TOKEN as string
+        process.env.YABOB_BOT_TOKEN as string
     );
     await rest
         .put(
             Routes.applicationGuildCommands(
-                process.env.BOB_APP_ID as string,
+                process.env.YABOB_APP_ID as string,
                 guild.id
             ),
             { body: commandData }

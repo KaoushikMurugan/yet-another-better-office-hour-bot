@@ -17,8 +17,8 @@ import { getFirestore } from "firebase-admin/firestore";
 dotenv.config();
 
 if (
-    process.env.BOB_BOT_TOKEN === undefined ||
-    process.env.BOB_APP_ID === undefined
+    process.env.YABOB_BOT_TOKEN === undefined ||
+    process.env.YABOB_APP_ID === undefined
 ) {
     throw new Error("Missing token or id!");
 }
@@ -43,8 +43,8 @@ const servers: Collection<Guild, AttendingServer> = new Collection();
 const firebase_db: FirebaseFirestore.Firestore = getFirestore();
 console.log("Connected to Firebase database");
 
-client.login(process.env.BOB_BOT_TOKEN).catch((e: Error) => {
-    console.error("Login Unsuccessful. Check BOBs credentials.");
+client.login(process.env.YABOB_BOT_TOKEN).catch((e: Error) => {
+    console.error("Login Unsuccessful. Check YABOBs credentials.");
     throw e;
 });
 
@@ -53,10 +53,10 @@ client.on("error", (error) => {
 });
 
 client.on("ready", async () => {
-    console.log("B.O.B. V3");
+    console.log("YABOB V3");
 
     if (client.user === null) {
-        throw new Error("Login Unsuccessful. Check BOB's Discord Credentials");
+        throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
     }
 
     console.log(`Logged in as ${client.user.tag}!`);
@@ -65,12 +65,12 @@ client.on("ready", async () => {
     const guilds = await client.guilds.fetch(); // guild is a server
     console.log(`Found ${guilds.size} server(s)`);
     const full_guilds = await Promise.all(guilds.map((guild) => guild.fetch()));
-    // * full guild is all the servers this BOB instance is part of
+    // * full guild is all the servers this YABOB instance is part of
 
     // Connecting to the attendance sheet
     let attendance_doc: GoogleSpreadsheet | null = null;
-    if (process.env.BOB_GOOGLE_SHEET_ID !== undefined) {
-        attendance_doc = new GoogleSpreadsheet(process.env.BOB_GOOGLE_SHEET_ID);
+    if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined) {
+        attendance_doc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
         await attendance_doc.useServiceAccountAuth(gcs_creds);
         console.log("Connected to Google sheets.");
     } else {
@@ -172,7 +172,7 @@ client.on("messageDelete", async (message) => {
         console.error("Recognized a message deletion without a message");
         return;
     }
-    if (message.author?.id !== process.env.BOB_APP_ID) {
+    if (message.author?.id !== process.env.YABOB_APP_ID) {
         return;
     }
     if (message.guild === null) {
@@ -180,8 +180,13 @@ client.on("messageDelete", async (message) => {
         return;
     }
 
-    const server =
-        servers.get(message.guild) ?? (await JoinGuild(message.guild));
+    const server = servers.get(message.guild);
+
+    if(server === undefined) {
+        // Calling JoinGuild() here causes issues involving duplicate of the
+        // same server being stored in fullGuilds
+        return;
+    }
 
     await server.EnsureHasRole(message.member as GuildMember);
 
