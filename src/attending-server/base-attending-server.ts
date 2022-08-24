@@ -15,48 +15,40 @@ import { HelpQueue, HelpQueueDisplayManager } from "../queue";
 import { MemberStateManager } from "../member_state_manager";
 import { UserError } from "../user_action_error";
 import { MemberState } from "../member_state_manager";
-import {
-    GoogleSpreadsheet,
-    GoogleSpreadsheetWorksheet,
-} from "google-spreadsheet";
-import gcs_creds from "../../gcs_service_account_key.json";
-import fetch from "node-fetch";
+
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
-import * as fs from "fs";
 import { Firestore } from "firebase-admin/firestore";
 
+// Wrapper for TextChannel
+// Guarantees that a queue_name exists
 type QueueChannel = {
-    /**
-     * Wrapper for TextChannel
-     * Guarantees that a queue_name exists
-     */
-    channel_object: TextChannel;
-    queue_name: string;
+    channelObject: TextChannel;
+    queueName: string;
 };
 
 class AttendingServerV2 {
     private queues: HelpQueue[] = [];
 
     private constructor(
-        private client: Client,
+        private user: User,
         private guild: Guild,
-        private firebase_db: Firestore,
-        private member_states = new MemberStateManager()
-    ) {}
+        private firebaseDB: Firestore,
+        private memberStates = new MemberStateManager()
+    ) { }
 
     /**
-     * **Asynchronously creates a YABOB instance**
+     * **Asynchronously creates a YABOB instance for 1 server**
      *
-     * @param client an instance of discord http client
+     * @param user discord client user
      * @param server the server for YABOB to join
-     * @param firebase_db firebase database object
+     * @param firebaseDB firebase database object
      * @returns a created instance of YABOB
      * @throws UserError
      */
     static async create(
-        client: Client,
+        user: User,
         server: Guild,
-        firebase_db: Firestore
+        firebaseDB: Firestore
     ): Promise<AttendingServerV2> {
         if (server.me === null || !server.me.permissions.has("ADMINISTRATOR")) {
             const owner = await server.fetchOwner();
@@ -71,8 +63,7 @@ class AttendingServerV2 {
         }
 
         console.log(`Creating new YABOB for server: ${server.name}`);
-        const me = new AttendingServerV2(client, server, firebase_db);
-        const queue_channels = me.getQueueChannels();
+        const me = new AttendingServerV2(user, server, firebaseDB);
 
         return me;
     }
@@ -80,49 +71,94 @@ class AttendingServerV2 {
     /**
      * Gets all the queue channels on the server
      * if nothing is found, returns empty array
+     * @param use_cache whether to read from existing cache, defaults to true
+     * - unless queues change often, prefer cache for fast response
      */
-    async getQueueChannels(): Promise<QueueChannel[]> {
-        // have to cast because ch has type 'AnyChannel'
-        // type checking is done by ch.type so it's safe
-        // same for channel as TextChannel
-        // ch is channel
-        const all_channels = await this.guild.channels.fetch();
-        const queue_channels = all_channels
+    async getQueueChannels(use_cache = true): Promise<QueueChannel[]> {
+        const allChannels = use_cache
+            ? this.guild.channels.cache
+            : await this.guild.channels.fetch();
+        const queueChannels = allChannels
+            // type checking done here
             .filter(ch => ch.type === "GUILD_CATEGORY")
+            // ch has type 'AnyChannel', have to cast
             .map(ch => ch as CategoryChannel)
             .map(category => [
                 category.children.find(
                     child =>
-                        child.name === "queue" && child.type === "GUILD_TEXT"
+                        child.name === "queue" &&
+                        child.type === "GUILD_TEXT"
                 ),
                 category.name,
             ])
             .filter(([ch]) => ch !== undefined)
             .map(([ch, name]) => {
                 return {
-                    channel_object: ch,
-                    queue_name: name,
+                    channelObject: ch,
+                    queueName: name,
                 } as QueueChannel;
             });
 
-        const duplicate_queues = queue_channels
-            .map(q => q.queue_name)
+        const duplicateQueues = queueChannels
+            .map(q => q.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);
 
-        if (duplicate_queues.length > 0) {
+        if (duplicateQueues.length > 0) {
             console.warn(
                 `The server "${this.guild.name}" contains these duplicate queues:`
             );
-            console.warn(duplicate_queues);
+            console.warn(duplicateQueues);
             console.warn(
-                `YABOB will still treat them as unique queues, but their names should be updated`
+                `This might lead to undefined behaviors when students try to join them.\n
+                Please update category names as soon as possible.`
             );
         }
 
-        return queue_channels;
+        return queueChannels;
     }
 
+    /**
+     * Creates all the office hour queues
+     */
+    async initAllQueues(): Promise<void> {
+        if (this.queues.length !== 0) {
+            console.warn("Overriding existing queues.");
+        }
 
+        const queueChannels = await this.getQueueChannels();
+    }
+
+    async updateCommandHelpChannels(): Promise<void> {
+        const allChannels = await this.guild.channels.fetch();
+        const existingHelpCh = allChannels
+            .filter(
+                ch =>
+                    ch.type === "GUILD_CATEGORY" &&
+                    ch.name === "Bot Commands Help"
+            )
+            .map(ch => ch as CategoryChannel);
+
+        if (existingHelpCh.length === 0) {
+            console.log("Creating new help channels");
+            const helpCategory = await this.guild.channels.create(
+                "Bot Commands Help",
+                { type: "GUILD_CATEGORY" }
+            );
+
+            const adminCommandCh = await helpCategory.createChannel(
+                "admin-commands"
+            );
+            await adminCommandCh.permissionOverwrites.create(
+                this.guild.roles.everyone,
+                { SEND_MESSAGES: false }
+            );
+            await adminCommandCh.permissionOverwrites.create(
+                this.user,
+                { SEND_MESSAGES: true }
+            );
+
+        }
+    }
 }
 
-export { AttendingServerV2 };
+export { AttendingServerV2, QueueChannel };

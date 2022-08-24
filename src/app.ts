@@ -85,7 +85,7 @@ client.on("ready", async () => {
         );
     }
 
-    await AttendingServerV2.create(client, full_guilds[0], firebase_db);
+    await AttendingServerV2.create(client.user, full_guilds[0], firebase_db);
 
     process.exit(0);
     await Promise.all(
