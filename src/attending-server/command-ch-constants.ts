@@ -19,17 +19,17 @@ const StudentCommands = fs.readFileSync(
 
 export const CommandChConfig = {
     admin: {
-        name: 'admin-commands',
+        channelName: 'admin-commands',
         file: AdminCommands,
         visibility: CommandAccessLevel.ADMIN
     },
     helper: {
-        name: 'helper-commands',
+        channelName: 'helper-commands',
         file: HelperCommands,
         visibility: CommandAccessLevel.ANYONE
     },
     student: {
-        name: 'student-commands',
+        channelName: 'student-commands',
         file: StudentCommands,
         visibility: CommandAccessLevel.ANYONE
     }

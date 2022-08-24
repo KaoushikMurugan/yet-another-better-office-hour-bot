@@ -30,9 +30,9 @@ class AttendingServerV2 {
     private queues: HelpQueue[] = [];
 
     private constructor(
-        private user: User,
-        private guild: Guild,
-        private firebaseDB: Firestore,
+        private readonly user: User,
+        private readonly guild: Guild,
+        private readonly firebaseDB: Firestore,
         private memberStates = new MemberStateManager()
     ) { }
 
@@ -55,15 +55,14 @@ class AttendingServerV2 {
             await owner.send(
                 SimpleEmbed(
                     `Sorry. I need full administrator permission to join and manage "${server.name}"`,
-                    EmbedColor.Error
-                )
-            );
+                    EmbedColor.Error));
             await server.leave();
             throw new UserError("YABOB doesn't have admin permission.");
         }
 
         console.log(`Creating new YABOB for server: ${server.name}`);
         const me = new AttendingServerV2(user, server, firebaseDB);
+
         await me.updateCommandHelpChannels();
 
         return me;
@@ -140,7 +139,7 @@ class AttendingServerV2 {
             .map(ch => ch as CategoryChannel);
 
         // If no help category is found, initialize
-        // do initialization only in this if block
+        // ! initialization only in this if block
         // messages are handled separately
         if (existingHelpCategory.length === 0) {
             console.log("\x1b[33mFound no help channels. Creating new ones.");
@@ -152,9 +151,7 @@ class AttendingServerV2 {
             existingHelpCategory.push(helpCategory);
 
             for (const role of Object.values(CommandChConfig)) {
-                const commandCh = await helpCategory.createChannel(
-                    role.name
-                );
+                const commandCh = await helpCategory.createChannel(role.channelName);
 
                 // ? doesn't block server owner
                 await commandCh.permissionOverwrites.create(
@@ -164,28 +161,42 @@ class AttendingServerV2 {
                     this.user,
                     { SEND_MESSAGES: true });
 
-                // ** Change the config object and add more function calls if necessary
+                // ** Change the config object and add more function calls here if necessary
             }
         } else {
             console.log('\x1b[33mFound existing help channel, updating command help file\x1b[0m');
         }
 
-        const allHelpChannels = existingHelpCategory
+        await this.sendCommandHelpMessages(existingHelpCategory);
+    }
+
+    // async createRoles(): Promise<void> {
+
+    // }
+
+    private async sendCommandHelpMessages(helpCategories: CategoryChannel[]): Promise<void> {
+        const allHelpChannels = helpCategories
             .flatMap(cat => [...cat.children.values()]
                 .filter(ch => ch.type === 'GUILD_TEXT') as TextChannel[]);
 
+        if (helpCategories.length === 0 || allHelpChannels.length === 0) {
+            console.warn('\x1b[31mNo help categories found.\x1b[0m');
+            console.log('Did you mean to call \x1b[32mupdateCommandHelpChannels()\x1b[0m?');
+            return;
+        }
+
         // delete all existing messages
         await Promise.all(allHelpChannels
-            .map(async ch => {
+            .map(async (ch) => {
                 await ch.messages.fetch()
                     .then(messages => messages.map(msg => msg.delete()));
             }));
 
         // now send new ones
         await Promise.all(allHelpChannels
-            .map(async ch => {
+            .map(async (ch) => {
                 const file = Object.values(CommandChConfig)
-                    .find(val => val.name === ch.name)?.file;
+                    .find(val => val.channelName === ch.name)?.file;
                 if (file) {
                     await ch.send(SimpleEmbed(file));
                 }

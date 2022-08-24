@@ -1,0 +1,3 @@
+class HelpQueueV2 {
+    
+}
