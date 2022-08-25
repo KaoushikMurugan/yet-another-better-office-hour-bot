@@ -60,8 +60,8 @@ class AttendingServerV2 {
         const me = new AttendingServerV2(user, server, firebaseDB);
 
         await me.createHierarchyRoles();
-        await me.createClassRoles();
-        await me.updateCommandHelpChannels();
+        // await me.createClassRoles();
+        // await me.updateCommandHelpChannels();
 
         return me;
     }
@@ -151,17 +151,12 @@ class AttendingServerV2 {
                 const commandCh = await helpCategory.createChannel(
                     role.channelName
                 );
-
-                // ? doesn't block server owner
                 await commandCh.permissionOverwrites.create(
                     this.guild.roles.everyone,
-                    { SEND_MESSAGES: false }
-                );
+                    { SEND_MESSAGES: false });
                 await commandCh.permissionOverwrites.create(
                     this.user,
-                    { SEND_MESSAGES: true }
-                );
-
+                    { SEND_MESSAGES: true });
                 // * Change the config object,
                 // * and add more function calls here if necessary
             }
@@ -170,7 +165,6 @@ class AttendingServerV2 {
                 "\x1b[33mFound existing help channel, updating command help file\x1b[0m"
             );
         }
-
         await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
@@ -182,16 +176,34 @@ class AttendingServerV2 {
         const existingRoles = (await this.guild.roles.fetch()).map(
             role => role.name
         );
-
-        // create all the missing roles to bump up YABOB's role
-        await Promise.all(hierarchyRoleConfigs
+        // ! DO NOT skip filter here
+        // creating roles with the same name is valid and make it hard to adjust
+        const createdRoles = await Promise.all(hierarchyRoleConfigs
             .filter(roleConfig => !existingRoles.includes(roleConfig.name))
             .map(async roleConfig =>
                 await this.guild.roles.create(roleConfig)));
 
+        // Remove console logs if necessary
         console.log("Initially create roles:");
-        console.log(this.guild.roles.cache.map(r => [r.name, r.position]));
+        console.log(this.guild.roles.cache
+            .map(r => { return { name: r.name, pos: r.position }; })
+            .sort((a, b) => a.pos - b.pos));
 
+        // Adjustment must happen after role creation
+        // Otherwise YABOB doesn't have high enough role
+        await Promise.all(createdRoles
+            .map(async role => {
+                switch (role.name) {
+                    case "Student": await role.edit({ position: 1 }); break;
+                    case "Staff": await role.edit({ position: 2 }); break;
+                    case "Admin": await role.edit({ position: 3 }); break;
+                }
+            }));
+
+        console.log("Adjusted roles:");
+        console.log(this.guild.roles.cache
+            .map(r => { return { name: r.name, pos: r.position }; })
+            .sort((a, b) => a.pos - b.pos));
     }
 
     /**
