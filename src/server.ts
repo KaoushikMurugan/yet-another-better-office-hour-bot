@@ -40,7 +40,7 @@ export class AttendingServer {
 
     private attendance_doc: GoogleSpreadsheet | null;
     private attendance_sheet: GoogleSpreadsheetWorksheet | null = null;
-    
+
     private firebase_db: Firestore;
     // in firebase
     private tutor_info_doc: GoogleSpreadsheet | null = null;
@@ -215,7 +215,7 @@ export class AttendingServer {
      */
     async IsHelperFor(member: GuildMember, queue_name: string): Promise<boolean> {
         const queue = this.queues.find((queue) => queue.name === queue_name);
-        if(queue === undefined) {
+        if (queue === undefined) {
             throw new UserError("Invalid queue")
         }
         return member.roles.cache.find((role) => role.name === queue_name) !== undefined
@@ -387,8 +387,7 @@ export class AttendingServer {
         // Update the attendance log in the background
         void this.UpdateAttendanceLog(member, start_time).catch((err) => {
             console.error(
-                `Failed to update the attendance log for ${
-                    member.user.username
+                `Failed to update the attendance log for ${member.user.username
                 } who helped for ${Math.round(
                     (Date.now() - start_time) / 60000
                 )} mins`
@@ -926,8 +925,8 @@ export class AttendingServer {
             if (schedule_message === null || schedule_message === undefined) {
                 console.log(
                     "queue_message for " +
-                        queue_name +
-                        " was not void, but it's schedule message was void"
+                    queue_name +
+                    " was not void, but it's schedule message was void"
                 );
                 return;
             } else {
@@ -1084,9 +1083,9 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
         const response = await fetch(
             "https://www.googleapis.com/calendar/v3/calendars/" +
-                calendar_id +
-                "/events?key=" +
-                process.env.YABOB_GOOGLE_CALENDAR_API_KEY
+            calendar_id +
+            "/events?key=" +
+            process.env.YABOB_GOOGLE_CALENDAR_API_KEY
         );
         const data = await response.json();
 
@@ -1167,10 +1166,10 @@ disabled. To enable it, do `/post_session_msg enable: true`";
             this.tutor_info_sheet = tutor_sheet;
 
             return [
-                "Connected to the Google Sheet document: " +
-                    tutor_doc.title +
-                    " -> " +
-                    tutor_sheet.title,
+                "Connected to the Google Sheet document: "
+                + tutor_doc.title
+                + " -> "
+                + tutor_sheet.title,
                 true,
             ];
         }
@@ -1215,13 +1214,13 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
         const response = await fetch(
             "https://www.googleapis.com/calendar/v3/calendars/" +
-                this.tutor_info_calendar +
-                "/events?orderBy=startTime&singleEvents=true&timeMax=" +
-                maxDate.toISOString() +
-                "&timeMin=" +
-                minDate.toISOString() +
-                "&key=" +
-                process.env.YABOB_GOOGLE_CALENDAR_API_KEY
+            this.tutor_info_calendar +
+            "/events?orderBy=startTime&singleEvents=true&timeMax=" +
+            maxDate.toISOString() +
+            "&timeMin=" +
+            minDate.toISOString() +
+            "&key=" +
+            process.env.YABOB_GOOGLE_CALENDAR_API_KEY
         );
 
         const data = await response.json();
@@ -1233,7 +1232,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
 
         const update_time = new Date(0);
 
-        if(data.items === undefined){
+        if (data.items === undefined) {
             console.log("no data for " + queue_name)
         }
 
@@ -1523,7 +1522,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 embeds: SimpleEmbed(
                     fs.readFileSync(
                         __dirname +
-                            "/../../help-channel-messages/admin-commands.txt",
+                        "/../../help-channel-messages/admin-commands.txt",
                         { encoding: "utf8" }
                     )
                 ).embeds,
@@ -1555,7 +1554,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 embeds: SimpleEmbed(
                     fs.readFileSync(
                         __dirname +
-                            "/../../help-channel-messages/helper-commands.txt",
+                        "/../../help-channel-messages/helper-commands.txt",
                         { encoding: "utf8" }
                     )
                 ).embeds,
@@ -1587,7 +1586,7 @@ disabled. To enable it, do `/post_session_msg enable: true`";
                 embeds: SimpleEmbed(
                     fs.readFileSync(
                         __dirname +
-                            "/../../help-channel-messages/student-commands.txt",
+                        "/../../help-channel-messages/student-commands.txt",
                         { encoding: "utf8" }
                     )
                 ).embeds,

@@ -17,7 +17,7 @@ const StudentCommands = fs.readFileSync(
     { encoding: "utf8" }
 );
 
-export const CommandChConfig = {
+export const commandChConfigs = {
     admin: {
         channelName: 'admin-commands',
         file: AdminCommands,

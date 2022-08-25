@@ -5,29 +5,21 @@ import {
     TextChannel,
     User,
     GuildMember,
-    ColorResolvable,
-    RoleData,
 } from "discord.js";
 import { HelpQueue } from "../queue";
 import { UserError } from "../user_action_error";
 import { MemberStateV2 } from "../models/member-states";
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
 import { Firestore } from "firebase-admin/firestore";
-import { CommandChConfig } from "./command-ch-constants";
+import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 
 // Wrapper for TextChannel
-// Guarantees that a queue_name exists
+// Guarantees that a queueName exists
 type QueueChannel = {
     channelObject: TextChannel;
     queueName: string;
 };
-
-interface BOBServer {
-    getQueueChannels: (use_cache: boolean) => Promise<QueueChannel[]>;
-    initAllQueues: () => Promise<void>;
-    updateCommandHelpChannels: () => Promise<void>;
-}
 
 class AttendingServerV2 {
     private queues: HelpQueue[] = [];
@@ -67,10 +59,9 @@ class AttendingServerV2 {
         console.log(`Creating new YABOB for server: ${server.name}`);
         const me = new AttendingServerV2(user, server, firebaseDB);
 
-        // await me.createHierarchyRoles();
+        await me.createHierarchyRoles();
         await me.createClassRoles();
-
-        // await me.updateCommandHelpChannels();
+        await me.updateCommandHelpChannels();
 
         return me;
     }
@@ -94,8 +85,8 @@ class AttendingServerV2 {
             .map(category => [
                 category.children.find(
                     child =>
-                        child.name === "queue" && child.type === "GUILD_TEXT"
-                ),
+                        child.name === "queue" &&
+                        child.type === "GUILD_TEXT"),
                 category.name,
             ])
             .filter(([ch]) => ch !== undefined)
@@ -126,6 +117,7 @@ class AttendingServerV2 {
 
     /**
      * Creates all the office hour queues
+     * ----
      */
     async initAllQueues(): Promise<void> {
         if (this.queues.length !== 0) {
@@ -155,7 +147,7 @@ class AttendingServerV2 {
             );
             existingHelpCategory.push(helpCategory);
 
-            for (const role of Object.values(CommandChConfig)) {
+            for (const role of Object.values(commandChConfigs)) {
                 const commandCh = await helpCategory.createChannel(
                     role.channelName
                 );
@@ -199,6 +191,7 @@ class AttendingServerV2 {
 
         console.log("Initially create roles:");
         console.log(this.guild.roles.cache.map(r => [r.name, r.position]));
+
     }
 
     /**
@@ -213,12 +206,10 @@ class AttendingServerV2 {
         await Promise.all(queueNames
             .filter(queue => !existingRoles.includes(queue))
             .map(async roleToCreate =>
-                await this.guild.roles.create(
-                    {
-                        name: roleToCreate,
-                        position: 1,
-                    }
-                )));
+                await this.guild.roles.create({
+                    name: roleToCreate,
+                    position: 1,
+                })));
     }
 
     // async hieararchyRolesAreCorrect(): Promise<boolean> {
@@ -230,8 +221,7 @@ class AttendingServerV2 {
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
             cat => [...cat.children.values()]
-                .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]
-        );
+                .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
 
         if (helpCategories.length === 0 || allHelpChannels.length === 0) {
             console.warn("\x1b[31mNo help categories found.\x1b[0m");
@@ -249,10 +239,10 @@ class AttendingServerV2 {
                     .then(messages => messages.map(msg => msg.delete()))
             ));
 
-        // now send new ones
+        // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
-                const file = Object.values(CommandChConfig).find(
+                const file = Object.values(commandChConfigs).find(
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) { await ch.send(SimpleEmbed(file)); }
