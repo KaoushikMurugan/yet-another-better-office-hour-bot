@@ -78,9 +78,8 @@ class AttendingServerV2 {
             ? this.guild.channels.cache
             : await this.guild.channels.fetch();
         const queueChannels = allChannels
-            // type checking done here
             .filter(ch => ch.type === "GUILD_CATEGORY")
-            // ch has type 'AnyChannel', have to cast
+            // ch has type 'AnyChannel', have to cast, type already checked
             .map(ch => ch as CategoryChannel)
             .map(category => [
                 category.children.find(
@@ -99,15 +98,16 @@ class AttendingServerV2 {
 
         const duplicateQueues = queueChannels
             .map(q => q.queueName)
-            .filter((item, index, arr) => arr.indexOf(item) !== index);
+            .filter((item, index, arr) =>
+                arr.indexOf(item) !== index);
 
         if (duplicateQueues.length > 0) {
             console.warn(
-                `The server "${this.guild.name}" contains these duplicate queues:`
+                `Server["${this.guild.name}"] contains these duplicate queues:`
             );
             console.warn(duplicateQueues);
             console.warn(
-                `This might lead to undefined behaviors when students try to join them.\n
+                `This might lead to unexpected behaviors.\n
                 Please update category names as soon as possible.`
             );
         }
@@ -126,6 +126,12 @@ class AttendingServerV2 {
 
         const queueChannels = await this.getQueueChannels();
     }
+
+    /**
+     * Updates the help channels
+     * ----
+     * Removes all messages in the help channel and posts new ones
+    */
 
     async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
@@ -183,9 +189,9 @@ class AttendingServerV2 {
             .map(async roleConfig =>
                 await this.guild.roles.create(roleConfig)));
 
-        // Remove console logs if necessary
+        // * Remove console logs if necessary
         console.log("Initially create roles:");
-        console.log(this.guild.roles.cache
+        console.log(createdRoles
             .map(r => { return { name: r.name, pos: r.position }; })
             .sort((a, b) => a.pos - b.pos));
 
@@ -223,10 +229,6 @@ class AttendingServerV2 {
                     position: 1,
                 })));
     }
-
-    // async hieararchyRolesAreCorrect(): Promise<boolean> {
-
-    // }
 
     private async sendCommandHelpMessages(
         helpCategories: CategoryChannel[]
