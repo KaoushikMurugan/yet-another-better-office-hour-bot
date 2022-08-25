@@ -1,20 +1,14 @@
 // V2 of attending server
 import {
     CategoryChannel,
-    Client,
     Guild,
-    GuildChannel,
-    Role,
     TextChannel,
     User,
-    Collection,
     GuildMember,
-    Channel,
 } from "discord.js";
-import { HelpQueue, HelpQueueDisplayManager } from "../queue";
-import { MemberStateManager } from "../member_state_manager";
+import { HelpQueue } from "../queue";
 import { UserError } from "../user_action_error";
-import { MemberState } from "../member_state_manager";
+import { MemberStateV2 } from "../models/member-states";
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
 import { Firestore } from "firebase-admin/firestore";
 import { CommandChConfig } from "./command-ch-constants";
@@ -33,7 +27,7 @@ class AttendingServerV2 {
         private readonly user: User,
         private readonly guild: Guild,
         private readonly firebaseDB: Firestore,
-        private memberStates = new MemberStateManager()
+        private memberStates = new Map<GuildMember, MemberStateV2>()
     ) { }
 
     /**
