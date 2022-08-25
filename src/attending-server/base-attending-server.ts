@@ -37,7 +37,7 @@ class AttendingServerV2 {
         private readonly guild: Guild,
         private readonly firebaseDB: Firestore,
         private memberStates = new Map<GuildMember, MemberStateV2>()
-    ) {}
+    ) { }
 
     /**
      * Asynchronously creates a YABOB instance for 1 server
@@ -53,14 +53,13 @@ class AttendingServerV2 {
         server: Guild,
         firebaseDB: Firestore
     ): Promise<AttendingServerV2> {
-        if (server.me === null || !server.me.permissions.has("ADMINISTRATOR")) {
+        if (server.me === null
+            || !server.me.permissions.has("ADMINISTRATOR")) {
             const owner = await server.fetchOwner();
             await owner.send(
                 SimpleEmbed(
-                    `Sorry. I need full administrator permission to join and manage "${server.name}"`,
-                    EmbedColor.Error
-                )
-            );
+                    `Sorry, I need full administrator permission for "${server.name}"`,
+                    EmbedColor.Error));
             await server.leave();
             throw new UserError("YABOB doesn't have admin permission.");
         }
@@ -166,11 +165,13 @@ class AttendingServerV2 {
                     this.guild.roles.everyone,
                     { SEND_MESSAGES: false }
                 );
-                await commandCh.permissionOverwrites.create(this.user, {
-                    SEND_MESSAGES: true,
-                });
+                await commandCh.permissionOverwrites.create(
+                    this.user,
+                    { SEND_MESSAGES: true }
+                );
 
-                // ** Change the config object and add more function calls here if necessary
+                // * Change the config object,
+                // * and add more function calls here if necessary
             }
         } else {
             console.log(
@@ -191,14 +192,10 @@ class AttendingServerV2 {
         );
 
         // create all the missing roles to bump up YABOB's role
-        await Promise.all(
-            hierarchyRoleConfigs
-                .filter(roleConfig => !existingRoles.includes(roleConfig.name))
-                .map(
-                    async roleConfig =>
-                        await this.guild.roles.create(roleConfig)
-                )
-        );
+        await Promise.all(hierarchyRoleConfigs
+            .filter(roleConfig => !existingRoles.includes(roleConfig.name))
+            .map(async roleConfig =>
+                await this.guild.roles.create(roleConfig)));
 
         console.log("Initially create roles:");
         console.log(this.guild.roles.cache.map(r => [r.name, r.position]));
@@ -209,21 +206,19 @@ class AttendingServerV2 {
      * ----
      */
     async createClassRoles(): Promise<void> {
-        const existingRoles = this.guild.roles.cache.map(role => role.name);
-        const queueNames = (await this.getQueueChannels()).map(
-            ch => ch.queueName
-        );
-        await Promise.all(
-            queueNames
-                .filter(queue => !existingRoles.includes(queue))
-                .map(
-                    async roleToCreate =>
-                        await this.guild.roles.create({
-                            name: roleToCreate,
-                            position: 1,
-                        })
-                )
-        );
+        const existingRoles = this.guild.roles.cache
+            .map(role => role.name);
+        const queueNames = (await this.getQueueChannels())
+            .map(ch => ch.queueName);
+        await Promise.all(queueNames
+            .filter(queue => !existingRoles.includes(queue))
+            .map(async roleToCreate =>
+                await this.guild.roles.create(
+                    {
+                        name: roleToCreate,
+                        position: 1,
+                    }
+                )));
     }
 
     // async hieararchyRolesAreCorrect(): Promise<boolean> {
@@ -234,10 +229,8 @@ class AttendingServerV2 {
         helpCategories: CategoryChannel[]
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
-            cat =>
-                [...cat.children.values()].filter(
-                    ch => ch.type === "GUILD_TEXT"
-                ) as TextChannel[]
+            cat => [...cat.children.values()]
+                .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]
         );
 
         if (helpCategories.length === 0 || allHelpChannels.length === 0) {
@@ -250,12 +243,11 @@ class AttendingServerV2 {
 
         // delete all existing messages
         await Promise.all(
-            allHelpChannels.map(async ch => {
-                await ch.messages
+            allHelpChannels.map(
+                async ch => await ch.messages
                     .fetch()
-                    .then(messages => messages.map(msg => msg.delete()));
-            })
-        );
+                    .then(messages => messages.map(msg => msg.delete()))
+            ));
 
         // now send new ones
         await Promise.all(
@@ -263,11 +255,8 @@ class AttendingServerV2 {
                 const file = Object.values(CommandChConfig).find(
                     val => val.channelName === ch.name
                 )?.file;
-                if (file) {
-                    await ch.send(SimpleEmbed(file));
-                }
-            })
-        );
+                if (file) { await ch.send(SimpleEmbed(file)); }
+            }));
     }
 }
 
