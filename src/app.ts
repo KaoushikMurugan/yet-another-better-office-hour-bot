@@ -1,5 +1,5 @@
 import Collection from "@discordjs/collection";
-import { Client, Guild, GuildMember, Intents, TextChannel } from "discord.js";
+import { Client, CommandInteraction, Guild, GuildMember, Intents, Interaction, TextChannel } from "discord.js";
 
 import { ProcessCommand } from "./command_handler";
 import { AttendingServer } from "./server";
@@ -15,6 +15,7 @@ import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
+
 
 dotenv.config();
 
@@ -87,6 +88,8 @@ client.on("ready", async () => {
 
     await AttendingServerV2.create(client.user, full_guilds[0], firebase_db);
 
+
+    // return;
     process.exit(0);
     await Promise.all(
         full_guilds.map(guild =>

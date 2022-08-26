@@ -6,13 +6,13 @@ import {
     User,
     GuildMember,
 } from "discord.js";
-import { HelpQueue } from "../queue";
+import { HelpQueueV2, QueueViewModel } from "../help-queue/help-queue";
 import { UserError } from "../user_action_error";
-import { MemberStateV2 } from "../models/member-states";
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
 import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
+import { QueueDisplayV2 } from "../help-queue/queue-display";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -22,13 +22,12 @@ type QueueChannel = {
 };
 
 class AttendingServerV2 {
-    private queues: HelpQueue[] = [];
+    private queues: HelpQueueV2[] = [];
 
     private constructor(
         private readonly user: User,
         private readonly guild: Guild,
         private readonly firebaseDB: Firestore,
-        private memberStates = new Map<GuildMember, MemberStateV2>()
     ) { }
 
     /**
@@ -59,7 +58,8 @@ class AttendingServerV2 {
         console.log(`Creating new YABOB for server: ${server.name}`);
         const me = new AttendingServerV2(user, server, firebaseDB);
 
-        await me.createHierarchyRoles();
+        await me.initAllQueues();
+        // await me.createHierarchyRoles();
         // await me.createClassRoles();
         // await me.updateCommandHelpChannels();
 
@@ -123,8 +123,13 @@ class AttendingServerV2 {
         if (this.queues.length !== 0) {
             console.warn("Overriding existing queues.");
         }
-
         const queueChannels = await this.getQueueChannels();
+        this.queues = await Promise.all(queueChannels.map(channel => HelpQueueV2.create(channel, this.user)));
+
+        ///testing code
+
+
+        // await this.queues[0]?.triggerRender();
     }
 
     /**
@@ -195,14 +200,14 @@ class AttendingServerV2 {
             .map(r => { return { name: r.name, pos: r.position }; })
             .sort((a, b) => a.pos - b.pos));
 
-        // Adjustment must happen after role creation
+        // ! Adjustment must happen after role creation
         // Otherwise YABOB doesn't have high enough role
         await Promise.all(createdRoles
             .map(async role => {
                 switch (role.name) {
-                    case "Student": await role.edit({ position: 1 }); break;
-                    case "Staff": await role.edit({ position: 2 }); break;
-                    case "Admin": await role.edit({ position: 3 }); break;
+                    case "Student": { await role.edit({ position: 1 }); break; }
+                    case "Staff": { await role.edit({ position: 2 }); break; }
+                    case "Admin": { await role.edit({ position: 3 }); break; }
                 }
             }));
 
@@ -216,13 +221,13 @@ class AttendingServerV2 {
      * Creates roles for all the available queues if not already created
      * ----
      */
-    async createClassRoles(): Promise<void> {
-        const existingRoles = this.guild.roles.cache
-            .map(role => role.name);
+    private async createClassRoles(): Promise<void> {
+        const existingRoles = new Set(this.guild.roles.cache
+            .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
         await Promise.all(queueNames
-            .filter(queue => !existingRoles.includes(queue))
+            .filter(queue => !existingRoles.has(queue))
             .map(async roleToCreate =>
                 await this.guild.roles.create({
                     name: roleToCreate,
@@ -237,7 +242,8 @@ class AttendingServerV2 {
             cat => [...cat.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
 
-        if (helpCategories.length === 0 || allHelpChannels.length === 0) {
+        if (helpCategories.length === 0 ||
+            allHelpChannels.length === 0) {
             console.warn("\x1b[31mNo help categories found.\x1b[0m");
             console.log(
                 "Did you mean to call \x1b[32mupdateCommandHelpChannels()\x1b[0m?"
