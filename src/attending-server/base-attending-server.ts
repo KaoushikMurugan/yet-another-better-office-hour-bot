@@ -4,15 +4,13 @@ import {
     Guild,
     TextChannel,
     User,
-    GuildMember,
 } from "discord.js";
-import { HelpQueueV2, QueueViewModel } from "../help-queue/help-queue";
+import { HelpQueueV2 } from "../help-queue/help-queue";
 import { UserError } from "../user_action_error";
 import { EmbedColor, SimpleEmbed } from "../embed_helper";
 import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
-import { QueueDisplayV2 } from "../help-queue/queue-display";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -124,12 +122,10 @@ class AttendingServerV2 {
             console.warn("Overriding existing queues.");
         }
         const queueChannels = await this.getQueueChannels();
-        this.queues = await Promise.all(queueChannels.map(channel => HelpQueueV2.create(channel, this.user)));
-
-        ///testing code
-
-
-        // await this.queues[0]?.triggerRender();
+        this.queues = await Promise
+            .all(queueChannels
+                .map(channel => HelpQueueV2
+                    .create(channel, this.user)));
     }
 
     /**

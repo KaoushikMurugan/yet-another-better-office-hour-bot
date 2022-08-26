@@ -2,10 +2,13 @@
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { QueueViewModel } from './help-queue';
-// import { SimpleEmbed } from '../embed_helper';
-
 import { QueueChannel } from '../attending-server/base-attending-server';
-import { MessageActionRow, MessageButton, MessageEmbed, User } from 'discord.js';
+import {
+    MessageActionRow,
+    MessageButton,
+    MessageEmbed,
+    User
+} from 'discord.js';
 
 
 // The only responsibility is to interface with the ascii table
@@ -16,6 +19,7 @@ class QueueDisplayV2 {
         private readonly user: User
     ) { }
 
+    // TODO: Extract notif button as extension
     async render(queue: QueueViewModel, sendNew = false): Promise<void> {
         const embedTableMsg = new MessageEmbed();
         const joinLeaveButtons = new MessageActionRow()
@@ -56,7 +60,8 @@ class QueueDisplayV2 {
         embedTableMsg.setTitle(`Queue for ${queue.name} is\t**${queue.isOpen ? "✓ OPEN" : "✕ CLOSED"}**`)
             .setDescription(this.composeAsciiTable(queue));
 
-        // why tf is this so long
+        // Trigger onRenderMessageCreate() here
+
         const queueMessages = await this.queueChannel
             .channelObject
             .messages
@@ -72,7 +77,6 @@ class QueueDisplayV2 {
             return;
         }
 
-
         if (sendNew) {
             await this.queueChannel.channelObject.send({
                 embeds: [embedTableMsg],
@@ -84,6 +88,8 @@ class QueueDisplayV2 {
                 components: [joinLeaveButtons, notifButtons]
             });
         }
+
+        // Trigger onRenderMessageSent() here
     }
 
     composeAsciiTable(queue: QueueViewModel): string {

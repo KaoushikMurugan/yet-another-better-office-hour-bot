@@ -7,6 +7,8 @@ import {
 
 import { QueueDisplayV2 } from './queue-display';
 
+type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B;
+
 type QueueViewModel = {
     name: string;
     helperIDs: Array<string>;
@@ -17,44 +19,46 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
+    public queueChannel: QueueChannel;
+    public helpers: Set<Helper> = new Set();
+    private display: QueueDisplayV2;
+    private students: Helpee[] = [];
+    private isOpen = false;
+
     private constructor(
         user: User,
-        public queueChannel: QueueChannel,
-        public helpers: Set<Helper> = new Set(),
-        private display = new QueueDisplayV2(queueChannel, user),
-        private students: Helpee[] = [],
-        private isOpen: boolean = false
-    ) { }
-
-    get length(): number {
-        return this.students.length;
+        queueChannel: QueueChannel
+    ) {
+        this.queueChannel = queueChannel;
+        this.display = new QueueDisplayV2(queueChannel, user);
     }
 
     /**
-     * Asynchronously create a queue
+     * Number of students
+     * ----
+    */
+    get length(): number {
+        return this.students.length;
+    }
+    /**
+     * Returns the first students in the queue
+     * ----
+     * if there are no students, returns undefined
+    */
+    first(): Helpee | undefined {
+        return this.students[0];
+    }
+
+    /**
+     * Asynchronously creates a clean queue
      * ----
      * @param queueChannel the corresponding text channel and its name
     */
     static async create(
         queueChannel: QueueChannel,
         user: User): Promise<HelpQueueV2> {
-        const testQueueVM: QueueViewModel = {
-            name: 'class1',
-            helperIDs: ["H1", "H2"],
-            studentIDs: ["Bob", 'Alice'],
-            isOpen: false
-        };
-
         const queue = new HelpQueueV2(user, queueChannel);
         await queue.cleanUpQueueChannel();
-        console.log(`Queue ${queueChannel.queueName} cleaned up.`);
-        // //!! testing code
-        await queue.display.render(testQueueVM);
-        // testQueueVM.studentIDs.push('LMAO');
-        // await queue.display.render(testQueueVM);
-        // testQueueVM.studentIDs.push('LMAO2');
-        // await queue.display.render(testQueueVM);
-
         return queue;
     }
 
@@ -110,6 +114,7 @@ class HelpQueueV2 {
         await Promise.all((await this.queueChannel.channelObject.messages.fetch())
             .map(msg => msg.delete()));
         await this.display.render(emptyQueueViewModel, true);
+        console.log(`Queue ${this.queueChannel.queueName} cleaned up.`);
     }
 
     private async triggerRender(): Promise<void> {
