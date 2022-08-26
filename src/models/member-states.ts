@@ -1,12 +1,12 @@
 import { GuildMember } from "discord.js";
 
-type BeingHelped = {
+type Helpee = {
     waitStart: Date;
     upNext: boolean;
     readonly member: GuildMember // backref
 }
 
-type Helping = {
+type Helper = {
     helpStart: Date;
     helpEnd: Date; // ? Maybe init to end of day
     helpedMembers: GuildMember[];
@@ -15,7 +15,7 @@ type Helping = {
 
 type Idle = "Idle"; // This is for everyone not in the queue, including tutors & admin
 
-type MemberStateV2 = Helping | BeingHelped | Idle;
+type MemberStateV2 = Helper | Helpee | Idle;
 
-export { BeingHelped, Helping, Idle, MemberStateV2 };
+export { Helpee, Helper, Idle, MemberStateV2 };
 
