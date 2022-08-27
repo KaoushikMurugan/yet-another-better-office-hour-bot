@@ -7,8 +7,8 @@ import { PostSlashCommands } from "./slash_commands";
 import { ProcessButtonPress } from "./button_handler";
 
 import dotenv from "dotenv";
-import gcs_creds from "../../gcs_service_account_key.json";
-import fbs_creds from "../../fbs_service_account_key.json";
+import gcs_creds from "../gcs_service_account_key.json";
+import fbs_creds from "../fbs_service_account_key.json";
 
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { initializeApp, cert } from "firebase-admin/app";

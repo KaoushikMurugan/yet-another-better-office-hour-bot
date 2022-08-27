@@ -5,8 +5,7 @@ import {
     User,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
-import { UserError } from "../user_action_error";
-import { EmbedColor, SimpleEmbed } from "../embed_helper";
+import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
 import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
@@ -53,7 +52,7 @@ class AttendingServerV2 {
                     `Sorry, I need full administrator permission for "${guild.name}"`,
                     EmbedColor.Error));
             await guild.leave();
-            throw new UserError("YABOB doesn't have admin permission.");
+            throw new Error("YABOB doesn't have admin permission.");
         }
 
         console.log(`Creating new YABOB for server: ${guild.name}`);
