@@ -1,11 +1,18 @@
 import { MessageOptions } from "discord.js";
+import {
+    CommandParseError,
+    QueueError,
+    ServerError,
+    UserViewableError
+} from '../utils/error-types';
+
 
 export enum EmbedColor {
-    Success = 0x00ff00, // Green
-    Error = 0xff0000, // Red
-    Neutral = 0xfba736, // Orange
-    Warning = 0xffff00, // Yellow
-    NeedName = 0x0000ff, // Blue
+    Success = 0xa9dc76, // Green
+    Error = 0xff6188, // Red
+    Neutral = 0xffffff, // white
+    Warning = 0xffd866, // Yellow
+    NeedName = 0x78dce8, // Aqua
 }
 
 export function SimpleEmbed(
@@ -38,4 +45,46 @@ export function SimpleEmbed(
             }],
         };
     }
+}
+
+
+export function ErrorEmbed(
+    err: UserViewableError,
+): Pick<MessageOptions, "embeds"> {
+    let color = EmbedColor.Warning;
+    const embedFields = [
+        {
+            name: 'Error Type',
+            value: err.name,
+            inline: true
+        }
+    ];
+
+    if (err instanceof QueueError) {
+        color = EmbedColor.NeedName;
+        embedFields.push({
+            name: 'In Queue',
+            value: err.queueName,
+            inline: true
+        });
+    }
+    if (err instanceof ServerError) {
+        color = EmbedColor.Error;
+    }
+
+    return {
+        embeds: [{
+            color: color,
+            title: err.message,
+            timestamp: new Date(),
+            description: `If you need help or think this is a mistake, `
+                + `please post a screenshot of this message in the #help channel `
+                + `and ping @Officers.`,
+            author: {
+                name: 'BOBv3',
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            },
+            fields: embedFields
+        }],
+    };
 }

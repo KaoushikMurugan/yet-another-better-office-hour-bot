@@ -294,14 +294,13 @@ async function postSlashCommands(guild: Guild): Promise<void> {
         process.env.YABOB_BOT_TOKEN
     );
     await rest
-        .put(
-            Routes.applicationGuildCommands(
+        .put(Routes.applicationGuildCommands(
                 process.env.YABOB_APP_ID,
                 guild.id
             ),
             { body: commandData }
         )
-        .catch(console.error);
+        .catch(e => console.error(e));
     console.log(`Updated slash commands on "${guild.name}"`);
 }
 

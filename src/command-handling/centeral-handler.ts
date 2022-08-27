@@ -5,7 +5,7 @@ import {
     TextChannel
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
-import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
+import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import { CommandParseError, UserViewableError } from '../utils/error-types';
 
 /**
@@ -68,13 +68,7 @@ class CentralCommandDispatcher {
                     }))
                 .catch(async (err: UserViewableError) =>
                     await interaction.reply({
-                        ...SimpleEmbed(
-                            err.briefErrorString(),
-                            EmbedColor.Error,
-                            `If you need help or think this is a mistake, `
-                            + `please post a screenshot of this message in the #help channel `
-                            + `and ping the Officers.`
-                        ),
+                        ...ErrorEmbed(err),
                         ephemeral: true
                     }));
         }
