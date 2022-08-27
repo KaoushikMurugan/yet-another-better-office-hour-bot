@@ -6,7 +6,7 @@ import {
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
-import { CommandParseError, AnyError } from '../utils/error-types';
+import { CommandParseError, UserViewableError } from '../utils/error-types';
 
 /**
 const handlers = new Map<string, CommandHandler>([
@@ -60,18 +60,19 @@ class CentralCommandDispatcher {
                 .then(async () =>
                     await interaction.reply({
                         ...SimpleEmbed(
-                            `Command ${interaction.commandName} `
-                            + `${interaction.options.getSubcommand() ?? ''} succeeded.`,
+                            `Command \`/${interaction.commandName} `
+                            + `${interaction.options.getSubcommand() ?? ''}\` succeeded.`,
                             EmbedColor.Success),
                         ephemeral: true
                     }))
-                .catch(async (err: AnyError) =>
+                .catch(async (err: UserViewableError) =>
                     await interaction.reply({
                         ...SimpleEmbed(
-                            `Command ${interaction.commandName} `
-                            + `${interaction.options.getSubcommand() ?? ''} failed.`,
+                            err.briefErrorString(),
                             EmbedColor.Error,
-                            err.briefErrorString()
+                            `If you need help or think this is a mistake, `
+                            + `please post a screenshot of this message in the #help channel `
+                            + `and ping the Officers.`
                         ),
                         ephemeral: true
                     }));
@@ -80,7 +81,6 @@ class CentralCommandDispatcher {
 
     private async queue(interaction: CommandInteraction): Promise<void> {
         const serverId = interaction.guild?.id;
-
         if (!serverId || !this.serverMap.has(serverId)) {
             return Promise.reject(
                 new CommandParseError('I only accept server based interactions.')
@@ -99,7 +99,8 @@ class CentralCommandDispatcher {
                 const channel = interaction.options.getChannel("queue_name", true);
                 if (channel.type !== 'GUILD_CATEGORY') {
                     return Promise.reject(
-                        new CommandParseError('The channel is not a category channel.')
+                        new CommandParseError(
+                            `${channel.name.toUpperCase()} is not a category channel.`)
                     );
                 }
                 await this.serverMap.get(serverId)
@@ -107,26 +108,31 @@ class CentralCommandDispatcher {
                 break;
             }
             default: {
-                return Promise.reject(new CommandParseError('Invalid queue creation command.'));
+                return Promise.reject(new CommandParseError(
+                    `Invalid queue creation subcommand ${subcommand}.`));
             }
         }
     }
 
     private async enqueue(interaction: CommandInteraction): Promise<void> {
-        const channel = interaction.options.getChannel("queue_name", true);
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {
-            return Promise.reject(new CommandParseError('I only accept server based interactions'));
+            return Promise.reject(new CommandParseError(
+                'I only accept server based interactions'));
         }
+
+        const channel = interaction.options.getChannel("queue_name", true);
         if (channel.type !== 'GUILD_CATEGORY') {
-            return Promise.reject(new CommandParseError(`${channel.name} is not a valid queue`));
+            return Promise.reject(new CommandParseError(
+                `${channel.name} is not a valid queue.`));
         }
 
         const roles = (await (interaction.member as GuildMember)?.fetch())
             .roles.cache.map(role => role.name);
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
-            return Promise.reject(new CommandParseError(`You need to be verified to use /enqueue.`));
+            return Promise.reject(new CommandParseError(
+                `You need to be verified to use /enqueue.`));
         }
 
         const queueTextChannel = (channel as CategoryChannel).children
@@ -136,7 +142,7 @@ class CentralCommandDispatcher {
         if (queueTextChannel === undefined) {
             return Promise.reject(new CommandParseError(
                 `This category does not have a 'queue' text channel. `
-                + `Consider using /queue < ${channel.name} > to generate one`));
+                + `Consider using /queue < ${channel.name} > to generate one.`));
         }
 
         const queueChannel: QueueChannel = {
