@@ -15,7 +15,7 @@ export enum CommandAccessLevel {
 export const hierarchyRoleConfigs = [
     {
         name: "Admin",
-        color: "DARK_VIVID_PINK" as ColorResolvable,
+        color: "LUMINOUS_VIVID_PINK" as ColorResolvable,
         hoist: true,
     },
     {
@@ -30,7 +30,7 @@ export const hierarchyRoleConfigs = [
     },
     {
         name: "Verified Email",
-        color: "AQUA" as ColorResolvable,
+        color: "YELLOW" as ColorResolvable,
         hoist: true,
     },
 ];

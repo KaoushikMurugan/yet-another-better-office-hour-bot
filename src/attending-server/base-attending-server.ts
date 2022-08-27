@@ -144,7 +144,7 @@ class AttendingServerV2 {
         this.queues = await Promise
             .all(queueChannels
                 .map(channel => HelpQueueV2
-                    .create(channel, this.user)));
+                    .create(channel, this.user, this.guild.roles.everyone)));
     }
 
     /**
@@ -164,7 +164,7 @@ class AttendingServerV2 {
 
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
-            console.log("\x1b[33mFound no help channels. Creating new ones.");
+            console.log("\x1b[33mFound no help channels. Creating new ones.\x1b[0m");
 
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
@@ -197,36 +197,15 @@ class AttendingServerV2 {
      * ----
      */
     async createHierarchyRoles(): Promise<void> {
-        const existingRoles = (await this.guild.roles.fetch()).map(
-            role => role.name
-        );
-        // ! DO NOT skip filter here
-        // creating roles with the same name is valid and makes it hard to adjust
+        const existingRoles = (await this.guild.roles.fetch())
+            .filter(role => role.name !== this.user.username &&
+                role.name !== '@everyone');
+        await Promise.all(existingRoles.map(role => role.delete()));
         const createdRoles = await Promise.all(hierarchyRoleConfigs
-            .filter(roleConfig => !existingRoles.includes(roleConfig.name))
             .map(async roleConfig =>
                 await this.guild.roles.create(roleConfig)));
-
-        // * Remove console logs if necessary
-        console.log("Initially create roles:");
+        console.log("Created roles:");
         console.log(createdRoles
-            .map(r => { return { name: r.name, pos: r.position }; })
-            .sort((a, b) => a.pos - b.pos));
-
-        // ! Adjustment must happen after role creation
-        // Otherwise YABOB doesn't have high enough role
-        await Promise.all(createdRoles
-            .map(async role => {
-                switch (role.name) {
-                    case "Verified Email": { await role.edit({ position: 1 }); break; }
-                    case "Student": { await role.edit({ position: 2 }); break; }
-                    case "Staff": { await role.edit({ position: 3 }); break; }
-                    case "Admin": { await role.edit({ position: 4 }); break; }
-                }
-            }));
-
-        console.log("Adjusted roles:");
-        console.log(this.guild.roles.cache
             .map(r => { return { name: r.name, pos: r.position }; })
             .sort((a, b) => a.pos - b.pos));
     }
@@ -251,7 +230,10 @@ class AttendingServerV2 {
         };
         await parentCategory.createChannel('chat');
 
-        this.queues.push(await HelpQueueV2.create(queueChannel, this.user));
+        this.queues.push(await HelpQueueV2.create(
+            queueChannel,
+            this.user,
+            this.guild.roles.everyone));
     }
 
     async deleteQueueByID(queueCategoryID: string): Promise<void> {
@@ -291,6 +273,7 @@ class AttendingServerV2 {
     }
 
     async dequeueFirst(helper: GuildMember, specificQueue?: QueueChannel): Promise<void> {
+
         if (specificQueue !== undefined) {
             if (!helper.roles.cache.has(specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
@@ -298,6 +281,7 @@ class AttendingServerV2 {
                 ));
             }
         }
+        // from all the opened queues, 
     }
 
     /**

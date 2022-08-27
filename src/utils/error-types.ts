@@ -1,3 +1,8 @@
+/**
+ * Describes errors that happen during the parsing stage
+ * ----
+ * This error should be triggered before any server related methods are called
+*/
 class CommandParseError extends Error {
     constructor(message: string) {
         super(message);
@@ -8,6 +13,11 @@ class CommandParseError extends Error {
     }
 }
 
+/**
+ * Describes behavioral errors in the server
+ * ----
+ * This error should be triggered before any queue related methods are called
+*/
 class ServerError extends Error {
     constructor(message: string) {
         super(message);
@@ -18,6 +28,10 @@ class ServerError extends Error {
     }
 }
 
+/**
+ * Describes behavioral errors in a HelpQueue
+ * ----
+*/
 class QueueError extends Error {
     constructor(message: string,
         public queueName: string) {
@@ -29,6 +43,7 @@ class QueueError extends Error {
     }
 }
 
-type AnyError = CommandParseError | ServerError | QueueError;
+// All 3 errors will be presented to the user
+type UserViewableError = CommandParseError | ServerError | QueueError;
 
-export { CommandParseError, ServerError, QueueError, AnyError };
+export { CommandParseError, ServerError, QueueError, UserViewableError };

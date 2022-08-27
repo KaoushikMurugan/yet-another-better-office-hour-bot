@@ -70,31 +70,11 @@ client.on("ready", async () => {
     console.log("Scanning servers I am a part of...");
 
     // allGuilds is all the servers this YABOB instance has joined
-    const allGuilds = await Promise.all((await client.guilds.fetch()).map(guild => guild.fetch()));
-    console.log(`Found ${allGuilds.length} server(s)`);
+    const allGuilds = await Promise
+        .all((await client.guilds.fetch()).map(guild => guild.fetch()));
+    console.log(`Found ${allGuilds.length} server${allGuilds.length === 1 ? '' : 's'}:`);
+    console.log(allGuilds.map(g => g.name));
 
-    // Connecting to the attendance sheet
-    let attendance_doc: GoogleSpreadsheet | null = null;
-    if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined) {
-        attendance_doc = new GoogleSpreadsheet(
-            process.env.YABOB_GOOGLE_SHEET_ID
-        );
-        await attendance_doc.useServiceAccountAuth(gcs_creds);
-        console.log("Connected to Google sheets.");
-    } else {
-        console.log(
-            `No google sheets ID found. Creating BOB without attendance logging.`
-        );
-    }
-
-    const a = await AttendingServerV2.create(client.user, allGuilds[0]!, firebase_db);
-    serversV2.set(allGuilds[0]!, a);
-    return;
-    serversV2.set(allGuilds[0]!, a);
-
-
-    // return;
-    // // process.exit(0);
     await Promise.all(
         allGuilds.map(guild =>
             // not sure why TS still complains, we already checked for null
@@ -104,27 +84,20 @@ client.on("ready", async () => {
                 .then(() => postSlashCommands(guild))
                 .catch((err: Error) => {
                     console.error(
-                        `An error occured in processing servers during startup of server: `
-                        + `${guild.name}. ${err.stack}`
+                        `An error occured during startup of server: `
+                        + `${guild.name}.\n${err.stack}`
                     );
                 })
         )
     );
 
-    console.log("Ready to go!");
-    console.log(allGuilds.map(guild => guild.name));
-
-    // await Promise.all(
-    //     full_guilds.map(async guild => {
-    //         const server = servers.get(guild);
-    //         if (server !== undefined) {
-    //             await server.AutoScheduleUpdates(server);
-    //         }
-    //     })
-    // );
+    console.log("✅\x1b[32mReady to go!\x1b[0m✅\n");
+    console.log("---- Begin Server Logs ----");
+    return;
 });
 
 client.on("guildCreate", async guild => {
+    console.log("guild create");
     await joinGuild(guild);
 });
 
@@ -231,6 +204,8 @@ client.on("guildMemberAdd", async member => {
     // const server = serversv2.get(member.guild) ?? await joinGuild(member.guild);
     // await server.EnsureHasRole(member as GuildMember);
 });
+
+process.on("exit", () => console.log('---- End Server Log ----'));
 
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {
