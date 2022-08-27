@@ -267,7 +267,7 @@ class AttendingServerV2 {
             member: student
         };
 
-        this.queues
+        await this.queues
             .find(q => q.queueChannel.channelObj.id === queue.channelObj.id)
             ?.enqueueStudent(helpee);
     }

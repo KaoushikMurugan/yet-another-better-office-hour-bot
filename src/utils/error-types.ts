@@ -6,7 +6,7 @@
 class CommandParseError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CommandError";
+        this.name = "CommandParseError";
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;

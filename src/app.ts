@@ -205,7 +205,11 @@ client.on("guildMemberAdd", async member => {
     // await server.EnsureHasRole(member as GuildMember);
 });
 
-process.on("exit", () => console.log('---- End Server Log ----'));
+process.on('exit', () => {
+    console.log(
+        '---- End Server Log ----\n'
+        + '---- Begin Error Stack Trace ----\n');
+});
 
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {

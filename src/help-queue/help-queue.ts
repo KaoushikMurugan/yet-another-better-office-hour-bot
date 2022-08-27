@@ -8,7 +8,10 @@ import { QueueError } from '../utils/error-types';
 
 import { QueueDisplayV2 } from './queue-display';
 
-type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ? B : A | B;
+type If<T extends boolean, A, B = null> = T extends true
+    ? A
+    : T extends false ? B
+    : A | B;
 
 type QueueViewModel = {
     name: string;
@@ -101,7 +104,7 @@ class HelpQueueV2 {
     async enqueueStudent(student: Helpee): Promise<void> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
-                `Queue ${this.queueChannel.queueName} is not open.`,
+                `Queue is not open.`,
                 this.queueChannel.queueName));
         }
         student.waitStart = new Date();
