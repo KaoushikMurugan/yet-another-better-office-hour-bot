@@ -1,13 +1,7 @@
 import { GuildMember, TextChannel } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { ServerError } from '../utils/error-types';
 
-
-class ServerError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "ServerError";
-    }
-}
 
 class ServerCommandHandler {
 
@@ -44,11 +38,11 @@ class ServerCommandHandler {
         });
     }
 
-    // async enqueue(user: GuildMember, queue: QueueChannel): Promise<void> {
-        
-    // }
+    async enqueue(user: GuildMember, queue: QueueChannel): Promise<void> {
+
+    }
 
 
 }
 
-export { ServerCommandHandler, ServerError };
+export { ServerCommandHandler };

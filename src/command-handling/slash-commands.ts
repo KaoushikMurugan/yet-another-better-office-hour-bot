@@ -3,7 +3,7 @@
  * .setName is the name of the command as it appears on Discord
  * options are the arguments of the command
  * .setRequired defines where the argument is required or not
- * Adopted from original BOB v3
+ * Adopted from original BOB v3 by Noah & Kaoushik
  *************************************************************************/
 
 import { SlashCommandBuilder } from "@discordjs/builders";
