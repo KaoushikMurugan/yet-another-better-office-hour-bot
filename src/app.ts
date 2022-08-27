@@ -146,8 +146,8 @@ client.on("interactionCreate", async interaction => {
         console.log(`Received interaction from unknown server. Did you invite me yet?`);
         throw Error();
     }
-    const mappp = new Map<string, ServerCommandHandler>();
-    mappp.set(interaction.guild.id, new ServerCommandHandler(server));
+    const mappp = new Map<string, AttendingServerV2>();
+    mappp.set(interaction.guild.id, server);
     const h = new CentralCommandHandler(mappp);
     await h.process(interaction as CommandInteraction);
 

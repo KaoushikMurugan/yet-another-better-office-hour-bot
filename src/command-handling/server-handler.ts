@@ -24,9 +24,9 @@ class ServerCommandHandler {
         });
     }
 
-    async deleteQueue(queueChannel: TextChannel): Promise<void> {
+    async deleteQueueByID(queueChannel: TextChannel): Promise<void> {
         const queueExists = (await this.server.getQueueChannels())
-            .find(queue => queue.channelObject.id === queueChannel.id);
+            .find(queue => queue.channelObj.id === queueChannel.id);
 
         // deletion logic
 

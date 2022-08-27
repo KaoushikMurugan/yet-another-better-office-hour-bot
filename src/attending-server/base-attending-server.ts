@@ -1,6 +1,7 @@
 import {
     CategoryChannel,
     Guild,
+    GuildMember,
     TextChannel,
     User,
 } from "discord.js";
@@ -9,11 +10,13 @@ import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
 import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
+import { ServerError } from "../utils/error-types";
+import { Helpee } from "../models/member-states";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
 type QueueChannel = {
-    channelObject: TextChannel;
+    channelObj: TextChannel;
     queueName: string;
 };
 
@@ -100,7 +103,7 @@ class AttendingServerV2 {
             .filter(([ch]) => ch !== undefined)
             .map(([ch, name]) => {
                 return {
-                    channelObject: ch,
+                    channelObj: ch,
                     queueName: name,
                 } as QueueChannel;
             });
@@ -145,7 +148,6 @@ class AttendingServerV2 {
      * ----
      * Removes all messages in the help channel and posts new ones
     */
-
     async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
@@ -224,6 +226,64 @@ class AttendingServerV2 {
             .sort((a, b) => a.pos - b.pos));
     }
 
+    async createQueue(name: string): Promise<void> {
+        const existingQueues = await this.getQueueChannels();
+        const existQueueWithSameName = existingQueues
+            .find(queue => queue.queueName === name)
+            !== undefined;
+        console.log(existingQueues.map(q => q.queueName));
+        if (existQueueWithSameName) {
+            return new Promise((_, reject) =>
+                reject(new ServerError(`Queue ${name} already exists`)));
+        }
+
+        const parentCategory = await this.guild.channels.create(
+            name,
+            { type: "GUILD_CATEGORY" }
+        );
+        const queueChannel: QueueChannel = {
+            channelObj: await parentCategory.createChannel('queue'),
+            queueName: name
+        };
+        await parentCategory.createChannel('chat');
+
+        this.queues.push(await HelpQueueV2.create(queueChannel, this.user));
+    }
+
+    async deleteQueueByID(queueCategoryID: string): Promise<void> {
+        const queueIndex = this.queues
+            .findIndex(queue => queue.queueChannel.channelObj.parent?.id === queueCategoryID);
+        if (queueIndex === -1) {
+            return new Promise((_, reject) =>
+                reject(new ServerError('This queue does not exist')));
+        }
+        const parentCategory = await (await this.guild.channels.fetch())
+            .find(ch => ch.id === queueCategoryID)
+            ?.fetch() as CategoryChannel;
+        // delete child channels first
+        await Promise.all(parentCategory
+            ?.children
+            .map(child => child.delete())
+            .filter(promise => promise !== undefined) as Promise<TextChannel>[]
+        ).catch(err => { throw err; });
+        // now delete category
+        await parentCategory?.delete();
+        // finally delete queue model
+        this.queues.splice(queueIndex, 1);
+    }
+
+    async enqueueStudent(user: GuildMember, queue: QueueChannel): Promise<void> {
+        const student: Helpee = {
+            waitStart: new Date(),
+            upNext: false,
+            member: user
+        };
+
+        this.queues
+            .find(q => q.queueChannel.channelObj.id === queue.channelObj.id)
+            ?.enqueue(student);
+    }
+
     /**
      * Creates roles for all the available queues if not already created
      * ----
@@ -242,7 +302,6 @@ class AttendingServerV2 {
                 })));
     }
 
-
     /**
      * Overwrites the existing command help channel and send new help messages
      * ----
@@ -251,7 +310,7 @@ class AttendingServerV2 {
         helpCategories: CategoryChannel[]
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
-            cat => [...cat.children.values()]
+            category => [...category.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
         if (helpCategories.length === 0 ||
             allHelpChannels.length === 0) {

@@ -63,7 +63,7 @@ class QueueDisplayV2 {
         // Trigger onRenderMessageCreate() here
 
         const queueMessages = await this.queueChannel
-            .channelObject
+            .channelObj
             .messages
             .fetch();
 
@@ -78,12 +78,12 @@ class QueueDisplayV2 {
         }
 
         if (sendNew) {
-            await this.queueChannel.channelObject.send({
+            await this.queueChannel.channelObj.send({
                 embeds: [embedTableMsg],
                 components: [joinLeaveButtons, notifButtons]
             });
         } else {
-            await this.queueChannel.channelObject.messages.cache.first()?.edit({
+            await this.queueChannel.channelObj.messages.cache.first()?.edit({
                 embeds: [embedTableMsg],
                 components: [joinLeaveButtons, notifButtons]
             });

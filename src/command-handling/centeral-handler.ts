@@ -5,9 +5,8 @@ import {
     GuildMember,
     TextChannel
 } from "discord.js";
-import { QueueChannel } from "../attending-server/base-attending-server";
+import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
-import { ServerCommandHandler } from "./server-handler";
 import { CommandError, ServerError } from '../utils/error-types';
 
 /**
@@ -51,36 +50,65 @@ class CentralCommandDispatcher {
     ]);
 
     constructor(
-        private serverHandlerMap: Map<string, ServerCommandHandler>,
+        private serverMap: Map<string, AttendingServerV2>,
     ) { }
 
     async process(interaction: CommandInteraction): Promise<void> {
-        let success = true;
-
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
             console.log(`attempt ${interaction.commandName}`);
+            // await commandMethod(interaction)
             try {
-                await commandMethod(interaction);
+                await commandMethod(interaction)
+                    .then(async () => {
+                        await interaction.reply({
+                            ...SimpleEmbed(
+                                `Command ${interaction.commandName} `
+                                + `${interaction.options.getSubcommand() ?? ''} is successful`,
+                                EmbedColor.Success),
+                            ephemeral: true
+                        });
+                    })
+                    .catch(async (err: ServerError) =>
+                        await interaction.reply({
+                            ...SimpleEmbed(
+                                err.message,
+                                EmbedColor.Error),
+                            ephemeral: true
+                        })
+                    );
+
+            } catch (err: any) {
+                await interaction.reply({
+                    ...SimpleEmbed(
+                        err.message,
+                        EmbedColor.Error),
+                    ephemeral: true
+                });
             }
-            catch (err) {
-                console.error(err);
-                success = false;
-            }
+
+
+            // .then(() => interaction.reply({
+            //     ...SimpleEmbed(
+            //         `Command ${interaction.commandName} is successful`,
+            //         EmbedColor.Success),
+            //     ephemeral: true
+            // }))
+            // .catch((err: ServerError) =>
+            //     interaction.reply({
+            //         ...SimpleEmbed(
+            //             err.message,
+            //             EmbedColor.Error),
+            //         ephemeral: true
+            //     })
+            // );
         }
-
-        return new Promise<void>((resolve, reject) => success
-            ? resolve()
-            // todo: add better error message
-            : reject(new CommandError('Command Failed'))
-        );
-
     }
 
     private async queue(interaction: CommandInteraction): Promise<void> {
         const serverId = interaction.guild?.id;
 
-        if (!serverId || !this.serverHandlerMap.has(serverId)) {
+        if (!serverId || !this.serverMap.has(serverId)) {
             throw new CommandError('I only accept server based interactions');
         }
         // start parsing
@@ -88,35 +116,19 @@ class CentralCommandDispatcher {
         switch (subcommand) {
             case "add": {
                 const queueName = interaction.options.getString("queue_name", true);
-                await this.serverHandlerMap.get(serverId)
+                await this.serverMap.get(serverId)
                     ?.createQueue(queueName)
-                    .then(() => interaction.reply({
-                        ...SimpleEmbed(
-                            `Successfully removed queue "${queueName}"`,
-                            EmbedColor.Success),
-                        ephemeral: true
-                    }))
-                    .catch((err: ServerError) => {
-                        throw err;
-                    });
+                    .catch(err => { throw err; });
                 break;
             }
             case "remove": {
                 const channel = interaction.options.getChannel("queue_name", true);
-                if (channel.type !== 'GUILD_TEXT') {
-                    throw new CommandError('The channel is not a text channel');
+                if (channel.type !== 'GUILD_CATEGORY') {
+                    throw new CommandError('The channel is not a category channel');
                 }
-                this.serverHandlerMap.get(serverId)
-                    ?.deleteQueue(channel as TextChannel)
-                    .then(() => interaction.reply({
-                        ...SimpleEmbed(
-                            `Successfully removed queue "${channel.name}"`,
-                            EmbedColor.Success),
-                        ephemeral: true
-                    }))
-                    .catch((err: ServerError) => {
-                        throw err;
-                    });
+                await this.serverMap.get(serverId)
+                    ?.deleteQueueByID(channel.id)
+                    .catch(err => { throw err; });
                 break;
             }
             default: {
@@ -128,7 +140,7 @@ class CentralCommandDispatcher {
     private async enqueue(interaction: CommandInteraction): Promise<void> {
         const channel = interaction.options.getChannel("queue_name", true);
         const serverId = interaction.guild?.id;
-        if (!serverId || !this.serverHandlerMap.has(serverId)) {
+        if (!serverId || !this.serverMap.has(serverId)) {
             throw new CommandError('I only accept server based interactions');
         }
         if (channel.type !== 'GUILD_CATEGORY') {
@@ -153,27 +165,15 @@ class CentralCommandDispatcher {
         }
 
         const queueChannel: QueueChannel = {
-            channelObject: queueTextChannel as TextChannel,
+            channelObj: queueTextChannel as TextChannel,
             queueName: channel.name
         };
 
         // type is already checked, so we can safely cast
-        await this.serverHandlerMap
+        await this.serverMap
             .get(serverId)
-            ?.enqueue(interaction.member as GuildMember, queueChannel)
-            .then(async () => {
-                console.log('then');
-                await interaction.reply({
-                    ...SimpleEmbed(
-                        `Successfully joined queue "${channel.name}"`,
-                        EmbedColor.Success),
-                    ephemeral: true
-                });
-            })
-            .catch((err: ServerError) => {
-                console.log('catch');
-                throw err;
-            });
+            ?.enqueueStudent(interaction.member as GuildMember, queueChannel)
+            .catch(err => { throw err; });
     }
 }
 

@@ -111,7 +111,7 @@ class HelpQueueV2 {
             calendarString: '',
             isOpen: false
         };
-        await Promise.all((await this.queueChannel.channelObject.messages.fetch())
+        await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
         await this.display.render(emptyQueue, true);
         console.log(`Queue ${this.queueChannel.queueName} cleaned up.`);
