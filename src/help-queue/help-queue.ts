@@ -4,6 +4,7 @@ import {
     Helper,
     Helpee
 } from '../models/member-states';
+import { QueueError } from '../utils/error-types';
 
 import { QueueDisplayV2 } from './queue-display';
 
@@ -12,7 +13,7 @@ type If<T extends boolean, A, B = null> = T extends true ? A : T extends false ?
 type QueueViewModel = {
     name: string;
     helperIDs: Array<string>;
-    studentIDs: Array<string>;
+    studentDisplayNames: Array<string>;
     calendarString?: string;
     isOpen: boolean;
 }
@@ -64,7 +65,9 @@ class HelpQueueV2 {
 
     async openQueue(): Promise<void> {
         if (this.isOpen) {
-            throw new Error('The queue is already open.');
+            throw new QueueError(
+                'The queue is already open.',
+                this.queueChannel.queueName);
         }
         this.isOpen = true;
         this.helpers.forEach(helper => helper.helpStart = new Date());
@@ -73,7 +76,9 @@ class HelpQueueV2 {
 
     async closeQueue(): Promise<void> {
         if (this.isOpen) {
-            throw new Error('You are not currently hosting.');
+            throw new QueueError(
+                'You are not currently hosting.',
+                this.queueChannel.queueName);
         }
         this.isOpen = false;
         this.helpers.forEach(helper => helper.helpEnd = new Date());
@@ -82,7 +87,9 @@ class HelpQueueV2 {
 
     async enqueue(student: Helpee): Promise<void> {
         if (!this.isOpen) {
-            throw new Error(`Queue ${this.queueChannel.queueName} is not open.`);
+            throw new QueueError(
+                `Queue ${this.queueChannel.queueName} is not open.`,
+                this.queueChannel.queueName);
         }
         student.waitStart = new Date();
         this.students.push(student);
@@ -91,10 +98,13 @@ class HelpQueueV2 {
 
     async dequeue(helper: Helper): Promise<void> {
         if (!this.helpers.has(helper)) {
-            throw new Error('You don\'t have permission to help this queue');
+            throw new QueueError(
+                'You don\'t have permission to help this queue',
+                this.queueChannel.queueName);
         }
         if (this.students.length === 0) {
-            throw new Error('There\'s no one in the queue');
+            throw new QueueError('There\'s no one in the queue',
+                this.queueChannel.queueName);
         }
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -107,7 +117,7 @@ class HelpQueueV2 {
         const emptyQueue: QueueViewModel = {
             name: this.queueChannel.queueName,
             helperIDs: [],
-            studentIDs: [],
+            studentDisplayNames: [],
             calendarString: '',
             isOpen: false
         };
@@ -123,7 +133,7 @@ class HelpQueueV2 {
             name: this.queueChannel.queueName,
             helperIDs: [...this.helpers.values()]
                 .map(helper => helper.member.id),
-            studentIDs: [... this.students.values()]
+            studentDisplayNames: [... this.students.values()]
                 .map(student => student.member.displayName),
             calendarString: '',
             isOpen: this.isOpen

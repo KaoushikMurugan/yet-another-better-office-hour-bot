@@ -25,7 +25,8 @@ export function SimpleEmbed(
             }],
         };
     } else {
-        // TODO: if longer than 4096 characters break up into more than one message/embed
+        // TODO: if longer than 256? characters 
+        // TODO: break up into more than one message/embed
         return {
             embeds: [{
                 color: color,

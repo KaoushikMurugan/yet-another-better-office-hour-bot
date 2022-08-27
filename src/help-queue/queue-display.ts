@@ -93,14 +93,14 @@ class QueueDisplayV2 {
     }
 
     composeAsciiTable(queue: QueueViewModel): string {
-        if (queue.studentIDs.length === 0) {
+        if (queue.studentDisplayNames.length === 0) {
             return "";
         }
         const table = new AsciiTable3();
         table.setHeading('Position', 'Student Name')
             .setAlign(1, AlignmentEnum.CENTER)
             .setAlign(2, AlignmentEnum.CENTER)
-            .addRowMatrix([...queue.studentIDs
+            .addRowMatrix([...queue.studentDisplayNames
                 .map((name, idx) => [idx === 0 ? `(☞°∀°)☞` : `${idx + 1}`, name])
             ])
             .setStyle('unicode-mix');

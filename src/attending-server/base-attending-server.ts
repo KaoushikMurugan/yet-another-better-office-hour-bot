@@ -58,7 +58,7 @@ class AttendingServerV2 {
                     `Sorry, I need full administrator permission for "${guild.name}"`,
                     EmbedColor.Error));
             await guild.leave();
-            throw new Error("YABOB doesn't have admin permission.");
+            throw Error("YABOB doesn't have admin permission.");
         }
 
         console.log(`Creating new YABOB for server: ${guild.name}`);
@@ -265,7 +265,10 @@ class AttendingServerV2 {
             ?.children
             .map(child => child.delete())
             .filter(promise => promise !== undefined) as Promise<TextChannel>[]
-        ).catch(err => { throw err; });
+        ).catch((err: Error) => {
+            return new Promise((_, reject) =>
+                reject(new ServerError(`API Failure: ${err.name}\n${err.message}`)));
+        });
         // now delete category
         await parentCategory?.delete();
         // finally delete queue model

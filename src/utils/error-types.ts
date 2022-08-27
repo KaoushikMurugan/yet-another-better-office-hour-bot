@@ -12,4 +12,12 @@ class ServerError extends Error {
     }
 }
 
-export { CommandError, ServerError };
+class QueueError extends Error {
+    constructor(message: string,
+        public queueName: string) {
+        super(message);
+        this.name = "QueueError";
+    }
+}
+
+export { CommandError, ServerError, QueueError };
