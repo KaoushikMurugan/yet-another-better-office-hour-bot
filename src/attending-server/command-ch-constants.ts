@@ -1,6 +1,10 @@
 import fs from "fs";
-import { CommandAccessLevel } from '../command_handler';
 
+enum CommandAccessLevel {
+    ANYONE,
+    STAFF,
+    ADMIN,
+}
 
 const AdminCommands = fs.readFileSync(
     __dirname + "/../../../help-channel-messages/admin-commands.txt",

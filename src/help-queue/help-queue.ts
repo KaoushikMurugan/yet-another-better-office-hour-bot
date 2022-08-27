@@ -104,7 +104,7 @@ class HelpQueueV2 {
     }
 
     private async cleanUpQueueChannel(): Promise<void> {
-        const emptyQueueViewModel: QueueViewModel = {
+        const emptyQueue: QueueViewModel = {
             name: this.queueChannel.queueName,
             helperIDs: [],
             studentIDs: [],
@@ -113,7 +113,7 @@ class HelpQueueV2 {
         };
         await Promise.all((await this.queueChannel.channelObject.messages.fetch())
             .map(msg => msg.delete()));
-        await this.display.render(emptyQueueViewModel, true);
+        await this.display.render(emptyQueue, true);
         console.log(`Queue ${this.queueChannel.queueName} cleaned up.`);
     }
 

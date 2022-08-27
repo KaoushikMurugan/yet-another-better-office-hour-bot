@@ -1,4 +1,3 @@
-// V2 of attending server
 import {
     CategoryChannel,
     Guild,
@@ -19,6 +18,9 @@ type QueueChannel = {
     queueName: string;
 };
 
+// V2 of attending server
+// Cannot be extended
+// To add functionalities, either modify this class or make an extension
 class AttendingServerV2 {
     private queues: HelpQueueV2[] = [];
 
@@ -32,34 +34,41 @@ class AttendingServerV2 {
      * Asynchronously creates a YABOB instance for 1 server
      * ----
      * @param user discord client user
-     * @param server the server for YABOB to join
+     * @param guild the server for YABOB to join
      * @param firebaseDB firebase database object
      * @returns a created instance of YABOB
      * @throws UserError
      */
     static async create(
         user: User,
-        server: Guild,
+        guild: Guild,
         firebaseDB: Firestore
     ): Promise<AttendingServerV2> {
-        if (server.me === null
-            || !server.me.permissions.has("ADMINISTRATOR")) {
-            const owner = await server.fetchOwner();
+        if (guild.me === null ||
+            !guild.me.permissions.has("ADMINISTRATOR")
+        ) {
+            const owner = await guild.fetchOwner();
             await owner.send(
                 SimpleEmbed(
-                    `Sorry, I need full administrator permission for "${server.name}"`,
+                    `Sorry, I need full administrator permission for "${guild.name}"`,
                     EmbedColor.Error));
-            await server.leave();
+            await guild.leave();
             throw new UserError("YABOB doesn't have admin permission.");
         }
 
-        console.log(`Creating new YABOB for server: ${server.name}`);
-        const me = new AttendingServerV2(user, server, firebaseDB);
+        console.log(`Creating new YABOB for server: ${guild.name}`);
+        const me = new AttendingServerV2(user, guild, firebaseDB);
 
-        await me.initAllQueues();
-        // await me.createHierarchyRoles();
-        // await me.createClassRoles();
-        // await me.updateCommandHelpChannels();
+        // use individual awaits if a setup should be blocked by another
+        // here they can be launched in parallel
+        await Promise.all([
+            me.initAllQueues(),
+            me.createHierarchyRoles(),
+            me.updateCommandHelpChannels()
+        ]).catch(err => {
+            console.error(err);
+            throw Error(`Failed to initialize YABOB for ${guild.name}`);
+        });
 
         return me;
     }
@@ -126,6 +135,7 @@ class AttendingServerV2 {
             .all(queueChannels
                 .map(channel => HelpQueueV2
                     .create(channel, this.user)));
+        await this.createClassRoles();
     }
 
     /**
@@ -154,6 +164,7 @@ class AttendingServerV2 {
             );
             existingHelpCategory.push(helpCategory);
 
+            // Change the config object and add more functions here if needed
             for (const role of Object.values(commandChConfigs)) {
                 const commandCh = await helpCategory.createChannel(
                     role.channelName
@@ -164,8 +175,6 @@ class AttendingServerV2 {
                 await commandCh.permissionOverwrites.create(
                     this.user,
                     { SEND_MESSAGES: true });
-                // * Change the config object,
-                // * and add more function calls here if necessary
             }
         } else {
             console.log(
@@ -184,7 +193,7 @@ class AttendingServerV2 {
             role => role.name
         );
         // ! DO NOT skip filter here
-        // creating roles with the same name is valid and make it hard to adjust
+        // creating roles with the same name is valid and makes it hard to adjust
         const createdRoles = await Promise.all(hierarchyRoleConfigs
             .filter(roleConfig => !existingRoles.includes(roleConfig.name))
             .map(async roleConfig =>
@@ -231,6 +240,11 @@ class AttendingServerV2 {
                 })));
     }
 
+
+    /**
+     * Overwrites the existing command help channel and send new help messages
+     * ----
+    */
     private async sendCommandHelpMessages(
         helpCategories: CategoryChannel[]
     ): Promise<void> {

@@ -15,6 +15,8 @@ import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
+import { ServerCommandHandler } from "./command-handling/server-handler";
+import { CentralCommandHandler } from "./command-handling/centeral-handler";
 
 
 dotenv.config();
@@ -39,10 +41,12 @@ const client = new Client({
 });
 
 initializeApp({
-    credential: cert(fbs_creds),
+    credential: cert(fbs_creds)
 });
 
 const servers: Collection<Guild, AttendingServer> = new Collection();
+const serversv2: Collection<Guild, AttendingServerV2> = new Collection();
+
 const firebase_db: FirebaseFirestore.Firestore = getFirestore();
 console.log("Connected to Firebase database");
 
@@ -86,11 +90,12 @@ client.on("ready", async () => {
         );
     }
 
-    await AttendingServerV2.create(client.user, full_guilds[0], firebase_db);
+    const a = await AttendingServerV2.create(client.user, full_guilds[0]!, firebase_db);
+    serversv2.set(full_guilds[0]!, a);
 
 
-    // return;
-    process.exit(0);
+    return;
+    // process.exit(0);
     await Promise.all(
         full_guilds.map(guild =>
             AttendingServer.Create(client, guild, firebase_db, attendance_doc)
@@ -132,21 +137,27 @@ client.on("interactionCreate", async interaction => {
     }
     console.log("interaction create");
 
-    const server = servers.get(interaction.guild)!;
+    const server = serversv2.get(interaction.guild)!;
     if (server === undefined) {
         console.log(`undefined server`);
+        throw Error();
     }
+    const mappp = new Map<string, ServerCommandHandler>();
+    mappp.set(interaction.guild.id, new ServerCommandHandler(server));
+    const h = new CentralCommandHandler(mappp);
+    await h.enqueue(interaction as CommandInteraction);
 
-    await server.EnsureHasRole(interaction.member as GuildMember);
 
-    //If the interactin is a Command
-    if (interaction.isCommand()) {
-        await ProcessCommand(server, interaction);
-    }
-    //if the interaction is a button
-    else if (interaction.isButton()) {
-        await ProcessButtonPress(server, interaction);
-    }
+    // await server.EnsureHasRole(interaction.member as GuildMember);
+
+    // //If the interactin is a Command
+    // if (interaction.isCommand()) {
+    //     await ProcessCommand(server, interaction);
+    // }
+    // //if the interaction is a button
+    // else if (interaction.isButton()) {
+    //     await ProcessButtonPress(server, interaction);
+    // }
 });
 
 // updates user status of either joining a vc or leaving one
