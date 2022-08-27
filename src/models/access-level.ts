@@ -19,13 +19,18 @@ export const hierarchyRoleConfigs = [
         hoist: true,
     },
     {
+        name: "Staff",
+        color: "RED" as ColorResolvable,
+        hoist: true,
+    },
+    {
         name: "Student",
         color: "GREEN" as ColorResolvable, // casting is safe here
         hoist: true,
     },
     {
-        name: "Staff",
-        color: "RED" as ColorResolvable,
+        name: "Verified Email",
+        color: "AQUA" as ColorResolvable,
         hoist: true,
     },
 ];

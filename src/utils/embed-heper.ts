@@ -10,7 +10,8 @@ export enum EmbedColor {
 
 export function SimpleEmbed(
     message: string,
-    color = EmbedColor.Neutral
+    color = EmbedColor.Neutral,
+    description?: string
 ): Pick<MessageOptions, "embeds"> {
     if (message.length <= 256) {
         return {
@@ -18,6 +19,7 @@ export function SimpleEmbed(
                 color: color,
                 title: message,
                 timestamp: new Date(),
+                description: description,
                 author: {
                     name: 'BOBv3',
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'

@@ -85,7 +85,7 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async enqueue(student: Helpee): Promise<void> {
+    async enqueueStudent(student: Helpee): Promise<void> {
         if (!this.isOpen) {
             throw new QueueError(
                 `Queue ${this.queueChannel.queueName} is not open.`,
@@ -96,7 +96,7 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async dequeue(helper: Helper): Promise<void> {
+    async dequeueWithHelper(helper: Helper): Promise<void> {
         if (!this.helpers.has(helper)) {
             throw new QueueError(
                 'You don\'t have permission to help this queue',

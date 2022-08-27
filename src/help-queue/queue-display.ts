@@ -57,7 +57,7 @@ class QueueDisplayV2 {
                     .setStyle("PRIMARY")
             );
 
-        embedTableMsg.setTitle(`Queue for ${queue.name} is\t**${queue.isOpen ? "✓ OPEN" : "✕ CLOSED"}**`)
+        embedTableMsg.setTitle(`Queue for〚${queue.name}〛is\t**${queue.isOpen ? "OPEN ✓" : "CLOSED ✕"}**`)
             .setDescription(this.composeAsciiTable(queue));
 
         // Trigger onRenderMessageCreate() here

@@ -17,8 +17,7 @@ import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
-import { ServerCommandHandler } from "./command-handling/server-handler";
-import { CentralCommandHandler } from "./command-handling/centeral-handler";
+import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
 
 dotenv.config();
 
@@ -148,7 +147,7 @@ client.on("interactionCreate", async interaction => {
     }
     const mappp = new Map<string, AttendingServerV2>();
     mappp.set(interaction.guild.id, server);
-    const h = new CentralCommandHandler(mappp);
+    const h = new CentralCommandDispatcher(mappp);
     await h.process(interaction as CommandInteraction);
 
 

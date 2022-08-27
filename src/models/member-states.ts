@@ -8,7 +8,7 @@ type Helpee = {
 
 type Helper = {
     helpStart: Date;
-    helpEnd: Date; // ? Maybe init to end of day
+    helpEnd?: Date; // ? Maybe init to end of day
     helpedMembers: GuildMember[];
     readonly member: GuildMember; // backref
 }

@@ -11,7 +11,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
-import { Helpee } from "../models/member-states";
+import { Helpee, Helper } from "../models/member-states";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -64,11 +64,12 @@ class AttendingServerV2 {
         console.log(`Creating new YABOB for server: ${guild.name}`);
         const me = new AttendingServerV2(user, guild, firebaseDB);
 
-        // use individual awaits if a setup should be blocked by another
-        // here they can be launched in parallel
+        // ! this call must block everything else
+        await me.createHierarchyRoles();
+        // the ones below can be launched in parallel
         await Promise.all([
             me.initAllQueues(),
-            me.createHierarchyRoles(),
+            me.createClassRoles(),
             me.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
@@ -78,15 +79,19 @@ class AttendingServerV2 {
         return me;
     }
 
+    getAllQueueNames(): string[] {
+        return this.queues.map(queue => queue.queueChannel.queueName);
+    }
+
     /**
      * Gets all the queue channels on the server
      * ----
      * if nothing is found, returns empty array
-     * @param use_cache whether to read from existing cache, defaults to true
+     * @param useCache whether to read from existing cache, defaults to true
      * - unless queues change often, prefer cache for fast response
      */
-    async getQueueChannels(use_cache = true): Promise<QueueChannel[]> {
-        const allChannels = use_cache
+    async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
+        const allChannels = useCache
             ? this.guild.channels.cache
             : await this.guild.channels.fetch();
         const queueChannels = allChannels
@@ -140,7 +145,6 @@ class AttendingServerV2 {
             .all(queueChannels
                 .map(channel => HelpQueueV2
                     .create(channel, this.user)));
-        await this.createClassRoles();
     }
 
     /**
@@ -214,9 +218,10 @@ class AttendingServerV2 {
         await Promise.all(createdRoles
             .map(async role => {
                 switch (role.name) {
-                    case "Student": { await role.edit({ position: 1 }); break; }
-                    case "Staff": { await role.edit({ position: 2 }); break; }
-                    case "Admin": { await role.edit({ position: 3 }); break; }
+                    case "Verified Email": { await role.edit({ position: 1 }); break; }
+                    case "Student": { await role.edit({ position: 2 }); break; }
+                    case "Staff": { await role.edit({ position: 3 }); break; }
+                    case "Admin": { await role.edit({ position: 4 }); break; }
                 }
             }));
 
@@ -233,8 +238,7 @@ class AttendingServerV2 {
             !== undefined;
         console.log(existingQueues.map(q => q.queueName));
         if (existQueueWithSameName) {
-            return new Promise((_, reject) =>
-                reject(new ServerError(`Queue ${name} already exists`)));
+            return Promise.reject(new ServerError(`Queue ${name} already exists`));
         }
 
         const parentCategory = await this.guild.channels.create(
@@ -252,10 +256,10 @@ class AttendingServerV2 {
 
     async deleteQueueByID(queueCategoryID: string): Promise<void> {
         const queueIndex = this.queues
-            .findIndex(queue => queue.queueChannel.channelObj.parent?.id === queueCategoryID);
+            .findIndex(queue => queue.queueChannel
+                .channelObj.parent?.id === queueCategoryID);
         if (queueIndex === -1) {
-            return new Promise((_, reject) =>
-                reject(new ServerError('This queue does not exist')));
+            return Promise.reject(new ServerError('This queue does not exist'));
         }
         const parentCategory = await (await this.guild.channels.fetch())
             .find(ch => ch.id === queueCategoryID)
@@ -266,8 +270,7 @@ class AttendingServerV2 {
             .map(child => child.delete())
             .filter(promise => promise !== undefined) as Promise<TextChannel>[]
         ).catch((err: Error) => {
-            return new Promise((_, reject) =>
-                reject(new ServerError(`API Failure: ${err.name}\n${err.message}`)));
+            return Promise.reject(new ServerError(`API Failure: ${err.name}\n${err.message}`));
         });
         // now delete category
         await parentCategory?.delete();
@@ -275,16 +278,26 @@ class AttendingServerV2 {
         this.queues.splice(queueIndex, 1);
     }
 
-    async enqueueStudent(user: GuildMember, queue: QueueChannel): Promise<void> {
-        const student: Helpee = {
+    async enqueueStudent(student: GuildMember, queue: QueueChannel): Promise<void> {
+        const helpee: Helpee = {
             waitStart: new Date(),
             upNext: false,
-            member: user
+            member: student
         };
 
         this.queues
             .find(q => q.queueChannel.channelObj.id === queue.channelObj.id)
-            ?.enqueue(student);
+            ?.enqueueStudent(helpee);
+    }
+
+    async dequeueFirst(helper: GuildMember, specificQueue?: QueueChannel): Promise<void> {
+        if (specificQueue !== undefined) {
+            if (!helper.roles.cache.has(specificQueue.queueName)) {
+                return Promise.reject(new ServerError(
+                    `You don't have the permission to dequeue ${specificQueue.queueName}`
+                ));
+            }
+        }
     }
 
     /**
