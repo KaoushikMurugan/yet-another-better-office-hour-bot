@@ -6,7 +6,7 @@ import {
     User,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
-import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
+import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
 import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
@@ -164,7 +164,7 @@ class AttendingServerV2 {
 
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
-            console.log("\x1b[33mFound no help channels. Creating new ones.\x1b[0m");
+            console.log("\x1b[35mFound no help channels. Creating new ones.\x1b[0m");
 
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
@@ -186,7 +186,7 @@ class AttendingServerV2 {
             }
         } else {
             console.log(
-                "\x1b[33mFound existing help channel, updating command help file\x1b[0m"
+                "\x1b[33mFound existing help channels, updating command help file\x1b[0m"
             );
         }
         await this.sendCommandHelpMessages(existingHelpCategory);
@@ -215,9 +215,10 @@ class AttendingServerV2 {
         const existQueueWithSameName = existingQueues
             .find(queue => queue.queueName === name)
             !== undefined;
-        console.log(existingQueues.map(q => q.queueName));
+
         if (existQueueWithSameName) {
-            return Promise.reject(new ServerError(`Queue ${name} already exists`));
+            return Promise.reject(new ServerError(
+                `Queue ${name} already exists`));
         }
 
         const parentCategory = await this.guild.channels.create(
@@ -228,12 +229,15 @@ class AttendingServerV2 {
             channelObj: await parentCategory.createChannel('queue'),
             queueName: name
         };
+
         await parentCategory.createChannel('chat');
+        await this.createClassRoles();
 
         this.queues.push(await HelpQueueV2.create(
             queueChannel,
             this.user,
             this.guild.roles.everyone));
+        
     }
 
     async deleteQueueByID(queueCategoryID: string): Promise<void> {
@@ -252,7 +256,9 @@ class AttendingServerV2 {
             .map(child => child.delete())
             .filter(promise => promise !== undefined) as Promise<TextChannel>[]
         ).catch((err: Error) => {
-            return Promise.reject(new ServerError(`API Failure: ${err.name}\n${err.message}`));
+            return Promise.reject(new ServerError(
+                `API Failure: ${err.name}\n${err.message}`
+            ));
         });
         // now delete category
         await parentCategory?.delete();
@@ -260,7 +266,9 @@ class AttendingServerV2 {
         this.queues.splice(queueIndex, 1);
     }
 
-    async enqueueStudent(student: GuildMember, queue: QueueChannel): Promise<void> {
+    async enqueueStudent(
+        student: GuildMember,
+        queue: QueueChannel): Promise<void> {
         const helpee: Helpee = {
             waitStart: new Date(),
             upNext: false,
@@ -269,15 +277,18 @@ class AttendingServerV2 {
 
         await this.queues
             .find(q => q.queueChannel.channelObj.id === queue.channelObj.id)
-            ?.enqueueStudent(helpee);
+            ?.enqueue(helpee);
     }
 
-    async dequeueFirst(helper: GuildMember, specificQueue?: QueueChannel): Promise<void> {
+    async dequeueFirst(
+        helper: GuildMember,
+        specificQueue?: QueueChannel): Promise<void> {
 
         if (specificQueue !== undefined) {
             if (!helper.roles.cache.has(specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
-                    `You don't have the permission to dequeue ${specificQueue.queueName}`
+                    `You don't have the permission to dequeue `
+                    + `${specificQueue.queueName}`
                 ));
             }
         }

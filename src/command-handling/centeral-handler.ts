@@ -5,7 +5,7 @@ import {
     TextChannel
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
-import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
+import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
 import { CommandParseError, UserViewableError } from '../utils/error-types';
 
 /**
@@ -55,13 +55,14 @@ class CentralCommandDispatcher {
     async process(interaction: CommandInteraction): Promise<void> {
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`Attempting <${interaction.commandName}>`);
+            console.log(`Attempting ${interaction.toString()}`);
             await commandMethod(interaction)
                 .then(async () =>
                     await interaction.reply({
                         ...SimpleEmbed(
                             `Command \`/${interaction.commandName} `
-                            + `${interaction.options.getSubcommand() ?? ''}\` succeeded.`,
+                            + `${interaction.options.getSubcommand() ?? ''}\``
+                            + ` finished successfully.`,
                             EmbedColor.Success),
                         ephemeral: true
                     }))
@@ -132,7 +133,7 @@ class CentralCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
             return Promise.reject(new CommandParseError(
-                `You need to be verified to use /enqueue.`));
+                `You need to be verified to use \`/enqueue.\``));
         }
 
         const queueTextChannel = (channel as CategoryChannel).children
@@ -141,8 +142,8 @@ class CentralCommandDispatcher {
                 child.type === 'GUILD_TEXT');
         if (queueTextChannel === undefined) {
             return Promise.reject(new CommandParseError(
-                `This category does not have a 'queue' text channel. `
-                + `Consider using /queue < ${channel.name} > to generate one.`));
+                `This category does not have a \`#queue\` text channel. `
+                + `Consider using \`/queue add ${channel.name}\` to generate one.`));
         }
 
         const queueChannel: QueueChannel = {

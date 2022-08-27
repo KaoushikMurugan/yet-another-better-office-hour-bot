@@ -44,7 +44,7 @@ class HelpQueueV2 {
     get length(): number {
         return this.students.length;
     }
-    get opened(): boolean {
+    get currentlyOpen(): boolean {
         return this.isOpen;
     }
     get name(): string {
@@ -101,13 +101,16 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async enqueueStudent(student: Helpee): Promise<void> {
+    async enqueue(student: Helpee): Promise<void> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 `Queue is not open.`,
                 this.queueChannel.queueName));
         }
         student.waitStart = new Date();
+        if (this.students.length === 0) {
+            student.upNext = true;
+        }
         this.students.push(student);
         await this.triggerRender();
     }

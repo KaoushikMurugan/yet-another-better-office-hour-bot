@@ -102,8 +102,6 @@ client.on("guildCreate", async guild => {
 });
 
 client.on("interactionCreate", async interaction => {
-    console.log("interaction create");
-
     // Only care about if the interaction was a command or a button
     if (!interaction.isCommand() && !interaction.isButton()) return;
 
