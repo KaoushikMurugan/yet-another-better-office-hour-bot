@@ -1,4 +1,4 @@
-import { User } from 'discord.js';
+import { Role, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import {
     Helper,
@@ -41,6 +41,12 @@ class HelpQueueV2 {
     get length(): number {
         return this.students.length;
     }
+    get opened(): boolean {
+        return this.isOpen;
+    }
+    get name(): string {
+        return this.queueChannel.queueName;
+    }
     /**
      * Returns the first students in the queue
      * ----
@@ -57,17 +63,24 @@ class HelpQueueV2 {
     */
     static async create(
         queueChannel: QueueChannel,
-        user: User): Promise<HelpQueueV2> {
+        user: User,
+        everyoneRole: Role): Promise<HelpQueueV2> {
         const queue = new HelpQueueV2(user, queueChannel);
         await queue.cleanUpQueueChannel();
+        await queueChannel.channelObj.permissionOverwrites.create(
+            everyoneRole,
+            { SEND_MESSAGES: false });
+        await queueChannel.channelObj.permissionOverwrites.create(
+            user,
+            { SEND_MESSAGES: true });
         return queue;
     }
 
     async openQueue(): Promise<void> {
         if (this.isOpen) {
-            throw new QueueError(
+            return Promise.reject(new QueueError(
                 'The queue is already open.',
-                this.queueChannel.queueName);
+                this.queueChannel.queueName));
         }
         this.isOpen = true;
         this.helpers.forEach(helper => helper.helpStart = new Date());
@@ -76,9 +89,9 @@ class HelpQueueV2 {
 
     async closeQueue(): Promise<void> {
         if (this.isOpen) {
-            throw new QueueError(
+            return Promise.reject(new QueueError(
                 'You are not currently hosting.',
-                this.queueChannel.queueName);
+                this.queueChannel.queueName));
         }
         this.isOpen = false;
         this.helpers.forEach(helper => helper.helpEnd = new Date());
@@ -87,9 +100,9 @@ class HelpQueueV2 {
 
     async enqueueStudent(student: Helpee): Promise<void> {
         if (!this.isOpen) {
-            throw new QueueError(
+            return Promise.reject(new QueueError(
                 `Queue ${this.queueChannel.queueName} is not open.`,
-                this.queueChannel.queueName);
+                this.queueChannel.queueName));
         }
         student.waitStart = new Date();
         this.students.push(student);
@@ -98,13 +111,14 @@ class HelpQueueV2 {
 
     async dequeueWithHelper(helper: Helper): Promise<void> {
         if (!this.helpers.has(helper)) {
-            throw new QueueError(
+            return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
-                this.queueChannel.queueName);
+                this.queueChannel.queueName));
         }
         if (this.students.length === 0) {
-            throw new QueueError('There\'s no one in the queue',
-                this.queueChannel.queueName);
+            return Promise.reject(new QueueError(
+                'There\'s no one in the queue',
+                this.queueChannel.queueName));
         }
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -124,7 +138,6 @@ class HelpQueueV2 {
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
         await this.display.render(emptyQueue, true);
-        console.log(`Queue ${this.queueChannel.queueName} cleaned up.`);
     }
 
     private async triggerRender(): Promise<void> {
