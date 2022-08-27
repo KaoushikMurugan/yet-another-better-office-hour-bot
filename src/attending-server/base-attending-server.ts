@@ -253,7 +253,6 @@ class AttendingServerV2 {
         const allHelpChannels = helpCategories.flatMap(
             cat => [...cat.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
-
         if (helpCategories.length === 0 ||
             allHelpChannels.length === 0) {
             console.warn("\x1b[31mNo help categories found.\x1b[0m");
@@ -262,15 +261,11 @@ class AttendingServerV2 {
             );
             return;
         }
-
         // delete all existing messages
         await Promise.all(
-            allHelpChannels.map(
-                async ch => await ch.messages
-                    .fetch()
-                    .then(messages => messages.map(msg => msg.delete()))
-            ));
-
+            allHelpChannels.map(async ch => await ch.messages
+                .fetch()
+                .then(messages => messages.map(msg => msg.delete()))));
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {

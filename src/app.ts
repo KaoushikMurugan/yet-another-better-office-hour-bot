@@ -148,8 +148,8 @@ client.on("interactionCreate", async interaction => {
     }
     const mappp = new Map<string, ServerCommandHandler>();
     mappp.set(interaction.guild.id, new ServerCommandHandler(server));
-    const h = CentralCommandHandler.create(mappp);
-    await h.enqueue(interaction as CommandInteraction);
+    const h = new CentralCommandHandler(mappp);
+    await h.process(interaction as CommandInteraction);
 
 
     // await server.EnsureHasRole(interaction.member as GuildMember);

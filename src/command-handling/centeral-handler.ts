@@ -1,13 +1,9 @@
 import {
+    ButtonInteraction,
     CategoryChannel,
     CommandInteraction,
-    Guild,
-    GuildChannel,
     GuildMember,
-    GuildMemberRoleManager,
-    Interaction,
-    TextChannel,
-    User
+    TextChannel
 } from "discord.js";
 import { QueueChannel } from "../attending-server/base-attending-server";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-heper";
@@ -34,10 +30,8 @@ const handlers = new Map<string, CommandHandler>([
 ]);
 **/
 
-
-
 /**
- * Responsible for validating & parsing commands, then dispatching them to servers
+ * Responsible for preprocessing commands and dispatching them to servers
  * ----
  * Notes:
  * - This is a singleton class
@@ -50,24 +44,40 @@ const handlers = new Map<string, CommandHandler>([
  *     4. resolve / reject
 */
 class CentralCommandDispatcher {
-    private constructor(private serverHandlerMap: Map<string, ServerCommandHandler>) { }
-    private static instance?: CentralCommandDispatcher;
 
-    static create(serverHandlerMap: Map<string, ServerCommandHandler>): CentralCommandDispatcher {
-        if (this.instance === undefined) {
-            this.instance = new CentralCommandDispatcher(serverHandlerMap);
+    private readonly commandMethodMap = new Map([
+        ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
+        ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
+    ]);
+
+    constructor(
+        private serverHandlerMap: Map<string, ServerCommandHandler>,
+    ) { }
+
+    async process(interaction: CommandInteraction): Promise<void> {
+        let success = true;
+
+        const commandMethod = this.commandMethodMap.get(interaction.commandName);
+        if (commandMethod !== undefined) {
+            console.log(`attempt ${interaction.commandName}`);
+            try {
+                await commandMethod(interaction);
+            }
+            catch (err) {
+                console.error(err);
+                success = false;
+            }
         }
-        return this.instance;
+
+        return new Promise<void>((resolve, reject) => success
+            ? resolve()
+            // todo: add better error message
+            : reject(new CommandError('Command Failed'))
+        );
+
     }
 
-    static getInstance(): CentralCommandDispatcher {
-        if (this.instance === undefined) {
-            throw Error('Dispatcher not created');
-        }
-        return this.instance;
-    }
-
-    async queue(interaction: CommandInteraction): Promise<void> {
+    private async queue(interaction: CommandInteraction): Promise<void> {
         const serverId = interaction.guild?.id;
 
         if (!serverId || !this.serverHandlerMap.has(serverId)) {
@@ -115,17 +125,18 @@ class CentralCommandDispatcher {
         }
     }
 
-    async enqueue(interaction: CommandInteraction): Promise<void> {
+    private async enqueue(interaction: CommandInteraction): Promise<void> {
         const channel = interaction.options.getChannel("queue_name", true);
         const serverId = interaction.guild?.id;
-
         if (!serverId || !this.serverHandlerMap.has(serverId)) {
             throw new CommandError('I only accept server based interactions');
         }
         if (channel.type !== 'GUILD_CATEGORY') {
             throw new CommandError(`${channel.name} is not a valid queue`);
         }
-        const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(role => role.name);
+
+        const roles = (await (interaction.member as GuildMember)?.fetch())
+            .roles.cache.map(role => role.name);
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
             throw new CommandError(`You need to be verified to use /enqueue.`);
@@ -135,7 +146,6 @@ class CentralCommandDispatcher {
             .find(child =>
                 child.name === 'queue' &&
                 child.type === 'GUILD_TEXT');
-
         if (queueTextChannel === undefined) {
             throw new CommandError(
                 `This category does not have a 'queue' text channel. `
@@ -165,8 +175,6 @@ class CentralCommandDispatcher {
                 throw err;
             });
     }
-
-
 }
 
 export { CentralCommandDispatcher as CentralCommandHandler };
