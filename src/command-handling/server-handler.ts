@@ -39,7 +39,10 @@ class ServerCommandHandler {
     }
 
     async enqueue(user: GuildMember, queue: QueueChannel): Promise<void> {
+        return new Promise<void>((resolve, reject) => {
+            resolve();
 
+        });
     }
 
 

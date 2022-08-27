@@ -44,7 +44,7 @@ initializeApp({
     credential: cert(fbs_creds)
 });
 
-const serversv2: Collection<Guild, AttendingServerV2> = new Collection();
+const serversV2: Collection<Guild, AttendingServerV2> = new Collection();
 const firebase_db: FirebaseFirestore.Firestore = getFirestore();
 
 console.log("Connected to Firebase database");
@@ -74,7 +74,6 @@ client.on("ready", async () => {
     const allGuilds = await Promise.all((await client.guilds.fetch()).map(guild => guild.fetch()));
     console.log(`Found ${allGuilds.length} server(s)`);
 
-
     // Connecting to the attendance sheet
     let attendance_doc: GoogleSpreadsheet | null = null;
     if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined) {
@@ -90,8 +89,9 @@ client.on("ready", async () => {
     }
 
     const a = await AttendingServerV2.create(client.user, allGuilds[0]!, firebase_db);
+    serversV2.set(allGuilds[0]!, a);
     return;
-    serversv2.set(allGuilds[0]!, a);
+    serversV2.set(allGuilds[0]!, a);
 
 
     // return;
@@ -101,7 +101,7 @@ client.on("ready", async () => {
             // not sure why TS still complains, we already checked for null
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             AttendingServerV2.create(client.user!, guild, firebase_db)
-                .then(server => serversv2.set(guild, server))
+                .then(server => serversV2.set(guild, server))
                 .then(() => postSlashCommands(guild))
                 .catch((err: Error) => {
                     console.error(
@@ -141,7 +141,7 @@ client.on("interactionCreate", async interaction => {
         return;
     }
 
-    const server = serversv2.get(interaction.guild);
+    const server = serversV2.get(interaction.guild);
     if (server === undefined) {
         console.log(`Received interaction from unknown server. Did you invite me yet?`);
         throw Error();
@@ -207,7 +207,7 @@ client.on("messageDelete", async message => {
         return;
     }
 
-    const server = serversv2.get(message.guild);
+    const server = serversV2.get(message.guild);
 
     if (server === undefined) {
         // Calling JoinGuild() here causes issues involving duplicate of the
@@ -238,11 +238,11 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
     }
-
     console.log(`Joining guild ${guild.name}`);
+
     const server = await AttendingServerV2.create(client.user, guild, firebase_db);
     await postSlashCommands(guild);
     console.log(guild.name);
-    serversv2.set(guild, server);
+    serversV2.set(guild, server);
     return server;
 }

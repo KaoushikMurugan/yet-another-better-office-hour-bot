@@ -17,9 +17,12 @@ type QueueChannel = {
     queueName: string;
 };
 
-// V2 of attending server
-// Cannot be extended
-// To add functionalities, either modify this class or make an extension
+/**
+ * V2 of attending server
+ * ----
+ * -  Cannot be extended
+ * - To add functionalities, either modify this class or make an extension
+*/
 class AttendingServerV2 {
     private queues: HelpQueueV2[] = [];
 

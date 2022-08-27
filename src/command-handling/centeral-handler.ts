@@ -80,9 +80,12 @@ class CentralCommandDispatcher {
                 const queueName = interaction.options.getString("queue_name", true);
                 await this.serverHandlerMap.get(serverId)
                     ?.createQueue(queueName)
-                    .then(() => interaction.editReply(SimpleEmbed(
-                        `Successfully created queue "${queueName}"`,
-                        EmbedColor.Success)))
+                    .then(() => interaction.reply({
+                        ...SimpleEmbed(
+                            `Successfully removed queue "${queueName}"`,
+                            EmbedColor.Success),
+                        ephemeral: true
+                    }))
                     .catch((err: ServerError) => {
                         throw err;
                     });
@@ -95,9 +98,12 @@ class CentralCommandDispatcher {
                 }
                 this.serverHandlerMap.get(serverId)
                     ?.deleteQueue(channel as TextChannel)
-                    .then(() => interaction.editReply(SimpleEmbed(
-                        `Successfully removed queue "${channel.name}"`,
-                        EmbedColor.Success)))
+                    .then(() => interaction.reply({
+                        ...SimpleEmbed(
+                            `Successfully removed queue "${channel.name}"`,
+                            EmbedColor.Success),
+                        ephemeral: true
+                    }))
                     .catch((err: ServerError) => {
                         throw err;
                     });
@@ -119,8 +125,9 @@ class CentralCommandDispatcher {
         if (channel.type !== 'GUILD_CATEGORY') {
             throw new CommandError(`${channel.name} is not a valid queue`);
         }
-        if (interaction.member instanceof GuildMember &&
-            !interaction.member.roles.cache.has('Verified Email')) {
+        const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(role => role.name);
+        if (!(interaction.member instanceof GuildMember &&
+            roles.includes('Verified Email'))) {
             throw new CommandError(`You need to be verified to use /enqueue.`);
         }
 
@@ -144,11 +151,17 @@ class CentralCommandDispatcher {
         await this.serverHandlerMap
             .get(serverId)
             ?.enqueue(interaction.member as GuildMember, queueChannel)
-            .then(() => interaction.editReply(
-                SimpleEmbed(`Successfully joined queue "${channel.name}"`,
-                    EmbedColor.Success))
-            )
+            .then(async () => {
+                console.log('then');
+                await interaction.reply({
+                    ...SimpleEmbed(
+                        `Successfully joined queue "${channel.name}"`,
+                        EmbedColor.Success),
+                    ephemeral: true
+                });
+            })
             .catch((err: ServerError) => {
+                console.log('catch');
                 throw err;
             });
     }
