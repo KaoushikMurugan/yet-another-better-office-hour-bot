@@ -194,7 +194,7 @@ class HelpQueueV2 {
         const viewModel: QueueViewModel = {
             name: this.name,
             helperIDs: [...this.helpers.values()]
-                .map(helper => helper.member.id),
+                .map(helper => `<@${helper.member.id}>`),
             studentDisplayNames: [... this.students.values()]
                 .map(student => student.member.displayName),
             calendarString: '',

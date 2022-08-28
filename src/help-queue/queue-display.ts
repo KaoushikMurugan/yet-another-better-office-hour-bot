@@ -21,7 +21,26 @@ class QueueDisplayV2 {
 
     // TODO: Extract notif button as extension
     async render(queue: QueueViewModel, sendNew = false): Promise<void> {
+        const queueMessages = await this.queueChannel
+            .channelObj
+            .messages
+            .fetch();
+
+        // If YABOB's message is not the first one, abort render
+        // prompt user to call enclosing queue's cleanUpQueueChannel() method
+        if (!sendNew && (queueMessages.size !== 1 ||
+            queueMessages.first()?.author.id !== this.user.id)) {
+            console.warn('The queue has messages not from YABOB. '
+                + `Use the /cleanup ${this.queueChannel.queueName} command `
+                + 'to clean up the channel');
+            return;
+        }
+
         const embedTableMsg = new MessageEmbed();
+        embedTableMsg
+            .setTitle(`Queue for〚${queue.name}〛is\t**${queue.isOpen ? "OPEN ✓" : "CLOSED ✕"}**`)
+            .setDescription(this.composeAsciiTable(queue));
+
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -57,39 +76,31 @@ class QueueDisplayV2 {
                     .setStyle("PRIMARY")
             );
 
-        embedTableMsg.setTitle(`Queue for〚${queue.name}〛is\t**${queue.isOpen ? "OPEN ✓" : "CLOSED ✕"}**`)
-            .setDescription(this.composeAsciiTable(queue));
+        const embedList = [embedTableMsg];
+        
+        if (queue.helperIDs.length !== 0) {
+            const helperList = new MessageEmbed();
+            helperList
+                .setTitle(`Currently available helpers`)
+                .setDescription(queue.helperIDs.join('\n'));
+            embedList.push(helperList);
+        }
 
         // Trigger onRenderMessageCreate() here
 
-        const queueMessages = await this.queueChannel
-            .channelObj
-            .messages
-            .fetch();
-
-        // If YABOB's message is not the first one, abort render
-        // prompt user to call enclosing queue's cleanUpQueueChannel() method
-        if (!sendNew && (queueMessages.size !== 1 ||
-            queueMessages.first()?.author.id !== this.user.id)) {
-            console.warn('The queue has messages not from YABOB. '
-                + `Use the /cleanup ${this.queueChannel.queueName} command `
-                + 'to clean up the channel');
-            return;
-        }
-
         if (sendNew) {
             await this.queueChannel.channelObj.send({
-                embeds: [embedTableMsg],
+                embeds: embedList,
                 components: [joinLeaveButtons, notifButtons]
             });
         } else {
             await this.queueChannel.channelObj.messages.cache.first()?.edit({
-                embeds: [embedTableMsg],
+                embeds: embedList,
                 components: [joinLeaveButtons, notifButtons]
             });
         }
 
-        // Trigger onRenderMessageSent() here
+        // Trigger onRenderComplete() here
     }
 
     composeAsciiTable(queue: QueueViewModel): string {
