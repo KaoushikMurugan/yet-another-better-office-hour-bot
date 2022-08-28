@@ -5,6 +5,7 @@ import {
     TextChannel
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { Helper } from "../models/member-states";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import { CommandParseError, UserViewableError } from '../utils/error-types';
 
@@ -36,6 +37,7 @@ const handlers = new Map<string, CommandHandler>([
  *     2. do command specific checks
  *     3. call server command handler
  *     4. explicitly reject if parsing failed
+ *     5. return reply message
 */
 class CentralCommandDispatcher {
     private readonly commandMethodMap = new Map([
@@ -45,7 +47,8 @@ class CentralCommandDispatcher {
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
         ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
-        ['clear', (interaction: CommandInteraction) => this.clear(interaction)]
+        ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
+        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)]
     ]);
 
     constructor(
@@ -64,11 +67,10 @@ class CentralCommandDispatcher {
                 ephemeral: true
             });
             await commandMethod(interaction)
-                .then(async () =>
+                .then(async successMsg =>
                     await interaction.editReply(
                         SimpleEmbed(
-                            `Command \`/${interaction.commandName}\` `
-                            + `finished successfully.`,
+                            successMsg,
                             EmbedColor.Success),
                     ))
                 .catch(async (err: UserViewableError) =>
@@ -76,14 +78,14 @@ class CentralCommandDispatcher {
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.editReply(
+            await interaction.reply(
                 ErrorEmbed(new CommandParseError(
                     'This command does not exist.'
                 )));
         }
     }
 
-    private async queue(interaction: CommandInteraction): Promise<void> {
+    private async queue(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithRoles(
@@ -99,7 +101,7 @@ class CentralCommandDispatcher {
                 const queueName = interaction.options.getString("queue_name", true);
                 await this.serverMap.get(serverId)
                     ?.createQueue(queueName);
-                break;
+                return `Successfully created \`queueName\``;
             }
             case "remove": {
                 await this.isValidQueueInteraction(interaction);
@@ -111,7 +113,7 @@ class CentralCommandDispatcher {
                 }
                 await this.serverMap.get(serverId)
                     ?.deleteQueueById(channel.id);
-                break;
+                return `Successfully deleted \`queueName\``;
             }
             default: {
                 return Promise.reject(new CommandParseError(
@@ -120,7 +122,7 @@ class CentralCommandDispatcher {
         }
     }
 
-    private async enqueue(interaction: CommandInteraction): Promise<void> {
+    private async enqueue(interaction: CommandInteraction): Promise<string> {
         const [serverId, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isValidQueueInteraction(interaction),
@@ -130,9 +132,10 @@ class CentralCommandDispatcher {
         // type is already checked, so we can safely cast
         await this.serverMap.get(serverId)
             ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
+        return `Successfully joined \`${queueChannel.queueName}\``;
     }
 
-    private async next(interaction: CommandInteraction): Promise<void> {
+    private async next(interaction: CommandInteraction): Promise<string> {
         const [serverId, , member] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(
@@ -144,11 +147,11 @@ class CentralCommandDispatcher {
                 "next",
                 ['Admin', 'Staff'])
         ]);
-
-        await this.serverMap.get(serverId)?.dequeueFirst(member);
+        const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
+        return `An invite has been sent to \`${student?.member.displayName}\``;
     }
 
-    private async start(interaction: CommandInteraction): Promise<void> {
+    private async start(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithRoles(
@@ -160,11 +163,11 @@ class CentralCommandDispatcher {
                 "start"
             ),
         ]);
-
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member);
+        return `You have started helping! Have Fun!`;
     }
 
-    private async stop(interaction: CommandInteraction): Promise<void> {
+    private async stop(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithRoles(
@@ -177,10 +180,17 @@ class CentralCommandDispatcher {
             ),
         ]);
 
-        await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
+        const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
+
+        return `You have helped for ` +
+            `${Math.round(Math.abs(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                helpTime!.helpStart.getTime() - helpTime!.helpEnd!.getTime()
+            ) / 1000)} ` +
+            `seconds`;
     }
 
-    private async leave(interaction: CommandInteraction): Promise<void> {
+    private async leave(interaction: CommandInteraction): Promise<string> {
         const [serverId, member, queue] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(
@@ -191,9 +201,10 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
+        return `You have successfully left from queue ${queue.queueName}`;
     }
 
-    private async clear(interaction: CommandInteraction): Promise<void> {
+    private async clear(interaction: CommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isValidQueueInteraction(interaction),
@@ -209,6 +220,19 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.clearQueue(queue);
+        return `Everyone in ${queue.queueName} was removed from queue.`;
+    }
+
+    private async listHelpers(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction)
+        ]);
+        const helpers = this.serverMap.get(serverId ?? '')?.getAllHelpers();
+        console.log(helpers);
+        if (helpers === undefined || helpers.size === 0) {
+            return `No one is currently helping.`;
+        }
+        return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping`;
     }
 
     /**

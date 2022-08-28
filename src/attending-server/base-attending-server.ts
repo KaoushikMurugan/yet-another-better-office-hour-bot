@@ -11,7 +11,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
-import { Helpee } from "../models/member-states";
+import { Helpee, Helper } from "../models/member-states";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -86,6 +86,12 @@ class AttendingServerV2 {
 
     getHelpQueues(): Readonly<HelpQueueV2[]> {
         return this.queues;
+    }
+
+    getAllHelpers(): Set<string> {
+        return new Set(this.queues
+            .flatMap(q => [...q.helpers.values()])
+            .map(helper => helper.member.displayName));
     }
 
     /**
@@ -271,7 +277,7 @@ class AttendingServerV2 {
 
     async dequeueFirst(
         helperMember: GuildMember,
-        specificQueue?: QueueChannel): Promise<void> {
+        specificQueue?: QueueChannel): Promise<Readonly<Helpee>> {
         if (specificQueue !== undefined) {
             if (!helperMember.roles.cache.has(specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
@@ -313,6 +319,7 @@ class AttendingServerV2 {
             `It's your turn! Join the call: ${invite.toString()}`,
             EmbedColor.Success
         ));
+        return student;
     }
 
     async openAllOpenableQueues(member: GuildMember): Promise<void> {
@@ -333,7 +340,7 @@ class AttendingServerV2 {
             )));
     }
 
-    async closeAllClosableQueues(member: GuildMember): Promise<void> {
+    async closeAllClosableQueues(member: GuildMember): Promise<Readonly<Helper>> {
         const closableQueues = this.queues
             .filter(queue => member.roles.cache
                 .map(role => role.name)
@@ -352,6 +359,7 @@ class AttendingServerV2 {
         console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
         // emit onAllClosableQueuesClose() event here
+        return maxHelpTime;
     }
 
     async removeStudentFromQueue(

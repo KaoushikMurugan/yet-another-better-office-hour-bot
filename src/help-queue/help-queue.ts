@@ -74,7 +74,7 @@ class HelpQueueV2 {
     }
 
     async openQueue(helperMember: GuildMember): Promise<void> {
-        if (this.isOpen) {
+        if (this.helpers.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
                 this.name));
@@ -86,6 +86,7 @@ class HelpQueueV2 {
         };
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
+        console.log(this.helpers);
         // emit onQueueOpen event here
         await this.triggerRender();
     }
