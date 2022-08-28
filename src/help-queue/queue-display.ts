@@ -15,8 +15,8 @@ import {
 class QueueDisplayV2 {
 
     constructor(
+        private readonly user: User,
         private readonly queueChannel: QueueChannel,
-        private readonly user: User
     ) { }
 
     // TODO: Extract notif button as extension

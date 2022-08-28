@@ -60,9 +60,8 @@ class CentralCommandDispatcher {
                 .then(async () =>
                     await interaction.reply({
                         ...SimpleEmbed(
-                            `Command \`/${interaction.commandName} `
-                            + `${interaction.options.getSubcommand() ?? ''}\``
-                            + ` finished successfully.`,
+                            `Command \`/${interaction.commandName}\` `
+                            + `finished successfully.`,
                             EmbedColor.Success),
                         ephemeral: true
                     }))

@@ -29,7 +29,7 @@ class HelpQueueV2 {
         queueChannel: QueueChannel
     ) {
         this.queueChannel = queueChannel;
-        this.display = new QueueDisplayV2(queueChannel, user);
+        this.display = new QueueDisplayV2(user, queueChannel);
     }
 
     /**
@@ -77,26 +77,25 @@ class HelpQueueV2 {
     async openQueue(member: GuildMember): Promise<void> {
         if (this.isOpen) {
             return Promise.reject(new QueueError(
-                'The queue is already open.',
+                'Queue is already open',
                 this.queueChannel.queueName));
-        }
-        this.isOpen = true;
-        // this.helpers.forEach(helper => helper.helpStart = new Date());
+        } // won't actually be seen, will be caught
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
             member: member
         };
+        this.isOpen = true;
         this.helpers.set(member.id, helper);
         await this.triggerRender();
     }
 
     async closeQueue(): Promise<void> {
-        if (this.isOpen) {
+        if (!this.isOpen) {
             return Promise.reject(new QueueError(
-                'You are not currently hosting.',
+                'Queue is already closed',
                 this.queueChannel.queueName));
-        }
+        } // won't actually be seen, will be caught
         this.isOpen = false;
         this.helpers.forEach(helper => helper.helpEnd = new Date());
         await this.triggerRender();

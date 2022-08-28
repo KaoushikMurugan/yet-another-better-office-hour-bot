@@ -248,6 +248,9 @@ class AttendingServerV2 {
         });
         // now delete category
         await parentCategory?.delete();
+        await (await this.guild.roles.fetch())
+            .find(role => role.name === parentCategory.name)
+            ?.delete();
         // finally delete queue model
         this.queues.splice(queueIndex, 1);
     }
@@ -280,18 +283,22 @@ class AttendingServerV2 {
                 .find(queue => queue.name === specificQueue.queueName)
                 ?.dequeueWithHelper(helper);
         }
-
         // from all the queues, select the ones that are open
         // and reduce by comparing frist student's waitStart time
-        const queueToDeq = this.queues
-            .filter(queue => queue.currentlyOpen)
-            .reduce((prev, curr) =>
-                (prev.first?.waitStart !== undefined &&
-                    curr.first?.waitStart !== undefined) &&
-                    prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
-                    ? prev
-                    : curr
-            );
+        const queuesWithPeople = this.queues
+            .filter(queue => queue.currentlyOpen && queue.length !== 0);
+        if (queuesWithPeople.length === 0) {
+            return Promise.reject(new ServerError(
+                `There's no one left to help. You should get some coffee!`
+            ));
+        }
+        const queueToDeq = queuesWithPeople.reduce((prev, curr) =>
+            (prev.first?.waitStart !== undefined &&
+                curr.first?.waitStart !== undefined) &&
+                prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
+                ? prev
+                : curr
+        );
 
         await queueToDeq.dequeueWithHelper(helper);
     }
@@ -299,14 +306,19 @@ class AttendingServerV2 {
     async openAllOpenableQueues(member: GuildMember): Promise<void> {
         const openableQueues = this.queues
             .filter(queue => member.roles.cache
-                .has(queue.queueChannel.queueName));
+                .map(role => role.name)
+                .includes(queue.queueChannel.queueName));
         if (openableQueues.length === 0) {
             return Promise.reject(new ServerError(
-                `It seems like you don't have any class roles.\nThis might be a human error. ` +
+                `It seems like you don't have any class roles.\n` +
+                `This might be a human error. ` +
                 `In the meantime, you can help students through DMs.`
             ));
         }
-        await Promise.all(openableQueues.map(queue => queue.openQueue(member)));
+        await Promise.all(openableQueues.map(queue => queue.openQueue(member)))
+            .catch(() => Promise.reject(new ServerError(
+                'You are already hosting.'
+            )));
     }
 
 
