@@ -1,8 +1,6 @@
 // Library Imports
 import {
-    ButtonInteraction,
     Client,
-    CommandInteraction,
     Guild,
     Intents,
 } from "discord.js";
@@ -40,13 +38,14 @@ const client = new Client({
     ],
 });
 
+const serversV2: Map<string, AttendingServerV2> = new Map();
+
 initializeApp({
     credential: cert(fbs_creds)
 });
+
 const firebase_db: FirebaseFirestore.Firestore = getFirestore();
 console.log("Connected to Firebase database");
-
-const serversV2: Map<string, AttendingServerV2> = new Map();
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -58,7 +57,7 @@ client.on("error", error => {
 });
 
 client.on("ready", async () => {
-    const titleString = "YABOB: Yet-Another-Better-OH-Bot V3";
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
     console.log(
         `\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
         `${titleString}` +
@@ -78,14 +77,14 @@ client.on("ready", async () => {
     console.log(`Found ${allGuilds.length} server${allGuilds.length === 1 ? '' : 's'}:`);
     console.log(allGuilds.map(g => g.name));
 
+    // launch all startup sequences in parallel
     await Promise.all(
         allGuilds.map(guild => joinGuild(guild)
             .catch((err: Error) =>
                 console.error(
                     `An error occured during startup of server: `
                     + `${guild.name}.\n${err.stack}`
-                )))
-    );
+                ))));
 
     console.log("✅ \x1b[32mReady to go!\x1b[0m ✅\n");
     console.log("---- Begin Server Logs ----");
@@ -98,23 +97,13 @@ client.on("guildCreate", async guild => {
 });
 
 client.on("interactionCreate", async interaction => {
-    // Don't care about the interaction if done through dms
-    if (interaction.guild === null) {
-        console.error('Received non-server interaction.');
-        return;
-    }
-    const server = serversV2.get(interaction.guild.id);
-    if (server === undefined) {
-        console.log(`Received interaction from unknown server. Did you invite me yet?`);
-        throw Error();
-    }
     const commandHandler = new CentralCommandDispatcher(serversV2);
     const buttonHandler = new ButtonCommandDispatcher(serversV2);
     if (interaction.isCommand()) {
-        await commandHandler.process(interaction as CommandInteraction);
+        await commandHandler.process(interaction);
     }
     if (interaction.isButton()) {
-        await buttonHandler.process(interaction as ButtonInteraction);
+        await buttonHandler.process(interaction);
     }
 });
 

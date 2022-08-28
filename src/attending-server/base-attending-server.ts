@@ -12,6 +12,7 @@ import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
+import { IQueueExtension, IServerExtension } from "../extensions/base-interface";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -33,7 +34,25 @@ class AttendingServerV2 {
         public readonly user: User,
         public readonly guild: Guild,
         public readonly firebaseDB: Firestore,
+        private readonly serverExtensions: IServerExtension[],
+        // a bit of prop drilling, it's only here to pass it to the queues
+        private readonly queueExtensions: IQueueExtension[]
     ) { }
+
+
+    get allQueueNames(): string[] {
+        return this.queues.map(queue => queue.name);
+    }
+
+    get helpQueues(): Readonly<HelpQueueV2[]> {
+        return this.queues;
+    }
+
+    get allHelpers(): Set<string> {
+        return new Set(this.queues
+            .flatMap(q => [...q.helpers.values()])
+            .map(helper => helper.member.displayName));
+    }
 
     /**
      * Asynchronously creates a YABOB instance for 1 server
@@ -42,12 +61,14 @@ class AttendingServerV2 {
      * @param guild the server for YABOB to join
      * @param firebaseDB firebase database object
      * @returns a created instance of YABOB
-     * @throws UserError
+     * @throws ServerError
      */
     static async create(
         user: User,
         guild: Guild,
-        firebaseDB: Firestore
+        firebaseDB: Firestore,
+        serverExtensions: IServerExtension[] = [],
+        queueExtensions: IQueueExtension[] = []
     ): Promise<AttendingServerV2> {
         if (guild.me === null ||
             !guild.me.permissions.has("ADMINISTRATOR")
@@ -62,13 +83,21 @@ class AttendingServerV2 {
         }
 
         console.log(`Creating new YABOB for server: ${guild.name}`);
-        const me = new AttendingServerV2(user, guild, firebaseDB);
+
+        const me = new AttendingServerV2(
+            user,
+            guild,
+            firebaseDB,
+            serverExtensions,
+            queueExtensions
+        );
 
         // ! this call must block everything else
         // Disabled for dev environment assuming everything is created
         if (process.env.NODE_ENV === 'Production') {
             await me.createHierarchyRoles();
         }
+
         // the ones below can be launched in parallel
         await Promise.all([
             me.initAllQueues(),
@@ -76,25 +105,16 @@ class AttendingServerV2 {
             me.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw Error(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
+            throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
+
         console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
 
+        await Promise.all(serverExtensions.map(
+            extension => extension.onServerInitSuccess()
+        ));
+
         return me;
-    }
-
-    getAllQueueNames(): string[] {
-        return this.queues.map(queue => queue.name);
-    }
-
-    getHelpQueues(): Readonly<HelpQueueV2[]> {
-        return this.queues;
-    }
-
-    getAllHelpers(): Set<string> {
-        return new Set(this.queues
-            .flatMap(q => [...q.helpers.values()])
-            .map(helper => helper.member.displayName));
     }
 
     /**
@@ -155,9 +175,18 @@ class AttendingServerV2 {
             console.warn("Overriding existing queues.");
         }
         const queueChannels = await this.getQueueChannels();
-        this.queues = await Promise.all(queueChannels
-            .map(channel => HelpQueueV2
-                .create(channel, this.user, this.guild.roles.everyone)));
+        this.queues = await Promise.all(queueChannels.map(
+            channel => HelpQueueV2.create(
+                channel,
+                this.user,
+                this.guild.roles.everyone,
+                this.queueExtensions
+            )
+        ));
+
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onAllQueueInit()
+        ));
     }
 
     /**
@@ -231,7 +260,9 @@ class AttendingServerV2 {
         this.queues.push(await HelpQueueV2.create(
             queueChannel,
             this.user,
-            this.guild.roles.everyone));
+            this.guild.roles.everyone,
+            this.queueExtensions
+        ));
     }
 
     async deleteQueueById(queueCategoryID: string): Promise<void> {
@@ -260,19 +291,20 @@ class AttendingServerV2 {
             ?.delete();
         // finally delete queue model
         this.queues.splice(queueIndex, 1);
+        //   onQueueDelete()
     }
 
     async enqueueStudent(
-        student: GuildMember,
+        studentMember: GuildMember,
         queue: QueueChannel): Promise<void> {
-        const helpee: Helpee = {
+        const student: Helpee = {
             waitStart: new Date(),
             upNext: false,
-            member: student
+            member: studentMember
         };
         await this.queues
             .find(q => q.channelObj.id === queue.channelObj.id)
-            ?.enqueue(helpee);
+            ?.enqueue(student);
     }
 
     async dequeueFirst(
@@ -325,12 +357,14 @@ class AttendingServerV2 {
             `It's your turn! Join the call: ${invite.toString()}`,
             EmbedColor.Success
         ));
+
+        //   onDequeueFirst()
         return student;
     }
 
-    async openAllOpenableQueues(member: GuildMember): Promise<void> {
+    async openAllOpenableQueues(helperMember: GuildMember): Promise<void> {
         const openableQueues = this.queues
-            .filter(queue => member.roles.cache
+            .filter(queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
         if (openableQueues.length === 0) {
@@ -340,20 +374,21 @@ class AttendingServerV2 {
                 `In the meantime, you can help students through DMs.`
             ));
         }
-        await Promise.all(openableQueues.map(queue => queue.openQueue(member)))
+        await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember)))
             .catch(() => Promise.reject(new ServerError(
                 'You are already hosting.'
             )));
+        //   onHelperOpenQueue()
     }
 
-    async closeAllClosableQueues(member: GuildMember): Promise<Readonly<Helper>> {
+    async closeAllClosableQueues(helperMember: GuildMember): Promise<Readonly<Helper>> {
         const closableQueues = this.queues
-            .filter(queue => member.roles.cache
+            .filter(queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
         // since each queue maintain a set of helpers, take the max
         const helpTimes = await Promise.all(
-            closableQueues.map(queue => queue.closeQueue(member)))
+            closableQueues.map(queue => queue.closeQueue(helperMember)))
             .catch(() => Promise.reject(new ServerError(
                 'You are not currently hosting.'
             )));
@@ -364,17 +399,17 @@ class AttendingServerV2 {
         );
         console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
-        // emit onAllClosableQueuesClose() event here
+        //   onHelperCloseQueue(helper, queues)
         return maxHelpTime;
     }
 
     async removeStudentFromQueue(
-        member: GuildMember,
+        studentMember: GuildMember,
         targetQueue: QueueChannel
     ): Promise<void> {
         const queueToRemoveFrom = this.queues
             .find(queue => queue.name === targetQueue.queueName);
-        await queueToRemoveFrom?.removeStudent(member);
+        await queueToRemoveFrom?.removeStudent(studentMember);
     }
 
     async clearQueue(targetQueue: QueueChannel): Promise<void> {

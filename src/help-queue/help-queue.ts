@@ -1,12 +1,9 @@
 import { GuildMember, Role, TextChannel, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
-import {
-    Helper,
-    Helpee
-} from '../models/member-states';
+import { IQueueExtension } from '../extensions/base-interface';
+import { Helper, Helpee } from '../models/member-states';
 import { SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';
-
 import { QueueDisplayV2 } from './queue-display';
 
 type QueueViewModel = {
@@ -19,20 +16,23 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
+    helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
+
     private queueChannel: QueueChannel;
-    public helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
-    private readonly display: QueueDisplayV2;
     private students: Required<Helpee>[] = [];
     private isOpen = false;
+    private readonly queueExtensions: IQueueExtension[];
+    private readonly display: QueueDisplayV2;
 
     private constructor(
         user: User,
-        queueChannel: QueueChannel
+        queueChannel: QueueChannel,
+        queueExtensions: IQueueExtension[]
     ) {
         this.queueChannel = queueChannel;
         this.display = new QueueDisplayV2(user, queueChannel);
+        this.queueExtensions = queueExtensions;
     }
-
 
     get length(): number {
         return this.students.length;
@@ -58,8 +58,10 @@ class HelpQueueV2 {
     static async create(
         queueChannel: QueueChannel,
         user: User,
-        everyoneRole: Role): Promise<HelpQueueV2> {
-        const queue = new HelpQueueV2(user, queueChannel);
+        everyoneRole: Role,
+        queueExtensions: IQueueExtension[]
+    ): Promise<HelpQueueV2> {
+        const queue = new HelpQueueV2(user, queueChannel, queueExtensions);
         await queue.cleanUpQueueChannel();
         await queueChannel.channelObj.permissionOverwrites.create(
             everyoneRole,
@@ -83,7 +85,10 @@ class HelpQueueV2 {
         };
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
-        // emit onQueueOpen event here
+
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueOpen())
+        );
         await this.triggerRender();
     }
 
@@ -102,7 +107,10 @@ class HelpQueueV2 {
         this.helpers.delete(helperMember.id);
         this.isOpen = this.helpers.size > 0;
         helper.helpEnd = new Date();
-        // emit onQueueClose event here
+
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueClose())
+        );
         await this.triggerRender();
         return helper as Required<Helper>;
     }
@@ -113,7 +121,8 @@ class HelpQueueV2 {
                 `Queue is not open.`,
                 this.name));
         }
-        if (this.students.find(s => s.member.id === student.member.id)) {
+        if (this.students
+            .find(s => s.member.id === student.member.id) !== undefined) {
             return Promise.reject(new QueueError(
                 `You are already in the queue.`,
                 this.name
@@ -125,16 +134,19 @@ class HelpQueueV2 {
                 this.name
             ));
         }
-        student.waitStart = new Date();
         if (this.students.length === 0) {
             student.upNext = true;
         }
+        student.waitStart = new Date();
+        this.students.push(student);
         await Promise.all([...this.helpers.values()].map(helper =>
             helper.member.send(SimpleEmbed(
                 `Heads up! <@${student.member.user.id}> has joined "${this.name}".`
             ))
         ));
-        this.students.push(student);
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueClose())
+        );
         await this.triggerRender();
     }
 
@@ -160,6 +172,9 @@ class HelpQueueV2 {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this.students.shift()!;
         helper.helpedMembers.push(firstStudent.member);
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onDequeue())
+        );
         await this.triggerRender();
         return firstStudent;
     }
@@ -174,11 +189,17 @@ class HelpQueueV2 {
             ));
         }
         this.students.splice(idx, 1);
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onStudentRemove())
+        );
         await this.triggerRender();
     }
 
     async removeAllStudents(): Promise<void> {
         this.students = [];
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onRemoveAllStudents())
+        );
         await this.triggerRender();
     }
 
@@ -196,7 +217,7 @@ class HelpQueueV2 {
     }
 
     private async triggerRender(): Promise<void> {
-        // build viewModel, then call display.render();
+        // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             name: this.name,
             helperIDs: [...this.helpers.values()]
@@ -206,8 +227,10 @@ class HelpQueueV2 {
             calendarString: '',
             isOpen: this.isOpen
         };
-
         await this.display.render(viewModel);
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueRenderComplete())
+        );
     }
 }
 

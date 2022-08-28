@@ -47,9 +47,7 @@ class CentralCommandDispatcher {
         ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)]
     ]);
 
-    constructor(
-        private serverMap: Map<string, AttendingServerV2>,
-    ) { }
+    constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: CommandInteraction): Promise<void> {
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
@@ -75,11 +73,11 @@ class CentralCommandDispatcher {
                     )); // Central error handling, reply to user with the error
         } else {
             await interaction.reply({
-                    ...ErrorEmbed(new CommandNotImplementedError(
-                        'This command does not exist.'
-                    )),
-                    ephemeral: true
-                });
+                ...ErrorEmbed(new CommandNotImplementedError(
+                    'This command does not exist.'
+                )),
+                ephemeral: true
+            });
         }
     }
 
@@ -228,7 +226,7 @@ class CentralCommandDispatcher {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction)
         ]);
-        const helpers = this.serverMap.get(serverId ?? '')?.getAllHelpers();
+        const helpers = this.serverMap.get(serverId ?? '')?.allHelpers;
         if (helpers === undefined || helpers.size === 0) {
             return `No one is currently helping.`;
         }

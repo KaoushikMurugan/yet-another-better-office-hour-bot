@@ -15,9 +15,7 @@ class ButtonCommandDispatcher {
             interaction: ButtonInteraction) => this.leave(queueName, interaction)],
     ]);
 
-    constructor(
-        private serverMap: Map<string, AttendingServerV2>,
-    ) { }
+    constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
         const delimiterPosition = interaction.customId.indexOf(" ");
