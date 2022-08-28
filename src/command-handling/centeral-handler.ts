@@ -31,21 +31,21 @@ const handlers = new Map<string, CommandHandler>([
 /**
  * Responsible for preprocessing commands and dispatching them to servers
  * ----
- * Notes:
- * - This is a singleton class
+ * - This is a *singleton* class
  * - All the functions in this class follow these conventions:
  *   - function names are the corresponding command names
- *   - each function will: 
+ *   - Each function will: 
  *     1. check if server exist
  *     2. do command specific checks
  *     3. call server command handler
- *     4. resolve / reject
+ *     4. explicitly reject if parsing failed
 */
-
 class CentralCommandDispatcher {
     private readonly commandMethodMap = new Map([
         ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
+        ['next', (interaction: CommandInteraction) => this.next(interaction)],
+        ['start', (interaction: CommandInteraction) => this.start(interaction)],
     ]);
 
     constructor(
@@ -70,17 +70,25 @@ class CentralCommandDispatcher {
                     await interaction.reply({
                         ...ErrorEmbed(err),
                         ephemeral: true
-                    }));
+                    })); // Central error handling, reply to user with the error
+        } else {
+            await interaction.reply({
+                ...ErrorEmbed(new CommandParseError(
+                    'This command does not exist.'
+                )),
+                ephemeral: true
+            });
         }
     }
 
     private async queue(interaction: CommandInteraction): Promise<void> {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !this.serverMap.has(serverId)) {
-            return Promise.reject(
-                new CommandParseError('I only accept server based interactions.')
-            );
-        }
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByStaffOrAdmin(
+                interaction,
+                `queue ${interaction.options.getSubcommand()}`)
+        ]);
+
         // start parsing
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
@@ -91,15 +99,15 @@ class CentralCommandDispatcher {
                 break;
             }
             case "remove": {
+                await this.isValidQueueInteraction(interaction);
                 const channel = interaction.options.getChannel("queue_name", true);
                 if (channel.type !== 'GUILD_CATEGORY') {
                     return Promise.reject(
                         new CommandParseError(
-                            `${channel.name.toUpperCase()} is not a category channel.`)
-                    );
+                            `${channel.name.toUpperCase()} is not a category channel.`));
                 }
                 await this.serverMap.get(serverId)
-                    ?.deleteQueueByID(channel.id);
+                    ?.deleteQueueById(channel.id);
                 break;
             }
             default: {
@@ -110,50 +118,128 @@ class CentralCommandDispatcher {
     }
 
     private async enqueue(interaction: CommandInteraction): Promise<void> {
+        const [serverId, queueChannel] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isValidQueueInteraction(interaction),
+            this.isTriggeredByUserWithValidEmail(interaction, "enqueue"),
+        ]);
+
+        // type is already checked, so we can safely cast
+        await this.serverMap.get(serverId)
+            ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
+    }
+
+    private async next(interaction: CommandInteraction): Promise<void> {
+        const [serverId, , member] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                "next"
+            ),
+            this.isTriggeredByStaffOrAdmin(
+                interaction,
+                "next")
+        ]);
+
+        await this.serverMap.get(serverId)?.dequeueFirst(member);
+    }
+
+    private async start(interaction: CommandInteraction): Promise<void> {
+        const [serverId, member] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByStaffOrAdmin(
+                interaction,
+                "start"),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                "start"
+            ),
+        ]);
+
+        await this.serverMap.get(serverId)?.openAllOpenableQueues(member);
+    }
+
+    /**
+     * 
+     * Below are the validation functions
+     * - Returns type is Promise<validatedValueType> 
+     * - return Promise.reject if something fails
+     * - return a value if needed
+     * Usage Example:
+     * - const [serverId] = await Promise.all([
+     *      this.isServerInteraction(interaction),
+     *      this.isTriggeredByStaffOrAdmin(
+     *          interaction,
+                `queue ${interaction.options.getSubcommand()}`)
+        ]);
+        - use const [valueName, ...] = await Promise.all() to pick the ones you need
+        - Place the non void promises at the front for cleaner syntax
+    */
+
+    private async isServerInteraction(
+        interaction: CommandInteraction
+    ): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {
             return Promise.reject(new CommandParseError(
-                'I only accept server based interactions'));
+                'I can only accept server based interactions. '
+                + `Are you sure ${interaction.guild?.name} has a initialized YABOB?`));
+        } else {
+            return serverId;
         }
+    }
 
-        const channel = interaction.options.getChannel("queue_name", true);
-        if (channel.type !== 'GUILD_CATEGORY') {
+    private async isTriggeredByStaffOrAdmin(
+        interaction: CommandInteraction,
+        commandName: string
+    ): Promise<GuildMember> {
+        const roles = (await (interaction.member as GuildMember)?.fetch())
+            .roles.cache.map(role => role.name);
+        if (!(interaction.member instanceof GuildMember &&
+            (roles.includes('Staff') || roles.includes('Admin')))) {
             return Promise.reject(new CommandParseError(
-                `${channel.name} is not a valid queue.`));
+                `You need to be a staff member to use \`/${commandName}\`.`));
         }
+        return interaction.member as GuildMember;
+    }
 
+    private async isTriggeredByUserWithValidEmail(
+        interaction: CommandInteraction,
+        commandName: string
+    ): Promise<GuildMember> {
         const roles = (await (interaction.member as GuildMember)?.fetch())
             .roles.cache.map(role => role.name);
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
             return Promise.reject(new CommandParseError(
-                `You need to be verified to use \`/enqueue.\``));
+                `You need to have a verified email to use \`/${commandName}\`.`));
         }
+        return interaction.member as GuildMember;
+    }
 
+    private async isValidQueueInteraction(
+        interaction: CommandInteraction
+    ): Promise<QueueChannel> {
+        const channel = interaction.options.getChannel("queue_name", true);
+        if (channel.type !== 'GUILD_CATEGORY') {
+            return Promise.reject(new CommandParseError(
+                `${channel.name} is not a valid queue category.`));
+        }
         const queueTextChannel = (channel as CategoryChannel).children
             .find(child =>
                 child.name === 'queue' &&
                 child.type === 'GUILD_TEXT');
         if (queueTextChannel === undefined) {
             return Promise.reject(new CommandParseError(
-                `This category does not have a \`#queue\` text channel. `
-                + `Consider using \`/queue add ${channel.name}\` to generate one.`));
+                `This category does not have a \`#queue\` text channel.\n` +
+                `If you are an admin, you can use \`/queue add ${channel.name}\` ` +
+                `to generate one.`));
         }
-
         const queueChannel: QueueChannel = {
             channelObj: queueTextChannel as TextChannel,
             queueName: channel.name
         };
-
-        // type is already checked, so we can safely cast
-        await this.serverMap
-            .get(serverId)
-            ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
-    }
-
-    private async next(interaction: CommandInteraction): Promise<void> {
-
-        return Promise.resolve();
+        return queueChannel;
     }
 }
 

@@ -1,6 +1,5 @@
 import { MessageOptions } from "discord.js";
 import {
-    CommandParseError,
     QueueError,
     ServerError,
     UserViewableError

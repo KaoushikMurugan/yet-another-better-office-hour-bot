@@ -30,9 +30,9 @@ class AttendingServerV2 {
     private queues: HelpQueueV2[] = [];
 
     private constructor(
-        private readonly user: User,
-        private readonly guild: Guild,
-        private readonly firebaseDB: Firestore,
+        public readonly user: User,
+        public readonly guild: Guild,
+        public readonly firebaseDB: Firestore,
     ) { }
 
     /**
@@ -65,7 +65,7 @@ class AttendingServerV2 {
         const me = new AttendingServerV2(user, guild, firebaseDB);
 
         // ! this call must block everything else
-        await me.createHierarchyRoles();
+        // await me.createHierarchyRoles();
         // the ones below can be launched in parallel
         await Promise.all([
             me.initAllQueues(),
@@ -73,14 +73,19 @@ class AttendingServerV2 {
             me.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw Error(`Failed to initialize YABOB for ${guild.name}`);
+            throw Error(`\x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
+        console.log(`⭐\x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
 
         return me;
     }
 
     getAllQueueNames(): string[] {
         return this.queues.map(queue => queue.queueChannel.queueName);
+    }
+
+    getHelpQueues(): Readonly<HelpQueueV2[]> {
+        return this.queues;
     }
 
     /**
@@ -192,24 +197,6 @@ class AttendingServerV2 {
         await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
-    /**
-     * Creates all the command access hierarchy roles
-     * ----
-     */
-    async createHierarchyRoles(): Promise<void> {
-        const existingRoles = (await this.guild.roles.fetch())
-            .filter(role => role.name !== this.user.username &&
-                role.name !== '@everyone');
-        await Promise.all(existingRoles.map(role => role.delete()));
-        const createdRoles = await Promise.all(hierarchyRoleConfigs
-            .map(async roleConfig =>
-                await this.guild.roles.create(roleConfig)));
-        console.log("Created roles:");
-        console.log(createdRoles
-            .map(r => { return { name: r.name, pos: r.position }; })
-            .sort((a, b) => a.pos - b.pos));
-    }
-
     async createQueue(name: string): Promise<void> {
         const existingQueues = await this.getQueueChannels();
         const existQueueWithSameName = existingQueues
@@ -237,15 +224,14 @@ class AttendingServerV2 {
             queueChannel,
             this.user,
             this.guild.roles.everyone));
-        
     }
 
-    async deleteQueueByID(queueCategoryID: string): Promise<void> {
+    async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queueIndex = this.queues
             .findIndex(queue => queue.queueChannel
                 .channelObj.parent?.id === queueCategoryID);
         if (queueIndex === -1) {
-            return Promise.reject(new ServerError('This queue does not exist'));
+            return Promise.reject(new ServerError('This queue does not exist.'));
         }
         const parentCategory = await (await this.guild.channels.fetch())
             .find(ch => ch.id === queueCategoryID)
@@ -283,7 +269,6 @@ class AttendingServerV2 {
     async dequeueFirst(
         helper: GuildMember,
         specificQueue?: QueueChannel): Promise<void> {
-
         if (specificQueue !== undefined) {
             if (!helper.roles.cache.has(specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
@@ -291,8 +276,56 @@ class AttendingServerV2 {
                     + `${specificQueue.queueName}`
                 ));
             }
+            this.queues
+                .find(queue => queue.name === specificQueue.queueName)
+                ?.dequeueWithHelper(helper);
         }
-        // from all the opened queues, 
+
+        // from all the queues, select the ones that are open
+        // and reduce by comparing frist student's waitStart time
+        const queueToDeq = this.queues
+            .filter(queue => queue.currentlyOpen)
+            .reduce((prev, curr) =>
+                (prev.first?.waitStart !== undefined &&
+                    curr.first?.waitStart !== undefined) &&
+                    prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
+                    ? prev
+                    : curr
+            );
+
+        await queueToDeq.dequeueWithHelper(helper);
+    }
+
+    async openAllOpenableQueues(member: GuildMember): Promise<void> {
+        const openableQueues = this.queues
+            .filter(queue => member.roles.cache
+                .has(queue.queueChannel.queueName));
+        if (openableQueues.length === 0) {
+            return Promise.reject(new ServerError(
+                `It seems like you don't have any class roles.\nThis might be a human error. ` +
+                `In the meantime, you can help students through DMs.`
+            ));
+        }
+        await Promise.all(openableQueues.map(queue => queue.openQueue(member)));
+    }
+
+
+    /**
+     * Creates all the command access hierarchy roles
+     * ----
+     */
+    private async createHierarchyRoles(): Promise<void> {
+        const existingRoles = (await this.guild.roles.fetch())
+            .filter(role => role.name !== this.user.username &&
+                role.name !== '@everyone');
+        await Promise.all(existingRoles.map(role => role.delete()));
+        const createdRoles = await Promise.all(hierarchyRoleConfigs
+            .map(async roleConfig =>
+                await this.guild.roles.create(roleConfig)));
+        console.log("Created roles:");
+        console.log(createdRoles
+            .map(r => { return { name: r.name, pos: r.position }; })
+            .sort((a, b) => a.pos - b.pos));
     }
 
     /**
@@ -304,6 +337,9 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
+        console.log('Created class roles:');
+        console.log(queueNames
+            .filter(queue => !existingRoles.has(queue)));
         await Promise.all(queueNames
             .filter(queue => !existingRoles.has(queue))
             .map(async roleToCreate =>

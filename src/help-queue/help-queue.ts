@@ -1,4 +1,4 @@
-import { Role, User } from 'discord.js';
+import { GuildMember, Role, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import {
     Helper,
@@ -7,11 +7,6 @@ import {
 import { QueueError } from '../utils/error-types';
 
 import { QueueDisplayV2 } from './queue-display';
-
-type If<T extends boolean, A, B = null> = T extends true
-    ? A
-    : T extends false ? B
-    : A | B;
 
 type QueueViewModel = {
     name: string;
@@ -24,9 +19,9 @@ type QueueViewModel = {
 class HelpQueueV2 {
 
     public queueChannel: QueueChannel;
-    public helpers: Set<Helper> = new Set();
+    public helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
     private display: QueueDisplayV2;
-    private students: Helpee[] = [];
+    private students: Required<Helpee>[] = [];
     private isOpen = false;
 
     private constructor(
@@ -55,7 +50,7 @@ class HelpQueueV2 {
      * ----
      * if there are no students, returns undefined
     */
-    first(): Helpee | undefined {
+    get first(): Required<Helpee> | undefined {
         return this.students[0];
     }
 
@@ -79,14 +74,20 @@ class HelpQueueV2 {
         return queue;
     }
 
-    async openQueue(): Promise<void> {
+    async openQueue(member: GuildMember): Promise<void> {
         if (this.isOpen) {
             return Promise.reject(new QueueError(
                 'The queue is already open.',
                 this.queueChannel.queueName));
         }
         this.isOpen = true;
-        this.helpers.forEach(helper => helper.helpStart = new Date());
+        // this.helpers.forEach(helper => helper.helpStart = new Date());
+        const helper: Helper = {
+            helpStart: new Date(),
+            helpedMembers: [],
+            member: member
+        };
+        this.helpers.set(member.id, helper);
         await this.triggerRender();
     }
 
@@ -115,15 +116,22 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async dequeueWithHelper(helper: Helper): Promise<void> {
-        if (!this.helpers.has(helper)) {
+    async dequeueWithHelper(member: GuildMember): Promise<void> {
+        if (!this.isOpen) {
             return Promise.reject(new QueueError(
-                'You don\'t have permission to help this queue',
+                'This queue is not open. Did you mean to use `/start`?',
                 this.queueChannel.queueName));
         }
         if (this.students.length === 0) {
             return Promise.reject(new QueueError(
                 'There\'s no one in the queue',
+                this.queueChannel.queueName));
+        }
+
+        const helper = this.helpers.get(member.id);
+        if (!helper) {
+            return Promise.reject(new QueueError(
+                'You don\'t have permission to help this queue',
                 this.queueChannel.queueName));
         }
         // assertion is safe becasue we already checked for length
