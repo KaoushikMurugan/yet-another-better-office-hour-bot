@@ -58,7 +58,12 @@ client.on("error", error => {
 });
 
 client.on("ready", async () => {
-    console.log("\x1b[45mYABOB: Yet-Another-Better-OH-Bot V3\x1b[0m");
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V3";
+    console.log(
+        `\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
+        `${titleString}` +
+        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m`
+    );
     if (client.user === null) {
         throw new Error(
             "Login Unsuccessful. Check YABOB's Discord Credentials"
@@ -82,7 +87,7 @@ client.on("ready", async () => {
                 )))
     );
 
-    console.log("✅\x1b[32mReady to go!\x1b[0m✅\n");
+    console.log("✅ \x1b[32mReady to go!\x1b[0m ✅\n");
     console.log("---- Begin Server Logs ----");
     return;
 });
@@ -93,27 +98,22 @@ client.on("guildCreate", async guild => {
 });
 
 client.on("interactionCreate", async interaction => {
-    // Only care about if the interaction was a command or a button
-    if (!interaction.isCommand() && !interaction.isButton()) { return; }
-
     // Don't care about the interaction if done through dms
     if (interaction.guild === null) {
-        await interaction.reply("Sorry, I dont respond to direct messages.");
+        console.error('Received non-server interaction.');
         return;
     }
-
     const server = serversV2.get(interaction.guild.id);
     if (server === undefined) {
         console.log(`Received interaction from unknown server. Did you invite me yet?`);
         throw Error();
     }
-
     const commandHandler = new CentralCommandDispatcher(serversV2);
     const buttonHandler = new ButtonCommandDispatcher(serversV2);
-    if (interaction instanceof CommandInteraction) {
+    if (interaction.isCommand()) {
         await commandHandler.process(interaction as CommandInteraction);
     }
-    if (interaction instanceof ButtonInteraction) {
+    if (interaction.isButton()) {
         await buttonHandler.process(interaction as ButtonInteraction);
     }
 });

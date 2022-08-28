@@ -21,7 +21,7 @@ class HelpQueueV2 {
 
     private queueChannel: QueueChannel;
     public helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
-    private display: QueueDisplayV2;
+    private readonly display: QueueDisplayV2;
     private students: Required<Helpee>[] = [];
     private isOpen = false;
 
@@ -113,7 +113,7 @@ class HelpQueueV2 {
                 `Queue is not open.`,
                 this.name));
         }
-        if (this.students.includes(student)) {
+        if (this.students.find(s => s.member.id === student.member.id)) {
             return Promise.reject(new QueueError(
                 `You are already in the queue.`,
                 this.name
