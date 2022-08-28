@@ -7,8 +7,8 @@
     "build": "npx tsc",
     "test": "nyc mocha -r ts-node/register test/*.ts",
     "start": "node dist/src/app.js",
-    "dev": "npx tsc && NODE_ENV=Development node dist/src/app.js",
-    "prod": "npx tsc && NODE_ENV=Production node dist/src/app.js"
+    "dev": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=Development node dist/src/app.js",
+    "prod": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=Production node dist/src/app.js"
   },
   "devDependencies": {
     "@types/chai": "^4.2.21",
