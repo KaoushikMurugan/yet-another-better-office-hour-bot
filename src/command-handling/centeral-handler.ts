@@ -91,7 +91,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 `queue ${interaction.options.getSubcommand()}`,
-                ['Admin', 'Staff'])
+                ['Admin'])
         ]);
 
         // start parsing
@@ -101,7 +101,7 @@ class CentralCommandDispatcher {
                 const queueName = interaction.options.getString("queue_name", true);
                 await this.serverMap.get(serverId)
                     ?.createQueue(queueName);
-                return `Successfully created \`queueName\``;
+                return `Successfully created \`${queueName}\``;
             }
             case "remove": {
                 await this.isValidQueueInteraction(interaction);
@@ -228,7 +228,6 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction)
         ]);
         const helpers = this.serverMap.get(serverId ?? '')?.getAllHelpers();
-        console.log(helpers);
         if (helpers === undefined || helpers.size === 0) {
             return `No one is currently helping.`;
         }
@@ -274,7 +273,7 @@ class CentralCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             (userRoles.some(role => requiredRoles.includes(role))))) {
             return Promise.reject(new CommandParseError(
-                `You need to be a staff member to use \`/${commandName}\`.`));
+                `You need to be ${requiredRoles.join(' or ')} to use \`/${commandName}\`.`));
         }
         return interaction.member as GuildMember;
     }

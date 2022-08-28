@@ -43,7 +43,7 @@ initializeApp({
     credential: cert(fbs_creds)
 });
 
-const serversV2: Collection<Guild, AttendingServerV2> = new Collection();
+const serversV2: Map<string, AttendingServerV2> = new Map();
 const firebase_db: FirebaseFirestore.Firestore = getFirestore();
 
 console.log("Connected to Firebase database");
@@ -80,7 +80,7 @@ client.on("ready", async () => {
             // not sure why TS still complains, we already checked for null
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             AttendingServerV2.create(client.user!, guild, firebase_db)
-                .then(server => serversV2.set(guild, server))
+                .then(server => serversV2.set(guild.id, server))
                 .then(() => postSlashCommands(guild))
                 .catch((err: Error) => {
                     console.error(
@@ -111,7 +111,7 @@ client.on("interactionCreate", async interaction => {
         return;
     }
 
-    const server = serversV2.get(interaction.guild);
+    const server = serversV2.get(interaction.guild.id);
     if (server === undefined) {
         console.log(`Received interaction from unknown server. Did you invite me yet?`);
         throw Error();
@@ -177,7 +177,7 @@ client.on("messageDelete", async message => {
         return;
     }
 
-    const server = serversV2.get(message.guild);
+    const server = serversV2.get(message.guild.id);
 
     if (server === undefined) {
         // Calling JoinGuild() here causes issues involving duplicate of the
@@ -215,10 +215,8 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
             + 'to manage the server');
     }
     console.log(`Joining guild ${guild.name}`);
-
     const server = await AttendingServerV2.create(client.user, guild, firebase_db);
     await postSlashCommands(guild);
-    console.log(guild.name);
-    serversV2.set(guild, server);
+    serversV2.set(guild.id, server);
     return server;
 }
