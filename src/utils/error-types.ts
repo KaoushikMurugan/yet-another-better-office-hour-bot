@@ -43,7 +43,27 @@ class QueueError extends Error {
     }
 }
 
-// All 3 errors will be presented to the user
-type UserViewableError = CommandParseError | ServerError | QueueError;
+class CommandNotImplementedError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "CommandNotImplementedError";
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
+}
 
-export { CommandParseError, ServerError, QueueError, UserViewableError };
+// All 3 errors will be presented to the user
+type UserViewableError =
+    | CommandParseError
+    | ServerError
+    | QueueError
+    | CommandNotImplementedError;
+
+export {
+    CommandParseError,
+    ServerError,
+    QueueError,
+    CommandNotImplementedError,
+    UserViewableError
+};

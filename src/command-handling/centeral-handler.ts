@@ -6,19 +6,14 @@ import {
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
-import { CommandParseError, UserViewableError } from '../utils/error-types';
+import {
+    CommandNotImplementedError,
+    CommandParseError, UserViewableError
+} from '../utils/error-types';
 
 /**
 const handlers = new Map<string, CommandHandler>([
-    ["queue", new QueueCommandHandler()],
-    ["enqueue", new EnqueueCommandHandler()],
-    ["next", new DequeueCommandHandler()],
-    ["start", new StartCommandHandler()],
-    ["stop", new StopCommandHandler()],
-    ["leave", new LeaveCommandHandler()],
-    ["clear", new ClearCommandHandler()],
     ["announce", new AnnounceCommandHandler()],
-    ["list_helpers", new ListHelpersCommandHandler()],
     ["notify_me", new GetNotifcationsHandler()],
     ["remove_notif", new RemoveNotifcationsHandler()],
     ["post_session_msg", new MsgAfterLeaveVCHandler()],
@@ -57,15 +52,15 @@ class CentralCommandDispatcher {
     async process(interaction: CommandInteraction): Promise<void> {
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
             await interaction.reply({
                 ...SimpleEmbed(
-                    'Processing…',
+                    'Processing command...',
                     EmbedColor.Neutral
                 ),
                 ephemeral: true
             });
-            await commandMethod(interaction)
+            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
+            await commandMethod(interaction as CommandInteraction)
                 .then(async successMsg =>
                     await interaction.editReply(
                         SimpleEmbed(
@@ -78,7 +73,7 @@ class CentralCommandDispatcher {
                     )); // Central error handling, reply to user with the error
         } else {
             await interaction.reply(
-                ErrorEmbed(new CommandParseError(
+                ErrorEmbed(new CommandNotImplementedError(
                     'This command does not exist.'
                 )));
         }
@@ -122,7 +117,7 @@ class CentralCommandDispatcher {
     }
 
     private async enqueue(interaction: CommandInteraction): Promise<string> {
-        const [serverId, queueChannel] = await Promise.all([
+        const [serverId, queueChannel, member] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isValidQueueInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "enqueue"),
@@ -130,8 +125,8 @@ class CentralCommandDispatcher {
 
         // type is already checked, so we can safely cast
         await this.serverMap.get(serverId)
-            ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
-        return `Successfully joined \`${queueChannel.queueName}\``;
+            ?.enqueueStudent(member, queueChannel);
+        return `Successfully joined \`${queueChannel.queueName}\`.`;
     }
 
     private async next(interaction: CommandInteraction): Promise<string> {
@@ -147,7 +142,7 @@ class CentralCommandDispatcher {
                 ['Admin', 'Staff'])
         ]);
         const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
-        return `An invite has been sent to \`${student?.member.displayName}\``;
+        return `An invite has been sent to \`${student?.member.displayName}\`.`;
     }
 
     private async start(interaction: CommandInteraction): Promise<string> {
@@ -186,7 +181,7 @@ class CentralCommandDispatcher {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 helpTime!.helpStart.getTime() - helpTime!.helpEnd!.getTime()
             ) / 1000)} ` +
-            `seconds`;
+            `seconds. See you later!`;
     }
 
     private async leave(interaction: CommandInteraction): Promise<string> {
@@ -200,7 +195,7 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
-        return `You have successfully left from queue ${queue.queueName}`;
+        return `You have successfully left from queue ${queue.queueName}.`;
     }
 
     private async clear(interaction: CommandInteraction): Promise<string> {
@@ -219,7 +214,7 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.clearQueue(queue);
-        return `Everyone in ${queue.queueName} was removed from queue.`;
+        return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
     private async listHelpers(interaction: CommandInteraction): Promise<string> {
@@ -290,7 +285,6 @@ class CentralCommandDispatcher {
         }
         return interaction.member as GuildMember;
     }
-
 
     /**
      * Checks if the REQUIRED queue_name argument is valid

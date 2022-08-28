@@ -1,5 +1,6 @@
 // Library Imports
 import {
+    ButtonInteraction,
     Client,
     CommandInteraction,
     Guild,
@@ -16,6 +17,7 @@ import fbs_creds from "../fbs_service_account_key.json";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
+import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
 dotenv.config();
 console.log(`Environment: ${process.env.NODE_ENV}`);
@@ -112,10 +114,16 @@ client.on("interactionCreate", async interaction => {
         console.log(`Received interaction from unknown server. Did you invite me yet?`);
         throw Error();
     }
-    const mappp = new Map<string, AttendingServerV2>();
-    mappp.set(interaction.guild.id, server);
-    const h = new CentralCommandDispatcher(mappp);
-    await h.process(interaction as CommandInteraction);
+
+    const commandHandler = new CentralCommandDispatcher(serversV2);
+    const buttonHandler = new ButtonCommandDispatcher(serversV2);
+    if (interaction instanceof CommandInteraction) {
+        await commandHandler.process(interaction as CommandInteraction);
+    }
+    if (interaction instanceof ButtonInteraction) {
+        await buttonHandler.process(interaction as ButtonInteraction);
+    }
+
 
 
     // await server.EnsureHasRole(interaction.member as GuildMember);

@@ -89,7 +89,6 @@ class HelpQueueV2 {
         };
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
-        console.log(this.helpers);
         // emit onQueueOpen event here
         await this.triggerRender();
     }
