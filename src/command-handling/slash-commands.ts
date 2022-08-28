@@ -89,7 +89,13 @@ const stopCommand = new SlashCommandBuilder() // /stop
 
 const leaveCommand = new SlashCommandBuilder() // /leave
     .setName("leave")
-    .setDescription("Leave your current queue");
+    .setDescription("Leave your current queue")
+    .addChannelOption((option) =>
+        option
+            .setName("queue_name")
+            .setDescription("The queue to leave from")
+            .setRequired(true)
+    );
 
 const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
     .setName("clear")

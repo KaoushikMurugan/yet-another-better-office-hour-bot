@@ -31,7 +31,7 @@ const handlers = new Map<string, CommandHandler>([
 /**
  * Responsible for preprocessing commands and dispatching them to servers
  * ----
- * - This is a *singleton* class
+ * - Each YABOB instance should only have 1 central command dispatcher
  * - All the functions in this class follow these conventions:
  *   - function names are the corresponding command names
  *   - Each function will: 
@@ -46,7 +46,9 @@ class CentralCommandDispatcher {
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
         ['next', (interaction: CommandInteraction) => this.next(interaction)],
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
-        ['stop', (interaction: CommandInteraction) => this.stop(interaction)]
+        ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
+        ['leave', (interaction: CommandInteraction) => this.leave(interaction)]
+
     ]);
 
     constructor(
@@ -56,7 +58,7 @@ class CentralCommandDispatcher {
     async process(interaction: CommandInteraction): Promise<void> {
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`Attempting ${interaction.toString()}`);
+            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
             await commandMethod(interaction)
                 .then(async () =>
                     await interaction.reply({
@@ -172,6 +174,19 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
+    }
+
+    private async leave(interaction: CommandInteraction): Promise<void> {
+        const [serverId, member, queue] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                "leave"
+            ),
+            this.isValidQueueInteraction(interaction)
+        ]);
+
+        await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
     }
 
     /**

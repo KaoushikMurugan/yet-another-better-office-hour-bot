@@ -11,7 +11,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
-import { Helpee, Helper } from "../models/member-states";
+import { Helpee } from "../models/member-states";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -340,6 +340,15 @@ class AttendingServerV2 {
         console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
         // emit onAllClosableQueuesClose() event here
+    }
+
+    async removeStudentFromQueue(
+        member: GuildMember,
+        targetQueue: QueueChannel
+    ): Promise<void> {
+        const queueToRemoveFrom = this.queues
+            .find(queue => queue.name === targetQueue.queueName);
+        await queueToRemoveFrom?.removeStudent(member);
     }
 
 

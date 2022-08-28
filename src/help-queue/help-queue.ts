@@ -48,7 +48,6 @@ class HelpQueueV2 {
     /**
      * Returns the first students in the queue
      * ----
-     * if there are no students, returns undefined
     */
     get first(): Required<Helpee> | undefined {
         return this.students[0];
@@ -78,7 +77,7 @@ class HelpQueueV2 {
         if (this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
-                this.queueChannel.queueName));
+                this.name));
         } // won't actually be seen, will be caught
         const helper: Helper = {
             helpStart: new Date(),
@@ -95,13 +94,13 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
-                this.queueChannel.queueName));
+                this.name));
         } // won't actually be seen, will be caught
         const helper = this.helpers.get(member.id);
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You are not one of the helpers',
-                this.queueChannel.queueName));
+                this.name));
         } // won't actually be seen, will be caught
         this.helpers.delete(member.id);
         this.isOpen = this.helpers.size > 0;
@@ -115,7 +114,13 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 `Queue is not open.`,
-                this.queueChannel.queueName));
+                this.name));
+        }
+        if (this.students.includes(student)) {
+            return Promise.reject(new QueueError(
+                `You are already in the queue`,
+                this.name
+            ));
         }
         student.waitStart = new Date();
         if (this.students.length === 0) {
@@ -129,19 +134,19 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
-                this.queueChannel.queueName));
+                this.name));
         }
         if (this.students.length === 0) {
             return Promise.reject(new QueueError(
                 'There\'s no one in the queue',
-                this.queueChannel.queueName));
+                this.name));
         }
 
         const helper = this.helpers.get(member.id);
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
-                this.queueChannel.queueName));
+                this.name));
         }
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -150,9 +155,22 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    async removeStudent(member: GuildMember): Promise<void> {
+        const idx = this.students.findIndex(student => student.member.id === member.id);
+        if (idx === -1) {
+            return Promise.reject(new QueueError(
+                `${member.displayName} is not in the queue`,
+                this.name
+            ));
+        }
+        this.students.splice(idx, 1);
+        await this.triggerRender();
+    }
+
+
     private async cleanUpQueueChannel(): Promise<void> {
         const emptyQueue: QueueViewModel = {
-            name: this.queueChannel.queueName,
+            name: this.name,
             helperIDs: [],
             studentDisplayNames: [],
             calendarString: '',
@@ -166,7 +184,7 @@ class HelpQueueV2 {
     private async triggerRender(): Promise<void> {
         // build viewModel, then call display.render();
         const viewModel: QueueViewModel = {
-            name: this.queueChannel.queueName,
+            name: this.name,
             helperIDs: [...this.helpers.values()]
                 .map(helper => helper.member.id),
             studentDisplayNames: [... this.students.values()]
