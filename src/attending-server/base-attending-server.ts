@@ -321,6 +321,27 @@ class AttendingServerV2 {
             )));
     }
 
+    async closeAllClosableQueues(member: GuildMember): Promise<void> {
+        const closableQueues = this.queues
+            .filter(queue => member.roles.cache
+                .map(role => role.name)
+                .includes(queue.queueChannel.queueName));
+        // since each queue maintain a set of helpers, take the max
+        const helpTimes = await Promise.all(
+            closableQueues.map(queue => queue.closeQueue(member)))
+            .catch(() => Promise.reject(new ServerError(
+                'You are not currently hosting.'
+            )));
+        const maxHelpTime = helpTimes.reduce((prev, curr) =>
+            prev.helpEnd.getTime() > curr.helpStart.getTime()
+                ? prev
+                : curr
+        );
+        console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
+            `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
+        // emit onAllClosableQueuesClose() event here
+    }
+
 
     /**
      * Creates all the command access hierarchy roles

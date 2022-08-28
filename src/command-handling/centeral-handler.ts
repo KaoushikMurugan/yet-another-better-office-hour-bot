@@ -46,6 +46,7 @@ class CentralCommandDispatcher {
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
         ['next', (interaction: CommandInteraction) => this.next(interaction)],
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
+        ['stop', (interaction: CommandInteraction) => this.stop(interaction)]
     ]);
 
     constructor(
@@ -158,8 +159,22 @@ class CentralCommandDispatcher {
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member);
     }
 
+    private async stop(interaction: CommandInteraction): Promise<void> {
+        const [serverId, member] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByStaffOrAdmin(
+                interaction,
+                "start"),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                "start"
+            ),
+        ]);
+
+        await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
+    }
+
     /**
-     * 
      * Below are the validation functions
      * - Returns type is Promise<validatedValueType> 
      * - return Promise.reject if something fails

@@ -87,18 +87,28 @@ class HelpQueueV2 {
         };
         this.isOpen = true;
         this.helpers.set(member.id, helper);
+        // emit onQueueOpen event here
         await this.triggerRender();
     }
 
-    async closeQueue(): Promise<void> {
+    async closeQueue(member: GuildMember): Promise<Required<Helper>> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
                 this.queueChannel.queueName));
         } // won't actually be seen, will be caught
-        this.isOpen = false;
-        this.helpers.forEach(helper => helper.helpEnd = new Date());
+        const helper = this.helpers.get(member.id);
+        if (!helper) {
+            return Promise.reject(new QueueError(
+                'You are not one of the helpers',
+                this.queueChannel.queueName));
+        } // won't actually be seen, will be caught
+        this.helpers.delete(member.id);
+        this.isOpen = this.helpers.size > 0;
+        helper.helpEnd = new Date();
+        // emit onQueueClose event here
         await this.triggerRender();
+        return helper as Required<Helper>;
     }
 
     async enqueue(student: Helpee): Promise<void> {
