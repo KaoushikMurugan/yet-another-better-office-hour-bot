@@ -46,10 +46,12 @@ class ButtonCommandDispatcher {
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply(
-                ErrorEmbed(new CommandNotImplementedError(
+            await interaction.reply({
+                ...ErrorEmbed(new CommandNotImplementedError(
                     'This command does not exist.'
-                )));
+                )),
+                ephemeral: true
+            });
         }
     }
 

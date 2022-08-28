@@ -4,6 +4,7 @@ import {
     Helper,
     Helpee
 } from '../models/member-states';
+import { SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';
 
 import { QueueDisplayV2 } from './queue-display';
@@ -128,6 +129,11 @@ class HelpQueueV2 {
         if (this.students.length === 0) {
             student.upNext = true;
         }
+        await Promise.all([...this.helpers.values()].map(helper =>
+            helper.member.send(SimpleEmbed(
+                `Heads up! <@${student.member.user.id}> has joined "${this.name}".`
+            ))
+        ));
         this.students.push(student);
         await this.triggerRender();
     }

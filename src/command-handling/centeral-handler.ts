@@ -74,10 +74,12 @@ class CentralCommandDispatcher {
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply(
-                ErrorEmbed(new CommandNotImplementedError(
-                    'This command does not exist.'
-                )));
+            await interaction.reply({
+                    ...ErrorEmbed(new CommandNotImplementedError(
+                        'This command does not exist.'
+                    )),
+                    ephemeral: true
+                });
         }
     }
 
@@ -144,7 +146,7 @@ class CentralCommandDispatcher {
                 ['Admin', 'Staff'])
         ]);
         const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
-        return `An invite has been sent to \`${student?.member.displayName}\`.`;
+        return `An invite has been sent to ${student?.member.displayName}.`;
     }
 
     private async start(interaction: CommandInteraction): Promise<string> {

@@ -77,7 +77,7 @@ class QueueDisplayV2 {
             );
 
         const embedList = [embedTableMsg];
-        
+
         if (queue.helperIDs.length !== 0) {
             const helperList = new MessageEmbed();
             helperList
@@ -104,17 +104,20 @@ class QueueDisplayV2 {
     }
 
     composeAsciiTable(queue: QueueViewModel): string {
-        if (queue.studentDisplayNames.length === 0) {
+        if (!queue.isOpen) {
             return "";
         }
         const table = new AsciiTable3();
         table.setHeading('Position', 'Student Name')
             .setAlign(1, AlignmentEnum.CENTER)
             .setAlign(2, AlignmentEnum.CENTER)
-            .addRowMatrix([...queue.studentDisplayNames
-                .map((name, idx) => [idx === 0 ? `(☞°∀°)☞` : `${idx + 1}`, name])
-            ])
             .setStyle('unicode-mix');
+        if (queue.studentDisplayNames.length > 0) {
+            table.addRowMatrix([...queue.studentDisplayNames
+                .map((name, idx) => [idx === 0 ? `(☞°∀°)☞` : `${idx + 1}`, name])
+            ]);
+        }
+
         return "```" + table.toString() + "```";
     }
 }
