@@ -19,12 +19,9 @@ const handlers = new Map<string, CommandHandler>([
     ["clear", new ClearCommandHandler()],
     ["announce", new AnnounceCommandHandler()],
     ["list_helpers", new ListHelpersCommandHandler()],
-    ["when_next", new ListNextHoursCommandHandler()],
     ["notify_me", new GetNotifcationsHandler()],
     ["remove_notif", new RemoveNotifcationsHandler()],
     ["post_session_msg", new MsgAfterLeaveVCHandler()],
-    ["calendar", new SetCalendarHandler()],
-    ["force_update_queues", new ForceUpdateQueues()],
 ]);
 **/
 
@@ -47,8 +44,8 @@ class CentralCommandDispatcher {
         ['next', (interaction: CommandInteraction) => this.next(interaction)],
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
-        ['leave', (interaction: CommandInteraction) => this.leave(interaction)]
-
+        ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
+        ['clear', (interaction: CommandInteraction) => this.clear(interaction)]
     ]);
 
     constructor(
@@ -59,36 +56,40 @@ class CentralCommandDispatcher {
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
             console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
+            await interaction.reply({
+                ...SimpleEmbed(
+                    'Processing…',
+                    EmbedColor.Neutral
+                ),
+                ephemeral: true
+            });
             await commandMethod(interaction)
                 .then(async () =>
-                    await interaction.reply({
-                        ...SimpleEmbed(
+                    await interaction.editReply(
+                        SimpleEmbed(
                             `Command \`/${interaction.commandName}\` `
                             + `finished successfully.`,
                             EmbedColor.Success),
-                        ephemeral: true
-                    }))
+                    ))
                 .catch(async (err: UserViewableError) =>
-                    await interaction.reply({
-                        ...ErrorEmbed(err),
-                        ephemeral: true
-                    })); // Central error handling, reply to user with the error
+                    await interaction.editReply(
+                        ErrorEmbed(err)
+                    )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply({
-                ...ErrorEmbed(new CommandParseError(
+            await interaction.editReply(
+                ErrorEmbed(new CommandParseError(
                     'This command does not exist.'
-                )),
-                ephemeral: true
-            });
+                )));
         }
     }
 
     private async queue(interaction: CommandInteraction): Promise<void> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByStaffOrAdmin(
+            this.isTriggeredByUserWithRoles(
                 interaction,
-                `queue ${interaction.options.getSubcommand()}`)
+                `queue ${interaction.options.getSubcommand()}`,
+                ['Admin', 'Staff'])
         ]);
 
         // start parsing
@@ -138,9 +139,10 @@ class CentralCommandDispatcher {
                 interaction,
                 "next"
             ),
-            this.isTriggeredByStaffOrAdmin(
+            this.isTriggeredByUserWithRoles(
                 interaction,
-                "next")
+                "next",
+                ['Admin', 'Staff'])
         ]);
 
         await this.serverMap.get(serverId)?.dequeueFirst(member);
@@ -149,9 +151,10 @@ class CentralCommandDispatcher {
     private async start(interaction: CommandInteraction): Promise<void> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByStaffOrAdmin(
+            this.isTriggeredByUserWithRoles(
                 interaction,
-                "start"),
+                "start",
+                ['Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "start"
@@ -164,9 +167,10 @@ class CentralCommandDispatcher {
     private async stop(interaction: CommandInteraction): Promise<void> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByStaffOrAdmin(
+            this.isTriggeredByUserWithRoles(
                 interaction,
-                "start"),
+                "start",
+                ['Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "start"
@@ -187,6 +191,24 @@ class CentralCommandDispatcher {
         ]);
 
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
+    }
+
+    private async clear(interaction: CommandInteraction): Promise<void> {
+        const [serverId, queue] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isValidQueueInteraction(interaction),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                "clear",
+                ['Admin', 'Staff']
+            ),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                "clear"
+            ),
+        ]);
+
+        await this.serverMap.get(serverId)?.clearQueue(queue);
     }
 
     /**
@@ -218,14 +240,15 @@ class CentralCommandDispatcher {
         }
     }
 
-    private async isTriggeredByStaffOrAdmin(
+    private async isTriggeredByUserWithRoles(
         interaction: CommandInteraction,
-        commandName: string
+        commandName: string,
+        requiredRoles: string[]
     ): Promise<GuildMember> {
-        const roles = (await (interaction.member as GuildMember)?.fetch())
+        const userRoles = (await (interaction.member as GuildMember)?.fetch())
             .roles.cache.map(role => role.name);
         if (!(interaction.member instanceof GuildMember &&
-            (roles.includes('Staff') || roles.includes('Admin')))) {
+            (userRoles.some(role => requiredRoles.includes(role))))) {
             return Promise.reject(new CommandParseError(
                 `You need to be a staff member to use \`/${commandName}\`.`));
         }
@@ -246,6 +269,10 @@ class CentralCommandDispatcher {
         return interaction.member as GuildMember;
     }
 
+
+    /**
+     * Checks if the REQUIRED queue_name argument is valid
+     * */
     private async isValidQueueInteraction(
         interaction: CommandInteraction
     ): Promise<QueueChannel> {

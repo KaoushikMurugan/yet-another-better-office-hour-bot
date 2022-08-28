@@ -73,7 +73,7 @@ class HelpQueueV2 {
         return queue;
     }
 
-    async openQueue(member: GuildMember): Promise<void> {
+    async openQueue(helperMember: GuildMember): Promise<void> {
         if (this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
@@ -82,27 +82,27 @@ class HelpQueueV2 {
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
-            member: member
+            member: helperMember
         };
         this.isOpen = true;
-        this.helpers.set(member.id, helper);
+        this.helpers.set(helperMember.id, helper);
         // emit onQueueOpen event here
         await this.triggerRender();
     }
 
-    async closeQueue(member: GuildMember): Promise<Required<Helper>> {
+    async closeQueue(helperMember: GuildMember): Promise<Required<Helper>> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
                 this.name));
         } // won't actually be seen, will be caught
-        const helper = this.helpers.get(member.id);
+        const helper = this.helpers.get(helperMember.id);
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You are not one of the helpers',
                 this.name));
         } // won't actually be seen, will be caught
-        this.helpers.delete(member.id);
+        this.helpers.delete(helperMember.id);
         this.isOpen = this.helpers.size > 0;
         helper.helpEnd = new Date();
         // emit onQueueClose event here
@@ -130,7 +130,7 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async dequeueWithHelper(member: GuildMember): Promise<void> {
+    async dequeueWithHelper(helperMember: GuildMember): Promise<Helpee> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
@@ -142,7 +142,7 @@ class HelpQueueV2 {
                 this.name));
         }
 
-        const helper = this.helpers.get(member.id);
+        const helper = this.helpers.get(helperMember.id);
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
@@ -153,13 +153,15 @@ class HelpQueueV2 {
         const firstStudent = this.students.shift()!;
         helper.helpedMembers.push(firstStudent.member);
         await this.triggerRender();
+        return firstStudent;
     }
 
-    async removeStudent(member: GuildMember): Promise<void> {
-        const idx = this.students.findIndex(student => student.member.id === member.id);
+    async removeStudent(targetStudent: GuildMember): Promise<void> {
+        const idx = this.students
+            .findIndex(student => student.member.id === targetStudent.id);
         if (idx === -1) {
             return Promise.reject(new QueueError(
-                `${member.displayName} is not in the queue`,
+                `${targetStudent.displayName} is not in the queue`,
                 this.name
             ));
         }
@@ -167,6 +169,10 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    async removeAllStudents(): Promise<void> {
+        this.students = [];
+        await this.triggerRender();
+    }
 
     private async cleanUpQueueChannel(): Promise<void> {
         const emptyQueue: QueueViewModel = {

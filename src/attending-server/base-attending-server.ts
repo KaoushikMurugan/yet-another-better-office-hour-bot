@@ -81,7 +81,7 @@ class AttendingServerV2 {
     }
 
     getAllQueueNames(): string[] {
-        return this.queues.map(queue => queue.queueChannel.queueName);
+        return this.queues.map(queue => queue.name);
     }
 
     getHelpQueues(): Readonly<HelpQueueV2[]> {
@@ -270,44 +270,56 @@ class AttendingServerV2 {
     }
 
     async dequeueFirst(
-        helper: GuildMember,
+        helperMember: GuildMember,
         specificQueue?: QueueChannel): Promise<void> {
         if (specificQueue !== undefined) {
-            if (!helper.roles.cache.has(specificQueue.queueName)) {
+            if (!helperMember.roles.cache.has(specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
                     `You don't have the permission to dequeue `
-                    + `${specificQueue.queueName}`
+                    + `\`${specificQueue.queueName}\`.`
                 ));
             }
             this.queues
                 .find(queue => queue.name === specificQueue.queueName)
-                ?.dequeueWithHelper(helper);
+                ?.dequeueWithHelper(helperMember);
         }
-        // from all the queues, select the ones that are open
-        // and reduce by comparing frist student's waitStart time
-        const queuesWithPeople = this.queues
+        const helperVoiceChannel = helperMember.voice.channel;
+        if (helperVoiceChannel === null) {
+            return Promise.reject(new ServerError(
+                `You need to be in a voice channel first.`
+            ));
+        }
+        const nonEmptyQueues = this.queues
             .filter(queue => queue.currentlyOpen && queue.length !== 0);
-        if (queuesWithPeople.length === 0) {
+        if (nonEmptyQueues.length === 0) {
             return Promise.reject(new ServerError(
                 `There's no one left to help. You should get some coffee!`
             ));
         }
-        const queueToDeq = queuesWithPeople.reduce((prev, curr) =>
+        const queueToDeq = nonEmptyQueues.reduce((prev, curr) =>
             (prev.first?.waitStart !== undefined &&
                 curr.first?.waitStart !== undefined) &&
                 prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
                 ? prev
                 : curr
         );
-
-        await queueToDeq.dequeueWithHelper(helper);
+        const student = await queueToDeq.dequeueWithHelper(helperMember);
+        await helperVoiceChannel.permissionOverwrites.create(student.member, {
+            VIEW_CHANNEL: true,
+            CONNECT: true,
+        });
+        const invite = await helperVoiceChannel.createInvite();
+        await student.member.send(SimpleEmbed(
+            `It's your turn! Join the call: ${invite.toString()}`,
+            EmbedColor.Success
+        ));
     }
 
     async openAllOpenableQueues(member: GuildMember): Promise<void> {
         const openableQueues = this.queues
             .filter(queue => member.roles.cache
                 .map(role => role.name)
-                .includes(queue.queueChannel.queueName));
+                .includes(queue.name));
         if (openableQueues.length === 0) {
             return Promise.reject(new ServerError(
                 `It seems like you don't have any class roles.\n` +
@@ -325,7 +337,7 @@ class AttendingServerV2 {
         const closableQueues = this.queues
             .filter(queue => member.roles.cache
                 .map(role => role.name)
-                .includes(queue.queueChannel.queueName));
+                .includes(queue.name));
         // since each queue maintain a set of helpers, take the max
         const helpTimes = await Promise.all(
             closableQueues.map(queue => queue.closeQueue(member)))
@@ -349,6 +361,14 @@ class AttendingServerV2 {
         const queueToRemoveFrom = this.queues
             .find(queue => queue.name === targetQueue.queueName);
         await queueToRemoveFrom?.removeStudent(member);
+    }
+
+    async clearQueue(
+        targetQueue: QueueChannel
+    ): Promise<void> {
+        const queueToClear = this.queues
+            .find(queue => queue.name === targetQueue.queueName);
+        await queueToClear?.removeAllStudents();
     }
 
 
