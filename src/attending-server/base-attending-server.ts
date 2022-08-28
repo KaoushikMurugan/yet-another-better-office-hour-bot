@@ -65,7 +65,10 @@ class AttendingServerV2 {
         const me = new AttendingServerV2(user, guild, firebaseDB);
 
         // ! this call must block everything else
-        // await me.createHierarchyRoles();
+        // Disabled for dev environment assuming everything is created
+        if (process.env.NODE_ENV === 'Production') {
+            await me.createHierarchyRoles();
+        }
         // the ones below can be launched in parallel
         await Promise.all([
             me.initAllQueues(),
@@ -73,9 +76,9 @@ class AttendingServerV2 {
             me.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw Error(`\x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
+            throw Error(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
-        console.log(`⭐\x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
+        console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
 
         return me;
     }
@@ -234,8 +237,7 @@ class AttendingServerV2 {
 
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queueIndex = this.queues
-            .findIndex(queue => queue.queueChannel
-                .channelObj.parent?.id === queueCategoryID);
+            .findIndex(queue => queue.channelObj.parent?.id === queueCategoryID);
         if (queueIndex === -1) {
             return Promise.reject(new ServerError('This queue does not exist.'));
         }
@@ -271,7 +273,7 @@ class AttendingServerV2 {
         };
 
         await this.queues
-            .find(q => q.queueChannel.channelObj.id === queue.channelObj.id)
+            .find(q => q.channelObj.id === queue.channelObj.id)
             ?.enqueue(helpee);
     }
 

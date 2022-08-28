@@ -5,7 +5,6 @@ import {
     TextChannel
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
-import { Helper } from "../models/member-states";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import { CommandParseError, UserViewableError } from '../utils/error-types';
 

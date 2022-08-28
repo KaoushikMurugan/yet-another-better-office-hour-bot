@@ -1,4 +1,4 @@
-import Collection from "@discordjs/collection";
+// Library Imports
 import {
     Client,
     CommandInteraction,
@@ -6,20 +6,19 @@ import {
     Intents,
 } from "discord.js";
 
-import { postSlashCommands } from "./command-handling/slash-commands";
-
-import dotenv from "dotenv";
-import gcs_creds from "../gcs_service_account_key.json";
-import fbs_creds from "../fbs_service_account_key.json";
-
-import { GoogleSpreadsheet } from "google-spreadsheet";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 
+// Local Imports
+import dotenv from "dotenv";
+import fbs_creds from "../fbs_service_account_key.json";
+
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
+import { postSlashCommands } from "./command-handling/slash-commands";
 
 dotenv.config();
+console.log(`Environment: ${process.env.NODE_ENV}`);
 
 if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
@@ -42,11 +41,10 @@ const client = new Client({
 initializeApp({
     credential: cert(fbs_creds)
 });
+const firebase_db: FirebaseFirestore.Firestore = getFirestore();
+console.log("Connected to Firebase database");
 
 const serversV2: Map<string, AttendingServerV2> = new Map();
-const firebase_db: FirebaseFirestore.Firestore = getFirestore();
-
-console.log("Connected to Firebase database");
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((e: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -58,14 +56,12 @@ client.on("error", error => {
 });
 
 client.on("ready", async () => {
-    console.log("YABOB V3");
-
+    console.log("\x1b[45mYABOB: Yet-Another-Better-OH-Bot V3\x1b[0m");
     if (client.user === null) {
         throw new Error(
             "Login Unsuccessful. Check YABOB's Discord Credentials"
         );
     }
-
     console.log(`Logged in as ${client.user.tag}!`);
     console.log("Scanning servers I am a part of...");
 
@@ -103,7 +99,7 @@ client.on("guildCreate", async guild => {
 
 client.on("interactionCreate", async interaction => {
     // Only care about if the interaction was a command or a button
-    if (!interaction.isCommand() && !interaction.isButton()) return;
+    if (!interaction.isCommand() && !interaction.isButton()) { return; }
 
     // Don't care about the interaction if done through dms
     if (interaction.guild === null) {
@@ -142,65 +138,14 @@ client.on("voiceStateUpdate", async (oldState, newState) => {
     if (oldState.guild.id !== newState.guild.id) {
         console.error("voiceStateUpdate: servers don't match");
     }
-
-    // const server =
-    //     serversv2.get(oldState.guild) ?? (await joinGuild(oldState.guild));
-    // const member = oldState.member;
-    // await server.EnsureHasRole(member as GuildMember);
-
-    // // if a user joins a vc
-    // if (oldState.channel === null && newState.channel !== null) {
-    //     // if not a helper, mark as being helped
-    //     server.UpdateMemberJoinedVC(member as GuildMember);
-    // }
-
-    // // if a user leaves a vc
-    // if (oldState.channel !== null && newState.channel === null) {
-    //     // if not a helper and marked as being helped
-    //     // send the person who left vc a dm to fill out a form
-    //     // mark as not currently being helped
-    //     await server.UpdateMemberLeftVC(member as GuildMember);
-    // }
-});
-
-// incase queue message gets deleted
-client.on("messageDelete", async message => {
-    if (message === null || message?.member === null) {
-        console.error("Recognized a message deletion without a message");
-        return;
-    }
-    if (message.author?.id !== process.env.YABOB_APP_ID) {
-        return;
-    }
-    if (message.guild === null) {
-        console.error("Recognized a message deletion without a guild");
-        return;
-    }
-
-    const server = serversV2.get(message.guild.id);
-
-    if (server === undefined) {
-        // Calling JoinGuild() here causes issues involving duplicate of the
-        // same server being stored in fullGuilds
-        return;
-    }
-
-    // await server.EnsureHasRole(message.member as GuildMember);
-
-    // const channel = message.channel as TextChannel;
-    // const category = channel.parent;
-
-    // if (category === null) {
-    //     return;
-    // }
-
-    // await server.EnsureQueueSafe(category.name);
-    // await server.ForceQueueUpdate(category.name);
 });
 
 client.on("guildMemberAdd", async member => {
-    // const server = serversv2.get(member.guild) ?? await joinGuild(member.guild);
-    // await server.EnsureHasRole(member as GuildMember);
+    const server = serversV2.get(member.guild.id) ?? await joinGuild(member.guild);
+    const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
+    if (studentRole !== undefined) {
+        await member.roles.add(studentRole);
+    }
 });
 
 process.on('exit', () => {

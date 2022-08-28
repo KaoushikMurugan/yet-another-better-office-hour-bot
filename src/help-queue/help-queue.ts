@@ -1,4 +1,4 @@
-import { GuildMember, Role, User } from 'discord.js';
+import { GuildMember, Role, TextChannel, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import {
     Helper,
@@ -18,7 +18,7 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
-    public queueChannel: QueueChannel;
+    private queueChannel: QueueChannel;
     public helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
     private display: QueueDisplayV2;
     private students: Required<Helpee>[] = [];
@@ -44,6 +44,9 @@ class HelpQueueV2 {
     }
     get name(): string {
         return this.queueChannel.queueName;
+    }
+    get channelObj(): Readonly<TextChannel> {
+        return this.queueChannel.channelObj;
     }
     /**
      * Returns the first students in the queue
@@ -131,7 +134,7 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
-    async dequeueWithHelper(helperMember: GuildMember): Promise<Helpee> {
+    async dequeueWithHelper(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
