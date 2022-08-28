@@ -32,10 +32,7 @@ class HelpQueueV2 {
         this.display = new QueueDisplayV2(user, queueChannel);
     }
 
-    /**
-     * Number of students
-     * ----
-    */
+
     get length(): number {
         return this.students.length;
     }
@@ -48,10 +45,6 @@ class HelpQueueV2 {
     get channelObj(): Readonly<TextChannel> {
         return this.queueChannel.channelObj;
     }
-    /**
-     * Returns the first students in the queue
-     * ----
-    */
     get first(): Required<Helpee> | undefined {
         return this.students[0];
     }
@@ -121,7 +114,13 @@ class HelpQueueV2 {
         }
         if (this.students.includes(student)) {
             return Promise.reject(new QueueError(
-                `You are already in the queue`,
+                `You are already in the queue.`,
+                this.name
+            ));
+        }
+        if (this.helpers.has(student.member.id)) {
+            return Promise.reject(new QueueError(
+                `You can't enqueue yourself while helping.`,
                 this.name
             ));
         }

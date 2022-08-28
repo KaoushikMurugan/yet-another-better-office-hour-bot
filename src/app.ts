@@ -48,9 +48,9 @@ console.log("Connected to Firebase database");
 
 const serversV2: Map<string, AttendingServerV2> = new Map();
 
-client.login(process.env.YABOB_BOT_TOKEN).catch((e: Error) => {
+client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
-    throw e;
+    throw err;
 });
 
 client.on("error", error => {
@@ -74,19 +74,12 @@ client.on("ready", async () => {
     console.log(allGuilds.map(g => g.name));
 
     await Promise.all(
-        allGuilds.map(guild =>
-            // not sure why TS still complains, we already checked for null
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            AttendingServerV2.create(client.user!, guild, firebase_db)
-                .then(server => serversV2.set(guild.id, server))
-                .then(() => postSlashCommands(guild))
-                .catch((err: Error) => {
-                    console.error(
-                        `An error occured during startup of server: `
-                        + `${guild.name}.\n${err.stack}`
-                    );
-                })
-        )
+        allGuilds.map(guild => joinGuild(guild)
+            .catch((err: Error) =>
+                console.error(
+                    `An error occured during startup of server: `
+                    + `${guild.name}.\n${err.stack}`
+                )))
     );
 
     console.log("✅\x1b[32mReady to go!\x1b[0m✅\n");
@@ -123,19 +116,6 @@ client.on("interactionCreate", async interaction => {
     if (interaction instanceof ButtonInteraction) {
         await buttonHandler.process(interaction as ButtonInteraction);
     }
-
-
-
-    // await server.EnsureHasRole(interaction.member as GuildMember);
-
-    // //If the interactin is a Command
-    // if (interaction.isCommand()) {
-    //     await ProcessCommand(server, interaction);
-    // }
-    // //if the interaction is a button
-    // else if (interaction.isButton()) {
-    //     await ProcessButtonPress(server, interaction);
-    // }
 });
 
 // updates user status of either joining a vc or leaving one
@@ -158,7 +138,7 @@ client.on("guildMemberAdd", async member => {
 
 process.on('exit', () => {
     console.log(
-        '---- End Server Log ----\n'
+        '---- End of Server Log ----\n'
         + '---- Begin Error Stack Trace ----\n');
 });
 

@@ -1,7 +1,11 @@
 import { ButtonInteraction, GuildMember, TextChannel } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
-import { CommandParseError, CommandNotImplementedError, UserViewableError } from "../utils/error-types";
+import {
+    CommandParseError,
+    CommandNotImplementedError,
+    UserViewableError
+} from "../utils/error-types";
 
 class ButtonCommandDispatcher {
     private readonly commandMethodMap = new Map([
@@ -29,7 +33,7 @@ class ButtonCommandDispatcher {
                 ),
                 ephemeral: true
             });
-            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
+            console.log(`User ${interaction.user.username} used [${interactionName}]`);
             await commandMethod(queueName, interaction)
                 .then(async successMsg =>
                     await interaction.editReply(
@@ -49,7 +53,10 @@ class ButtonCommandDispatcher {
         }
     }
 
-    private async join(queueName: string, interaction: ButtonInteraction): Promise<string> {
+    private async join(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "Join"),
@@ -63,18 +70,20 @@ class ButtonCommandDispatcher {
             ));
         }
 
-
         const queueChannel: QueueChannel = {
             channelObj: interaction.channel as TextChannel,
             queueName: queueName
         };
-        // type is already checked, so we can safely cast
+
         await this.serverMap.get(serverId)
             ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
         return `Successfully joined \`${queueName}\`.`;
     }
 
-    private async leave(queueName: string, interaction: ButtonInteraction): Promise<string> {
+    private async leave(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "Leave"),

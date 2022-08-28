@@ -104,7 +104,7 @@ const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
         option
             .setName("queue_name")
             .setDescription("The queue to clear")
-            .setRequired(false)
+            .setRequired(true)
     )
     .addBooleanOption((option) =>
         option
@@ -299,14 +299,11 @@ async function postSlashCommands(guild: Guild): Promise<void> {
     const rest = new REST({ version: "9" }).setToken(
         process.env.YABOB_BOT_TOKEN
     );
-    await rest
-        .put(Routes.applicationGuildCommands(
-                process.env.YABOB_APP_ID,
-                guild.id
-            ),
-            { body: commandData }
-        )
-        .catch(e => console.error(e));
+    await rest.put(Routes.applicationGuildCommands(
+        process.env.YABOB_APP_ID,
+        guild.id),
+        { body: commandData }
+    ).catch(e => console.error(e));
     console.log(`Updated slash commands on "${guild.name}"`);
 }
 

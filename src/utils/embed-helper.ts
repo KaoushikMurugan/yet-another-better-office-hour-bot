@@ -9,7 +9,8 @@ import {
 export enum EmbedColor {
     Success = 0xa9dc76, // Green
     Error = 0xff6188, // Red
-    Neutral = 0xffffff, // white
+    KindaBad = 0xfc9867, // Orange
+    Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
     NeedName = 0x78dce8, // Aqua
 }
@@ -50,7 +51,7 @@ export function SimpleEmbed(
 export function ErrorEmbed(
     err: UserViewableError,
 ): Pick<MessageOptions, "embeds"> {
-    let color = EmbedColor.Warning;
+    let color = EmbedColor.KindaBad;
     const embedFields = [
         {
             name: 'Error Type',
@@ -58,7 +59,6 @@ export function ErrorEmbed(
             inline: true
         }
     ];
-
     if (err instanceof QueueError) {
         color = EmbedColor.NeedName;
         embedFields.push({

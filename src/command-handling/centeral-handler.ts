@@ -12,7 +12,9 @@ import {
 } from '../utils/error-types';
 
 /**
-const handlers = new Map<string, CommandHandler>([
+ * TODO
+ * 
+ * const handlers = new Map<string, CommandHandler>([
     ["announce", new AnnounceCommandHandler()],
     ["notify_me", new GetNotifcationsHandler()],
     ["remove_notif", new RemoveNotifcationsHandler()],
@@ -65,7 +67,7 @@ class CentralCommandDispatcher {
                     await interaction.editReply(
                         SimpleEmbed(
                             successMsg,
-                            EmbedColor.Success),
+                            EmbedColor.Success)
                     ))
                 .catch(async (err: UserViewableError) =>
                     await interaction.editReply(
@@ -175,13 +177,16 @@ class CentralCommandDispatcher {
         ]);
 
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
-
-        return `You have helped for ` +
-            `${Math.round(Math.abs(
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                helpTime!.helpStart.getTime() - helpTime!.helpEnd!.getTime()
-            ) / 1000)} ` +
-            `seconds. See you later!`;
+        const totalSeconds = Math.round(Math.abs(
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            helpTime!.helpStart.getTime() - helpTime!.helpEnd!.getTime()
+        ) / 1000);
+        const hours = Math.floor(totalSeconds / 3600);
+        return `You helped for ` +
+            (hours > 0
+                ? `${hours} hours and ${((totalSeconds - hours * 3600) / 60).toFixed(2)} minutes. `
+                : `${(totalSeconds / 60).toFixed(2)} minutes. `) +
+            `See you later!`;
     }
 
     private async leave(interaction: CommandInteraction): Promise<string> {
@@ -233,15 +238,13 @@ class CentralCommandDispatcher {
      * - Returns type is Promise<validatedValueType> 
      * - return Promise.reject if something fails
      * - return a value if needed
+     * 
      * Usage Example:
      * - const [serverId] = await Promise.all([
-     *      this.isServerInteraction(interaction),
-     *      this.isTriggeredByStaffOrAdmin(
-     *          interaction,
-                `queue ${interaction.options.getSubcommand()}`)
-        ]);
-        - use const [valueName, ...] = await Promise.all() to pick the ones you need
-        - Place the non void promises at the front for cleaner syntax
+     *      this.isServerInteraction(...),
+     *      this.isTriggeredByStaffOrAdmin(...)
+     * ]);
+     * - Place the non void promises at the front for cleaner syntax
     */
 
     private async isServerInteraction(
