@@ -111,7 +111,7 @@ class CentralCommandDispatcher {
                 }
                 await this.serverMap.get(serverId)
                     ?.deleteQueueById(channel.id);
-                return `Successfully deleted \`queueName\``;
+                return `Successfully deleted \`${channel.name}\``;
             }
             default: {
                 return Promise.reject(new CommandParseError(

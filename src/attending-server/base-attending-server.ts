@@ -155,10 +155,9 @@ class AttendingServerV2 {
             console.warn("Overriding existing queues.");
         }
         const queueChannels = await this.getQueueChannels();
-        this.queues = await Promise
-            .all(queueChannels
-                .map(channel => HelpQueueV2
-                    .create(channel, this.user, this.guild.roles.everyone)));
+        this.queues = await Promise.all(queueChannels
+            .map(channel => HelpQueueV2
+                .create(channel, this.user, this.guild.roles.everyone)));
     }
 
     /**
@@ -271,7 +270,6 @@ class AttendingServerV2 {
             upNext: false,
             member: student
         };
-
         await this.queues
             .find(q => q.channelObj.id === queue.channelObj.id)
             ?.enqueue(helpee);
@@ -291,13 +289,20 @@ class AttendingServerV2 {
                 .find(queue => queue.name === specificQueue.queueName)
                 ?.dequeueWithHelper(helperMember);
         }
+        const currentlyHelpingChannels = this.queues
+            .filter(queue => queue.helpers.has(helperMember.id));
+        if (currentlyHelpingChannels.length === 0) {
+            return Promise.reject(new ServerError(
+                'You are not currently hosting.'
+            ));
+        }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             return Promise.reject(new ServerError(
                 `You need to be in a voice channel first.`
             ));
         }
-        const nonEmptyQueues = this.queues
+        const nonEmptyQueues = currentlyHelpingChannels
             .filter(queue => queue.currentlyOpen && queue.length !== 0);
         if (nonEmptyQueues.length === 0) {
             return Promise.reject(new ServerError(
@@ -309,8 +314,7 @@ class AttendingServerV2 {
                 curr.first?.waitStart !== undefined) &&
                 prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
                 ? prev
-                : curr
-        );
+                : curr);
         const student = await queueToDeq.dequeueWithHelper(helperMember);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             VIEW_CHANNEL: true,
@@ -373,14 +377,11 @@ class AttendingServerV2 {
         await queueToRemoveFrom?.removeStudent(member);
     }
 
-    async clearQueue(
-        targetQueue: QueueChannel
-    ): Promise<void> {
+    async clearQueue(targetQueue: QueueChannel): Promise<void> {
         const queueToClear = this.queues
             .find(queue => queue.name === targetQueue.queueName);
         await queueToClear?.removeAllStudents();
     }
-
 
     /**
      * Creates all the command access hierarchy roles

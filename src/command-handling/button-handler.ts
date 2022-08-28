@@ -33,7 +33,7 @@ class ButtonCommandDispatcher {
                 ),
                 ephemeral: true
             });
-            console.log(`User ${interaction.user.username} used [${interactionName}]`);
+            console.log(`User ${interaction.user.username} used [${interactionName}] in queue: ${queueName}`);
             await commandMethod(queueName, interaction)
                 .then(async successMsg =>
                     await interaction.editReply(
