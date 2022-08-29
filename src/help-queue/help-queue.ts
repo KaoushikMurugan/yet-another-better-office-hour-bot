@@ -87,7 +87,7 @@ class HelpQueueV2 {
         this.helpers.set(helperMember.id, helper);
 
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueOpen())
+            extension => extension.onQueueOpen(this))
         );
         await this.triggerRender();
     }
@@ -109,7 +109,7 @@ class HelpQueueV2 {
         helper.helpEnd = new Date();
 
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueClose())
+            extension => extension.onQueueClose(this))
         );
         await this.triggerRender();
         return helper as Required<Helper>;
@@ -145,7 +145,7 @@ class HelpQueueV2 {
             ))
         ));
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueClose())
+            extension => extension.onQueueClose(this))
         );
         await this.triggerRender();
     }
@@ -173,7 +173,7 @@ class HelpQueueV2 {
         const firstStudent = this.students.shift()!;
         helper.helpedMembers.push(firstStudent.member);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onDequeue())
+            extension => extension.onDequeue(firstStudent))
         );
         await this.triggerRender();
         return firstStudent;
@@ -188,18 +188,22 @@ class HelpQueueV2 {
                 this.name
             ));
         }
+
+        // we checked for idx === -1, so it will not be null
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const removedStudent = this.students[idx]!;
         this.students.splice(idx, 1);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onStudentRemove())
+            extension => extension.onStudentRemove(removedStudent))
         );
         await this.triggerRender();
     }
 
     async removeAllStudents(): Promise<void> {
-        this.students = [];
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onRemoveAllStudents())
+            extension => extension.onRemoveAllStudents(this.students))
         );
+        this.students = [];
         await this.triggerRender();
     }
 

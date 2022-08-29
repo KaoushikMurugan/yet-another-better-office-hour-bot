@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * !! Important !!
  * ----
@@ -6,37 +7,40 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
+import { HelpQueueV2 } from "../help-queue/help-queue";
+import { Helpee, Helper } from "../models/member-states";
+
 // Server only extensions
 interface IServerExtension {
     onServerInitSuccess: () => Promise<void>;
     onAllQueueInit: () => Promise<void>;
     onQueueDelete: () => Promise<void>;
-    onDequeueFirst: () => Promise<void>;
-    onHelperStartHelping: () => Promise<void>;
-    onHelperStopHelping: () => Promise<void>;
+    onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
+    onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
+    onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
 }
 
 // Extensions for individual queues
 interface IQueueExtension {
-    onQueueCreate: () => Promise<void>;
+    onQueueCreate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueRenderComplete: () => Promise<void>;
-    onQueueClose: () => Promise<void>;
-    onQueueOpen: () => Promise<void>;
-    onEnqueue: () => Promise<void>;
-    onDequeue: () => Promise<void>;
-    onStudentRemove: () => Promise<void>;
-    onRemoveAllStudents: () => Promise<void>;
+    onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
+    onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
+    onEnqueue: (student: Readonly<Helpee>) => Promise<void>;
+    onDequeue: (student: Readonly<Helpee>) => Promise<void>;
+    onStudentRemove: (student: Readonly<Helpee>) => Promise<void>;
+    onRemoveAllStudents: (students: Readonly<Helpee[]>) => Promise<void>;
 }
 
-
 /**
- * Base class of server related extensions. 
+ * Boilerplate base class of server related extensions. 
  * ----
  * - Any SERVER extension must inherit from here
  * - Override the events that you want to trigger
 */
-class DoNothingServerExtension implements IServerExtension {
+class BaseServerExtension implements IServerExtension {
     onServerInitSuccess(): Promise<void> {
+        console.log('serverInit fired');
         return Promise.resolve();
     }
     onAllQueueInit(): Promise<void> {
@@ -48,43 +52,43 @@ class DoNothingServerExtension implements IServerExtension {
     onDequeueFirst(): Promise<void> {
         return Promise.resolve();
     }
-    onHelperStartHelping(): Promise<void> {
+    onHelperStartHelping(helper: Readonly<Omit<Helper, 'helpEnd'>>): Promise<void> {
         return Promise.resolve();
     }
-    onHelperStopHelping(): Promise<void> {
+    onHelperStopHelping(helper: Readonly<Required<Helper>>): Promise<void> {
         return Promise.resolve();
     }
 }
 
 /**
- * Base class of individual-queue related extensions. 
+ * Boilerplate base class of individual-queue related extensions. 
  * ----
  * - Any QUEUE extension must inherit from here
  * - Override the events that you want to trigger
 */
-class DoNothingQueueExtension implements IQueueExtension {
-    onQueueCreate(): Promise<void> {
+class BaseQueueExtension implements IQueueExtension {
+    onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
     onQueueRenderComplete(): Promise<void> {
         return Promise.resolve();
     }
-    onQueueClose(): Promise<void> {
+    onQueueClose(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
-    onQueueOpen(): Promise<void> {
+    onQueueOpen(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
-    onEnqueue(): Promise<void> {
+    onEnqueue(student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
-    onDequeue(): Promise<void> {
+    onDequeue(student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
-    onStudentRemove(): Promise<void> {
+    onStudentRemove(student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
-    onRemoveAllStudents(): Promise<void> {
+    onRemoveAllStudents(students: Readonly<Helpee[]>): Promise<void> {
         return Promise.resolve();
     }
 }
@@ -92,6 +96,6 @@ class DoNothingQueueExtension implements IQueueExtension {
 export {
     IServerExtension,
     IQueueExtension,
-    DoNothingServerExtension,
-    DoNothingQueueExtension
+    BaseServerExtension,
+    BaseQueueExtension
 };

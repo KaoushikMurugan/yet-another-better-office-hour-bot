@@ -1,17 +1,9 @@
 import { ColorResolvable } from "discord.js";
 
-export enum CommandAccessLevel {
-    ANYONE,
-    STAFF,
-    ADMIN,
-}
-
 /**
- * Order the config objects in the order of hight -> low hierearchy
- * If the bot starts with an empty server,
- * there won't be enough indexes to raise the bot's position high enough
+ * Order the config objects in the order of hight -> low hierearchy if the bot starts with an empty server
+ * Otherwise there won't be enough indices to raise the bot's position high enough
 */
-
 export const hierarchyRoleConfigs = [
     {
         name: "Admin",

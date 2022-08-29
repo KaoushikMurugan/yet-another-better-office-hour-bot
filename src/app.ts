@@ -17,6 +17,9 @@ import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
+// Extensions
+import { AttendanceExtension } from './extensions/attendance-extension';
+
 dotenv.config();
 console.log(`Environment: ${process.env.NODE_ENV}`);
 
@@ -131,13 +134,30 @@ process.on('exit', () => {
         + '---- Begin Error Stack Trace ----\n');
 });
 
+/**
+ * Initilization sequence
+ * @param guild server tp join
+ * @returns AttendingServerV2 if successfully initialized
+ */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
     }
     console.log(`Joining guild ${guild.name}`);
-    const server = await AttendingServerV2.create(client.user, guild, firebase_db);
+
+    // Load extensions here
+    // If extensions don't depend on each other, user Promise.all for faster load time
+    // - Otherwise use individual awaits
+    const attendanceExtension = await AttendanceExtension.load(guild.name);
+
+    const server = await AttendingServerV2.create(
+        client.user,
+        guild,
+        firebase_db,
+        [attendanceExtension]
+    );
+
     await postSlashCommands(guild);
     serversV2.set(guild.id, server);
     return server;

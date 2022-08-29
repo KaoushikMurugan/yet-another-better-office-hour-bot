@@ -24,7 +24,7 @@ type QueueChannel = {
 /**
  * V2 of attending server
  * ----
- * -  Cannot be extended
+ * - Cannot be extended
  * - To add functionalities, either modify this class or make an extension
 */
 class AttendingServerV2 {
@@ -36,6 +36,7 @@ class AttendingServerV2 {
         public readonly firebaseDB: Firestore,
         private readonly serverExtensions: IServerExtension[],
         // a bit of prop drilling, it's only here to pass it to the queues
+        // ! Do NOT invoke them at server level
         private readonly queueExtensions: IQueueExtension[]
     ) { }
 
@@ -92,7 +93,7 @@ class AttendingServerV2 {
             queueExtensions
         );
 
-        // ! this call must block everything else
+        // ! This call must block everything else
         // Disabled for dev environment assuming everything is created
         if (process.env.NODE_ENV === 'Production') {
             await me.createHierarchyRoles();
@@ -358,7 +359,9 @@ class AttendingServerV2 {
             EmbedColor.Success
         ));
 
-        //   onDequeueFirst()
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onDequeueFirst(student)
+        ));
         return student;
     }
 
@@ -378,20 +381,31 @@ class AttendingServerV2 {
             .catch(() => Promise.reject(new ServerError(
                 'You are already hosting.'
             )));
-        //   onHelperOpenQueue()
+
+        // a bit redundant, consider changing the param for openQueue()
+        const helper: Helper = {
+            helpStart: new Date,
+            helpedMembers: [],
+            member: helperMember
+        };
+
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onHelperStartHelping(helper)
+        ));
     }
 
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Readonly<Helper>> {
-        const closableQueues = this.queues
-            .filter(queue => helperMember.roles.cache
+        const closableQueues = this.queues.filter(
+            queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
-        // since each queue maintain a set of helpers, take the max
         const helpTimes = await Promise.all(
             closableQueues.map(queue => queue.closeQueue(helperMember)))
             .catch(() => Promise.reject(new ServerError(
                 'You are not currently hosting.'
             )));
+        // Since each queue maintains a helper object, we take the one with maximum time (argmax)
+        // The time offsets between each queue is negligible
         const maxHelpTime = helpTimes.reduce((prev, curr) =>
             prev.helpEnd.getTime() > curr.helpStart.getTime()
                 ? prev
@@ -399,7 +413,9 @@ class AttendingServerV2 {
         );
         console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
-        //   onHelperCloseQueue(helper, queues)
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onHelperStopHelping(maxHelpTime)
+        ));
         return maxHelpTime;
     }
 
