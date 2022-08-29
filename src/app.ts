@@ -19,6 +19,7 @@ import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
 // Extensions
 import { AttendanceExtension } from './extensions/attendance-extension';
+import { CalendarExtension } from "./extensions/calendar-extension";
 
 dotenv.config();
 console.log(`Environment: ${process.env.NODE_ENV}`);
@@ -95,7 +96,7 @@ client.on("ready", async () => {
 });
 
 client.on("guildCreate", async guild => {
-    console.log("guild create");
+    console.log(`Got invited to '${guild.name}'!`);
     await joinGuild(guild);
 });
 
@@ -110,16 +111,6 @@ client.on("interactionCreate", async interaction => {
     }
 });
 
-// updates user status of either joining a vc or leaving one
-client.on("voiceStateUpdate", async (oldState, newState) => {
-    if (oldState.member?.id !== newState.member?.id) {
-        console.error("voiceStateUpdate: members don't match");
-    }
-    if (oldState.guild.id !== newState.guild.id) {
-        console.error("voiceStateUpdate: servers don't match");
-    }
-});
-
 client.on("guildMemberAdd", async member => {
     const server = serversV2.get(member.guild.id) ?? await joinGuild(member.guild);
     const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
@@ -129,6 +120,7 @@ client.on("guildMemberAdd", async member => {
 });
 
 process.on('exit', () => {
+    // When something fatal happens
     console.log(
         '---- End of Server Log ----\n'
         + '---- Begin Error Stack Trace ----\n');
@@ -150,12 +142,15 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     // If extensions don't depend on each other, user Promise.all for faster load time
     // - Otherwise use individual awaits
     const attendanceExtension = await AttendanceExtension.load(guild.name);
+    const calendarExtension = await CalendarExtension.load();
 
+    // process.exit(0);
     const server = await AttendingServerV2.create(
         client.user,
         guild,
         firebase_db,
-        [attendanceExtension]
+        [attendanceExtension],
+        [calendarExtension]
     );
 
     await postSlashCommands(guild);

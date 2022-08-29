@@ -18,20 +18,22 @@ class AttendanceExtension extends BaseServerExtension {
     constructor(
         private serverName: string,
         private attendanceDoc: GoogleSpreadsheet
-    ) {
-        super();
-    }
+    ) { super(); }
 
     static async load(serverName: string): Promise<AttendanceExtension> {
         if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined ||
             gcs_creds === undefined) {
             const attendanceDoc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
             await attendanceDoc.useServiceAccountAuth(gcs_creds);
-            console.log(`[\x1b[33mAttendance Extension\x1b[0m] successfully loaded for ${serverName}!`);
+            await attendanceDoc.loadInfo();
+            console.log(
+                `[\x1b[33mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!` +
+                `Using this google sheet: ${attendanceDoc.title}`
+            );
             return new AttendanceExtension(serverName, attendanceDoc);
         }
         return Promise.reject(
-            new Error('No google sheet ID or GCS credentials found. Please check the .env file.')
+            new Error('\x1b[31mNo Google Sheet ID or Google Cloud credentials found\x1b[0m. Please check the .env file.')
         );
     }
 
@@ -51,8 +53,6 @@ class AttendanceExtension extends BaseServerExtension {
     private async updateAttendance(
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
-        await this.attendanceDoc.loadInfo();
-
         // try to find existing sheet
         // if not created, make a new one
         let sheetForThisServer = this.attendanceDoc.sheetsByTitle[this.serverName];
