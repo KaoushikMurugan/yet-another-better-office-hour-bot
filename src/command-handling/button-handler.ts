@@ -7,6 +7,14 @@ import {
     UserViewableError
 } from "../utils/error-types";
 
+
+/**
+ * Responsible for preprocessing button presses and dispatching them to servers
+ * ----
+ * The design is almost identical to CentralCommandDispatcher
+ * - Check there for detailed comments
+ * The difference here is that a button command is guaranteed to happen in a queue as of right now
+*/
 class ButtonCommandDispatcher {
     private readonly commandMethodMap = new Map([
         ['join', (queueName: string,

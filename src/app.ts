@@ -42,6 +42,7 @@ const client = new Client({
     ],
 });
 
+// key is Guild.id
 const serversV2: Map<string, AttendingServerV2> = new Map();
 
 initializeApp({
@@ -73,8 +74,6 @@ client.on("ready", async () => {
     // allGuilds is all the servers this YABOB instance has joined
     const allGuilds = await Promise
         .all((await client.guilds.fetch()).map(guild => guild.fetch()));
-    console.log(`Found ${allGuilds.length} server${allGuilds.length === 1 ? '' : 's'}:`);
-    console.log(allGuilds.map(g => g.name));
 
     // Launch all startup sequences in parallel
     await Promise.all(
@@ -126,9 +125,7 @@ process.on('exit', () => {
  * @param guild server tp join
  * @returns AttendingServerV2 if successfully initialized
  */
-async function joinGuild(
-    guild: Guild
-): Promise<AttendingServerV2> {
+async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');

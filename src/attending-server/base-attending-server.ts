@@ -22,7 +22,7 @@ type QueueChannel = {
 };
 
 /**
- * V2 of attending server
+ * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
  * - Cannot be extended
  * - To add functionalities, either modify this class or make an extension
@@ -35,7 +35,7 @@ class AttendingServerV2 {
         public readonly guild: Guild,
         public readonly firebaseDB: Firestore,
         private readonly serverExtensions: IServerExtension[],
-        // a bit of prop drilling, it's only here to pass it to the queues
+        // a bit of prop drilling :(, it's only here to pass it to the queues
         // ! Do NOT invoke them at server level
         private readonly queueExtensions: IQueueExtension[]
     ) { }
@@ -49,7 +49,7 @@ class AttendingServerV2 {
         return this.queues;
     }
 
-    get allHelpers(): Set<string> {
+    get allHelperNames(): Set<string> {
         return new Set(this.queues
             .flatMap(q => [...q.helpers.values()])
             .map(helper => helper.member.displayName));
@@ -61,6 +61,8 @@ class AttendingServerV2 {
      * @param user discord client user
      * @param guild the server for YABOB to join
      * @param firebaseDB firebase database object
+     * @param serverExtensions extensions for this AttendingServer
+     * @param queueExtensions extensions to pass to the individual queues
      * @returns a created instance of YABOB
      * @throws ServerError
      */
@@ -82,8 +84,6 @@ class AttendingServerV2 {
             await guild.leave();
             throw Error("YABOB doesn't have admin permission.");
         }
-
-        console.log(`Creating new YABOB for server: ${guild.name}`);
 
         const me = new AttendingServerV2(
             user,
@@ -175,6 +175,7 @@ class AttendingServerV2 {
         if (this.queues.length !== 0) {
             console.warn("Overriding existing queues.");
         }
+
         const queueChannels = await this.getQueueChannels();
         this.queues = await Promise.all(queueChannels.map(
             channel => HelpQueueV2.create(
@@ -191,7 +192,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Updates the help channels
+     * Updates the help channel messages
      * ----
      * Removes all messages in the help channel and posts new ones
     */
@@ -216,6 +217,7 @@ class AttendingServerV2 {
             existingHelpCategory.push(helpCategory);
 
             // Change the config object and add more functions here if needed
+            // TODO: Very slow, convert to Promise.all to launch them simultaneously
             for (const role of Object.values(commandChConfigs)) {
                 const commandCh = await helpCategory.createChannel(
                     role.channelName
@@ -235,6 +237,12 @@ class AttendingServerV2 {
         await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
+    /**
+     * Creates a new OH queue
+     * ----
+     * @param name name for this class/queue
+     * @throws ServerError: if a queue with the same name already exists
+    */
     async createQueue(name: string): Promise<void> {
         const existingQueues = await this.getQueueChannels();
         const existQueueWithSameName = existingQueues
@@ -266,6 +274,13 @@ class AttendingServerV2 {
         ));
     }
 
+    /**
+     * Deletes a queue by categoryID
+     * ----
+     * @param queueCategoryID CategoryChannel.id of the target queue
+     * @throws ServerError: If a discord API failure happened
+     * - #queue existence is checked by CentralCommandHandler
+    */
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queueIndex = this.queues
             .findIndex(queue => queue.channelObj.parent?.id === queueCategoryID);
@@ -295,6 +310,13 @@ class AttendingServerV2 {
         //   onQueueDelete()
     }
 
+    /**
+     * Attempt to enqueue a student
+     * ----
+     * @param studentMember student member to enqueue
+     * @param queue target queue
+     * @throws QueueError: if @param queue rejects
+    */
     async enqueueStudent(
         studentMember: GuildMember,
         queue: QueueChannel): Promise<void> {
@@ -308,6 +330,15 @@ class AttendingServerV2 {
             ?.enqueue(student);
     }
 
+    /**
+     * Dequeue the student that has been waiting for the longest
+     * ----
+     * @param helperMember the helper that used /next
+     * @param specificQueue if specified, dequeue from this queue
+     * @throws
+     * - ServerError: if specificQueue is given but helper doesn't have the role
+     * - QueueError: if the queue to dequeue from rejects
+    */
     async dequeueFirst(
         helperMember: GuildMember,
         specificQueue?: QueueChannel): Promise<Readonly<Helpee>> {
@@ -365,6 +396,14 @@ class AttendingServerV2 {
         return student;
     }
 
+    /**
+     * Opens all the queue that the helper has permission to
+     * ----
+     * @param helperMember helper that used /start
+     * @throws ServerError
+     * - If the helper doesn't have any class roles
+     * - If the helper is already hosting
+    */
     async openAllOpenableQueues(helperMember: GuildMember): Promise<void> {
         const openableQueues = this.queues
             .filter(queue => helperMember.roles.cache
@@ -394,6 +433,13 @@ class AttendingServerV2 {
         ));
     }
 
+     /**
+     * Closes all the queue that the helper has permission to
+     * Also logs the help time to the console
+     * ----
+     * @param helperMember helper that used /stop
+     * @throws ServerError: If the helper is not hosting
+    */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Readonly<Helper>> {
         const closableQueues = this.queues.filter(
             queue => helperMember.roles.cache
@@ -419,6 +465,13 @@ class AttendingServerV2 {
         return maxHelpTime;
     }
 
+    /**
+     * Removes a student from a given queue
+     * ----
+     * @param studentMember student that used /leave or the leave button
+     * @param targetQueue the queue to leave from
+     * @throws QueueError: if @param targetQueue rejects
+    */
     async removeStudentFromQueue(
         studentMember: GuildMember,
         targetQueue: QueueChannel

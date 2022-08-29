@@ -16,7 +16,8 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
-    helpers: Map<string, Helper> = new Map(); // key is Guildmember.id
+    // key is Guildmember.id
+    helpers: Map<string, Helper> = new Map();
 
     private queueChannel: QueueChannel;
     private students: Required<Helpee>[] = [];
@@ -34,19 +35,19 @@ class HelpQueueV2 {
         this.queueExtensions = queueExtensions;
     }
 
-    get length(): number {
+    get length(): number { // number of students
         return this.students.length;
     }
-    get currentlyOpen(): boolean {
+    get currentlyOpen(): boolean { // is the queue open
         return this.isOpen;
     }
-    get name(): string {
+    get name(): string { // name of corresponding class
         return this.queueChannel.queueName;
     }
-    get channelObj(): Readonly<TextChannel> {
+    get channelObj(): Readonly<TextChannel> { // #queue text channel object
         return this.queueChannel.channelObj;
     }
-    get first(): Required<Helpee> | undefined {
+    get first(): Required<Helpee> | undefined { // first student
         return this.students[0];
     }
 
@@ -54,6 +55,9 @@ class HelpQueueV2 {
      * Asynchronously creates a clean queue
      * ----
      * @param queueChannel the corresponding text channel and its name
+     * @param user YABOB's client object. Used for queue rendering
+     * @param everyoneRole used for locking the queue
+     * @param queueExtensions individual queue extensions to inject
     */
     static async create(
         queueChannel: QueueChannel,
@@ -72,12 +76,19 @@ class HelpQueueV2 {
         return queue;
     }
 
+    /**
+     * Open a queue with a helper
+     * ----
+     * @param helperMember member with Staff/Admin that used /start
+     * @throws QueueError: do nothing if helperMemeber is already helping
+    */
     async openQueue(helperMember: GuildMember): Promise<void> {
         if (this.helpers.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
                 this.name));
         } // won't actually be seen, will be caught
+
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
@@ -92,18 +103,25 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    /**
+     * Close a queue with a helper
+     * ----
+     * @param helperMember member with Staff/Admin that used /stop
+     * @throws QueueError: do nothing if queue is closed
+    */
     async closeQueue(helperMember: GuildMember): Promise<Required<Helper>> {
+        const helper = this.helpers.get(helperMember.id);
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
                 this.name));
-        } // won't actually be seen, will be caught
-        const helper = this.helpers.get(helperMember.id);
+        } // won't actually be seen, will be caught 
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You are not one of the helpers',
                 this.name));
         } // won't actually be seen, will be caught
+
         this.helpers.delete(helperMember.id);
         this.isOpen = this.helpers.size > 0;
         helper.helpEnd = new Date();
@@ -115,6 +133,11 @@ class HelpQueueV2 {
         return helper as Required<Helper>;
     }
 
+    /**
+     * Enqueue a student
+     * @param student the complete Helpee object
+     * @throws QueueError: 
+    */
     async enqueue(student: Helpee): Promise<void> {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
@@ -137,8 +160,10 @@ class HelpQueueV2 {
         if (this.students.length === 0) {
             student.upNext = true;
         }
+
         student.waitStart = new Date();
         this.students.push(student);
+
         await Promise.all([...this.helpers.values()].map(helper =>
             helper.member.send(SimpleEmbed(
                 `Heads up! ${student.member.displayName} has joined "${this.name}".`,
@@ -151,7 +176,17 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    /**
+     * Dequeue this particular queue with a helper
+     * ----
+     * @param helperMember the member that triggered dequeue
+     * @throws QueueError when
+     * - Queue is not open
+     * - No student is here
+     * - helperMember is not one of the helpers
+    */
     async dequeueWithHelper(helperMember: GuildMember): Promise<Readonly<Helpee>> {
+        const helper = this.helpers.get(helperMember.id);
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
@@ -162,8 +197,6 @@ class HelpQueueV2 {
                 'There\'s no one in the queue',
                 this.name));
         }
-
-        const helper = this.helpers.get(helperMember.id);
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
@@ -180,6 +213,13 @@ class HelpQueueV2 {
         return firstStudent;
     }
 
+
+    /**
+     * Remove a student from the queue. Used for /leave
+     * ----
+     * @param targetStudent the student to remove
+     * @throws QueueError: the student is not in the queue
+    */
     async removeStudent(targetStudent: GuildMember): Promise<void> {
         const idx = this.students
             .findIndex(student => student.member.id === targetStudent.id);
@@ -189,7 +229,6 @@ class HelpQueueV2 {
                 this.name
             ));
         }
-
         // we checked for idx === -1, so it will not be null
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const removedStudent = this.students[idx]!;
@@ -200,6 +239,10 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    /**
+     * Remove a student from the queue. Used for /clear
+     * ----
+    */
     async removeAllStudents(): Promise<void> {
         await Promise.all(this.queueExtensions.map(
             extension => extension.onRemoveAllStudents(this.students))
@@ -208,6 +251,10 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    /**
+     * Cleans up the #queue channel
+     * ----
+    */
     private async cleanUpQueueChannel(): Promise<void> {
         const emptyQueue: QueueViewModel = {
             name: this.name,
@@ -221,6 +268,11 @@ class HelpQueueV2 {
         await this.display.render(emptyQueue, true);
     }
 
+    /**
+     * Queue re-render
+     * ----
+     * Composes the queue view model, then sends it to the queueDisplay class
+    */
     private async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {

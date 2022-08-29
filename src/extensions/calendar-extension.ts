@@ -6,6 +6,7 @@ import path from 'path';
 import cliendFile from './google_client_id.json';
 import fs from 'fs';
 
+// TODO: This is ugly, see if we can change it to imports
 const CREDENTIALS_PATH = path.join(process.cwd(), './src/extensions/google_client_id.json');
 const TOKEN_PATH = path.join(process.cwd(), './src/extensions/token.json');
 
@@ -17,8 +18,8 @@ class CalendarExtension extends BaseQueueExtension {
     ) { super(); }
 
     static async load(calendarID?: string): Promise<CalendarExtension> {
-        if (calendarID === undefined
-            || cliendFile === undefined) {
+        if (calendarID === undefined ||
+            cliendFile === undefined) {
             return Promise.reject(new ExtensionSetupError(
                 '\x1b[31mMake sure you have Calendar ID and google cloud credentials in .env.\x1b[0m'
             ));
@@ -64,7 +65,9 @@ class CalendarExtension extends BaseQueueExtension {
 }
 
 /**
- * Function below are adopted from the Google API starter code
+ * Function below are adopted from the Google API starter code for NodeJS
+ * They are very hacky
+ * TODO: Find the proper way to do this in TS
 */
 
 async function makeClient(): Promise<OAuth2Client> {
