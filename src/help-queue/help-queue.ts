@@ -1,4 +1,4 @@
-import { GuildMember, Role, TextChannel, User } from 'discord.js';
+import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { IQueueExtension } from '../extensions/extension-interface';
 import { Helper, Helpee } from '../models/member-states';
@@ -16,11 +16,12 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
-    // key is Guildmember.id
-    helpers: Map<string, Helper> = new Map();
+    // key is Guildmember.id for both maps
+    helpers: Collection<string, Helper> = new Collection();
 
     private queueChannel: QueueChannel;
     private students: Required<Helpee>[] = [];
+    private notifGroup: Collection<string, GuildMember> = new Collection();
     private isOpen = false;
     private readonly queueExtensions: IQueueExtension[];
     private readonly display: QueueDisplayV2;
@@ -97,9 +98,14 @@ class HelpQueueV2 {
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
 
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueOpen(this))
-        );
+        // queue operations are done
+        // safe to launch all these in parallel
+        await Promise.all([
+            this.notifGroup.map(notifMember => notifMember.send(
+                SimpleEmbed(`Queue \`${this.name}\` is open!`)
+            )),
+            this.queueExtensions.map(extension => extension.onQueueOpen(this))
+        ]);
         await this.triggerRender();
     }
 
@@ -138,33 +144,35 @@ class HelpQueueV2 {
      * @param student the complete Helpee object
      * @throws QueueError: 
     */
-    async enqueue(student: Helpee): Promise<void> {
+    async enqueue(studentMember: GuildMember): Promise<void> {
+
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 `Queue is not open.`,
                 this.name));
         }
         if (this.students
-            .find(s => s.member.id === student.member.id) !== undefined) {
+            .find(s => s.member.id === studentMember.id) !== undefined) {
             return Promise.reject(new QueueError(
                 `You are already in the queue.`,
                 this.name
             ));
         }
-        if (this.helpers.has(student.member.id)) {
+        if (this.helpers.has(studentMember.id)) {
             return Promise.reject(new QueueError(
                 `You can't enqueue yourself while helping.`,
                 this.name
             ));
         }
-        if (this.students.length === 0) {
-            student.upNext = true;
-        }
 
-        student.waitStart = new Date();
+        const student: Helpee = {
+            waitStart: new Date(),
+            upNext: this.students.length === 0,
+            member: studentMember
+        };
         this.students.push(student);
 
-        await Promise.all([...this.helpers.values()].map(helper =>
+        await Promise.all(this.helpers.map(helper =>
             helper.member.send(SimpleEmbed(
                 `Heads up! ${student.member.displayName} has joined "${this.name}".`,
                 EmbedColor.Neutral,
@@ -213,7 +221,6 @@ class HelpQueueV2 {
         return firstStudent;
     }
 
-
     /**
      * Remove a student from the queue. Used for /leave
      * ----
@@ -251,6 +258,26 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
+        if (this.notifGroup.has(targetStudent.id)) {
+            return Promise.reject(new QueueError(
+                'You are already in the notification squad.',
+                this.name
+            ));
+        }
+        this.notifGroup.set(targetStudent.id, targetStudent);
+    }
+
+    async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
+        if (!this.notifGroup.has(targetStudent.id)) {
+            return Promise.reject(new QueueError(
+                'You are not in the notification squad.',
+                this.name
+            ));
+        }
+        this.notifGroup.delete(targetStudent.id);
+    }
+
     /**
      * Cleans up the #queue channel
      * ----
@@ -277,10 +304,8 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             name: this.name,
-            helperIDs: [...this.helpers.values()]
-                .map(helper => `<@${helper.member.id}>`),
-            studentDisplayNames: [... this.students.values()]
-                .map(student => student.member.displayName),
+            helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
+            studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',
             isOpen: this.isOpen
         };

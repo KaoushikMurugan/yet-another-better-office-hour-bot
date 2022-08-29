@@ -217,23 +217,22 @@ class AttendingServerV2 {
             existingHelpCategory.push(helpCategory);
 
             // Change the config object and add more functions here if needed
-            // TODO: Very slow, convert to Promise.all to launch them simultaneously
-            for (const role of Object.values(commandChConfigs)) {
-                const commandCh = await helpCategory.createChannel(
-                    role.channelName
-                );
+            await Promise.all(Object.values(commandChConfigs).map(async role => {
+                const commandCh = await helpCategory
+                    .createChannel(role.channelName);
                 await commandCh.permissionOverwrites.create(
                     this.guild.roles.everyone,
                     { SEND_MESSAGES: false });
                 await commandCh.permissionOverwrites.create(
                     this.user,
                     { SEND_MESSAGES: true });
-            }
+            }));
         } else {
             console.log(
                 "\x1b[33mFound existing help channels, updating command help file\x1b[0m"
             );
         }
+
         await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
@@ -320,14 +319,9 @@ class AttendingServerV2 {
     async enqueueStudent(
         studentMember: GuildMember,
         queue: QueueChannel): Promise<void> {
-        const student: Helpee = {
-            waitStart: new Date(),
-            upNext: false,
-            member: studentMember
-        };
         await this.queues
             .find(q => q.channelObj.id === queue.channelObj.id)
-            ?.enqueue(student);
+            ?.enqueue(studentMember);
     }
 
     /**
@@ -421,7 +415,7 @@ class AttendingServerV2 {
                 'You are already hosting.'
             )));
 
-        // a bit redundant, consider changing the param for openQueue()
+        // only used for onHelperStartHelping()
         const helper: Helper = {
             helpStart: new Date,
             helpedMembers: [],
@@ -433,14 +427,14 @@ class AttendingServerV2 {
         ));
     }
 
-     /**
-     * Closes all the queue that the helper has permission to
-     * Also logs the help time to the console
-     * ----
-     * @param helperMember helper that used /stop
-     * @throws ServerError: If the helper is not hosting
-    */
-    async closeAllClosableQueues(helperMember: GuildMember): Promise<Readonly<Helper>> {
+    /**
+    * Closes all the queue that the helper has permission to
+    * Also logs the help time to the console
+    * ----
+    * @param helperMember helper that used /stop
+    * @throws ServerError: If the helper is not hosting
+   */
+    async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const closableQueues = this.queues.filter(
             queue => helperMember.roles.cache
                 .map(role => role.name)
@@ -485,6 +479,24 @@ class AttendingServerV2 {
         const queueToClear = this.queues
             .find(queue => queue.name === targetQueue.queueName);
         await queueToClear?.removeAllStudents();
+    }
+
+    async addStudentToNotifGroup(
+        studentMember: GuildMember,
+        targetQueue: QueueChannel
+    ): Promise<void> {
+        const queueToJoinNotif = this.helpQueues
+            .find(queue => queue.name === targetQueue.queueName);
+        await queueToJoinNotif?.addToNotifGroup(studentMember);
+    }
+
+    async removeStudentFromNotifGroup(
+        studentMember: GuildMember,
+        targetQueue: QueueChannel
+    ): Promise<void> {
+        const queueToJoinNotif = this.helpQueues
+            .find(queue => queue.name === targetQueue.queueName);
+        await queueToJoinNotif?.removeFromNotifGroup(studentMember);
     }
 
     /**
@@ -535,14 +547,6 @@ class AttendingServerV2 {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
-        if (helpCategories.length === 0 ||
-            allHelpChannels.length === 0) {
-            console.warn("\x1b[31mNo help categories found.\x1b[0m");
-            console.log(
-                "Did you mean to call \x1b[32mupdateCommandHelpChannels()\x1b[0m?"
-            );
-            return;
-        }
         // delete all existing messages
         await Promise.all(
             allHelpChannels.map(async ch => await ch.messages
@@ -554,7 +558,9 @@ class AttendingServerV2 {
                 const file = Object.values(commandChConfigs).find(
                     val => val.channelName === ch.name
                 )?.file;
-                if (file) { await ch.send(SimpleEmbed(file)); }
+                if (file) {
+                    await ch.send(SimpleEmbed(file));
+                }
             }));
     }
 }

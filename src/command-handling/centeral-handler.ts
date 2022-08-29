@@ -232,6 +232,8 @@ class CentralCommandDispatcher {
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
+    // TODO: the result string might be too long
+    // might need a handler in Simple Embed
     private async listHelpers(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction)
