@@ -1,6 +1,6 @@
 {
   "name": "yet-another-better-oh-bot",
-  "version": "3.1.0",
+  "version": "4.0.0",
   "description": "Yet another better discord bot for managing office hours",
   "scripts": {
     "lint": "eslint . --ext .ts",
@@ -31,7 +31,6 @@
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.0-canary.0",
-    "@googleapis/calendar": "^2.0.0",
     "ascii-table": "^0.0.9",
     "ascii-table3": "^0.7.7",
     "discord-api": "^0.0.1",

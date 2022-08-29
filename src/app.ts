@@ -19,9 +19,10 @@ import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
 // Extensions
 import { AttendanceExtension } from './extensions/attendance-extension';
+import { IServerExtension } from "./extensions/extension-interface";
 
 dotenv.config();
-console.log(`Environment: ${process.env.NODE_ENV}`);
+console.log(`Environment: \x1b[34m${process.env.NODE_ENV}\x1b[0m`);
 
 if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
@@ -132,10 +133,12 @@ async function joinGuild(
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
     }
-    console.log(`Joining guild ${guild.name}`);
+    console.log(`Joining guild: \x1b[33m${guild.name}\x1b[0m`);
 
     // Load extensions here
-    const serverExtensions = await Promise.all([AttendanceExtension.load(guild.name)]);
+    const serverExtensions: IServerExtension[] = await Promise.all([
+        AttendanceExtension.load(guild.name)
+    ]);
 
     const server = await AttendingServerV2.create(
         client.user,
@@ -152,8 +155,8 @@ async function joinGuild(
 function printTitleString(): void {
     const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
     console.log(
-        `\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
+        `\n\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
         `${titleString}` +
-        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m`
+        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m\n`
     );
 }

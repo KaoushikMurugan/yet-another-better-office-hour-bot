@@ -59,8 +59,9 @@ class CentralCommandDispatcher {
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
-            await commandMethod(interaction as CommandInteraction)
+            console.log(`[${(new Date).toLocaleString()}]` +
+                ` User ${interaction.user.username} used ${interaction.toString()}`);
+            await commandMethod(interaction)
                 .then(async successMsg =>
                     await interaction.editReply(
                         SimpleEmbed(

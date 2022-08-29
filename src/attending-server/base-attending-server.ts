@@ -412,7 +412,7 @@ class AttendingServerV2 {
                 : curr
         );
         console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
-            `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}`);
+            `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}ms.`);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(maxHelpTime)
         ));
@@ -461,8 +461,8 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
-        console.log(`Created class roles: [${queueNames
-            .filter(queue => !existingRoles.has(queue))}]`);
+        // console.log(`Created class roles: [${queueNames
+        //     .filter(queue => !existingRoles.has(queue))}]`);
         await Promise.all(queueNames
             .filter(queue => !existingRoles.has(queue))
             .map(async roleToCreate =>

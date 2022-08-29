@@ -36,7 +36,7 @@ class AttendanceExtension extends BaseServerExtension {
         });
         console.log(
             `[\x1b[34mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!\n` +
-            `Using this google sheet: ${attendanceDoc.title}`
+            `\t- Using this google sheet: ${attendanceDoc.title}`
         );
         return new AttendanceExtension(serverName, attendanceDoc);
     }

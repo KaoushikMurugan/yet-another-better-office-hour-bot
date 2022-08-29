@@ -2,7 +2,7 @@ import { GuildMember, Role, TextChannel, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { IQueueExtension } from '../extensions/extension-interface';
 import { Helper, Helpee } from '../models/member-states';
-import { SimpleEmbed } from '../utils/embed-helper';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 
@@ -141,8 +141,9 @@ class HelpQueueV2 {
         this.students.push(student);
         await Promise.all([...this.helpers.values()].map(helper =>
             helper.member.send(SimpleEmbed(
-                `Heads up! <@${student.member.user.id}> has joined "${this.name}".`
-            ))
+                `Heads up! ${student.member.displayName} has joined "${this.name}".`,
+                EmbedColor.Neutral,
+                `<@${student.member.user.id}>`))
         ));
         await Promise.all(this.queueExtensions.map(
             extension => extension.onQueueClose(this))
