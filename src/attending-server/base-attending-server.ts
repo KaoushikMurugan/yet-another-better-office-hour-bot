@@ -26,6 +26,8 @@ type QueueChannel = {
  * ----
  * - Cannot be extended
  * - To add functionalities, either modify this class or make an extension
+ * public functions can be accessed by the command handler
+ * private functions are designed to not be triggered by commands
 */
 class AttendingServerV2 {
     private queues: HelpQueueV2[] = [];
@@ -165,75 +167,6 @@ class AttendingServerV2 {
         }
 
         return queueChannels;
-    }
-
-    /**
-     * Creates all the office hour queues
-     * ----
-     */
-    async initAllQueues(): Promise<void> {
-        if (this.queues.length !== 0) {
-            console.warn("Overriding existing queues.");
-        }
-
-        const queueChannels = await this.getQueueChannels();
-        this.queues = await Promise.all(queueChannels.map(
-            channel => HelpQueueV2.create(
-                channel,
-                this.user,
-                this.guild.roles.everyone,
-                this.queueExtensions
-            )
-        ));
-
-        await Promise.all(this.serverExtensions.map(
-            extension => extension.onAllQueueInit()
-        ));
-    }
-
-    /**
-     * Updates the help channel messages
-     * ----
-     * Removes all messages in the help channel and posts new ones
-    */
-    async updateCommandHelpChannels(): Promise<void> {
-        const allChannels = await this.guild.channels.fetch();
-        const existingHelpCategory = allChannels
-            .filter(
-                ch =>
-                    ch.type === "GUILD_CATEGORY" &&
-                    ch.name === "Bot Commands Help"
-            )
-            .map(ch => ch as CategoryChannel);
-
-        // If no help category is found, initialize
-        if (existingHelpCategory.length === 0) {
-            console.log("\x1b[35mFound no help channels. Creating new ones.\x1b[0m");
-
-            const helpCategory = await this.guild.channels.create(
-                "Bot Commands Help",
-                { type: "GUILD_CATEGORY" }
-            );
-            existingHelpCategory.push(helpCategory);
-
-            // Change the config object and add more functions here if needed
-            await Promise.all(Object.values(commandChConfigs).map(async role => {
-                const commandCh = await helpCategory
-                    .createChannel(role.channelName);
-                await commandCh.permissionOverwrites.create(
-                    this.guild.roles.everyone,
-                    { SEND_MESSAGES: false });
-                await commandCh.permissionOverwrites.create(
-                    this.user,
-                    { SEND_MESSAGES: true });
-            }));
-        } else {
-            console.log(
-                "\x1b[33mFound existing help channels, updating command help file\x1b[0m"
-            );
-        }
-
-        await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
     /**
@@ -497,6 +430,109 @@ class AttendingServerV2 {
         const queueToJoinNotif = this.helpQueues
             .find(queue => queue.name === targetQueue.queueName);
         await queueToJoinNotif?.removeFromNotifGroup(studentMember);
+    }
+
+    async announceToStudentsInQueue(
+        helperMember: GuildMember,
+        message: string,
+        targetQueue?: QueueChannel
+    ): Promise<void> {
+        if (targetQueue) {
+            const queueToAnnounce = this.queues
+                .find(queue =>
+                    queue.name === targetQueue.queueName &&
+                    queue.helpers.has(helperMember.id)
+                );
+            if (queueToAnnounce === undefined) {
+                return Promise.reject(new ServerError(
+                    `You don't have permission to announce in ${targetQueue.queueName}. ` +
+                    `Check your class roles.`
+                ));
+            }
+            await Promise.all(queueToAnnounce.students
+                .map(student => student.member.send(SimpleEmbed(
+                    `Staff member ${helperMember.displayName} announced: ${message}`,
+                    EmbedColor.NeedName,
+                    `In queue: ${targetQueue.queueName}`
+                )))
+            );
+        }
+        // from this.queues select queue where queue.helpers has helperMember.id
+        await Promise.all(this.queues
+            .filter(queue => queue.helpers.has(helperMember.id))
+            .map(queueToAnnounce => queueToAnnounce.students)
+            .flat()
+            .map(student => student.member.send(SimpleEmbed(message)))
+        );
+    }
+
+    /**
+     * Creates all the office hour queues
+     * ----
+     */
+    private async initAllQueues(): Promise<void> {
+        if (this.queues.length !== 0) {
+            console.warn("Overriding existing queues.");
+        }
+
+        const queueChannels = await this.getQueueChannels();
+        this.queues = await Promise.all(queueChannels.map(
+            channel => HelpQueueV2.create(
+                channel,
+                this.user,
+                this.guild.roles.everyone,
+                this.queueExtensions
+            )
+        ));
+
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onAllQueueInit()
+        ));
+    }
+
+    /**
+     * Updates the help channel messages
+     * ----
+     * Removes all messages in the help channel and posts new ones
+    */
+    private async updateCommandHelpChannels(): Promise<void> {
+        const allChannels = await this.guild.channels.fetch();
+        const existingHelpCategory = allChannels
+            .filter(
+                ch =>
+                    ch.type === "GUILD_CATEGORY" &&
+                    ch.name === "Bot Commands Help"
+            )
+            .map(ch => ch as CategoryChannel);
+
+        // If no help category is found, initialize
+        if (existingHelpCategory.length === 0) {
+            console.log("\x1b[35mFound no help channels. Creating new ones.\x1b[0m");
+
+            const helpCategory = await this.guild.channels.create(
+                "Bot Commands Help",
+                { type: "GUILD_CATEGORY" }
+            );
+            existingHelpCategory.push(helpCategory);
+
+            // Change the config object and add more functions here if needed
+            await Promise.all(Object.values(commandChConfigs).map(async role => {
+                const commandCh = await helpCategory
+                    .createChannel(role.channelName);
+                await commandCh.permissionOverwrites.create(
+                    this.guild.roles.everyone,
+                    { SEND_MESSAGES: false });
+                await commandCh.permissionOverwrites.create(
+                    this.user,
+                    { SEND_MESSAGES: true });
+            }));
+        } else {
+            console.log(
+                "\x1b[33mFound existing help channels, updating command help file\x1b[0m"
+            );
+        }
+
+        await this.sendCommandHelpMessages(existingHelpCategory);
     }
 
     /**

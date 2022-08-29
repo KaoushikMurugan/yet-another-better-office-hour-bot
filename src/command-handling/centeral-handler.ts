@@ -16,8 +16,6 @@ import {
  * 
  * const handlers = new Map<string, CommandHandler>([
     ["announce", new AnnounceCommandHandler()],
-    ["notify_me", new GetNotifcationsHandler()],
-    ["remove_notif", new RemoveNotifcationsHandler()],
     ["post_session_msg", new MsgAfterLeaveVCHandler()],
 ]);
 **/
@@ -45,7 +43,8 @@ class CentralCommandDispatcher {
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
         ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
-        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)]
+        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
+        ['announce', (interaction: CommandInteraction) => this.announce(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -90,7 +89,6 @@ class CentralCommandDispatcher {
             ));
         }
     }
-
 
     private async queue(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
@@ -243,6 +241,32 @@ class CentralCommandDispatcher {
             return `No one is currently helping.`;
         }
         return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping`;
+    }
+
+    private async announce(interaction: CommandInteraction): Promise<string> {
+        const [serverId, member] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                'announce',
+                ['Admin', 'Staff']
+            ),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                'announce'
+            ),
+        ]);
+        const announcement = interaction.options.getString("message", true);
+        const optionalChannel = interaction.options.getChannel("queue_name", false);
+        if (optionalChannel) {
+            const queueChannel = await this.isValidQueueInteraction(interaction);
+            await this.serverMap.get(serverId)
+                ?.announceToStudentsInQueue(member, announcement, queueChannel);
+        } else {
+            await this.serverMap.get(serverId)
+                ?.announceToStudentsInQueue(member, announcement);
+        }
+        return `Your announcement: ${announcement} has been sent!`;
     }
 
     /**

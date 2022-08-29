@@ -18,9 +18,9 @@ class HelpQueueV2 {
 
     // key is Guildmember.id for both maps
     helpers: Collection<string, Helper> = new Collection();
+    students: Required<Helpee>[] = [];
 
     private queueChannel: QueueChannel;
-    private students: Required<Helpee>[] = [];
     private notifGroup: Collection<string, GuildMember> = new Collection();
     private isOpen = false;
     private readonly queueExtensions: IQueueExtension[];
