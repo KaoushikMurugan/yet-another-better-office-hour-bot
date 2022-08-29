@@ -1,6 +1,6 @@
 import { GuildMember, Role, TextChannel, User } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
-import { IQueueExtension } from '../extensions/base-interface';
+import { IQueueExtension } from '../extensions/extension-interface';
 import { Helper, Helpee } from '../models/member-states';
 import { SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';

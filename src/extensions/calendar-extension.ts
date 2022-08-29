@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import { BaseQueueExtension, ExtensionSetupError } from "./base-interface";
+import { BaseQueueExtension, ExtensionSetupError } from "./extension-interface";
 import { OAuth2Client } from 'googleapis-common';
 import { authenticate } from '@google-cloud/local-auth';
 import path from 'path';

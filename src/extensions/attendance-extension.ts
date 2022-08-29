@@ -1,6 +1,6 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Helper } from "../models/member-states";
-import { BaseServerExtension, ExtensionSetupError } from "./base-interface";
+import { BaseServerExtension, ExtensionSetupError } from "./extension-interface";
 import gcs_creds from "../../gcs_service_account_key.json";
 
 class AttendanceError extends Error {

@@ -12,7 +12,7 @@ import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
-import { IQueueExtension, IServerExtension } from "../extensions/base-interface";
+import { IQueueExtension, IServerExtension } from "../extensions/extension-interface";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists

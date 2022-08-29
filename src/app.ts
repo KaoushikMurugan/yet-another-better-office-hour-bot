@@ -95,12 +95,12 @@ client.on("guildCreate", async guild => {
 });
 
 client.on("interactionCreate", async interaction => {
-    const commandHandler = new CentralCommandDispatcher(serversV2);
-    const buttonHandler = new ButtonCommandDispatcher(serversV2);
     if (interaction.isCommand()) {
+        const commandHandler = new CentralCommandDispatcher(serversV2);
         await commandHandler.process(interaction);
     }
     if (interaction.isButton()) {
+        const buttonHandler = new ButtonCommandDispatcher(serversV2);
         await buttonHandler.process(interaction);
     }
 });
