@@ -21,20 +21,24 @@ class AttendanceExtension extends BaseServerExtension {
     ) { super(); }
 
     static async load(serverName: string): Promise<AttendanceExtension> {
-        if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined ||
+        if (process.env.YABOB_GOOGLE_SHEET_ID === undefined ||
             gcs_creds === undefined) {
-            const attendanceDoc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
-            await attendanceDoc.useServiceAccountAuth(gcs_creds);
-            await attendanceDoc.loadInfo();
-            console.log(
-                `[\x1b[33mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!\n` +
-                `Using this google sheet: ${attendanceDoc.title}`
-            );
-            return new AttendanceExtension(serverName, attendanceDoc);
+            return Promise.reject(new ExtensionSetupError(
+                '\x1b[31mNo Google Sheet ID or Google Cloud credentials found in .env\x1b[0m.'
+            ));
         }
-        return Promise.reject(new ExtensionSetupError(
-            '\x1b[31mNo Google Sheet ID or Google Cloud credentials found in .env\x1b[0m.'
-        ));
+        const attendanceDoc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
+        await attendanceDoc.useServiceAccountAuth(gcs_creds);
+        await attendanceDoc.loadInfo().catch(() => {
+            return Promise.reject(new ExtensionSetupError(
+                '\x1b[31mFailed to load google sheet.\x1b[0m.'
+            ));
+        });
+        console.log(
+            `[\x1b[34mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!\n` +
+            `Using this google sheet: ${attendanceDoc.title}`
+        );
+        return new AttendanceExtension(serverName, attendanceDoc);
     }
 
     override async onHelperStopHelping(

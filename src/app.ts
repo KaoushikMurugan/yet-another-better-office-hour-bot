@@ -135,17 +135,13 @@ async function joinGuild(
     console.log(`Joining guild ${guild.name}`);
 
     // Load extensions here
-    // If extensions don't depend on each other, user Promise.all for faster load time
-    // - Otherwise use individual awaits
-    const [attendanceExtension] = await Promise.all([
-        AttendanceExtension.load(guild.name),
-    ]);
+    const serverExtensions = await Promise.all([AttendanceExtension.load(guild.name)]);
 
     const server = await AttendingServerV2.create(
         client.user,
         guild,
         firebase_db,
-        [attendanceExtension]
+        serverExtensions
     );
 
     serversV2.set(guild.id, server);
