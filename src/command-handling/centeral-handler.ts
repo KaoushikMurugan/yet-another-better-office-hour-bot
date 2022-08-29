@@ -50,15 +50,15 @@ class CentralCommandDispatcher {
     constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: CommandInteraction): Promise<void> {
+        await interaction.reply({
+            ...SimpleEmbed(
+                'Processing command...',
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    'Processing command...',
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
             console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
             await commandMethod(interaction as CommandInteraction)
                 .then(async successMsg =>
@@ -72,12 +72,9 @@ class CentralCommandDispatcher {
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply({
-                ...ErrorEmbed(new CommandNotImplementedError(
-                    'This command does not exist.'
-                )),
-                ephemeral: true
-            });
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This command does not exist.')
+            ));
         }
     }
 

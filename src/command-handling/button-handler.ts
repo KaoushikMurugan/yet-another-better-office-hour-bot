@@ -18,38 +18,35 @@ class ButtonCommandDispatcher {
     constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
+        await interaction.reply({
+            ...SimpleEmbed(
+                'Processing command...',
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
-
         const commandMethod = this.commandMethodMap.get(interactionName);
         if (commandMethod !== undefined) {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    'Processing command...',
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-            console.log(`User ${interaction.user.username} used [${interactionName}] in queue: ${queueName}`);
+            console.log(`User ${interaction.user.username} ` +
+                `used [${interactionName}] ` +
+                `in queue: ${queueName}`);
             await commandMethod(queueName, interaction)
                 .then(async successMsg =>
-                    await interaction.editReply(
-                        SimpleEmbed(
-                            successMsg,
-                            EmbedColor.Success),
+                    await interaction.editReply(SimpleEmbed(
+                        successMsg,
+                        EmbedColor.Success),
                     ))
                 .catch(async (err: UserViewableError) =>
                     await interaction.editReply(
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply({
-                ...ErrorEmbed(new CommandNotImplementedError(
-                    'This command does not exist.'
-                )),
-                ephemeral: true
-            });
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This command does not exist.'))
+            );
         }
     }
 
