@@ -461,8 +461,8 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
-        console.log(`Created class roles: ${queueNames
-            .filter(queue => !existingRoles.has(queue))}`);
+        console.log(`Created class roles: [${queueNames
+            .filter(queue => !existingRoles.has(queue))}]`);
         await Promise.all(queueNames
             .filter(queue => !existingRoles.has(queue))
             .map(async roleToCreate =>

@@ -1,6 +1,6 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Helper } from "../models/member-states";
-import { BaseServerExtension } from "./base-interface";
+import { BaseServerExtension, ExtensionSetupError } from "./base-interface";
 import gcs_creds from "../../gcs_service_account_key.json";
 
 class AttendanceError extends Error {
@@ -27,14 +27,14 @@ class AttendanceExtension extends BaseServerExtension {
             await attendanceDoc.useServiceAccountAuth(gcs_creds);
             await attendanceDoc.loadInfo();
             console.log(
-                `[\x1b[33mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!` +
+                `[\x1b[33mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!\n` +
                 `Using this google sheet: ${attendanceDoc.title}`
             );
             return new AttendanceExtension(serverName, attendanceDoc);
         }
-        return Promise.reject(
-            new Error('\x1b[31mNo Google Sheet ID or Google Cloud credentials found\x1b[0m. Please check the .env file.')
-        );
+        return Promise.reject(new ExtensionSetupError(
+            '\x1b[31mNo Google Sheet ID or Google Cloud credentials found in .env\x1b[0m.'
+        ));
     }
 
     override async onHelperStopHelping(

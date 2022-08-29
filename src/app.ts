@@ -19,7 +19,6 @@ import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
 // Extensions
 import { AttendanceExtension } from './extensions/attendance-extension';
-import { CalendarExtension } from "./extensions/calendar-extension";
 
 dotenv.config();
 console.log(`Environment: ${process.env.NODE_ENV}`);
@@ -61,17 +60,12 @@ client.on("error", error => {
 });
 
 client.on("ready", async () => {
-    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
-    console.log(
-        `\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
-        `${titleString}` +
-        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m`
-    );
     if (client.user === null) {
         throw new Error(
             "Login Unsuccessful. Check YABOB's Discord Credentials"
         );
     }
+    printTitleString();
     console.log(`Logged in as ${client.user.tag}!`);
     console.log("Scanning servers I am a part of...");
 
@@ -81,7 +75,7 @@ client.on("ready", async () => {
     console.log(`Found ${allGuilds.length} server${allGuilds.length === 1 ? '' : 's'}:`);
     console.log(allGuilds.map(g => g.name));
 
-    // launch all startup sequences in parallel
+    // Launch all startup sequences in parallel
     await Promise.all(
         allGuilds.map(guild => joinGuild(guild)
             .catch((err: Error) =>
@@ -131,7 +125,9 @@ process.on('exit', () => {
  * @param guild server tp join
  * @returns AttendingServerV2 if successfully initialized
  */
-async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
+async function joinGuild(
+    guild: Guild
+): Promise<AttendingServerV2> {
     if (client.user === null) {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
@@ -141,19 +137,27 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     // Load extensions here
     // If extensions don't depend on each other, user Promise.all for faster load time
     // - Otherwise use individual awaits
-    const attendanceExtension = await AttendanceExtension.load(guild.name);
-    const calendarExtension = await CalendarExtension.load();
+    const [attendanceExtension] = await Promise.all([
+        AttendanceExtension.load(guild.name),
+    ]);
 
-    // process.exit(0);
     const server = await AttendingServerV2.create(
         client.user,
         guild,
         firebase_db,
-        [attendanceExtension],
-        [calendarExtension]
+        [attendanceExtension]
     );
 
-    await postSlashCommands(guild);
     serversV2.set(guild.id, server);
+    await postSlashCommands(guild);
     return server;
+}
+
+function printTitleString(): void {
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
+    console.log(
+        `\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
+        `${titleString}` +
+        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m`
+    );
 }

@@ -40,7 +40,6 @@ interface IQueueExtension {
 */
 class BaseServerExtension implements IServerExtension {
     onServerInitSuccess(): Promise<void> {
-        console.log('serverInit fired');
         return Promise.resolve();
     }
     onAllQueueInit(): Promise<void> {
@@ -93,9 +92,20 @@ class BaseQueueExtension implements IQueueExtension {
     }
 }
 
+class ExtensionSetupError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ExtensionSetupError";
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
+}
+
 export {
     IServerExtension,
     IQueueExtension,
     BaseServerExtension,
-    BaseQueueExtension
+    BaseQueueExtension,
+    ExtensionSetupError
 };
