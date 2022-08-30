@@ -35,10 +35,7 @@ interface IQueueExtension {
         queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
     ) => Promise<void>;
-    onQueuePeriodicUpdate: (
-        queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
-    ) => Promise<void>;
+    onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
 }
 
 /**
@@ -79,13 +76,13 @@ class BaseQueueExtension implements IQueueExtension {
     onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
-    onQueueRenderComplete(): Promise<void> {
-        return Promise.resolve();
-    }
-    onQueuePeriodicUpdate(
+    onQueueRenderComplete(
         queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
     ): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: Readonly<HelpQueueV2>): Promise<void> {
@@ -109,20 +106,9 @@ class BaseQueueExtension implements IQueueExtension {
     }
 }
 
-class ExtensionSetupError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "ExtensionSetupError";
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
-
 export {
     IServerExtension,
     IQueueExtension,
     BaseServerExtension,
     BaseQueueExtension,
-    ExtensionSetupError
 };

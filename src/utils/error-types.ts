@@ -57,6 +57,16 @@ class CommandNotImplementedError extends Error {
     }
 }
 
+class ExtensionSetupError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "ExtensionSetupError";
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
+}
+
 // All 4 errors will be presented to the user
 type UserViewableError =
     | CommandParseError
@@ -64,10 +74,12 @@ type UserViewableError =
     | QueueError
     | CommandNotImplementedError;
 
+
 export {
     CommandParseError,
     ServerError,
     QueueError,
     CommandNotImplementedError,
-    UserViewableError
+    UserViewableError,
+    ExtensionSetupError
 };
