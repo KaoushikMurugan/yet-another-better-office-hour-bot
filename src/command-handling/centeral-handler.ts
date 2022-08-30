@@ -16,8 +16,6 @@ import {
  * 
  * const handlers = new Map<string, CommandHandler>([
     ["announce", new AnnounceCommandHandler()],
-    ["notify_me", new GetNotifcationsHandler()],
-    ["remove_notif", new RemoveNotifcationsHandler()],
     ["post_session_msg", new MsgAfterLeaveVCHandler()],
 ]);
 **/
@@ -26,16 +24,17 @@ import {
  * Responsible for preprocessing commands and dispatching them to servers
  * ----
  * - Each YABOB instance should only have 1 central command dispatcher
- * - All the functions in this class follow these conventions:
- *   - function names are the corresponding command names
- *   - Each function will: 
- *     1. check if server exist
- *     2. do command specific checks
- *     3. call server command handler
- *     4. explicitly reject if parsing failed
- *     5. return reply message
-*/
+ * All the functions below follows this convention:
+ *      private async <corresponding command name>(interaction): Promise<string>
+ * @param interaction the raw interaction
+ * @throws CommandParseError: if command doesn't satify the checks in Promise.all
+ * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
+ * @returns string: the success message
+ */
 class CentralCommandDispatcher {
+
+    // The map of available commands
+    // Key is what the user will see, value is the arrow function
     private readonly commandMethodMap = new Map([
         ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
@@ -44,25 +43,36 @@ class CentralCommandDispatcher {
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
         ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
-        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)]
+        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
+        ['announce', (interaction: CommandInteraction) => this.announce(interaction)]
     ]);
 
-    constructor(
-        private serverMap: Map<string, AttendingServerV2>,
-    ) { }
+    // key is Guild.id, same as servers map from app.ts
+    constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
+    /**
+     * Main processor for command interactions
+     * ----
+     * @param interaction the raw interaction from discord js
+     * @throws UserViewableError: when the command exists but failed
+     * @throws CommandNotImplementedError: if the command is not implemented
+     * - If thrown but the command is implemented, make sure commandMethodMap has it
+    */
     async process(interaction: CommandInteraction): Promise<void> {
+        // Immediately replay to show that YABOB has received the interaction
+        await interaction.reply({
+            ...SimpleEmbed(
+                'Processing command...',
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
+        // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    'Processing command...',
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-            console.log(`User ${interaction.user.username} used ${interaction.toString()}`);
-            await commandMethod(interaction as CommandInteraction)
+            console.log(`[${(new Date).toLocaleString()}]` +
+                ` User ${interaction.user.username} used ${interaction.toString()}`);
+            await commandMethod(interaction)
                 .then(async successMsg =>
                     await interaction.editReply(
                         SimpleEmbed(
@@ -74,12 +84,9 @@ class CentralCommandDispatcher {
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply({
-                    ...ErrorEmbed(new CommandNotImplementedError(
-                        'This command does not exist.'
-                    )),
-                    ephemeral: true
-                });
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This command does not exist.')
+            ));
         }
     }
 
@@ -92,7 +99,6 @@ class CentralCommandDispatcher {
                 ['Admin'])
         ]);
 
-        // start parsing
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
             case "add": {
@@ -115,7 +121,7 @@ class CentralCommandDispatcher {
             }
             default: {
                 return Promise.reject(new CommandParseError(
-                    `Invalid queue creation subcommand ${subcommand}.`));
+                    `Invalid /queue subcommand ${subcommand}.`));
             }
         }
     }
@@ -127,8 +133,8 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithValidEmail(interaction, "enqueue"),
         ]);
 
-        // type is already checked, so we can safely cast
-        await this.serverMap.get(serverId)
+        await this.serverMap
+            .get(serverId)
             ?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueChannel.queueName}\`.`;
     }
@@ -224,22 +230,49 @@ class CentralCommandDispatcher {
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
+    // TODO: the result string might be too long
+    // might need a handler in Simple Embed
     private async listHelpers(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction)
         ]);
-        const helpers = this.serverMap.get(serverId ?? '')?.getAllHelpers();
+        const helpers = this.serverMap.get(serverId ?? '')?.allHelperNames;
         if (helpers === undefined || helpers.size === 0) {
             return `No one is currently helping.`;
         }
         return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping`;
     }
 
+    private async announce(interaction: CommandInteraction): Promise<string> {
+        const [serverId, member] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                'announce',
+                ['Admin', 'Staff']
+            ),
+            this.isTriggeredByUserWithValidEmail(
+                interaction,
+                'announce'
+            ),
+        ]);
+        const announcement = interaction.options.getString("message", true);
+        const optionalChannel = interaction.options.getChannel("queue_name", false);
+        if (optionalChannel) {
+            const queueChannel = await this.isValidQueueInteraction(interaction);
+            await this.serverMap.get(serverId)
+                ?.announceToStudentsInQueue(member, announcement, queueChannel);
+        } else {
+            await this.serverMap.get(serverId)
+                ?.announceToStudentsInQueue(member, announcement);
+        }
+        return `Your announcement: ${announcement} has been sent!`;
+    }
+
     /**
      * Below are the validation functions
-     * - Returns type is Promise<validatedValueType> 
-     * - return Promise.reject if something fails
-     * - return a value if needed
+     * - @returns Promise<validatedValueType> if the check passed
+     * - @returns Promise.reject(new CommandParseError(errMsg)) if something fails
      * 
      * Usage Example:
      * - const [serverId] = await Promise.all([
@@ -249,6 +282,11 @@ class CentralCommandDispatcher {
      * - Place the non void promises at the front for cleaner syntax
     */
 
+    /**
+     * Checks if the command came from a server with correctly initialized YABOB
+     * ----
+     * @returns string: the server id
+    */
     private async isServerInteraction(
         interaction: CommandInteraction
     ): Promise<string> {
@@ -262,6 +300,13 @@ class CentralCommandDispatcher {
         }
     }
 
+    /**
+     * Checks if the triggerer has all the required roles
+     * ----
+     * @param commandName the command used
+     * @param requiredRoles the roles to check, roles have AND relationship
+     * @returns GuildMember: object of the triggerer
+    */
     private async isTriggeredByUserWithRoles(
         interaction: CommandInteraction,
         commandName: string,
@@ -277,6 +322,12 @@ class CentralCommandDispatcher {
         return interaction.member as GuildMember;
     }
 
+    /**
+     * Checks if the user has the Valid Email role
+     * ----
+     * @param commandName the command used
+     * @returns GuildMember: object of the triggerer
+    */
     private async isTriggeredByUserWithValidEmail(
         interaction: CommandInteraction,
         commandName: string
@@ -293,6 +344,8 @@ class CentralCommandDispatcher {
 
     /**
      * Checks if the REQUIRED queue_name argument is valid
+     * ----
+     * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
      * */
     private async isValidQueueInteraction(
         interaction: CommandInteraction

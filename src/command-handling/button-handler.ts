@@ -7,51 +7,58 @@ import {
     UserViewableError
 } from "../utils/error-types";
 
+
+/**
+ * Responsible for preprocessing button presses and dispatching them to servers
+ * ----
+ * The design is almost identical to CentralCommandDispatcher
+ * - Check there for detailed comments
+ * The difference here is that a button command is guaranteed to happen in a queue as of right now
+*/
 class ButtonCommandDispatcher {
     private readonly commandMethodMap = new Map([
         ['join', (queueName: string,
             interaction: ButtonInteraction) => this.join(queueName, interaction)],
         ['leave', (queueName: string,
             interaction: ButtonInteraction) => this.leave(queueName, interaction)],
+        ['notif', (queueName: string,
+            interaction: ButtonInteraction) => this.joinNotifGroup(queueName, interaction)],
+        ['removeN', (queueName: string,
+            interaction: ButtonInteraction) => this.leaveNotifGroup(queueName, interaction)]
     ]);
 
-    constructor(
-        private serverMap: Map<string, AttendingServerV2>,
-    ) { }
+    constructor(private serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
+        await interaction.reply({
+            ...SimpleEmbed(
+                'Processing command...',
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
-
         const commandMethod = this.commandMethodMap.get(interactionName);
         if (commandMethod !== undefined) {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    'Processing command...',
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-            console.log(`User ${interaction.user.username} used [${interactionName}] in queue: ${queueName}`);
+            console.log(`User ${interaction.user.username} ` +
+                `used [${interactionName}] ` +
+                `in queue: ${queueName}`);
             await commandMethod(queueName, interaction)
                 .then(async successMsg =>
-                    await interaction.editReply(
-                        SimpleEmbed(
-                            successMsg,
-                            EmbedColor.Success),
+                    await interaction.editReply(SimpleEmbed(
+                        successMsg,
+                        EmbedColor.Success),
                     ))
                 .catch(async (err: UserViewableError) =>
                     await interaction.editReply(
                         ErrorEmbed(err)
                     )); // Central error handling, reply to user with the error
         } else {
-            await interaction.reply({
-                ...ErrorEmbed(new CommandNotImplementedError(
-                    'This command does not exist.'
-                )),
-                ephemeral: true
-            });
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This command does not exist.'))
+            );
         }
     }
 
@@ -59,26 +66,14 @@ class ButtonCommandDispatcher {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId] = await Promise.all([
+        const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "Join"),
+            this.isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
-        if (interaction.channel?.type !== 'GUILD_TEXT' ||
-            interaction.channel.parent === undefined) {
-            return Promise.reject(new CommandParseError(
-                'Invalid button press. ' +
-                'Make sure this channel has a parent category.'
-            ));
-        }
-
-        const queueChannel: QueueChannel = {
-            channelObj: interaction.channel as TextChannel,
-            queueName: queueName
-        };
-
         await this.serverMap.get(serverId)
-            ?.enqueueStudent(interaction.member as GuildMember, queueChannel);
+            ?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueName}\`.`;
     }
 
@@ -86,27 +81,47 @@ class ButtonCommandDispatcher {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member] = await Promise.all([
+        const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            this.isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
-        if (interaction.channel?.type !== 'GUILD_TEXT' ||
-            interaction.channel.parent === undefined) {
-            return Promise.reject(new CommandParseError(
-                'Invalid button press. ' +
-                'Make sure this channel has a parent category.'
-            ));
-        }
-
-        const queueChannel: QueueChannel = {
-            channelObj: interaction.channel as TextChannel,
-            queueName: queueName
-        };
-
-        await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queueChannel);
+        await this.serverMap.get(serverId)
+            ?.removeStudentFromQueue(member, queueChannel);
         return `Successfully left \`${queueName}\`.`;
     }
+
+    private async joinNotifGroup(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
+        const [serverId, member, queueChannel] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            this.isFromQueueChannelWithParent(interaction, queueName)
+        ]);
+
+        await this.serverMap.get(serverId)?.addStudentToNotifGroup(member, queueChannel);
+        return `Successfully joined notification group for \`${queueName}\``;
+    }
+
+    private async leaveNotifGroup(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
+        const [serverId, member, queueChannel] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            this.isFromQueueChannelWithParent(interaction, queueName)
+        ]);
+
+        await this.serverMap.get(serverId)?.removeStudentFromNotifGroup(member, queueChannel);
+        return `Successfully left notification group for \`${queueName}\``;
+    }
+
+
+    // Begin Validation functions
 
     private async isServerInteraction(
         interaction: ButtonInteraction
@@ -133,6 +148,28 @@ class ButtonCommandDispatcher {
                 `You need to have a verified email to use \`[${commandName}]\`.`));
         }
         return interaction.member as GuildMember;
+    }
+
+    /**
+     * Checks if the queue channel has a parent folder
+     * ----
+    */
+    private isFromQueueChannelWithParent(
+        interaction: ButtonInteraction,
+        queueName: string
+    ): Promise<QueueChannel> {
+        if (interaction.channel?.type !== 'GUILD_TEXT' ||
+            interaction.channel.parent === undefined) {
+            return Promise.reject(new CommandParseError(
+                'Invalid button press. ' +
+                'Make sure this channel has a parent category.'
+            ));
+        }
+        const queueChannel: QueueChannel = {
+            channelObj: interaction.channel as TextChannel,
+            queueName: queueName
+        };
+        return Promise.resolve(queueChannel);
     }
 
 }

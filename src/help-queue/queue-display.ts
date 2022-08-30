@@ -28,7 +28,7 @@ class QueueDisplayV2 {
 
         // If YABOB's message is not the first one, abort render
         // prompt user to call enclosing queue's cleanUpQueueChannel() method
-        if (!sendNew && (queueMessages.size !== 1 ||
+        if (!sendNew && (queueMessages.size > 1 ||
             queueMessages.first()?.author.id !== this.user.id)) {
             console.warn('The queue has messages not from YABOB. '
                 + `Use the /cleanup ${this.queueChannel.queueName} command `

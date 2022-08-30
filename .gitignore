@@ -8,3 +8,7 @@ gcs_service_account_key.json
 fbs_service_account_key.json
 test_dir/
 .DS_Store
+src/extensions/google_client_id.json
+.DS_Store
+.DS_Store
+src/extensions/token.json

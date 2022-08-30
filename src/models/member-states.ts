@@ -13,9 +13,5 @@ type Helper = {
     readonly member: GuildMember; // backref
 }
 
-type Idle = "Idle"; // This is for everyone not in the queue, including tutors & admin
-
-type MemberStateV2 = Helper | Helpee | Idle;
-
-export { Helpee, Helper, Idle, MemberStateV2 };
+export { Helpee, Helper};
 
