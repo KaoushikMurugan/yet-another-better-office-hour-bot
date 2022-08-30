@@ -13,7 +13,7 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             }
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/start (mute_notif)`',
             timestamp: new Date(),
             fields: [
@@ -36,7 +36,7 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/stop`',
             timestamp: new Date(),
             fields: [
@@ -59,12 +59,12 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/next (queue_name) (user)`',
             fields: [
                 {
                     name: 'Description',
-                    value: 'Removes the next student from a queue and sends them an invite to a voice channel',
+                    value: 'Removes the next student from a queue and sends them an invite to a voice channel.',
                     inline: false
                 },
                 {
@@ -81,7 +81,7 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/announce [message] (queue_name)`',
             fields: [
                 {
@@ -103,7 +103,7 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/clear (queue_name)`',
             fields: [
                 {

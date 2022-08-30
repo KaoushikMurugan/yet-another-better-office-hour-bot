@@ -13,7 +13,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             }
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/enqueue [queue_name]`',
             timestamp: new Date(),
             fields: [
@@ -36,7 +36,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/leave`',
             timestamp: new Date(),
             fields: [
@@ -59,7 +59,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/list_helpers`',
             fields: [
                 {
@@ -81,7 +81,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/notify_me [queue_name]`',
             fields: [
                 {
@@ -103,7 +103,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             ]
         },
         {
-            color: EmbedColor.Neutral,
+            color: EmbedColor.NoColor,
             title: 'Command: `/remove_notif [queue_name]`',
             fields: [
                 {
