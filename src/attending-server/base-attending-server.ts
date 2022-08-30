@@ -393,12 +393,19 @@ class AttendingServerV2 {
                 role.name !== '@everyone');
         await Promise.all(existingRoles.map(role => role.delete()));
         const createdRoles = await Promise.all(hierarchyRoleConfigs
-            .map(async roleConfig =>
-                await this.guild.roles.create(roleConfig)));
+            .map(roleConfig => this.guild.roles.create(roleConfig)));
         console.log("Created roles:");
         console.log(createdRoles
             .map(r => { return { name: r.name, pos: r.position }; })
             .sort((a, b) => a.pos - b.pos));
+        // Give everyone the student role
+        const studentRole = createdRoles.find(role => role.name === 'Student');
+        await Promise.all(this.guild.members.cache.map(async member => {
+            if (member.user.id !== this.user.id) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                await member.roles.add(studentRole!);
+            }
+        }));
     }
 
     /**

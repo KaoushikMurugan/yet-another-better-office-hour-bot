@@ -19,6 +19,11 @@ import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
+// Extensions
+import { AttendanceExtension } from './extensions/attendance-extension';
+import { IServerExtension, IQueueExtension } from "./extensions/extension-interface";
+import { BaseQueueExtension } from './extensions/extension-interface';
+
 dotenv.config();
 console.log(`Environment: ${process.env.NODE_ENV}`);
 
@@ -147,8 +152,25 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
     }
-    console.log(`Joining guild ${guild.name}`);
-    const server = await AttendingServerV2.create(client.user, guild, firebase_db);
+    console.log(`Joining guild: \x1b[33m${guild.name}\x1b[0m`);
+
+    // Load extensions here
+    const serverExtensions: IServerExtension[] = await Promise.all([
+        AttendanceExtension.load(guild.name)
+    ]);
+    const testQueueExtensions: IQueueExtension[] = await Promise.all([
+        new BaseQueueExtension()
+    ]);
+
+    const server = await AttendingServerV2.create(
+        client.user,
+        guild,
+        firebase_db,
+        serverExtensions,
+        testQueueExtensions
+    );
+
+    serversV2.set(guild.id, server);
     await postSlashCommands(guild);
     serversV2.set(guild.id, server);
     return server;
