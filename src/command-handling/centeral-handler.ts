@@ -12,15 +12,6 @@ import {
 } from '../utils/error-types';
 
 /**
- * TODO
- * 
- * const handlers = new Map<string, CommandHandler>([
-    ["announce", new AnnounceCommandHandler()],
-    ["post_session_msg", new MsgAfterLeaveVCHandler()],
-]);
-**/
-
-/**
  * Responsible for preprocessing commands and dispatching them to servers
  * ----
  * - Each YABOB instance should only have 1 central command dispatcher

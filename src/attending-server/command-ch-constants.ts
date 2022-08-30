@@ -1,21 +1,15 @@
 import { adminCommandsEmbed } from '../../help-channel-messages/AdminCommands';
 import { studentCommandsEmbed } from '../../help-channel-messages/StudentCommands';
 
-enum CommandAccessLevel {
-    ANYONE,
-    STAFF,
-    ADMIN,
-}
-
-export const commandChConfigs = {
-    staff: {
+export const commandChConfigs = [
+    {
         channelName: 'staff-commands',
         file: adminCommandsEmbed,
-        visibility: CommandAccessLevel.ADMIN
+        visibility: ['Admin', 'Staff']
     },
-    student: {
+    {
         channelName: 'student-commands',
         file: studentCommandsEmbed,
-        visibility: CommandAccessLevel.ANYONE
+        visibility: ['Admin', 'Staff', 'Student']
     }
-};
+];

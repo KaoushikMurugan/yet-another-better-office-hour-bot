@@ -516,15 +516,26 @@ class AttendingServerV2 {
             existingHelpCategory.push(helpCategory);
 
             // Change the config object and add more functions here if needed
-            await Promise.all(Object.values(commandChConfigs).map(async role => {
+            await Promise.all(commandChConfigs.map(async roleConfig => {
                 const commandCh = await helpCategory
-                    .createChannel(role.channelName);
+                    .createChannel(roleConfig.channelName);
                 await commandCh.permissionOverwrites.create(
                     this.guild.roles.everyone,
-                    { SEND_MESSAGES: false });
+                    {
+                        SEND_MESSAGES: false,
+                        VIEW_CHANNEL: false
+                    });
                 await commandCh.permissionOverwrites.create(
                     this.user,
                     { SEND_MESSAGES: true });
+                await Promise.all(
+                    this.guild.roles.cache
+                        .filter(role => roleConfig.visibility.includes(role.name))
+                        .map(roleWithViewPermission =>
+                            commandCh.permissionOverwrites.create(
+                                roleWithViewPermission,
+                                { VIEW_CHANNEL: true })
+                        ));
             }));
         } else {
             console.log(
@@ -598,12 +609,10 @@ class AttendingServerV2 {
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
-                console.log(ch.name);
-                const file = Object.values(commandChConfigs).find(
+                const file = commandChConfigs.find(
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) {
-                    // await ch.send(SimpleEmbed(file));
                     await ch.send(file);
                 }
             }));

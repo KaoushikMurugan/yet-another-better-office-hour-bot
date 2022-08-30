@@ -43,6 +43,10 @@ class QueueError extends Error {
     }
 }
 
+/**
+ * Error for not implemented commands
+ * ----
+*/
 class CommandNotImplementedError extends Error {
     constructor(message: string) {
         super(message);
@@ -53,7 +57,7 @@ class CommandNotImplementedError extends Error {
     }
 }
 
-// All 3 errors will be presented to the user
+// All 4 errors will be presented to the user
 type UserViewableError =
     | CommandParseError
     | ServerError
