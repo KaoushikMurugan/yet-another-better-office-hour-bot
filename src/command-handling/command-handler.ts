@@ -1,5 +1,4 @@
 import {
-    CategoryChannel,
     CommandInteraction,
     GuildChannel,
     GuildMember,
@@ -344,16 +343,14 @@ class CentralCommandDispatcher {
         interaction: CommandInteraction,
         required = false
     ): Promise<QueueChannel> {
-        // short hand syntax. If getChannel returns null/undefined, which are falsy.
-        // it will evaluate the right hand side
-        const channel = interaction.options.getChannel("queue_name", required) ||
+        const channel = interaction.options.getChannel("queue_name", required) ??
             (interaction.channel as GuildChannel).parent;
         // null check is done here by optional property access
         if (channel?.type !== 'GUILD_CATEGORY') {
             return Promise.reject(new CommandParseError(
                 `\`${channel?.name}\` is not a valid queue category.`));
         }
-        const queueTextChannel = (channel as CategoryChannel).children
+        const queueTextChannel = channel.children
             .find(child =>
                 child.name === 'queue' &&
                 child.type === 'GUILD_TEXT');

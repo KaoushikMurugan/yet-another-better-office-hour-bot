@@ -19,7 +19,6 @@ class QueueDisplayV2 {
         private readonly queueChannel: QueueChannel,
     ) { }
 
-    // TODO: Extract notif button as extension
     async render(queue: QueueViewModel, sendNew = false): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
@@ -28,8 +27,7 @@ class QueueDisplayV2 {
 
         // If YABOB's message is not the first one, abort render
         // prompt user to call enclosing queue's cleanUpQueueChannel() method
-        if (!sendNew && (queueMessages.size > 1 ||
-            queueMessages.first()?.author.id !== this.user.id)) {
+        if (!sendNew && queueMessages.first()?.author.id !== this.user.id) {
             console.warn('The queue has messages not from YABOB. '
                 + `Use the /cleanup ${this.queueChannel.queueName} command `
                 + 'to clean up the channel');
@@ -103,7 +101,7 @@ class QueueDisplayV2 {
         // Trigger onRenderComplete() here
     }
 
-    composeAsciiTable(queue: QueueViewModel): string {
+    private composeAsciiTable(queue: QueueViewModel): string {
         if (!queue.isOpen) {
             return "";
         }

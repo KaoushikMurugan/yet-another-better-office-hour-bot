@@ -34,6 +34,12 @@ class HelpQueueV2 {
         this.queueChannel = queueChannel;
         this.display = new QueueDisplayV2(user, queueChannel);
         this.queueExtensions = queueExtensions;
+        setInterval(async () => {
+            await Promise.all(queueExtensions.map(
+                ext => ext.onQueuePeriodicUpdate(this, this.display)
+            ));
+            console.log();
+        }, 1000 * 60 * 60 * 24); // emit onQueuePeriodicUpdate every 24 hours
     }
 
     get length(): number { // number of students
@@ -311,7 +317,7 @@ class HelpQueueV2 {
         };
         await this.display.render(viewModel);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete())
+            extension => extension.onQueueRenderComplete(this, this.display))
         );
     }
 }

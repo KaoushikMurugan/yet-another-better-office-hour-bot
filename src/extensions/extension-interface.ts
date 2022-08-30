@@ -7,14 +7,16 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
+import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
+import { QueueDisplayV2 } from "../help-queue/queue-display";
 import { Helpee, Helper } from "../models/member-states";
 
-// Server only extensions
+// Server level extensions
 interface IServerExtension {
-    onServerInitSuccess: () => Promise<void>;
-    onAllQueueInit: () => Promise<void>;
-    onQueueDelete: () => Promise<void>;
+    onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    onAllQueueInit: (queues: Readonly<HelpQueueV2[]>) => Promise<void>;
+    onQueueDelete: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
     onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
@@ -23,13 +25,20 @@ interface IServerExtension {
 // Extensions for individual queues
 interface IQueueExtension {
     onQueueCreate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
-    onQueueRenderComplete: () => Promise<void>;
-    onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
+    onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onEnqueue: (student: Readonly<Helpee>) => Promise<void>;
     onDequeue: (student: Readonly<Helpee>) => Promise<void>;
     onStudentRemove: (student: Readonly<Helpee>) => Promise<void>;
     onRemoveAllStudents: (students: Readonly<Helpee[]>) => Promise<void>;
+    onQueueRenderComplete: (
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ) => Promise<void>;
+    onQueuePeriodicUpdate: (
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ) => Promise<void>;
 }
 
 /**
@@ -66,10 +75,17 @@ class BaseServerExtension implements IServerExtension {
  * - Override the events that you want to trigger
 */
 class BaseQueueExtension implements IQueueExtension {
+
     onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
     onQueueRenderComplete(): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueuePeriodicUpdate(
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: Readonly<HelpQueueV2>): Promise<void> {

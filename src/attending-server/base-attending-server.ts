@@ -87,7 +87,7 @@ class AttendingServerV2 {
             throw Error("YABOB doesn't have admin permission.");
         }
 
-        const me = new AttendingServerV2(
+        const server = new AttendingServerV2(
             user,
             guild,
             firebaseDB,
@@ -98,14 +98,14 @@ class AttendingServerV2 {
         // ! This call must block everything else
         // Disabled for dev environment assuming everything is created
         if (process.env.NODE_ENV === 'Production') {
-            await me.createHierarchyRoles();
+            await server.createHierarchyRoles();
         }
 
         // the ones below can be launched in parallel
         await Promise.all([
-            me.initAllQueues(),
-            me.createClassRoles(),
-            me.updateCommandHelpChannels()
+            server.initAllQueues(),
+            server.createClassRoles(),
+            server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
             throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
@@ -114,10 +114,10 @@ class AttendingServerV2 {
         console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
 
         await Promise.all(serverExtensions.map(
-            extension => extension.onServerInitSuccess()
+            extension => extension.onServerInitSuccess(server)
         ));
 
-        return me;
+        return server;
     }
 
     /**
@@ -282,6 +282,8 @@ class AttendingServerV2 {
         }
         const currentlyHelpingChannels = this.queues
             .filter(queue => queue.helpers.has(helperMember.id));
+        // this is here to prevent empty currentlyHelpingChannels from calling reduce
+        // i forgot how it could be empty tho
         if (currentlyHelpingChannels.length === 0) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
@@ -491,7 +493,7 @@ class AttendingServerV2 {
         ));
 
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onAllQueueInit()
+            extension => extension.onAllQueueInit(this.queues)
         ));
     }
 
