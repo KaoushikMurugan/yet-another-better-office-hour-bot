@@ -1,6 +1,7 @@
 import {
     CategoryChannel,
     CommandInteraction,
+    GuildChannel,
     GuildMember,
     TextChannel
 } from "discord.js";
@@ -99,7 +100,7 @@ class CentralCommandDispatcher {
                 return `Successfully created \`${queueName}\``;
             }
             case "remove": {
-                await this.isValidQueueInteraction(interaction);
+                await this.isValidQueueInteraction(interaction, true);
                 const channel = interaction.options.getChannel("queue_name", true);
                 if (channel.type !== 'GUILD_CATEGORY') {
                     return Promise.reject(
@@ -131,16 +132,16 @@ class CentralCommandDispatcher {
     }
 
     private async next(interaction: CommandInteraction): Promise<string> {
-        const [serverId, , member] = await Promise.all([
+        const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                "next",
+                ['Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "next"
             ),
-            this.isTriggeredByUserWithRoles(
-                interaction,
-                "next",
-                ['Admin', 'Staff'])
         ]);
         const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
         return `An invite has been sent to ${student?.member.displayName}.`;
@@ -205,7 +206,7 @@ class CentralCommandDispatcher {
     private async clear(interaction: CommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isValidQueueInteraction(interaction),
+            this.isValidQueueInteraction(interaction, true),
             this.isTriggeredByUserWithRoles(
                 interaction,
                 "clear",
@@ -308,7 +309,7 @@ class CentralCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             (userRoles.some(role => requiredRoles.includes(role))))) {
             return Promise.reject(new CommandParseError(
-                `You need to be ${requiredRoles.join(' or ')} to use \`/${commandName}\`.`));
+                `You need to have: [${requiredRoles.join(' or ')}] to use \`/${commandName}\`.`));
         }
         return interaction.member as GuildMember;
     }
@@ -334,17 +335,23 @@ class CentralCommandDispatcher {
     }
 
     /**
-     * Checks if the REQUIRED queue_name argument is valid
+     * Checks if the queue_name argument is given
+     * If not, use the parent of the channel where the command was used
      * ----
      * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
      * */
     private async isValidQueueInteraction(
-        interaction: CommandInteraction
+        interaction: CommandInteraction,
+        required = false
     ): Promise<QueueChannel> {
-        const channel = interaction.options.getChannel("queue_name", true);
-        if (channel.type !== 'GUILD_CATEGORY') {
+        // short hand syntax. If getChannel returns null/undefined, which are falsy.
+        // it will evaluate the right hand side
+        const channel = interaction.options.getChannel("queue_name", required) ||
+            (interaction.channel as GuildChannel).parent;
+        // null check is done here by optional property access
+        if (channel?.type !== 'GUILD_CATEGORY') {
             return Promise.reject(new CommandParseError(
-                `${channel.name} is not a valid queue category.`));
+                `\`${channel?.name}\` is not a valid queue category.`));
         }
         const queueTextChannel = (channel as CategoryChannel).children
             .find(child =>

@@ -44,7 +44,7 @@ const enqueueCommand = new SlashCommandBuilder() // /enqueue [queue_name] (user)
         option
             .setName("queue_name")
             .setDescription("The queue you want to wait on")
-            .setRequired(true)
+            .setRequired(false)
     )
     .addUserOption((option) =>
         option
@@ -94,7 +94,7 @@ const leaveCommand = new SlashCommandBuilder() // /leave
         option
             .setName("queue_name")
             .setDescription("The queue to leave from")
-            .setRequired(true)
+            .setRequired(false)
     );
 
 const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)

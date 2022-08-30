@@ -372,6 +372,11 @@ class AttendingServerV2 {
             queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
+        if (closableQueues.length === 0) {
+            return Promise.reject(new ServerError(
+                'You are not currently hosting.'
+            ));
+        }
         const helpTimes = await Promise.all(
             closableQueues.map(queue => queue.closeQueue(helperMember)))
             .catch(() => Promise.reject(new ServerError(
