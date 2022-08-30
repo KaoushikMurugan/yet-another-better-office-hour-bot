@@ -13,7 +13,7 @@ import dotenv from "dotenv";
 import fbs_creds from "../fbs_service_account_key.json";
 
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
-import { CentralCommandDispatcher } from "./command-handling/centeral-handler";
+import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
