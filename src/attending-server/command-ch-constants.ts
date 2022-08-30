@@ -1,4 +1,5 @@
-import fs from "fs";
+import { adminCommandsEmbed } from '../../help-channel-messages/AdminCommands';
+import { studentCommandsEmbed } from '../../help-channel-messages/StudentCommands';
 
 enum CommandAccessLevel {
     ANYONE,
@@ -6,35 +7,15 @@ enum CommandAccessLevel {
     ADMIN,
 }
 
-const AdminCommands = fs.readFileSync(
-    __dirname + "/../../../help-channel-messages/admin-commands.txt",
-    { encoding: "utf8" }
-);
-
-const HelperCommands = fs.readFileSync(
-    __dirname + "/../../../help-channel-messages/helper-commands.txt",
-    { encoding: "utf8" }
-);
-
-const StudentCommands = fs.readFileSync(
-    __dirname + "/../../../help-channel-messages/student-commands.txt",
-    { encoding: "utf8" }
-);
-
 export const commandChConfigs = {
-    admin: {
-        channelName: 'admin-commands',
-        file: AdminCommands,
+    staff: {
+        channelName: 'staff-commands',
+        file: adminCommandsEmbed,
         visibility: CommandAccessLevel.ADMIN
-    },
-    helper: {
-        channelName: 'helper-commands',
-        file: HelperCommands,
-        visibility: CommandAccessLevel.ANYONE
     },
     student: {
         channelName: 'student-commands',
-        file: StudentCommands,
+        file: studentCommandsEmbed,
         visibility: CommandAccessLevel.ANYONE
     }
 };

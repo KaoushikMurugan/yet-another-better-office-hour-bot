@@ -591,11 +591,13 @@ class AttendingServerV2 {
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
+                console.log(ch.name);
                 const file = Object.values(commandChConfigs).find(
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) {
-                    await ch.send(SimpleEmbed(file));
+                    // await ch.send(SimpleEmbed(file));
+                    await ch.send(file);
                 }
             }));
     }

@@ -1,11 +1,11 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 
-export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
+export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
     embeds: [
         {
             color: EmbedColor.Neutral,
-            title: 'Admin & Helper Only Commands',
+            title: 'Commands Available To Everyone (Admin, Helper, Student)',
             timestamp: new Date(),
             author: {
                 name: 'BOBv3',
@@ -14,35 +14,12 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
         },
         {
             color: EmbedColor.Neutral,
-            title: 'Command: `/start (mute_notif)`',
+            title: 'Command: `/enqueue [queue_name]`',
             timestamp: new Date(),
             fields: [
                 {
                     name: 'Description',
-                    value: 'Open queues that the Helper/Admin is assigned to help for.',
-                    inline: false
-                },
-                {
-                    name: 'Options',
-                    value: "`mute_notif: boolean`\nDon't notify users that have enabled notifications for queues assigned to a Helper/Admin.",
-                    inline: true
-                },
-                { name: '\u0002', value: '\u0002', inline: true },
-                {
-                    name: 'Example Usage',
-                    value: '`/start`',
-                    inline: true
-                },
-            ]
-        },
-        {
-            color: EmbedColor.Neutral,
-            title: 'Command: `/stop`',
-            timestamp: new Date(),
-            fields: [
-                {
-                    name: 'Description',
-                    value: 'Close the OH-queue and stop students from entering the queue.\n\nStudents that were in the queue before closing will still be regisitered for OH and be in the queue for the next OH.',
+                    value: 'Adds sender to the back of the queue `queue_name`',
                     inline: false
                 },
                 {
@@ -53,45 +30,68 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
                 { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/stop`',
+                    value: '`/enqueue ECS32A`',
                     inline: true
                 },
             ]
         },
         {
             color: EmbedColor.Neutral,
-            title: 'Command: `/next (queue_name) (user)`',
+            title: 'Command: `/leave`',
+            timestamp: new Date(),
             fields: [
                 {
                     name: 'Description',
-                    value: 'Removes the next student from a queue and sends them an invite to a voice channel',
+                    value: 'Removes sender from ALL the queues in which they are in.',
                     inline: false
                 },
                 {
                     name: 'Options',
-                    value: "`queue_name: Channel`\nDequeue the first student from a particular queue\n\n`user: User`\nDequeue a specific user.",
+                    value: "None",
                     inline: true
                 },
                 { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/next`',
+                    value: '`/leave`',
                     inline: true
                 },
             ]
         },
         {
             color: EmbedColor.Neutral,
-            title: 'Command: `/announce [message] (queue_name)`',
+            title: 'Command: `/list_helpers`',
             fields: [
                 {
                     name: 'Description',
-                    value: 'Sends a messeage to all of the queues that you are currently helping.',
+                    value: "Shows a list of Helpers that are currently available, the queues for which they help for and how long they've been helping for.",
                     inline: false
                 },
                 {
                     name: 'Options',
-                    value: "`queue_name: Channel`\nSends the message to only those in a queue specficied in`queue_name`",
+                    value: "None",
+                    inline: true
+                },
+                { name: '\u0002', value: '\u0002', inline: true },
+                {
+                    name: 'Example Usage',
+                    value: '`/list_helpers`',
+                    inline: true
+                },
+            ]
+        },
+        {
+            color: EmbedColor.Neutral,
+            title: 'Command: `/notify_me [queue_name]`',
+            fields: [
+                {
+                    name: 'Description',
+                    value: 'Adds a user to the notifcation list for a queue. They will be sent a direct message once the queue they listed is open.',
+                    inline: false
+                },
+                {
+                    name: 'Options',
+                    value: "`queue_name: Channel`\nThe queue to be notified of.",
                     inline: true
                 },
                 { name: '\u0002', value: '\u0002', inline: true },
@@ -104,22 +104,22 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
         },
         {
             color: EmbedColor.Neutral,
-            title: 'Command: `/clear (queue_name)`',
+            title: 'Command: `/remove_notif [queue_name]`',
             fields: [
                 {
                     name: 'Description',
-                    value: 'Empties a queue of students.',
+                    value: 'Removes a user from the notification list for a queue.',
                     inline: false
                 },
                 {
                     name: 'Options',
-                    value: "`queue_name: Channel`\nThe queue to clear",
+                    value: "Required: `queue_name: Channel`\nThe queue to remove notification from.",
                     inline: true
                 },
                 { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/clear class A`',
+                    value: '`/remove_notif ECS32A`',
                     inline: true
                 },
             ]
