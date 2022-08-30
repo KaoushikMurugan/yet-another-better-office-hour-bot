@@ -1,67 +1,138 @@
 import { google } from 'googleapis';
-import { BaseQueueExtension, ExtensionSetupError } from "./extension-interface";
+import { BaseQueueExtension } from "./extension-interface";
+import { ExtensionSetupError } from '../utils/error-types';
 import { OAuth2Client } from 'googleapis-common';
 import { authenticate } from '@google-cloud/local-auth';
 import path from 'path';
 import cliendFile from './google_client_id.json';
 import fs from 'fs';
+import { HelpQueueV2 } from '../help-queue/help-queue';
+import { QueueDisplayV2 } from '../help-queue/queue-display';
 
 // TODO: This is ugly, see if we can change it to imports
 const CREDENTIALS_PATH = path.join(process.cwd(), './src/extensions/google_client_id.json');
 const TOKEN_PATH = path.join(process.cwd(), './src/extensions/token.json');
 
+// ViewModel for 1 tutor's upcoming session
+type UpComingSessionViewModel = {
+    start: Date;
+    end: Date;
+    rawSummary: string;
+    displayName: string;
+    discordID?: string;
+    ecsClass: string;
+};
+
+/**
+ * Calendar Extension for individual queues
+ * - All instances read from the same calendar
+ * - Each instance only looks for the class it's responsible for
+*/
 class CalendarExtension extends BaseQueueExtension {
+
+    private upcomingHours: UpComingSessionViewModel[] = []
+    private embedInitialized = false;
 
     private constructor(
         private readonly client: OAuth2Client,
-        private readonly calendarID: string
+        private readonly calendarID: string,
+        private readonly renderIndex: number,
     ) { super(); }
 
-    static async load(calendarID?: string): Promise<CalendarExtension> {
+    static async load(
+        renderIndex: number,
+        calendarID?: string,
+    ): Promise<CalendarExtension> {
         if (calendarID === undefined ||
             cliendFile === undefined) {
             return Promise.reject(new ExtensionSetupError(
                 '\x1b[31mMake sure you have Calendar ID and google cloud credentials in .env.\x1b[0m'
             ));
         }
-        const instance = new CalendarExtension(await makeClient(), calendarID);
-        await instance.listEvents();
+        const instance = new CalendarExtension(
+            await makeClient(),
+            calendarID,
+            renderIndex);
+        await instance.getUpComingTutoringEvents();
+        console.log(
+            `[\x1b[34mCalendar Extension\x1b[0m] successfully loaded!`
+        );
         return instance;
     }
 
-    override onQueueRenderComplete(): Promise<void> {
-        return Promise.resolve();
+    override async onQueuePeriodicUpdate(): Promise<void> {
+        await this.getUpComingTutoringEvents();
     }
 
-    /**
-     * Lists the next 10 events on the user's primary calendar.
-     */
-    private async listEvents(): Promise<void> {
+    // cache this somewhere in the class
+    private async getUpComingTutoringEvents(): Promise<string[]> {
+        const nextWeek = new Date();
+        nextWeek.setDate(nextWeek.getDate() + 7);
+
         const calendar = google.calendar({
             version: 'v3',
             auth: this.client
         });
-
-        await calendar.events.list({
+        const response = await calendar.events.list({
             calendarId: this.calendarID,
             timeMin: (new Date()).toISOString(),
-            maxResults: 10,
+            timeMax: nextWeek.toISOString(),
             singleEvents: true,
-            orderBy: 'startTime',
-        }).then(res => {
-            const events = res.data.items;
-            if (!events || events.length === 0) {
-                console.log('No upcoming events found.');
-                return;
-            }
-            console.log('Upcoming 10 events:');
-            events.map((event) => {
-                const start = event.start?.dateTime || event.start?.date;
-                console.log(`${start} - ${event.summary}`);
-            });
-        }).catch(e => console.error(e));
+        });
+        const events = response.data.items;
+
+        if (!events || events.length === 0) {
+            console.log('No upcoming events found.');
+            return [];
+        }
+        // Format: "StartDate - Summary"
+        return events.map((event) => {
+            const start = event.start?.dateTime ?? event.start?.date;
+            return `${start} - ${event.summary}`;
+        });
     }
 
+    /**
+     * Builds the view model for the current queue given a summary string
+     * @param summary string from getUpComingTutoringEvents
+     * @param start start Date
+     * @param end end Date
+    */
+    private composeViewModels(
+        queueName: string,
+        summary: string,
+        start: Date,
+        end: Date
+    ): UpComingSessionViewModel[] {
+        // Summary format: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
+        // words will be ["TutorName ", "ECS 20, 36A, 36B, 122A, 122B"]
+        const words = summary.split('-');
+        if (words.length !== 2) {
+            return [];
+        }
+        const tutorName = words[0]?.trim();
+        const ecsClasses = words[1]?.split(' '); // ["ECS", "20,", "36A,", "36B,", "122A,", "122B"]
+        ecsClasses?.shift(); // Remove the ECS
+
+        if (ecsClasses?.length === 0 || tutorName === undefined) {
+            return [];
+        }
+
+        const punctuations = /[.,/#!$%^&*;:{}=\-_`~()]/g;
+
+        return ecsClasses
+            ?.filter(ecsClass => ecsClass === queueName)
+            .map(className => {
+                return {
+                    start: start,
+                    end: end,
+                    // remove the puncuations and any trailing/leading white spaces
+                    ecsClass: className.replace(punctuations, '').trim(),
+                    rawSummary: summary,
+                    displayName: tutorName
+                };
+            }) ?? [];
+    }
 }
 
 /**

@@ -1,5 +1,6 @@
 import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
+import { CalendarExtension } from '../extensions/calendar-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
 import { Helper, Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
@@ -16,16 +17,21 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
-    // key is Guildmember.id for both maps
+    // Key is Guildmember.id
     helpers: Collection<string, Helper> = new Collection();
     students: Required<Helpee>[] = [];
 
     private queueChannel: QueueChannel;
-    private notifGroup: Collection<string, GuildMember> = new Collection();
+    private notifGroup: Collection<string, GuildMember> = new Collection(); // Key is Guildmember.id
     private isOpen = false;
     private readonly queueExtensions: IQueueExtension[];
     private readonly display: QueueDisplayV2;
 
+    /**
+     * @param user YABOB's user object for QueueDisplay
+     * @param queueChannel the channel to manage
+     * @param queueExtensions individual queue extensions to inject
+    */
     private constructor(
         user: User,
         queueChannel: QueueChannel,
@@ -36,9 +42,8 @@ class HelpQueueV2 {
         this.queueExtensions = queueExtensions;
         setInterval(async () => {
             await Promise.all(queueExtensions.map(
-                ext => ext.onQueuePeriodicUpdate(this, this.display)
+                extension => extension.onQueuePeriodicUpdate(this)
             ));
-            console.log();
         }, 1000 * 60 * 60 * 24); // emit onQueuePeriodicUpdate every 24 hours
     }
 
@@ -64,15 +69,18 @@ class HelpQueueV2 {
      * @param queueChannel the corresponding text channel and its name
      * @param user YABOB's client object. Used for queue rendering
      * @param everyoneRole used for locking the queue
-     * @param queueExtensions individual queue extensions to inject
     */
     static async create(
         queueChannel: QueueChannel,
         user: User,
-        everyoneRole: Role,
-        queueExtensions: IQueueExtension[]
+        everyoneRole: Role
     ): Promise<HelpQueueV2> {
+        // * Load QueueExtensions here
+        const queueExtensions = await Promise.all([
+            CalendarExtension.load(1, process.env.YABOB_GOOGLE_CALENDAR_ID)
+        ]);
         const queue = new HelpQueueV2(user, queueChannel, queueExtensions);
+
         await queue.cleanUpQueueChannel();
         await queueChannel.channelObj.permissionOverwrites.create(
             everyoneRole,
@@ -87,9 +95,10 @@ class HelpQueueV2 {
      * Open a queue with a helper
      * ----
      * @param helperMember member with Staff/Admin that used /start
+     * @param notify notify everyone in the notif group
      * @throws QueueError: do nothing if helperMemeber is already helping
     */
-    async openQueue(helperMember: GuildMember): Promise<void> {
+    async openQueue(helperMember: GuildMember, notify = true): Promise<void> {
         if (this.helpers.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
@@ -107,6 +116,7 @@ class HelpQueueV2 {
         // queue operations are done
         // safe to launch all these in parallel
         await Promise.all([
+            notify && // shorthand syntax, the rhs of && will be invoked if lhs is true
             this.notifGroup.map(notifMember => notifMember.send(
                 SimpleEmbed(`Queue \`${this.name}\` is open!`)
             )),
@@ -147,11 +157,10 @@ class HelpQueueV2 {
 
     /**
      * Enqueue a student
-     * @param student the complete Helpee object
+     * @param studentMember the complete Helpee object
      * @throws QueueError: 
     */
     async enqueue(studentMember: GuildMember): Promise<void> {
-
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 `Queue is not open.`,
@@ -178,15 +187,18 @@ class HelpQueueV2 {
         };
         this.students.push(student);
 
-        await Promise.all(this.helpers.map(helper =>
-            helper.member.send(SimpleEmbed(
-                `Heads up! ${student.member.displayName} has joined "${this.name}".`,
-                EmbedColor.Neutral,
-                `<@${student.member.user.id}>`))
-        ));
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueClose(this))
-        );
+        // the Promise<void> cast is for combining 2 different promise types
+        // so that they can be launched in parallel
+        // we won't use the return values so it's safe to cast
+        await Promise.all([
+            this.helpers.map(helper =>
+                helper.member.send(SimpleEmbed(
+                    `Heads up! ${student.member.displayName} has joined "${this.name}".`,
+                    EmbedColor.Neutral,
+                    `<@${student.member.user.id}>`))
+            ),
+            this.queueExtensions.map(extension => extension.onEnqueue(student))
+        ].flat() as Promise<void>[]);
         await this.triggerRender();
     }
 
@@ -298,13 +310,13 @@ class HelpQueueV2 {
         };
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
-        await this.display.render(emptyQueue, true);
+        await this.display.renderQueue(emptyQueue, true);
     }
 
     /**
      * Queue re-render
      * ----
-     * Composes the queue view model, then sends it to the queueDisplay class
+     * Composes the queue view model, then sends it to QueueDisplay
     */
     private async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
@@ -315,7 +327,7 @@ class HelpQueueV2 {
             calendarString: '',
             isOpen: this.isOpen
         };
-        await this.display.render(viewModel);
+        await this.display.renderQueue(viewModel);
         await Promise.all(this.queueExtensions.map(
             extension => extension.onQueueRenderComplete(this, this.display))
         );

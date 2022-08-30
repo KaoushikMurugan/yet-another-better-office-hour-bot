@@ -17,12 +17,6 @@ import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 
-// Extensions
-import { AttendanceExtension } from './extensions/attendance-extension';
-import { IServerExtension, IQueueExtension } from "./extensions/extension-interface";
-
-import { CalendarExtension } from "./extensions/calendar-extension";
-
 dotenv.config();
 console.log(`Environment: \x1b[34m${process.env.NODE_ENV}\x1b[0m`);
 
@@ -134,12 +128,8 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     }
     console.log(`Joining guild: \x1b[33m${guild.name}\x1b[0m`);
 
-    // Load extensions here
-    const serverExtensions: IServerExtension[] = await Promise.all([
-        AttendanceExtension.load(guild.name)
-    ]);
     /**
-     * * Don't load queueExtensions here
+     * * Don't load extensions here
      * load them in the create method then pass it to individual queues
      * each queueExtension will get a renderIndex 
      * - starts at 1; 0 is reserved for queue itself
@@ -149,8 +139,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     const server = await AttendingServerV2.create(
         client.user,
         guild,
-        firebase_db,
-        serverExtensions
+        firebase_db
     );
 
     serversV2.set(guild.id, server);

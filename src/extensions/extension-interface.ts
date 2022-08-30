@@ -45,7 +45,7 @@ interface IQueueExtension {
  * - Override the events that you want to trigger
 */
 class BaseServerExtension implements IServerExtension {
-    onServerInitSuccess(): Promise<void> {
+    onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
     onAllQueueInit(): Promise<void> {

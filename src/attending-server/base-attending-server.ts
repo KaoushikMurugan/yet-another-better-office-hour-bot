@@ -12,7 +12,8 @@ import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
-import { IQueueExtension, IServerExtension } from "../extensions/extension-interface";
+import { IServerExtension } from "../extensions/extension-interface";
+import { AttendanceExtension } from "../extensions/attendance-extension";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -37,20 +38,15 @@ class AttendingServerV2 {
         public readonly guild: Guild,
         public readonly firebaseDB: Firestore,
         private readonly serverExtensions: IServerExtension[],
-        // a bit of prop drilling :(, it's only here to pass it to the queues
-        // ! Do NOT invoke them at server level
-        private readonly queueExtensions: IQueueExtension[]
     ) { }
 
 
     get allQueueNames(): string[] {
         return this.queues.map(queue => queue.name);
     }
-
     get helpQueues(): Readonly<HelpQueueV2[]> {
         return this.queues;
     }
-
     get allHelperNames(): Set<string> {
         return new Set(this.queues
             .flatMap(q => [...q.helpers.values()])
@@ -63,17 +59,13 @@ class AttendingServerV2 {
      * @param user discord client user
      * @param guild the server for YABOB to join
      * @param firebaseDB firebase database object
-     * @param serverExtensions extensions for this AttendingServer
-     * @param queueExtensions extensions to pass to the individual queues
      * @returns a created instance of YABOB
      * @throws ServerError
      */
     static async create(
         user: User,
         guild: Guild,
-        firebaseDB: Firestore,
-        serverExtensions: IServerExtension[] = [],
-        queueExtensions: IQueueExtension[] = []
+        firebaseDB: Firestore
     ): Promise<AttendingServerV2> {
         if (guild.me === null ||
             !guild.me.permissions.has("ADMINISTRATOR")
@@ -87,12 +79,16 @@ class AttendingServerV2 {
             throw Error("YABOB doesn't have admin permission.");
         }
 
+        // * Load ServerExtensions here
+        const serverExtensions = await Promise.all([
+            AttendanceExtension.load(guild.name)
+        ]);
+
         const server = new AttendingServerV2(
             user,
             guild,
             firebaseDB,
-            serverExtensions,
-            queueExtensions
+            serverExtensions
         );
 
         // ! This call must block everything else
@@ -110,13 +106,11 @@ class AttendingServerV2 {
             console.error(err);
             throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
-
-        console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
-
         await Promise.all(serverExtensions.map(
             extension => extension.onServerInitSuccess(server)
         ));
 
+        console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
         return server;
     }
 
@@ -201,8 +195,7 @@ class AttendingServerV2 {
         this.queues.push(await HelpQueueV2.create(
             queueChannel,
             this.user,
-            this.guild.roles.everyone,
-            this.queueExtensions
+            this.guild.roles.everyone
         ));
     }
 
@@ -487,8 +480,7 @@ class AttendingServerV2 {
             channel => HelpQueueV2.create(
                 channel,
                 this.user,
-                this.guild.roles.everyone,
-                this.queueExtensions
+                this.guild.roles.everyone
             )
         ));
 

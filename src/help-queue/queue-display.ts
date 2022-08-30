@@ -7,6 +7,7 @@ import {
     MessageActionRow,
     MessageButton,
     MessageEmbed,
+    MessageOptions,
     User
 } from 'discord.js';
 
@@ -19,7 +20,7 @@ class QueueDisplayV2 {
         private readonly queueChannel: QueueChannel,
     ) { }
 
-    async render(queue: QueueViewModel, sendNew = false): Promise<void> {
+    async renderQueue(queue: QueueViewModel, sendNew = false): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
@@ -99,6 +100,33 @@ class QueueDisplayV2 {
         }
 
         // Trigger onRenderComplete() here
+    }
+
+    async renderNonQueueEmbeds(
+        embeds: Pick<MessageOptions, "embeds">,
+        renderIdx: number,
+        sendNew = false
+    ): Promise<void> {
+        const queueMessages = await this.queueChannel
+            .channelObj
+            .messages
+            .fetch();
+
+        // if the message at idx is not from bob, don't render
+        if (!sendNew && queueMessages.first(renderIdx + 1)[renderIdx]?.author.id !== this.user.id) {
+            console.warn('The queue has messages not from YABOB. '
+                + `Use the /cleanup ${this.queueChannel.queueName} command `
+                + 'to clean up the channel');
+            return;
+        }
+
+        if (sendNew) {
+            await this.queueChannel.channelObj.send(embeds);
+        } else {
+            await this.queueChannel.channelObj.messages.cache
+                .first(renderIdx + 1)[renderIdx]
+                ?.edit(embeds);
+        }
     }
 
     private composeAsciiTable(queue: QueueViewModel): string {
