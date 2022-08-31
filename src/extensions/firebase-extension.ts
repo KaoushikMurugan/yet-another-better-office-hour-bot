@@ -7,6 +7,10 @@ import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../utils/command-line-colors";
 
+// moved outside to prevent multiple calls
+initializeApp({
+    credential: cert(firebase_creds)
+});
 
 class FirebaseLoggingExtension extends BaseServerExtension {
     private constructor(
@@ -19,9 +23,7 @@ class FirebaseLoggingExtension extends BaseServerExtension {
 
     static async load(serverName: string, serverId: string): Promise<FirebaseLoggingExtension> {
         const instance = new FirebaseLoggingExtension(
-            getFirestore(initializeApp({
-                credential: cert(firebase_creds)
-            })),
+            getFirestore(),
             serverId,
             serverName
         );

@@ -43,8 +43,8 @@ class QueueDisplayV2 {
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.name}〛is\t${queue.isOpen
-                ? "**OPEN**  (･`ω´・)"
-                : "**CLOSED**  ◦<(¦3[▓▓]⋆｡˚"}`)
+                ? "**OPEN**\n(･`ω´・)"
+                : "**CLOSED**\n◦<(¦3[▓▓]⋆｡˚"}`)
             .setDescription(this.composeAsciiTable(queue))
             .setColor(EmbedColor.NoColor);
 
@@ -70,7 +70,6 @@ class QueueDisplayV2 {
                 new MessageButton()
                     .setCustomId("notif " + queue.name)
                     .setEmoji("🔔")
-                    // .setDisabled(queue.isOpen) // is this required?
                     .setLabel("Notify When Open")
                     .setStyle("PRIMARY")
             )
@@ -140,18 +139,20 @@ class QueueDisplayV2 {
     }
 
     private composeAsciiTable(queue: QueueViewModel): string {
-        if (!queue.isOpen) {
-            return "";
-        }
         const table = new AsciiTable3();
-        table.setHeading('Position', 'Student Name')
-            .setAlign(1, AlignmentEnum.CENTER)
-            .setAlign(2, AlignmentEnum.CENTER)
-            .setStyle('unicode-mix');
         if (queue.studentDisplayNames.length > 0) {
-            table.addRowMatrix([...queue.studentDisplayNames
-                .map((name, idx) => [idx === 0 ? `(☞°∀°)☞` : `${idx + 1}`, name])
-            ]);
+            table.setHeading('Position', 'Student Name')
+                .setAlign(1, AlignmentEnum.CENTER)
+                .setAlign(2, AlignmentEnum.CENTER)
+                .setStyle('unicode-mix')
+                .addRowMatrix([...queue.studentDisplayNames
+                    .map((name, idx) => [idx === 0 ? `(☞°∀°)☞ 1` : `${idx + 1}`, name])
+                ]);
+        } else {
+            table.addRow('This Queue is Empty.')
+                .addRow(`${Math.random() < 0.3 ? "=^ Φ ω Φ ^=" : "Did you find the cat?"}`)
+                .setAlign(1, AlignmentEnum.CENTER)
+                .setStyle('unicode-mix');
         }
 
         return "```" + table.toString() + "```";

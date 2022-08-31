@@ -111,6 +111,11 @@ class HelpQueueV2 {
         ]);
         const queue = new HelpQueueV2(user, queueChannel, queueExtensions, backupData);
 
+        // This need to happen first
+        // because extensions need to rerender in cleanUpQueueChannel()
+        await Promise.all(
+            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue))
+        );
         await queue.cleanUpQueueChannel();
         await queueChannel.channelObj.permissionOverwrites.create(
             everyoneRole,
@@ -118,10 +123,6 @@ class HelpQueueV2 {
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
             { SEND_MESSAGES: true });
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue))
-        );
-
         setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue)
@@ -384,13 +385,13 @@ class HelpQueueV2 {
         };
         await this.display.renderQueue(viewModel)
             .catch(async (err: QueueRenderError) => {
-                console.error(`Force rerender in ${err.queueName}.`);
+                console.error(`- Force rerender in ${err.queueName}.`);
                 await this.cleanUpQueueChannel();
             });
         await Promise.all(this.queueExtensions.map(
             extension => extension.onQueueRenderComplete(this, this.display))
         ).catch(async (err: QueueRenderError) => {
-            console.error(`Force rerender in ${err.queueName}.`);
+            console.error(`- Force rerender in ${err.queueName}.`);
             await this.cleanUpQueueChannel();
         });
     }

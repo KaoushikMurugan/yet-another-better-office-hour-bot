@@ -197,7 +197,6 @@ class CalendarExtension extends BaseQueueExtension {
         return {
             start: start,
             end: end,
-            // remove the puncuations and any trailing/leading white spaces
             ecsClass: targteClass,
             rawSummary: summary,
             displayName: tutorName
