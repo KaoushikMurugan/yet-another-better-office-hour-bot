@@ -34,24 +34,22 @@ export function SimpleEmbed(
                 },
             }],
         };
-    } else {
-        // TODO: if longer than 256? characters 
-        // TODO: break up into more than one message/embed
+    } else { // temporary solution: Force the message into description
         return {
             embeds: [{
                 color: color,
-                description: message,
+                description: message + '\n\n' + description,
                 timestamp: new Date(),
-                // TODO: author: { name: 'BOBv3', iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' },
+                author: {
+                    name: 'BOBv3',
+                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                },
             }],
         };
     }
 }
 
-
-export function ErrorEmbed(
-    err: UserViewableError,
-): Pick<MessageOptions, "embeds"> {
+export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, "embeds"> {
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -71,7 +69,6 @@ export function ErrorEmbed(
     if (err instanceof ServerError) {
         color = EmbedColor.Error;
     }
-
     return {
         embeds: [{
             color: color,
