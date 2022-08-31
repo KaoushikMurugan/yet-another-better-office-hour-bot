@@ -93,9 +93,9 @@ class AttendingServerV2 {
 
         // ! This call must block everything else
         // Disabled for dev environment assuming everything is created
-        if (process.env.NODE_ENV === 'Production') {
-            await server.createHierarchyRoles();
-        }
+        // if (process.env.NODE_ENV === 'Production') {
+        await server.createHierarchyRoles();
+        // }
 
         // the ones below can be launched in parallel
         await Promise.all([
@@ -552,16 +552,23 @@ class AttendingServerV2 {
     private async createHierarchyRoles(): Promise<void> {
         const existingRoles = (await this.guild.roles.fetch())
             .filter(role => role.name !== this.user.username &&
-                role.name !== '@everyone');
-        await Promise.all(existingRoles.map(role => role.delete()));
-        const createdRoles = await Promise.all(hierarchyRoleConfigs
-            .map(roleConfig => this.guild.roles.create(roleConfig)));
-        console.log("Created roles:");
-        console.log(createdRoles
-            .map(r => { return { name: r.name, pos: r.position }; })
-            .sort((a, b) => a.pos - b.pos));
+                role.name !== '@everyone')
+            .map(role => role.name);
+        const createdRoles = await Promise.all(
+            hierarchyRoleConfigs
+                .filter(role => !existingRoles.includes(role.name))
+                .map(roleConfig => this.guild.roles.create(roleConfig))
+        );
+        if (createdRoles.length !== 0) {
+            console.log("Created roles:");
+            console.log(createdRoles
+                .map(r => { return { name: r.name, pos: r.position }; })
+                .sort((a, b) => a.pos - b.pos));
+        } else {
+            console.log('All required roles exist!');
+        }
         // Give everyone the student role
-        const studentRole = createdRoles.find(role => role.name === 'Student');
+        const studentRole = this.guild.roles.cache.find(role => role.name === 'Student');
         await Promise.all(this.guild.members.cache.map(async member => {
             if (member.user.id !== this.user.id) {
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
