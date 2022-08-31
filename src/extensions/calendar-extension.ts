@@ -8,6 +8,7 @@ import cliendFile from './google_client_id.json';
 import fs from 'fs';
 import { HelpQueueV2 } from '../help-queue/help-queue';
 import { QueueDisplayV2 } from '../help-queue/queue-display';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 
 // TODO: This is ugly, see if we can change it to imports
 const CREDENTIALS_PATH = path.join(process.cwd(), './src/extensions/google_client_id.json');
@@ -31,7 +32,6 @@ type UpComingSessionViewModel = {
 class CalendarExtension extends BaseQueueExtension {
 
     private upcomingHours: UpComingSessionViewModel[] = []
-    private embedInitialized = false;
 
     private constructor(
         private readonly client: OAuth2Client,
@@ -53,22 +53,56 @@ class CalendarExtension extends BaseQueueExtension {
             await makeClient(),
             calendarID,
             renderIndex);
-        await instance.getUpComingTutoringEvents();
+        console.log(await instance.getUpComingTutoringEvents());
         console.log(
             `[\x1b[34mCalendar Extension\x1b[0m] successfully loaded!`
         );
         return instance;
     }
 
-    override async onQueuePeriodicUpdate(): Promise<void> {
-        await this.getUpComingTutoringEvents();
+    /**
+     * Every time queue emits onQueuePeriodicUpdate
+     * fecth new events and update cached viewModel
+    */
+    override async onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>): Promise<void> {
+        this.upcomingHours = await this.getUpComingTutoringEvents(queue.name);
+        console.log(this.upcomingHours);
     }
 
-    // cache this somewhere in the class
-    private async getUpComingTutoringEvents(): Promise<string[]> {
+    /**
+     * Embeds the upcoming hours into the queue channel
+     * @param queue target queue to embed
+     * @param display corresponding display object
+    */
+    override async onQueueRenderComplete(
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ): Promise<void> {
+        const embed = SimpleEmbed(
+            `Upcoming Hours for ${queue.name}`,
+            EmbedColor.NoColor,
+            this.upcomingHours
+                .map(viewModel => `${viewModel.displayName} | ` +
+                    `Starts at: ${viewModel.start.toLocaleString()}\t` +
+                    `Ends at: ${viewModel.end.toLocaleString()}`)
+                .join('\n')
+        );
+        await display.renderNonQueueEmbeds(
+            embed,
+            this.renderIndex
+        );
+    }
+
+    /**
+     * Fetches the calendar events from google calendar
+     * @param queueName: the queue that this extension instance belongs to
+     * - if undefined, simply test for connection to google calendar
+    */
+    private async getUpComingTutoringEvents(
+        queueName?: string
+    ): Promise<UpComingSessionViewModel[]> {
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
-
         const calendar = google.calendar({
             version: 'v3',
             auth: this.client
@@ -80,16 +114,35 @@ class CalendarExtension extends BaseQueueExtension {
             singleEvents: true,
         });
         const events = response.data.items;
+        if (queueName === undefined) {
+            return [];
+        }
 
         if (!events || events.length === 0) {
             console.log('No upcoming events found.');
             return [];
         }
         // Format: "StartDate - Summary"
-        return events.map((event) => {
-            const start = event.start?.dateTime ?? event.start?.date;
-            return `${start} - ${event.summary}`;
-        });
+        const definedEvents = events
+            .filter(event => event.start?.dateTime && event.end?.dateTime)
+            .map((event) => {
+                // we already checked for dateTime existence
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const start = event.start!.dateTime!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const end = event.end!.dateTime!;
+                return this.composeViewModels(
+                    queueName,
+                    event.summary ?? '',
+                    new Date(start),
+                    new Date(end)
+                );
+            })
+            .filter(s => s !== undefined);
+        if (definedEvents.length === 0) {
+            return [];
+        }
+        return definedEvents as UpComingSessionViewModel[];
     }
 
     /**
@@ -97,41 +150,48 @@ class CalendarExtension extends BaseQueueExtension {
      * @param summary string from getUpComingTutoringEvents
      * @param start start Date
      * @param end end Date
+     * @returns undefined if any parsing failed, otherwise a complete view model
     */
     private composeViewModels(
         queueName: string,
         summary: string,
         start: Date,
         end: Date
-    ): UpComingSessionViewModel[] {
+    ): UpComingSessionViewModel | undefined {
         // Summary format: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
         // words will be ["TutorName ", "ECS 20, 36A, 36B, 122A, 122B"]
         const words = summary.split('-');
         if (words.length !== 2) {
-            return [];
-        }
-        const tutorName = words[0]?.trim();
-        const ecsClasses = words[1]?.split(' '); // ["ECS", "20,", "36A,", "36B,", "122A,", "122B"]
-        ecsClasses?.shift(); // Remove the ECS
-
-        if (ecsClasses?.length === 0 || tutorName === undefined) {
-            return [];
+            return undefined;
         }
 
         const punctuations = /[.,/#!$%^&*;:{}=\-_`~()]/g;
+        const tutorName = words[0]?.trim();
+        const ecsClasses = words[1]?.trim().split(' ')
+            .map(ecsClass => ecsClass
+                ?.replace(punctuations, '')
+                .trim());
+        // ["ECS", "20,", "36A,", "36B,", "122A,", "122B"]
+        ecsClasses?.shift(); // Remove the ECS
 
-        return ecsClasses
-            ?.filter(ecsClass => ecsClass === queueName)
-            .map(className => {
-                return {
-                    start: start,
-                    end: end,
-                    // remove the puncuations and any trailing/leading white spaces
-                    ecsClass: className.replace(punctuations, '').trim(),
-                    rawSummary: summary,
-                    displayName: tutorName
-                };
-            }) ?? [];
+        if (ecsClasses?.length === 0 || tutorName === undefined) {
+            return undefined;
+        }
+
+        const targteClass = ecsClasses?.find(ecsClass => queueName === `ECS ${ecsClass}`);
+
+        if (targteClass === undefined) {
+            return undefined;
+        }
+
+        return {
+            start: start,
+            end: end,
+            // remove the puncuations and any trailing/leading white spaces
+            ecsClass: targteClass,
+            rawSummary: summary,
+            displayName: tutorName
+        };
     }
 }
 

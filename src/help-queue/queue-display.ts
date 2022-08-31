@@ -15,6 +15,10 @@ import {
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
 
+    // Key is renderIndex, Value is ready or not
+    // If nonQueueEmbedReadyState[renderIndex] is true, then it's safe to edit
+    private nonQueueEmbedReadyState = new Map<number, boolean>();
+
     constructor(
         private readonly user: User,
         private readonly queueChannel: QueueChannel,
@@ -104,16 +108,18 @@ class QueueDisplayV2 {
 
     async renderNonQueueEmbeds(
         embeds: Pick<MessageOptions, "embeds">,
-        renderIdx: number,
-        sendNew = false
+        renderIndex: number,
     ): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
             .fetch();
 
-        // if the message at idx is not from bob, don't render
-        if (!sendNew && queueMessages.first(renderIdx + 1)[renderIdx]?.author.id !== this.user.id) {
+        const sendNew = !this.nonQueueEmbedReadyState.get(renderIndex) ?? true;
+
+        // if the message at renderIndex is not from bob, don't render
+        if (!sendNew &&
+            queueMessages.first(renderIndex + 1)[renderIndex]?.author.id !== this.user.id) {
             console.warn('The queue has messages not from YABOB. '
                 + `Use the /cleanup ${this.queueChannel.queueName} command `
                 + 'to clean up the channel');
@@ -122,9 +128,10 @@ class QueueDisplayV2 {
 
         if (sendNew) {
             await this.queueChannel.channelObj.send(embeds);
+            this.nonQueueEmbedReadyState.set(renderIndex, true);
         } else {
             await this.queueChannel.channelObj.messages.cache
-                .first(renderIdx + 1)[renderIdx]
+                .first(renderIndex + 1)[renderIndex]
                 ?.edit(embeds);
         }
     }

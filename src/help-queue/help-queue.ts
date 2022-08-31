@@ -40,11 +40,18 @@ class HelpQueueV2 {
         this.queueChannel = queueChannel;
         this.display = new QueueDisplayV2(user, queueChannel);
         this.queueExtensions = queueExtensions;
+        // immediately trigger first call
+        setTimeout(async () => {
+            await Promise.all(queueExtensions.map(
+                extension => extension.onQueuePeriodicUpdate(this)
+            ));
+        }, 10);
+        // then setup the interval. This will be called 24hrs later
         setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(this)
             ));
-        }, 1000 * 60 * 60 * 24); // emit onQueuePeriodicUpdate every 24 hours
+        }, 5000); // emit onQueuePeriodicUpdate every 24 hours
     }
 
     get length(): number { // number of students
@@ -311,6 +318,9 @@ class HelpQueueV2 {
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
         await this.display.renderQueue(emptyQueue, true);
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueRenderComplete(this, this.display))
+        );
     }
 
     /**

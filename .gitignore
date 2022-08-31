@@ -12,3 +12,5 @@ src/extensions/google_client_id.json
 .DS_Store
 .DS_Store
 src/extensions/token.json
+src/extensions/google_client_id.json
+src/extensions/token.json
