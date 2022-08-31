@@ -39,6 +39,7 @@ class FirebaseLoggingExtension extends BaseServerExtension {
                         waitStart: student.waitStart,
                         upNext: student.upNext,
                         displayName: student.member.displayName,
+                        memberId: student.member.id
                     };
                 }),
                 name: queue.name,
@@ -55,7 +56,10 @@ class FirebaseLoggingExtension extends BaseServerExtension {
             .collection("serverBackups")
             .doc(this.serverId)
             .set(serverBackup)
-            .then(() => console.log(`Backup successful for ${this.serverName}`))
+            .then(() => console.log(
+                `[\x1b[34m${(new Date()).toLocaleString()}\x1b[0m]` +
+                `Backup successful for ${this.serverName}`
+            ))
             .catch((err: Error) => console.error(err.message));
     }
 
@@ -66,13 +70,11 @@ class FirebaseLoggingExtension extends BaseServerExtension {
      * @param serverId the server to retrieve backup for. This is the id from Guild.id
     */
     override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
-        this.firebase_db
+        const backupData = await this.firebase_db
             .collection("serverBackups")
             .doc(serverId)
-            .get()
-            .then(doc => console.log(doc.data()))
-            .catch((err: Error) => console.error(err.message));
-        return undefined;
+            .get();
+        return <ServerBackup>backupData.data();
     }
 }
 

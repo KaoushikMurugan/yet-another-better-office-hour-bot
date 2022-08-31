@@ -16,6 +16,7 @@ import { Helpee, Helper } from "../models/member-states";
 import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-extension';
+import { QueueBackup } from "../extensions/firebase-models/backups";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -88,38 +89,39 @@ class AttendingServerV2 {
             serverExtensions
         );
 
-        // This call must block everything else
+        // Retrieve backup from all sources
+        const externalBackup = await Promise.all(
+            serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
+        );
+        // Then take the first one that's not undefined 
+        // TODO: Change behavior here depending on backup strategy
+        const externalServerData = externalBackup.find(backup => backup !== undefined);
+        if (externalServerData !== undefined) {
+            console.log('external data', externalServerData);
+        }
+
+        // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
         // The ones below can be launched together
         await Promise.all([
-            server.initAllQueues(),
+            server.initAllQueues(externalServerData?.queues),
             server.createClassRoles(),
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
             throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
-
-        const externalBackup = await Promise.all(
-            serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
-        );
-        // take the first one that's not undefined
-        const externalServerData = externalBackup.find(backup => backup !== undefined);
-        if (externalServerData !== undefined) {
-            console.log('external data', externalServerData);
-        }
-
         // Emit all the events
         await Promise.all(serverExtensions.map(
             extension => [
                 extension.onServerInitSuccess(server),
                 extension.onServerPeriodicUpdate(server)
             ]).flat());
-        // This wont block. Will be called 3 hours later
+        // The below Promise.all wont block. Will be called every 30 minutes
         setInterval(async () =>
             await Promise.all(serverExtensions
                 .map(extension => extension.onServerPeriodicUpdate(server)))
-            , 1000 * 60 * 60 * 3 + Math.floor(Math.random() * 1000));
+            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
         console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
         return server;
     }
@@ -486,21 +488,22 @@ class AttendingServerV2 {
      * Creates all the office hour queues
      * ----
      */
-    private async initAllQueues(): Promise<void> {
+    private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
         if (this.queues.size !== 0) {
             console.warn("Overriding existing queues.");
         }
-
         const queueChannels = await this.getQueueChannels();
         await Promise.all(queueChannels
             .map(async channel => this.queues.set(channel.parentCategoryId,
                 await HelpQueueV2.create(
                     channel,
                     this.user,
-                    this.guild.roles.everyone
+                    this.guild.roles.everyone,
+                    // TODO: this is N^2, a bit slow
+                    queueBackups?.find(backup =>
+                        backup.parentCategoryId === channel.parentCategoryId)
                 )))
         );
-
         await Promise.all(this.serverExtensions.map(
             extension => extension.onAllQueueInit([...this.queues.values()])
         ));

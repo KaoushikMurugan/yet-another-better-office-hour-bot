@@ -20,7 +20,7 @@ class HelpQueueV2 {
 
     // Key is Guildmember.id
     private helpers: Collection<string, Helper> = new Collection();
-    private students: Required<Helpee>[] = [];
+    private students: Helpee[] = [];
 
     // Key is Guildmember.id
     private notifGroup: Collection<string, GuildMember> = new Collection();
@@ -31,13 +31,32 @@ class HelpQueueV2 {
      * @param user YABOB's user object for QueueDisplay
      * @param queueChannel the channel to manage
      * @param queueExtensions individual queue extensions to inject
+     * @param backupData If defined, use this data to restore the students array
     */
     protected constructor(
         user: User,
         private queueChannel: QueueChannel,
-        private queueExtensions: IQueueExtension[]
+        private queueExtensions: IQueueExtension[],
+        backupData?: QueueBackup
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
+        // If we choose to use backup,
+        // restore members with queueChannel.channelObj.members.get()
+        if (backupData !== undefined) {
+            console.log(`Found backup for ${backupData.name}`);
+            backupData.studentsInQueue.forEach(studentBackup => {
+                // forEach backup, if there's a corresponding channel member, push it into queue
+                const correspondingMember = this.queueChannel.channelObj.members
+                    .get(studentBackup.memberId);
+                if (correspondingMember !== undefined) {
+                    this.students.push({
+                        waitStart: studentBackup.waitStart,
+                        upNext: studentBackup.upNext,
+                        member: correspondingMember
+                    });
+                }
+            });
+        }
     }
 
     get length(): number { // number of students
@@ -55,7 +74,7 @@ class HelpQueueV2 {
     get parentCategoryId(): string {
         return this.queueChannel.parentCategoryId;
     }
-    get first(): Required<Helpee> | undefined { // first student
+    get first(): Helpee | undefined { // first student; undefined if no one is here
         return this.students[0];
     }
     get studentsInQueue(): ReadonlyArray<Required<Helpee>> {
@@ -74,11 +93,13 @@ class HelpQueueV2 {
      * @param queueChannel the corresponding text channel and its name
      * @param user YABOB's client object. Used for queue rendering
      * @param everyoneRole used for locking the queue
+     * @param backupData backup queue data directly passed to the constructor
     */
     static async create(
         queueChannel: QueueChannel,
         user: User,
         everyoneRole: Role,
+        backupData?: QueueBackup
     ): Promise<HelpQueueV2> {
         // * Load QueueExtensions here
         const queueExtensions = await Promise.all([
@@ -88,7 +109,7 @@ class HelpQueueV2 {
                 process.env.YABOB_GOOGLE_CALENDAR_ID
             )
         ]);
-        const queue = new HelpQueueV2(user, queueChannel, queueExtensions);
+        const queue = new HelpQueueV2(user, queueChannel, queueExtensions, backupData);
 
         await queue.cleanUpQueueChannel();
         await queueChannel.channelObj.permissionOverwrites.create(
@@ -104,7 +125,7 @@ class HelpQueueV2 {
         setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue)
-            )); // Random offset to avoid spamming the apis
+            )); // Random offset to avoid spamming the APIs
         }, (1000 * 60 * 60 * 24) + Math.floor(Math.random() * 2000));
         return queue;
     }
