@@ -37,20 +37,6 @@ class HelpQueueV2 {
         private queueExtensions: IQueueExtension[]
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
-        // Immediately trigger first update call
-        const timoutID = setTimeout(async () => {
-            await Promise.all(queueExtensions.map(
-                extension => extension.onQueuePeriodicUpdate(this)
-            ));
-            // clean up the timeout so the event loop removes it
-            clearTimeout(timoutID);
-        }, 0);
-        // Setup the interval. This will be called every 24 hours
-        setInterval(async () => {
-            await Promise.all(queueExtensions.map(
-                extension => extension.onQueuePeriodicUpdate(this)
-            ));
-        }, 1000 * 60 * 60 * 24);
     }
 
     get length(): number { // number of students
@@ -107,6 +93,15 @@ class HelpQueueV2 {
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
             { SEND_MESSAGES: true });
+        await Promise.all(
+            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue))
+        );
+
+        setInterval(async () => {
+            await Promise.all(queueExtensions.map(
+                extension => extension.onQueuePeriodicUpdate(queue)
+            )); // Random offset to avoid spamming the apis
+        }, (1000 * 60 * 60 * 24) + Math.floor(Math.random() * 2000));
         return queue;
     }
 

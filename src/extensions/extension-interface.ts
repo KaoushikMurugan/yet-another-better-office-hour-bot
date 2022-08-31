@@ -20,6 +20,7 @@ interface IServerExtension {
     onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
     onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
+    onServerPeriodicUpdate: (server: Readonly<AttendingServerV2>) => Promise<void>;
 }
 
 // Extensions for individual queues
@@ -64,6 +65,9 @@ class BaseServerExtension implements IServerExtension {
     onHelperStopHelping(helper: Readonly<Required<Helper>>): Promise<void> {
         return Promise.resolve();
     }
+    onServerPeriodicUpdate(server: Readonly<AttendingServerV2>): Promise<void> {
+        return Promise.resolve();
+    }
 }
 
 /**
@@ -73,7 +77,6 @@ class BaseServerExtension implements IServerExtension {
  * - Override the events that you want to trigger
 */
 class BaseQueueExtension implements IQueueExtension {
-
     onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }

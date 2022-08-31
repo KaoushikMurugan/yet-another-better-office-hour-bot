@@ -11,8 +11,10 @@ import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
+
 import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance-extension";
+import { FirebaseLoggingExtension } from '../extensions/firebase-extension';
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -74,7 +76,8 @@ class AttendingServerV2 {
 
         // * Load ServerExtensions here
         const serverExtensions = await Promise.all([
-            AttendanceExtension.load(guild.name)
+            AttendanceExtension.load(guild.name),
+            FirebaseLoggingExtension.load(guild.name, guild.id)
         ]);
         const server = new AttendingServerV2(
             user,
@@ -82,9 +85,9 @@ class AttendingServerV2 {
             serverExtensions
         );
 
-        // ! This call must block everything else
+        // This call must block everything else
         await server.createHierarchyRoles();
-        // the ones below can be launched together
+        // The ones below can be launched together
         await Promise.all([
             server.initAllQueues(),
             server.createClassRoles(),
@@ -93,10 +96,18 @@ class AttendingServerV2 {
             console.error(err);
             throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
         });
-        await Promise.all(serverExtensions.map(
-            extension => extension.onServerInitSuccess(server)
-        ));
 
+        // Emit all the events
+        await Promise.all(serverExtensions.map(
+            extension => [
+                extension.onServerInitSuccess(server),
+                extension.onServerPeriodicUpdate(server)
+            ]).flat());
+        // This wont block. Will be called 3 hours later
+        setInterval(async () =>
+            await Promise.all(serverExtensions
+                .map(extension => extension.onServerPeriodicUpdate(server)))
+            , 1000 * 60 * 60 * 3 + Math.floor(Math.random() * 1000));
         console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
         return server;
     }
