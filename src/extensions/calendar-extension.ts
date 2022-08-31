@@ -84,7 +84,8 @@ class CalendarExtension extends BaseQueueExtension {
     */
     override async onQueueRenderComplete(
         queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        display: Readonly<QueueDisplayV2>,
+        isClenupRender = false
     ): Promise<void> {
         const embed = SimpleEmbed(
             `Upcoming Hours for ${queue.name}`,
@@ -97,7 +98,8 @@ class CalendarExtension extends BaseQueueExtension {
         );
         await display.renderNonQueueEmbeds(
             embed,
-            this.renderIndex
+            this.renderIndex,
+            isClenupRender
         );
     }
 

@@ -249,9 +249,15 @@ const setCalendar = new SlashCommandBuilder()
     );
 
 const forceUpdateQueues = new SlashCommandBuilder()
-    .setName("force_update_queues")
+    .setName("cleanup")
     .setDescription(
         "Debug feature: Forces updates of the queue and the schedule messages in all #queue channel"
+    )
+    .addChannelOption((option) =>
+        option
+            .setName("queue_name")
+            .setDescription("The queue to clean")
+            .setRequired(true)
     );
 
 // Get the raw data that can be sent to Discord
@@ -286,7 +292,7 @@ type BaseBOBCommands =
     | 'notify_me'
     | 'remove_notif'
     | 'post_session_msg'
-    | 'force_update_queues';
+    | 'cleanup';
 
 async function postSlashCommands(guild: Guild): Promise<void> {
     if (process.env.YABOB_APP_ID === undefined) {

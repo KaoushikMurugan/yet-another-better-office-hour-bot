@@ -4,7 +4,7 @@ import { CalendarExtension } from '../extensions/calendar-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
 import { Helper, Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { QueueError } from '../utils/error-types';
+import { QueueError, QueueRenderError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 
 type QueueViewModel = {
@@ -316,23 +316,26 @@ class HelpQueueV2 {
     }
 
     /**
-     * Cleans up the #queue channel.
+     * Cleans up the #queue channel, removes every message then resend
      * ----
      * onQueueRenderComplete will be emitted
+     * Very slow, non of the 3 promises can be parallelized
+     * - because msg.delete must happen first
+     * Will not be called unless QueueDisplay rejects a re-render
     */
-    private async cleanUpQueueChannel(): Promise<void> {
-        const emptyQueue: QueueViewModel = {
+    async cleanUpQueueChannel(): Promise<void> {
+        const viewModel: QueueViewModel = {
             name: this.name,
-            helperIDs: [],
-            studentDisplayNames: [],
+            helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
+            studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',
-            isOpen: false
+            isOpen: this.isOpen
         };
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
-        await this.display.renderQueue(emptyQueue, true);
+        await this.display.renderQueue(viewModel, true);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this, this.display))
+            extension => extension.onQueueRenderComplete(this, this.display, true))
         );
     }
 
@@ -350,10 +353,17 @@ class HelpQueueV2 {
             calendarString: '',
             isOpen: this.isOpen
         };
-        await this.display.renderQueue(viewModel);
+        await this.display.renderQueue(viewModel)
+            .catch(async (err: QueueRenderError) => {
+                console.error(`Force rerender in ${err.queueName}.`);
+                await this.cleanUpQueueChannel();
+            });
         await Promise.all(this.queueExtensions.map(
             extension => extension.onQueueRenderComplete(this, this.display))
-        );
+        ).catch(async (err: QueueRenderError) => {
+            console.error(`Force rerender in ${err.queueName}.`);
+            await this.cleanUpQueueChannel();
+        });
     }
 }
 
