@@ -1,10 +1,5 @@
 // Library Imports
-import {
-    Client,
-    Guild,
-    Intents,
-} from "discord.js";
-
+import { Client, Guild, Intents} from "discord.js";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 

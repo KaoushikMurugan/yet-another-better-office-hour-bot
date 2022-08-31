@@ -49,8 +49,9 @@ class AttendanceExtension extends BaseServerExtension {
             .catch(() => Promise.reject(
                 new AttendanceError(
                     `Failed to update attendace.\n` +
-                    `Don't worry, your time is still being logged, just not viewable on Google Sheets. ` +
-                    `Please contact an hooman to manually update.`
+                    `Don't worry, your time is still being logged, ` +
+                    `just not viewable on Google Sheets. ` +
+                    `Please contact @Officer to manually update.`
                 )
             ));
     }

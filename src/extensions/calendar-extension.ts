@@ -4,7 +4,7 @@ import { ExtensionSetupError } from '../utils/error-types';
 import { OAuth2Client } from 'googleapis-common';
 import { authenticate } from '@google-cloud/local-auth';
 import path from 'path';
-import cliendFile from './google_client_id.json';
+import clientFile from './google_client_id.json';
 import fs from 'fs';
 import { HelpQueueV2 } from '../help-queue/help-queue';
 import { QueueDisplayV2 } from '../help-queue/queue-display';
@@ -39,13 +39,21 @@ class CalendarExtension extends BaseQueueExtension {
         private readonly renderIndex: number,
     ) { super(); }
 
+
+    /**
+     * Initializes the calendar extension
+     * ----
+     * @param renderIndex the index of the embed message given by the queue
+     * @param queueName name of the queue
+     * @param calendarID ID of the calendar. Found in google calendar share settings
+    */
     static async load(
         renderIndex: number,
         queueName: string,
         calendarID?: string,
     ): Promise<CalendarExtension> {
         if (calendarID === undefined ||
-            cliendFile === undefined) {
+            clientFile === undefined) {
             return Promise.reject(new ExtensionSetupError(
                 '\x1b[31mMake sure you have Calendar ID and google cloud credentials in .env.\x1b[0m'
             ));
@@ -117,7 +125,6 @@ class CalendarExtension extends BaseQueueExtension {
         if (queueName === undefined) {
             return [];
         }
-
         if (!events || events.length === 0) {
             console.log('No upcoming events found.');
             return [];
@@ -131,7 +138,7 @@ class CalendarExtension extends BaseQueueExtension {
                 const start = event.start!.dateTime!;
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 const end = event.end!.dateTime!;
-                return this.composeViewModels(
+                return this.composeViewModel(
                     queueName,
                     event.summary ?? '',
                     new Date(start),
@@ -152,7 +159,7 @@ class CalendarExtension extends BaseQueueExtension {
      * @param end end Date
      * @returns undefined if any parsing failed, otherwise a complete view model
     */
-    private composeViewModels(
+    private composeViewModel(
         queueName: string,
         summary: string,
         start: Date,
@@ -195,12 +202,16 @@ class CalendarExtension extends BaseQueueExtension {
     }
 }
 
-/**
- * Function below are adopted from the Google API starter code for NodeJS
- * They are very hacky
- * TODO: Find the proper way to do this in TS
-*/
+// Functions below are adopted from the Google API starter code for NodeJS
+// They are very hacky
+// TODO: Find the proper way to do this in TS
 
+/**
+ * Creates a OAuth2Client
+ * ----
+ * Expects to find google_client_id.json in the same folder
+ * 
+*/
 async function makeClient(): Promise<OAuth2Client> {
     const localCredentials = loadSavedCredentials();
     if (localCredentials !== undefined) {

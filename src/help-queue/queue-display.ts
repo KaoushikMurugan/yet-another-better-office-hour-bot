@@ -17,7 +17,7 @@ class QueueDisplayV2 {
 
     // Key is renderIndex, Value is ready or not
     // If nonQueueEmbedReadyState[renderIndex] is true, then it's safe to edit
-    private nonQueueEmbedReadyState = new Map<number, boolean>();
+    private nonQueueEmbedReadyStates = new Map<number, boolean>();
 
     constructor(
         private readonly user: User,
@@ -115,7 +115,9 @@ class QueueDisplayV2 {
             .messages
             .fetch();
 
-        const sendNew = !this.nonQueueEmbedReadyState.get(renderIndex) ?? true;
+        // see if the embed is already sent (ready)
+        // if not ready or non existent, send a new one
+        const sendNew = !this.nonQueueEmbedReadyStates.get(renderIndex) ?? true;
 
         // if the message at renderIndex is not from bob, don't render
         if (!sendNew &&
@@ -128,7 +130,7 @@ class QueueDisplayV2 {
 
         if (sendNew) {
             await this.queueChannel.channelObj.send(embeds);
-            this.nonQueueEmbedReadyState.set(renderIndex, true);
+            this.nonQueueEmbedReadyStates.set(renderIndex, true);
         } else {
             await this.queueChannel.channelObj.messages.cache
                 .first(renderIndex + 1)[renderIndex]
