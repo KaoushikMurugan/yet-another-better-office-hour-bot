@@ -8,10 +8,10 @@ type Helpee = {
 
 type Helper = {
     helpStart: Date;
-    helpEnd?: Date; // ? Maybe init to end of day
+    helpEnd?: Date;
     helpedMembers: GuildMember[];
     readonly member: GuildMember; // backref
 }
 
-export { Helpee, Helper};
+export { Helpee, Helper };
 

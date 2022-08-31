@@ -159,7 +159,7 @@ class ButtonCommandDispatcher {
         queueName: string
     ): Promise<QueueChannel> {
         if (interaction.channel?.type !== 'GUILD_TEXT' ||
-            interaction.channel.parent === undefined) {
+            interaction.channel.parent === null) {
             return Promise.reject(new CommandParseError(
                 'Invalid button press. ' +
                 'Make sure this channel has a parent category.'
@@ -167,7 +167,8 @@ class ButtonCommandDispatcher {
         }
         const queueChannel: QueueChannel = {
             channelObj: interaction.channel as TextChannel,
-            queueName: queueName
+            queueName: queueName,
+            parentCategoryId: interaction.channel.parent.id
         };
         return Promise.resolve(queueChannel);
     }
