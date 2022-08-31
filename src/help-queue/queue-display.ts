@@ -10,6 +10,7 @@ import {
     User
 } from 'discord.js';
 import { QueueRenderError } from '../utils/error-types';
+import { EmbedColor } from '../utils/embed-helper';
 
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
@@ -41,8 +42,11 @@ class QueueDisplayV2 {
 
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
-            .setTitle(`Queue for〚${queue.name}〛is\t**${queue.isOpen ? "OPEN ✓" : "CLOSED ✕"}**`)
-            .setDescription(this.composeAsciiTable(queue));
+            .setTitle(`Queue for〚${queue.name}〛is\t${queue.isOpen
+                ? "**OPEN**  (･`ω´・)"
+                : "**CLOSED**  ◦<(¦3[▓▓]⋆｡˚"}`)
+            .setDescription(this.composeAsciiTable(queue))
+            .setColor(EmbedColor.NoColor);
 
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(

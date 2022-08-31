@@ -13,7 +13,7 @@ export enum EmbedColor {
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
     NeedName = 0x78dce8, // Aqua
-    NoColor = 0x36393F // the discord background
+    NoColor = 0x2f3137 // the embed background
 }
 
 export function SimpleEmbed(
