@@ -62,10 +62,7 @@ class AttendingServerV2 {
      * @returns a created instance of YABOB
      * @throws ServerError
      */
-    static async create(
-        user: User,
-        guild: Guild
-    ): Promise<AttendingServerV2> {
+    static async create(user: User, guild: Guild): Promise<AttendingServerV2> {
         if (guild.me === null ||
             !guild.me.permissions.has("ADMINISTRATOR")
         ) {
@@ -96,9 +93,6 @@ class AttendingServerV2 {
         // Then take the first one that's not undefined 
         // TODO: Change behavior here depending on backup strategy
         const externalServerData = externalBackup.find(backup => backup !== undefined);
-        if (externalServerData !== undefined) {
-            console.log('external data', externalServerData);
-        }
 
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
