@@ -38,10 +38,11 @@ class FirebaseLoggingExtension extends BaseServerExtension {
                     return {
                         waitStart: student.waitStart,
                         upNext: student.upNext,
-                        displayName: student.member.displayName
+                        displayName: student.member.displayName,
                     };
                 }),
                 name: queue.name,
+                parentCategoryId: queue.parentCategoryId
             };
         });
         const serverBackup: ServerBackup = {
@@ -56,6 +57,22 @@ class FirebaseLoggingExtension extends BaseServerExtension {
             .set(serverBackup)
             .then(() => console.log(`Backup successful for ${this.serverName}`))
             .catch((err: Error) => console.error(err.message));
+    }
+
+    /**
+     * Gets the backup from firebase
+     * ----
+     * If there's no backup for this serverId, return undefined
+     * @param serverId the server to retrieve backup for. This is the id from Guild.id
+    */
+    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+        this.firebase_db
+            .collection("serverBackups")
+            .doc(serverId)
+            .get()
+            .then(doc => console.log(doc.data()))
+            .catch((err: Error) => console.error(err.message));
+        return undefined;
     }
 }
 

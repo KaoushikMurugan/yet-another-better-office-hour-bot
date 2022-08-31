@@ -357,26 +357,27 @@ class CentralCommandDispatcher {
         interaction: CommandInteraction,
         required = false
     ): Promise<QueueChannel> {
-        const channel = interaction.options.getChannel("queue_name", required) ??
+        const parentCategory = interaction.options.getChannel("queue_name", required) ??
             (interaction.channel as GuildChannel).parent;
         // null check is done here by optional property access
-        if (channel?.type !== 'GUILD_CATEGORY') {
+        if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {
             return Promise.reject(new CommandParseError(
-                `\`${channel?.name}\` is not a valid queue category.`));
+                `\`${parentCategory?.name}\` is not a valid queue category.`));
         }
-        const queueTextChannel = channel.children
+        const queueTextChannel = parentCategory.children
             .find(child =>
                 child.name === 'queue' &&
                 child.type === 'GUILD_TEXT');
         if (queueTextChannel === undefined) {
             return Promise.reject(new CommandParseError(
                 `This category does not have a \`#queue\` text channel.\n` +
-                `If you are an admin, you can use \`/queue add ${channel.name}\` ` +
+                `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
                 `to generate one.`));
         }
         const queueChannel: QueueChannel = {
             channelObj: queueTextChannel as TextChannel,
-            queueName: channel.name
+            queueName: parentCategory.name,
+            parentCategoryId: parentCategory.id
         };
         return queueChannel;
     }

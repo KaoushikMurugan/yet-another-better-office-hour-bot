@@ -11,6 +11,7 @@ import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
 import { Helpee, Helper } from "../models/member-states";
+import { ServerBackup } from "./firebase-models/backups";
 
 // Server level extensions
 interface IServerExtension {
@@ -21,6 +22,7 @@ interface IServerExtension {
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
     onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
     onServerPeriodicUpdate: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
 }
 
 // Extensions for individual queues
@@ -67,6 +69,9 @@ class BaseServerExtension implements IServerExtension {
     }
     onServerPeriodicUpdate(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
+    }
+    loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+        return Promise.resolve(undefined);
     }
 }
 

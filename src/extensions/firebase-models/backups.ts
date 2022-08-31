@@ -3,6 +3,7 @@ import { Helpee } from "../../models/member-states";
 type QueueBackup = {
     studentsInQueue: ReadonlyArray<Omit<Helpee, "member"> & { displayName: string }>;
     name: string;
+    parentCategoryId: string;
 };
 
 type ServerBackup = {

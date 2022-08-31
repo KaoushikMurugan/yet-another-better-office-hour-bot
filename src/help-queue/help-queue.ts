@@ -2,6 +2,7 @@ import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarExtension } from '../extensions/calendar-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
+import { QueueBackup } from '../extensions/firebase-models/backups';
 import { Helper, Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError, QueueRenderError } from '../utils/error-types';
@@ -51,6 +52,9 @@ class HelpQueueV2 {
     get channelObj(): Readonly<TextChannel> { // #queue text channel object
         return this.queueChannel.channelObj;
     }
+    get parentCategoryId(): string {
+        return this.queueChannel.parentCategoryId;
+    }
     get first(): Required<Helpee> | undefined { // first student
         return this.students[0];
     }
@@ -74,7 +78,7 @@ class HelpQueueV2 {
     static async create(
         queueChannel: QueueChannel,
         user: User,
-        everyoneRole: Role
+        everyoneRole: Role,
     ): Promise<HelpQueueV2> {
         // * Load QueueExtensions here
         const queueExtensions = await Promise.all([
