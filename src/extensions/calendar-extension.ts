@@ -41,6 +41,7 @@ class CalendarExtension extends BaseQueueExtension {
 
     static async load(
         renderIndex: number,
+        queueName: string,
         calendarID?: string,
     ): Promise<CalendarExtension> {
         if (calendarID === undefined ||
@@ -53,9 +54,9 @@ class CalendarExtension extends BaseQueueExtension {
             await makeClient(),
             calendarID,
             renderIndex);
-        console.log(await instance.getUpComingTutoringEvents());
+        await instance.getUpComingTutoringEvents();
         console.log(
-            `[\x1b[34mCalendar Extension\x1b[0m] successfully loaded!`
+            `[\x1b[35mCalendar Extension\x1b[0m] successfully loaded for '${queueName}'!`
         );
         return instance;
     }
@@ -66,7 +67,6 @@ class CalendarExtension extends BaseQueueExtension {
     */
     override async onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>): Promise<void> {
         this.upcomingHours = await this.getUpComingTutoringEvents(queue.name);
-        console.log(this.upcomingHours);
     }
 
     /**
@@ -82,9 +82,9 @@ class CalendarExtension extends BaseQueueExtension {
             `Upcoming Hours for ${queue.name}`,
             EmbedColor.NoColor,
             this.upcomingHours
-                .map(viewModel => `${viewModel.displayName} | ` +
-                    `Starts at: ${viewModel.start.toLocaleString()}\t` +
-                    `Ends at: ${viewModel.end.toLocaleString()}`)
+                .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                    `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
+                    `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                 .join('\n')
         );
         await display.renderNonQueueEmbeds(
@@ -158,7 +158,7 @@ class CalendarExtension extends BaseQueueExtension {
         start: Date,
         end: Date
     ): UpComingSessionViewModel | undefined {
-        // Summary format: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
+        // Summary example: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
         // words will be ["TutorName ", "ECS 20, 36A, 36B, 122A, 122B"]
         const words = summary.split('-');
         if (words.length !== 2) {
