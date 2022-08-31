@@ -9,7 +9,7 @@ import {
     MessageOptions,
     User
 } from 'discord.js';
-
+import { QueueRenderError } from '../utils/error-types';
 
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
@@ -29,13 +29,14 @@ class QueueDisplayV2 {
             .messages
             .fetch();
 
-        // If YABOB's message is not the first one, abort render
-        // prompt user to call enclosing queue's cleanUpQueueChannel() method
+        // If YABOB's message is not the first one, reject
         if (!sendNew && queueMessages.first()?.author.id !== this.user.id) {
-            console.warn('The queue has messages not from YABOB. '
+            return Promise.reject(new QueueRenderError(
+                'This queue is not safe to re-render. '
                 + `Use the /cleanup ${this.queueChannel.queueName} command `
-                + 'to clean up the channel');
-            return;
+                + 'to clean up the channel',
+                this.queueChannel.queueName
+            ));
         }
 
         const embedTableMsg = new MessageEmbed();
@@ -88,8 +89,6 @@ class QueueDisplayV2 {
             embedList.push(helperList);
         }
 
-        // Trigger onRenderMessageCreate() here
-
         if (sendNew) {
             await this.queueChannel.channelObj.send({
                 embeds: embedList,
@@ -101,13 +100,12 @@ class QueueDisplayV2 {
                 components: [joinLeaveButtons, notifButtons]
             });
         }
-
-        // Trigger onRenderComplete() here
     }
 
     async renderNonQueueEmbeds(
         embeds: Pick<MessageOptions, "embeds">,
         renderIndex: number,
+        cleanUp = false
     ): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
@@ -116,15 +114,15 @@ class QueueDisplayV2 {
 
         // see if the embed is already sent (ready)
         // if not ready or non existent, send a new one
-        const sendNew = !this.nonQueueEmbedReadyStates.get(renderIndex) ?? true;
+        const sendNew = (!this.nonQueueEmbedReadyStates.get(renderIndex) ?? true) || cleanUp;
 
-        // if the message at renderIndex is not from bob, don't render
+        // if the message at renderIndex is not from YABOB, reject and let HelpQueueV2 call cleanup
         if (!sendNew &&
             queueMessages.first(renderIndex + 1)[renderIndex]?.author.id !== this.user.id) {
-            console.warn('The queue has messages not from YABOB. '
-                + `Use the /cleanup ${this.queueChannel.queueName} command `
-                + 'to clean up the channel');
-            return;
+            return Promise.reject(new QueueRenderError(
+                'This queue is not safe to re-render.',
+                this.queueChannel.queueName
+            ));
         }
 
         if (sendNew) {

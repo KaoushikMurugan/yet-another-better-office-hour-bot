@@ -71,18 +71,34 @@ class ExtensionSetupError extends Error {
     }
 }
 
+/**
+ * Error thrown during display.renderQueue()
+ * ----
+*/
+class QueueRenderError extends Error {
+    constructor(message: string,
+        public queueName: string) {
+        super(message);
+        this.name = "QueueError";
+    }
+    briefErrorString(): string {
+        return `**Queue Render Failed in ${this.queueName}**: ${this.message}`;
+    }
+}
+
 // All 4 errors will be presented to the user
 type UserViewableError =
     | CommandParseError
     | ServerError
     | QueueError
-    | CommandNotImplementedError;
+    | CommandNotImplementedError
 
 
 export {
     CommandParseError,
     ServerError,
     QueueError,
+    QueueRenderError,
     CommandNotImplementedError,
     UserViewableError,
     ExtensionSetupError

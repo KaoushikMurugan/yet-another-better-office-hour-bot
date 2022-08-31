@@ -33,7 +33,8 @@ interface IQueueExtension {
     onRemoveAllStudents: (students: Readonly<Helpee[]>) => Promise<void>;
     onQueueRenderComplete: (
         queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        display: Readonly<QueueDisplayV2>,
+        isClenupRender?: boolean
     ) => Promise<void>;
     onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
 }
@@ -78,7 +79,8 @@ class BaseQueueExtension implements IQueueExtension {
     }
     onQueueRenderComplete(
         queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        display: Readonly<QueueDisplayV2>,
+        isClenupRender?: boolean
     ): Promise<void> {
         return Promise.resolve();
     }

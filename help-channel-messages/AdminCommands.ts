@@ -123,6 +123,28 @@ export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
                     inline: true
                 },
             ]
-        }
+        },
+        {
+            color: EmbedColor.NoColor,
+            title: 'Command: `/cleanup (queue_name)`',
+            fields: [
+                {
+                    name: 'Description',
+                    value: 'Debug feature. Cleans up everything in #queue for the specified queue and resend new embeds.',
+                    inline: false
+                },
+                {
+                    name: 'Options',
+                    value: "`queue_name: Channel`\nThe queue to clean",
+                    inline: true
+                },
+                { name: '\u0002', value: '\u0002', inline: true },
+                {
+                    name: 'Example Usage',
+                    value: '`/cleanup class A`',
+                    inline: true
+                },
+            ]
+        },
     ],
 };
