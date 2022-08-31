@@ -89,7 +89,6 @@ class BaseQueueExtension implements IQueueExtension {
         return Promise.resolve();
     }
     onQueueOpen(queue: Readonly<HelpQueueV2>): Promise<void> {
-        console.log('queue open fired');
         return Promise.resolve();
     }
     onEnqueue(student: Readonly<Helpee>): Promise<void> {

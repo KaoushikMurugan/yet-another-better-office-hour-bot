@@ -326,7 +326,7 @@ class AttendingServerV2 {
      * - If the helper doesn't have any class roles
      * - If the helper is already hosting
     */
-    async openAllOpenableQueues(helperMember: GuildMember): Promise<void> {
+    async openAllOpenableQueues(helperMember: GuildMember, notify: boolean): Promise<void> {
         const openableQueues = this.queues
             .filter(queue => helperMember.roles.cache
                 .map(role => role.name)
@@ -338,7 +338,7 @@ class AttendingServerV2 {
                 `In the meantime, you can help students through DMs.`
             ));
         }
-        await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember)))
+        await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember, notify)))
             .catch(() => Promise.reject(new ServerError(
                 'You are already hosting.'
             )));

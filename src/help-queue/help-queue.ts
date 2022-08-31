@@ -21,10 +21,9 @@ class HelpQueueV2 {
     helpers: Collection<string, Helper> = new Collection();
     students: Required<Helpee>[] = [];
 
-    private queueChannel: QueueChannel;
-    private notifGroup: Collection<string, GuildMember> = new Collection(); // Key is Guildmember.id
+    // Key is Guildmember.id
+    private notifGroup: Collection<string, GuildMember> = new Collection();
     private isOpen = false;
-    private readonly queueExtensions: IQueueExtension[];
     private readonly display: QueueDisplayV2;
 
     /**
@@ -34,24 +33,24 @@ class HelpQueueV2 {
     */
     private constructor(
         user: User,
-        queueChannel: QueueChannel,
-        queueExtensions: IQueueExtension[]
+        private queueChannel: QueueChannel,
+        private queueExtensions: IQueueExtension[]
     ) {
-        this.queueChannel = queueChannel;
         this.display = new QueueDisplayV2(user, queueChannel);
-        this.queueExtensions = queueExtensions;
-        // immediately trigger first call
-        setTimeout(async () => {
+        // Immediately trigger first update call
+        const timoutID = setTimeout(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(this)
             ));
-        }, 10);
-        // then setup the interval. This will be called 24hrs later
+            // clean up the timeout so the event loop removes it
+            clearTimeout(timoutID);
+        }, 0);
+        // Setup the interval. This will be called every 24 hours
         setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(this)
             ));
-        }, 5000); // emit onQueuePeriodicUpdate every 24 hours
+        }, 1000 * 60 * 60 * 24);
     }
 
     get length(): number { // number of students
@@ -109,7 +108,7 @@ class HelpQueueV2 {
      * @param notify notify everyone in the notif group
      * @throws QueueError: do nothing if helperMemeber is already helping
     */
-    async openQueue(helperMember: GuildMember, notify = true): Promise<void> {
+    async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
         if (this.helpers.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
@@ -124,10 +123,8 @@ class HelpQueueV2 {
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
 
-        // queue operations are done
-        // safe to launch all these in parallel
         await Promise.all([
-            notify && // shorthand syntax, the rhs of && will be invoked if lhs is true
+            notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notifMember.send(
                 SimpleEmbed(`Queue \`${this.name}\` is open!`)
             )),
@@ -144,16 +141,17 @@ class HelpQueueV2 {
     */
     async closeQueue(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this.helpers.get(helperMember.id);
+        // These will be caught and show 'You are not currently helping'
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
                 this.name));
-        } // won't actually be seen, will be caught 
+        }
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You are not one of the helpers',
                 this.name));
-        } // won't actually be seen, will be caught
+        }
 
         this.helpers.delete(helperMember.id);
         this.isOpen = this.helpers.size > 0;
@@ -287,6 +285,11 @@ class HelpQueueV2 {
         await this.triggerRender();
     }
 
+    /**
+     * Adds a student to the notification group.
+     * ----
+     * Used for JoinNotif button
+    */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (this.notifGroup.has(targetStudent.id)) {
             return Promise.reject(new QueueError(
@@ -297,6 +300,11 @@ class HelpQueueV2 {
         this.notifGroup.set(targetStudent.id, targetStudent);
     }
 
+    /**
+     * Adds a student to the notification group.
+     * ----
+     * Used for RemoveNotif button
+    */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
             return Promise.reject(new QueueError(
@@ -308,8 +316,9 @@ class HelpQueueV2 {
     }
 
     /**
-     * Cleans up the #queue channel
+     * Cleans up the #queue channel.
      * ----
+     * onQueueRenderComplete will be emitted
     */
     private async cleanUpQueueChannel(): Promise<void> {
         const emptyQueue: QueueViewModel = {
@@ -328,7 +337,7 @@ class HelpQueueV2 {
     }
 
     /**
-     * Queue re-render
+     * Re-renders the queue message.
      * ----
      * Composes the queue view model, then sends it to QueueDisplay
     */

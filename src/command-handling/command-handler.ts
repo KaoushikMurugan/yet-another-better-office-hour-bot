@@ -158,7 +158,8 @@ class CentralCommandDispatcher {
                 "start"
             ),
         ]);
-        await this.serverMap.get(serverId)?.openAllOpenableQueues(member);
+        const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
+        await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
         return `You have started helping! Have Fun!`;
     }
 
