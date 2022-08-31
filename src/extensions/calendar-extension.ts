@@ -9,6 +9,7 @@ import fs from 'fs';
 import { HelpQueueV2 } from '../help-queue/help-queue';
 import { QueueDisplayV2 } from '../help-queue/queue-display';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
+import { FgBlue, FgRed, ResetColor } from '../utils/command-line-colors';
 
 // TODO: This is ugly, see if we can change it to imports
 const CREDENTIALS_PATH = path.join(process.cwd(), './src/extensions/google_client_id.json');
@@ -55,7 +56,7 @@ class CalendarExtension extends BaseQueueExtension {
         if (calendarID === undefined ||
             clientFile === undefined) {
             return Promise.reject(new ExtensionSetupError(
-                '\x1b[31mMake sure you have Calendar ID and google cloud credentials in .env.\x1b[0m'
+                `${FgRed}Make sure you have Calendar ID and google cloud credentials in .env.${ResetColor}`
             ));
         }
         const instance = new CalendarExtension(
@@ -64,7 +65,7 @@ class CalendarExtension extends BaseQueueExtension {
             renderIndex);
         await instance.getUpComingTutoringEvents();
         console.log(
-            `[\x1b[35mCalendar Extension\x1b[0m] successfully loaded for '${queueName}'!`
+            `[${FgBlue}Calendar Extension${ResetColor}] successfully loaded for '${queueName}'!`
         );
         return instance;
     }

@@ -17,6 +17,7 @@ import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-extension';
 import { QueueBackup } from "../extensions/firebase-models/backups";
+import { FgCyan, FgGreen, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -103,7 +104,7 @@ class AttendingServerV2 {
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw new ServerError(`❗ \x1b[31mInitilization for ${guild.name} failed.\x1b[0m`);
+            throw new ServerError(`❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`);
         });
         // Emit all the events
         await Promise.all(serverExtensions.map(
@@ -116,7 +117,7 @@ class AttendingServerV2 {
             await Promise.all(serverExtensions
                 .map(extension => extension.onServerPeriodicUpdate(server)))
             , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
-        console.log(`⭐ \x1b[32mInitilization for ${guild.name} is successful!\x1b[0m`);
+        console.log(`⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`);
         return server;
     }
 
@@ -390,7 +391,7 @@ class AttendingServerV2 {
                 ? prev
                 : curr
         );
-        console.log(`HelpTime of ${maxHelpTime.member.displayName} is ` +
+        console.log(`- Help time of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}ms.`);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(maxHelpTime)
@@ -524,7 +525,7 @@ class AttendingServerV2 {
 
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
-            console.log("\x1b[35mFound no help channels. Creating new ones.\x1b[0m");
+            console.log(`${FgCyan}mFound no help channels. Creating new ones.${ResetColor}`);
 
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
@@ -556,7 +557,7 @@ class AttendingServerV2 {
             }));
         } else {
             console.log(
-                "\x1b[33mFound existing help channels, updating command help file\x1b[0m"
+                `${FgYellow}Found existing help channels, updating command help file${ResetColor}`
             );
         }
 

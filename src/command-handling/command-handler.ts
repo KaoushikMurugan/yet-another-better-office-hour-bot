@@ -5,6 +5,7 @@ import {
     TextChannel
 } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
@@ -62,7 +63,7 @@ class CentralCommandDispatcher {
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`[${(new Date).toLocaleString()}]` +
+            console.log(`[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
                 ` User ${interaction.user.username} used ${interaction.toString()}`);
             await commandMethod(interaction)
                 .then(async successMsg =>

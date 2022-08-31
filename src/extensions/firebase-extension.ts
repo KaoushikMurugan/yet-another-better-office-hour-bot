@@ -5,6 +5,7 @@ import { getFirestore } from "firebase-admin/firestore";
 import firebase_creds from "../../fbs_service_account_key.json";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
+import { FgBlue, FgCyan, ResetColor } from "../utils/command-line-colors";
 
 
 class FirebaseLoggingExtension extends BaseServerExtension {
@@ -25,7 +26,7 @@ class FirebaseLoggingExtension extends BaseServerExtension {
             serverName
         );
         console.log(
-            `[\x1b[34mFirebase Logging Extension\x1b[0m] successfully loaded for '${serverName}'!`
+            `[${FgBlue}Firebase Logging Extension${ResetColor}] successfully loaded for '${serverName}'!`
         );
         return instance;
     }
@@ -57,7 +58,7 @@ class FirebaseLoggingExtension extends BaseServerExtension {
             .doc(this.serverId)
             .set(serverBackup)
             .then(() => console.log(
-                `[\x1b[34m${(new Date()).toLocaleString()}\x1b[0m]` +
+                `[${FgCyan}${(new Date()).toLocaleString()}${ResetColor}] ` +
                 `Backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));

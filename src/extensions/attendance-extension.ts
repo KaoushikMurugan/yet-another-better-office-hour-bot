@@ -3,6 +3,7 @@ import { Helper } from "../models/member-states";
 import { BaseServerExtension } from "./extension-interface";
 import { ExtensionSetupError } from '../utils/error-types';
 import gcs_creds from "../../gcs_service_account_key.json";
+import { FgBlue, FgRed, ResetColor } from "../utils/command-line-colors";
 
 class AttendanceError extends Error {
     constructor(message: string) {
@@ -25,18 +26,18 @@ class AttendanceExtension extends BaseServerExtension {
         if (process.env.YABOB_GOOGLE_SHEET_ID === undefined ||
             gcs_creds === undefined) {
             return Promise.reject(new ExtensionSetupError(
-                '\x1b[31mNo Google Sheet ID or Google Cloud credentials found in .env\x1b[0m.'
+                `${FgRed}No Google Sheet ID or Google Cloud credentials found in .env.${ResetColor}`
             ));
         }
         const attendanceDoc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
         await attendanceDoc.useServiceAccountAuth(gcs_creds);
         await attendanceDoc.loadInfo().catch(() => {
             return Promise.reject(new ExtensionSetupError(
-                '\x1b[31mFailed to load google sheet.\x1b[0m.'
+                `${FgRed}Failed to load google sheet. Google sheets rejected our connection.${ResetColor}`
             ));
         });
         console.log(
-            `[\x1b[34mAttendance Extension\x1b[0m] successfully loaded for '${serverName}'!\n` +
+            `[${FgBlue}Attendance Extension${ResetColor}] successfully loaded for '${serverName}'!\n` +
             ` - Using this google sheet: ${attendanceDoc.title}`
         );
         return new AttendanceExtension(serverName, attendanceDoc);

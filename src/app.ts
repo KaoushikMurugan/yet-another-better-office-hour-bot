@@ -4,12 +4,13 @@ import { Client, Guild, Intents } from "discord.js";
 import dotenv from "dotenv";
 // Local imports
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
-import { CentralCommandDispatcher } from "./command-handling/command-handler";
-import { postSlashCommands } from "./command-handling/slash-commands";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
+import { CentralCommandDispatcher } from "./command-handling/command-handler";
+import { BgMagenta, FgBlack, FgBlue, FgGreen, FgYellow, ResetColor } from './utils/command-line-colors';
+import { postSlashCommands } from "./command-handling/slash-commands";
 
 dotenv.config();
-console.log(`Environment: \x1b[34m${process.env.NODE_ENV}\x1b[0m`);
+console.log(`Environment: ${FgBlue}${process.env.NODE_ENV}${ResetColor}`);
 
 if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
@@ -64,8 +65,8 @@ client.on("ready", async () => {
                     + `${guild.name}.\n${err.stack}`
                 ))));
 
-    console.log("✅ \x1b[32mReady to go!\x1b[0m ✅\n");
-    console.log("---- Begin Server Logs ----\n");
+    console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
+    console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
     return;
 });
 
@@ -95,9 +96,11 @@ client.on("guildMemberAdd", async member => {
 
 process.on('exit', () => {
     // When something fatal happens
-    console.log(
-        '---- End of Server Log ----\n'
-        + '---- Begin Error Stack Trace ----\n');
+    // console.log(
+    //     '---- End of Server Log ----\n'
+    //     + '---- Begin Error Stack Trace ----\n');
+    console.log(`${centeredText('-------- End of Server Log --------')}`);
+    console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
 });
 
 /**
@@ -110,7 +113,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         throw Error('Please wait until YABOB has logged in '
             + 'to manage the server');
     }
-    console.log(`Joining guild: \x1b[33m${guild.name}\x1b[0m`);
+    console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
 
     // Extensions are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
@@ -123,8 +126,13 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 function printTitleString(): void {
     const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
     console.log(
-        `\n\x1b[30m\x1b[45m${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
+        `\n${FgBlack}${BgMagenta}${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
         `${titleString}` +
-        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}\x1b[0m\n`
+        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}${ResetColor}\n`
     );
+}
+function centeredText(text: string): string {
+    return `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
+        `${text}` +
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}`;
 }
