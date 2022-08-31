@@ -227,7 +227,7 @@ class CentralCommandDispatcher {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction)
         ]);
-        const helpers = this.serverMap.get(serverId ?? '')?.allHelperNames;
+        const helpers = this.serverMap.get(serverId ?? '')?.helperNames;
         if (helpers === undefined || helpers.size === 0) {
             return `No one is currently helping.`;
         }

@@ -3,7 +3,7 @@
  * !! Important !!
  * ----
  * All extensions will be called with Promise.all()
- * this means that extensions will be launched in parallel
+ * this means that extensions will be launched together
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
@@ -15,7 +15,7 @@ import { Helpee, Helper } from "../models/member-states";
 // Server level extensions
 interface IServerExtension {
     onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
-    onAllQueueInit: (queues: Readonly<HelpQueueV2[]>) => Promise<void>;
+    onAllQueueInit: (queues: ReadonlyArray<HelpQueueV2>) => Promise<void>;
     onQueueDelete: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
@@ -30,7 +30,7 @@ interface IQueueExtension {
     onEnqueue: (student: Readonly<Helpee>) => Promise<void>;
     onDequeue: (student: Readonly<Helpee>) => Promise<void>;
     onStudentRemove: (student: Readonly<Helpee>) => Promise<void>;
-    onRemoveAllStudents: (students: Readonly<Helpee[]>) => Promise<void>;
+    onRemoveAllStudents: (students: ReadonlyArray<Helpee>) => Promise<void>;
     onQueueRenderComplete: (
         queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>,
@@ -102,7 +102,7 @@ class BaseQueueExtension implements IQueueExtension {
     onStudentRemove(student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
-    onRemoveAllStudents(students: Readonly<Helpee[]>): Promise<void> {
+    onRemoveAllStudents(students: ReadonlyArray<Helpee>): Promise<void> {
         return Promise.resolve();
     }
 }

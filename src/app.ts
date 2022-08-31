@@ -1,12 +1,8 @@
 // Library Imports
-import { Client, Guild, Intents} from "discord.js";
-import { initializeApp, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-
-// Local Imports
+import { Client, Guild, Intents } from "discord.js";
+// Credentials
 import dotenv from "dotenv";
-import fbs_creds from "../fbs_service_account_key.json";
-
+// Local imports
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import { postSlashCommands } from "./command-handling/slash-commands";
@@ -35,13 +31,6 @@ const client = new Client({
 
 // key is Guild.id
 const serversV2: Map<string, AttendingServerV2> = new Map();
-
-initializeApp({
-    credential: cert(fbs_creds)
-});
-
-const firebase_db: FirebaseFirestore.Firestore = getFirestore();
-console.log("Connected to Firebase database");
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -76,7 +65,7 @@ client.on("ready", async () => {
                 ))));
 
     console.log("✅ \x1b[32mReady to go!\x1b[0m ✅\n");
-    console.log("---- Begin Server Logs ----");
+    console.log("---- Begin Server Logs ----\n");
     return;
 });
 
@@ -113,7 +102,7 @@ process.on('exit', () => {
 
 /**
  * Initilization sequence
- * @param guild server tp join
+ * @param guild server to join
  * @returns AttendingServerV2 if successfully initialized
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
@@ -123,19 +112,8 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     }
     console.log(`Joining guild: \x1b[33m${guild.name}\x1b[0m`);
 
-    /**
-     * * Don't load extensions here
-     * load them in the create method then pass it to individual queues
-     * each queueExtension will get a renderIndex 
-     * - starts at 1; 0 is reserved for queue itself
-     * renderIndex is the index of the message that QueueDisplayV2 will edit
-     * 
-    */
-    const server = await AttendingServerV2.create(
-        client.user,
-        guild,
-        firebase_db
-    );
+    // Extensions are loaded inside the create method
+    const server = await AttendingServerV2.create(client.user, guild);
 
     serversV2.set(guild.id, server);
     await postSlashCommands(guild);

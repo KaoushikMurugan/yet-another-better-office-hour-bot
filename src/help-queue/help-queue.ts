@@ -18,8 +18,8 @@ type QueueViewModel = {
 class HelpQueueV2 {
 
     // Key is Guildmember.id
-    helpers: Collection<string, Helper> = new Collection();
-    students: Required<Helpee>[] = [];
+    private helpers: Collection<string, Helper> = new Collection();
+    private students: Required<Helpee>[] = [];
 
     // Key is Guildmember.id
     private notifGroup: Collection<string, GuildMember> = new Collection();
@@ -31,7 +31,7 @@ class HelpQueueV2 {
      * @param queueChannel the channel to manage
      * @param queueExtensions individual queue extensions to inject
     */
-    private constructor(
+    protected constructor(
         user: User,
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[]
@@ -67,6 +67,15 @@ class HelpQueueV2 {
     }
     get first(): Required<Helpee> | undefined { // first student
         return this.students[0];
+    }
+    get studentsInQueue(): ReadonlyArray<Required<Helpee>> {
+        return this.students;
+    }
+    get currentHelpers(): ReadonlyArray<Helper> {
+        return [...this.helpers.values()];
+    }
+    get helperIDs(): ReadonlySet<string> { // set of helper IDs. Use this only for lookup
+        return new Set(this.helpers.keys());
     }
 
     /**

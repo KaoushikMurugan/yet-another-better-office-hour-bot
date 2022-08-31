@@ -87,8 +87,6 @@ class AttendanceExtension extends BaseServerExtension {
                 }))),
         });
     }
-
 }
-
 
 export { AttendanceExtension };

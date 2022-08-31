@@ -7,7 +7,6 @@ import {
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
-import { Firestore } from "firebase-admin/firestore";
 import { commandChConfigs } from "./command-ch-constants";
 import { hierarchyRoleConfigs } from "../models/access-level";
 import { ServerError } from "../utils/error-types";
@@ -33,23 +32,18 @@ type QueueChannel = {
 class AttendingServerV2 {
     private queues: HelpQueueV2[] = [];
 
-    private constructor(
+    protected constructor(
         public readonly user: User,
         public readonly guild: Guild,
-        public readonly firebaseDB: Firestore,
         private readonly serverExtensions: IServerExtension[],
     ) { }
 
-
-    get allQueueNames(): string[] {
-        return this.queues.map(queue => queue.name);
-    }
-    get helpQueues(): Readonly<HelpQueueV2[]> {
+    get helpQueues(): ReadonlyArray<HelpQueueV2> {
         return this.queues;
     }
-    get allHelperNames(): Set<string> {
+    get helperNames(): ReadonlySet<string> {
         return new Set(this.queues
-            .flatMap(q => [...q.helpers.values()])
+            .flatMap(q => q.currentHelpers)
             .map(helper => helper.member.displayName));
     }
 
@@ -64,8 +58,7 @@ class AttendingServerV2 {
      */
     static async create(
         user: User,
-        guild: Guild,
-        firebaseDB: Firestore
+        guild: Guild
     ): Promise<AttendingServerV2> {
         if (guild.me === null ||
             !guild.me.permissions.has("ADMINISTRATOR")
@@ -83,21 +76,15 @@ class AttendingServerV2 {
         const serverExtensions = await Promise.all([
             AttendanceExtension.load(guild.name)
         ]);
-
         const server = new AttendingServerV2(
             user,
             guild,
-            firebaseDB,
             serverExtensions
         );
 
         // ! This call must block everything else
-        // Disabled for dev environment assuming everything is created
-        // if (process.env.NODE_ENV === 'Production') {
         await server.createHierarchyRoles();
-        // }
-
-        // the ones below can be launched in parallel
+        // the ones below can be launched together
         await Promise.all([
             server.initAllQueues(),
             server.createClassRoles(),
@@ -274,7 +261,7 @@ class AttendingServerV2 {
                 ?.dequeueWithHelper(helperMember);
         }
         const currentlyHelpingChannels = this.queues
-            .filter(queue => queue.helpers.has(helperMember.id));
+            .filter(queue => queue.helperIDs.has(helperMember.id));
         // this is here to prevent empty currentlyHelpingChannels from calling reduce
         // i forgot how it could be empty tho
         if (currentlyHelpingChannels.length === 0) {
@@ -441,7 +428,7 @@ class AttendingServerV2 {
             const queueToAnnounce = this.queues
                 .find(queue =>
                     queue.name === targetQueue.queueName &&
-                    queue.helpers.has(helperMember.id)
+                    queue.helperIDs.has(helperMember.id)
                 );
             if (queueToAnnounce === undefined) {
                 return Promise.reject(new ServerError(
@@ -449,7 +436,7 @@ class AttendingServerV2 {
                     `Check your class roles.`
                 ));
             }
-            await Promise.all(queueToAnnounce.students
+            await Promise.all(queueToAnnounce.studentsInQueue
                 .map(student => student.member.send(SimpleEmbed(
                     `Staff member ${helperMember.displayName} announced: ${message}`,
                     EmbedColor.NeedName,
@@ -459,8 +446,8 @@ class AttendingServerV2 {
         }
         // from this.queues select queue where queue.helpers has helperMember.id
         await Promise.all(this.queues
-            .filter(queue => queue.helpers.has(helperMember.id))
-            .map(queueToAnnounce => queueToAnnounce.students)
+            .filter(queue => queue.helperIDs.has(helperMember.id))
+            .map(queueToAnnounce => queueToAnnounce.studentsInQueue)
             .flat()
             .map(student => student.member.send(SimpleEmbed(message)))
         );
