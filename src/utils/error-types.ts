@@ -57,6 +57,10 @@ class CommandNotImplementedError extends Error {
     }
 }
 
+/**
+ * Error thrown during extension.load()
+ * ----
+*/
 class ExtensionSetupError extends Error {
     constructor(message: string) {
         super(message);
