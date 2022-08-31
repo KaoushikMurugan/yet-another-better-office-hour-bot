@@ -466,6 +466,12 @@ class AttendingServerV2 {
         );
     }
 
+    async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
+        const queueToClean = this.queues
+            .find(queue => queue.name === targetQueue.queueName);
+        await queueToClean?.cleanUpQueueChannel();
+    }
+
     /**
      * Creates all the office hour queues
      * ----

@@ -35,7 +35,8 @@ class CentralCommandDispatcher {
         ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
         ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
-        ['announce', (interaction: CommandInteraction) => this.announce(interaction)]
+        ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
+        ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -222,8 +223,6 @@ class CentralCommandDispatcher {
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
-    // TODO: the result string might be too long
-    // might need a handler in Simple Embed
     private async listHelpers(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction)
@@ -259,6 +258,20 @@ class CentralCommandDispatcher {
                 ?.announceToStudentsInQueue(member, announcement);
         }
         return `Your announcement: ${announcement} has been sent!`;
+    }
+
+    private async cleanup(interaction: CommandInteraction): Promise<string> {
+        const [serverId, queue] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isValidQueueInteraction(interaction, true),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                'cleanup',
+                ['Admin', 'Staff']
+            ),
+        ]);
+        await this.serverMap.get(serverId)?.cleanUpQueue(queue);
+        return `Queue ${queue.queueName} has been cleaned up.`;
     }
 
     /**
