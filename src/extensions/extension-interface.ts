@@ -11,7 +11,7 @@ import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
 import { Helpee, Helper } from "../models/member-states";
-import { ServerBackup } from "./firebase-models/backups";
+import { ServerBackup } from "./firebase-backup/firebase-models/backups";
 
 // Server level extensions
 interface IServerExtension {

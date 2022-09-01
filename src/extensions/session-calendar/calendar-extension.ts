@@ -1,19 +1,21 @@
 import { google } from 'googleapis';
-import { BaseQueueExtension } from "./extension-interface";
-import { ExtensionSetupError } from '../utils/error-types';
+import { BaseQueueExtension } from "../extension-interface";
+import { ExtensionSetupError } from '../../utils/error-types';
 import { OAuth2Client } from 'googleapis-common';
 import { authenticate } from '@google-cloud/local-auth';
 import path from 'path';
 import clientFile from './google_client_id.json';
 import fs from 'fs';
-import { HelpQueueV2 } from '../help-queue/help-queue';
-import { QueueDisplayV2 } from '../help-queue/queue-display';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { FgBlue, FgRed, ResetColor } from '../utils/command-line-colors';
+import { HelpQueueV2 } from '../../help-queue/help-queue';
+import { QueueDisplayV2 } from '../../help-queue/queue-display';
+import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
+import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
 
 // TODO: This is ugly, see if we can change it to imports
-const CREDENTIALS_PATH = path.join(process.cwd(), './src/extensions/google_client_id.json');
-const TOKEN_PATH = path.join(process.cwd(), './src/extensions/token.json');
+const CREDENTIALS_PATH = path
+    .join(process.cwd(), './src/extensions/session-calendar/google_client_id.json');
+const TOKEN_PATH = path
+    .join(process.cwd(), './src/extensions/session-calendar/token.json');
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {

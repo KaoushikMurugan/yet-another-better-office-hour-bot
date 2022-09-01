@@ -1,11 +1,11 @@
-import { BaseServerExtension } from "./extension-interface";
+import { BaseServerExtension } from "../extension-interface";
 import { Firestore } from "firebase-admin/firestore";
 import { initializeApp, cert } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import firebase_creds from "../../fbs_service_account_key.json";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
+import firebase_creds from "./fbs_service_account_key.json";
+import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
-import { FgBlue, FgCyan, ResetColor } from "../utils/command-line-colors";
+import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 // moved outside to prevent multiple calls
 initializeApp({

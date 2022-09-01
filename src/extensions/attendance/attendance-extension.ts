@@ -1,9 +1,9 @@
 import { GoogleSpreadsheet } from "google-spreadsheet";
-import { Helper } from "../models/member-states";
-import { BaseServerExtension } from "./extension-interface";
-import { ExtensionSetupError } from '../utils/error-types';
-import gcs_creds from "../../gcs_service_account_key.json";
-import { FgBlue, FgRed, ResetColor } from "../utils/command-line-colors";
+import { Helper } from "../../models/member-states";
+import { BaseServerExtension } from "../extension-interface";
+import { ExtensionSetupError } from '../../utils/error-types';
+import gcs_creds from "../gcs_service_account_key.json";
+import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
 
 class AttendanceError extends Error {
     constructor(message: string) {

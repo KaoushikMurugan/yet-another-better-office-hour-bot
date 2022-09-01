@@ -14,9 +14,9 @@ import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
 
 import { IServerExtension } from "../extensions/extension-interface";
-import { AttendanceExtension } from "../extensions/attendance-extension";
-import { FirebaseLoggingExtension } from '../extensions/firebase-extension';
-import { QueueBackup } from "../extensions/firebase-models/backups";
+import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
+import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
+import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
 import { FgCyan, FgGreen, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
