@@ -132,7 +132,13 @@ class HelpQueueV2 {
         await queue.cleanUpQueueChannel();
         await queueChannel.channelObj.permissionOverwrites.create(
             everyoneRole,
-            { SEND_MESSAGES: false });
+            {
+                SEND_MESSAGES: false,
+                CREATE_PRIVATE_THREADS: false,
+                CREATE_PUBLIC_THREADS: false,
+                ADD_REACTIONS: false
+            }
+        );
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
             { SEND_MESSAGES: true });

@@ -9,7 +9,7 @@ import {
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
 import { commandChConfigs } from "./command-ch-constants";
-import { hierarchyRoleConfigs } from "../models/access-level";
+import { hierarchyRoleConfigs } from "../models/hierarchy-roles";
 import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
 
@@ -78,7 +78,7 @@ class AttendingServerV2 {
             const owner = await guild.fetchOwner();
             await owner.send(
                 SimpleEmbed(
-                    `Sorry, I need full administrator permission and highest role for "${guild.name}"`,
+                    `Sorry, I need full administrator permission for "${guild.name}"`,
                     EmbedColor.Error));
             await guild.leave();
             throw Error("YABOB doesn't have admin permission.");
@@ -105,6 +105,10 @@ class AttendingServerV2 {
             serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
         );
         const externalServerData = externalBackup.find(backup => backup !== undefined);
+
+        if (externalServerData !== undefined) {
+            console.log(`${FgCyan}Found external backup for ${guild.name}. Restoring...${ResetColor}`);
+        }
 
         const server = new AttendingServerV2(
             user,
@@ -495,7 +499,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Cleans up the given queue
+     * Cleans up the given queue and resend all embeds
      * @param targetQueue the queue to clean
     */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
@@ -546,7 +550,7 @@ class AttendingServerV2 {
 
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
-            console.log(`${FgCyan}mFound no help channels. Creating new ones.${ResetColor}`);
+            console.log(`${FgCyan}Found no help channels. Creating new ones.${ResetColor}`);
 
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
@@ -591,7 +595,8 @@ class AttendingServerV2 {
      */
     private async createHierarchyRoles(): Promise<void> {
         const existingRoles = (await this.guild.roles.fetch())
-            .filter(role => role.name !== this.user.username &&
+            .filter(role =>
+                role.name !== this.user.username &&
                 role.name !== '@everyone')
             .map(role => role.name);
         const createdRoles = await Promise.all(
@@ -610,9 +615,8 @@ class AttendingServerV2 {
         // Give everyone the student role
         const studentRole = this.guild.roles.cache.find(role => role.name === 'Student');
         await Promise.all(this.guild.members.cache.map(async member => {
-            if (member.user.id !== this.user.id) {
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                await member.roles.add(studentRole!);
+            if (member.user.id !== this.user.id && studentRole) {
+                await member.roles.add(studentRole);
             }
         }));
     }
@@ -626,13 +630,17 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
-        await Promise.all(queueNames
-            .filter(queue => !existingRoles.has(queue))
-            .map(async roleToCreate =>
-                await this.guild.roles.create({
-                    name: roleToCreate,
-                    position: 1,
-                })));
+        await Promise.all(
+            queueNames
+                .filter(queue => !existingRoles.has(queue))
+                .map(async roleToCreate =>
+                    await this.guild.roles.create(
+                        {
+                            name: roleToCreate,
+                            position: 1,
+                        }
+                    ))
+        );
     }
 
     /**
@@ -649,7 +657,8 @@ class AttendingServerV2 {
         await Promise.all(
             allHelpChannels.map(async ch => await ch.messages
                 .fetch()
-                .then(messages => messages.map(msg => msg.delete()))));
+                .then(messages => messages.map(msg => msg.delete())))
+        );
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
@@ -659,7 +668,8 @@ class AttendingServerV2 {
                 if (file) {
                     await ch.send(file);
                 }
-            }));
+            })
+        );
     }
 }
 

@@ -43,8 +43,8 @@ class QueueDisplayV2 {
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.name}〛is\t${queue.isOpen
-                ? "**OPEN**\n(･`ω´・)"
-                : "**CLOSED**\n◦<(¦3[▓▓]⋆｡˚"}`)
+                ? "**OPEN**\t (ﾟ∀ﾟ )"
+                : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
             .setDescription(this.composeAsciiTable(queue))
             .setColor(EmbedColor.NoColor);
 
@@ -149,10 +149,15 @@ class QueueDisplayV2 {
                     .map((name, idx) => [idx === 0 ? `(☞°∀°)☞ 1` : `${idx + 1}`, name])
                 ]);
         } else {
+            const rand = Math.random();
             table.addRow('This Queue is Empty.')
-                .addRow(`${Math.random() < 0.3 ? "=^ Φ ω Φ ^=" : "Did you find the cat?"}`)
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
+            if (rand < 0.15) {
+                table.addRow(`=^ Φ ω Φ ^=`);
+            } else if (rand < 0.35) {
+                table.addRow(`Did you find the cat?`);
+            }
         }
 
         return "```" + table.toString() + "```";

@@ -8,9 +8,10 @@ import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import {
     BgMagenta, FgBlack, FgCyan,
-    FgGreen, FgRed, FgYellow, ResetColor
+    FgGreen, FgMagenta, FgRed, FgYellow, ResetColor
 } from './utils/command-line-colors';
 import { postSlashCommands } from "./command-handling/slash-commands";
+import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
 
 dotenv.config();
 console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
@@ -79,9 +80,11 @@ client.on("ready", async () => {
  * ----
 */
 client.on("guildCreate", async guild => {
-    console.log(`Got invited to '${guild.name}'!`);
+    console.log(`${FgMagenta}Got invited to:${ResetColor} '${guild.name}'!`);
     await joinGuild(guild)
-        .catch(() => console.error(`${FgRed}Please give me the highest role.${ResetColor}`));
+        .catch(() => console.error(
+            `${FgRed}Please give me the highest role in: ${ResetColor}'${guild.name}'.`
+        ));
 });
 
 /**
@@ -129,8 +132,15 @@ client.on("guildMemberAdd", async member => {
 client.on("roleUpdate", async role => {
     if (role.name === client.user?.username &&
         role.guild.roles.highest.name === client.user.username) {
-        console.log('Got the highest Role! Starting server initialization');
-        await joinGuild(role.guild);
+        console.log(`${FgCyan}Got the highest Role! Starting server initialization${ResetColor}`);
+        const owner = await role.guild.fetchOwner();
+        await Promise.all([
+            owner.send(SimpleEmbed(
+                `Got the highest Role! Starting server initialization for ${role.guild.name}`,
+                EmbedColor.Success
+            )),
+            joinGuild(role.guild)
+        ]);
     }
 });
 
