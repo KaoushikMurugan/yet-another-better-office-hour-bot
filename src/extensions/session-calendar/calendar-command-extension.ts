@@ -1,6 +1,6 @@
 import { BaseInteractionExtension } from "../extension-interface";
 import { calendarExtensionConfig } from './calendar-config';
-import { CacheType, CommandInteraction } from 'discord.js';
+import { CommandInteraction } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -49,7 +49,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         ];
     }
 
-    override async processCommand(interaction: CommandInteraction<CacheType>): Promise<void> {
+    override async processCommand(interaction: CommandInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed(
                 'Processing command...',

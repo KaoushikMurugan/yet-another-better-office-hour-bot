@@ -10,6 +10,7 @@ import { SlashCommandBuilder } from "@discordjs/builders";
 import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import { Guild } from "discord.js";
+import { FgMagenta, ResetColor } from "../utils/command-line-colors";
 
 const queueCommand = new SlashCommandBuilder() // /queue
     .setName("queue")
@@ -137,18 +138,6 @@ const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
     .setName("list_helpers")
     .setDescription("See who is online and helping.");
 
-const listNextHours = new SlashCommandBuilder() // /when_next (queue_name)
-    .setName("when_next")
-    .setDescription("View the upcoming tutoring hours")
-    .addChannelOption((option) =>
-        option
-            .setName("queue_name")
-            .setDescription(
-                "The course for which you want to view the next tutoring hours"
-            )
-            .setRequired(false)
-    );
-
 const getNotifications = new SlashCommandBuilder() // /get_notifs [queue_name]
     .setName("notify_me")
     .setDescription("Get notified when the queue opens (not permanent)")
@@ -175,80 +164,7 @@ const removeNotifications = new SlashCommandBuilder() // /remove_notif [queue_na
             .setRequired(true)
     );
 
-const msgAfterLeaveVC = new SlashCommandBuilder()
-    .setName("post_session_msg")
-    .setDescription(
-        "Commands to modify the message that is sent to tutees after their session"
-    )
-    .addSubcommand((subcommand) =>
-        subcommand // /post_session_msg edit [enable] (change_message)
-            .setName("edit")
-            .setDescription(
-                "enable/disable this feature and change the message that is sent"
-            )
-            .addBooleanOption((option) =>
-                option
-                    .setName("enable")
-                    .setDescription(
-                        "if false, then YABOB will not send any message to the tutee after their session [Default: false]"
-                    )
-                    .setRequired(true)
-            )
-            .addBooleanOption((option) =>
-                option
-                    .setName("change_message")
-                    .setDescription(
-                        "if true, grabs your previous message sent in this chat and sets it as the new message"
-                    )
-                    .setRequired(false)
-            )
-    )
-    .addSubcommand((subcommand) =>
-        subcommand // /post_session_msg revert
-            .setName("revert")
-            .setDescription("reverts the message to the previous one")
-    );
-
-const setCalendar = new SlashCommandBuilder()
-    .setName("calendar")
-    .setDescription(
-        "Commands to modify the resources connected to the /when_next command"
-    )
-    .addSubcommand((subcommand) =>
-        subcommand // /set_calendar calendar [Calendar ID]
-            .setName("set_calendar")
-            .setDescription(
-                "Connect the bot to a Google Calendar that lists tutoring hours"
-            )
-            .addStringOption((option) =>
-                option
-                    .setName("calendar_link")
-                    .setDescription("The link to the calendar")
-                    .setRequired(true)
-            )
-    )
-    .addSubcommand((subcommand) =>
-        subcommand // /set_calendar sheets [sheetsLink]
-            .setName("set_sheets")
-            .setDescription(
-                "Connect the bot to a Google sheets document that contains Discord IDs and corresponding First Names"
-            )
-            .addStringOption((option) =>
-                option
-                    .setName("sheets_link")
-                    .setDescription("The link to the google sheets")
-                    .setRequired(true)
-            )
-    )
-    .addSubcommand((subcommand) =>
-        subcommand
-            .setName("format_help")
-            .setDescription(
-                "Get an explanation of how the calendar and sheets have to be formatted"
-            )
-    );
-
-const forceUpdateQueues = new SlashCommandBuilder()
+const cleanupQueue = new SlashCommandBuilder()
     .setName("cleanup")
     .setDescription(
         "Debug feature: Forces updates of the queue and the schedule messages in all #queue channel"
@@ -259,6 +175,7 @@ const forceUpdateQueues = new SlashCommandBuilder()
             .setDescription("The queue to clean")
             .setRequired(true)
     );
+
 
 // Get the raw data that can be sent to Discord
 const commandData = [
@@ -271,12 +188,9 @@ const commandData = [
     clearCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
-    listNextHours.toJSON(),
     getNotifications.toJSON(),
     removeNotifications.toJSON(),
-    msgAfterLeaveVC.toJSON(),
-    setCalendar.toJSON(),
-    forceUpdateQueues.toJSON(),
+    cleanupQueue.toJSON()
 ];
 
 type BaseBOBCommands =
@@ -291,7 +205,6 @@ type BaseBOBCommands =
     | 'list_helpers'
     | 'notify_me'
     | 'remove_notif'
-    | 'post_session_msg'
     | 'cleanup';
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
@@ -301,17 +214,15 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
     if (process.env.YABOB_BOT_TOKEN === undefined) {
         throw new Error('Failed to post commands. BOT_TOKEN is undefined');
     }
-
     const rest = new REST({ version: "9" }).setToken(
         process.env.YABOB_BOT_TOKEN
     );
-
     await rest.put(Routes.applicationGuildCommands(
         process.env.YABOB_APP_ID,
         guild.id),
         { body: commandData.concat(externalCommands) }
     ).catch(e => console.error(e));
-    console.log(`Updated slash commands on "${guild.name}"`);
+    console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
 }
 
 type CommandData = typeof commandData;

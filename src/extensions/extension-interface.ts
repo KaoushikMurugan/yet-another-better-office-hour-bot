@@ -69,20 +69,20 @@ interface IQueueExtension {
 class BaseInteractionExtension implements IInteractionExtension {
     buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction<CacheType>) => Promise<string>
+        (interaction: ButtonInteraction) => Promise<string>
     > = new Map();
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction<CacheType>) => Promise<string>
+        (interaction: CommandInteraction) => Promise<string>
     > = new Map();
 
     get slashCommandData(): CommandData {
         return [];
     }
-    processCommand(interaction: CommandInteraction<CacheType>): Promise<void> {
+    processCommand(interaction: CommandInteraction): Promise<void> {
         return Promise.resolve();
     }
-    processButton(interaction: ButtonInteraction<CacheType>): Promise<void> {
+    processButton(interaction: ButtonInteraction): Promise<void> {
         return Promise.resolve();
     }
 }
