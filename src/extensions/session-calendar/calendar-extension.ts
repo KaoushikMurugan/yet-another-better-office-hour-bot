@@ -10,6 +10,8 @@ import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
 import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
+import { calendarExtensionConfig } from './calendar-config';
+
 
 // TODO: This is ugly, see if we can change it to imports
 const CREDENTIALS_PATH = path
@@ -48,22 +50,22 @@ class CalendarExtension extends BaseQueueExtension {
      * ----
      * @param renderIndex the index of the embed message given by the queue
      * @param queueName name of the queue
-     * @param calendarID ID of the calendar. Found in google calendar share settings
     */
     static async load(
         renderIndex: number,
-        queueName: string,
-        calendarID?: string,
+        queueName: string
     ): Promise<CalendarExtension> {
-        if (calendarID === undefined ||
+        if (calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID === undefined ||
             clientFile === undefined) {
             return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Make sure you have Calendar ID and google cloud credentials in .env.${ResetColor}`
+                `${FgRed}Make sure you have Calendar ID in calendar-config.ts, ` +
+                `The client id in google_client_id.json, ` +
+                `and Google Cloud credentials in gcs_service_account_key.json${ResetColor}`
             ));
         }
         const instance = new CalendarExtension(
             await makeClient(),
-            calendarID,
+            calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID,
             renderIndex);
         await instance.getUpComingTutoringEvents();
         console.log(

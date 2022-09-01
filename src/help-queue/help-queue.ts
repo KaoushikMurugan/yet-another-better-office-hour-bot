@@ -106,8 +106,7 @@ class HelpQueueV2 {
         const queueExtensions = await Promise.all([
             CalendarExtension.load(
                 1, // renderIndex
-                queueChannel.queueName,
-                process.env.YABOB_GOOGLE_CALENDAR_ID
+                queueChannel.queueName
             )
         ]);
 
