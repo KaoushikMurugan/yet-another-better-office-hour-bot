@@ -121,7 +121,7 @@ class HelpQueueV2 {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue)
             )); // Random offset to avoid spamming the APIs
-        }, (1000 * 60 * 60 * 24) + Math.floor(Math.random() * 2000));
+        }, (1000 * 60 * 30) + Math.floor(Math.random() * 2000));
 
         // This need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()

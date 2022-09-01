@@ -2,22 +2,13 @@ import { google } from 'googleapis';
 import { BaseQueueExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
 import { OAuth2Client } from 'googleapis-common';
-import { authenticate } from '@google-cloud/local-auth';
-import path from 'path';
 import clientFile from './google_client_id.json';
-import fs from 'fs';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
 import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
 import { calendarExtensionConfig } from './calendar-config';
-
-
-// TODO: This is ugly, see if we can change it to imports
-const CREDENTIALS_PATH = path
-    .join(process.cwd(), './src/extensions/session-calendar/google_client_id.json');
-const TOKEN_PATH = path
-    .join(process.cwd(), './src/extensions/session-calendar/token.json');
+import { makeClient } from './google-auth-helpers';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -40,7 +31,6 @@ class CalendarExtension extends BaseQueueExtension {
 
     private constructor(
         private readonly client: OAuth2Client,
-        private readonly calendarID: string,
         private readonly renderIndex: number,
     ) { super(); }
 
@@ -65,8 +55,8 @@ class CalendarExtension extends BaseQueueExtension {
         }
         const instance = new CalendarExtension(
             await makeClient(),
-            calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID,
-            renderIndex);
+            renderIndex
+        );
         await instance.getUpComingTutoringEvents();
         console.log(
             `[${FgBlue}Calendar Extension${ResetColor}] successfully loaded for '${queueName}'!`
@@ -79,10 +69,13 @@ class CalendarExtension extends BaseQueueExtension {
      * fecth new events and update cached viewModel
      * ----
      * @param queue target queue to get calendar for
-     * @param _isFirstCall, unused here, indicates whether onQueuePeriodicUpdate is invoked on queue init
     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override async onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>, _isFirstCall = false): Promise<void> {
+
+    override async onQueuePeriodicUpdate(
+        queue: Readonly<HelpQueueV2>,
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _isFirstCall = false
+    ): Promise<void> {
         this.upcomingHours = await this.getUpComingTutoringEvents(queue.name);
     }
 
@@ -127,7 +120,7 @@ class CalendarExtension extends BaseQueueExtension {
             auth: this.client
         });
         const response = await calendar.events.list({
-            calendarId: this.calendarID,
+            calendarId: calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID,
             timeMin: (new Date()).toISOString(),
             timeMax: nextWeek.toISOString(),
             singleEvents: true,
@@ -209,52 +202,6 @@ class CalendarExtension extends BaseQueueExtension {
             rawSummary: summary,
             displayName: tutorName
         };
-    }
-}
-
-// Functions below are adopted from the Google API starter code for NodeJS
-// They are very hacky
-// TODO: Find the proper way to do this in TS
-
-/**
- * Creates a OAuth2Client
- * ----
- * Expects to find google_client_id.json in the same folder
- * 
-*/
-async function makeClient(): Promise<OAuth2Client> {
-    const localCredentials = loadSavedCredentials();
-    if (localCredentials !== undefined) {
-        return localCredentials;
-    }
-    console.log('No cached credentials found. Authenticating...');
-    // this will launch an auth window in the browser
-    const client = await authenticate({
-        scopes: ['https://www.googleapis.com/auth/calendar.readonly'],
-        keyfilePath: CREDENTIALS_PATH,
-    });
-    const content = fs.readFileSync(CREDENTIALS_PATH).toString();
-    const keys = JSON.parse(content);
-    const key = keys.installed || keys.web;
-    const payload = JSON.stringify({
-        type: 'authorized_user',
-        client_id: key.client_id,
-        client_secret: key.client_secret,
-        refresh_token: client.credentials.refresh_token,
-    });
-    fs.writeFileSync(TOKEN_PATH, payload);
-    // Google apis have multiple classes named OAuth2Client
-    // the cast is a temporary solution 
-    return client as unknown as OAuth2Client;
-}
-
-function loadSavedCredentials(): OAuth2Client | undefined {
-    try {
-        const content = fs.readFileSync(TOKEN_PATH).toString();
-        const credentials = JSON.parse(content);
-        return google.auth.fromJSON(credentials) as OAuth2Client;
-    } catch (err) {
-        return undefined;
     }
 }
 
