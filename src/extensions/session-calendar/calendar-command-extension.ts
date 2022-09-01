@@ -50,7 +50,11 @@ class CalendarSwitchError extends Error {
 }
 
 class CalendarCommandExtension extends BaseInteractionExtension {
-    public override commandMethodMap = new Map<string, (interaction: CommandInteraction) => Promise<string | void>>([
+    // I know this is verbose but TS gets angry :(
+    public override commandMethodMap: ReadonlyMap<
+        string,
+        (interaction: CommandInteraction) => Promise<string | void>
+    > = new Map<string, (interaction: CommandInteraction) => Promise<string | void>>([
         ['set_calendar', (interaction: CommandInteraction) => this.updateCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) => this.listUpComingHours(interaction)]
     ]);
@@ -78,7 +82,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
             return;
         }
         await commandMethod(interaction)
-            // if the method didn't directly replay, the center handler replies
+            // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
                 await interaction.editReply(
                     SimpleEmbed(
