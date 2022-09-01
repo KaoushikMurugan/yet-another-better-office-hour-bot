@@ -37,7 +37,9 @@ type QueueChannel = {
 */
 class AttendingServerV2 {
     // id is CategoryChannel.id of the parent of #queue
+
     private queues: Collection<string, HelpQueueV2> = new Collection();
+    public intervalID?: NodeJS.Timer;
 
     protected constructor(
         public readonly user: User,
@@ -55,6 +57,12 @@ class AttendingServerV2 {
             .map(helper => helper.member.displayName));
     }
 
+    clearAllIntervals(): void {
+        // Types are ignored here b/c TS doesn't recognize the Timout overload for clearInterval
+        clearInterval(this.intervalID as never);
+        this.queues.forEach(queue => clearInterval(queue.intervalID as never));
+    }
+
     /**
      * Asynchronously creates a YABOB instance for 1 server
      * ----
@@ -70,30 +78,44 @@ class AttendingServerV2 {
             const owner = await guild.fetchOwner();
             await owner.send(
                 SimpleEmbed(
-                    `Sorry, I need full administrator permission for "${guild.name}"`,
+                    `Sorry, I need full administrator permission and highest role for "${guild.name}"`,
                     EmbedColor.Error));
             await guild.leave();
             throw Error("YABOB doesn't have admin permission.");
         }
+        if (guild.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
+            const owner = await guild.fetchOwner();
+            await owner.send(
+                SimpleEmbed(
+                    `It seems like I'm joining a server with existing roles. ` +
+                    `Please go to server settings -> Roles and change ${user.username} ` +
+                    `to the highest role.\n`,
+                    EmbedColor.Error));
+            throw Error("YABOB doesn't have highest role.");
+        }
 
-        // * Load ServerExtensions here
+        // Load ServerExtensions here
         const serverExtensions = await Promise.all([
             AttendanceExtension.load(guild.name),
             FirebaseLoggingExtension.load(guild.name, guild.id)
         ]);
+        // Retrieve backup from all sources. Take the first one that's not undefined 
+        // Change behavior here depending on backup strategy
+        const externalBackup = await Promise.all(
+            serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
+        );
+        const externalServerData = externalBackup.find(backup => backup !== undefined);
+
         const server = new AttendingServerV2(
             user,
             guild,
             serverExtensions
         );
-
-        // Retrieve backup from all sources
-        const externalBackup = await Promise.all(
-            serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
-        );
-        // Then take the first one that's not undefined 
-        // TODO: Change behavior here depending on backup strategy
-        const externalServerData = externalBackup.find(backup => backup !== undefined);
+        // Call onServerPeriodicUpdate every 30min +- 1 second
+        server.intervalID = setInterval(async () =>
+            await Promise.all(serverExtensions
+                .map(extension => extension.onServerPeriodicUpdate(server)))
+            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
 
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
@@ -112,11 +134,6 @@ class AttendingServerV2 {
                 extension.onServerInitSuccess(server),
                 extension.onServerPeriodicUpdate(server)
             ]).flat());
-        // The below Promise.all wont block. Will be called every 30 minutes
-        setInterval(async () =>
-            await Promise.all(serverExtensions
-                .map(extension => extension.onServerPeriodicUpdate(server)))
-            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
         console.log(`⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`);
         return server;
     }
@@ -182,10 +199,12 @@ class AttendingServerV2 {
         const existQueueWithSameName = existingQueues
             .find(queue => queue.queueName === name)
             !== undefined;
+
         if (existQueueWithSameName) {
             return Promise.reject(new ServerError(
                 `Queue ${name} already exists`));
         }
+
         const parentCategory = await this.guild.channels.create(
             name,
             { type: "GUILD_CATEGORY" }
@@ -215,12 +234,15 @@ class AttendingServerV2 {
     */
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this.queues.get(queueCategoryID);
+
         if (queue === undefined) {
             return Promise.reject(new ServerError('This queue does not exist.'));
         }
+
         const parentCategory = await (await this.guild.channels.fetch())
             .find(ch => ch.id === queueCategoryID)
             ?.fetch() as CategoryChannel;
+
         // delete child channels first
         await Promise.all(parentCategory
             ?.children
@@ -238,7 +260,6 @@ class AttendingServerV2 {
             ?.delete();
         // finally delete queue model
         this.queues.delete(queueCategoryID);
-        //   onQueueDelete()
     }
 
     /**
@@ -605,8 +626,6 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels())
             .map(ch => ch.queueName);
-        // console.log(`Created class roles: [${queueNames
-        //     .filter(queue => !existingRoles.has(queue))}]`);
         await Promise.all(queueNames
             .filter(queue => !existingRoles.has(queue))
             .map(async roleToCreate =>

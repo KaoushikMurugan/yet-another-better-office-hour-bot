@@ -27,6 +27,8 @@ class HelpQueueV2 {
     private isOpen = false;
     private readonly display: QueueDisplayV2;
 
+    public intervalID?: NodeJS.Timer;
+
     /**
      * @param user YABOB's user object for QueueDisplay
      * @param queueChannel the channel to manage
@@ -43,7 +45,6 @@ class HelpQueueV2 {
         // If we choose to use backup,
         // restore members with queueChannel.channelObj.members.get()
         if (backupData !== undefined) {
-            console.log(`Found backup for ${backupData.name}`);
             backupData.studentsInQueue.forEach(studentBackup => {
                 // forEach backup, if there's a corresponding channel member, push it into queue
                 const correspondingMember = this.queueChannel.channelObj.members
@@ -109,7 +110,19 @@ class HelpQueueV2 {
                 process.env.YABOB_GOOGLE_CALENDAR_ID
             )
         ]);
-        const queue = new HelpQueueV2(user, queueChannel, queueExtensions, backupData);
+
+        const queue = new HelpQueueV2(
+            user,
+            queueChannel,
+            queueExtensions,
+            backupData
+        );
+
+        queue.intervalID = setInterval(async () => {
+            await Promise.all(queueExtensions.map(
+                extension => extension.onQueuePeriodicUpdate(queue)
+            )); // Random offset to avoid spamming the APIs
+        }, (1000 * 60 * 60 * 24) + Math.floor(Math.random() * 2000));
 
         // This need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
@@ -123,11 +136,6 @@ class HelpQueueV2 {
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
             { SEND_MESSAGES: true });
-        setInterval(async () => {
-            await Promise.all(queueExtensions.map(
-                extension => extension.onQueuePeriodicUpdate(queue)
-            )); // Random offset to avoid spamming the APIs
-        }, (1000 * 60 * 60 * 24) + Math.floor(Math.random() * 2000));
         return queue;
     }
 
