@@ -16,7 +16,10 @@ import {
  * The difference here is that a button command is guaranteed to happen in a queue as of right now
 */
 class ButtonCommandDispatcher {
-    private readonly commandMethodMap = new Map([
+    public buttonMethodMap: ReadonlyMap<
+        string,
+        (queueName: string, interaction: ButtonInteraction) => Promise<string>
+    > = new Map([
         ['join', (queueName: string,
             interaction: ButtonInteraction) => this.join(queueName, interaction)],
         ['leave', (queueName: string,
@@ -40,12 +43,12 @@ class ButtonCommandDispatcher {
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
-        const commandMethod = this.commandMethodMap.get(interactionName);
-        if (commandMethod !== undefined) {
+        const buttonMethod = this.buttonMethodMap.get(interactionName);
+        if (buttonMethod !== undefined) {
             console.log(`User ${interaction.user.username} ` +
                 `used [${interactionName}] ` +
                 `in queue: ${queueName}`);
-            await commandMethod(queueName, interaction)
+            await buttonMethod(queueName, interaction)
                 .then(async successMsg =>
                     await interaction.editReply(SimpleEmbed(
                         successMsg,

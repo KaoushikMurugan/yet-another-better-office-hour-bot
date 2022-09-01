@@ -7,11 +7,28 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
+import { ButtonInteraction, CacheType, CommandInteraction, Guild } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
 import { Helpee, Helper } from "../models/member-states";
 import { ServerBackup } from "./firebase-backup/firebase-models/backups";
+import { CommandData } from '../command-handling/slash-commands';
+
+// Command level extensions
+interface IInteractionExtension {
+    commandMethodMap: ReadonlyMap<
+        string,
+        (interaction: CommandInteraction) => Promise<string>
+    >;
+    buttonMethodMap: ReadonlyMap<
+        string,
+        (interaction: ButtonInteraction) => Promise<string>
+    >;
+    slashCommandData: CommandData;
+    processCommand: (interaction: CommandInteraction) => Promise<void>;
+    processButton: (interaction: ButtonInteraction) => Promise<void>;
+}
 
 // Server level extensions
 interface IServerExtension {
@@ -40,6 +57,34 @@ interface IQueueExtension {
         isClenupRender?: boolean
     ) => Promise<void>;
     onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>, isFirstCall: boolean) => Promise<void>;
+}
+
+/**
+ * Boilerplate base class of interaction related extensions. 
+ * ----
+ * - Any INTERACTION extension must inherit from here
+ * - Always override postExternalSlashCommands() if you want to post your own commands
+ * - override processCommand and/or processButton depending on which type you want
+*/
+class BaseInteractionExtension implements IInteractionExtension {
+    buttonMethodMap: ReadonlyMap<
+        string,
+        (interaction: ButtonInteraction<CacheType>) => Promise<string>
+    > = new Map();
+    commandMethodMap: ReadonlyMap<
+        string,
+        (interaction: CommandInteraction<CacheType>) => Promise<string>
+    > = new Map();
+
+    get slashCommandData(): CommandData {
+        return [];
+    }
+    processCommand(interaction: CommandInteraction<CacheType>): Promise<void> {
+        return Promise.resolve();
+    }
+    processButton(interaction: ButtonInteraction<CacheType>): Promise<void> {
+        return Promise.resolve();
+    }
 }
 
 /**
@@ -116,8 +161,10 @@ class BaseQueueExtension implements IQueueExtension {
 }
 
 export {
+    IInteractionExtension,
     IServerExtension,
     IQueueExtension,
+    BaseInteractionExtension,
     BaseServerExtension,
     BaseQueueExtension,
 };

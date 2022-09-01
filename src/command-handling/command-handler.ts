@@ -27,7 +27,10 @@ class CentralCommandDispatcher {
 
     // The map of available commands
     // Key is what the user will see, value is the arrow function
-    private readonly commandMethodMap = new Map([
+    public commandMethodMap: ReadonlyMap<
+        string,
+        (interaction: CommandInteraction) => Promise<string>
+    > = new Map([
         ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
         ['next', (interaction: CommandInteraction) => this.next(interaction)],

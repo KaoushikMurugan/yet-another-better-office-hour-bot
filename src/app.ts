@@ -12,6 +12,8 @@ import {
 } from './utils/command-line-colors';
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
+import { CalendarCommandExtension } from './extensions/session-calendar/calendar-command-extension';
+import { IInteractionExtension } from "./extensions/extension-interface";
 
 dotenv.config();
 console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
@@ -36,6 +38,9 @@ const client = new Client({
 
 // key is Guild.id
 const serversV2: Map<string, AttendingServerV2> = new Map();
+const interactionExtensions: IInteractionExtension[] = [
+    new CalendarCommandExtension()
+];
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -106,13 +111,29 @@ client.on("guildDelete", async guild => {
 });
 
 client.on("interactionCreate", async interaction => {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
     if (interaction.isCommand()) {
-        const commandHandler = new CentralCommandDispatcher(serversV2);
-        await commandHandler.process(interaction);
+        const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
+        if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
+            await builtinCommandHandler.process(interaction);
+        } else {
+            const externalCommandHandler = interactionExtensions.find(
+                ext => ext.commandMethodMap.has(interaction.commandName)
+            );
+            await externalCommandHandler?.processCommand(interaction);
+        }
     }
     if (interaction.isButton()) {
-        const buttonHandler = new ButtonCommandDispatcher(serversV2);
-        await buttonHandler.process(interaction);
+        const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
+        if (builtinButtonHandler.buttonMethodMap.has(interaction.customId)) {
+            await builtinButtonHandler.process(interaction);
+        } else {
+            const externalButtonHandler = interactionExtensions.find(
+                ext => ext.commandMethodMap.has(interaction.customId)
+            );
+            await externalButtonHandler?.processButton(interaction);
+        }
     }
 });
 
@@ -132,7 +153,9 @@ client.on("guildMemberAdd", async member => {
 client.on("roleUpdate", async role => {
     if (role.name === client.user?.username &&
         role.guild.roles.highest.name === client.user.username) {
-        console.log(`${FgCyan}Got the highest Role! Starting server initialization${ResetColor}`);
+        console.log(
+            `${FgCyan}Got the highest Role! Starting server initialization${ResetColor}`
+        );
         const owner = await role.guild.fetchOwner();
         await Promise.all([
             owner.send(SimpleEmbed(
@@ -162,7 +185,12 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     }
 
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
-    await postSlashCommands(guild);
+
+    await postSlashCommands(
+        guild,
+        interactionExtensions
+            .flatMap(extension => extension.slashCommandData)
+    );
 
     // Extensions are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);

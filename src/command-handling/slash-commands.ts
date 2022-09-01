@@ -294,7 +294,7 @@ type BaseBOBCommands =
     | 'post_session_msg'
     | 'cleanup';
 
-async function postSlashCommands(guild: Guild): Promise<void> {
+async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
     if (process.env.YABOB_APP_ID === undefined) {
         throw new Error('Failed to post commands. APP_ID is undefined');
     }
@@ -305,12 +305,15 @@ async function postSlashCommands(guild: Guild): Promise<void> {
     const rest = new REST({ version: "9" }).setToken(
         process.env.YABOB_BOT_TOKEN
     );
+
     await rest.put(Routes.applicationGuildCommands(
         process.env.YABOB_APP_ID,
         guild.id),
-        { body: commandData }
+        { body: commandData.concat(externalCommands) }
     ).catch(e => console.error(e));
     console.log(`Updated slash commands on "${guild.name}"`);
 }
 
-export { BaseBOBCommands, postSlashCommands };
+type CommandData = typeof commandData;
+
+export { BaseBOBCommands, postSlashCommands, CommandData };
