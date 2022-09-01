@@ -310,7 +310,7 @@ class CentralCommandDispatcher {
      * Checks if the triggerer has all the required roles
      * ----
      * @param commandName the command used
-     * @param requiredRoles the roles to check, roles have AND relationship
+     * @param requiredRoles the roles to check, roles have OR relationship
      * @returns GuildMember: object of the triggerer
     */
     private async isTriggeredByUserWithRoles(

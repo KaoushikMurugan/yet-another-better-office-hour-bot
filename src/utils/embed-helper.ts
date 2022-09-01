@@ -29,7 +29,7 @@ export function SimpleEmbed(
                 timestamp: new Date(),
                 description: description,
                 author: {
-                    name: 'BOBv3',
+                    name: 'BOBv4',
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],
@@ -41,7 +41,7 @@ export function SimpleEmbed(
                 description: message + '\n\n' + description,
                 timestamp: new Date(),
                 author: {
-                    name: 'BOBv3',
+                    name: 'BOBv4',
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],

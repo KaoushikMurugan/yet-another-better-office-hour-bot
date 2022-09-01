@@ -73,8 +73,12 @@ class CalendarExtension extends BaseQueueExtension {
     /**
      * Every time queue emits onQueuePeriodicUpdate
      * fecth new events and update cached viewModel
+     * ----
+     * @param queue target queue to get calendar for
+     * @param _isFirstCall, unused here, indicates whether onQueuePeriodicUpdate is invoked on queue init
     */
-    override async onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>): Promise<void> {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override async onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>, _isFirstCall = false): Promise<void> {
         this.upcomingHours = await this.getUpComingTutoringEvents(queue.name);
     }
 

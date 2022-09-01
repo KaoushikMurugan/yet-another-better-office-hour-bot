@@ -33,7 +33,12 @@ class FirebaseLoggingExtension extends BaseServerExtension {
         return instance;
     }
 
-    override async onServerPeriodicUpdate(server: Readonly<AttendingServerV2>): Promise<void> {
+    override async onServerPeriodicUpdate(server: Readonly<AttendingServerV2>, isFirstCall = false): Promise<void> {
+        // if invoked on server init, don't back up yet to prevent accidental override
+        if (isFirstCall) { 
+            return Promise.resolve();
+        }
+
         const queues = server.helpQueues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {

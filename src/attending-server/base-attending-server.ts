@@ -36,8 +36,8 @@ type QueueChannel = {
  * private functions are designed to not be triggered by commands
 */
 class AttendingServerV2 {
-    // id is CategoryChannel.id of the parent of #queue
 
+    // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
     public intervalID?: NodeJS.Timer;
 
@@ -59,8 +59,10 @@ class AttendingServerV2 {
 
     clearAllIntervals(): void {
         // Types are ignored here b/c TS doesn't recognize the Timout overload for clearInterval
-        clearInterval(this.intervalID as never);
-        this.queues.forEach(queue => clearInterval(queue.intervalID as never));
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        clearInterval(this.intervalID!);
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        this.queues.forEach(queue => clearInterval(queue.intervalID!));
     }
 
     /**
@@ -105,7 +107,6 @@ class AttendingServerV2 {
             serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
         );
         const externalServerData = externalBackup.find(backup => backup !== undefined);
-
         if (externalServerData !== undefined) {
             console.log(`${FgCyan}Found external backup for ${guild.name}. Restoring...${ResetColor}`);
         }
@@ -115,15 +116,10 @@ class AttendingServerV2 {
             guild,
             serverExtensions
         );
-        // Call onServerPeriodicUpdate every 30min +- 1 second
-        server.intervalID = setInterval(async () =>
-            await Promise.all(serverExtensions
-                .map(extension => extension.onServerPeriodicUpdate(server)))
-            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
 
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
-        // The ones below can be launched together
+        // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
             server.initAllQueues(externalServerData?.queues),
             server.createClassRoles(),
@@ -132,12 +128,20 @@ class AttendingServerV2 {
             console.error(err);
             throw new ServerError(`❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`);
         });
-        // Emit all the events
+
+        // Now Emit all the events
         await Promise.all(serverExtensions.map(
             extension => [
                 extension.onServerInitSuccess(server),
-                extension.onServerPeriodicUpdate(server)
+                extension.onServerPeriodicUpdate(server, true)
             ]).flat());
+
+        // Call onServerPeriodicUpdate every 30min +- 1 second
+        server.intervalID = setInterval(async () =>
+            await Promise.all(serverExtensions
+                .map(extension => extension.onServerPeriodicUpdate(server)))
+            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
+
         console.log(`⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`);
         return server;
     }

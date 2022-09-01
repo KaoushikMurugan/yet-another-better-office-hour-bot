@@ -21,7 +21,7 @@ interface IServerExtension {
     onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
     onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
-    onServerPeriodicUpdate: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    onServerPeriodicUpdate: (server: Readonly<AttendingServerV2>, isFirstCall: boolean) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
 }
 
@@ -39,7 +39,7 @@ interface IQueueExtension {
         display: Readonly<QueueDisplayV2>,
         isClenupRender?: boolean
     ) => Promise<void>;
-    onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
+    onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>, isFirstCall: boolean) => Promise<void>;
 }
 
 /**
@@ -67,7 +67,7 @@ class BaseServerExtension implements IServerExtension {
     onHelperStopHelping(helper: Readonly<Required<Helper>>): Promise<void> {
         return Promise.resolve();
     }
-    onServerPeriodicUpdate(server: Readonly<AttendingServerV2>): Promise<void> {
+    onServerPeriodicUpdate(server: Readonly<AttendingServerV2>, isFirstCall = false): Promise<void> {
         return Promise.resolve();
     }
     loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
@@ -92,7 +92,7 @@ class BaseQueueExtension implements IQueueExtension {
     ): Promise<void> {
         return Promise.resolve();
     }
-    onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>): Promise<void> {
+    onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>, isFirstCall = false): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: Readonly<HelpQueueV2>): Promise<void> {
