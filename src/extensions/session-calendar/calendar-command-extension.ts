@@ -11,6 +11,9 @@ import { CommandData } from '../../command-handling/slash-commands';
 import { google } from "googleapis";
 import { OAuth2Client } from "googleapis-common";
 import { makeClient } from "./google-auth-helpers";
+import { isValidQueueInteraction } from '../../command-handling/common-validations';
+import { getUpComingTutoringEvents } from "./calendar-queue-extension";
+
 
 const setCalendar = new SlashCommandBuilder()
     .setName("set_calendar")
@@ -24,6 +27,18 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+const whenNext = new SlashCommandBuilder() // /when_next (queue_name)
+    .setName("when_next")
+    .setDescription("View the upcoming tutoring hours")
+    .addChannelOption((option) =>
+        option
+            .setName("queue_name")
+            .setDescription(
+                "The course for which you want to view the next tutoring hours"
+            )
+            .setRequired(false)
+    );
+
 class CalendarSwitchError extends Error {
     constructor(message: string) {
         super(message);
@@ -34,18 +49,16 @@ class CalendarSwitchError extends Error {
     }
 }
 
-
 class CalendarCommandExtension extends BaseInteractionExtension {
-    public override commandMethodMap: ReadonlyMap<
-        string,
-        (interaction: CommandInteraction) => Promise<string>
-    > = new Map([
-        ['set_calendar', (interaction: CommandInteraction) => this.updateCalendarId(interaction)]
+    public override commandMethodMap = new Map<string, (interaction: CommandInteraction) => Promise<string | void>>([
+        ['set_calendar', (interaction: CommandInteraction) => this.updateCalendarId(interaction)],
+        ['when_next', (interaction: CommandInteraction) => this.listUpComingHours(interaction)]
     ]);
 
     override get slashCommandData(): CommandData {
         return [
-            setCalendar.toJSON()
+            setCalendar.toJSON(),
+            whenNext.toJSON()
         ];
     }
 
@@ -65,7 +78,8 @@ class CalendarCommandExtension extends BaseInteractionExtension {
             return;
         }
         await commandMethod(interaction)
-            .then(async successMsg =>
+            // if the method didn't directly replay, the center handler replies
+            .then(async successMsg => successMsg &&
                 await interaction.editReply(
                     SimpleEmbed(
                         successMsg,
@@ -96,6 +110,28 @@ class CalendarCommandExtension extends BaseInteractionExtension {
             }` +
             `The calendar embed will be refreshed on next render.`
         );
+    }
+
+    private async listUpComingHours(interaction: CommandInteraction): Promise<void> {
+        const channel = await isValidQueueInteraction(interaction);
+        const viewModels = await getUpComingTutoringEvents(
+            await makeClient(),
+            channel.queueName
+        );
+
+        const embed = SimpleEmbed(
+            `Upcoming Hours for ${channel.queueName}`,
+            EmbedColor.NoColor,
+            viewModels.length > 0
+                ? viewModels
+                    .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
+                        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
+                    .join('\n')
+                : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`
+        );
+
+        await interaction.editReply(embed);
     }
 
     private async checkCalendarConnection(
