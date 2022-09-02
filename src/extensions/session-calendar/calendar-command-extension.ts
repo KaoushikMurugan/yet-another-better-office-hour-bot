@@ -1,10 +1,11 @@
 import { BaseInteractionExtension } from "../extension-interface";
 import { calendarExtensionConfig } from './calendar-config';
-import { CommandInteraction } from 'discord.js';
+import { CommandInteraction, Guild, GuildMember } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
+    CommandParseError,
     UserViewableError
 } from "../../utils/error-types";
 import { CommandData } from '../../command-handling/slash-commands';
@@ -40,6 +41,24 @@ const whenNext = new SlashCommandBuilder()
             .setRequired(false)
     );
 
+function makeCalendarStringCommand(guild: Guild): SlashCommandBuilder {
+    const command = new SlashCommandBuilder()
+        .setName("make_calendar_string")
+        .setDescription("Generates a valid calendar string that can be parsed by YABOB");
+
+    [...guild.channels.cache
+        .filter(channel => channel.type === "GUILD_CATEGORY")]
+        .forEach((_, idx) =>
+            command.addChannelOption(option =>
+                option.setName(`queue_name_${idx + 1}`)
+                    .setDescription(
+                        "The course you tutor for"
+                    )
+                    .setRequired(idx === 0)) // make the first one required
+        );
+    return command;
+}
+
 class CalendarConnectionError extends Error {
     constructor(message: string) {
         super(message);
@@ -51,19 +70,29 @@ class CalendarConnectionError extends Error {
 }
 
 class CalendarCommandExtension extends BaseInteractionExtension {
-    // I know this is verbose but TS gets angry if I don't write all this:(
+
+    constructor(private readonly guild: Guild) {
+        super();
+    }
+
+    // I know this is verbose but TS gets angry if I don't write all this :(
     public override commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | void>
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | void>>([
-        ['set_calendar', (interaction: CommandInteraction) => this.updateCalendarId(interaction)],
-        ['when_next', (interaction: CommandInteraction) => this.listUpComingHours(interaction)]
+        ['set_calendar', (interaction: CommandInteraction) =>
+            this.updateCalendarId(interaction)],
+        ['when_next', (interaction: CommandInteraction) =>
+            this.listUpComingHours(interaction)],
+        ['make_calendar_string', (interaction: CommandInteraction) =>
+            this.makeParsableCalendarTitle(interaction)]
     ]);
 
     override get slashCommandData(): CommandData {
         return [
             setCalendar.toJSON(),
-            whenNext.toJSON()
+            whenNext.toJSON(),
+            makeCalendarStringCommand(this.guild).toJSON()
         ];
     }
 
@@ -144,6 +173,40 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         await interaction.editReply(embed);
     }
 
+    private async makeParsableCalendarTitle(interaction: CommandInteraction): Promise<string> {
+        // all the queue_name_1, queue_name_2, ... 
+        const commandArgs = [...this.guild.channels.cache
+            .filter(channel => channel.type === "GUILD_CATEGORY")]
+            .map((_, idx) => interaction.options
+                .getChannel(`queue_name_${idx + 1}`, idx === 0))
+            .filter(queueArg => queueArg !== undefined && queueArg !== null);
+
+        const validQueues = await Promise.all(commandArgs.map(category => {
+            if (category?.type !== 'GUILD_CATEGORY' || category === null) {
+                return Promise.reject(new CommandParseError(
+                    `\`${category?.name}\` is not a valid queue category.`
+                ));
+            }
+            const queueTextChannel = category.children
+                .find(child =>
+                    child.name === 'queue' &&
+                    child.type === 'GUILD_TEXT');
+            if (queueTextChannel === undefined) {
+                return Promise.reject(new CommandParseError(
+                    `This category does not have a \`#queue\` text channel.\n` +
+                    `If you are an admin, you can use \`/queue add ${category.name}\` ` +
+                    `to generate one.`
+                ));
+            }
+            return Promise.resolve(category);
+        }));
+
+        return Promise.resolve(
+            `${(interaction.member as GuildMember).displayName} - ECS ` +
+            `${validQueues.map(queue => queue.name.split(' ')[1]).join(', ')}`
+        );
+    }
+
     private async checkCalendarConnection(
         newCalendarId: string
     ): Promise<string> {
@@ -160,8 +223,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         if (response.status !== 200) {
             return Promise.reject('Calendar request failed.');
         }
-        const responseJSON = response.json();
-
+        const responseJSON = await response.json();
         return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
     }
 }

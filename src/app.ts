@@ -42,9 +42,7 @@ const client = new Client({
 
 // key is Guild.id
 const serversV2: Map<string, AttendingServerV2> = new Map();
-const interactionExtensions: IInteractionExtension[] = [
-    new CalendarCommandExtension()
-];
+const interactionExtensions: IInteractionExtension[] = [];
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -170,7 +168,8 @@ client.on("roleUpdate", async role => {
         const owner = await role.guild.fetchOwner();
         await Promise.all([
             owner.send(SimpleEmbed(
-                `Got the highest Role! Starting server initialization for ${role.guild.name}`,
+                `Got the highest Role!` +
+                ` Starting server initialization for ${role.guild.name}`,
                 EmbedColor.Success
             )),
             joinGuild(role.guild)
@@ -191,26 +190,29 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {
-        throw Error('Please wait until YABOB has logged in '
-            + 'to manage the server');
+        throw Error(
+            'Please wait until YABOB has logged in ' +
+            'to manage the server'
+        );
     }
 
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
+
+    // Extensions for server&queue are loaded inside the create method
+    const server = await AttendingServerV2.create(client.user, guild);
+    serversV2.set(guild.id, server);
+    interactionExtensions.push(new CalendarCommandExtension(guild));
 
     await postSlashCommands(
         guild,
         interactionExtensions
             .flatMap(extension => extension.slashCommandData)
     );
-
-    // Extensions are loaded inside the create method
-    const server = await AttendingServerV2.create(client.user, guild);
-    serversV2.set(guild.id, server);
     return server;
 }
 
 function printTitleString(): void {
-    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4";
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4.0";
     console.log(
         `\n${FgBlack}${BgMagenta}${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
         `${titleString}` +
