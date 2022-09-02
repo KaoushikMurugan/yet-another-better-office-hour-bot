@@ -1,7 +1,7 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 
-export const adminCommandsEmbed: Pick<MessageOptions, "embeds"> = {
+export const adminCommandsEmbed: Pick<MessageOptions, 'embeds'> = {
     embeds: [
         {
             color: EmbedColor.Neutral,

@@ -46,7 +46,7 @@ class QueueDisplayV2 {
                 ? "**OPEN**\t (ﾟ∀ﾟ )"
                 : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
             .setDescription(this.composeAsciiTable(queue))
-            .setColor(EmbedColor.NoColor);
+            .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple1);
 
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
@@ -153,9 +153,9 @@ class QueueDisplayV2 {
             table.addRow('This Queue is Empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
-            if (rand < 0.15) {
+            if (rand <= 0.1) {
                 table.addRow(`=^ Φ ω Φ ^=`);
-            } else if (rand < 0.35) {
+            } else if (rand <= 0.2) {
                 table.addRow(`Did you find the cat?`);
             }
         }

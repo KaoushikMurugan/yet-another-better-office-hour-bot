@@ -6,7 +6,7 @@ import { ColorResolvable } from "discord.js";
 */
 export const hierarchyRoleConfigs = [
     {
-        name: "Admin",
+        name: "Bot Admin",
         color: "LUMINOUS_VIVID_PINK" as ColorResolvable,
         hoist: true,
     },

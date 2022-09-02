@@ -92,7 +92,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 `queue ${interaction.options.getSubcommand()}`,
-                ['Admin'])
+                ['Bot Admin'])
         ]);
 
         const subcommand = interaction.options.getSubcommand();
@@ -141,7 +141,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 "next",
-                ['Admin', 'Staff']),
+                ['Bot Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "next"
@@ -157,7 +157,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 "start",
-                ['Admin', 'Staff']),
+                ['Bot Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "start"
@@ -174,7 +174,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 "start",
-                ['Admin', 'Staff']),
+                ['Bot Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
                 "start"
@@ -215,7 +215,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 "clear",
-                ['Admin', 'Staff']
+                ['Bot Admin', 'Staff']
             ),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
@@ -244,7 +244,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 'announce',
-                ['Admin', 'Staff']
+                ['Bot Admin', 'Staff']
             ),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
@@ -271,7 +271,7 @@ class CentralCommandDispatcher {
             this.isTriggeredByUserWithRoles(
                 interaction,
                 'cleanup',
-                ['Admin', 'Staff']
+                ['Bot Admin']
             ),
         ]);
         await this.serverMap.get(serverId)?.cleanUpQueue(queue);

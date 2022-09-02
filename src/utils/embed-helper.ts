@@ -12,15 +12,16 @@ export enum EmbedColor {
     KindaBad = 0xfc9867, // Orange
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
-    NeedName = 0x78dce8, // Aqua
-    NoColor = 0x2f3137 // the embed background
+    NoColor = 0x2f3137, // the embed background
+    Aqua = 0x78dce8, // Aqua
+    Purple1 = 0xd3ccd6,
 }
 
 export function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
     description?: string,
-): Pick<MessageOptions, "embeds"> {
+): Pick<MessageOptions, 'embeds'> {
     if (message.length <= 256) {
         return {
             embeds: [{
@@ -49,7 +50,7 @@ export function SimpleEmbed(
     }
 }
 
-export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, "embeds"> {
+export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds'> {
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -59,7 +60,7 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, "embeds
         }
     ];
     if (err instanceof QueueError) {
-        color = EmbedColor.NeedName;
+        color = EmbedColor.Aqua;
         embedFields.push({
             name: 'In Queue',
             value: err.queueName,

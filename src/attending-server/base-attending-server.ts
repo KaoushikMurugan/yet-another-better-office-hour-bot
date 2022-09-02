@@ -484,7 +484,7 @@ class AttendingServerV2 {
             await Promise.all(queueToAnnounce.studentsInQueue
                 .map(student => student.member.send(SimpleEmbed(
                     `Staff member ${helperMember.displayName} announced: ${message}`,
-                    EmbedColor.NeedName,
+                    EmbedColor.Aqua,
                     `In queue: ${targetQueue.queueName}`
                 )))
             );

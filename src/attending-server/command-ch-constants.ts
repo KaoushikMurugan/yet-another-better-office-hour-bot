@@ -5,11 +5,11 @@ export const commandChConfigs = [
     {
         channelName: 'staff-commands',
         file: adminCommandsEmbed,
-        visibility: ['Admin', 'Staff']
+        visibility: ['Bot Admin', 'Staff']
     },
     {
         channelName: 'student-commands',
         file: studentCommandsEmbed,
-        visibility: ['Admin', 'Staff', 'Student']
+        visibility: ['Bot Admin', 'Staff', 'Student']
     }
 ];

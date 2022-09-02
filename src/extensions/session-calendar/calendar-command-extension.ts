@@ -52,7 +52,7 @@ function makeCalendarStringCommand(guild: Guild): SlashCommandBuilder {
             command.addChannelOption(option =>
                 option.setName(`queue_name_${idx + 1}`)
                     .setDescription(
-                        "The course you tutor for"
+                        "The courses you tutor for"
                     )
                     .setRequired(idx === 0)) // make the first one required
         );
@@ -129,7 +129,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         await isTriggeredByUserWithRoles(
             interaction,
             "set_calendar",
-            ["Admin"]
+            ['Bot Admin']
         );
 
         const newCalendarId = interaction.options.getString('calendar_id', true);
@@ -175,8 +175,14 @@ class CalendarCommandExtension extends BaseInteractionExtension {
 
     private async makeParsableCalendarTitle(interaction: CommandInteraction): Promise<string> {
         // all the queue_name_1, queue_name_2, ... 
+        await isTriggeredByUserWithRoles(
+            interaction,
+            "make_calendar_string",
+            ['Bot Admin', 'Staff']
+        );
+
         const commandArgs = [...this.guild.channels.cache
-            .filter(channel => channel.type === "GUILD_CATEGORY")]
+            .filter(channel => channel.type === 'GUILD_CATEGORY')]
             .map((_, idx) => interaction.options
                 .getChannel(`queue_name_${idx + 1}`, idx === 0))
             .filter(queueArg => queueArg !== undefined && queueArg !== null);
