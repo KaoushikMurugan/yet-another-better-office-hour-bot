@@ -125,12 +125,14 @@ client.on("interactionCreate", async interaction => {
         }
     }
     if (interaction.isButton()) {
+        console.log(interaction.customId);
+        const buttonName = interaction.customId.split(' ')[0] ?? '';
         const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
-        if (builtinButtonHandler.buttonMethodMap.has(interaction.customId)) {
+        if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
             await builtinButtonHandler.process(interaction);
         } else {
             const externalButtonHandler = interactionExtensions.find(
-                ext => ext.commandMethodMap.has(interaction.customId)
+                ext => ext.commandMethodMap.has(buttonName)
             );
             await externalButtonHandler?.processButton(interaction);
         }

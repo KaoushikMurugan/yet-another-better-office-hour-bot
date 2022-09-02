@@ -30,8 +30,6 @@ type QueueChannel = {
 /**
  * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
- * - Cannot be extended
- * - To add functionalities, either modify this class or make an extension
  * public functions can be accessed by the command handler
  * private functions are designed to not be triggered by commands
 */
