@@ -66,8 +66,11 @@ class CentralCommandDispatcher {
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
-            console.log(`[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
-                ` User ${interaction.user.username} used ${interaction.toString()}`);
+            console.log(
+                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
+                ` User ${interaction.user.username}` +
+                ` used ${interaction.toString()}`
+            );
             await commandMethod(interaction)
                 .then(async successMsg =>
                     await interaction.editReply(

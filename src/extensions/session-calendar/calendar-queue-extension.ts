@@ -4,7 +4,7 @@ import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
-import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
+import { FgRed, ResetColor } from '../../utils/command-line-colors';
 import { calendarExtensionConfig } from './calendar-config';
 
 // ViewModel for 1 tutor's upcoming session
@@ -50,11 +50,8 @@ class CalendarExtension extends BaseQueueExtension {
         const instance = new CalendarExtension(
             renderIndex
         );
-        await getUpComingTutoringEvents(queueName);
-        console.log(
-            `[${FgBlue}Calendar Extension${ResetColor}] ` +
-            `successfully loaded for '${queueName}'!`
-        );
+        await getUpComingTutoringEvents(queueName)
+            .catch(() => Promise.reject((`Failed to load calendar extension.`)));
         return instance;
     }
 
@@ -125,7 +122,6 @@ async function getUpComingTutoringEvents(
     const responseJSON = await response.json();
     const events = (responseJSON as calendar_v3.Schema$Events).items;
     if (!events || events.length === 0) {
-        console.log('No upcoming events found.');
         return [];
     }
     // Format: "StartDate - Summary"

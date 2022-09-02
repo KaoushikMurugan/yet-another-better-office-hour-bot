@@ -531,6 +531,7 @@ class AttendingServerV2 {
                         backup.parentCategoryId === channel.parentCategoryId)
                 )))
         );
+        console.log(`All queues in '${this.guild.name}' successfully created with their extensions!`);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onAllQueueInit([...this.queues.values()])
         ));

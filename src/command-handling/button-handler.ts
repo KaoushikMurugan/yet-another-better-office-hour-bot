@@ -1,5 +1,6 @@
 import { ButtonInteraction, GuildMember, TextChannel } from "discord.js";
 import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
 import {
     CommandParseError,
@@ -45,9 +46,12 @@ class ButtonCommandDispatcher {
         const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(interactionName);
         if (buttonMethod !== undefined) {
-            console.log(`User ${interaction.user.username} ` +
+            console.log(
+                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
+                `User ${interaction.user.username} ` +
                 `used [${interactionName}] ` +
-                `in queue: ${queueName}`);
+                `in queue: ${queueName}.`
+            );
             await buttonMethod(queueName, interaction)
                 .then(async successMsg =>
                     await interaction.editReply(SimpleEmbed(
@@ -101,7 +105,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            this.isTriggeredByUserWithValidEmail(interaction, "JoinNotif"),
             this.isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
@@ -115,7 +119,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            this.isTriggeredByUserWithValidEmail(interaction, "LeaveNotif"),
             this.isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
@@ -148,7 +152,7 @@ class ButtonCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
             return Promise.reject(new CommandParseError(
-                `You need to have a verified email to use \`[${commandName}]\`.`));
+                `You need to have a verified email to use button \`[${commandName}]\`.`));
         }
         return interaction.member as GuildMember;
     }
