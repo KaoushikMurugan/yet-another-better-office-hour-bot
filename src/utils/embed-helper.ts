@@ -14,7 +14,7 @@ export enum EmbedColor {
     Warning = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8, // Aqua
-    Purple1 = 0xd3ccd6,
+    Purple1 = 0xa6a5c4,
 }
 
 export function SimpleEmbed(

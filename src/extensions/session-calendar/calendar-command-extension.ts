@@ -199,7 +199,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
                     child.type === 'GUILD_TEXT');
             if (queueTextChannel === undefined) {
                 return Promise.reject(new CommandParseError(
-                    `This category does not have a \`#queue\` text channel.\n` +
+                    `'${category.name}' does not have a \`#queue\` text channel.\n` +
                     `If you are an admin, you can use \`/queue add ${category.name}\` ` +
                     `to generate one.`
                 ));

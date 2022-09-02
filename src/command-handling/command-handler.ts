@@ -101,19 +101,25 @@ class CentralCommandDispatcher {
                 const queueName = interaction.options.getString("queue_name", true);
                 await this.serverMap.get(serverId)
                     ?.createQueue(queueName);
-                return `Successfully created \`${queueName}\``;
+                return `Successfully created \`${queueName}\`.`;
             }
             case "remove": {
                 await this.isValidQueueInteraction(interaction, true);
-                const channel = interaction.options.getChannel("queue_name", true);
-                if (channel.type !== 'GUILD_CATEGORY') {
-                    return Promise.reject(
-                        new CommandParseError(
-                            `${channel.name.toUpperCase()} is not a category channel.`));
+                const targetQueue = interaction.options.getChannel("queue_name", true);
+                if ((interaction.channel as GuildChannel).parent?.id === targetQueue.id) {
+                    return Promise.reject(new CommandParseError(
+                        `Please use the remove command in another channel.` +
+                        ` Otherwise Discord API will reject.`
+                    ));
+                }
+                if (targetQueue.type !== 'GUILD_CATEGORY') {
+                    return Promise.reject(new CommandParseError(
+                        `${targetQueue.name.toUpperCase()} is not a category channel.`
+                    ));
                 }
                 await this.serverMap.get(serverId)
-                    ?.deleteQueueById(channel.id);
-                return `Successfully deleted \`${channel.name}\``;
+                    ?.deleteQueueById(targetQueue.id);
+                return `Successfully deleted \`${targetQueue.name}\`.`;
             }
             default: {
                 return Promise.reject(new CommandParseError(
@@ -173,11 +179,11 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             this.isTriggeredByUserWithRoles(
                 interaction,
-                "start",
+                "stop",
                 ['Bot Admin', 'Staff']),
             this.isTriggeredByUserWithValidEmail(
                 interaction,
-                "start"
+                "stop"
             ),
         ]);
 
@@ -235,7 +241,7 @@ class CentralCommandDispatcher {
         if (helpers === undefined || helpers.size === 0) {
             return `No one is currently helping.`;
         }
-        return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping`;
+        return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping.`;
     }
 
     private async announce(interaction: CommandInteraction): Promise<string> {
@@ -326,7 +332,8 @@ class CentralCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             (userRoles.some(role => requiredRoles.includes(role))))) {
             return Promise.reject(new CommandParseError(
-                `You need to have: [${requiredRoles.join(' or ')}] to use \`/${commandName}\`.`));
+                `You need to have: [${requiredRoles.join(' or ')}] to use \`/${commandName}\`.`
+            ));
         }
         return interaction.member as GuildMember;
     }
@@ -346,7 +353,8 @@ class CentralCommandDispatcher {
         if (!(interaction.member instanceof GuildMember &&
             roles.includes('Verified Email'))) {
             return Promise.reject(new CommandParseError(
-                `You need to have a verified email to use \`/${commandName}\`.`));
+                `You need to have a verified email to use \`/${commandName}\`.`
+            ));
         }
         return interaction.member as GuildMember;
     }
@@ -366,7 +374,8 @@ class CentralCommandDispatcher {
         // null check is done here by optional property access
         if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {
             return Promise.reject(new CommandParseError(
-                `\`${parentCategory?.name}\` is not a valid queue category.`));
+                `\`${parentCategory?.name}\` is not a valid queue category.`
+            ));
         }
         const queueTextChannel = parentCategory.children
             .find(child =>
@@ -374,9 +383,10 @@ class CentralCommandDispatcher {
                 child.type === 'GUILD_TEXT');
         if (queueTextChannel === undefined) {
             return Promise.reject(new CommandParseError(
-                `This category does not have a \`#queue\` text channel.\n` +
+                `'${parentCategory.name}' does not have a \`#queue\` text channel.\n` +
                 `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
-                `to generate one.`));
+                `to generate one.`
+            ));
         }
         const queueChannel: QueueChannel = {
             channelObj: queueTextChannel as TextChannel,
