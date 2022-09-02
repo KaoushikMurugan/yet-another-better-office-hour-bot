@@ -102,6 +102,11 @@ class CalendarExtension extends BaseQueueExtension {
 
 }
 
+/**
+ * Fetches the calendar and build the embed view model
+ * ----
+ * @param queueName: the name to look for in the calendar event
+*/
 async function getUpComingTutoringEvents(
     queueName: string
 ): Promise<UpComingSessionViewModel[]> {
@@ -190,6 +195,14 @@ function composeViewModel(
     };
 }
 
+/**
+ * Build the calendar URL
+ * ----
+ * @param args.calendar_id id to the PUBLIC calendar
+ * @param args.apiKey apiKey found in calendar-config.ts
+ * @param args.timeMin the start of the date range
+ * @param args.timeMax the end of the date range
+*/
 function buildCalendarURL(args: {
     calendarId: string,
     apiKey: string,

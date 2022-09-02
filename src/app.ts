@@ -18,6 +18,10 @@ import { IInteractionExtension } from "./extensions/extension-interface";
 dotenv.config();
 console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
 
+if (process.env.NODE_ENV === 'Production') {
+    process.removeAllListeners('warning');
+}
+
 if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
 ) {
@@ -140,8 +144,10 @@ client.on("interactionCreate", async interaction => {
 });
 
 client.on("guildMemberAdd", async member => {
-    const server = serversV2.get(member.guild.id) ?? await joinGuild(member.guild);
-    const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
+    const server = serversV2.get(member.guild.id)
+        ?? await joinGuild(member.guild);
+    const studentRole = server.guild.roles.cache
+        .find(role => role.name === 'Student');
     if (studentRole !== undefined) {
         await member.roles.add(studentRole);
     }

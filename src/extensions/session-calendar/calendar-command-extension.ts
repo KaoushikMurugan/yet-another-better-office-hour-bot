@@ -8,7 +8,10 @@ import {
     UserViewableError
 } from "../../utils/error-types";
 import { CommandData } from '../../command-handling/slash-commands';
-import { isValidQueueInteraction } from '../../command-handling/common-validations';
+import {
+    isValidQueueInteraction,
+    isTriggeredByUserWithRoles
+} from '../../command-handling/common-validations';
 import { getUpComingTutoringEvents, buildCalendarURL } from "./calendar-queue-extension";
 import { calendar_v3 } from "googleapis";
 
@@ -94,6 +97,12 @@ class CalendarCommandExtension extends BaseInteractionExtension {
     }
 
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
+        await isTriggeredByUserWithRoles(
+            interaction,
+            "set_calendar",
+            ["Admin"]
+        );
+
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const newCalendarName = await this.checkCalendarConnection(
             newCalendarId
@@ -101,6 +110,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
             new CalendarConnectionError('This new ID is not valid.')
         ));
 
+        // runtime only. Will be resetted when YABOB restarts
         calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
 
         return Promise.resolve(
@@ -147,8 +157,8 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         });
 
         const response = await fetch(url);
-        if (response.status !== 200){
-            return Promise.reject();
+        if (response.status !== 200) {
+            return Promise.reject('Calendar request failed.');
         }
         const responseJSON = response.json();
 
