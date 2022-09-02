@@ -1,14 +1,21 @@
-import { google } from 'googleapis';
+import { calendar_v3 } from 'googleapis';
 import { BaseQueueExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
-import { OAuth2Client } from 'googleapis-common';
-import clientFile from './google_client_id.json';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
 import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
 import { calendarExtensionConfig } from './calendar-config';
-import { makeClient } from './google-auth-helpers';
+
+// ViewModel for 1 tutor's upcoming session
+type UpComingSessionViewModel = {
+    start: Date;
+    end: Date;
+    rawSummary: string;
+    displayName: string;
+    discordID?: string;
+    ecsClass: string;
+};
 
 /**
  * Calendar Extension for individual queues
@@ -20,7 +27,6 @@ class CalendarExtension extends BaseQueueExtension {
     private upcomingHours: UpComingSessionViewModel[] = []
 
     private constructor(
-        private readonly client: OAuth2Client,
         private readonly renderIndex: number,
     ) { super(); }
 
@@ -35,22 +41,19 @@ class CalendarExtension extends BaseQueueExtension {
         renderIndex: number,
         queueName: string
     ): Promise<CalendarExtension> {
-        if (calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID === undefined ||
-            clientFile === undefined) {
+        if (calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID === undefined) {
             return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Make sure you have Calendar ID in calendar-config.ts, ` +
-                `The client id in google_client_id.json, ` +
-                `and Google Cloud credentials in gcs_service_account_key.json${ResetColor}`
+                `${FgRed}Make sure you have Calendar ID ` +
+                `& API key in calendar-config.ts.${ResetColor}`
             ));
         }
-        const client = await makeClient();
         const instance = new CalendarExtension(
-            client,
             renderIndex
         );
-        await getUpComingTutoringEvents(client);
+        await getUpComingTutoringEvents(queueName);
         console.log(
-            `[${FgBlue}Calendar Extension${ResetColor}] successfully loaded for '${queueName}'!`
+            `[${FgBlue}Calendar Extension${ResetColor}] ` +
+            `successfully loaded for '${queueName}'!`
         );
         return instance;
     }
@@ -61,13 +64,12 @@ class CalendarExtension extends BaseQueueExtension {
      * ----
      * @param queue target queue to get calendar for
     */
-
     override async onQueuePeriodicUpdate(
         queue: Readonly<HelpQueueV2>,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _isFirstCall = false
     ): Promise<void> {
-        this.upcomingHours = await getUpComingTutoringEvents(this.client, queue.name);
+        this.upcomingHours = await getUpComingTutoringEvents(queue.name);
     }
 
     /**
@@ -100,41 +102,19 @@ class CalendarExtension extends BaseQueueExtension {
 
 }
 
-// ViewModel for 1 tutor's upcoming session
-type UpComingSessionViewModel = {
-    start: Date;
-    end: Date;
-    rawSummary: string;
-    displayName: string;
-    discordID?: string;
-    ecsClass: string;
-};
-
-/**
-    * Fetches the calendar events from google calendar
-    * @param queueName: the queue that this extension instance belongs to
-    * - if undefined, simply test for connection to google calendar
-   */
 async function getUpComingTutoringEvents(
-    client: OAuth2Client,
-    queueName?: string
+    queueName: string
 ): Promise<UpComingSessionViewModel[]> {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
-    const calendar = google.calendar({
-        version: 'v3',
-        auth: client
-    });
-    const response = await calendar.events.list({
+    const calendarUrl = buildCalendarURL({
         calendarId: calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID,
-        timeMin: (new Date()).toISOString(),
-        timeMax: nextWeek.toISOString(),
-        singleEvents: true,
+        apiKey: calendarExtensionConfig.YABOB_GOOGLE_API_KEY,
+        timeMin: new Date(),
+        timeMax: nextWeek
     });
-    const events = response.data.items;
-    if (queueName === undefined) {
-        return [];
-    }
+    const response = await (await fetch(calendarUrl)).json();
+    const events = (response as calendar_v3.Schema$Events).items;
     if (!events || events.length === 0) {
         console.log('No upcoming events found.');
         return [];
@@ -210,4 +190,18 @@ function composeViewModel(
     };
 }
 
-export { CalendarExtension, getUpComingTutoringEvents };
+function buildCalendarURL(args: {
+    calendarId: string,
+    apiKey: string,
+    timeMin: Date,
+    timeMax: Date,
+}): string {
+    return `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?`
+        + `&key=${args.apiKey}`
+        + `&timeMax=${args.timeMax.toISOString()}`
+        + `&timeMin=${args.timeMin.toISOString()}`
+        + `&singleEvents=true`;
+}
+
+
+export { CalendarExtension, getUpComingTutoringEvents, buildCalendarURL };

@@ -8,11 +8,9 @@ import {
     UserViewableError
 } from "../../utils/error-types";
 import { CommandData } from '../../command-handling/slash-commands';
-import { google } from "googleapis";
-import { OAuth2Client } from "googleapis-common";
-import { makeClient } from "./google-auth-helpers";
 import { isValidQueueInteraction } from '../../command-handling/common-validations';
-import { getUpComingTutoringEvents } from "./calendar-queue-extension";
+import { getUpComingTutoringEvents, buildCalendarURL } from "./calendar-queue-extension";
+import { calendar_v3 } from "googleapis";
 
 
 const setCalendar = new SlashCommandBuilder()
@@ -27,7 +25,7 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-const whenNext = new SlashCommandBuilder() // /when_next (queue_name)
+const whenNext = new SlashCommandBuilder()
     .setName("when_next")
     .setDescription("View the upcoming tutoring hours")
     .addChannelOption((option) =>
@@ -39,10 +37,10 @@ const whenNext = new SlashCommandBuilder() // /when_next (queue_name)
             .setRequired(false)
     );
 
-class CalendarSwitchError extends Error {
+class CalendarConnectionError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CalendarSwitchError";
+        this.name = "CalendarConnectionError";
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -50,7 +48,7 @@ class CalendarSwitchError extends Error {
 }
 
 class CalendarCommandExtension extends BaseInteractionExtension {
-    // I know this is verbose but TS gets angry :(
+    // I know this is verbose but TS gets angry if I don't write all this:(
     public override commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | void>
@@ -98,10 +96,9 @@ class CalendarCommandExtension extends BaseInteractionExtension {
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const newCalendarName = await this.checkCalendarConnection(
-            await makeClient(),
             newCalendarId
         ).catch(() => Promise.reject(
-            new CalendarSwitchError('This new ID is not valid.')
+            new CalendarConnectionError('This new ID is not valid.')
         ));
 
         calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
@@ -112,14 +109,13 @@ class CalendarCommandExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "
             }` +
-            `The calendar embed will be refreshed on next render.`
+            `The calendar embed will be refreshed on next queue periodic update.`
         );
     }
 
     private async listUpComingHours(interaction: CommandInteraction): Promise<void> {
         const channel = await isValidQueueInteraction(interaction);
         const viewModels = await getUpComingTutoringEvents(
-            await makeClient(),
             channel.queueName
         );
 
@@ -139,22 +135,24 @@ class CalendarCommandExtension extends BaseInteractionExtension {
     }
 
     private async checkCalendarConnection(
-        client: OAuth2Client,
         newCalendarId: string
     ): Promise<string> {
         const nextWeek = new Date();
         nextWeek.setDate(nextWeek.getDate() + 7);
-        const calendar = google.calendar({
-            version: 'v3',
-            auth: client
-        });
-        const res = await calendar.events.list({
+        const url = buildCalendarURL({
             calendarId: newCalendarId,
-            timeMin: (new Date()).toISOString(),
-            timeMax: nextWeek.toISOString(),
-            singleEvents: true,
+            timeMin: new Date(),
+            timeMax: nextWeek,
+            apiKey: calendarExtensionConfig.YABOB_GOOGLE_API_KEY
         });
-        return res.data.summary ?? '';
+
+        const response = await fetch(url);
+        if (response.status !== 200){
+            return Promise.reject();
+        }
+        const responseJSON = response.json();
+
+        return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
     }
 }
 
