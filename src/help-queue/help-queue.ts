@@ -27,7 +27,7 @@ class HelpQueueV2 {
     private isOpen = false;
     private readonly display: QueueDisplayV2;
 
-    public intervalID?: NodeJS.Timer;
+    public intervalID!: NodeJS.Timer;
 
     /**
      * @param user YABOB's user object for QueueDisplay

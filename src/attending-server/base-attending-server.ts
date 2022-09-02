@@ -39,7 +39,7 @@ class AttendingServerV2 {
 
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
-    public intervalID?: NodeJS.Timer;
+    public intervalID!: NodeJS.Timer;
 
     protected constructor(
         public readonly user: User,
@@ -59,10 +59,8 @@ class AttendingServerV2 {
 
     clearAllIntervals(): void {
         // Types are ignored here b/c TS doesn't recognize the Timout overload for clearInterval
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        clearInterval(this.intervalID!);
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.queues.forEach(queue => clearInterval(queue.intervalID!));
+        clearInterval(this.intervalID);
+        this.queues.forEach(queue => clearInterval(queue.intervalID));
     }
 
     /**
