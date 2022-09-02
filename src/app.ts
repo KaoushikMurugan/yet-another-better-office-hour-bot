@@ -153,6 +153,9 @@ client.on("guildMemberAdd", async member => {
  * Once YABOB has the highest role, start the initialization call
  */
 client.on("roleUpdate", async role => {
+    if (serversV2.has(role.guild.id)) {
+        return;
+    }
     if (role.name === client.user?.username &&
         role.guild.roles.highest.name === client.user.username) {
         console.log(
