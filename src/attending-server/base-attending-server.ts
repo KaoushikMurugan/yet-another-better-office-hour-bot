@@ -79,7 +79,7 @@ class AttendingServerV2 {
                     `Sorry, I need full administrator permission for "${guild.name}"`,
                     EmbedColor.Error));
             await guild.leave();
-            throw Error("YABOB doesn't have admin permission.");
+            return Promise.reject(Error("YABOB doesn't have admin permission."));
         }
         if (guild.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
             const owner = await guild.fetchOwner();
@@ -89,7 +89,7 @@ class AttendingServerV2 {
                     `Please go to server settings -> Roles and change ${user.username} ` +
                     `to the highest role.\n`,
                     EmbedColor.Error));
-            throw Error("YABOB doesn't have highest role.");
+            return Promise.reject(Error("YABOB doesn't have highest role."));
         }
 
         // Load ServerExtensions here
@@ -104,7 +104,10 @@ class AttendingServerV2 {
         );
         const externalServerData = externalBackup.find(backup => backup !== undefined);
         if (externalServerData !== undefined) {
-            console.log(`${FgCyan}Found external backup for ${guild.name}. Restoring...${ResetColor}`);
+            console.log(
+                `${FgCyan}Found external backup for ${guild.name}.` +
+                ` Restoring...${ResetColor}`
+            );
         }
 
         const server = new AttendingServerV2(

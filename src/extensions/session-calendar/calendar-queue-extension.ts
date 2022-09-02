@@ -118,8 +118,12 @@ async function getUpComingTutoringEvents(
         timeMin: new Date(),
         timeMax: nextWeek
     });
-    const response = await (await fetch(calendarUrl)).json();
-    const events = (response as calendar_v3.Schema$Events).items;
+    const response = await fetch(calendarUrl);
+    if (response.status !== 200) {
+        return Promise.reject('Calendar request failed.');
+    }
+    const responseJSON = await response.json();
+    const events = (responseJSON as calendar_v3.Schema$Events).items;
     if (!events || events.length === 0) {
         console.log('No upcoming events found.');
         return [];

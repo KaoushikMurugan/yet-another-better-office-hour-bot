@@ -36,7 +36,7 @@ class AttendanceExtension extends BaseServerExtension {
         await attendanceDoc.useServiceAccountAuth(gcs_creds);
         await attendanceDoc.loadInfo().catch(() => {
             return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Failed to load google sheet. ` +
+                `${FgRed}Failed to load google sheet for ${serverName}. ` +
                 `Google sheets rejected our connection.${ResetColor}`
             ));
         });

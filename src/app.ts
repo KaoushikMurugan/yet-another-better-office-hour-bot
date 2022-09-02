@@ -1,8 +1,5 @@
-// Library Imports
-import { Client, Guild, Intents } from "discord.js";
-// Credentials
 import dotenv from "dotenv";
-// Local imports
+import { Client, Guild, Intents, Collection } from "discord.js";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
@@ -41,8 +38,8 @@ const client = new Client({
 });
 
 // key is Guild.id
-const serversV2: Map<string, AttendingServerV2> = new Map();
-const interactionExtensions: IInteractionExtension[] = [];
+const serversV2: Collection<string, AttendingServerV2> = new Collection();
+const interactionExtensions: Collection<string, IInteractionExtension[]> = new Collection();
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -68,14 +65,21 @@ client.on("ready", async () => {
     console.log("Scanning servers I am a part of...");
 
     // allGuilds is all the servers this YABOB instance has joined
-    const allGuilds = await Promise
-        .all((await client.guilds.fetch()).map(guild => guild.fetch()));
+    const allGuilds = await Promise.all(
+        (await client.guilds.fetch()).map(guild => guild.fetch())
+    );
 
     // Launch all startup sequences in parallel
-    await Promise.all(
-        allGuilds.map(guild => joinGuild(guild)
-            .catch(() => console.error(`${FgRed}Please give me the highest role.${ResetColor}`)
-            )));
+    const setupResult = await Promise.allSettled(allGuilds.map(guild => joinGuild(guild)));
+    setupResult.forEach(result =>
+        result.status === 'rejected' &&
+        console.log(`${result.reason}`)
+    );
+
+    if (setupResult.filter(res => res.status === 'fulfilled').length === 0) {
+        console.error('All server setups failed. Aborting.');
+        process.exit(1);
+    }
 
     console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
     console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
@@ -120,9 +124,9 @@ client.on("interactionCreate", async interaction => {
         if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
             await builtinCommandHandler.process(interaction);
         } else {
-            const externalCommandHandler = interactionExtensions.find(
-                ext => ext.commandMethodMap.has(interaction.commandName)
-            );
+            const externalCommandHandler = interactionExtensions
+                .get(interaction.guild?.id ?? '')
+                ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
             await externalCommandHandler?.processCommand(interaction);
         }
     }
@@ -133,9 +137,9 @@ client.on("interactionCreate", async interaction => {
         if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
             await builtinButtonHandler.process(interaction);
         } else {
-            const externalButtonHandler = interactionExtensions.find(
-                ext => ext.commandMethodMap.has(buttonName)
-            );
+            const externalButtonHandler = interactionExtensions
+                .get(interaction.guild?.id ?? '')
+                ?.find(ext => ext.commandMethodMap.has(buttonName));
             await externalButtonHandler?.processButton(interaction);
         }
     }
@@ -201,12 +205,13 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     serversV2.set(guild.id, server);
-    interactionExtensions.push(new CalendarCommandExtension(guild));
+    interactionExtensions.set(guild.id, [new CalendarCommandExtension(guild)]);
 
     await postSlashCommands(
         guild,
         interactionExtensions
-            .flatMap(extension => extension.slashCommandData)
+            .get(guild.id)
+            ?.flatMap(ext => ext.slashCommandData)
     );
     return server;
 }
