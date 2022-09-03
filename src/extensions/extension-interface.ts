@@ -7,7 +7,7 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
-import { ButtonInteraction, CacheType, CommandInteraction, Guild } from "discord.js";
+import { ButtonInteraction, CommandInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";

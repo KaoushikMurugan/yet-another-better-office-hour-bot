@@ -266,6 +266,7 @@ class AttendingServerV2 {
             .find(role => role.name === parentCategory.name)
             ?.delete();
         // finally delete queue model
+        await Promise.all(this.serverExtensions.map(extension => extension.onQueueDelete(queue)));
         this.queues.delete(queueCategoryID);
     }
 
