@@ -1,6 +1,6 @@
 import { BaseInteractionExtension } from "../extension-interface";
-import { calendarExtensionConfig } from './calendar-config';
-import { CommandInteraction, Guild, GuildMember } from 'discord.js';
+import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
+import { ButtonInteraction, CacheType, CommandInteraction, Guild, GuildChannel, GuildMember } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -11,6 +11,7 @@ import {
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
+    isFromQueueChannelWithParent,
     isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
 import { getUpComingTutoringEvents, buildCalendarURL } from "./calendar-queue-extension";
@@ -69,7 +70,7 @@ class CalendarConnectionError extends Error {
     }
 }
 
-class CalendarCommandExtension extends BaseInteractionExtension {
+class CalendarInteractionExtension extends BaseInteractionExtension {
 
     constructor(private readonly guild: Guild) {
         super();
@@ -87,6 +88,15 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         ['make_calendar_string', (interaction: CommandInteraction) =>
             this.makeParsableCalendarTitle(interaction)]
     ]);
+
+    public override buttonMethodMap: ReadonlyMap<
+        string,
+        (interaction: ButtonInteraction, queueName: string) => Promise<string | void>
+    > = new Map([
+        ['refresh', (interaction: ButtonInteraction, queueName: string) =>
+            this.requestCalendarRefresh(interaction, queueName)]
+    ]);
+
 
     override get slashCommandData(): CommandData {
         return [
@@ -125,22 +135,67 @@ class CalendarCommandExtension extends BaseInteractionExtension {
                 ));
     }
 
-    private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
-        await isTriggeredByUserWithRoles(
-            interaction,
-            "set_calendar",
-            ['Bot Admin']
-        );
+    override async processButton(interaction: ButtonInteraction<CacheType>): Promise<void> {
+        await interaction.reply({
+            ...SimpleEmbed(
+                'Processing button...',
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
 
+        const delimiterPosition = interaction.customId.indexOf(" ");
+        const interactionName = interaction.customId.substring(0, delimiterPosition);
+        const queueName = interaction.customId.substring(delimiterPosition + 1);
+        const buttonMethod = this.buttonMethodMap.get(interactionName);
+
+        if (buttonMethod === undefined) {
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This external command does not exist.')
+            ));
+            return;
+        }
+
+        await buttonMethod(interaction, queueName)
+            // if the method didn't directly reply, the center handler replies
+            .then(async successMsg => successMsg &&
+                await interaction.editReply(
+                    SimpleEmbed(
+                        successMsg,
+                        EmbedColor.Success)
+                ))
+            .catch(async (err: UserViewableError) =>
+                await interaction.editReply(
+                    ErrorEmbed(err)
+                ));
+    }
+
+    private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
+        const interactionChannelName = (interaction.channel as GuildChannel).parent?.name;
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        const newCalendarName = await this.checkCalendarConnection(
-            newCalendarId
-        ).catch(() => Promise.reject(
-            new CalendarConnectionError('This new ID is not valid.')
-        ));
+        
+        const [queue, newCalendarName] = await Promise.all([
+            isFromQueueChannelWithParent(
+                interaction,
+                interactionChannelName ?? ''
+            ),
+            this.checkCalendarConnection(
+                newCalendarId
+            ).catch(() => Promise.reject(
+                new CalendarConnectionError('This new ID is not valid.')
+            )),
+            isTriggeredByUserWithRoles(
+                interaction,
+                "set_calendar",
+                ['Bot Admin']
+            )
+        ]);
 
         // runtime only. Will be resetted when YABOB restarts
         calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
+        await Promise.all(calendarExtensionStates.listeners.map(listener =>
+            listener.onCalendarExtensionStateChange(queue.queueName))
+        );
 
         return Promise.resolve(
             `Successfully changed to new calendar` +
@@ -148,7 +203,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "
             }` +
-            `The calendar embed will be refreshed on next queue periodic update.`
+            `The calendar embed will refresh soon.`
         );
     }
 
@@ -232,7 +287,18 @@ class CalendarCommandExtension extends BaseInteractionExtension {
         const responseJSON = await response.json();
         return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
     }
+
+    private async requestCalendarRefresh(
+        _interaction: ButtonInteraction,
+        queueName: string
+    ): Promise<string> {
+        await Promise.all(
+            calendarExtensionStates.listeners
+                .map(listener => listener.onCalendarExtensionStateChange(queueName))
+        );
+        return `Successfully refreshed upcoming hours for ${queueName}`;
+    }
 }
 
 
-export { CalendarCommandExtension };
+export { CalendarInteractionExtension };

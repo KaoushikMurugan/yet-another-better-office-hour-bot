@@ -85,7 +85,7 @@ async function hasValidQueueArgument(
  * ----
  */
 async function isFromQueueChannelWithParent(
-    interaction: ButtonInteraction,
+    interaction: ButtonInteraction | CommandInteraction,
     queueName: string
 ): Promise<QueueChannel> {
     if (interaction.channel?.type !== 'GUILD_TEXT' ||

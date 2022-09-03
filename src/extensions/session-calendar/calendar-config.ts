@@ -1,5 +1,7 @@
 // Please see the setup guide on how to find the following credentials.
 
+import { CalendarQueueExtension } from "./calendar-queue-extension";
+
 const calendarExtensionConfig = {
     // Put your calendar ID here.
     // It should end in calendar.google.com
@@ -8,5 +10,9 @@ const calendarExtensionConfig = {
     YABOB_GOOGLE_API_KEY: ""
 };
 
-export { calendarExtensionConfig };
+const calendarExtensionStates = {
+    listeners: new Array<CalendarQueueExtension>()
+};
+
+export { calendarExtensionConfig, calendarExtensionStates};
 

@@ -9,7 +9,7 @@ import {
 } from './utils/command-line-colors';
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
-import { CalendarCommandExtension } from './extensions/session-calendar/calendar-command-extension';
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from "./extensions/extension-interface";
 
 dotenv.config();
@@ -142,7 +142,7 @@ client.on("interactionCreate", async interaction => {
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? '')
-                ?.find(ext => ext.commandMethodMap.has(buttonName));
+                ?.find(ext => ext.buttonMethodMap.has(buttonName));
             await externalButtonHandler?.processButton(interaction);
         }
     }
@@ -211,7 +211,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
     const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
     if (!disableExtension) {
-        interactionExtensions.set(guild.id, [new CalendarCommandExtension(guild)]);
+        interactionExtensions.set(guild.id, [new CalendarInteractionExtension(guild)]);
     }
 
     await postSlashCommands(

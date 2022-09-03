@@ -3,9 +3,10 @@ import { BaseQueueExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
-import { EmbedColor, SimpleEmbed } from '../../utils/embed-helper';
+import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
-import { calendarExtensionConfig } from './calendar-config';
+import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
+import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -13,7 +14,6 @@ type UpComingSessionViewModel = {
     end: Date;
     rawSummary: string;
     displayName: string;
-    discordID?: string;
     ecsClass: string;
 };
 
@@ -22,14 +22,15 @@ type UpComingSessionViewModel = {
  * - All instances read from the same calendar
  * - Each instance only looks for the class it's responsible for
 */
-class CalendarExtension extends BaseQueueExtension {
+class CalendarQueueExtension extends BaseQueueExtension {
 
-    private upcomingHours: UpComingSessionViewModel[] = []
+    private upcomingHours: UpComingSessionViewModel[] = [];
+    private display!: Readonly<QueueDisplayV2>; // will init on the 1st server-wide render
 
     private constructor(
         private readonly renderIndex: number,
+        private readonly queueName: string
     ) { super(); }
-
 
     /**
      * Initializes the calendar extension
@@ -40,18 +41,20 @@ class CalendarExtension extends BaseQueueExtension {
     static async load(
         renderIndex: number,
         queueName: string
-    ): Promise<CalendarExtension> {
+    ): Promise<CalendarQueueExtension> {
         if (calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID === undefined) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}Make sure you have Calendar ID ` +
                 `& API key in calendar-config.ts.${ResetColor}`
             ));
         }
-        const instance = new CalendarExtension(
-            renderIndex
+        const instance = new CalendarQueueExtension(
+            renderIndex,
+            queueName
         );
         await getUpComingTutoringEvents(queueName)
             .catch(() => Promise.reject((`Failed to load calendar extension.`)));
+        calendarExtensionStates.listeners.push(instance);
         return instance;
     }
 
@@ -79,24 +82,76 @@ class CalendarExtension extends BaseQueueExtension {
         display: Readonly<QueueDisplayV2>,
         isClenupRender = false
     ): Promise<void> {
-        const embed = SimpleEmbed(
-            `Upcoming Hours for ${queue.name}`,
-            EmbedColor.NoColor,
-            this.upcomingHours.length > 0
-                ? this.upcomingHours
-                    .map(viewModel => `**${viewModel.displayName}**\t|\t` +
-                        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
-                        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                    .join('\n')
-                : `There are no upcoming sessions for ${queue.name} in the next 7 days.`
-        );
+        const upcomingHoursEmbed = new MessageEmbed()
+            .setTitle(`Upcoming Hours for ${queue.name}`)
+            .setDescription(
+                this.upcomingHours.length > 0
+                    ? this.upcomingHours
+                        .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                            `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
+                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
+                        .join('\n')
+                    : `There are no upcoming sessions for ${queue.name} in the next 7 days.`
+            )
+            .setColor(EmbedColor.NoColor);
+
+        const refreshButton = new MessageActionRow()
+            .addComponents(
+                new MessageButton()
+                    .setCustomId("refresh " + queue.name)
+                    .setEmoji("🔄")
+                    .setLabel("Refresh Upcoming Hours")
+                    .setStyle("PRIMARY")
+            );
+
         await display.renderNonQueueEmbeds(
-            embed,
+            {
+                embeds: [upcomingHoursEmbed],
+                components: [refreshButton]
+            },
             this.renderIndex,
             isClenupRender
         );
+        // a bit ugly, but that's the only way we can get the display object for now
+        this.display = display; 
     }
 
+    async onCalendarExtensionStateChange(targetQueueName: string): Promise<void> {
+        if (targetQueueName !== this.queueName) {
+            return;
+        }
+        this.upcomingHours = await getUpComingTutoringEvents(targetQueueName);
+        const upcomingHoursEmbed = new MessageEmbed()
+            .setTitle(`Upcoming Hours for ${targetQueueName}`)
+            .setDescription(
+                this.upcomingHours.length > 0
+                    ? this.upcomingHours
+                        .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                            `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
+                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
+                        .join('\n')
+                    : `There are no upcoming sessions for ${targetQueueName} in the next 7 days.`
+            )
+            .setColor(EmbedColor.NoColor);
+
+        const refreshButton = new MessageActionRow()
+            .addComponents(
+                new MessageButton()
+                    .setCustomId("refresh " + targetQueueName)
+                    .setEmoji("🔄")
+                    .setLabel("Refresh Upcoming Hours")
+                    .setStyle("PRIMARY")
+            );
+
+        await this.display.renderNonQueueEmbeds(
+            {
+                embeds: [upcomingHoursEmbed],
+                components: [refreshButton]
+            },
+            this.renderIndex,
+            false // use false here, otherwise 2 messages will be sent
+        );
+    }
 }
 
 /**
@@ -217,4 +272,4 @@ function buildCalendarURL(args: {
 }
 
 
-export { CalendarExtension, getUpComingTutoringEvents, buildCalendarURL };
+export { CalendarQueueExtension, getUpComingTutoringEvents, buildCalendarURL };

@@ -106,7 +106,7 @@ class QueueDisplayV2 {
     }
 
     async renderNonQueueEmbeds(
-        embeds: Pick<MessageOptions, "embeds">,
+        embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
         renderIndex: number,
         cleanUp = false
     ): Promise<void> {
@@ -129,12 +129,12 @@ class QueueDisplayV2 {
         }
 
         if (sendNew) {
-            await this.queueChannel.channelObj.send(embeds);
+            await this.queueChannel.channelObj.send(embedElements);
             this.nonQueueEmbedReadyStates.set(renderIndex, true);
         } else {
             await this.queueChannel.channelObj.messages.cache
                 .first(renderIndex + 1)[renderIndex]
-                ?.edit(embeds);
+                ?.edit(embedElements);
         }
     }
 
