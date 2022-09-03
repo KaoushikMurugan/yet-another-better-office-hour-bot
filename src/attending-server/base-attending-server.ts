@@ -92,17 +92,23 @@ class AttendingServerV2 {
             return Promise.reject(Error("YABOB doesn't have highest role."));
         }
 
+        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
+
         // Load ServerExtensions here
-        const serverExtensions = await Promise.all([
-            AttendanceExtension.load(guild.name),
-            FirebaseLoggingExtension.load(guild.name, guild.id)
-        ]);
+        const serverExtensions = disableExtensions
+            ? []
+            : await Promise.all([
+                AttendanceExtension.load(guild.name),
+                FirebaseLoggingExtension.load(guild.name, guild.id)
+            ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
-        const externalBackup = await Promise.all(
-            serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
-        );
-        const externalServerData = externalBackup.find(backup => backup !== undefined);
+        const externalBackup = disableExtensions
+            ? undefined
+            : await Promise.all(
+                serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
+            );
+        const externalServerData = externalBackup?.find(backup => backup !== undefined);
         if (externalServerData !== undefined) {
             console.log(
                 `${FgCyan}Found external backup for ${guild.name}.` +
@@ -588,7 +594,12 @@ class AttendingServerV2 {
                         backup.parentCategoryId === channel.parentCategoryId)
                 )))
         );
-        console.log(`All queues in '${this.guild.name}' successfully created with their extensions!`);
+        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
+        console.log(`All queues in '${this.guild.name}' successfully created` +
+            `${disableExtensions
+                ? ''
+                : " with their extensions"}!`
+        );
         await Promise.all(this.serverExtensions.map(
             extension => extension.onAllQueueInit([...this.queues.values()])
         ));
