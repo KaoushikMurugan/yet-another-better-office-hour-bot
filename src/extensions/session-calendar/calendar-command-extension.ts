@@ -10,7 +10,7 @@ import {
 } from "../../utils/error-types";
 import { CommandData } from '../../command-handling/slash-commands';
 import {
-    isValidQueueInteraction,
+    hasValidQueueArgument,
     isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
 import { getUpComingTutoringEvents, buildCalendarURL } from "./calendar-queue-extension";
@@ -153,7 +153,7 @@ class CalendarCommandExtension extends BaseInteractionExtension {
     }
 
     private async listUpComingHours(interaction: CommandInteraction): Promise<void> {
-        const channel = await isValidQueueInteraction(interaction);
+        const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
             channel.queueName
         );

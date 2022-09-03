@@ -1,16 +1,16 @@
-import {
-    CommandInteraction,
-    GuildChannel,
-    GuildMember,
-    TextChannel
-} from "discord.js";
-import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { CommandInteraction, GuildChannel } from "discord.js";
+import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
 } from '../utils/error-types';
+import {
+    isTriggeredByUserWithRoles,
+    isTriggeredByUserWithValidEmail,
+    hasValidQueueArgument
+} from './common-validations';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -93,7 +93,7 @@ class CentralCommandDispatcher {
     private async queue(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 `queue ${interaction.options.getSubcommand()}`,
                 ['Bot Admin'])
@@ -107,7 +107,7 @@ class CentralCommandDispatcher {
                 return `Successfully created \`${queueName}\`.`;
             }
             case "remove": {
-                const targetQueue = await this.isValidQueueInteraction(interaction, true);
+                const targetQueue = await hasValidQueueArgument(interaction, true);
                 if ((interaction.channel as GuildChannel).parent?.id ===
                     targetQueue.parentCategoryId) {
                     return Promise.reject(new CommandParseError(
@@ -129,8 +129,8 @@ class CentralCommandDispatcher {
     private async enqueue(interaction: CommandInteraction): Promise<string> {
         const [serverId, queueChannel, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isValidQueueInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "enqueue"),
+            hasValidQueueArgument(interaction),
+            isTriggeredByUserWithValidEmail(interaction, "enqueue"),
         ]);
         await this.serverMap.get(serverId)?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueChannel.queueName}\`.`;
@@ -139,11 +139,11 @@ class CentralCommandDispatcher {
     private async next(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 "next",
                 ['Bot Admin', 'Staff']),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 "next"
             ),
@@ -155,11 +155,11 @@ class CentralCommandDispatcher {
     private async start(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 "start",
                 ['Bot Admin', 'Staff']),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 "start"
             ),
@@ -172,11 +172,11 @@ class CentralCommandDispatcher {
     private async stop(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 "stop",
                 ['Bot Admin', 'Staff']),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 "stop"
             ),
@@ -198,11 +198,11 @@ class CentralCommandDispatcher {
     private async leave(interaction: CommandInteraction): Promise<string> {
         const [serverId, member, queue] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 "leave"
             ),
-            this.isValidQueueInteraction(interaction)
+            hasValidQueueArgument(interaction)
         ]);
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
         return `You have successfully left from queue ${queue.queueName}.`;
@@ -211,13 +211,13 @@ class CentralCommandDispatcher {
     private async clear(interaction: CommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isValidQueueInteraction(interaction, true),
-            this.isTriggeredByUserWithRoles(
+            hasValidQueueArgument(interaction, true),
+            isTriggeredByUserWithRoles(
                 interaction,
                 "clear",
                 ['Bot Admin', 'Staff']
             ),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 "clear"
             ),
@@ -240,12 +240,12 @@ class CentralCommandDispatcher {
     private async announce(interaction: CommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 'announce',
                 ['Bot Admin', 'Staff']
             ),
-            this.isTriggeredByUserWithValidEmail(
+            isTriggeredByUserWithValidEmail(
                 interaction,
                 'announce'
             ),
@@ -253,7 +253,7 @@ class CentralCommandDispatcher {
         const announcement = interaction.options.getString("message", true);
         const optionalChannel = interaction.options.getChannel("queue_name", false);
         if (optionalChannel) {
-            const queueChannel = await this.isValidQueueInteraction(interaction);
+            const queueChannel = await hasValidQueueArgument(interaction);
             await this.serverMap.get(serverId)
                 ?.announceToStudentsInQueue(member, announcement, queueChannel);
         } else {
@@ -266,8 +266,8 @@ class CentralCommandDispatcher {
     private async cleanup(interaction: CommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isValidQueueInteraction(interaction, true),
-            this.isTriggeredByUserWithRoles(
+            hasValidQueueArgument(interaction, true),
+            isTriggeredByUserWithRoles(
                 interaction,
                 'cleanup',
                 ['Bot Admin']
@@ -280,7 +280,7 @@ class CentralCommandDispatcher {
     private async cleanupHelpChannel(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithRoles(
+            isTriggeredByUserWithRoles(
                 interaction,
                 'cleanup_help_channel',
                 ['Bot Admin']
@@ -291,20 +291,8 @@ class CentralCommandDispatcher {
     }
 
     /**
-     * Below are the validation functions
-     * - @returns Promise<validatedValueType> if the check passed
-     * - @returns Promise.reject(new CommandParseError(errMsg)) if something fails
-     * 
-     * Usage Example:
-     * - const [serverId] = await Promise.all([
-     *      this.isServerInteraction(...),
-     *      this.isTriggeredByStaffOrAdmin(...)
-     * ]);
-     * - Place the non void promises at the front for cleaner syntax
-    */
-
-    /**
      * Checks if the command came from a server with correctly initialized YABOB
+     * Each handler will have their own isServerInteraction method
      * ----
      * @returns string: the server id
     */
@@ -319,87 +307,6 @@ class CentralCommandDispatcher {
         } else {
             return serverId;
         }
-    }
-
-    /**
-     * Checks if the triggerer has all the required roles
-     * ----
-     * @param commandName the command used
-     * @param requiredRoles the roles to check, roles have OR relationship
-     * @returns GuildMember: object of the triggerer
-    */
-    private async isTriggeredByUserWithRoles(
-        interaction: CommandInteraction,
-        commandName: string,
-        requiredRoles: string[]
-    ): Promise<GuildMember> {
-        const userRoles = (await (interaction.member as GuildMember)?.fetch())
-            .roles.cache.map(role => role.name);
-        if (!(interaction.member instanceof GuildMember &&
-            (userRoles.some(role => requiredRoles.includes(role))))) {
-            return Promise.reject(new CommandParseError(
-                `You need to have: [${requiredRoles.join(' or ')}] to use \`/${commandName}\`.`
-            ));
-        }
-        return interaction.member as GuildMember;
-    }
-
-    /**
-     * Checks if the user has the Valid Email role
-     * ----
-     * @param commandName the command used
-     * @returns GuildMember: object of the triggerer
-    */
-    private async isTriggeredByUserWithValidEmail(
-        interaction: CommandInteraction,
-        commandName: string
-    ): Promise<GuildMember> {
-        const roles = (await (interaction.member as GuildMember)?.fetch())
-            .roles.cache.map(role => role.name);
-        if (!(interaction.member instanceof GuildMember &&
-            roles.includes('Verified Email'))) {
-            return Promise.reject(new CommandParseError(
-                `You need to have a verified email to use \`/${commandName}\`.`
-            ));
-        }
-        return interaction.member as GuildMember;
-    }
-
-    /**
-     * Checks if the queue_name argument is given
-     * If not, use the parent of the channel where the command was used
-     * ----
-     * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
-     * */
-    private async isValidQueueInteraction(
-        interaction: CommandInteraction,
-        required = false
-    ): Promise<QueueChannel> {
-        const parentCategory = interaction.options.getChannel("queue_name", required) ??
-            (interaction.channel as GuildChannel).parent;
-        // null check is done here by optional property access
-        if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {
-            return Promise.reject(new CommandParseError(
-                `\`${parentCategory?.name}\` is not a valid queue category.`
-            ));
-        }
-        const queueTextChannel = parentCategory.children
-            .find(child =>
-                child.name === 'queue' &&
-                child.type === 'GUILD_TEXT');
-        if (queueTextChannel === undefined) {
-            return Promise.reject(new CommandParseError(
-                `'${parentCategory.name}' does not have a \`#queue\` text channel.\n` +
-                `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
-                `to generate one.`
-            ));
-        }
-        const queueChannel: QueueChannel = {
-            channelObj: queueTextChannel as TextChannel,
-            queueName: parentCategory.name,
-            parentCategoryId: parentCategory.id
-        };
-        return queueChannel;
     }
 }
 
