@@ -1,16 +1,12 @@
 
-<div>
+
 <div align="center">
+
+<h1 style="font-size: 5em">
 <img src="https://i.postimg.cc/dVkg4XFf/BOB-pfp.png" width = "50px">&nbsp;
-<span style="font-size: 5em">
-$\Huge\textsf{YABOB  V4.0}$ 
-</span>
-<br>
-<span style="font-size: 2.5em">
-    <i>Yet Another Better Office-hours Bot</i>
-</span>
-</div>
-<br>
+$\Huge{\textsf{YABOB  V4.0}}$ $\hspace{0.5em}\textsf{Yet Another Better Office-hours Bot}$
+</h1>
+
 </div>
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
