@@ -141,7 +141,7 @@ const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
 const cleanupQueue = new SlashCommandBuilder()
     .setName("cleanup")
     .setDescription(
-        "Debug feature: Forces updates of the queue and the schedule messages in all #queue channel"
+        "Debug feature: Forces updates of embed in all #queue channels"
     )
     .addChannelOption((option) =>
         option
@@ -150,6 +150,11 @@ const cleanupQueue = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+const cleanupHelpChannelCommand = new SlashCommandBuilder()
+    .setName("cleanup_help_ch")
+    .setDescription(
+        "Debug feature: Force updates the command help channels"
+    );
 
 // Get the raw data that can be sent to Discord
 const commandData = [
@@ -162,7 +167,8 @@ const commandData = [
     clearCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
-    cleanupQueue.toJSON()
+    cleanupQueue.toJSON(),
+    cleanupHelpChannelCommand.toJSON()
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {

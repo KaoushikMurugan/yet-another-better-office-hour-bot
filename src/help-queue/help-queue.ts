@@ -150,7 +150,7 @@ class HelpQueueV2 {
      * Open a queue with a helper
      * ----
      * @param helperMember member with Staff/Admin that used /start
-     * @param notify notify everyone in the notif group
+     * @param notify whether to notify everyone in the notif group
      * @throws QueueError: do nothing if helperMemeber is already helping
     */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
@@ -172,7 +172,7 @@ class HelpQueueV2 {
             notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notifMember.send(
                 SimpleEmbed(`Queue \`${this.name}\` is open!`)
-            )),
+            ).then(() => this.notifGroup.delete(notifMember.id))),
             this.queueExtensions.map(extension => extension.onQueueOpen(this))
         ]);
         await this.triggerRender();

@@ -1,16 +1,16 @@
-import { CommandInteraction, GuildMember, GuildChannel, TextChannel } from "discord.js";
+import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from "discord.js";
 import { QueueChannel } from "../attending-server/base-attending-server";
 import { CommandParseError } from "../utils/error-types";
 
 /**
- * Checks if the triggerer has all the required roles
+ * Checks if the triggerer has the required roles
  * ----
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember: object of the triggerer
 */
 async function isTriggeredByUserWithRoles(
-    interaction: CommandInteraction,
+    interaction: CommandInteraction | ButtonInteraction,
     commandName: string,
     requiredRoles: string[]
 ): Promise<GuildMember> {
@@ -31,7 +31,7 @@ async function isTriggeredByUserWithRoles(
  * @returns GuildMember: object of the triggerer
 */
 async function isTriggeredByUserWithValidEmail(
-    interaction: CommandInteraction,
+    interaction: CommandInteraction | ButtonInteraction,
     commandName: string
 ): Promise<GuildMember> {
     const roles = (await (interaction.member as GuildMember)?.fetch())
@@ -48,9 +48,10 @@ async function isTriggeredByUserWithValidEmail(
  * Checks if the queue_name argument is given
  * If not, use the parent of the channel where the command was used
  * ----
+ * @param required if true, check if the command arg is a valid queue category
  * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
  * */
-async function isValidQueueInteraction(
+async function hasValidQueueArgument(
     interaction: CommandInteraction,
     required = false
 ): Promise<QueueChannel> {
@@ -79,8 +80,33 @@ async function isValidQueueInteraction(
     return queueChannel;
 }
 
+/**
+ *  Checks if the queue channel has a parent folder
+ * ----
+ */
+async function isFromQueueChannelWithParent(
+    interaction: ButtonInteraction,
+    queueName: string
+): Promise<QueueChannel> {
+    if (interaction.channel?.type !== 'GUILD_TEXT' ||
+        interaction.channel.parent === null) {
+        return Promise.reject(new CommandParseError(
+            'Invalid button press / Command. ' +
+            'Make sure this channel has a parent category.'
+        ));
+    }
+
+    const queueChannel: QueueChannel = {
+        channelObj: interaction.channel as TextChannel,
+        queueName: queueName,
+        parentCategoryId: interaction.channel.parent.id
+    };
+    return Promise.resolve(queueChannel);
+}
+
 export {
     isTriggeredByUserWithRoles,
-    isValidQueueInteraction,
-    isTriggeredByUserWithValidEmail
+    hasValidQueueArgument,
+    isTriggeredByUserWithValidEmail,
+    isFromQueueChannelWithParent
 };

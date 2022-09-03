@@ -146,7 +146,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Gets all the queue channels on the server
+     * Gets all the queue channels on the server. SLOW
      * ----
      * if nothing is found, returns empty array
      * @param useCache whether to read from existing cache, defaults to true
@@ -198,38 +198,42 @@ class AttendingServerV2 {
     /**
      * Creates a new OH queue
      * ----
-     * @param name name for this class/queue
+     * @param newQueueName name for this class/queue
      * @throws ServerError: if a queue with the same name already exists
     */
-    async createQueue(name: string): Promise<void> {
-        const existingQueues = await this.getQueueChannels();
-        const existQueueWithSameName = existingQueues
-            .find(queue => queue.queueName === name)
-            !== undefined;
-
-        if (existQueueWithSameName) {
+    async createQueue(newQueueName: string): Promise<void> {
+        const existingQueues = this.queues.find(queue => queue.name === newQueueName);
+        if (existingQueues !== undefined) {
             return Promise.reject(new ServerError(
-                `Queue ${name} already exists`));
+                `Queue ${newQueueName} already exists`));
         }
 
         const parentCategory = await this.guild.channels.create(
-            name,
+            newQueueName,
             { type: "GUILD_CATEGORY" }
         );
+
+        const [queueTextChannel] = await Promise.all([
+            parentCategory.createChannel('queue'),
+            parentCategory.createChannel('chat')
+        ]);
+
         const queueChannel: QueueChannel = {
-            channelObj: await parentCategory.createChannel('queue'),
-            queueName: name,
+            channelObj: queueTextChannel,
+            queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
 
-        await parentCategory.createChannel('chat');
-        await this.createClassRoles();
+        const [helpQueue] = await Promise.all([
+            HelpQueueV2.create(
+                queueChannel,
+                this.user,
+                this.guild.roles.everyone
+            ),
+            this.createClassRoles()
+        ]);
 
-        this.queues.set(parentCategory.id, await HelpQueueV2.create(
-            queueChannel,
-            this.user,
-            this.guild.roles.everyone
-        ));
+        this.queues.set(parentCategory.id, helpQueue);
     }
 
     /**
@@ -282,7 +286,7 @@ class AttendingServerV2 {
         queue: QueueChannel
     ): Promise<void> {
         await this.queues
-            .find(q => q.channelObj.id === queue.channelObj.id)
+            .get(queue.parentCategoryId)
             ?.enqueue(studentMember);
     }
 
@@ -305,9 +309,7 @@ class AttendingServerV2 {
                     + `\`${specificQueue.queueName}\`.`
                 ));
             }
-            this.queues
-                .find(queue => queue.name === specificQueue.queueName)
-                ?.dequeueWithHelper(helperMember);
+            this.queues.get(specificQueue.parentCategoryId)?.dequeueWithHelper(helperMember);
         }
         const currentlyHelpingChannels = this.queues
             .filter(queue => queue.helperIDs.has(helperMember.id));
@@ -439,33 +441,33 @@ class AttendingServerV2 {
         studentMember: GuildMember,
         targetQueue: QueueChannel
     ): Promise<void> {
-        const queueToRemoveFrom = this.queues
-            .find(queue => queue.name === targetQueue.queueName);
-        await queueToRemoveFrom?.removeStudent(studentMember);
+        await this.queues
+            .get(targetQueue.parentCategoryId)
+            ?.removeStudent(studentMember);
     }
 
     async clearQueue(targetQueue: QueueChannel): Promise<void> {
-        const queueToClear = this.queues
-            .find(queue => queue.name === targetQueue.queueName);
-        await queueToClear?.removeAllStudents();
+        await this.queues
+            .get(targetQueue.parentCategoryId)
+            ?.removeAllStudents();
     }
 
     async addStudentToNotifGroup(
         studentMember: GuildMember,
         targetQueue: QueueChannel
     ): Promise<void> {
-        const queueToJoinNotif = this.helpQueues
-            .find(queue => queue.name === targetQueue.queueName);
-        await queueToJoinNotif?.addToNotifGroup(studentMember);
+        await this.queues
+            .get(targetQueue.parentCategoryId)
+            ?.addToNotifGroup(studentMember);
     }
 
     async removeStudentFromNotifGroup(
         studentMember: GuildMember,
         targetQueue: QueueChannel
     ): Promise<void> {
-        const queueToJoinNotif = this.helpQueues
-            .find(queue => queue.name === targetQueue.queueName);
-        await queueToJoinNotif?.removeFromNotifGroup(studentMember);
+        await this.queues
+            .get(targetQueue.parentCategoryId)
+            ?.removeFromNotifGroup(studentMember);
     }
 
     async announceToStudentsInQueue(
@@ -475,11 +477,9 @@ class AttendingServerV2 {
     ): Promise<void> {
         if (targetQueue) {
             const queueToAnnounce = this.queues
-                .find(queue =>
-                    queue.name === targetQueue.queueName &&
-                    queue.helperIDs.has(helperMember.id)
-                );
-            if (queueToAnnounce === undefined) {
+                .get(targetQueue.parentCategoryId);
+            if (queueToAnnounce === undefined ||
+                !queueToAnnounce.helperIDs.has(helperMember.id)) {
                 return Promise.reject(new ServerError(
                     `You don't have permission to announce in ${targetQueue.queueName}. ` +
                     `Check your class roles.`
@@ -507,35 +507,9 @@ class AttendingServerV2 {
      * @param targetQueue the queue to clean
     */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        const queueToClean = this.queues
-            .find(queue => queue.name === targetQueue.queueName);
-        await queueToClean?.cleanUpQueueChannel();
-    }
-
-    /**
-     * Creates all the office hour queues
-     * ----
-     */
-    private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
-        if (this.queues.size !== 0) {
-            console.warn("Overriding existing queues.");
-        }
-        const queueChannels = await this.getQueueChannels();
-        await Promise.all(queueChannels
-            .map(async channel => this.queues.set(channel.parentCategoryId,
-                await HelpQueueV2.create(
-                    channel,
-                    this.user,
-                    this.guild.roles.everyone,
-                    // TODO: this is N^2, a bit slow
-                    queueBackups?.find(backup =>
-                        backup.parentCategoryId === channel.parentCategoryId)
-                )))
-        );
-        console.log(`All queues in '${this.guild.name}' successfully created with their extensions!`);
-        await Promise.all(this.serverExtensions.map(
-            extension => extension.onAllQueueInit([...this.queues.values()])
-        ));
+        await this.queues
+            .get(targetQueue.parentCategoryId)
+            ?.cleanUpQueueChannel();
     }
 
     /**
@@ -543,7 +517,7 @@ class AttendingServerV2 {
      * ----
      * Removes all messages in the help channel and posts new ones
     */
-    private async updateCommandHelpChannels(): Promise<void> {
+    async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
             .filter(
@@ -592,6 +566,32 @@ class AttendingServerV2 {
         }
 
         await this.sendCommandHelpMessages(existingHelpCategory);
+    }
+
+    /**
+         * Creates all the office hour queues
+         * ----
+         */
+    private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
+        if (this.queues.size !== 0) {
+            console.warn("Overriding existing queues.");
+        }
+        const queueChannels = await this.getQueueChannels();
+        await Promise.all(queueChannels
+            .map(async channel => this.queues.set(channel.parentCategoryId,
+                await HelpQueueV2.create(
+                    channel,
+                    this.user,
+                    this.guild.roles.everyone,
+                    // TODO: this is N^2, a bit slow
+                    queueBackups?.find(backup =>
+                        backup.parentCategoryId === channel.parentCategoryId)
+                )))
+        );
+        console.log(`All queues in '${this.guild.name}' successfully created with their extensions!`);
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onAllQueueInit([...this.queues.values()])
+        ));
     }
 
     /**

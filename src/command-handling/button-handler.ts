@@ -1,5 +1,5 @@
-import { ButtonInteraction, GuildMember, TextChannel } from "discord.js";
-import { AttendingServerV2, QueueChannel } from "../attending-server/base-attending-server";
+import { ButtonInteraction } from "discord.js";
+import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
 import {
@@ -7,7 +7,10 @@ import {
     CommandNotImplementedError,
     UserViewableError
 } from "../utils/error-types";
-
+import {
+    isFromQueueChannelWithParent,
+    isTriggeredByUserWithValidEmail
+} from './common-validations';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -47,7 +50,7 @@ class ButtonCommandDispatcher {
         const buttonMethod = this.buttonMethodMap.get(interactionName);
         if (buttonMethod !== undefined) {
             console.log(
-                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
+                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
                 `used [${interactionName}] ` +
                 `in queue: ${queueName}.`
@@ -75,8 +78,8 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "Join"),
-            this.isFromQueueChannelWithParent(interaction, queueName)
+            isTriggeredByUserWithValidEmail(interaction, "Join"),
+            isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
         await this.serverMap.get(serverId)
@@ -90,8 +93,8 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "Leave"),
-            this.isFromQueueChannelWithParent(interaction, queueName)
+            isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
         await this.serverMap.get(serverId)
@@ -105,8 +108,8 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "JoinNotif"),
-            this.isFromQueueChannelWithParent(interaction, queueName)
+            isTriggeredByUserWithValidEmail(interaction, "JoinNotif"),
+            isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
         await this.serverMap.get(serverId)?.addStudentToNotifGroup(member, queueChannel);
@@ -119,8 +122,8 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            this.isTriggeredByUserWithValidEmail(interaction, "LeaveNotif"),
-            this.isFromQueueChannelWithParent(interaction, queueName)
+            isTriggeredByUserWithValidEmail(interaction, "LeaveNotif"),
+            isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
         await this.serverMap.get(serverId)?.removeStudentFromNotifGroup(member, queueChannel);
@@ -142,44 +145,6 @@ class ButtonCommandDispatcher {
             return serverId;
         }
     }
-
-    private async isTriggeredByUserWithValidEmail(
-        interaction: ButtonInteraction,
-        commandName: string
-    ): Promise<GuildMember> {
-        const roles = (await (interaction.member as GuildMember)?.fetch())
-            .roles.cache.map(role => role.name);
-        if (!(interaction.member instanceof GuildMember &&
-            roles.includes('Verified Email'))) {
-            return Promise.reject(new CommandParseError(
-                `You need to have a verified email to use button \`[${commandName}]\`.`));
-        }
-        return interaction.member as GuildMember;
-    }
-
-    /**
-     * Checks if the queue channel has a parent folder
-     * ----
-    */
-    private isFromQueueChannelWithParent(
-        interaction: ButtonInteraction,
-        queueName: string
-    ): Promise<QueueChannel> {
-        if (interaction.channel?.type !== 'GUILD_TEXT' ||
-            interaction.channel.parent === null) {
-            return Promise.reject(new CommandParseError(
-                'Invalid button press. ' +
-                'Make sure this channel has a parent category.'
-            ));
-        }
-        const queueChannel: QueueChannel = {
-            channelObj: interaction.channel as TextChannel,
-            queueName: queueName,
-            parentCategoryId: interaction.channel.parent.id
-        };
-        return Promise.resolve(queueChannel);
-    }
-
 }
 
 export { ButtonCommandDispatcher };
