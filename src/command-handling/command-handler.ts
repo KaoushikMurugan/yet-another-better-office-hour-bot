@@ -40,7 +40,8 @@ class CentralCommandDispatcher {
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
         ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
-        ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)]
+        ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
+        ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -102,27 +103,21 @@ class CentralCommandDispatcher {
         switch (subcommand) {
             case "add": {
                 const queueName = interaction.options.getString("queue_name", true);
-                await this.serverMap.get(serverId)
-                    ?.createQueue(queueName);
+                await this.serverMap.get(serverId)?.createQueue(queueName);
                 return `Successfully created \`${queueName}\`.`;
             }
             case "remove": {
-                await this.isValidQueueInteraction(interaction, true);
-                const targetQueue = interaction.options.getChannel("queue_name", true);
-                if ((interaction.channel as GuildChannel).parent?.id === targetQueue.id) {
+                const targetQueue = await this.isValidQueueInteraction(interaction, true);
+                if ((interaction.channel as GuildChannel).parent?.id ===
+                    targetQueue.parentCategoryId) {
                     return Promise.reject(new CommandParseError(
                         `Please use the remove command in another channel.` +
                         ` Otherwise Discord API will reject.`
                     ));
                 }
-                if (targetQueue.type !== 'GUILD_CATEGORY') {
-                    return Promise.reject(new CommandParseError(
-                        `${targetQueue.name.toUpperCase()} is not a category channel.`
-                    ));
-                }
                 await this.serverMap.get(serverId)
-                    ?.deleteQueueById(targetQueue.id);
-                return `Successfully deleted \`${targetQueue.name}\`.`;
+                    ?.deleteQueueById(targetQueue.parentCategoryId);
+                return `Successfully deleted \`${targetQueue.queueName}\`.`;
             }
             default: {
                 return Promise.reject(new CommandParseError(
@@ -137,10 +132,7 @@ class CentralCommandDispatcher {
             this.isValidQueueInteraction(interaction),
             this.isTriggeredByUserWithValidEmail(interaction, "enqueue"),
         ]);
-
-        await this.serverMap
-            .get(serverId)
-            ?.enqueueStudent(member, queueChannel);
+        await this.serverMap.get(serverId)?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueChannel.queueName}\`.`;
     }
 
@@ -212,7 +204,6 @@ class CentralCommandDispatcher {
             ),
             this.isValidQueueInteraction(interaction)
         ]);
-
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
         return `You have successfully left from queue ${queue.queueName}.`;
     }
@@ -231,7 +222,6 @@ class CentralCommandDispatcher {
                 "clear"
             ),
         ]);
-
         await this.serverMap.get(serverId)?.clearQueue(queue);
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
@@ -285,6 +275,19 @@ class CentralCommandDispatcher {
         ]);
         await this.serverMap.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
+    }
+
+    private async cleanupHelpChannel(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            this.isTriggeredByUserWithRoles(
+                interaction,
+                'cleanup_help_channel',
+                ['Bot Admin']
+            )
+        ]);
+        await this.serverMap.get(serverId)?.updateCommandHelpChannels();
+        return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
     /**

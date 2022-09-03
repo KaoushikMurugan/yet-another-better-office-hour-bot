@@ -47,7 +47,7 @@ class ButtonCommandDispatcher {
         const buttonMethod = this.buttonMethodMap.get(interactionName);
         if (buttonMethod !== undefined) {
             console.log(
-                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
+                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
                 `used [${interactionName}] ` +
                 `in queue: ${queueName}.`
