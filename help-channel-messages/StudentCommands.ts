@@ -8,7 +8,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds"> = {
             title: 'Commands Available To Everyone (Admin, Helper, Student)',
             timestamp: new Date(),
             author: {
-                name: 'BOBv3',
+                name: 'YABOBv4',
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         },
