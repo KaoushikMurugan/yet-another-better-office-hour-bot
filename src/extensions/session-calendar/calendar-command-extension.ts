@@ -1,6 +1,10 @@
 import { BaseInteractionExtension } from "../extension-interface";
 import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
-import { ButtonInteraction, CacheType, CommandInteraction, Guild, GuildChannel, GuildMember } from 'discord.js';
+import {
+    ButtonInteraction,
+    CommandInteraction,
+    Guild, GuildMember
+} from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -11,11 +15,14 @@ import {
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isFromQueueChannelWithParent,
     isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
-import { getUpComingTutoringEvents, buildCalendarURL } from "./calendar-queue-extension";
+import {
+    getUpComingTutoringEvents,
+    buildCalendarURL
+} from "./calendar-queue-extension";
 import { calendar_v3 } from "googleapis";
+import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 
 const setCalendar = new SlashCommandBuilder()
@@ -76,7 +83,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         super();
     }
 
-    // I know this is verbose but TS gets angry if I don't write all this :(
+    // I know this is very verbose but TS gets angry if I don't write all this :(
     public override commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | void>
@@ -97,7 +104,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             this.requestCalendarRefresh(interaction, queueName)]
     ]);
 
-
     override get slashCommandData(): CommandData {
         return [
             setCalendar.toJSON(),
@@ -106,6 +112,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ];
     }
 
+    /**
+     * Button handler. Almost the same as the built in command-handler.ts
+    */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed(
@@ -121,6 +130,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ));
             return;
         }
+        console.log(
+            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
+            ` User ${interaction.user.username}` +
+            ` used ${interaction.toString()}`
+        );
         await commandMethod(interaction)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
@@ -135,7 +149,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ));
     }
 
-    override async processButton(interaction: ButtonInteraction<CacheType>): Promise<void> {
+    /**
+     * Button handler. Almost the same as the built in button-handler.ts
+    */
+    override async processButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed(
                 'Processing button...',
@@ -156,6 +173,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
 
+        console.log(
+            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+            `User ${interaction.user.username} ` +
+            `pressed [${interaction.customId}] `
+        );
+
         await buttonMethod(interaction, queueName)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
@@ -171,18 +194,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
-        const interactionChannelName = (interaction.channel as GuildChannel).parent?.name;
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        
-        const [queue, newCalendarName] = await Promise.all([
-            isFromQueueChannelWithParent(
-                interaction,
-                interactionChannelName ?? ''
-            ),
+        const [newCalendarName] = await Promise.all([
             this.checkCalendarConnection(
                 newCalendarId
             ).catch(() => Promise.reject(
-                new CalendarConnectionError('This new ID is not valid.')
+                new CalendarConnectionError('This new calendar ID is not valid.')
             )),
             isTriggeredByUserWithRoles(
                 interaction,
@@ -194,16 +211,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         // runtime only. Will be resetted when YABOB restarts
         calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
         await Promise.all(calendarExtensionStates.listeners.map(listener =>
-            listener.onCalendarExtensionStateChange(queue.queueName))
+            listener.onCalendarExtensionStateChange())
         );
 
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
                 ? ` '${newCalendarName}'. `
-                : ", but it doesn't have a name. "
-            }` +
-            `The calendar embed will refresh soon.`
+                : ", but it doesn't have a name. "}` +
+            `The calendar embed will refresh soon. ` +
+            `Or you can manually refresh it using the refresh button.`
         );
     }
 
@@ -292,10 +309,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         _interaction: ButtonInteraction,
         queueName: string
     ): Promise<string> {
-        await Promise.all(
-            calendarExtensionStates.listeners
-                .map(listener => listener.onCalendarExtensionStateChange(queueName))
-        );
+        await calendarExtensionStates.listeners
+            .get(queueName)
+            ?.onCalendarExtensionStateChange();
         return `Successfully refreshed upcoming hours for ${queueName}`;
     }
 }

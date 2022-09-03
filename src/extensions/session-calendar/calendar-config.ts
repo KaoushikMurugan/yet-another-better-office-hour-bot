@@ -1,5 +1,6 @@
 // Please see the setup guide on how to find the following credentials.
 
+import { Collection } from "discord.js";
 import { CalendarQueueExtension } from "./calendar-queue-extension";
 
 const calendarExtensionConfig = {
@@ -10,9 +11,17 @@ const calendarExtensionConfig = {
     YABOB_GOOGLE_API_KEY: ""
 };
 
+/**
+ * This manages the state of the calendar extension
+ * Calendar extension only need to worry about calendar switches, 
+ * so I didn't set up different event listeners.
+ * 
+ * If your extension is more sophisticated, you should set up different event listeners.
+ * Make sure to use hashmaps. O(n) is very slow for a network heavy application.
+ * */
 const calendarExtensionStates = {
-    listeners: new Array<CalendarQueueExtension>()
+    listeners: new Collection<string, CalendarQueueExtension>()
 };
 
-export { calendarExtensionConfig, calendarExtensionStates};
+export { calendarExtensionConfig, calendarExtensionStates };
 

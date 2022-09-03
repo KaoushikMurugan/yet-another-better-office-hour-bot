@@ -19,6 +19,7 @@ type UpComingSessionViewModel = {
 
 /**
  * Calendar Extension for individual queues
+ * ----
  * - All instances read from the same calendar
  * - Each instance only looks for the class it's responsible for
 */
@@ -48,13 +49,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 `& API key in calendar-config.ts.${ResetColor}`
             ));
         }
-        const instance = new CalendarQueueExtension(
-            renderIndex,
-            queueName
-        );
+        const instance = new CalendarQueueExtension(renderIndex, queueName);
         await getUpComingTutoringEvents(queueName)
             .catch(() => Promise.reject((`Failed to load calendar extension.`)));
-        calendarExtensionStates.listeners.push(instance);
+        calendarExtensionStates.listeners.set(queueName, instance);
         return instance;
     }
 
@@ -74,6 +72,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Embeds the upcoming hours into the queue channel
+     * ----
      * @param queue target queue to embed
      * @param display corresponding display object
     */
@@ -87,7 +86,8 @@ class CalendarQueueExtension extends BaseQueueExtension {
             .setDescription(
                 this.upcomingHours.length > 0
                     ? this.upcomingHours
-                        .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                        .map(viewModel =>
+                            `**${viewModel.displayName}**\t|\t` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                         .join('\n')
@@ -113,16 +113,17 @@ class CalendarQueueExtension extends BaseQueueExtension {
             isClenupRender
         );
         // a bit ugly, but that's the only way we can get the display object for now
-        this.display = display; 
+        this.display = display;
     }
 
-    async onCalendarExtensionStateChange(targetQueueName: string): Promise<void> {
-        if (targetQueueName !== this.queueName) {
-            return;
-        }
-        this.upcomingHours = await getUpComingTutoringEvents(targetQueueName);
+    /**
+     * Event listener/subscriber for changes in calendarExtensionStates
+     * ----
+    */
+    async onCalendarExtensionStateChange(): Promise<void> {
+        this.upcomingHours = await getUpComingTutoringEvents(this.queueName);
         const upcomingHoursEmbed = new MessageEmbed()
-            .setTitle(`Upcoming Hours for ${targetQueueName}`)
+            .setTitle(`Upcoming Hours for ${this.queueName}`)
             .setDescription(
                 this.upcomingHours.length > 0
                     ? this.upcomingHours
@@ -130,14 +131,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                         .join('\n')
-                    : `There are no upcoming sessions for ${targetQueueName} in the next 7 days.`
+                    : `There are no upcoming sessions for ${this.queueName} in the next 7 days.`
             )
             .setColor(EmbedColor.NoColor);
 
         const refreshButton = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("refresh " + targetQueueName)
+                    .setCustomId("refresh " + this.queueName)
                     .setEmoji("🔄")
                     .setLabel("Refresh Upcoming Hours")
                     .setStyle("PRIMARY")
@@ -203,7 +204,8 @@ async function getUpComingTutoringEvents(
 }
 
 /**
- * Builds the view model for the current queue given a summary string
+ * Parses the summary string and builds the view model for the current queue
+ * ----
  * @param summary string from getUpComingTutoringEvents
  * @param start start Date
  * @param end end Date
@@ -251,7 +253,7 @@ function composeViewModel(
 }
 
 /**
- * Build the calendar URL
+ * Builds the calendar URL
  * ----
  * @param args.calendar_id id to the PUBLIC calendar
  * @param args.apiKey apiKey found in calendar-config.ts

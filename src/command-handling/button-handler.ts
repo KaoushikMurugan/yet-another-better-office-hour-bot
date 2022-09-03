@@ -44,15 +44,17 @@ class ButtonCommandDispatcher {
             ),
             ephemeral: true
         });
+
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(interactionName);
+
         if (buttonMethod !== undefined) {
             console.log(
                 `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
-                `used [${interactionName}] ` +
+                `pressed [${interactionName}] ` +
                 `in queue: ${queueName}.`
             );
             await buttonMethod(queueName, interaction)
