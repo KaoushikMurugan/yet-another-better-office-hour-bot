@@ -1,11 +1,8 @@
 
-
 <div align="center">
 
-<h1 style="font-size: 5em">
-<img src="https://i.postimg.cc/dVkg4XFf/BOB-pfp.png" width = "50px">&nbsp;
-$\Huge{\textsf{YABOB  V4.0}}$ $\hspace{0.5em}\textsf{Yet Another Better Office-hours Bot}$
-</h1>
+<img width="623" alt="Screen Shot 2022-09-02 at 11 57 04 PM" src="https://user-images.githubusercontent.com/60045212/188259692-156487e9-c198-443c-aa09-c39e80d35046.png">
+
 
 </div>
 
@@ -19,7 +16,7 @@ Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) li
 <span size="+2">
       <a href=#purpose>Purpose</a> •
       <a href=#overview>Overview</a> •
-      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki</a> •
+      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki & Documentation</a> •
       <a href=#license>License</a>
 </span>
 </div>
