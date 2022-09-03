@@ -8,7 +8,7 @@ export const adminCommandsEmbed: Pick<MessageOptions, 'embeds'> = {
             title: 'Admin & Helper Only Commands',
             timestamp: new Date(),
             author: {
-                name: 'YABOBv4',
+                name: 'YABOB V4.',
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         },

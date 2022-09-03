@@ -131,7 +131,6 @@ client.on("interactionCreate", async interaction => {
         }
     }
     if (interaction.isButton()) {
-        console.log(interaction.customId);
         const buttonName = interaction.customId.split(' ')[0] ?? '';
         const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
         if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {

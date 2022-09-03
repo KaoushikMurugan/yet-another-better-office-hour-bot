@@ -138,32 +138,6 @@ const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
     .setName("list_helpers")
     .setDescription("See who is online and helping.");
 
-const getNotifications = new SlashCommandBuilder() // /get_notifs [queue_name]
-    .setName("notify_me")
-    .setDescription("Get notified when the queue opens (not permanent)")
-    .addChannelOption((option) =>
-        option
-            .setName("queue_name")
-            .setDescription(
-                "The course for which you want be notifed when its queue becomes open"
-            )
-            .setRequired(true)
-    );
-
-const removeNotifications = new SlashCommandBuilder() // /remove_notif [queue_name]
-    .setName("remove_notif")
-    .setDescription(
-        "Remove yourself from a notification queue for a particular channel"
-    )
-    .addChannelOption((option) =>
-        option
-            .setName("queue_name")
-            .setDescription(
-                "The course for which you no longer want to be notified for"
-            )
-            .setRequired(true)
-    );
-
 const cleanupQueue = new SlashCommandBuilder()
     .setName("cleanup")
     .setDescription(
@@ -188,24 +162,8 @@ const commandData = [
     clearCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
-    getNotifications.toJSON(),
-    removeNotifications.toJSON(),
     cleanupQueue.toJSON()
 ];
-
-type BaseBOBCommands =
-    | 'queue'
-    | 'enqueue'
-    | 'next'
-    | 'start'
-    | 'stop'
-    | 'leave'
-    | 'clear'
-    | 'announce'
-    | 'list_helpers'
-    | 'notify_me'
-    | 'remove_notif'
-    | 'cleanup';
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
     if (process.env.YABOB_APP_ID === undefined) {
@@ -227,4 +185,4 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
 
 type CommandData = typeof commandData;
 
-export { BaseBOBCommands, postSlashCommands, CommandData };
+export { postSlashCommands, CommandData };
