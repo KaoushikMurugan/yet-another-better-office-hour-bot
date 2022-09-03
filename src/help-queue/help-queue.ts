@@ -103,12 +103,16 @@ class HelpQueueV2 {
         backupData?: QueueBackup
     ): Promise<HelpQueueV2> {
         // * Load QueueExtensions here
-        const queueExtensions = await Promise.all([
-            CalendarExtension.load(
-                1, // renderIndex
-                queueChannel.queueName
-            )
-        ]);
+        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
+
+        const queueExtensions = disableExtensions
+            ? []
+            : await Promise.all([
+                CalendarExtension.load(
+                    1, // renderIndex
+                    queueChannel.queueName
+                )
+            ]);
 
         const queue = new HelpQueueV2(
             user,

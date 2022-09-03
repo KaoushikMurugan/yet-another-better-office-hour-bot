@@ -4,7 +4,7 @@ import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import {
-    BgMagenta, FgBlack, FgCyan,
+    BgMagenta, FgBlack, FgCyan, BgYellow,
     FgGreen, FgMagenta, FgRed, FgYellow, ResetColor
 } from './utils/command-line-colors';
 import { postSlashCommands } from "./command-handling/slash-commands";
@@ -23,6 +23,10 @@ if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
 ) {
     throw new Error("Missing token or bot ID. Aborting setup.");
+}
+
+if (process.argv.slice(2)[0]?.split('=')[1] === 'true'){
+    console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
 }
 
 const client = new Client({
@@ -204,7 +208,11 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     serversV2.set(guild.id, server);
-    interactionExtensions.set(guild.id, [new CalendarCommandExtension(guild)]);
+
+    const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
+    if (!disableExtension) {
+        interactionExtensions.set(guild.id, [new CalendarCommandExtension(guild)]);
+    }
 
     await postSlashCommands(
         guild,
