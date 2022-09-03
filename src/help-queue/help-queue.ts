@@ -141,6 +141,8 @@ class HelpQueueV2 {
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
             { SEND_MESSAGES: true });
+
+        await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue)));
         return queue;
     }
 
