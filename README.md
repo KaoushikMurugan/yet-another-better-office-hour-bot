@@ -19,7 +19,7 @@ Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) li
 <span size="+2">
       <a href=#purpose>Purpose</a> •
       <a href=#overview>Overview</a> •
-      <a href=https://github.com/KaoushikMurugan/YABOB/blob/main/docs>Docs</a> •
+      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki</a> •
       <a href=#license>License</a>
 </span>
 </div>
