@@ -55,7 +55,8 @@ class AttendanceExtension extends BaseServerExtension {
         await this.updateAttendance(helper)
             .catch(() => Promise.reject(
                 new AttendanceError(
-                    `Failed to update attendace.\n` +
+                    `Failed to update attendace. ` +
+                    `The attendance sheet might have missing headers.\n` +
                     `Don't worry, your time is still being logged, ` +
                     `just not viewable on Google Sheets. ` +
                     `Please contact @Officer to manually update.`

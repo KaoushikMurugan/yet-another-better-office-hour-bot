@@ -284,6 +284,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         calendarExtensionStates.calendarNameDiscordIdMap
             .set(calendarDisplayName, interaction.user.id);
 
+        await Promise.all(calendarExtensionStates.listeners
+            .map(listener => listener.onCalendarExtensionStateChange()));
+
         return Promise.resolve(
             `${calendarDisplayName} - ECS ` +
             `${validQueues.map(queue => queue.name.split(' ')[1]).join(', ')}`
