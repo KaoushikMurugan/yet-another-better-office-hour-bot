@@ -20,6 +20,8 @@ const calendarExtensionConfig = {
  * Make sure to use hashmaps. O(n) is very slow for a network heavy application.
  * */
 const calendarExtensionStates = {
+    // key is the name on the calendar, value is user.id, used for ping
+    calendarNameDiscordIdMap: new Collection<string, string>(),
     listeners: new Collection<string, CalendarQueueExtension>()
 };
 

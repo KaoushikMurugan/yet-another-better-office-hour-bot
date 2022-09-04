@@ -275,7 +275,9 @@ class AttendingServerV2 {
             .find(role => role.name === parentCategory.name)
             ?.delete();
         // finally delete queue model
-        await Promise.all(this.serverExtensions.map(extension => extension.onQueueDelete(queue)));
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onQueueDelete(this, queue)
+        ));
         this.queues.delete(queueCategoryID);
     }
 
@@ -356,7 +358,7 @@ class AttendingServerV2 {
         ));
 
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onDequeueFirst(student)
+            extension => extension.onDequeueFirst(this, student)
         ));
         return student;
     }
@@ -394,7 +396,7 @@ class AttendingServerV2 {
         };
 
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onHelperStartHelping(helper)
+            extension => extension.onHelperStartHelping(this, helper)
         ));
     }
 
@@ -430,7 +432,7 @@ class AttendingServerV2 {
         console.log(`- Help time of ${maxHelpTime.member.displayName} is ` +
             `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}ms.`);
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onHelperStopHelping(maxHelpTime)
+            extension => extension.onHelperStopHelping(this, maxHelpTime)
         ));
         return maxHelpTime;
     }
@@ -600,7 +602,7 @@ class AttendingServerV2 {
                 : ` ${FgBlue}with their extensions${ResetColor}`}!`
         );
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onAllQueuesInit([...this.queues.values()])
+            extension => extension.onAllQueuesInit(this, [...this.queues.values()])
         ));
     }
 

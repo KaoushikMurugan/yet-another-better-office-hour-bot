@@ -257,7 +257,7 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `<@${student.member.user.id}>`))
             ),
-            this.queueExtensions.map(extension => extension.onEnqueue(student))
+            this.queueExtensions.map(extension => extension.onEnqueue(this, student))
         ].flat() as Promise<void>[]);
         await this.triggerRender();
     }
@@ -293,7 +293,7 @@ class HelpQueueV2 {
         const firstStudent = this.students.shift()!;
         helper.helpedMembers.push(firstStudent.member);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onDequeue(firstStudent))
+            extension => extension.onDequeue(this, firstStudent))
         );
         await this.triggerRender();
         return firstStudent;
@@ -319,7 +319,7 @@ class HelpQueueV2 {
         const removedStudent = this.students[idx]!;
         this.students.splice(idx, 1);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onStudentRemove(removedStudent))
+            extension => extension.onStudentRemove(this, removedStudent))
         );
         await this.triggerRender();
     }
@@ -330,7 +330,7 @@ class HelpQueueV2 {
     */
     async removeAllStudents(): Promise<void> {
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onRemoveAllStudents(this.students))
+            extension => extension.onRemoveAllStudents(this, this.students))
         );
         this.students = [];
         await this.triggerRender();

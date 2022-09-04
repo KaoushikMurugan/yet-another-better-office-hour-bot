@@ -5,6 +5,7 @@ import { ExtensionSetupError } from '../../utils/error-types';
 import gcs_creds from "../gcs_service_account_key.json";
 import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
 import { attendaceExtensionConfig } from './attendance-config';
+import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 class AttendanceError extends Error {
     constructor(message: string) {
@@ -48,6 +49,7 @@ class AttendanceExtension extends BaseServerExtension {
     }
 
     override async onHelperStopHelping(
+        _server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         await this.updateAttendance(helper)

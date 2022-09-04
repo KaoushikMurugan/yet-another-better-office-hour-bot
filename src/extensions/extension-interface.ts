@@ -34,29 +34,65 @@ interface IInteractionExtension {
 // Server level extensions
 interface IServerExtension {
     onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
-    onAllQueuesInit: (queues: ReadonlyArray<HelpQueueV2>) => Promise<void>;
-    onQueueDelete: (queue: Readonly<HelpQueueV2>) => Promise<void>;
-    onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
-    onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
-    onHelperStopHelping: (helper: Readonly<Required<Helper>>) => Promise<void>;
-    onServerPeriodicUpdate: (server: Readonly<AttendingServerV2>, isFirstCall: boolean) => Promise<void>;
+    onAllQueuesInit: (
+        server: Readonly<AttendingServerV2>,
+        allQueues: ReadonlyArray<HelpQueueV2>
+    ) => Promise<void>;
+    onQueueDelete: (
+        server: Readonly<AttendingServerV2>,
+        deletedQueue: Readonly<HelpQueueV2>
+    ) => Promise<void>;
+    onDequeueFirst: (
+        dserver: Readonly<AttendingServerV2>,
+        equeuedStudent: Readonly<Helpee>
+    ) => Promise<void>;
+    onHelperStartHelping: (
+        server: Readonly<AttendingServerV2>,
+        helper: Readonly<Omit<Helper, 'helpEnd'>>
+    ) => Promise<void>;
+    onHelperStopHelping: (
+        server: Readonly<AttendingServerV2>,
+        helper: Readonly<Required<Helper>>
+    ) => Promise<void>;
+    onServerPeriodicUpdate: (
+        server: Readonly<AttendingServerV2>,
+        isFirstCall: boolean
+    ) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
 }
 
 // Extensions for individual queues
 interface IQueueExtension {
-    onQueueCreate: (queue: Readonly<HelpQueueV2>, display: Readonly<QueueDisplayV2>) => Promise<void>;
+    onQueueCreate: (
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ) => Promise<void>;
     onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
-    onEnqueue: (student: Readonly<Helpee>) => Promise<void>;
-    onDequeue: (student: Readonly<Helpee>) => Promise<void>;
-    onStudentRemove: (student: Readonly<Helpee>) => Promise<void>;
-    onRemoveAllStudents: (students: ReadonlyArray<Helpee>) => Promise<void>;
+    onEnqueue: (
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ) => Promise<void>;
+    onDequeue: (
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ) => Promise<void>;
+    onStudentRemove: (
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ) => Promise<void>;
+    onRemoveAllStudents: (
+        queue: Readonly<HelpQueueV2>,
+        students: ReadonlyArray<Helpee>
+    ) => Promise<void>;
     onQueueRenderComplete: (
         queue: Readonly<HelpQueueV2>,
         isClenupRender?: boolean
     ) => Promise<void>;
-    onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>, isFirstCall: boolean) => Promise<void>;
+    onQueuePeriodicUpdate: (
+        queue: Readonly<HelpQueueV2>,
+        isFirstCall: boolean
+    ) => Promise<void>;
 }
 
 /**
@@ -98,22 +134,40 @@ class BaseServerExtension implements IServerExtension {
     onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
-    onAllQueuesInit(): Promise<void> {
+    onAllQueuesInit(
+        server: Readonly<AttendingServerV2>,
+        allQueues: ReadonlyArray<HelpQueueV2>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onQueueDelete(): Promise<void> {
+    onQueueDelete(
+        server: Readonly<AttendingServerV2>,
+        deletedQueue: Readonly<HelpQueueV2>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onDequeueFirst(): Promise<void> {
+    onDequeueFirst(
+        server: Readonly<AttendingServerV2>,
+        dequeuedStudent: Readonly<Helpee>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onHelperStartHelping(helper: Readonly<Omit<Helper, 'helpEnd'>>): Promise<void> {
+    onHelperStartHelping(
+        server: Readonly<AttendingServerV2>,
+        helper: Readonly<Omit<Helper, 'helpEnd'>>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onHelperStopHelping(helper: Readonly<Required<Helper>>): Promise<void> {
+    onHelperStopHelping(
+        server: Readonly<AttendingServerV2>,
+        helper: Readonly<Required<Helper>>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onServerPeriodicUpdate(server: Readonly<AttendingServerV2>, isFirstCall = false): Promise<void> {
+    onServerPeriodicUpdate(
+        server: Readonly<AttendingServerV2>,
+        isFirstCall = false
+    ): Promise<void> {
         return Promise.resolve();
     }
     loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
@@ -137,7 +191,10 @@ class BaseQueueExtension implements IQueueExtension {
     ): Promise<void> {
         return Promise.resolve();
     }
-    onQueuePeriodicUpdate(queue: Readonly<HelpQueueV2>, isFirstCall = false): Promise<void> {
+    onQueuePeriodicUpdate(
+        queue: Readonly<HelpQueueV2>,
+        isFirstCall = false
+    ): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: Readonly<HelpQueueV2>): Promise<void> {
@@ -146,16 +203,28 @@ class BaseQueueExtension implements IQueueExtension {
     onQueueOpen(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
-    onEnqueue(student: Readonly<Helpee>): Promise<void> {
+    onEnqueue(
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onDequeue(student: Readonly<Helpee>): Promise<void> {
+    onDequeue(
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onStudentRemove(student: Readonly<Helpee>): Promise<void> {
+    onStudentRemove(
+        queue: Readonly<HelpQueueV2>,
+        student: Readonly<Helpee>
+    ): Promise<void> {
         return Promise.resolve();
     }
-    onRemoveAllStudents(students: ReadonlyArray<Helpee>): Promise<void> {
+    onRemoveAllStudents(
+        queue: Readonly<HelpQueueV2>,
+        students: ReadonlyArray<Helpee>
+    ): Promise<void> {
         return Promise.resolve();
     }
 }
