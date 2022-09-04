@@ -1,10 +1,6 @@
 import { BaseInteractionExtension } from "../extension-interface";
 import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
-import {
-    ButtonInteraction,
-    CommandInteraction,
-    Guild, GuildMember
-} from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Guild } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -49,10 +45,16 @@ const whenNext = new SlashCommandBuilder()
             .setRequired(false)
     );
 
-function makeCalendarStringCommand(guild: Guild): SlashCommandBuilder {
+function makeCalendarStringCommand(
+    guild: Guild
+): Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
     const command = new SlashCommandBuilder()
         .setName("make_calendar_string")
-        .setDescription("Generates a valid calendar string that can be parsed by YABOB");
+        .setDescription("Generates a valid calendar string that can be parsed by YABOB")
+        .addStringOption(option => option
+            .setRequired(true)
+            .setName('your_name')
+            .setDescription("Your display name on the calendar"));
 
     [...guild.channels.cache
         .filter(channel => channel.type === "GUILD_CATEGORY")]
@@ -253,6 +255,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ['Bot Admin', 'Staff']
         );
 
+        const calendarDisplayName = interaction.options.getString('your_name', true);
+
         const commandArgs = [...this.guild.channels.cache
             .filter(channel => channel.type === 'GUILD_CATEGORY')]
             .map((_, idx) => interaction.options
@@ -271,16 +275,17 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     child.type === 'GUILD_TEXT');
             if (queueTextChannel === undefined) {
                 return Promise.reject(new CommandParseError(
-                    `'${category.name}' does not have a \`#queue\` text channel.\n` +
-                    `If you are an admin, you can use \`/queue add ${category.name}\` ` +
-                    `to generate one.`
+                    `'${category.name}' does not have a \`#queue\` text channel.`
                 ));
             }
             return Promise.resolve(category);
         }));
 
+        calendarExtensionStates.calendarNameDiscordIdMap
+            .set(calendarDisplayName, interaction.user.id);
+
         return Promise.resolve(
-            `${(interaction.member as GuildMember).displayName} - ECS ` +
+            `${calendarDisplayName} - ECS ` +
             `${validQueues.map(queue => queue.name.split(' ')[1]).join(', ')}`
         );
     }

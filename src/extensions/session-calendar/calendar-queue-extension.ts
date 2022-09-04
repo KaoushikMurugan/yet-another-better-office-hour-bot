@@ -15,6 +15,7 @@ type UpComingSessionViewModel = {
     rawSummary: string;
     displayName: string;
     ecsClass: string;
+    discordId?: string;
 };
 
 /**
@@ -116,7 +117,11 @@ class CalendarQueueExtension extends BaseQueueExtension {
             .setDescription(
                 this.upcomingHours.length > 0
                     ? this.upcomingHours
-                        .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                        .map(viewModel =>
+                            `**${viewModel.discordId !== undefined 
+                                ? `<@${viewModel.discordId}>`
+                                : viewModel.displayName
+                            }**\t|\t` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                         .join('\n')
@@ -246,7 +251,8 @@ function composeViewModel(
         end: end,
         ecsClass: targteClass,
         rawSummary: summary,
-        displayName: tutorName
+        displayName: tutorName,
+        discordId: calendarExtensionStates.calendarNameDiscordIdMap.get(tutorName)
     };
 }
 

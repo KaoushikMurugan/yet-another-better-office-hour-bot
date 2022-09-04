@@ -87,7 +87,7 @@ class AttendanceExtension extends BaseServerExtension {
                 `${helper.helpEnd.toLocaleTimeString()}`,
             "Helped Students": JSON.stringify(
                 helper.helpedMembers.map(student => new Object({
-                    nickName: student.nickname,
+                    displayName: student.nickname ?? student.displayName,
                     username: student.user.username
                 }))),
         });
