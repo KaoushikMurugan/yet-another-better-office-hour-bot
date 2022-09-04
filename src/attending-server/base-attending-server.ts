@@ -17,7 +17,7 @@ import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
-import { FgCyan, FgGreen, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
+import { FgBlue, FgCyan, FgGreen, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -37,7 +37,7 @@ class AttendingServerV2 {
 
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
-    public intervalID!: NodeJS.Timer;
+    public intervalID!: NodeJS.Timer; // late init
 
     protected constructor(
         public readonly user: User,
@@ -56,7 +56,6 @@ class AttendingServerV2 {
     }
 
     clearAllIntervals(): void {
-        // Types are ignored here b/c TS doesn't recognize the Timout overload for clearInterval
         clearInterval(this.intervalID);
         this.queues.forEach(queue => clearInterval(queue.intervalID));
     }
@@ -575,9 +574,9 @@ class AttendingServerV2 {
     }
 
     /**
-         * Creates all the office hour queues
-         * ----
-         */
+     * Creates all the office hour queues
+     * ----
+     */
     private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
         if (this.queues.size !== 0) {
             console.warn("Overriding existing queues.");
@@ -598,10 +597,10 @@ class AttendingServerV2 {
         console.log(`All queues in '${this.guild.name}' successfully created` +
             `${disableExtensions
                 ? ''
-                : " with their extensions"}!`
+                : ` ${FgBlue}with their extensions${ResetColor}`}!`
         );
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onAllQueueInit([...this.queues.values()])
+            extension => extension.onAllQueuesInit([...this.queues.values()])
         ));
     }
 
@@ -650,12 +649,10 @@ class AttendingServerV2 {
             queueNames
                 .filter(queue => !existingRoles.has(queue))
                 .map(async roleToCreate =>
-                    await this.guild.roles.create(
-                        {
-                            name: roleToCreate,
-                            position: 1,
-                        }
-                    ))
+                    await this.guild.roles.create({
+                        name: roleToCreate,
+                        position: 1,
+                    }))
         );
     }
 

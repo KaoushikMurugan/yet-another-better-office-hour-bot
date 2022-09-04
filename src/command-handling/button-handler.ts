@@ -39,7 +39,7 @@ class ButtonCommandDispatcher {
     async process(interaction: ButtonInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed(
-                'Processing command...',
+                'Processing button...',
                 EmbedColor.Neutral
             ),
             ephemeral: true

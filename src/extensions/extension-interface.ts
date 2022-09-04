@@ -34,7 +34,7 @@ interface IInteractionExtension {
 // Server level extensions
 interface IServerExtension {
     onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
-    onAllQueueInit: (queues: ReadonlyArray<HelpQueueV2>) => Promise<void>;
+    onAllQueuesInit: (queues: ReadonlyArray<HelpQueueV2>) => Promise<void>;
     onQueueDelete: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onDequeueFirst: (dequeuedStudent: Readonly<Helpee>) => Promise<void>;
     onHelperStartHelping: (helper: Readonly<Omit<Helper, 'helpEnd'>>) => Promise<void>;
@@ -45,7 +45,7 @@ interface IServerExtension {
 
 // Extensions for individual queues
 interface IQueueExtension {
-    onQueueCreate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
+    onQueueCreate: (queue: Readonly<HelpQueueV2>, display: Readonly<QueueDisplayV2>) => Promise<void>;
     onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onEnqueue: (student: Readonly<Helpee>) => Promise<void>;
@@ -54,7 +54,6 @@ interface IQueueExtension {
     onRemoveAllStudents: (students: ReadonlyArray<Helpee>) => Promise<void>;
     onQueueRenderComplete: (
         queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>,
         isClenupRender?: boolean
     ) => Promise<void>;
     onQueuePeriodicUpdate: (queue: Readonly<HelpQueueV2>, isFirstCall: boolean) => Promise<void>;
@@ -99,7 +98,7 @@ class BaseServerExtension implements IServerExtension {
     onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
-    onAllQueueInit(): Promise<void> {
+    onAllQueuesInit(): Promise<void> {
         return Promise.resolve();
     }
     onQueueDelete(): Promise<void> {
@@ -129,12 +128,11 @@ class BaseServerExtension implements IServerExtension {
  * - Override the events that you want to trigger
 */
 class BaseQueueExtension implements IQueueExtension {
-    onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
+    onQueueCreate(queue: Readonly<HelpQueueV2>, display: Readonly<QueueDisplayV2>): Promise<void> {
         return Promise.resolve();
     }
     onQueueRenderComplete(
         queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>,
         isClenupRender?: boolean
     ): Promise<void> {
         return Promise.resolve();

@@ -21,11 +21,9 @@ class HelpQueueV2 {
     // Key is Guildmember.id
     private helpers: Collection<string, Helper> = new Collection();
     private students: Helpee[] = [];
-
     // Key is Guildmember.id
     private notifGroup: Collection<string, GuildMember> = new Collection();
     private isOpen = false;
-    private readonly display: QueueDisplayV2;
 
     public intervalID!: NodeJS.Timer;
 
@@ -39,6 +37,7 @@ class HelpQueueV2 {
         user: User,
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
+        private readonly display: QueueDisplayV2,
         backupData?: QueueBackup
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
@@ -114,10 +113,12 @@ class HelpQueueV2 {
                 )
             ]);
 
+        const display = new QueueDisplayV2(user, queueChannel);
         const queue = new HelpQueueV2(
             user,
             queueChannel,
             queueExtensions,
+            display,
             backupData
         );
 
@@ -129,10 +130,12 @@ class HelpQueueV2 {
 
         // This need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
+        await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue, display)));
         await Promise.all(
             queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue))
         );
         await queue.cleanUpQueueChannel();
+        // Do not parallelize these 2, we don't know which one gets applied first
         await queueChannel.channelObj.permissionOverwrites.create(
             everyoneRole,
             {
@@ -144,9 +147,8 @@ class HelpQueueV2 {
         );
         await queueChannel.channelObj.permissionOverwrites.create(
             user,
-            { SEND_MESSAGES: true });
-
-        await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue)));
+            { SEND_MESSAGES: true }
+        );
         return queue;
     }
 
@@ -384,7 +386,7 @@ class HelpQueueV2 {
             .map(msg => msg.delete()));
         await this.display.renderQueue(viewModel, true);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this, this.display, true))
+            extension => extension.onQueueRenderComplete(this, true))
         );
     }
 
@@ -408,7 +410,7 @@ class HelpQueueV2 {
                 await this.cleanUpQueueChannel();
             });
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this, this.display))
+            extension => extension.onQueueRenderComplete(this))
         ).catch(async (err: QueueRenderError) => {
             console.error(`- Force rerender in ${err.queueName}.`);
             await this.cleanUpQueueChannel();

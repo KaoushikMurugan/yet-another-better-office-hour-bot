@@ -108,7 +108,7 @@ class QueueDisplayV2 {
     async renderNonQueueEmbeds(
         embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
         renderIndex: number,
-        cleanUp = false
+        isCleanupRender = false
     ): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
@@ -116,8 +116,9 @@ class QueueDisplayV2 {
             .fetch();
 
         // see if the embed is already sent (ready)
-        // if not ready or non existent, send a new one
-        const sendNew = (!this.nonQueueEmbedReadyStates.get(renderIndex) ?? true) || cleanUp;
+        // if not ready(values is false or undefined, falsy either way) or non existent
+        // send a new one
+        const sendNew = !this.nonQueueEmbedReadyStates.get(renderIndex) || isCleanupRender;
 
         // if the message at renderIndex is not from YABOB, reject and let HelpQueueV2 call cleanup
         if (!sendNew &&

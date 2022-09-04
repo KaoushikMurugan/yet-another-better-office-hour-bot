@@ -26,7 +26,7 @@ type UpComingSessionViewModel = {
 class CalendarQueueExtension extends BaseQueueExtension {
 
     private upcomingHours: UpComingSessionViewModel[] = [];
-    private display!: Readonly<QueueDisplayV2>; // will init on the 1st server-wide render
+    private display!: Readonly<QueueDisplayV2>; // late init in onQueueCreate
 
     private constructor(
         private readonly renderIndex: number,
@@ -57,6 +57,18 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
+     * Grabs the display instance
+     * ----
+     * @param display the instance
+    */
+    override async onQueueCreate(
+        _queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ): Promise<void> {
+        this.display = display;
+    }
+
+    /**
      * Every time queue emits onQueuePeriodicUpdate
      * fecth new events and update cached viewModel
      * ----
@@ -73,47 +85,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
     /**
      * Embeds the upcoming hours into the queue channel
      * ----
-     * @param queue target queue to embed
-     * @param display corresponding display object
+     * @param isClenupRender if the queue requested a cleanup
     */
     override async onQueueRenderComplete(
-        queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>,
+        _queue: Readonly<HelpQueueV2>,
         isClenupRender = false
     ): Promise<void> {
-        const upcomingHoursEmbed = new MessageEmbed()
-            .setTitle(`Upcoming Hours for ${queue.name}`)
-            .setDescription(
-                this.upcomingHours.length > 0
-                    ? this.upcomingHours
-                        .map(viewModel =>
-                            `**${viewModel.displayName}**\t|\t` +
-                            `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
-                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                        .join('\n')
-                    : `There are no upcoming sessions for ${queue.name} in the next 7 days.`
-            )
-            .setColor(EmbedColor.NoColor);
-
-        const refreshButton = new MessageActionRow()
-            .addComponents(
-                new MessageButton()
-                    .setCustomId("refresh " + queue.name)
-                    .setEmoji("🔄")
-                    .setLabel("Refresh Upcoming Hours")
-                    .setStyle("PRIMARY")
-            );
-
-        await display.renderNonQueueEmbeds(
-            {
-                embeds: [upcomingHoursEmbed],
-                components: [refreshButton]
-            },
-            this.renderIndex,
-            isClenupRender
-        );
-        // a bit ugly, but that's the only way we can get the display object for now
-        this.display = display;
+        await this.renderCalendarEmbeds(false, isClenupRender);
     }
 
     /**
@@ -121,7 +99,18 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * ----
     */
     async onCalendarExtensionStateChange(): Promise<void> {
-        this.upcomingHours = await getUpComingTutoringEvents(this.queueName);
+        // true for refresh b/c the refresh button was used.
+        // false for isCleanup b/c we are just editing the embed
+        await this.renderCalendarEmbeds(true, false);
+    }
+
+    private async renderCalendarEmbeds(
+        refresh = false,
+        isCleanupRender = false
+    ): Promise<void> {
+        this.upcomingHours = refresh
+            ? await getUpComingTutoringEvents(this.queueName)
+            : this.upcomingHours;
         const upcomingHoursEmbed = new MessageEmbed()
             .setTitle(`Upcoming Hours for ${this.queueName}`)
             .setDescription(
@@ -150,7 +139,16 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 components: [refreshButton]
             },
             this.renderIndex,
-            false // use false here, otherwise 2 messages will be sent
+            isCleanupRender
+        ).catch(async () =>
+            this.display.renderNonQueueEmbeds(
+                {
+                    embeds: [upcomingHoursEmbed],
+                    components: [refreshButton]
+                },
+                this.renderIndex,
+                true
+            )
         );
     }
 }

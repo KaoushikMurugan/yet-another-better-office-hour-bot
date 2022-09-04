@@ -100,8 +100,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         string,
         (interaction: ButtonInteraction, queueName: string) => Promise<string | void>
     > = new Map([
-        ['refresh', (interaction: ButtonInteraction, queueName: string) =>
-            this.requestCalendarRefresh(interaction, queueName)]
+        ['refresh', (_: ButtonInteraction, queueName: string) =>
+            this.requestCalendarRefresh(queueName)]
     ]);
 
     override get slashCommandData(): CommandData {
@@ -305,10 +305,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
     }
 
-    private async requestCalendarRefresh(
-        _interaction: ButtonInteraction,
-        queueName: string
-    ): Promise<string> {
+    private async requestCalendarRefresh(queueName: string): Promise<string> {
         await calendarExtensionStates.listeners
             .get(queueName)
             ?.onCalendarExtensionStateChange();
