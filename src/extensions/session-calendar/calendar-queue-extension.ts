@@ -7,6 +7,7 @@ import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
 import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
+import { CalendarConnectionError } from './calendar-command-extension';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -118,7 +119,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 this.upcomingHours.length > 0
                     ? this.upcomingHours
                         .map(viewModel =>
-                            `**${viewModel.discordId !== undefined 
+                            `**${viewModel.discordId !== undefined
                                 ? `<@${viewModel.discordId}>`
                                 : viewModel.displayName
                             }**\t|\t` +
@@ -176,7 +177,10 @@ async function getUpComingTutoringEvents(
     });
     const response = await fetch(calendarUrl);
     if (response.status !== 200) {
-        return Promise.reject('Calendar request failed.');
+        return Promise.reject(new CalendarConnectionError(
+            'Failed to connect to Google Calendar. ' +
+            'The calendar might be deleted or set to private.'
+        ));
     }
     const responseJSON = await response.json();
     const events = (responseJSON as calendar_v3.Schema$Events).items;

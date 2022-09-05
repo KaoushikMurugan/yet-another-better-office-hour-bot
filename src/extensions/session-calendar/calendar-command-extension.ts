@@ -322,4 +322,4 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 }
 
 
-export { CalendarInteractionExtension };
+export { CalendarInteractionExtension, CalendarConnectionError };
