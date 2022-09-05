@@ -1,4 +1,4 @@
-import { ButtonInteraction } from "discord.js";
+import { ButtonInteraction, GuildMember } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
@@ -7,10 +7,7 @@ import {
     CommandNotImplementedError,
     UserViewableError
 } from "../utils/error-types";
-import {
-    isFromQueueChannelWithParent,
-    isTriggeredByUserWithValidEmail
-} from './common-validations';
+import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -80,7 +77,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithValidEmail(interaction, "Join"),
+            isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
@@ -95,7 +92,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithValidEmail(interaction, "Leave"),
+            isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
@@ -110,7 +107,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithValidEmail(interaction, "JoinNotif"),
+            isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
@@ -124,7 +121,7 @@ class ButtonCommandDispatcher {
     ): Promise<string> {
         const [serverId, member, queueChannel] = await Promise.all([
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithValidEmail(interaction, "LeaveNotif"),
+            isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 

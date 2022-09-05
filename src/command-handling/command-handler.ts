@@ -8,8 +8,8 @@ import {
 } from '../utils/error-types';
 import {
     isTriggeredByUserWithRoles,
-    isTriggeredByUserWithValidEmail,
-    hasValidQueueArgument
+    hasValidQueueArgument,
+    isFromGuildMember
 } from './common-validations';
 
 /**
@@ -130,7 +130,7 @@ class CentralCommandDispatcher {
         const [serverId, queueChannel, member] = await Promise.all([
             this.isServerInteraction(interaction),
             hasValidQueueArgument(interaction),
-            isTriggeredByUserWithValidEmail(interaction, "enqueue"),
+            isFromGuildMember(interaction),
         ]);
         await this.serverMap.get(serverId)?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueChannel.queueName}\`.`;
@@ -142,11 +142,7 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "next",
-                ['Bot Admin', 'Staff']),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                "next"
-            ),
+                ['Bot Admin', 'Staff'])
         ]);
         const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
         return `An invite has been sent to ${student?.member.displayName}.`;
@@ -158,11 +154,7 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "start",
-                ['Bot Admin', 'Staff']),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                "start"
-            ),
+                ['Bot Admin', 'Staff'])
         ]);
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
@@ -175,11 +167,7 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "stop",
-                ['Bot Admin', 'Staff']),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                "stop"
-            ),
+                ['Bot Admin', 'Staff'])
         ]);
 
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
@@ -198,10 +186,7 @@ class CentralCommandDispatcher {
     private async leave(interaction: CommandInteraction): Promise<string> {
         const [serverId, member, queue] = await Promise.all([
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                "leave"
-            ),
+            isFromGuildMember(interaction),
             hasValidQueueArgument(interaction)
         ]);
         await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
@@ -216,11 +201,7 @@ class CentralCommandDispatcher {
                 interaction,
                 "clear",
                 ['Bot Admin', 'Staff']
-            ),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                "clear"
-            ),
+            )
         ]);
         await this.serverMap.get(serverId)?.clearQueue(queue);
         return `Everyone in  queue ${queue.queueName} was removed.`;
@@ -244,11 +225,7 @@ class CentralCommandDispatcher {
                 interaction,
                 'announce',
                 ['Bot Admin', 'Staff']
-            ),
-            isTriggeredByUserWithValidEmail(
-                interaction,
-                'announce'
-            ),
+            )
         ]);
         const announcement = interaction.options.getString("message", true);
         const optionalChannel = interaction.options.getChannel("queue_name", false);
