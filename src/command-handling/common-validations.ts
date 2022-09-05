@@ -61,6 +61,26 @@ async function hasValidQueueArgument(
 }
 
 /**
+ * Checks if the user has the Valid Email role
+ * ----
+ * @param commandName the command used
+ * @returns GuildMember: object of the triggerer
+*/
+async function isTriggeredByUserWithValidEmail(
+    interaction: CommandInteraction | ButtonInteraction,
+    commandName: string
+): Promise<GuildMember> {
+    const roles = (await (interaction.member as GuildMember)?.fetch())
+        .roles.cache.map(role => role.name);
+    if (!(interaction.member instanceof GuildMember &&
+        roles.includes('Verified Email'))) {
+        return Promise.reject(new CommandParseError(
+            `You need to have a verified email to use \`/${commandName}\`.`));
+    }
+    return interaction.member as GuildMember;
+}
+
+/**
  *  Checks if the queue channel has a parent folder
  * ----
  */
@@ -99,5 +119,6 @@ export {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromQueueChannelWithParent,
-    isFromGuildMember
+    isFromGuildMember,
+    isTriggeredByUserWithValidEmail
 };

@@ -1,4 +1,4 @@
-import { ButtonInteraction, GuildMember } from "discord.js";
+import { ButtonInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
