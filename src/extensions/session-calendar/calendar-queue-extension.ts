@@ -5,7 +5,7 @@ import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
-import { calendarExtensionStates } from './calendar-states';
+import { serverIdStateMap } from './calendar-states';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { CalendarConnectionError } from './calendar-command-extension';
 
@@ -34,7 +34,8 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     private constructor(
         private readonly renderIndex: number,
-        private readonly queueName: string
+        private readonly queueName: string,
+        private readonly serverId: string
     ) { super(); }
 
     /**
@@ -45,18 +46,26 @@ class CalendarQueueExtension extends BaseQueueExtension {
     */
     static async load(
         renderIndex: number,
-        queueName: string
+        queueName: string,
+        serverId: string
     ): Promise<CalendarQueueExtension> {
-        if (calendarConfig.YABOB_GOOGLE_CALENDAR_ID.length === 0) {
+        if (calendarConfig.YABOB_DEFAULT_CALENDAR_ID.length === 0) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}Make sure you have Calendar ID ` +
                 `& API key in calendar-config.ts.${ResetColor}`
             ));
         }
-        const instance = new CalendarQueueExtension(renderIndex, queueName);
-        await getUpComingTutoringEvents(queueName)
+        if (!serverIdStateMap.has(serverId)) {
+            return Promise.reject(new ExtensionSetupError(
+                'The command level extension is required.'
+            ));
+        }
+
+        const instance = new CalendarQueueExtension(renderIndex, queueName, serverId);
+        await getUpComingTutoringEvents(serverId, queueName)
             .catch(() => Promise.reject((`Failed to load calendar extension.`)));
-        calendarExtensionStates.listeners.set(queueName, instance);
+
+        serverIdStateMap.get(serverId)?.listeners.set(queueName, instance);
         return instance;
     }
 
@@ -83,7 +92,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _isFirstCall = false
     ): Promise<void> {
-        this.upcomingHours = await getUpComingTutoringEvents(queue.name);
+        this.upcomingHours = await getUpComingTutoringEvents(this.serverId, queue.name);
     }
 
     /**
@@ -113,7 +122,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         isCleanupRender = false
     ): Promise<void> {
         this.upcomingHours = refresh
-            ? await getUpComingTutoringEvents(this.queueName)
+            ? await getUpComingTutoringEvents(this.serverId, this.queueName)
             : this.upcomingHours;
         const upcomingHoursEmbed = new MessageEmbed()
             .setTitle(`Upcoming Hours for ${this.queueName}`)
@@ -167,12 +176,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
  * @param queueName: the name to look for in the calendar event
 */
 async function getUpComingTutoringEvents(
+    serverId: string,
     queueName: string
 ): Promise<UpComingSessionViewModel[]> {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
-        calendarId: calendarConfig.YABOB_GOOGLE_CALENDAR_ID,
+        calendarId: serverIdStateMap.get(serverId)?.calendarId ?? "",
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek
@@ -199,10 +209,11 @@ async function getUpComingTutoringEvents(
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const end = event.end!.dateTime!;
             return composeViewModel(
+                serverId,
                 queueName,
                 event.summary ?? '',
                 new Date(start),
-                new Date(end)
+                new Date(end),
             );
         })
         .filter(s => s !== undefined);
@@ -221,10 +232,11 @@ async function getUpComingTutoringEvents(
  * @returns undefined if any parsing failed, otherwise a complete view model
 */
 function composeViewModel(
+    serverId: string,
     queueName: string,
     summary: string,
     start: Date,
-    end: Date
+    end: Date,
 ): UpComingSessionViewModel | undefined {
     // Summary example: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
     // words will be ["TutorName ", "ECS 20, 36A, 36B, 122A, 122B"]
@@ -258,7 +270,10 @@ function composeViewModel(
         ecsClass: targteClass,
         rawSummary: summary,
         displayName: tutorName,
-        discordId: calendarExtensionStates.calendarNameDiscordIdMap.get(tutorName)
+        discordId: serverIdStateMap
+            .get(serverId)
+            ?.calendarNameDiscordIdMap
+            .get(tutorName)
     };
 }
 

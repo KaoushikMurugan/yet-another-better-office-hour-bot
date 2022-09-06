@@ -10,11 +10,15 @@ import { CalendarQueueExtension } from "./calendar-queue-extension";
  * If your extension is more sophisticated, you should set up different event listeners.
  * Make sure to use hashmaps. O(n) is very slow for a network heavy application.
  * */
-const calendarExtensionStates = {
-    // key is the name on the calendar, value is user.id, used for ping
-    calendarNameDiscordIdMap: new Collection<string, string>(),
-    listeners: new Collection<string, CalendarQueueExtension>()
-};
 
-export { calendarExtensionStates };
+// key is server id, value is 1 calendar extension state
+const serverIdStateMap = new Collection<string, CalendarExtensionState>();
+
+interface CalendarExtensionState {
+    calendarId: string;
+    calendarNameDiscordIdMap: Collection<string, string>;
+    listeners: Collection<string, CalendarQueueExtension>;
+}
+
+export { CalendarExtensionState, serverIdStateMap };
 

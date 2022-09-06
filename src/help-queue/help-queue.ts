@@ -109,7 +109,8 @@ class HelpQueueV2 {
             : await Promise.all([
                 CalendarQueueExtension.load(
                     1, // renderIndex
-                    queueChannel.queueName
+                    queueChannel.queueName,
+                    queueChannel.channelObj.guild.id
                 )
             ]);
 

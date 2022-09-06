@@ -205,10 +205,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
 
-    // Extensions for server&queue are loaded inside the create method
-    const server = await AttendingServerV2.create(client.user, guild);
-    serversV2.set(guild.id, server);
-
     const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
     if (!disableExtension) {
         interactionExtensions.set(guild.id, [new CalendarInteractionExtension(guild)]);
@@ -220,6 +216,11 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
             .get(guild.id)
             ?.flatMap(ext => ext.slashCommandData)
     );
+
+    // Extensions for server&queue are loaded inside the create method
+    const server = await AttendingServerV2.create(client.user, guild);
+    serversV2.set(guild.id, server);
+
     return server;
 }
 

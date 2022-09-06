@@ -1,6 +1,6 @@
 import { BaseInteractionExtension } from "../extension-interface";
-import { calendarExtensionStates } from './calendar-states';
-import { ButtonInteraction, CommandInteraction, Guild } from 'discord.js';
+import { serverIdStateMap } from './calendar-states';
+import { ButtonInteraction, Collection, CommandInteraction, Guild } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -20,7 +20,8 @@ import {
 import { calendar_v3 } from "googleapis";
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 
-import gcsCreds from '../extension-credentials/calendar-config.json';
+import calendarConfig from '../extension-credentials/calendar-config.json';
+
 
 
 const setCalendar = new SlashCommandBuilder()
@@ -85,6 +86,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     constructor(private readonly guild: Guild) {
         super();
+        serverIdStateMap.set(guild.id, {
+            calendarId: calendarConfig.YABOB_DEFAULT_CALENDAR_ID,
+            calendarNameDiscordIdMap: new Collection(),
+            listeners: new Collection()
+        });
     }
 
     // I know this is very verbose but TS gets angry if I don't write all this :(
@@ -212,10 +218,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             )
         ]);
 
+        
+
         // runtime only. Will be resetted when YABOB restarts
-        gcsCreds.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
-        await Promise.all(calendarExtensionStates.listeners.map(listener =>
-            listener.onCalendarExtensionStateChange())
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        serverIdStateMap.get(this.guild.id)!.calendarId = newCalendarId;
+        await Promise.all(
+            serverIdStateMap
+                .get(this.guild.id)
+                ?.listeners
+                .map(listener => listener.onCalendarExtensionStateChange()) ?? []
         );
 
         return Promise.resolve(
@@ -231,6 +243,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     private async listUpComingHours(interaction: CommandInteraction): Promise<void> {
         const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
+            this.guild.id,
             channel.queueName
         );
 
@@ -283,11 +296,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return Promise.resolve(category);
         }));
 
-        calendarExtensionStates.calendarNameDiscordIdMap
+        serverIdStateMap.get(this.guild.id)?.calendarNameDiscordIdMap
             .set(calendarDisplayName, interaction.user.id);
 
-        await Promise.all(calendarExtensionStates.listeners
-            .map(listener => listener.onCalendarExtensionStateChange()));
+        await Promise.all(serverIdStateMap.get(this.guild.id)?.listeners
+            .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
 
         return Promise.resolve(
             `${calendarDisplayName} - ECS ` +
@@ -304,7 +317,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             calendarId: newCalendarId,
             timeMin: new Date(),
             timeMax: nextWeek,
-            apiKey: gcsCreds.YABOB_GOOGLE_API_KEY
+            apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
         });
 
         const response = await fetch(url);
@@ -316,7 +329,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     private async requestCalendarRefresh(queueName: string): Promise<string> {
-        await calendarExtensionStates.listeners
+        await serverIdStateMap
+            .get(this.guild.id)
+            ?.listeners
             .get(queueName)
             ?.onCalendarExtensionStateChange();
         return `Successfully refreshed upcoming hours for ${queueName}`;
