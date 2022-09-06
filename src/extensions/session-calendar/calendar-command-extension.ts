@@ -14,14 +14,13 @@ import {
     isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
 import {
+    buildCalendarURL,
     getUpComingTutoringEvents,
-    buildCalendarURL
-} from "./calendar-queue-extension";
+} from './shared-calendar-functions';
 import { calendar_v3 } from "googleapis";
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 import calendarConfig from '../extension-credentials/calendar-config.json';
-
 
 
 const setCalendar = new SlashCommandBuilder()
