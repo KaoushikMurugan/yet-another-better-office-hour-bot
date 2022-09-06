@@ -4,8 +4,6 @@ node_modules/
 .env
 .nyc_output/
 .vscode/
-gcs_service_account_key.json
-fbs_service_account_key.json
 test_dir/
 .DS_Store
 src/extensions/google_client_id.json

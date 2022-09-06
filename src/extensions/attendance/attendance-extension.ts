@@ -2,10 +2,11 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Helper } from "../../models/member-states";
 import { BaseServerExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
-import gcs_creds from "../gcs_service_account_key.json";
 import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
-import { attendaceExtensionConfig } from './attendance-config';
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
+
+import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
+import attendanceConfig from '../extension-credentials/attendance-config.json';
 
 class AttendanceError extends Error {
     constructor(message: string) {
@@ -25,16 +26,15 @@ class AttendanceExtension extends BaseServerExtension {
     ) { super(); }
 
     static async load(serverName: string): Promise<AttendanceExtension> {
-        if (attendaceExtensionConfig.YABOB_GOOGLE_SHEET_ID === undefined ||
-            gcs_creds === undefined) {
+        if (attendanceConfig.YABOB_GOOGLE_SHEET_ID.length === 0) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n` +
                 ` - Make sure you have the google sheets id in attendance-config.ts ` +
                 ` and Google Cloud credentials in gcs_service_account_key.json`
             ));
         }
-        const attendanceDoc = new GoogleSpreadsheet(attendaceExtensionConfig.YABOB_GOOGLE_SHEET_ID);
-        await attendanceDoc.useServiceAccountAuth(gcs_creds);
+        const attendanceDoc = new GoogleSpreadsheet(attendanceConfig.YABOB_GOOGLE_SHEET_ID);
+        await attendanceDoc.useServiceAccountAuth(gcsCreds);
         await attendanceDoc.loadInfo().catch(() => {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}Failed to load google sheet for ${serverName}. ` +

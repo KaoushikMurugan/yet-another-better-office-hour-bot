@@ -1,5 +1,5 @@
 import { BaseInteractionExtension } from "../extension-interface";
-import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
+import { calendarExtensionStates } from './calendar-states';
 import { ButtonInteraction, CommandInteraction, Guild } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
@@ -19,6 +19,8 @@ import {
 } from "./calendar-queue-extension";
 import { calendar_v3 } from "googleapis";
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
+
+import gcsCreds from '../extension-credentials/calendar-config.json';
 
 
 const setCalendar = new SlashCommandBuilder()
@@ -211,7 +213,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ]);
 
         // runtime only. Will be resetted when YABOB restarts
-        calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
+        gcsCreds.YABOB_GOOGLE_CALENDAR_ID = newCalendarId;
         await Promise.all(calendarExtensionStates.listeners.map(listener =>
             listener.onCalendarExtensionStateChange())
         );
@@ -302,7 +304,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             calendarId: newCalendarId,
             timeMin: new Date(),
             timeMax: nextWeek,
-            apiKey: calendarExtensionConfig.YABOB_GOOGLE_API_KEY
+            apiKey: gcsCreds.YABOB_GOOGLE_API_KEY
         });
 
         const response = await fetch(url);

@@ -5,9 +5,11 @@ import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
-import { calendarExtensionConfig, calendarExtensionStates } from './calendar-config';
+import { calendarExtensionStates } from './calendar-states';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { CalendarConnectionError } from './calendar-command-extension';
+
+import calendarConfig from '../extension-credentials/calendar-config.json';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -45,7 +47,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         renderIndex: number,
         queueName: string
     ): Promise<CalendarQueueExtension> {
-        if (calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID === undefined) {
+        if (calendarConfig.YABOB_GOOGLE_CALENDAR_ID.length === 0) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}Make sure you have Calendar ID ` +
                 `& API key in calendar-config.ts.${ResetColor}`
@@ -170,8 +172,8 @@ async function getUpComingTutoringEvents(
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
-        calendarId: calendarExtensionConfig.YABOB_GOOGLE_CALENDAR_ID,
-        apiKey: calendarExtensionConfig.YABOB_GOOGLE_API_KEY,
+        calendarId: calendarConfig.YABOB_GOOGLE_CALENDAR_ID,
+        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek
     });

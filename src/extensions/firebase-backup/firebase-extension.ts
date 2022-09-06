@@ -1,16 +1,11 @@
 import { BaseServerExtension } from "../extension-interface";
 import { Firestore } from "firebase-admin/firestore";
-import { initializeApp, cert } from "firebase-admin/app";
+import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import firebase_creds from "./fbs_service_account_key.json";
+import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
-
-// moved outside to prevent multiple calls
-initializeApp({
-    credential: cert(firebase_creds)
-});
 
 class FirebaseLoggingExtension extends BaseServerExtension {
     private constructor(
@@ -22,6 +17,11 @@ class FirebaseLoggingExtension extends BaseServerExtension {
     }
 
     static async load(serverName: string, serverId: string): Promise<FirebaseLoggingExtension> {
+        if (getApps().length === 0) {
+            initializeApp({
+                credential: cert(firebaseCredentials)
+            });
+        }
         const instance = new FirebaseLoggingExtension(
             getFirestore(),
             serverId,
@@ -33,9 +33,12 @@ class FirebaseLoggingExtension extends BaseServerExtension {
         return instance;
     }
 
-    override async onServerPeriodicUpdate(server: Readonly<AttendingServerV2>, isFirstCall = false): Promise<void> {
+    override async onServerPeriodicUpdate(
+        server: Readonly<AttendingServerV2>,
+        isFirstCall = false
+    ): Promise<void> {
         // if invoked on server init, don't back up yet to prevent accidental override
-        if (isFirstCall) { 
+        if (isFirstCall) {
             return Promise.resolve();
         }
 
