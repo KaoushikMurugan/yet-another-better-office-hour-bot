@@ -251,7 +251,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             EmbedColor.NoColor,
             viewModels.length > 0
                 ? viewModels
-                    .map(viewModel => `**${viewModel.displayName}**\t|\t` +
+                    .map(viewModel => 
+                        `**${viewModel.discordId !== undefined
+                            ? `<@${viewModel.discordId}>`
+                            : viewModel.displayName
+                        }**\t|\t` +
                         `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                         `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                     .join('\n')
@@ -302,8 +306,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
 
         return Promise.resolve(
-            `${calendarDisplayName} - ECS ` +
-            `${validQueues.map(queue => queue.name.split(' ')[1]).join(', ')}`
+            `${calendarDisplayName} - ` +
+            `${validQueues.map(queue => queue.name).join(', ')}`
         );
     }
 

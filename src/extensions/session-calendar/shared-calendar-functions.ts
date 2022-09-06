@@ -9,7 +9,7 @@ type UpComingSessionViewModel = {
     end: Date;
     rawSummary: string;
     displayName: string;
-    ecsClass: string;
+    eventQueue: string;
     discordId?: string;
 };
 
@@ -88,29 +88,29 @@ function composeViewModel(
         return undefined;
     }
 
-    const punctuations = /[.,/#!$%^&*;:{}=\-_`~()]/g;
+    const punctuations = /[,]/g;
     const tutorName = words[0]?.trim();
-    const ecsClasses = words[1]?.trim().split(' ')
-        .map(ecsClass => ecsClass
+    const eventQueues = words[1]?.trim().split(', ')
+        .map(eventQueue => eventQueue
             ?.replace(punctuations, '')
             .trim());
     // ["ECS", "20,", "36A,", "36B,", "122A,", "122B"]
-    ecsClasses?.shift(); // Remove the ECS
+    // ecsClasses?.shift(); // Remove the ECS
 
-    if (ecsClasses?.length === 0 || tutorName === undefined) {
+    if (eventQueues?.length === 0 || tutorName === undefined) {
         return undefined;
     }
 
-    const targteClass = ecsClasses?.find(ecsClass => queueName === `ECS ${ecsClass}`);
+    const targetQueue = eventQueues?.find(eventQueue => queueName === eventQueue);
 
-    if (targteClass === undefined) {
+    if (targetQueue === undefined) {
         return undefined;
     }
 
     return {
         start: start,
         end: end,
-        ecsClass: targteClass,
+        eventQueue: targetQueue,
         rawSummary: summary,
         displayName: tutorName,
         discordId: serverIdStateMap
