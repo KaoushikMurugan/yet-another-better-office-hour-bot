@@ -8,3 +8,13 @@ gcs_service_account_key.json
 fbs_service_account_key.json
 test_dir/
 .DS_Store
+src/extensions/google_client_id.json
+.DS_Store
+.DS_Store
+src/extensions/token.json
+src/extensions/google_client_id.json
+src/extensions/token.json
+src/extensions/session-calendar/google_client_id.json
+src/extensions/session-calendar/token.json
+src/extensions/attendance/attendance-config.ts
+src/extensions/session-calendar/calendar-config.ts

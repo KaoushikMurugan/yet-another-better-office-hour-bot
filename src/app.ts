@@ -1,26 +1,32 @@
-import Collection from "@discordjs/collection";
-import { Client, Guild, GuildMember, Intents, TextChannel } from "discord.js";
-
-import { ProcessCommand } from "./command_handler";
-import { AttendingServer } from "./server";
-import { PostSlashCommands } from "./slash_commands";
-import { ProcessButtonPress } from "./button_handler";
-
 import dotenv from "dotenv";
-import gcs_creds from "../gcs_service_account_key.json";
-import fbs_creds from "../fbs_service_account_key.json";
-
-import { GoogleSpreadsheet } from "google-spreadsheet";
-import { initializeApp, cert } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
+import { Client, Guild, Intents, Collection } from "discord.js";
+import { AttendingServerV2 } from "./attending-server/base-attending-server";
+import { ButtonCommandDispatcher } from "./command-handling/button-handler";
+import { CentralCommandDispatcher } from "./command-handling/command-handler";
+import {
+    BgMagenta, FgBlack, FgCyan, BgYellow,
+    FgGreen, FgMagenta, FgRed, FgYellow, ResetColor
+} from './utils/command-line-colors';
+import { postSlashCommands } from "./command-handling/slash-commands";
+import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
+import { IInteractionExtension } from "./extensions/extension-interface";
 
 dotenv.config();
+console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
 
-if (
-    process.env.YABOB_BOT_TOKEN === undefined ||
+if (process.env.NODE_ENV === 'Production') {
+    process.removeAllListeners('warning');
+}
+
+if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
 ) {
-    throw new Error("Missing token or id!");
+    throw new Error("Missing token or bot ID. Aborting setup.");
+}
+
+if (process.argv.slice(2)[0]?.split('=')[1] === 'true'){
+    console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
 }
 
 const client = new Client({
@@ -35,174 +41,199 @@ const client = new Client({
     ],
 });
 
-initializeApp({
-    credential: cert(fbs_creds),
-});
+// key is Guild.id
+const serversV2: Collection<string, AttendingServerV2> = new Collection();
+const interactionExtensions: Collection<string, IInteractionExtension[]> = new Collection();
 
-const servers: Collection<Guild, AttendingServer> = new Collection();
-const firebase_db: FirebaseFirestore.Firestore = getFirestore();
-console.log("Connected to Firebase database");
-
-client.login(process.env.YABOB_BOT_TOKEN).catch((e: Error) => {
+client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
-    throw e;
+    throw err;
 });
 
-client.on("error", (error) => {
+client.on("error", error => {
     console.error(error);
 });
 
+/**
+ * After login startup seqence
+ * ----
+*/
 client.on("ready", async () => {
-    console.log("YABOB V3");
-
     if (client.user === null) {
-        throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
+        throw new Error(
+            "Login Unsuccessful. Check YABOB's Discord Credentials"
+        );
     }
-
+    printTitleString();
     console.log(`Logged in as ${client.user.tag}!`);
     console.log("Scanning servers I am a part of...");
 
-    const guilds = await client.guilds.fetch(); // guild is a server
-    console.log(`Found ${guilds.size} server(s)`);
-    const full_guilds = await Promise.all(guilds.map((guild) => guild.fetch()));
-    // * full guild is all the servers this YABOB instance is part of
-
-    // Connecting to the attendance sheet
-    let attendance_doc: GoogleSpreadsheet | null = null;
-    if (process.env.YABOB_GOOGLE_SHEET_ID !== undefined) {
-        attendance_doc = new GoogleSpreadsheet(process.env.YABOB_GOOGLE_SHEET_ID);
-        await attendance_doc.useServiceAccountAuth(gcs_creds);
-        console.log("Connected to Google sheets.");
-    }
-
-    await Promise.all(
-        full_guilds.map((guild) =>
-            AttendingServer.Create(client, guild, firebase_db, attendance_doc)
-                .then((server) => servers.set(guild, server))
-                .then(() => PostSlashCommands(guild))
-                .catch((err: Error) => {
-                    console.error(
-                        `An error occured in processing servers during startup of server: ${guild.name}. ${err.stack}`
-                    );
-                })
-        )
+    // allGuilds is all the servers this YABOB instance has joined
+    const allGuilds = await Promise.all(
+        (await client.guilds.fetch()).map(guild => guild.fetch())
     );
 
-    console.log("Ready to go!");
-
-    await Promise.all(
-        full_guilds.map(async (guild) => {
-            const server = servers.get(guild);
-            if (server !== undefined) {
-                await server.AutoScheduleUpdates(server);
-            }
-        })
+    // Launch all startup sequences in parallel
+    const setupResult = await Promise.allSettled(allGuilds.map(guild => joinGuild(guild)));
+    setupResult.forEach(result =>
+        result.status === 'rejected' &&
+        console.log(`${result.reason}`)
     );
-});
 
-client.on("guildCreate", async (guild) => {
-    await JoinGuild(guild);
-});
-
-client.on("interactionCreate", async (interaction) => {
-    // Only care about if the interaction was a command or a button
-    if (!interaction.isCommand() && !interaction.isButton()) return;
-
-    // Don't care about the interaction if done through dms
-    if (interaction.guild === null) {
-        await interaction.reply("Sorry, I dont respond to direct messages.");
-        return;
+    if (setupResult.filter(res => res.status === 'fulfilled').length === 0) {
+        console.error('All server setups failed. Aborting.');
+        process.exit(1);
     }
 
-    const server =
-        servers.get(interaction.guild) ?? (await JoinGuild(interaction.guild));
+    console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
+    console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
+    return;
+});
 
-    await server.EnsureHasRole(interaction.member as GuildMember);
+/**
+ * Server joining procedure
+ * ----
+*/
+client.on("guildCreate", async guild => {
+    console.log(`${FgMagenta}Got invited to:${ResetColor} '${guild.name}'!`);
+    await joinGuild(guild)
+        .catch(() => console.error(
+            `${FgRed}Please give me the highest role in: ${ResetColor}'${guild.name}'.`
+        ));
+});
 
-    //If the interactin is a Command
+/**
+ * Server exit procedure
+ * ----
+ * - Clears all the periodic updates
+ * - Deletes server from server map
+*/
+client.on("guildDelete", async guild => {
+    const server = serversV2.get(guild.id);
+    if (server !== undefined) {
+        server.clearAllIntervals();
+        serversV2.delete(guild.id);
+        console.log(
+            `${FgRed}Leaving ${guild.name}. ` +
+            `Backups will be saved by the extensions.${ResetColor}`
+        );
+    }
+});
+
+client.on("interactionCreate", async interaction => {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
     if (interaction.isCommand()) {
-        await ProcessCommand(server, interaction);
+        const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
+        if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
+            await builtinCommandHandler.process(interaction);
+        } else {
+            const externalCommandHandler = interactionExtensions
+                .get(interaction.guild?.id ?? '')
+                ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
+            await externalCommandHandler?.processCommand(interaction);
+        }
     }
-    //if the interaction is a button
-    else if (interaction.isButton()) {
-        await ProcessButtonPress(server, interaction);
-    }
-});
-
-// updates user status of either joining a vc or leaving one
-client.on("voiceStateUpdate", async (oldState, newState) => {
-    if (oldState.member?.id !== newState.member?.id) {
-        console.error("voiceStateUpdate: members don't match");
-    }
-    if (oldState.guild.id !== newState.guild.id) {
-        console.error("voiceStateUpdate: servers don't match");
-    }
-
-    // * added nullish coalescing
-    const server =
-        servers.get(oldState.guild) ?? (await JoinGuild(oldState.guild));
-    const member = oldState.member;
-    await server.EnsureHasRole(member as GuildMember);
-
-    // if a user joins a vc
-    if (oldState.channel === null && newState.channel !== null) {
-        // if not a helper, mark as being helped
-        server.UpdateMemberJoinedVC(member as GuildMember);
-    }
-
-    // if a user leaves a vc
-    if (oldState.channel !== null && newState.channel === null) {
-        // if not a helper and marked as being helped
-        // send the person who left vc a dm to fill out a form
-        // mark as not currently being helped
-        await server.UpdateMemberLeftVC(member as GuildMember);
+    if (interaction.isButton()) {
+        const buttonName = interaction.customId.split(' ')[0] ?? '';
+        const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
+        if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
+            await builtinButtonHandler.process(interaction);
+        } else {
+            const externalButtonHandler = interactionExtensions
+                .get(interaction.guild?.id ?? '')
+                ?.find(ext => ext.buttonMethodMap.has(buttonName));
+            await externalButtonHandler?.processButton(interaction);
+        }
     }
 });
 
-// incase queue message gets deleted
-client.on("messageDelete", async (message) => {
-    if (message === null || message?.member === null) {
-        console.error("Recognized a message deletion without a message");
-        return;
+client.on("guildMemberAdd", async member => {
+    const server = serversV2.get(member.guild.id)
+        ?? await joinGuild(member.guild);
+    const studentRole = server.guild.roles.cache
+        .find(role => role.name === 'Student');
+    if (studentRole !== undefined) {
+        await member.roles.add(studentRole);
     }
-    if (message.author?.id !== process.env.YABOB_APP_ID) {
-        return;
-    }
-    if (message.guild === null) {
-        console.error("Recognized a message deletion without a guild");
-        return;
-    }
-
-    const server = servers.get(message.guild);
-
-    if(server === undefined) {
-        // Calling JoinGuild() here causes issues involving duplicate of the
-        // same server being stored in fullGuilds
-        return;
-    }
-
-    await server.EnsureHasRole(message.member as GuildMember);
-
-    const channel = message.channel as TextChannel;
-    const category = channel.parent;
-
-    if (category === null) {
-        return;
-    }
-
-    await server.EnsureQueueSafe(category.name);
-    await server.ForceQueueUpdate(category.name);
 });
 
-client.on("guildMemberAdd", async (member) => {
-    const server = servers.get(member.guild) ?? (await JoinGuild(member.guild));
-    await server.EnsureHasRole(member as GuildMember);
+/**
+ * Used for inviting YABOB to a server with existing roles
+ * ----
+ * Once YABOB has the highest role, start the initialization call
+ */
+client.on("roleUpdate", async role => {
+    if (serversV2.has(role.guild.id)) {
+        return;
+    }
+    if (role.name === client.user?.username &&
+        role.guild.roles.highest.name === client.user.username) {
+        console.log(
+            `${FgCyan}Got the highest Role! Starting server initialization${ResetColor}`
+        );
+        const owner = await role.guild.fetchOwner();
+        await Promise.all([
+            owner.send(SimpleEmbed(
+                `Got the highest Role!` +
+                ` Starting server initialization for ${role.guild.name}`,
+                EmbedColor.Success
+            )),
+            joinGuild(role.guild)
+        ]);
+    }
 });
 
-async function JoinGuild(guild: Guild): Promise<AttendingServer> {
-    console.log(`Joining guild ${guild.name}`);
-    const server = await AttendingServer.Create(client, guild, firebase_db);
-    await PostSlashCommands(guild);
-    servers.set(guild, server);
+process.on('exit', () => {
+    console.log(`${centeredText('-------- End of Server Log --------')}`);
+    console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
+});
+
+/**
+ * Initilization sequence
+ * ----
+ * @param guild server to join
+ * @returns AttendingServerV2 if successfully initialized
+ */
+async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
+    if (client.user === null) {
+        throw Error(
+            'Please wait until YABOB has logged in ' +
+            'to manage the server'
+        );
+    }
+
+    console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
+
+    // Extensions for server&queue are loaded inside the create method
+    const server = await AttendingServerV2.create(client.user, guild);
+    serversV2.set(guild.id, server);
+
+    const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
+    if (!disableExtension) {
+        interactionExtensions.set(guild.id, [new CalendarInteractionExtension(guild)]);
+    }
+
+    await postSlashCommands(
+        guild,
+        interactionExtensions
+            .get(guild.id)
+            ?.flatMap(ext => ext.slashCommandData)
+    );
     return server;
+}
+
+function printTitleString(): void {
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4.0";
+    console.log(
+        `\n${FgBlack}${BgMagenta}${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
+        `${titleString}` +
+        `${' '.repeat((process.stdout.columns - titleString.length) / 2)}${ResetColor}\n`
+    );
+}
+
+function centeredText(text: string): string {
+    return `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
+        `${text}` +
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}`;
 }
