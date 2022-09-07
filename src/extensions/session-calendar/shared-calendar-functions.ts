@@ -81,8 +81,8 @@ function composeViewModel(
     start: Date,
     end: Date,
 ): UpComingSessionViewModel | undefined {
-    // Summary example: "Tutor Name - ECS 20, 36A, 36B, 122A, 122B"
-    // words will be ["TutorName ", "ECS 20, 36A, 36B, 122A, 122B"]
+    // Summary example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
+    // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
     const words = summary.split('-');
     if (words.length !== 2) {
         return undefined;
@@ -94,8 +94,7 @@ function composeViewModel(
         .map(eventQueue => eventQueue
             ?.replace(punctuations, '')
             .trim());
-    // ["ECS", "20,", "36A,", "36B,", "122A,", "122B"]
-    // ecsClasses?.shift(); // Remove the ECS
+    // ["ECS 20,", "ECS 36A,", "ECS 36B,", "ECS 122A,", "ECS 122B"]
 
     if (eventQueues?.length === 0 || tutorName === undefined) {
         return undefined;

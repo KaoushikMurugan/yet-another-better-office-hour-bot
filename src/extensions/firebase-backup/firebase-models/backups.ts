@@ -13,6 +13,7 @@ type ServerBackup = {
     serverName: string;
     timeStamp: Date;
     queues: QueueBackup[];
+    afterSessionMessage: string;
 }
 
 export { QueueBackup, ServerBackup };

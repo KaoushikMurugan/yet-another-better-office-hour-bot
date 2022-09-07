@@ -156,6 +156,22 @@ const cleanupHelpChannelCommand = new SlashCommandBuilder()
         "Debug feature: Force updates the command help channels"
     );
 
+const setAfterSessionMessageCommand = new SlashCommandBuilder()
+    .setName("set_after_session_msg")
+    .setDescription(
+        "Sets the message automatically sent to students after they leave the voice chat"
+    )
+    .addStringOption(option => option
+        .setName("message")
+        .setDescription("The message to send")
+        .setRequired(true)
+    )
+    .addBooleanOption(option => option
+        .setName("enable")
+        .setDescription("If false, the content in `message` will be ignored")
+        .setRequired(true)
+    );
+
 // Get the raw data that can be sent to Discord
 const commandData = [
     queueCommand.toJSON(),
@@ -168,7 +184,8 @@ const commandData = [
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
     cleanupQueue.toJSON(),
-    cleanupHelpChannelCommand.toJSON()
+    cleanupHelpChannelCommand.toJSON(),
+    setAfterSessionMessageCommand.toJSON()
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {

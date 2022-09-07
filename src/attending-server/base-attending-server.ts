@@ -35,9 +35,10 @@ type QueueChannel = {
 */
 class AttendingServerV2 {
 
+    public intervalID!: NodeJS.Timer; // late init
+    public afterSessionMessage = ""; // message sent to students after they leave
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
-    public intervalID!: NodeJS.Timer; // late init
 
     protected constructor(
         public readonly user: User,
@@ -55,6 +56,10 @@ class AttendingServerV2 {
             .map(helper => helper.member.displayName));
     }
 
+    /**
+     * Cleans up all the timers from setInterval
+     * ----
+    */
     clearAllIntervals(): void {
         clearInterval(this.intervalID);
         this.queues.forEach(queue => clearInterval(queue.intervalID));
@@ -120,6 +125,7 @@ class AttendingServerV2 {
             guild,
             serverExtensions
         );
+        server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
 
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
@@ -517,6 +523,34 @@ class AttendingServerV2 {
         await this.queues
             .get(targetQueue.parentCategoryId)
             ?.cleanUpQueueChannel();
+    }
+
+    async setAfterSessionMessage(newMessage: string): Promise<void> {
+        this.afterSessionMessage = newMessage;
+        // trigger anything listening to internal updates
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerPeriodicUpdate(this, false)
+        ));
+    }
+
+    async sendAfterSessionMessage(member: GuildMember): Promise<void> {
+        // disable if no message is set
+        if (this.afterSessionMessage.length === 0) {
+            return;
+        }
+        // see if the member is actually a student that a helper just helped
+        // check if there's a queue that:
+        // - has a helper that has @param member in the students they helped
+        const memberFinishedReceivingHelp = this.queues.find(
+            queue => queue.currentHelpers.find(helper =>
+                helper.helpedMembers.find(helpedStudent => helpedStudent.id === member.id)
+                !== undefined) !== undefined
+        ) !== undefined;
+        if (memberFinishedReceivingHelp) {
+            await member
+                .send(SimpleEmbed(this.afterSessionMessage))
+                .catch(console.error);
+        }
     }
 
     /**

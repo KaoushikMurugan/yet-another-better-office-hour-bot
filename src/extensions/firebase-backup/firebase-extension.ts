@@ -60,7 +60,8 @@ class FirebaseLoggingExtension extends BaseServerExtension {
         const serverBackup: ServerBackup = {
             serverName: this.serverName,
             queues: queueBackups,
-            timeStamp: new Date()
+            timeStamp: new Date(),
+            afterSessionMessage: server.afterSessionMessage
         };
 
         this.firebase_db

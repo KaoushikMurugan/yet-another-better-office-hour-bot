@@ -31,17 +31,18 @@ class CentralCommandDispatcher {
         string,
         (interaction: CommandInteraction) => Promise<string>
     > = new Map([
-        ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
-        ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
-        ['next', (interaction: CommandInteraction) => this.next(interaction)],
-        ['start', (interaction: CommandInteraction) => this.start(interaction)],
-        ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
-        ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
-        ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
-        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
-        ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)]
+        ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
+        ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
+        ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
+        ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
+        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
+        ['next', (interaction: CommandInteraction) => this.next(interaction)],
+        ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
+        ['set_after_session_msg', (interaction: CommandInteraction) => this.setAfterSessionMessage(interaction)],
+        ['start', (interaction: CommandInteraction) => this.start(interaction)],
+        ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -265,6 +266,26 @@ class CentralCommandDispatcher {
         ]);
         await this.serverMap.get(serverId)?.updateCommandHelpChannels();
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
+    }
+
+    private async setAfterSessionMessage(
+        interaction: CommandInteraction
+    ): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'set_after_session_msg',
+                ['Bot Admin']
+            ),
+        ]);
+        const enableAfterSessionMessage = interaction.options.getBoolean(`enable`, true);
+        const newAfterSessionMessage = enableAfterSessionMessage
+            ? interaction.options.getString(`message`, true)
+            : "";
+
+        await this.serverMap.get(serverId)?.setAfterSessionMessage(newAfterSessionMessage);
+        return `Successfully updated after session message.`;
     }
 
     /**

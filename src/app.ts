@@ -25,7 +25,7 @@ if (process.env.YABOB_BOT_TOKEN === undefined ||
     throw new Error("Missing token or bot ID. Aborting setup.");
 }
 
-if (process.argv.slice(2)[0]?.split('=')[1] === 'true'){
+if (process.argv.slice(2)[0]?.split('=')[1] === 'true') {
     console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
 }
 
@@ -183,6 +183,20 @@ client.on("roleUpdate", async role => {
         ]);
     }
 });
+
+client.on("voiceStateUpdate", async voiceState => {
+    // 2nd condition is if the member is not leaving the vc
+    // when they leave the channel value is null
+    if (voiceState.member === null ||
+        voiceState.member.voice.channel !== null) {
+        return;
+    }
+    // now we are guaranteed that the member just left the vc
+    await serversV2
+        .get(voiceState.guild.id)
+        ?.sendAfterSessionMessage(voiceState.member);
+});
+
 
 process.on('exit', () => {
     console.log(`${centeredText('-------- End of Server Log --------')}`);
