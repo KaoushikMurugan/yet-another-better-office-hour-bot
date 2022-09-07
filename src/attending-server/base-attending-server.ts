@@ -17,7 +17,7 @@ import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
-import { FgBlue, FgCyan, FgGreen, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
+import { FgBlue, FgCyan, FgGreen, FgMagenta, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -607,6 +607,7 @@ class AttendingServerV2 {
         }
 
         await this.sendCommandHelpMessages(existingHelpCategory);
+        console.log(`${FgMagenta}✓ Updated help channels ✓${ResetColor}`);
     }
 
     /**

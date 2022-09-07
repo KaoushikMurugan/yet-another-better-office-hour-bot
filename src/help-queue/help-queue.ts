@@ -122,12 +122,10 @@ class HelpQueueV2 {
             backupData
         );
 
-        // This need to happen first
+        // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue, display)));
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
-        );
+        await Promise.all(queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true)));
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(
                 everyoneRole,

@@ -77,7 +77,6 @@ class QueueDisplayV2 {
                 new MessageButton()
                     .setCustomId("removeN " + queue.name)
                     .setEmoji("🔕")
-                    // .setDisabled(queue.isOpen)
                     .setLabel("Remove Notifications")
                     .setStyle("PRIMARY")
             );
@@ -124,7 +123,7 @@ class QueueDisplayV2 {
         if (!sendNew &&
             queueMessages.first(renderIndex + 1)[renderIndex]?.author.id !== this.user.id) {
             return Promise.reject(new QueueRenderError(
-                'This queue is not safe to re-render.',
+                'This queue is not safe to re-render. Use /cleanup to do a clean render.',
                 this.queueChannel.queueName
             ));
         }

@@ -81,8 +81,9 @@ async function isTriggeredByUserWithValidEmail(
 }
 
 /**
- *  Checks if the queue channel has a parent folder
+ * Checks if the queue channel has a parent folder
  * ----
+ * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
  */
 async function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | CommandInteraction,
@@ -104,6 +105,11 @@ async function isFromQueueChannelWithParent(
     return Promise.resolve(queueChannel);
 }
 
+/**
+ * Checks if the interaction came from a valid guild member
+ * ----
+ * @returns GuildMember: object of the triggerer
+*/
 async function isFromGuildMember(
     interaction: ButtonInteraction | CommandInteraction
 ): Promise<GuildMember> {
