@@ -43,8 +43,8 @@ interface IServerExtension {
         deletedQueue: Readonly<HelpQueueV2>
     ) => Promise<void>;
     onDequeueFirst: (
-        dserver: Readonly<AttendingServerV2>,
-        equeuedStudent: Readonly<Helpee>
+        server: Readonly<AttendingServerV2>,
+        dequeuedStudent: Readonly<Helpee>
     ) => Promise<void>;
     onHelperStartHelping: (
         server: Readonly<AttendingServerV2>,

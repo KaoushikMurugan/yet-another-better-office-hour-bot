@@ -217,8 +217,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             )
         ]);
 
-        
-
         // runtime only. Will be resetted when YABOB restarts
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         serverIdStateMap.get(this.guild.id)!.calendarId = newCalendarId;

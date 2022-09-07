@@ -16,7 +16,7 @@ import {
 /**
  * Calendar Extension for individual queues
  * ----
- * - All instances read from the same calendar
+ * - All instances read from the calendar in serverIdStateMap.get(serverId)
  * - Each instance only looks for the class it's responsible for
 */
 class CalendarQueueExtension extends BaseQueueExtension {
@@ -77,13 +77,12 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
-     * Every time queue emits onQueuePeriodicUpdate
+     * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
      * ----
-     * @param queue target queue to get calendar for
     */
     override async onQueuePeriodicUpdate(
-        queue: Readonly<HelpQueueV2>,
+        _queue: Readonly<HelpQueueV2>,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _isFirstCall = false
     ): Promise<void> {
@@ -175,7 +174,5 @@ class CalendarQueueExtension extends BaseQueueExtension {
         );
     }
 }
-
-
 
 export { CalendarQueueExtension };

@@ -33,6 +33,12 @@ class FirebaseLoggingExtension extends BaseServerExtension {
         return instance;
     }
 
+    /**
+     * Periodically backs up server data to firebase
+     * ----
+     * @param server the server to read data from
+     * @param isFirstCall whether it's triggeredon server create
+    */
     override async onServerPeriodicUpdate(
         server: Readonly<AttendingServerV2>,
         isFirstCall = false

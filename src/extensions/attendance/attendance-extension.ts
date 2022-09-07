@@ -64,14 +64,19 @@ class AttendanceExtension extends BaseServerExtension {
             ));
     }
 
+    /**
+     * Updates the attendance for 1 helper
+     * ----
+     * @param helper The complete Helper model with all the attendance data
+    */
     private async updateAttendance(
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         // try to find existing sheet
         // if not created, make a new one
-        let sheetForThisServer = this.attendanceDoc.sheetsByTitle[this.serverName];
-        if (sheetForThisServer === undefined) {
-            sheetForThisServer = await this.attendanceDoc.addSheet({
+        const sheetForThisServer =
+            this.attendanceDoc.sheetsByTitle[this.serverName]
+            ?? await this.attendanceDoc.addSheet({
                 title: this.serverName,
                 headerValues: [
                     "Username",
@@ -80,7 +85,6 @@ class AttendanceExtension extends BaseServerExtension {
                     "Helped Students",
                 ],
             });
-        }
 
         await sheetForThisServer.addRow({
             "Username": helper.member.user.username,

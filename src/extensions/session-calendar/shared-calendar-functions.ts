@@ -16,7 +16,8 @@ type UpComingSessionViewModel = {
 /**
  * Fetches the calendar and build the embed view model
  * ----
- * @param queueName: the name to look for in the calendar event
+ * @param serverId guild.id for calendarState.get()
+ * @param queueName the name to look for in the calendar event
 */
 async function getUpComingTutoringEvents(
     serverId: string,
@@ -25,6 +26,7 @@ async function getUpComingTutoringEvents(
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
+        // defaults to empty to let the api call reject, then prompt user to fix the id
         calendarId: serverIdStateMap.get(serverId)?.calendarId ?? "",
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
@@ -42,7 +44,6 @@ async function getUpComingTutoringEvents(
     if (!events || events.length === 0) {
         return [];
     }
-    // Format: "StartDate - Summary"
     const definedEvents = events
         .filter(event => event.start?.dateTime && event.end?.dateTime)
         .map((event) => {
@@ -94,7 +95,9 @@ function composeViewModel(
         .map(eventQueue => eventQueue
             ?.replace(punctuations, '')
             .trim());
-    // ["ECS 20,", "ECS 36A,", "ECS 36B,", "ECS 122A,", "ECS 122B"]
+
+    // eventQueues will be:
+    // ["ECS 20", "ECS 36A", "ECS 36B", "ECS 122A", "ECS 122B"]
 
     if (eventQueues?.length === 0 || tutorName === undefined) {
         return undefined;
