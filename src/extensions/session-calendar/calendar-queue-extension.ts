@@ -84,7 +84,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
     override async onQueuePeriodicUpdate(
         _queue: Readonly<HelpQueueV2>,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _isFirstCall = false
+        isFirstCall = false
     ): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
@@ -94,6 +94,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
             serverId,
             queueName
         );
+        // avoid unnecessary render
+        if (!isFirstCall) {
+            await this.renderCalendarEmbeds();
+        }
     }
 
     /**

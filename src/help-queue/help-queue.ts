@@ -122,33 +122,30 @@ class HelpQueueV2 {
             backupData
         );
 
-        queue.intervalID = setInterval(async () => {
-            await Promise.all(queueExtensions.map(
-                extension => extension.onQueuePeriodicUpdate(queue)
-            )); // Random offset to avoid spamming the APIs
-        }, (1000 * 60 * 30) + Math.floor(Math.random() * 2000));
-
         // This need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue, display)));
         await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue))
+            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
         );
-        await queue.cleanUpQueueChannel();
-        // Do not parallelize these 2, we don't know which one gets applied first
-        await queueChannel.channelObj.permissionOverwrites.create(
-            everyoneRole,
-            {
-                SEND_MESSAGES: false,
-                CREATE_PRIVATE_THREADS: false,
-                CREATE_PUBLIC_THREADS: false,
-                ADD_REACTIONS: false
-            }
-        );
-        await queueChannel.channelObj.permissionOverwrites.create(
-            user,
-            { SEND_MESSAGES: true }
-        );
+        await Promise.all([
+            queueChannel.channelObj.permissionOverwrites.create(
+                everyoneRole,
+                {
+                    SEND_MESSAGES: false,
+                    CREATE_PRIVATE_THREADS: false,
+                    CREATE_PUBLIC_THREADS: false,
+                    ADD_REACTIONS: false
+                }
+            ),
+            queue.cleanUpQueueChannel()
+        ]);
+        queue.intervalID = setInterval(async () => {
+            await Promise.all(queueExtensions.map(
+                extension => extension.onQueuePeriodicUpdate(queue, false)
+            )); // Random offset to avoid spamming the APIs
+        }, (1000 * 60 * 30) + Math.floor(Math.random() * 1000));
+
         return queue;
     }
 
