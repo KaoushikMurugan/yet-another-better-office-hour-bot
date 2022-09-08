@@ -1,10 +1,10 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 
-export const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
+export const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
     { embeds: [{
         color: EmbedColor.Neutral,
-        title: 'Bot Admin Only Commands',
+        title: 'Bot Admin & Helper Only Commands',
         timestamp: new Date(),
         author: {
             name: 'YABOB V4.',
@@ -13,109 +13,110 @@ export const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
     }]},
     { embeds: [{
         color: EmbedColor.NoColor,
-        title: 'Command: `/queue add [queue_name]`',
+        title: 'Command: `/start (mute_notif)`',
         fields: [
             {
                 name: 'Description',
-                value: 'Creates a new category with the name entered in `queue_name` and creates the #queue and #chat text channels within it.',
+                value: 'Open queues that the Helper/Admin is assigned to help for.',
                 inline: false
             },
             {
                 name: 'Options',
-                value: '`queue_name: string`\nThe name of the new queue category. Can contain any characters that are allowed by discord for category names other than comma (,).',
+                value: "`mute_notif: boolean`\nDon't notify users that have enabled notifications for queues assigned to a Helper/Admin.",
                 inline: true
             },
             { name: '\u0002', value: '\u0002', inline: true },
             {
                 name: 'Example Usage',
-                value: '`/queue add new queue!`',
+                value: '`/start`',
                 inline: true
             },
         ]
     }]},
     { embeds: [{
         color: EmbedColor.NoColor,
-        title: 'Command: `/queue remove`',
+        title: 'Command: `/stop`',
         fields: [
             {
                 name: 'Description',
-                value: 'Deletes an existing category with the name entered in queue_name and the channels within it.',
+                value: 'Close the OH-queue and stop students from entering the queue.\n\nStudents that were in the queue before closing will still be regisitered for OH and be in the queue for the next OH.',
                 inline: false
             },
             {
                 name: 'Options',
-                value: '`queue_name: Channel`\nThe queue category you want to delete.',
+                value: "None",
                 inline: true
             },
             { name: '\u0002', value: '\u0002', inline: true },
             {
                 name: 'Example Usage',
-                value: '`/queue remove existing queue`',
+                value: '`/stop`',
                 inline: true
             },
         ]
     }]},
     { embeds: [{
         color: EmbedColor.NoColor,
-        title: 'Command: `/cleanup (queue_name)`',
+        title: 'Command: `/next (queue_name) (user)`',
         fields: [
             {
                 name: 'Description',
-                value: 'Debug feature. Cleans up everything in #queue for the specified queue and resends new embeds.',
+                value: 'Removes the next student from a queue and sends them an invite to a voice channel.',
                 inline: false
             },
             {
                 name: 'Options',
-                value: '`queue_name: Channel`\nThe queue to clean',
+                value: "`queue_name: Channel`\nDequeue the first student from a particular queue\n\n`user: User`\nDequeue a specific user.",
                 inline: true
             },
             { name: '\u0002', value: '\u0002', inline: true },
             {
                 name: 'Example Usage',
-                value: '`/cleanup class A`',
+                value: '`/next`',
                 inline: true
             },
         ]
     }]},
     { embeds: [{
         color: EmbedColor.NoColor,
-        title: 'Command: `/clean_up_help_ch`',
+        title: 'Command: `/announce [message] (queue_name)`',
         fields: [
             {
                 name: 'Description',
-                value: 'Debug feature. Cleans up all the bot help channels and resends new embeds',
+                value: 'Sends a messeage to all of the queues that you are currently helping.',
+                inline: false
             },
             {
                 name: 'Options',
-                value: 'None',
+                value: "`queue_name: Channel`\nSends the message to only those in a queue specficied in`queue_name`",
                 inline: true
             },
             { name: '\u0002', value: '\u0002', inline: true },
             {
                 name: 'Example Usage',
-                value: '`/clean_up_help_ch',
+                value: '`/announce some announcement`',
                 inline: true
             },
         ]
     }]},
     { embeds: [{
         color: EmbedColor.NoColor,
-        title: 'Command: `/clear_all`',
+        title: 'Command: `/clear (queue_name)`',
         fields: [
             {
                 name: 'Description',
-                value: 'Empties all queues in the server.',
+                value: 'Empties a queue of students. You can only clear a queue that you are a helper for, or if you are a Bot Admin.',
                 inline: false
             },
             {
                 name: 'Options',
-                value: 'None',
+                value: "`queue_name: Channel`\nThe queue to clear",
                 inline: true
             },
             { name: '\u0002', value: '\u0002', inline: true },
             {
                 name: 'Example Usage',
-                value: '`/clear_all`',
+                value: '`/clear class A`',
                 inline: true
             },
         ]

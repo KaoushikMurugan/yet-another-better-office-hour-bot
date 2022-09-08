@@ -3,6 +3,7 @@ import {
     Collection,
     Guild,
     GuildMember,
+    MessageOptions,
     TextChannel,
     User,
 } from "discord.js";
@@ -16,6 +17,7 @@ import { Helpee, Helper } from "../models/member-states";
 import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension'
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
 import { FgBlue, FgCyan, FgGreen, FgMagenta, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
 
@@ -112,7 +114,8 @@ class AttendingServerV2 {
             ? []
             : await Promise.all([
                 AttendanceExtension.load(guild.name),
-                FirebaseLoggingExtension.load(guild.name, guild.id)
+                FirebaseLoggingExtension.load(guild.name, guild.id),
+                CalendarServerExtension.load(),
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
@@ -623,7 +626,7 @@ class AttendingServerV2 {
             );
         }
 
-        await this.sendCommandHelpMessages(existingHelpCategory);
+        await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
         console.log(`${FgMagenta}✓ Updated help channels ✓${ResetColor}`);
     }
 
@@ -714,26 +717,36 @@ class AttendingServerV2 {
      * Overwrites the existing command help channel and send new help messages
      * ----
     */
-    private async sendCommandHelpMessages(
-        helpCategories: CategoryChannel[]
+    public async sendCommandHelpMessages(
+        helpCategories: CategoryChannel[],
+        messageConfig: {
+            channelName: string;
+            file: Pick<MessageOptions, "embeds">[];
+            visibility: string[];
+        }[],
+        cleanUpFirst: boolean = true
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
         // delete all existing messages
-        await Promise.all(
-            allHelpChannels.map(async ch => await ch.messages
-                .fetch()
-                .then(messages => messages.map(msg => msg.delete())))
-        );
+        if(cleanUpFirst === true) {
+            await Promise.all(
+                allHelpChannels.map(async ch => await ch.messages
+                    .fetch()
+                    .then(messages => messages.map(msg => msg.delete())))
+            );
+        }
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
-                const file = commandChConfigs.find(
+                const file = messageConfig.find(
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) {
-                    await ch.send(file);
+                    file.forEach(async message => {
+                        await ch.send(message);
+                    })
                 }
             })
         );
