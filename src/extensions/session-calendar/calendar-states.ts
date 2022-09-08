@@ -9,8 +9,10 @@ import firebaseCredentials from "../extension-credentials/fbs_service_account_ke
 import calendarConfig from '../extension-credentials/calendar-config.json';
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 
-// key is server id, value is 1 calendar extension state
-const serverIdStateMap = new Collection<string, CalendarExtensionState>();
+type CalendarConfigBackup = {
+    calendarId: string;
+    calendarNameDiscordIdMap: { [key: string]: string; }
+}
 
 class CalendarExtensionState {
     calendarId: string = calendarConfig.YABOB_DEFAULT_CALENDAR_ID;
@@ -18,18 +20,34 @@ class CalendarExtensionState {
     calendarNameDiscordIdMap: Collection<string, string> = new Collection();
     // event listeners, their onCalendarStateChange will be called
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
-    firebase_db: Firestore;
 
     constructor(
         private readonly serverId: string,
-        private readonly serverName: string
+        private readonly serverName: string,
+        private readonly firebase_db: Firestore
     ) {
         if (getApps().length === 0) {
             initializeApp({
                 credential: cert(firebaseCredentials)
             });
         }
-        this.firebase_db = getFirestore();
+    }
+
+    static async load(serverId: string, serverName: string): Promise<CalendarExtensionState> {
+        if (getApps().length === 0) {
+            initializeApp({
+                credential: cert(firebaseCredentials)
+            });
+        }
+
+        const instance = new CalendarExtensionState(
+            serverId,
+            serverName,
+            getFirestore()
+        );
+
+        await instance.restoreFromBackup(serverId);
+        return instance;
     }
 
     async setCalendarId(validNewId: string): Promise<void> {
@@ -45,11 +63,30 @@ class CalendarExtensionState {
         await this.backupToFirebase();
     }
 
+    async restoreFromBackup(serverId: string): Promise<void> {
+        const backupDoc = await this.firebase_db
+            .collection("calendarBackups")
+            .doc(serverId)
+            .get();
+
+        if (backupDoc.data() === undefined) {
+            return;
+        }
+
+        const calendarBackup = backupDoc.data() as CalendarConfigBackup;
+
+        this.calendarId = calendarBackup.calendarId;
+        this.calendarNameDiscordIdMap
+            = new Collection(Object.entries(calendarBackup.calendarNameDiscordIdMap));
+    }
+
     private async backupToFirebase(): Promise<void> {
-        const backupData = {
+        const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
-            calendarNameDiscordIdMap: this.calendarNameDiscordIdMap.toJSON()
+            calendarNameDiscordIdMap:
+                Object.fromEntries(this.calendarNameDiscordIdMap)
         };
+
         this.firebase_db
             .collection("calendarBackups")
             .doc(this.serverId)
@@ -62,6 +99,8 @@ class CalendarExtensionState {
     }
 }
 
+// static, key is server id, value is 1 calendar extension state
+const serverIdStateMap = new Collection<string, CalendarExtensionState>();
 
 export { CalendarExtensionState, serverIdStateMap };
 

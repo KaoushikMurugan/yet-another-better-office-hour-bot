@@ -221,7 +221,12 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
     const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
     if (!disableExtension) {
-        interactionExtensions.set(guild.id, [new CalendarInteractionExtension(guild)]);
+        interactionExtensions.set(
+            guild.id,
+            await Promise.all([
+                CalendarInteractionExtension.load(guild)
+            ])
+        );
     }
 
     await postSlashCommands(

@@ -4,7 +4,7 @@ import {
     serverIdStateMap,
     CalendarExtensionState
 } from './calendar-states';
-import { ButtonInteraction, Collection, CommandInteraction, Guild } from 'discord.js';
+import { ButtonInteraction, CommandInteraction, Guild } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -87,15 +87,16 @@ class CalendarConnectionError extends Error {
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
-    constructor(private readonly guild: Guild) {
+    protected constructor(private readonly guild: Guild) {
         super();
+    }
+
+    static async load(guild: Guild): Promise<CalendarInteractionExtension> {
         serverIdStateMap.set(
             guild.id,
-            new CalendarExtensionState(
-                guild.id,
-                guild.name
-            )
+            await CalendarExtensionState.load(guild.id, guild.name)
         );
+        return new CalendarInteractionExtension(guild);
     }
 
     // I know this is very verbose but TS gets angry if I don't write all this :(
