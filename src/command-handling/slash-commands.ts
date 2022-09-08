@@ -114,6 +114,10 @@ const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
             .setRequired(false)
     );
 
+const clearAllCommand = new SlashCommandBuilder()
+    .setName("clear_all")
+    .setDescription("Admin only. Clears all the queues on this server");
+
 const announceCommand = new SlashCommandBuilder() // /announce [message] (queue_name)
     .setName("announce")
     .setDescription(
@@ -181,6 +185,7 @@ const commandData = [
     stopCommand.toJSON(),
     leaveCommand.toJSON(),
     clearCommand.toJSON(),
+    clearAllCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
     cleanupQueue.toJSON(),

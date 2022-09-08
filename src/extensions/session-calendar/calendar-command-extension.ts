@@ -51,9 +51,8 @@ const whenNext = new SlashCommandBuilder()
             .setRequired(false)
     );
 
-function makeCalendarStringCommand(
-    guild: Guild
-): Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
+function makeCalendarStringCommand():
+    Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
     const command = new SlashCommandBuilder()
         .setName("make_calendar_string")
         .setDescription("Generates a valid calendar string that can be parsed by YABOB")
@@ -62,16 +61,14 @@ function makeCalendarStringCommand(
             .setName('your_name')
             .setDescription("Your display name on the calendar"));
 
-    [...guild.channels.cache
-        .filter(channel => channel.type === "GUILD_CATEGORY")]
-        .forEach((_, idx) =>
-            command.addChannelOption(option =>
-                option.setName(`queue_name_${idx + 1}`)
-                    .setDescription(
-                        "The courses you tutor for"
-                    )
-                    .setRequired(idx === 0)) // make the first one required
-        );
+    Array(20).forEach((_, idx) =>
+        command.addChannelOption(option =>
+            option.setName(`queue_name_${idx + 1}`)
+                .setDescription(
+                    "The courses you tutor for"
+                )
+                .setRequired(idx === 0)) // make the first one required
+    );
     return command;
 }
 
@@ -124,7 +121,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         return [
             setCalendar.toJSON(),
             whenNext.toJSON(),
-            makeCalendarStringCommand(this.guild).toJSON()
+            makeCalendarStringCommand().toJSON()
         ];
     }
 
@@ -270,6 +267,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await interaction.editReply(embed);
     }
 
+    /**
+     * Makes calendar titles with every queue arg optional
+     * ----
+    */
     private async makeParsableCalendarTitle(interaction: CommandInteraction): Promise<string> {
         // all the queue_name_1, queue_name_2, ... 
         await isTriggeredByUserWithRoles(

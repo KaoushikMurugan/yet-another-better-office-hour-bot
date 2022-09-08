@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildChannel } from "discord.js";
+import { CommandInteraction, GuildChannel, GuildMemberRoleManager } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
@@ -35,6 +35,7 @@ class CentralCommandDispatcher {
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
         ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
+        ['clear_all', (interaction: CommandInteraction) => this.clearAll(interaction)],
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
         ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
         ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
@@ -204,8 +205,43 @@ class CentralCommandDispatcher {
                 ['Bot Admin', 'Staff']
             )
         ]);
+        // casting is safe because we checked for isServerInteraction
+        const memberRoles = interaction.member?.roles as GuildMemberRoleManager;
+        // if they are not admin or doesn't have the queue role, reject
+        if (
+            memberRoles.cache.find(role =>
+                role.name === queue.queueName ||
+                role.name === 'Bot Admin'
+            ) === undefined
+        ) {
+            return Promise.reject(new CommandParseError(
+                `You don't have permission to clear '${queue.queueName}'. ` +
+                `You can only clear the queues that you have a role of.`
+            ));
+        }
         await this.serverMap.get(serverId)?.clearQueue(queue);
         return `Everyone in  queue ${queue.queueName} was removed.`;
+    }
+
+    private async clearAll(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                "clear_all",
+                ['Bot Admin']
+            )
+        ]);
+        const server = this.serverMap.get(serverId);
+        const allQueues = await server?.getQueueChannels();
+        if (allQueues === undefined) {
+            return Promise.reject(new CommandParseError(
+                `This server doesn't seem to have any queues. ` +
+                `You can use \`/queue add <name>\` to create one`
+            ));
+        }
+        await Promise.all(allQueues.map(queue => server?.clearQueue(queue)));
+        return `All queues on ${server?.guild.name} was cleard.`;
     }
 
     private async listHelpers(interaction: CommandInteraction): Promise<string> {

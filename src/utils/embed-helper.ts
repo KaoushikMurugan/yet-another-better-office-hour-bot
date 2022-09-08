@@ -20,7 +20,7 @@ export enum EmbedColor {
 export function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
-    description?: string,
+    description = '',
 ): Pick<MessageOptions, 'embeds'> {
     if (message.length <= 256) {
         return {
