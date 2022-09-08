@@ -7,7 +7,7 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
-import { ButtonInteraction, CommandInteraction } from "discord.js";
+import { ButtonInteraction, Collection, CommandInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
@@ -17,6 +17,7 @@ import { CommandData } from '../command-handling/slash-commands';
 
 // Command level extensions
 interface IInteractionExtension {
+    serverMap: Collection<string, AttendingServerV2>;
     commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) =>
@@ -104,6 +105,7 @@ interface IQueueExtension {
  * - override processCommand and/or processButton depending on which type you want
 */
 class BaseInteractionExtension implements IInteractionExtension {
+    serverMap: Collection<string, AttendingServerV2> = new Collection();
     buttonMethodMap: ReadonlyMap<
         string,
         (interaction: ButtonInteraction, queueName: string) =>

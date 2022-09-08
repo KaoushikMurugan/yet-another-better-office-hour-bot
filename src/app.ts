@@ -131,7 +131,11 @@ client.on("interactionCreate", async interaction => {
             const externalCommandHandler = interactionExtensions
                 .get(interaction.guild?.id ?? '')
                 ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
-            await externalCommandHandler?.processCommand(interaction);
+            if (!externalCommandHandler) {
+                return;
+            }
+            externalCommandHandler.serverMap = serversV2;
+            await externalCommandHandler.processCommand(interaction);
         }
     }
     if (interaction.isButton()) {
@@ -143,7 +147,11 @@ client.on("interactionCreate", async interaction => {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? '')
                 ?.find(ext => ext.buttonMethodMap.has(buttonName));
-            await externalButtonHandler?.processButton(interaction);
+            if (!externalButtonHandler) {
+                return;
+            }
+            externalButtonHandler.serverMap = serversV2;
+            await externalButtonHandler.processButton(interaction);
         }
     }
 });
@@ -224,7 +232,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         interactionExtensions.set(
             guild.id,
             await Promise.all([
-                CalendarInteractionExtension.load(guild)
+                CalendarInteractionExtension.load(guild, serversV2)
             ])
         );
     }

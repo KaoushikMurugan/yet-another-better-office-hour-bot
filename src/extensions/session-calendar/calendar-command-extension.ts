@@ -1,11 +1,16 @@
 import { BaseInteractionExtension } from "../extension-interface";
 import {
-
     serverIdStateMap,
     CalendarExtensionState
 } from './calendar-states';
-import { ButtonInteraction, CommandInteraction, Guild } from 'discord.js';
-import { SlashCommandBuilder } from "@discordjs/builders";
+import {
+    ButtonInteraction,
+    CategoryChannel,
+    Collection,
+    CommandInteraction,
+    Guild,
+    GuildMemberRoleManager
+} from 'discord.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
@@ -23,54 +28,10 @@ import {
 } from './shared-calendar-functions';
 import { calendar_v3 } from "googleapis";
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
+import { calendarCommands } from './calendar-slash-commands';
 
 import calendarConfig from '../extension-credentials/calendar-config.json';
-
-
-const setCalendar = new SlashCommandBuilder()
-    .setName("set_calendar")
-    .setDescription(
-        "Commands to modify the resources connected to the /when_next command"
-    )
-    .addStringOption((option) =>
-        option
-            .setName("calendar_id")
-            .setDescription("The link to the calendar")
-            .setRequired(true)
-    );
-
-const whenNext = new SlashCommandBuilder()
-    .setName("when_next")
-    .setDescription("View the upcoming tutoring hours")
-    .addChannelOption((option) =>
-        option
-            .setName("queue_name")
-            .setDescription(
-                "The course for which you want to view the next tutoring hours"
-            )
-            .setRequired(false)
-    );
-
-function makeCalendarStringCommand():
-    Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
-    const command = new SlashCommandBuilder()
-        .setName("make_calendar_string")
-        .setDescription("Generates a valid calendar string that can be parsed by YABOB")
-        .addStringOption(option => option
-            .setRequired(true)
-            .setName('your_name')
-            .setDescription("Your display name on the calendar"));
-
-    Array(20).forEach((_, idx) =>
-        command.addChannelOption(option =>
-            option.setName(`queue_name_${idx + 1}`)
-                .setDescription(
-                    "The courses you tutor for"
-                )
-                .setRequired(idx === 0)) // make the first one required
-    );
-    return command;
-}
+import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
@@ -84,16 +45,21 @@ class CalendarConnectionError extends Error {
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
-    protected constructor(private readonly guild: Guild) {
-        super();
-    }
+    protected constructor(
+        private readonly guild: Guild
+    ) { super(); }
 
-    static async load(guild: Guild): Promise<CalendarInteractionExtension> {
+    static async load(
+        guild: Guild,
+        serverMap: Collection<string, AttendingServerV2>
+    ): Promise<CalendarInteractionExtension> {
         serverIdStateMap.set(
             guild.id,
             await CalendarExtensionState.load(guild.id, guild.name)
         );
-        return new CalendarInteractionExtension(guild);
+        const instance = new CalendarInteractionExtension(guild);
+        instance.serverMap = serverMap;
+        return instance;
     }
 
     // I know this is very verbose but TS gets angry if I don't write all this :(
@@ -102,13 +68,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     public override commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | undefined>
-    >  = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
+    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['set_calendar', (interaction: CommandInteraction) =>
             this.updateCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) =>
             this.listUpComingHours(interaction)],
         ['make_calendar_string', (interaction: CommandInteraction) =>
-            this.makeParsableCalendarTitle(interaction)]
+            this.makeParsableCalendarTitle(interaction, false)],
+        ['make_calendar_string_all', (interaction: CommandInteraction) =>
+            this.makeParsableCalendarTitle(interaction, true)]
     ]);
 
     public override buttonMethodMap: ReadonlyMap<
@@ -120,11 +88,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     ]);
 
     override get slashCommandData(): CommandData {
-        return [
-            setCalendar.toJSON(),
-            whenNext.toJSON(),
-            makeCalendarStringCommand().toJSON()
-        ];
+        return calendarCommands;
     }
 
     /**
@@ -249,7 +213,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             this.guild.id,
             channel.queueName
         );
-
         const embed = SimpleEmbed(
             `Upcoming Hours for ${channel.queueName}`,
             EmbedColor.NoColor,
@@ -274,39 +237,59 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Makes calendar titles with every queue arg optional
      * ----
     */
-    private async makeParsableCalendarTitle(interaction: CommandInteraction): Promise<string> {
+    private async makeParsableCalendarTitle(
+        interaction: CommandInteraction,
+        generateAll = true
+    ): Promise<string> {
         // all the queue_name_1, queue_name_2, ... 
-        await isTriggeredByUserWithRoles(
-            interaction,
-            "make_calendar_string",
-            ['Bot Admin', 'Staff']
-        );
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                "make_calendar_string",
+                ['Bot Admin', 'Staff']
+            )
+        ]);
 
         const calendarDisplayName = interaction.options.getString('your_name', true);
+        let validQueues: CategoryChannel[] = [];
 
-        const commandArgs = [...this.guild.channels.cache
-            .filter(channel => channel.type === 'GUILD_CATEGORY')]
-            .map((_, idx) => interaction.options
-                .getChannel(`queue_name_${idx + 1}`, idx === 0))
-            .filter(queueArg => queueArg !== undefined && queueArg !== null);
+        if (generateAll) {
+            const allQueues = await this.serverMap.get(serverId)?.getQueueChannels() ?? [];
+            validQueues = (allQueues
+                .map(queue => interaction.guild
+                    ?.channels.cache
+                    .get(queue.parentCategoryId)
+                ) as CategoryChannel[])
+                .filter(queue => (interaction.member?.roles as GuildMemberRoleManager)
+                    .cache
+                    .find(role => role.name === queue.name) !== undefined
+                );
+        } else {
+            const commandArgs = [...this.guild.channels.cache
+                .filter(channel => channel.type === 'GUILD_CATEGORY')]
+                .map((_, idx) => interaction.options
+                    .getChannel(`queue_name_${idx + 1}`, idx === 0))
+                .filter(queueArg => queueArg !== undefined && queueArg !== null);
 
-        const validQueues = await Promise.all(commandArgs.map(category => {
-            if (category?.type !== 'GUILD_CATEGORY' || category === null) {
-                return Promise.reject(new CommandParseError(
-                    `\`${category?.name}\` is not a valid queue category.`
-                ));
-            }
-            const queueTextChannel = category.children
-                .find(child =>
-                    child.name === 'queue' &&
-                    child.type === 'GUILD_TEXT');
-            if (queueTextChannel === undefined) {
-                return Promise.reject(new CommandParseError(
-                    `'${category.name}' does not have a \`#queue\` text channel.`
-                ));
-            }
-            return Promise.resolve(category);
-        }));
+            validQueues = await Promise.all(commandArgs.map(category => {
+                if (category?.type !== 'GUILD_CATEGORY' || category === null) {
+                    return Promise.reject(new CommandParseError(
+                        `\`${category?.name}\` is not a valid queue category.`
+                    ));
+                }
+                const queueTextChannel = category.children
+                    .find(child =>
+                        child.name === 'queue' &&
+                        child.type === 'GUILD_TEXT');
+                if (queueTextChannel === undefined) {
+                    return Promise.reject(new CommandParseError(
+                        `'${category.name}' does not have a \`#queue\` text channel.`
+                    ));
+                }
+                return Promise.resolve(category);
+            }));
+        }
 
         await serverIdStateMap
             .get(this.guild.id)
@@ -351,6 +334,19 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .get(queueName)
             ?.onCalendarExtensionStateChange();
         return `Successfully refreshed upcoming hours for ${queueName}`;
+    }
+
+    private async isServerInteraction(
+        interaction: CommandInteraction
+    ): Promise<string> {
+        const serverId = interaction.guild?.id;
+        if (!serverId || !this.serverMap.has(serverId)) {
+            return Promise.reject(new CommandParseError(
+                'I can only accept server based interactions. '
+                + `Are you sure ${interaction.guild?.name} has a initialized YABOB?`));
+        } else {
+            return serverId;
+        }
     }
 }
 

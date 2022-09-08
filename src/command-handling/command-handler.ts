@@ -35,10 +35,7 @@ class CentralCommandDispatcher {
     public commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | undefined>
-    > = new Map<
-        string,
-        (interaction: CommandInteraction) => Promise<string | undefined>
-    >([
+    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
         ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
