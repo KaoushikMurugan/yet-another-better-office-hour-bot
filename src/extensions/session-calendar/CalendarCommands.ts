@@ -24,7 +24,7 @@ const adminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
             },
         ]
     }]},
-]
+];
 
 export const helperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
     { embeds : [{
@@ -50,7 +50,7 @@ export const helperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
             },
         ]
     }]},
-]
+];
 
 export const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
     { embeds : [{
@@ -76,7 +76,7 @@ export const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
             },
         ]
     }]},
-]
+];
 
 export const calendarCommandChConfigs = [
     {

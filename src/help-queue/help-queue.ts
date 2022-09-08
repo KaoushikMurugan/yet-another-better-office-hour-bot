@@ -169,8 +169,9 @@ class HelpQueueV2 {
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
 
-        // the types are just here to make TS not angry
+        // the types are here to make TS not angry
         // We just need to start all of them synchronously
+        // the actual results doesn't matter
         await Promise.all<false | void | Promise<void> | Promise<Message<boolean>>>([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notify && notifMember.send(

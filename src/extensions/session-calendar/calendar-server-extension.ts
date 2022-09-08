@@ -4,12 +4,8 @@ import { BaseServerExtension } from "../extension-interface";
 import { calendarCommandChConfigs } from "./CalendarCommands";
 
 class CalendarServerExtension extends BaseServerExtension {
-    private constructor() {
+    constructor() {
         super();
-    }
-
-    static async load(): Promise<CalendarServerExtension> {
-        return new CalendarServerExtension();
     }
 
     override async onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
@@ -21,8 +17,8 @@ class CalendarServerExtension extends BaseServerExtension {
                     ch.name === "Bot Commands Help"
             )
             .map(ch => ch as CategoryChannel);
-        await server.sendCommandHelpMessages(existingHelpCategory, calendarCommandChConfigs, false);
+        await server.sendCommandHelpMessages(existingHelpCategory, calendarCommandChConfigs);
     }
 }
 
-export { CalendarServerExtension }
+export { CalendarServerExtension };

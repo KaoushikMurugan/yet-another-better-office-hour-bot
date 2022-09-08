@@ -1,11 +1,6 @@
 import {
-    CategoryChannel,
-    Collection,
-    Guild,
-    GuildMember,
-    MessageOptions,
-    TextChannel,
-    User,
+    CategoryChannel, Collection, Guild,
+    GuildMember, MessageOptions, TextChannel, User,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
@@ -17,9 +12,12 @@ import { Helpee, Helper } from "../models/member-states";
 import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
-import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension'
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension';
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
-import { FgBlue, FgCyan, FgGreen, FgMagenta, FgRed, FgYellow, ResetColor } from "../utils/command-line-colors";
+import {
+    FgBlue, FgCyan, FgGreen,
+    FgMagenta, FgRed, FgYellow, ResetColor
+} from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName exists
@@ -115,7 +113,7 @@ class AttendingServerV2 {
             : await Promise.all([
                 AttendanceExtension.load(guild.name),
                 FirebaseLoggingExtension.load(guild.name, guild.id),
-                CalendarServerExtension.load(),
+                new CalendarServerExtension(),
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
@@ -724,19 +722,15 @@ class AttendingServerV2 {
             file: Pick<MessageOptions, "embeds">[];
             visibility: string[];
         }[],
-        cleanUpFirst: boolean = true
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
                 .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
-        // delete all existing messages
-        if(cleanUpFirst === true) {
-            await Promise.all(
-                allHelpChannels.map(async ch => await ch.messages
-                    .fetch()
-                    .then(messages => messages.map(msg => msg.delete())))
-            );
-        }
+        await Promise.all(
+            allHelpChannels.map(async ch => await ch.messages
+                .fetch()
+                .then(messages => messages.map(msg => msg.delete())))
+        );
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
@@ -746,7 +740,7 @@ class AttendingServerV2 {
                 if (file) {
                     file.forEach(async message => {
                         await ch.send(message);
-                    })
+                    });
                 }
             })
         );
