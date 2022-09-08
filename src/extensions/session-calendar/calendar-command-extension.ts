@@ -1,5 +1,9 @@
 import { BaseInteractionExtension } from "../extension-interface";
-import { serverIdStateMap } from './calendar-states';
+import {
+
+    serverIdStateMap,
+    CalendarExtensionState
+} from './calendar-states';
 import { ButtonInteraction, Collection, CommandInteraction, Guild } from 'discord.js';
 import { SlashCommandBuilder } from "@discordjs/builders";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
@@ -85,11 +89,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     constructor(private readonly guild: Guild) {
         super();
-        serverIdStateMap.set(guild.id, {
-            calendarId: calendarConfig.YABOB_DEFAULT_CALENDAR_ID,
-            calendarNameDiscordIdMap: new Collection(),
-            listeners: new Collection()
-        });
+        serverIdStateMap.set(
+            guild.id,
+            new CalendarExtensionState(
+                guild.id,
+                guild.name
+            )
+        );
     }
 
     // I know this is very verbose but TS gets angry if I don't write all this :(
@@ -219,7 +225,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
         // runtime only. Will be resetted when YABOB restarts
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        serverIdStateMap.get(this.guild.id)!.calendarId = newCalendarId;
+        await serverIdStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
         await Promise.all(
             serverIdStateMap
                 .get(this.guild.id)
@@ -249,7 +255,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             EmbedColor.NoColor,
             viewModels.length > 0
                 ? viewModels
-                    .map(viewModel => 
+                    .map(viewModel =>
                         `**${viewModel.discordId !== undefined
                             ? `<@${viewModel.discordId}>`
                             : viewModel.displayName
@@ -297,8 +303,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return Promise.resolve(category);
         }));
 
-        serverIdStateMap.get(this.guild.id)?.calendarNameDiscordIdMap
-            .set(calendarDisplayName, interaction.user.id);
+        await serverIdStateMap
+            .get(this.guild.id)
+            ?.updateNameDiscordIdMap(
+                calendarDisplayName,
+                interaction.user.id
+            );
 
         await Promise.all(serverIdStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
