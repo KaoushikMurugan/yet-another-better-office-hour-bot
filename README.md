@@ -8,7 +8,7 @@
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
-Based on original **BOB V2** and **BOB V3** created by [Kaoushik Murugan](https://github.com/KaoushikMurugan), Grant Gilson, [Noah Rose Ledesma](https://github.com/NoahRoseLedesma), and Stephen Ott.
+Based on original **BOB V2** and **BOB V3** created by [Kaoushik Murugan](https://github.com/KaoushikMurugan), [Noah Rose Ledesma](https://github.com/NoahRoseLedesma), [Grant Gilson](https://github.com/GMGilson), and [Stephen Ott](https://github.com/stott531).
 
 <div align="center">
 <span size="+2">
