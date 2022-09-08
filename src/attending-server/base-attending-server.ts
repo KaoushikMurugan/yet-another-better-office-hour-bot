@@ -716,7 +716,9 @@ class AttendingServerV2 {
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) {
-                    await ch.send(file);
+                    file.forEach(async message => {
+                        await ch.send(message);
+                    })
                 }
             })
         );
