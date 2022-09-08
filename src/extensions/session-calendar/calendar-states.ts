@@ -24,16 +24,18 @@ class CalendarExtensionState {
     constructor(
         private readonly serverId: string,
         private readonly serverName: string,
-        private readonly firebase_db: Firestore
-    ) {
-        if (getApps().length === 0) {
-            initializeApp({
-                credential: cert(firebaseCredentials)
-            });
-        }
-    }
+        private readonly firebase_db: Firestore | null
+    ) { }
 
     static async load(serverId: string, serverName: string): Promise<CalendarExtensionState> {
+        if (
+            firebaseCredentials.clientEmail === "" &&
+            firebaseCredentials.privateKey === "" &&
+            firebaseCredentials.projectId === ""
+        ) {
+            return new CalendarExtensionState(serverId, serverName, null);
+        }
+
         if (getApps().length === 0) {
             initializeApp({
                 credential: cert(firebaseCredentials)
@@ -64,6 +66,9 @@ class CalendarExtensionState {
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {
+        if (this.firebase_db === null) {
+            return;
+        }
         const backupDoc = await this.firebase_db
             .collection("calendarBackups")
             .doc(serverId)
@@ -81,6 +86,9 @@ class CalendarExtensionState {
     }
 
     private async backupToFirebase(): Promise<void> {
+        if (this.firebase_db === null) {
+            return;
+        }
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
             calendarNameDiscordIdMap:
