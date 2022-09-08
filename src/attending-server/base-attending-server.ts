@@ -55,6 +55,14 @@ class AttendingServerV2 {
             .flat()
             .map(helper => helper.member.displayName));
     }
+    get helpers(): ReadonlyArray<Helper> {
+        const allHelpers = this.queues.map(queue => queue.currentHelpers).flat();
+        const collection = new Collection<string, Helper>();
+        for (const helper of allHelpers) {
+            collection.set(helper.member.id, helper);
+        }
+        return [...collection.values()];
+    }
 
     /**
      * Cleans up all the timers from setInterval

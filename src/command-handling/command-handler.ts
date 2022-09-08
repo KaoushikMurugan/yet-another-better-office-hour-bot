@@ -11,6 +11,9 @@ import {
     hasValidQueueArgument,
     isFromGuildMember
 } from './common-validations';
+import { msToHourMins } from '../utils/util-functions';
+// @ts-expect-error the ascii table lib has no type
+import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -32,7 +35,10 @@ class CentralCommandDispatcher {
     public commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | undefined>
-    > = new Map([
+    > = new Map<
+        string,
+        (interaction: CommandInteraction) => Promise<string | undefined>
+    >([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
         ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
@@ -176,15 +182,9 @@ class CentralCommandDispatcher {
         ]);
 
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
-        const totalSeconds = Math.round(Math.abs(
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            helpTime!.helpStart.getTime() - helpTime!.helpEnd!.getTime()
-        ) / 1000);
-        const hours = Math.floor(totalSeconds / 3600);
         return `You helped for ` +
-            (hours > 0
-                ? `${hours} hours and ${((totalSeconds - hours * 3600) / 60).toFixed(2)} minutes. `
-                : `${(totalSeconds / 60).toFixed(2)} minutes. `) +
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            msToHourMins(helpTime!.helpEnd.getTime() - helpTime!.helpStart.getTime()) +
             `See you later!`;
     }
 
@@ -247,15 +247,42 @@ class CentralCommandDispatcher {
         return `All queues on ${server?.guild.name} was cleard.`;
     }
 
-    private async listHelpers(interaction: CommandInteraction): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction)
-        ]);
-        const helpers = this.serverMap.get(serverId ?? '')?.helperNames;
-        if (helpers === undefined || helpers.size === 0) {
-            return `No one is currently helping.`;
+    private async listHelpers(interaction: CommandInteraction): Promise<undefined> {
+        const serverId = await this.isServerInteraction(interaction);
+        const helpers = this.serverMap.get(serverId)?.helpers;
+        if (helpers === undefined || helpers.length === 0) {
+            await interaction.editReply(SimpleEmbed('No one is currently helping.'));
+            return undefined;
         }
-        return `[${[...helpers].join('\n')}]\n${helpers.size === 1 ? 'is' : 'are'} helping.`;
+        const table = new AsciiTable3();
+        const allQueues = await this.serverMap.get(serverId)?.getQueueChannels() ?? [];
+        table.setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed')
+            .setAlign(1, AlignmentEnum.CENTER)
+            .setAlign(2, AlignmentEnum.CENTER)
+            .setAlign(3, AlignmentEnum.CENTER)
+            .setStyle('unicode-mix')
+            .addRowMatrix(helpers
+                .map(helper => [
+                    helper.member.displayName,
+                    ((helper.member.roles as GuildMemberRoleManager)
+                        .cache
+                        .filter(role => allQueues
+                            .find(queue => queue.queueName === role.name) !== undefined)
+                        .map(role => role.name).toString()),
+                    msToHourMins((new Date()).valueOf() - (helper.helpStart.valueOf()))
+                ])
+            )
+            .setWidths([15, 20, 15])
+            .setWrapped(1)
+            .setWrapped(2)
+            .setWrapped(3);
+
+        await interaction.editReply(SimpleEmbed(
+            'Current Helpers',
+            EmbedColor.Aqua,
+            '```' + table.toString() + '```'
+        ));
+        return undefined;
     }
 
     private async announce(interaction: CommandInteraction): Promise<string> {
