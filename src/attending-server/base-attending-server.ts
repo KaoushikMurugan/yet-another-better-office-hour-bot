@@ -39,6 +39,7 @@ class AttendingServerV2 {
     public afterSessionMessage = ""; // message sent to students after they leave
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
+    private queueChannels: QueueChannel[] = [];
 
     protected constructor(
         public readonly user: User,
@@ -144,7 +145,9 @@ class AttendingServerV2 {
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw new ServerError(`❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`);
+            throw new ServerError(
+                `❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`
+            );
         });
 
         // Now Emit all the events
@@ -160,7 +163,9 @@ class AttendingServerV2 {
                 .map(extension => extension.onServerPeriodicUpdate(server)))
             , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
 
-        console.log(`⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`);
+        console.log(
+            `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
+        );
         return server;
     }
 
@@ -172,10 +177,13 @@ class AttendingServerV2 {
      * - unless queues change often, prefer cache for fast response
      */
     async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
-        const allChannels = useCache
-            ? this.guild.channels.cache
-            : await this.guild.channels.fetch();
-        const queueChannels = allChannels
+        if (useCache && this.queueChannels.length !== 0) {
+            return this.queueChannels;
+        }
+
+        const allChannels = await this.guild.channels.fetch();
+        // cache again on a fresh request
+        this.queueChannels = allChannels
             .filter(ch => ch.type === "GUILD_CATEGORY")
             // ch has type 'AnyChannel', have to cast, type already checked
             .map(category => [
@@ -195,7 +203,7 @@ class AttendingServerV2 {
                 } as QueueChannel;
             });
 
-        const duplicateQueues = queueChannels
+        const duplicateQueues = this.queueChannels
             .map(q => q.queueName)
             .filter((item, index, arr) =>
                 arr.indexOf(item) !== index);
@@ -211,7 +219,7 @@ class AttendingServerV2 {
             );
         }
 
-        return queueChannels;
+        return this.queueChannels;
     }
 
     /**
@@ -252,6 +260,7 @@ class AttendingServerV2 {
             this.createClassRoles()
         ]);
 
+        this.queueChannels.push(queueChannel);
         this.queues.set(parentCategory.id, helpQueue);
     }
 
@@ -626,7 +635,7 @@ class AttendingServerV2 {
         if (this.queues.size !== 0) {
             console.warn("Overriding existing queues.");
         }
-        const queueChannels = await this.getQueueChannels();
+        const queueChannels = await this.getQueueChannels(false);
         await Promise.all(queueChannels
             .map(async channel => this.queues.set(channel.parentCategoryId,
                 await HelpQueueV2.create(

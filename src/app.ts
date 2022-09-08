@@ -44,6 +44,8 @@ const client = new Client({
 // key is Guild.id
 const serversV2: Collection<string, AttendingServerV2> = new Collection();
 const interactionExtensions: Collection<string, IInteractionExtension[]> = new Collection();
+const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
+const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
 
 client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
@@ -124,7 +126,6 @@ client.on("interactionCreate", async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     if (interaction.isCommand()) {
-        const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
         if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
             await builtinCommandHandler.process(interaction);
         } else {
@@ -134,14 +135,13 @@ client.on("interactionCreate", async interaction => {
             if (!externalCommandHandler) {
                 return;
             }
-            externalCommandHandler.serverMap = serversV2;
             await externalCommandHandler.processCommand(interaction);
         }
     }
     if (interaction.isButton()) {
         const buttonName = interaction.customId.split(' ')[0] ?? '';
-        const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
         if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
+            builtinButtonHandler.serverMap = serversV2;
             await builtinButtonHandler.process(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
@@ -150,7 +150,6 @@ client.on("interactionCreate", async interaction => {
             if (!externalButtonHandler) {
                 return;
             }
-            externalButtonHandler.serverMap = serversV2;
             await externalButtonHandler.processButton(interaction);
         }
     }
@@ -247,6 +246,12 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     serversV2.set(guild.id, server);
+    // update serverMap for all interaction handlers
+    builtinCommandHandler.serverMap = serversV2;
+    builtinButtonHandler.serverMap = serversV2;
+    [...interactionExtensions.values()]
+        .flat()
+        .forEach(extension => extension.serverMap = serversV2);
 
     return server;
 }

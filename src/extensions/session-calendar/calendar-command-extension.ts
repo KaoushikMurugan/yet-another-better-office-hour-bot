@@ -9,7 +9,8 @@ import {
     Collection,
     CommandInteraction,
     Guild,
-    GuildMemberRoleManager
+    GuildMember,
+    Role
 } from 'discord.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -32,6 +33,7 @@ import { calendarCommands } from './calendar-slash-commands';
 
 import calendarConfig from '../extension-credentials/calendar-config.json';
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
+import { getQueueRoles } from "../../utils/util-functions";
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
@@ -236,12 +238,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     /**
      * Makes calendar titles with every queue arg optional
      * ----
+     * @param generateAll whether to generate string for all the queue roles
     */
     private async makeParsableCalendarTitle(
         interaction: CommandInteraction,
-        generateAll = true
+        generateAll: boolean
     ): Promise<string> {
-        // all the queue_name_1, queue_name_2, ... 
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -252,19 +254,14 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ]);
 
         const calendarDisplayName = interaction.options.getString('your_name', true);
-        let validQueues: CategoryChannel[] = [];
+        let validQueues: (CategoryChannel | Role)[] = [];
 
         if (generateAll) {
-            const allQueues = await this.serverMap.get(serverId)?.getQueueChannels() ?? [];
-            validQueues = (allQueues
-                .map(queue => interaction.guild
-                    ?.channels.cache
-                    .get(queue.parentCategoryId)
-                ) as CategoryChannel[])
-                .filter(queue => (interaction.member?.roles as GuildMemberRoleManager)
-                    .cache
-                    .find(role => role.name === queue.name) !== undefined
-                );
+            validQueues = await getQueueRoles(
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                this.serverMap.get(serverId)!,
+                interaction.member as GuildMember
+            );
         } else {
             const commandArgs = [...this.guild.channels.cache
                 .filter(channel => channel.type === 'GUILD_CATEGORY')]

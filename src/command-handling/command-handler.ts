@@ -52,7 +52,7 @@ class CentralCommandDispatcher {
     ]);
 
     // key is Guild.id, same as servers map from app.ts
-    constructor(private serverMap: Map<string, AttendingServerV2>) { }
+    constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     /**
      * Main processor for command interactions
@@ -209,10 +209,10 @@ class CentralCommandDispatcher {
         const memberRoles = interaction.member?.roles as GuildMemberRoleManager;
         // if they are not admin or doesn't have the queue role, reject
         if (
-            memberRoles.cache.find(role =>
+            memberRoles.cache.some(role =>
                 role.name === queue.queueName ||
                 role.name === 'Bot Admin'
-            ) === undefined
+            )
         ) {
             return Promise.reject(new CommandParseError(
                 `You don't have permission to clear '${queue.queueName}'. ` +
@@ -234,7 +234,7 @@ class CentralCommandDispatcher {
         ]);
         const server = this.serverMap.get(serverId);
         const allQueues = await server?.getQueueChannels();
-        if (allQueues === undefined) {
+        if (allQueues === undefined || allQueues.length === 0) {
             return Promise.reject(new CommandParseError(
                 `This server doesn't seem to have any queues. ` +
                 `You can use \`/queue add <name>\` to create one`

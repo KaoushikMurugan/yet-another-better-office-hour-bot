@@ -31,7 +31,7 @@ class ButtonCommandDispatcher {
             interaction: ButtonInteraction) => this.leaveNotifGroup(queueName, interaction)]
     ]);
 
-    constructor(private serverMap: Map<string, AttendingServerV2>) { }
+    constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
         await interaction.reply({
