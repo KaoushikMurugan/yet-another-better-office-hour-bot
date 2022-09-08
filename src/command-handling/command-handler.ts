@@ -27,9 +27,11 @@ class CentralCommandDispatcher {
 
     // The map of available commands
     // Key is what the user will see, value is the arrow function
+    // undefined return values is when the method wants to reply to the interaction directly
+    // - If a call returns undefined, processCommand won't edit the reply
     public commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string>
+        (interaction: CommandInteraction) => Promise<string | undefined>
     > = new Map([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
@@ -75,7 +77,8 @@ class CentralCommandDispatcher {
                 ` used ${interaction.toString()}`
             );
             await commandMethod(interaction)
-                .then(async successMsg =>
+                // shorthand syntax, if successMsg is undefined, don't run the rhs
+                .then(async successMsg => successMsg &&
                     await interaction.editReply(
                         SimpleEmbed(
                             successMsg,

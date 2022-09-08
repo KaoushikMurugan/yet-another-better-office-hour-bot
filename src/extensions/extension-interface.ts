@@ -19,12 +19,13 @@ import { CommandData } from '../command-handling/slash-commands';
 interface IInteractionExtension {
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | void>
+        (interaction: CommandInteraction) =>
+            Promise<string | undefined>
     >;
     buttonMethodMap: ReadonlyMap<
         string,
         (interaction: ButtonInteraction, queueName: string) =>
-            Promise<string | void>
+            Promise<string | undefined>
     >;
     slashCommandData: CommandData;
     processCommand: (interaction: CommandInteraction) => Promise<void>;
@@ -106,11 +107,11 @@ class BaseInteractionExtension implements IInteractionExtension {
     buttonMethodMap: ReadonlyMap<
         string,
         (interaction: ButtonInteraction, queueName: string) =>
-            Promise<string | void>
+            Promise<string | undefined>
     > = new Map();
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | void>
+        (interaction: CommandInteraction) => Promise<string | undefined>
     > = new Map();
 
     get slashCommandData(): CommandData {

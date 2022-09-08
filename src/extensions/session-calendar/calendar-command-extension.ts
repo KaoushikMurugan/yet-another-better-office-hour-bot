@@ -97,10 +97,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     // I know this is very verbose but TS gets angry if I don't write all this :(
+    // undefined return values is when the method wants to reply to the interaction directly
+    // - If a call returns undefined, processCommand won't edit the reply
     public override commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | void>
-    > = new Map<string, (interaction: CommandInteraction) => Promise<string | void>>([
+        (interaction: CommandInteraction) => Promise<string | undefined>
+    >  = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['set_calendar', (interaction: CommandInteraction) =>
             this.updateCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) =>
@@ -111,7 +113,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     public override buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) => Promise<string | void>
+        (interaction: ButtonInteraction, queueName: string) => Promise<string | undefined>
     > = new Map([
         ['refresh', (_: ButtonInteraction, queueName: string) =>
             this.requestCalendarRefresh(queueName)]
@@ -241,7 +243,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
-    private async listUpComingHours(interaction: CommandInteraction): Promise<void> {
+    private async listUpComingHours(interaction: CommandInteraction): Promise<undefined> {
         const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
             this.guild.id,
@@ -265,6 +267,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
 
         await interaction.editReply(embed);
+        return undefined;
     }
 
     /**
