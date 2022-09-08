@@ -2,15 +2,13 @@
 <div align="center">
 
 <img width="623" alt="Screen Shot 2022-09-02 at 11 57 04 PM" src="https://user-images.githubusercontent.com/60045212/188259692-156487e9-c198-443c-aa09-c39e80d35046.png">
-
-
 </div>
+
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![TypeScript](https://img.shields.io/badge/--3178C6?logo=typescript&logoColor=ffffff)](https://www.typescriptlang.org/) 
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
 Based on original **BOB V2** and **BOB V3** created by [Kaoushik Murugan](https://github.com/KaoushikMurugan), Grant Gilson, [Noah Rose Ledesma](https://github.com/NoahRoseLedesma), and Stephen Ott.
-
-Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
 
 <div align="center">
 <span size="+2">
