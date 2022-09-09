@@ -12,7 +12,6 @@ import { Helpee, Helper } from "../models/member-states";
 import { IServerExtension } from "../extensions/extension-interface";
 import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
 import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
-import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension';
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
 import {
     FgBlue, FgCyan, FgGreen,
@@ -112,8 +111,7 @@ class AttendingServerV2 {
             ? []
             : await Promise.all([
                 AttendanceExtension.load(guild.name),
-                FirebaseLoggingExtension.load(guild.name, guild.id),
-                new CalendarServerExtension(),
+                FirebaseLoggingExtension.load(guild.name, guild.id)
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
@@ -715,7 +713,7 @@ class AttendingServerV2 {
      * Overwrites the existing command help channel and send new help messages
      * ----
     */
-    public async sendCommandHelpMessages(
+    private async sendCommandHelpMessages(
         helpCategories: CategoryChannel[],
         messageConfig: {
             channelName: string;

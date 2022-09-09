@@ -1,16 +1,8 @@
 import { BaseInteractionExtension } from "../extension-interface";
+import { serverIdStateMap, CalendarExtensionState } from './calendar-states';
 import {
-    serverIdStateMap,
-    CalendarExtensionState
-} from './calendar-states';
-import {
-    ButtonInteraction,
-    CategoryChannel,
-    Collection,
-    CommandInteraction,
-    Guild,
-    GuildMember,
-    Role
+    ButtonInteraction, CategoryChannel, Collection,
+    CommandInteraction, Guild, GuildMember, Role
 } from 'discord.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -34,6 +26,8 @@ import { calendarCommands } from './calendar-slash-commands';
 import calendarConfig from '../extension-credentials/calendar-config.json';
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { getQueueRoles } from "../../utils/util-functions";
+import { appendCalendarHelpEmbeds } from './CalendarCommands';
+
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
@@ -61,6 +55,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
         const instance = new CalendarInteractionExtension(guild);
         instance.serverMap = serverMap;
+        appendCalendarHelpEmbeds();
         return instance;
     }
 
@@ -346,6 +341,5 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         }
     }
 }
-
 
 export { CalendarInteractionExtension, CalendarConnectionError };
