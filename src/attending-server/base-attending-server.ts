@@ -291,16 +291,19 @@ class AttendingServerV2 {
                 `API Failure: ${err.name}\n${err.message}`
             ));
         });
-        // now delete category
-        await parentCategory?.delete();
-        await (await this.guild.roles.fetch())
-            .find(role => role.name === parentCategory.name)
-            ?.delete();
-        // finally delete queue model
-        await Promise.all(this.serverExtensions.map(
-            extension => extension.onQueueDelete(this, queue)
-        ));
+        // now delete category and role
+        await Promise.all([
+            parentCategory?.delete(),
+            (await this.guild.roles.fetch())
+                .find(role => role.name === parentCategory.name)
+                ?.delete(),
+            Promise.all(this.serverExtensions.map(
+                extension => extension.onQueueDelete(this, queue)
+            ))
+        ]);
+        // finally delete queue model and refresh cache
         this.queues.delete(queueCategoryID);
+        await this.getQueueChannels(false);
     }
 
     /**

@@ -178,7 +178,7 @@ class HelpQueueV2 {
                 SimpleEmbed(`Queue \`${this.name}\` is open!`)
             )),
             this.queueExtensions.map(extension => extension.onQueueOpen(this)),
-             this.notifGroup.clear(),
+            this.notifGroup.clear(),
             this.triggerRender()
         ].flat());
     }
