@@ -38,7 +38,7 @@ class AttendingServerV2 {
     public afterSessionMessage = ""; // message sent to students after they leave
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
-    private queueChannels: QueueChannel[] = [];
+    private queueChannelsCache: QueueChannel[] = [];
 
     protected constructor(
         public readonly user: User,
@@ -176,13 +176,13 @@ class AttendingServerV2 {
      * - unless queues change often, prefer cache for fast response
      */
     async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
-        if (useCache && this.queueChannels.length !== 0) {
-            return this.queueChannels;
+        if (useCache && this.queueChannelsCache.length !== 0) {
+            return this.queueChannelsCache;
         }
 
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request
-        this.queueChannels = allChannels
+        this.queueChannelsCache = allChannels
             .filter(ch => ch.type === "GUILD_CATEGORY")
             // ch has type 'AnyChannel', have to cast, type already checked
             .map(category => [
@@ -202,7 +202,7 @@ class AttendingServerV2 {
                 } as QueueChannel;
             });
 
-        const duplicateQueues = this.queueChannels
+        const duplicateQueues = this.queueChannelsCache
             .map(q => q.queueName)
             .filter((item, index, arr) =>
                 arr.indexOf(item) !== index);
@@ -218,7 +218,7 @@ class AttendingServerV2 {
             );
         }
 
-        return this.queueChannels;
+        return this.queueChannelsCache;
     }
 
     /**
@@ -259,7 +259,7 @@ class AttendingServerV2 {
             this.createClassRoles()
         ]);
 
-        this.queueChannels.push(queueChannel);
+        this.queueChannelsCache.push(queueChannel);
         this.queues.set(parentCategory.id, helpQueue);
     }
 
