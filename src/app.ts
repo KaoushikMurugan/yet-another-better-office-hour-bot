@@ -191,22 +191,20 @@ client.on("roleUpdate", async role => {
     }
 });
 
-client.on("voiceStateUpdate", async voiceState => {
-    // 2nd condition is if the member is not leaving the vc
-    // when they leave the channel value is null
-    if (voiceState.member === null ||
-        voiceState.member.voice.channel !== null) {
-        return;
+client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
+    if (newVoiceState.member === null) {
+        throw new Error('Received VC event in a server without initialized YABOB.');
     }
-    // now we are guaranteed that the member just left the vc
-    await serversV2
-        .get(voiceState.guild.id)
-        ?.sendAfterSessionMessage(voiceState.member);
+    const serverId = oldVoiceState.guild.id;
+    const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
+    const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
+    isLeaveVC && await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member);
+    isJoinVC && await serversV2.get(serverId)?.onMemberJoinVC(newVoiceState.member);
 });
 
 
 process.on('exit', () => {
-    console.log(`${centeredText('-------- End of Server Log --------')}`);
+    console.log(centeredText('-------- End of Server Log --------'));
     console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
 });
 

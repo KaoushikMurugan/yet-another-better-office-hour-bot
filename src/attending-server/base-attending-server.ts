@@ -168,6 +168,16 @@ class AttendingServerV2 {
         return server;
     }
 
+    async onMemberJoinVC(member: GuildMember): Promise<void> {
+        console.log('join vc evnt');
+        return;
+    }
+
+    async onMemberLeaveVC(member: GuildMember): Promise<void> {
+        console.log('leave vc evnt');
+        await this.sendAfterSessionMessage(member);
+    }
+
     /**
      * Gets all the queue channels on the server. SLOW
      * ----
@@ -558,7 +568,7 @@ class AttendingServerV2 {
         ));
     }
 
-    async sendAfterSessionMessage(member: GuildMember): Promise<void> {
+    private async sendAfterSessionMessage(member: GuildMember): Promise<void> {
         // disable if no message is set
         if (this.afterSessionMessage.length === 0) {
             return;

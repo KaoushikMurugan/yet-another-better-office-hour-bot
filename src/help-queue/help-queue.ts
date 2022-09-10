@@ -18,7 +18,8 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
-    intervalID!: NodeJS.Timer;
+    // lateinit, used for server exit procedure only
+    intervalID!: NodeJS.Timer; 
     // Key is Guildmember.id
     private helpers: Collection<string, Helper> = new Collection();
     private students: Helpee[] = [];
