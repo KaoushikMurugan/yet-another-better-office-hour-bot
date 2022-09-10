@@ -28,7 +28,8 @@ async function isTriggeredByUserWithRoles(
  * Checks if the queue_name argument is given
  * If not, use the parent of the channel where the command was used
  * ----
- * @param required if true, check if the command arg is a valid queue category
+ * @param required if true, check if the COMMAND ARG is a valid queue category
+ * - If false, check if the CURRENT channel's parent category is a valid queue category
  * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
  * */
 async function hasValidQueueArgument(

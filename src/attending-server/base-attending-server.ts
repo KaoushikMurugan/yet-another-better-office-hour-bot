@@ -103,10 +103,8 @@ class AttendingServerV2 {
                     EmbedColor.Error));
             return Promise.reject(Error("YABOB doesn't have highest role."));
         }
-
-        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-
         // Load ServerExtensions here
+        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
         const serverExtensions = disableExtensions
             ? []
             : await Promise.all([
@@ -127,14 +125,12 @@ class AttendingServerV2 {
                 ` Restoring...${ResetColor}`
             );
         }
-
         const server = new AttendingServerV2(
             user,
             guild,
             serverExtensions
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
-
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
@@ -148,14 +144,12 @@ class AttendingServerV2 {
                 `❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`
             );
         });
-
         // Now Emit all the events
         await Promise.all(serverExtensions.map(
             extension => [
                 extension.onServerInitSuccess(server),
                 extension.onServerPeriodicUpdate(server, true)
             ]).flat());
-
         // Call onServerPeriodicUpdate every 30min +- 1 second
         server.intervalID = setInterval(async () =>
             await Promise.all(serverExtensions
@@ -179,7 +173,6 @@ class AttendingServerV2 {
         if (useCache && this.queueChannelsCache.length !== 0) {
             return this.queueChannelsCache;
         }
-
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request
         this.queueChannelsCache = allChannels
@@ -201,12 +194,10 @@ class AttendingServerV2 {
                     parentCategoryId: parentId
                 } as QueueChannel;
             });
-
         const duplicateQueues = this.queueChannelsCache
             .map(q => q.queueName)
             .filter((item, index, arr) =>
                 arr.indexOf(item) !== index);
-
         if (duplicateQueues.length > 0) {
             console.warn(
                 `Server["${this.guild.name}"] contains these duplicate queues:`
@@ -233,23 +224,19 @@ class AttendingServerV2 {
             return Promise.reject(new ServerError(
                 `Queue ${newQueueName} already exists`));
         }
-
         const parentCategory = await this.guild.channels.create(
             newQueueName,
             { type: "GUILD_CATEGORY" }
         );
-
         const [queueTextChannel] = await Promise.all([
             parentCategory.createChannel('queue'),
             parentCategory.createChannel('chat')
         ]);
-
         const queueChannel: QueueChannel = {
             channelObj: queueTextChannel,
             queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
-
         const [helpQueue] = await Promise.all([
             HelpQueueV2.create(
                 queueChannel,
@@ -258,7 +245,7 @@ class AttendingServerV2 {
             ),
             this.createClassRoles()
         ]);
-
+        // update cache
         this.queueChannelsCache.push(queueChannel);
         this.queues.set(parentCategory.id, helpQueue);
     }
@@ -272,15 +259,12 @@ class AttendingServerV2 {
     */
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this.queues.get(queueCategoryID);
-
         if (queue === undefined) {
             return Promise.reject(new ServerError('This queue does not exist.'));
         }
-
         const parentCategory = await (await this.guild.channels.fetch())
             .find(ch => ch.id === queueCategoryID)
             ?.fetch() as CategoryChannel;
-
         // delete child channels first
         await Promise.all(parentCategory
             ?.children
@@ -417,7 +401,6 @@ class AttendingServerV2 {
             .catch(() => Promise.reject(new ServerError(
                 'You are already hosting.'
             )));
-
         // only used for onHelperStartHelping()
         const helper: Helper = {
             helpStart: new Date,
@@ -603,10 +586,12 @@ class AttendingServerV2 {
                     ch.name === "Bot Commands Help"
             )
             .map(ch => ch as CategoryChannel);
-
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
-            console.log(`${FgCyan}Found no help channels. Creating new ones.${ResetColor}`);
+            console.log(
+                `${FgCyan}Found no help channels in ${this.guild.name}. ` +
+                `Creating new ones.${ResetColor}`
+            );
 
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
@@ -638,10 +623,10 @@ class AttendingServerV2 {
             }));
         } else {
             console.log(
-                `${FgYellow}Found existing help channels, updating command help file${ResetColor}`
+                `${FgYellow}Found existing help channels in ${this.guild.name}, ` +
+                ` updating command help files${ResetColor}`
             );
         }
-
         await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
         console.log(`${FgMagenta}✓ Updated help channels ✓${ResetColor}`);
     }

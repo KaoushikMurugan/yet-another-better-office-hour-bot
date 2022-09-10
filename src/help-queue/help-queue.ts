@@ -1,4 +1,4 @@
-import { GuildMember, Role, TextChannel, User, Collection, Message } from 'discord.js';
+import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
@@ -160,19 +160,16 @@ class HelpQueueV2 {
                 'Queue is already open',
                 this.name));
         } // won't actually be seen, will be caught
-
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
             member: helperMember
         };
+
         this.isOpen = true;
         this.helpers.set(helperMember.id, helper);
 
-        // the types are here to make TS not angry
-        // We just need to start all of them synchronously
-        // the actual results doesn't matter
-        await Promise.all<false | void | Promise<void> | Promise<Message<boolean>>>([
+        await Promise.all([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notify && notifMember.send(
                 SimpleEmbed(`Queue \`${this.name}\` is open!`)
@@ -180,7 +177,7 @@ class HelpQueueV2 {
             this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.notifGroup.clear(),
             this.triggerRender()
-        ].flat());
+        ].flat() as Promise<void>[]);
     }
 
     /**
