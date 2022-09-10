@@ -9,7 +9,7 @@ import { QueueError, QueueRenderError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 
 type QueueViewModel = {
-    name: string;
+    queueName: string;
     helperIDs: Array<string>;
     studentDisplayNames: Array<string>;
     calendarString?: string;
@@ -18,14 +18,13 @@ type QueueViewModel = {
 
 class HelpQueueV2 {
 
+    intervalID!: NodeJS.Timer;
     // Key is Guildmember.id
     private helpers: Collection<string, Helper> = new Collection();
     private students: Helpee[] = [];
     // Key is Guildmember.id
     private notifGroup: Collection<string, GuildMember> = new Collection();
     private isOpen = false;
-
-    public intervalID!: NodeJS.Timer;
 
     /**
      * @param user YABOB's user object for QueueDisplay
@@ -401,7 +400,7 @@ class HelpQueueV2 {
     */
     async cleanUpQueueChannel(): Promise<void> {
         const viewModel: QueueViewModel = {
-            name: this.name,
+            queueName: this.name,
             helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
             studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',
@@ -423,7 +422,7 @@ class HelpQueueV2 {
     private async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
-            name: this.name,
+            queueName: this.name,
             helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
             studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',

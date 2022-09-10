@@ -35,17 +35,17 @@ type QueueChannel = {
 class AttendingServerV2 {
 
     // late init, used for clearAllIntervals only
-    public intervalID!: NodeJS.Timer;
+    intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
-    public afterSessionMessage = "";
+    afterSessionMessage = "";
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
 
     protected constructor(
-        public readonly user: User,
-        public readonly guild: Guild,
+        readonly user: User,
+        readonly guild: Guild,
         private readonly serverExtensions: IServerExtension[],
     ) { }
 

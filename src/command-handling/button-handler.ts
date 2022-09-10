@@ -17,7 +17,7 @@ import { isFromQueueChannelWithParent, isFromGuildMember } from './common-valida
  * The difference here is that a button command is guaranteed to happen in a queue as of right now
 */
 class ButtonCommandDispatcher {
-    public buttonMethodMap: ReadonlyMap<
+    buttonMethodMap: ReadonlyMap<
         string,
         (queueName: string, interaction: ButtonInteraction) => Promise<string>
     > = new Map([

@@ -42,7 +42,7 @@ class QueueDisplayV2 {
 
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
-            .setTitle(`Queue for〚${queue.name}〛is\t${queue.isOpen
+            .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
                 ? "**OPEN**\t (ﾟ∀ﾟ )"
                 : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
             .setDescription(this.composeAsciiTable(queue))
@@ -51,7 +51,7 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("join " + queue.name)
+                    .setCustomId("join " + queue.queueName)
                     .setEmoji("✅")
                     .setDisabled(!queue.isOpen)
                     .setLabel("Join")
@@ -59,7 +59,7 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new MessageButton()
-                    .setCustomId("leave " + queue.name)
+                    .setCustomId("leave " + queue.queueName)
                     .setEmoji("❎")
                     .setDisabled(!queue.isOpen)
                     .setLabel("Leave")
@@ -68,14 +68,14 @@ class QueueDisplayV2 {
         const notifButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("notif " + queue.name)
+                    .setCustomId("notif " + queue.queueName)
                     .setEmoji("🔔")
                     .setLabel("Notify When Open")
                     .setStyle("PRIMARY")
             )
             .addComponents(
                 new MessageButton()
-                    .setCustomId("removeN " + queue.name)
+                    .setCustomId("removeN " + queue.queueName)
                     .setEmoji("🔕")
                     .setLabel("Remove Notifications")
                     .setStyle("PRIMARY")

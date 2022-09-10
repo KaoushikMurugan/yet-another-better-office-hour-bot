@@ -34,7 +34,7 @@ class CentralCommandDispatcher {
     // Key is what the user will see, value is the arrow function
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    public commandMethodMap: ReadonlyMap<
+    commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | undefined>
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([

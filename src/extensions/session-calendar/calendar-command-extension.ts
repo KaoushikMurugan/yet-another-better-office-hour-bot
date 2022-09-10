@@ -62,7 +62,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     // I know this is very verbose but TS gets angry if I don't write all this :(
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    public override commandMethodMap: ReadonlyMap<
+    override commandMethodMap: ReadonlyMap<
         string,
         (interaction: CommandInteraction) => Promise<string | undefined>
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
@@ -76,7 +76,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             this.makeParsableCalendarTitle(interaction, true)]
     ]);
 
-    public override buttonMethodMap: ReadonlyMap<
+    override buttonMethodMap: ReadonlyMap<
         string,
         (interaction: ButtonInteraction, queueName: string) => Promise<string | undefined>
     > = new Map([

@@ -33,8 +33,10 @@ class ServerError extends Error {
  * ----
 */
 class QueueError extends Error {
-    constructor(message: string,
-        public queueName: string) {
+    constructor(
+        message: string,
+        public queueName: string
+    ) {
         super(message);
         this.name = "QueueError";
     }

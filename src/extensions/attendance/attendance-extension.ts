@@ -8,6 +8,23 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
 import attendanceConfig from '../extension-credentials/attendance-config.json';
 
+const requiredHeaders = [
+    "Username",
+    "Time In",
+    "Time Out",
+    "Helped Students",
+    "Discord ID",
+    "Session Time",
+    "Active Time",
+    "Number of Students Helped",
+] as const;
+
+// create a key for each item in requiredHeaders 
+// then set the key value as type string
+type AttendanceStats = {
+    [K in typeof requiredHeaders[number]]: string
+}
+
 class AttendanceError extends Error {
     constructor(message: string) {
         super(message);
@@ -35,14 +52,16 @@ class AttendanceExtension extends BaseServerExtension {
         }
         const attendanceDoc = new GoogleSpreadsheet(attendanceConfig.YABOB_GOOGLE_SHEET_ID);
         await attendanceDoc.useServiceAccountAuth(gcsCreds);
-        await attendanceDoc.loadInfo().catch(() => {
-            return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Failed to load google sheet for ${serverName}. ` +
-                `Google sheets rejected our connection.${ResetColor}`
-            ));
-        });
+        await attendanceDoc.loadInfo()
+            .catch(() => {
+                return Promise.reject(new ExtensionSetupError(
+                    `${FgRed}Failed to load google sheet for ${serverName}. ` +
+                    `Google sheets rejected our connection.${ResetColor}`
+                ));
+            });
         console.log(
-            `[${FgBlue}Attendance Extension${ResetColor}] successfully loaded for '${serverName}'!\n` +
+            `[${FgBlue}Attendance Extension${ResetColor}] ` +
+            `successfully loaded for '${serverName}'!\n` +
             ` - Using this google sheet: ${attendanceDoc.title}`
         );
         return new AttendanceExtension(serverName, attendanceDoc);
@@ -78,12 +97,8 @@ class AttendanceExtension extends BaseServerExtension {
             this.attendanceDoc.sheetsByTitle[this.serverName]
             ?? await this.attendanceDoc.addSheet({
                 title: this.serverName,
-                headerValues: [
-                    "Username",
-                    "Time In",
-                    "Time Out",
-                    "Helped Students",
-                ],
+                // concat nothing to convert back to mutable array
+                headerValues: requiredHeaders.concat()
             });
 
         await sheetForThisServer.addRow({
