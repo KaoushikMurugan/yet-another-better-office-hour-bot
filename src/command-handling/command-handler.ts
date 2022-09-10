@@ -218,11 +218,10 @@ class CentralCommandDispatcher {
         // casting is safe because we checked for isServerInteraction
         const memberRoles = interaction.member?.roles as GuildMemberRoleManager;
         // if they are not admin or doesn't have the queue role, reject
-        if (
-            memberRoles.cache.some(role =>
+        if (!memberRoles.cache
+            .some(role =>
                 role.name === queue.queueName ||
-                role.name === 'Bot Admin'
-            )
+                role.name === 'Bot Admin')
         ) {
             return Promise.reject(new CommandParseError(
                 `You don't have permission to clear '${queue.queueName}'. ` +
