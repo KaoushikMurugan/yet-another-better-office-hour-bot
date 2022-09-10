@@ -507,6 +507,13 @@ class AttendingServerV2 {
             ?.removeFromNotifGroup(studentMember);
     }
 
+    /**
+     * Send an announcement to all the students in the helper's approved queues
+     * ----
+     * @param helperMember helper that used /announce
+     * @param message announcement body
+     * @param targetQueue optional, specifies which queue to announce to
+    */
     async announceToStudentsInQueue(
         helperMember: GuildMember,
         message: string,
@@ -516,7 +523,8 @@ class AttendingServerV2 {
             const queueToAnnounce = this.queues
                 .get(targetQueue.parentCategoryId);
             if (queueToAnnounce === undefined ||
-                !queueToAnnounce.helperIDs.has(helperMember.id)) {
+                !(queueToAnnounce.helperIDs.has(helperMember.id) ||
+                    helperMember.roles.cache.some(role => role.name === 'Bot Admin'))) {
                 return Promise.reject(new ServerError(
                     `You don't have permission to announce in ${targetQueue.queueName}. ` +
                     `Check your class roles.`
@@ -529,13 +537,17 @@ class AttendingServerV2 {
                     `In queue: ${targetQueue.queueName}`
                 )))
             );
+            return;
         }
         // from this.queues select queue where queue.helpers has helperMember.id
         await Promise.all(this.queues
             .filter(queue => queue.helperIDs.has(helperMember.id))
             .map(queueToAnnounce => queueToAnnounce.studentsInQueue)
             .flat()
-            .map(student => student.member.send(SimpleEmbed(message)))
+            .map(student => student.member.send((SimpleEmbed(
+                `Staff member ${helperMember.displayName} announced: ${message}`,
+                EmbedColor.Aqua
+            ))))
         );
     }
 
@@ -637,6 +649,8 @@ class AttendingServerV2 {
     /**
      * Creates all the office hour queues
      * ----
+     * @param queueBackups
+     * - if a backup extension is enabled, this is the queue data to load
      */
     private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
         if (this.queues.size !== 0) {

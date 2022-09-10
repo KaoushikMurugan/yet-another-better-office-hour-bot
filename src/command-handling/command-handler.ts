@@ -302,8 +302,8 @@ class CentralCommandDispatcher {
         ]);
         const announcement = interaction.options.getString("message", true);
         const optionalChannel = interaction.options.getChannel("queue_name", false);
-        if (optionalChannel) {
-            const queueChannel = await hasValidQueueArgument(interaction);
+        if (optionalChannel !== null) {
+            const queueChannel = await hasValidQueueArgument(interaction, true);
             await this.serverMap.get(serverId)
                 ?.announceToStudentsInQueue(member, announcement, queueChannel);
         } else {
