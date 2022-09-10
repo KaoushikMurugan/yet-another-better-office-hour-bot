@@ -333,20 +333,22 @@ class AttendingServerV2 {
     */
     async dequeueFirst(
         helperMember: GuildMember,
-        specificQueue?: QueueChannel): Promise<Readonly<Helpee>> {
+        specificQueue?: QueueChannel,
+        targetStudentMember?: GuildMember
+    ): Promise<Readonly<Helpee>> {
         if (specificQueue !== undefined) {
-            if (!helperMember.roles.cache.has(specificQueue.queueName)) {
+            if (!helperMember.roles.cache.some(role => role.name === specificQueue.queueName)) {
                 return Promise.reject(new ServerError(
                     `You don't have the permission to dequeue `
                     + `\`${specificQueue.queueName}\`.`
                 ));
             }
-            this.queues.get(specificQueue.parentCategoryId)?.dequeueWithHelper(helperMember);
+            await this.queues
+                .get(specificQueue.parentCategoryId)
+                ?.dequeueWithHelper(helperMember, targetStudentMember);
         }
         const currentlyHelpingChannels = this.queues
             .filter(queue => queue.helperIDs.has(helperMember.id));
-        // this is here to prevent empty currentlyHelpingChannels from calling reduce
-        // i forgot how it could be empty tho
         if (currentlyHelpingChannels.size === 0) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
@@ -365,13 +367,16 @@ class AttendingServerV2 {
                 `There's no one left to help. You should get some coffee!`
             ));
         }
-        const queueToDeq = nonEmptyQueues.reduce<HelpQueueV2>((prev, curr) =>
-            (prev.first?.waitStart !== undefined &&
-                curr.first?.waitStart !== undefined) &&
-                prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
-                ? prev
-                : curr);
-        const student = await queueToDeq.dequeueWithHelper(helperMember);
+        const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>(
+            (prev, curr) =>
+                (prev.first?.waitStart !== undefined &&
+                    curr.first?.waitStart !== undefined) &&
+                    prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
+                    ? prev
+                    : curr
+        );
+        const student = await queueToDequeue
+            .dequeueWithHelper(helperMember, targetStudentMember);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             VIEW_CHANNEL: true,
             CONNECT: true,

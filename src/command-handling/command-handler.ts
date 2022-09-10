@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildChannel, GuildMemberRoleManager } from "discord.js";
+import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
@@ -24,7 +24,9 @@ import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
  * @param interaction the raw interaction
  * @throws CommandParseError: if command doesn't satify the checks in Promise.all
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
- * @returns string: the success message
+ * @returns 
+ * - string: the success message
+ * - undefined: if the function already replied
  */
 class CentralCommandDispatcher {
 
@@ -145,15 +147,23 @@ class CentralCommandDispatcher {
     }
 
     private async next(interaction: CommandInteraction): Promise<string> {
-        const [serverId, member] = await Promise.all([
+        const [serverId, helperMember] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
                 "next",
                 ['Bot Admin', 'Staff'])
         ]);
-        const student = await this.serverMap.get(serverId)?.dequeueFirst(member);
-        return `An invite has been sent to ${student?.member.displayName}.`;
+        const targetQueue = interaction.options.getChannel('queue_name', false) === null
+            ? undefined
+            : await hasValidQueueArgument(interaction, true);
+        const targetStudent = interaction.options.getMember('user', false) === null
+            ? undefined
+            : interaction.options.getMember('user', true) as GuildMember;
+        const dequeuedStudent = await this.serverMap
+            .get(serverId)
+            ?.dequeueFirst(helperMember, targetQueue, targetStudent);
+        return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
     }
 
     private async start(interaction: CommandInteraction): Promise<string> {

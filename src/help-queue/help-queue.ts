@@ -217,7 +217,7 @@ class HelpQueueV2 {
     /**
      * Enqueue a student
      * @param studentMember the complete Helpee object
-     * @throws QueueError: 
+     * @throws QueueError
     */
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (!this.isOpen) {
@@ -265,27 +265,56 @@ class HelpQueueV2 {
      * Dequeue this particular queue with a helper
      * ----
      * @param helperMember the member that triggered dequeue
+     * @param targetStudentMember the student to look for if specified
      * @throws QueueError when
      * - Queue is not open
      * - No student is here
      * - helperMember is not one of the helpers
+     * - targetStudentMember specified but not in queue
     */
-    async dequeueWithHelper(helperMember: GuildMember): Promise<Readonly<Helpee>> {
+    async dequeueWithHelper(
+        helperMember: GuildMember,
+        targetStudentMember?: GuildMember
+    ): Promise<Readonly<Helpee>> {
         const helper = this.helpers.get(helperMember.id);
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
-                this.name));
+                this.name
+            ));
         }
         if (this.students.length === 0) {
             return Promise.reject(new QueueError(
                 'There\'s no one in the queue',
-                this.name));
+                this.name
+            ));
         }
         if (!helper) {
             return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
-                this.name));
+                this.name
+            ));
+        }
+        if (targetStudentMember !== undefined) {
+            const studentIndex = this.students
+                .findIndex(student => student.member.id === targetStudentMember.id);
+            if (studentIndex === -1) {
+                return Promise.reject(new QueueError(
+                    `The specified student ${targetStudentMember.displayName}` +
+                    `is not in the queue`,
+                    this.queueChannel.queueName
+                ));
+            }
+            // already checked for idx === -1
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            const foundStudent = this.students[studentIndex]!;
+            helper.helpedMembers.push(foundStudent.member);
+            this.students.splice(studentIndex, 1);
+            await Promise.all(this.queueExtensions.map(
+                extension => extension.onDequeue(this, foundStudent))
+            );
+            await this.triggerRender();
+            return foundStudent;
         }
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
