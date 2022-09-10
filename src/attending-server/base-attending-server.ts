@@ -19,7 +19,7 @@ import {
 } from "../utils/command-line-colors";
 
 // Wrapper for TextChannel
-// Guarantees that a queueName exists
+// Guarantees that a queueName and parentCategoryId exists
 type QueueChannel = {
     channelObj: TextChannel;
     queueName: string;
@@ -34,10 +34,13 @@ type QueueChannel = {
 */
 class AttendingServerV2 {
 
-    public intervalID!: NodeJS.Timer; // late init
-    public afterSessionMessage = ""; // message sent to students after they leave
+    // late init, used for clearAllIntervals only
+    public intervalID!: NodeJS.Timer;
+    // message sent to students after they leave 
+    public afterSessionMessage = "";
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
+    // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
 
     protected constructor(
@@ -62,6 +65,9 @@ class AttendingServerV2 {
             collection.set(helper.member.id, helper);
         }
         return [...collection.values()];
+    }
+    get studentsInAllQueues(): ReadonlyArray<Helpee> {
+        return this.queues.map(queue => queue.studentsInQueue).flat();
     }
 
     /**
@@ -560,11 +566,10 @@ class AttendingServerV2 {
         // see if the member is actually a student that a helper just helped
         // check if there's a queue that:
         // - has a helper that has @param member in the students they helped
-        const memberFinishedReceivingHelp = this.queues.find(
-            queue => queue.currentHelpers.find(helper =>
-                helper.helpedMembers.find(helpedStudent => helpedStudent.id === member.id)
-                !== undefined) !== undefined
-        ) !== undefined;
+        const memberFinishedReceivingHelp = this.queues
+            .some(queue => queue.currentHelpers
+                .some(helper => helper.helpedMembers
+                    .some(helpedStudent => helpedStudent.id === member.id)));
         if (memberFinishedReceivingHelp) {
             await member
                 .send(SimpleEmbed(this.afterSessionMessage))

@@ -77,7 +77,7 @@ class HelpQueueV2 {
     get first(): Helpee | undefined { // first student; undefined if no one is here
         return this.students[0];
     }
-    get studentsInQueue(): ReadonlyArray<Required<Helpee>> {
+    get studentsInQueue(): ReadonlyArray<Helpee> {
         return this.students;
     }
     get currentHelpers(): ReadonlyArray<Helper> {
