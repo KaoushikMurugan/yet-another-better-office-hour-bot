@@ -19,7 +19,7 @@ type QueueViewModel = {
 class HelpQueueV2 {
 
     // lateinit, used for server exit procedure only
-    intervalID!: NodeJS.Timer; 
+    intervalID!: NodeJS.Timer;
     // Key is Guildmember.id
     private helpers: Collection<string, Helper> = new Collection();
     private students: Helpee[] = [];
@@ -80,8 +80,8 @@ class HelpQueueV2 {
     get studentsInQueue(): ReadonlyArray<Helpee> {
         return this.students;
     }
-    get currentHelpers(): ReadonlyArray<Helper> {
-        return [...this.helpers.values()];
+    get currentHelpers(): Collection<string, Helper> {
+        return this.helpers;
     }
     get helperIDs(): ReadonlySet<string> { // set of helper IDs. Use this only for lookup
         return new Set(this.helpers.keys());
@@ -317,10 +317,11 @@ class HelpQueueV2 {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this.students.shift()!;
         helper.helpedMembers.push(firstStudent.member);
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onDequeue(this, firstStudent))
-        );
-        await this.triggerRender();
+        await Promise.all([
+            this.queueExtensions.map(
+                extension => extension.onDequeue(this, firstStudent)),
+            await this.triggerRender()
+        ].flat() as Promise<void>[]);
         return firstStudent;
     }
 

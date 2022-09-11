@@ -256,7 +256,7 @@ class CentralCommandDispatcher {
     private async listHelpers(interaction: CommandInteraction): Promise<undefined> {
         const serverId = await this.isServerInteraction(interaction);
         const helpers = this.serverMap.get(serverId)?.helpers;
-        if (helpers === undefined || helpers.length === 0) {
+        if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
             return undefined;
         }

@@ -19,9 +19,9 @@ type Helpee = {
  * - Removed when a staff member uses /close
 */
 type Helper = {
-    helpStart: Date;
-    helpEnd?: Date;
-    helpedMembers: GuildMember[];
+    helpStart: Date; // time when /start is used
+    helpEnd?: Date; // time when /stop is used
+    helpedMembers: GuildMember[]; // TODO: Change to Helpee
     readonly member: GuildMember; // backref
 }
 

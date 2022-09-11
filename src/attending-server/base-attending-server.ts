@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel, User,
+    GuildMember, MessageOptions, TextChannel, User, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
@@ -17,6 +17,8 @@ import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
+import { ServerStatsCollector } from "../utils/stats-collector";
+
 
 // Wrapper for TextChannel
 // Guarantees that a queueName and parentCategoryId exists
@@ -42,6 +44,8 @@ class AttendingServerV2 {
     private queues: Collection<string, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
+    // initializes a fresh collector for server stats
+    private statsCollector = new ServerStatsCollector();
 
     protected constructor(
         readonly user: User,
@@ -54,20 +58,24 @@ class AttendingServerV2 {
     }
     get helperNames(): ReadonlySet<string> {
         return new Set(this.queues
-            .map(q => q.currentHelpers)
+            .map(queue => [...queue.currentHelpers.values()])
             .flat()
             .map(helper => helper.member.displayName));
     }
-    get helpers(): ReadonlyArray<Helper> {
-        const allHelpers = this.queues.map(queue => queue.currentHelpers).flat();
-        const collection = new Collection<string, Helper>();
-        for (const helper of allHelpers) {
-            collection.set(helper.member.id, helper);
-        }
-        return [...collection.values()];
-    }
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this.queues.map(queue => queue.studentsInQueue).flat();
+    }
+    get helpers(): Collection<string, Helper> {
+        const allHelpers = this.queues.flatMap(queue => queue.currentHelpers);
+        const uniqueHelpers = new Collection<string, Helper>();
+        for (const [helperId, helper] of allHelpers) {
+            uniqueHelpers.has(helperId)
+                // Explicitly allow duplicate helpedMembers
+                // because a student might come back multiple times
+                ? uniqueHelpers.get(helperId)?.helpedMembers.concat(helper.helpedMembers)
+                : uniqueHelpers.set(helperId, helper);
+        }
+        return uniqueHelpers;
     }
 
     /**
@@ -168,14 +176,30 @@ class AttendingServerV2 {
         return server;
     }
 
-    async onMemberJoinVC(member: GuildMember): Promise<void> {
-        console.log('join vc evnt');
-        return;
+    async onMemberJoinVC(member: GuildMember, voiceState: VoiceState): Promise<void> {
+        // if there is more than 2 people (should be the helper & this student), return
+        if (voiceState.channel && voiceState.channel?.members.size !== 2) {
+            return;
+        }
+        const isDequeuedStudent = this.queues
+            .some(queue => queue.currentHelpers
+                .some(helper => helper.helpedMembers
+                    .some(helpedMember => helpedMember.id === member.id)));
+        
     }
 
-    async onMemberLeaveVC(member: GuildMember): Promise<void> {
-        console.log('leave vc evnt');
-        await this.sendAfterSessionMessage(member);
+    async onMemberLeaveVC(member: GuildMember, voiceState: VoiceState): Promise<void> {
+        // the member is a student if there exists a helper that has helped this member
+        const memberIsStudent = this.queues
+            .some(queue => queue.currentHelpers
+                .some(helper => helper.helpedMembers
+                    .some(helpedStudent => helpedStudent.id === member.id)));
+        console.log(`leave vc evnt ${member.displayName}` + `${memberIsStudent ? "student" : ""}`);
+        if (memberIsStudent && this.afterSessionMessage !== '') {
+            await member
+                .send(SimpleEmbed(this.afterSessionMessage))
+                .catch(console.error);
+        }
     }
 
     /**
@@ -347,9 +371,9 @@ class AttendingServerV2 {
                 .get(specificQueue.parentCategoryId)
                 ?.dequeueWithHelper(helperMember, targetStudentMember);
         }
-        const currentlyHelpingChannels = this.queues
+        const currentlyHelpingQueues = this.queues
             .filter(queue => queue.helperIDs.has(helperMember.id));
-        if (currentlyHelpingChannels.size === 0) {
+        if (currentlyHelpingQueues.size === 0) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
             ));
@@ -360,7 +384,7 @@ class AttendingServerV2 {
                 `You need to be in a voice channel first.`
             ));
         }
-        const nonEmptyQueues = currentlyHelpingChannels
+        const nonEmptyQueues = currentlyHelpingQueues
             .filter(queue => queue.currentlyOpen && queue.length !== 0);
         if (nonEmptyQueues.size === 0) {
             return Promise.reject(new ServerError(
@@ -382,14 +406,15 @@ class AttendingServerV2 {
             CONNECT: true,
         });
         const invite = await helperVoiceChannel.createInvite();
-        await student.member.send(SimpleEmbed(
-            `It's your turn! Join the call: ${invite.toString()}`,
-            EmbedColor.Success
-        ));
-
-        await Promise.all(this.serverExtensions.map(
-            extension => extension.onDequeueFirst(this, student)
-        ));
+        await Promise.all([
+            this.serverExtensions.map(
+                extension => extension.onDequeueFirst(this, student)
+            ),
+            student.member.send(SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
+            ))
+        ].flat() as Promise<void>[]);
         return student;
     }
 
@@ -568,25 +593,6 @@ class AttendingServerV2 {
         ));
     }
 
-    private async sendAfterSessionMessage(member: GuildMember): Promise<void> {
-        // disable if no message is set
-        if (this.afterSessionMessage.length === 0) {
-            return;
-        }
-        // see if the member is actually a student that a helper just helped
-        // check if there's a queue that:
-        // - has a helper that has @param member in the students they helped
-        const memberFinishedReceivingHelp = this.queues
-            .some(queue => queue.currentHelpers
-                .some(helper => helper.helpedMembers
-                    .some(helpedStudent => helpedStudent.id === member.id)));
-        if (memberFinishedReceivingHelp) {
-            await member
-                .send(SimpleEmbed(this.afterSessionMessage))
-                .catch(console.error);
-        }
-    }
-
     /**
      * Updates the help channel messages
      * ----
@@ -737,7 +743,7 @@ class AttendingServerV2 {
     */
     private async sendCommandHelpMessages(
         helpCategories: CategoryChannel[],
-        messageConfig: {
+        messageContents: {
             channelName: string;
             file: Pick<MessageOptions, "embeds">[];
             visibility: string[];
@@ -754,7 +760,7 @@ class AttendingServerV2 {
         // send new ones
         await Promise.all(
             allHelpChannels.map(async ch => {
-                const file = messageConfig.find(
+                const file = messageContents.find(
                     val => val.channelName === ch.name
                 )?.file;
                 if (file) {
