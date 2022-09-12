@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel, User, VoiceState,
+    GuildMember, MessageOptions, TextChannel, User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
@@ -17,7 +17,6 @@ import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
-import { ServerStatsCollector } from "./stats-collector";
 import { msToHourMins } from "../utils/util-functions";
 
 
@@ -41,16 +40,12 @@ class AttendingServerV2 {
     intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
     afterSessionMessage = "";
-    // initializes a fresh collector for server stats
-    statsCollector = new ServerStatsCollector();
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
     // unique active helpers, key is member.id
     private activeHelpers: Collection<string, Helper> = new Collection();
-    // keep students that just got dequeued
-    private studentsJustDequeued: Collection<string, Helpee> = new Collection();
 
     protected constructor(
         readonly user: User,
@@ -170,42 +165,36 @@ class AttendingServerV2 {
         member: GuildMember,
         newVoiceState: VoiceState
     ): Promise<void> {
-        // if there is more than 2 people (should be the helper & this student), return
         const memberIsStudent = this.activeHelpers
             .some(helper => helper.helpedMembers
                 .some(helpedMember => helpedMember.member.id === member.id));
-        // checked in app.ts, if this function is called then channel is definitely not null
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const [helpersInVC, studentsInVC] = newVoiceState.channel!.members
-            .partition(member => this.helpers.has(member.id));
-        if (!memberIsStudent || helpersInVC.size === 0) {
+        if (!memberIsStudent || newVoiceState.channel === null) {
             return;
         }
-        this.statsCollector.collectOnStudentsJoinVC(
-            this.helpers,
-            this.studentsJustDequeued
-                .filter(student => studentsInVC
-                    .some(studentInVC => studentInVC.id === student.member.id))
-        );
-        studentsInVC.forEach(student => this.studentsJustDequeued.delete(student.id));
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onStudentJoinVC(
+                this,
+                member,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                newVoiceState.channel! as VoiceChannel
+            )));
     }
 
     async onMemberLeaveVC(
         member: GuildMember
     ): Promise<void> {
-        // the member is a student if there exists a helper that has helped thi-s member
         const memberIsStudent = this.activeHelpers
             .some(helper => helper.helpedMembers
                 .some(helpedMember => helpedMember.member.id === member.id));
         if (!memberIsStudent) {
             return;
         }
-        this.statsCollector.collectOnStudentsLeaveVC([member.id]);
-        if (this.afterSessionMessage !== '') {
-            await member
-                .send(SimpleEmbed(this.afterSessionMessage))
-                .catch(console.error);
-        }
+        await Promise.all([
+            this.serverExtensions.map(extension =>
+                extension.onStudentLeaveVC(this, member)
+            ),
+            this.afterSessionMessage !== '' && member.send(SimpleEmbed(this.afterSessionMessage))
+        ].flat() as Promise<void>[]);
     }
 
     /**
@@ -409,8 +398,7 @@ class AttendingServerV2 {
             .dequeueWithHelper(helperMember, targetStudentMember);
 
         this.activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        this.studentsJustDequeued.set(student.member.id, student);
-
+        // this api call is slow
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             VIEW_CHANNEL: true,
             CONNECT: true,
@@ -460,7 +448,6 @@ class AttendingServerV2 {
         };
 
         this.helpers.set(helperMember.id, helper);
-        this.statsCollector.collectOnHelperStart(helper);
 
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStartHelping(this, helper)
@@ -491,7 +478,6 @@ class AttendingServerV2 {
             )));
 
         helper.helpEnd = new Date();
-        this.statsCollector.collectOnHelperStop(helper as Required<Helper>);
         this.helpers.delete(helperMember.id);
         console.log(`- Help time of ${helper.member.displayName} is ` +
             `${msToHourMins(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);

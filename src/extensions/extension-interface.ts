@@ -7,7 +7,7 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
-import { ButtonInteraction, Collection, CommandInteraction } from "discord.js";
+import { ButtonInteraction, Collection, CommandInteraction, GuildMember, VoiceChannel, VoiceState } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
@@ -59,6 +59,15 @@ interface IServerExtension {
     onServerPeriodicUpdate: (
         server: Readonly<AttendingServerV2>,
         isFirstCall: boolean
+    ) => Promise<void>;
+    onStudentJoinVC: (
+        server: Readonly<AttendingServerV2>,
+        studentMember: GuildMember,
+        voiceChannel: VoiceChannel
+    ) => Promise<void>;
+    onStudentLeaveVC: (
+        server: Readonly<AttendingServerV2>,
+        studentMember: GuildMember,
     ) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
 }
@@ -170,6 +179,19 @@ class BaseServerExtension implements IServerExtension {
     onServerPeriodicUpdate(
         server: Readonly<AttendingServerV2>,
         isFirstCall = false
+    ): Promise<void> {
+        return Promise.resolve();
+    }
+    onStudentJoinVC(
+        server: Readonly<AttendingServerV2>,
+        studentMember: GuildMember,
+        voiceChannel: VoiceChannel
+    ): Promise<void> {
+        return Promise.resolve();
+    }
+    onStudentLeaveVC(
+        server: Readonly<AttendingServerV2>,
+        studentMember: GuildMember
     ): Promise<void> {
         return Promise.resolve();
     }
