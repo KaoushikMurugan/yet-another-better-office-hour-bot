@@ -35,19 +35,16 @@ class CalendarExtensionState {
         ) {
             return new CalendarExtensionState(serverId, serverName);
         }
-
         if (getApps().length === 0) {
             initializeApp({
                 credential: cert(firebaseCredentials)
             });
         }
-
         const instance = new CalendarExtensionState(
             serverId,
             serverName,
             getFirestore()
         );
-
         await instance.restoreFromBackup(serverId);
         return instance;
     }
@@ -77,9 +74,7 @@ class CalendarExtensionState {
         if (backupDoc.data() === undefined) {
             return;
         }
-
         const calendarBackup = backupDoc.data() as CalendarConfigBackup;
-
         this.calendarId = calendarBackup.calendarId;
         this.calendarNameDiscordIdMap
             = new Collection(Object.entries(calendarBackup.calendarNameDiscordIdMap));
@@ -94,7 +89,6 @@ class CalendarExtensionState {
             calendarNameDiscordIdMap:
                 Object.fromEntries(this.calendarNameDiscordIdMap)
         };
-
         this.firebase_db
             .collection("calendarBackups")
             .doc(this.serverId)
@@ -106,7 +100,7 @@ class CalendarExtensionState {
             .catch((err: Error) => console.error(err.message));
     }
 }
-
+// TODO: Might lead to memory leak. Need to delete on server exit
 // static, key is server id, value is 1 calendar extension state
 const serverIdStateMap = new Collection<string, CalendarExtensionState>();
 

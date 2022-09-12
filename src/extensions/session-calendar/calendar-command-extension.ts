@@ -139,25 +139,21 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ),
             ephemeral: true
         });
-
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(interactionName);
-
         if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This external command does not exist.')
             ));
             return;
         }
-
         console.log(
             `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `pressed [${interaction.customId}] `
         );
-
         await buttonMethod(interaction, queueName)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
@@ -186,9 +182,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ['Bot Admin']
             )
         ]);
-
-        // runtime only. Will be resetted when YABOB restarts
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         await serverIdStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
         await Promise.all(
             serverIdStateMap
@@ -196,7 +189,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ?.listeners
                 .map(listener => listener.onCalendarExtensionStateChange()) ?? []
         );
-
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
@@ -228,13 +220,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     .join('\n')
                 : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`
         );
-
         await interaction.editReply(embed);
         return undefined;
     }
 
     /**
-     * Makes calendar titles with every queue arg optional
+     * Makes calendar titles for all approved queues
      * ----
      * @param generateAll whether to generate string for all the queue roles
     */
@@ -250,12 +241,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ['Bot Admin', 'Staff']
             )
         ]);
-
         const calendarDisplayName = interaction.options.getString('your_name', true);
         let validQueues: (CategoryChannel | Role)[] = [];
 
         if (generateAll) {
             validQueues = await getQueueRoles(
+                // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.serverMap.get(serverId)!,
                 interaction.member as GuildMember
@@ -266,7 +257,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 .map((_, idx) => interaction.options
                     .getChannel(`queue_name_${idx + 1}`, idx === 0))
                 .filter(queueArg => queueArg !== undefined && queueArg !== null);
-
             validQueues = await Promise.all(commandArgs.map(category => {
                 if (category?.type !== 'GUILD_CATEGORY' || category === null) {
                     return Promise.reject(new CommandParseError(
@@ -285,17 +275,14 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 return Promise.resolve(category);
             }));
         }
-
         await serverIdStateMap
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(
                 calendarDisplayName,
                 interaction.user.id
             );
-
         await Promise.all(serverIdStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
-
         return Promise.resolve(
             `${calendarDisplayName} - ` +
             `${validQueues.map(queue => queue.name).join(', ')}`
@@ -313,7 +300,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             timeMax: nextWeek,
             apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
         });
-
         const response = await fetch(url);
         if (response.status !== 200) {
             return Promise.reject('Calendar request failed.');

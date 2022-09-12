@@ -35,6 +35,7 @@ type HelpSessionEntry = {
     'Queue Name': string;
     'Wait Time (ms)': number; // wait end - wait start
 }
+
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 class AttendanceError extends Error {
@@ -216,7 +217,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-
         await attendanceSheet.setHeaderRow(requiredHeaders);
         await attendanceSheet.addRow({
             "Helper Username": entry.member.user.username,
@@ -244,7 +244,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (entries[0] === undefined) {
             return;
         }
-
         const sheetTitle = `${this.serverName} Help Sessions`;
         const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
@@ -253,7 +252,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-
         await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
         await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
             ...requiredHeaders.map(header => entry[header] instanceof Date
