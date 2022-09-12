@@ -347,6 +347,8 @@ class AttendingServerV2 {
      * ----
      * @param helperMember the helper that used /next
      * @param specificQueue if specified, dequeue from this queue
+     * @param targetStudentMember if specified, dequeue this student
+     * - ignored if specified queue is undefined
      * @throws
      * - ServerError: if specificQueue is given but helper doesn't have the role
      * - QueueError: if the queue to dequeue from rejects

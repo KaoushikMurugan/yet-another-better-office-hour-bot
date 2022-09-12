@@ -193,7 +193,7 @@ class CentralCommandDispatcher {
         return `You helped for ` +
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             msToHourMins(helpTime!.helpEnd.getTime() - helpTime!.helpStart.getTime()) +
-            `See you later!`;
+            `. See you later!`;
     }
 
     private async leave(interaction: CommandInteraction): Promise<string> {

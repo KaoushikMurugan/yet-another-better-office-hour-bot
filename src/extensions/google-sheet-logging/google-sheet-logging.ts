@@ -8,7 +8,6 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
 import attendanceConfig from '../extension-credentials/google-sheet-config.json';
 import { Collection, GuildMember, VoiceChannel } from "discord.js";
-import { msToHourMins } from "../../utils/util-functions";
 
 /**
  * Attendance entry for each helper
@@ -34,7 +33,7 @@ type HelpSessionEntry = {
     'Session End'?: Date;  // time leave VC
     'Wait Start': Date; // Helpee.waitStart
     'Queue Name': string;
-    'Wait Time (Ms)': number; // wait end - wait start
+    'Wait Time (ms)': number; // wait end - wait start
 }
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
@@ -108,6 +107,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (helpersInVC.size === 0 || student === undefined) {
             return;
         }
+        this.studentsJustDequeued.delete(studentId);
         for (const helper of helpersInVC.map(helperInVC => server.helpers.get(helperInVC.id))) {
             if (helper === undefined) {
                 continue;
@@ -121,7 +121,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 'Session End': undefined,
                 'Wait Start': student.waitStart,
                 'Queue Name': student.queue.name,
-                'Wait Time (Ms)': (new Date()).getTime() - student.waitStart.getTime(),
+                'Wait Time (ms)': (new Date()).getTime() - student.waitStart.getTime(),
             };
             this.helpSessionEntries.has(studentId)
                 ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
@@ -254,16 +254,15 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 headerValues: requiredHeaders
             });
 
-        await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time']);
+        await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
         await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
             ...requiredHeaders.map(header => entry[header] instanceof Date
                 ? [header, entry[header].toLocaleString()]
                 : [header, entry[header].toString()]
             ),
             [
-                'Session Time',
-                msToHourMins(entry['Session Start'].getTime() -
-                    entry['Session End'].getTime())
+                'Session Time (ms)',
+                entry['Session End'].getTime() - entry['Session Start'].getTime()
             ]
         ])));
     }
