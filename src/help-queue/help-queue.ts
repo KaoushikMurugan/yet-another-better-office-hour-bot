@@ -122,8 +122,12 @@ class HelpQueueV2 {
 
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
-        await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue, display)));
-        await Promise.all(queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true)));
+        await Promise.all(queueExtensions.map(extension =>
+            extension.onQueueCreate(queue, display))
+        );
+        await Promise.all(queueExtensions.map(extension =>
+            extension.onQueuePeriodicUpdate(queue, true))
+        );
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(
                 everyoneRole,
@@ -241,10 +245,12 @@ class HelpQueueV2 {
         // we won't use the return values so it's safe to cast
         await Promise.all([
             helperIdArray.map(helperId =>
-                this.queueChannel.channelObj.members.get(helperId)?.send(SimpleEmbed(
-                    `Heads up! ${student.member.displayName} has joined "${this.name}".`,
-                    EmbedColor.Neutral,
-                    `<@${student.member.user.id}>`))
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(SimpleEmbed(
+                        `Heads up! ${student.member.displayName} has joined "${this.name}".`,
+                        EmbedColor.Neutral,
+                        `<@${student.member.user.id}>`))
             ),
             this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
@@ -289,7 +295,7 @@ class HelpQueueV2 {
                 .findIndex(student => student.member.id === targetStudentMember.id);
             if (studentIndex === -1) {
                 return Promise.reject(new QueueError(
-                    `The specified student ${targetStudentMember.displayName}` +
+                    `The specified student ${targetStudentMember.displayName} ` +
                     `is not in the queue`,
                     this.queueChannel.queueName
                 ));
@@ -298,10 +304,12 @@ class HelpQueueV2 {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const foundStudent = this.students[studentIndex]!;
             this.students.splice(studentIndex, 1);
-            await Promise.all(this.queueExtensions.map(
-                extension => extension.onDequeue(this, foundStudent))
-            );
-            await this.triggerRender();
+            await Promise.all([
+                this.queueExtensions.map(
+                    extension => extension.onDequeue(this, foundStudent)),
+                this.triggerRender()
+            ].flat() as Promise<void>[]);
+
             return foundStudent;
         }
         // assertion is safe becasue we already checked for length
@@ -335,9 +343,9 @@ class HelpQueueV2 {
         const removedStudent = this.students[idx]!;
         this.students.splice(idx, 1);
         await Promise.all([
-            this.triggerRender(),
             this.queueExtensions.map(
-                extension => extension.onStudentRemove(this, removedStudent))
+                extension => extension.onStudentRemove(this, removedStudent)),
+            this.triggerRender()
         ].flat() as Promise<void>[]);
     }
 

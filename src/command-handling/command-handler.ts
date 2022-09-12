@@ -32,6 +32,7 @@ class CentralCommandDispatcher {
 
     // The map of available commands
     // Key is what the user will see, value is the arrow function
+    // - arrow function wrapper is required because of the closure of 'this'
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
     commandMethodMap: ReadonlyMap<

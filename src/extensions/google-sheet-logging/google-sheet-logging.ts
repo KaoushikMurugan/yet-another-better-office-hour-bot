@@ -50,12 +50,12 @@ class AttendanceError extends Error {
 
 class GoogleSheetLoggingExtension extends BaseServerExtension {
     // Credit of all the update logic goes to Kaoushik
-    // key is student member.id
+    // key is student member.id, value is corresponding helpee object
     private studentsJustDequeued: Collection<string, Helpee> = new Collection();
-    // key is helper member.id
+    // key is helper member.id, value is entry for this helper
     private attendanceEntries: Collection<string, AttendanceEntry> = new Collection();
-    // key is student member.id
-    private helpSessionEntries: Collection<string, HelpSessionEntry> = new Collection();
+    // key is student member.id, value is an array of entries to handle multiple helpers
+    private helpSessionEntries: Collection<string, HelpSessionEntry[]> = new Collection();
 
     constructor(
         private serverName: string,
@@ -123,7 +123,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 'Queue Name': student.queue.name,
                 'Wait Time (Ms)': (new Date()).getTime() - student.waitStart.getTime(),
             };
-            this.helpSessionEntries.set(studentId, helpSessionEntry);
+            this.helpSessionEntries.has(studentId)
+                ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
+                : this.helpSessionEntries.set(studentId, [helpSessionEntry]);
             if (this.attendanceEntries.has(helper.member.id)) {
                 // ts doesn't recognize map.has
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -137,20 +139,20 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         _server: Readonly<AttendingServerV2>,
         studentMember: GuildMember
     ): Promise<void> {
-        const helpSessionEntry = this.helpSessionEntries.get(studentMember.id);
-        if (helpSessionEntry === undefined) {
+        const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
+        if (helpSessionEntries === undefined) {
             return;
         }
-        helpSessionEntry['Session End'] = new Date();
+        helpSessionEntries?.forEach(entry => entry['Session End'] = new Date());
         this.attendanceEntries.forEach(entry => {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs += (new Date()).getTime() -
                     entry.latestStudentJoinTimeStamp.getTime();
             }
         });
-        this.helpSessionEntries.delete(studentMember.id);
         // entry is now complete, safe to cast
-        await this.updateHelpSession(helpSessionEntry as Required<HelpSessionEntry>);
+        await this.updateHelpSession(helpSessionEntries as Array<Required<HelpSessionEntry>>);
+        this.helpSessionEntries.delete(studentMember.id);
     }
 
     override onHelperStartHelping(
@@ -183,7 +185,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         entry.helpEnd = helper.helpEnd;
         helper.helpedMembers
             .map(student => this.studentsJustDequeued.delete(student.member.id));
-
         await this.updateAttendance(entry as Required<AttendanceEntry>)
             .catch(() => Promise.reject(error));
         this.attendanceEntries.delete(helper.member.id);
@@ -196,8 +197,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     private async updateAttendance(
         entry: Required<AttendanceEntry>
     ): Promise<void> {
-        // try to find existing sheet
-        // if not created, make a new one
         const requiredHeaders = [
             "Helper Username",
             "Time In",
@@ -208,11 +207,13 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             "Active Time (ms)",
             "Number of Students Helped",
         ];
-
+        // try to find existing sheet
+        // if not created, make a new one
+        const sheetTitle = `${this.serverName} Attendance`;
         const attendanceSheet =
-            this.googleSheet.sheetsByTitle[`${this.serverName} Attendance`]
+            this.googleSheet.sheetsByTitle[sheetTitle]
             ?? await this.googleSheet.addSheet({
-                title: `${this.serverName} Attendance`,
+                title: sheetTitle,
                 headerValues: requiredHeaders
             });
 
@@ -238,24 +239,33 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
      * ----
     */
     private async updateHelpSession(
-        entry: Required<HelpSessionEntry>
+        entries: Array<Required<HelpSessionEntry>>
     ): Promise<void> {
-        const requiredHeaders = Object.keys(entry) as HelpSessionSheetHeaders;
+        if (entries[0] === undefined) {
+            return;
+        }
+
+        const sheetTitle = `${this.serverName} Help Sessions`;
+        const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
-            this.googleSheet.sheetsByTitle[`${this.serverName} Help Sessions`]
+            this.googleSheet.sheetsByTitle[sheetTitle]
             ?? await this.googleSheet.addSheet({
-                title: `${this.serverName} Help Sessions`,
+                title: sheetTitle,
                 headerValues: requiredHeaders
             });
+
         await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time']);
-        await helpSessionSheet.addRow(Object.fromEntries([
+        await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
             ...requiredHeaders.map(header => entry[header] instanceof Date
                 ? [header, entry[header].toLocaleString()]
                 : [header, entry[header].toString()]
             ),
-            ['Session Time', msToHourMins(entry['Session Start'].getTime() -
-                entry['Session End'].getTime())]
-        ]));
+            [
+                'Session Time',
+                msToHourMins(entry['Session Start'].getTime() -
+                    entry['Session End'].getTime())
+            ]
+        ])));
     }
 }
 
