@@ -18,6 +18,7 @@ import {
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
 import { ServerStatsCollector } from "../utils/stats-collector";
+import { msToHourMins } from "../utils/util-functions";
 
 
 // Wrapper for TextChannel
@@ -44,6 +45,8 @@ class AttendingServerV2 {
     private queues: Collection<string, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
+    // unique active helpers, key is member.id
+    private activeHelpers: Collection<string, Helper> = new Collection();
     // initializes a fresh collector for server stats
     private statsCollector = new ServerStatsCollector();
 
@@ -56,26 +59,11 @@ class AttendingServerV2 {
     get helpQueues(): ReadonlyArray<HelpQueueV2> {
         return [...this.queues.values()];
     }
-    get helperNames(): ReadonlySet<string> {
-        return new Set(this.queues
-            .map(queue => [...queue.currentHelpers.values()])
-            .flat()
-            .map(helper => helper.member.displayName));
-    }
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this.queues.map(queue => queue.studentsInQueue).flat();
     }
-    get helpers(): Collection<string, Helper> {
-        const allHelpers = this.queues.flatMap(queue => queue.currentHelpers);
-        const uniqueHelpers = new Collection<string, Helper>();
-        for (const [helperId, helper] of allHelpers) {
-            uniqueHelpers.has(helperId)
-                // Explicitly allow duplicate helpedMembers
-                // because a student might come back multiple times
-                ? uniqueHelpers.get(helperId)?.helpedMembers.concat(helper.helpedMembers)
-                : uniqueHelpers.set(helperId, helper);
-        }
-        return uniqueHelpers;
+    get helpers(): Readonly<Collection<string, Helper>> {
+        return this.activeHelpers;
     }
 
     /**
@@ -181,19 +169,15 @@ class AttendingServerV2 {
         if (voiceState.channel && voiceState.channel?.members.size !== 2) {
             return;
         }
-        const isDequeuedStudent = this.queues
-            .some(queue => queue.currentHelpers
-                .some(helper => helper.helpedMembers
-                    .some(helpedMember => helpedMember.id === member.id)));
-        
+        // checked in app.ts, if this function is called then channels is definitely not null
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const [helpersInVC, studentsInVC] = voiceState.channel!.members
+            .partition(member => this.helpers.has(member.id));
     }
 
     async onMemberLeaveVC(member: GuildMember, voiceState: VoiceState): Promise<void> {
-        // the member is a student if there exists a helper that has helped this member
-        const memberIsStudent = this.queues
-            .some(queue => queue.currentHelpers
-                .some(helper => helper.helpedMembers
-                    .some(helpedStudent => helpedStudent.id === member.id)));
+        // the member is a student if there exists a helper that has helped thi-s member
+        const memberIsStudent = false;
         console.log(`leave vc evnt ${member.displayName}` + `${memberIsStudent ? "student" : ""}`);
         if (memberIsStudent && this.afterSessionMessage !== '') {
             await member
@@ -442,12 +426,13 @@ class AttendingServerV2 {
             .catch(() => Promise.reject(new ServerError(
                 'You are already hosting.'
             )));
-        // only used for onHelperStartHelping()
+
         const helper: Helper = {
             helpStart: new Date,
             helpedMembers: [],
             member: helperMember
         };
+        this.helpers.set(helperMember.id, helper);
 
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStartHelping(this, helper)
@@ -462,33 +447,31 @@ class AttendingServerV2 {
     * @throws ServerError: If the helper is not hosting
    */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
-        const closableQueues = this.queues.filter(
-            queue => helperMember.roles.cache
-                .map(role => role.name)
-                .includes(queue.name));
-        if (closableQueues.size === 0) {
+        const helper = this.helpers.get(helperMember.id);
+        if (helper === undefined) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
             ));
         }
-        const helpTimes = await Promise.all(
-            closableQueues.map(queue => queue.closeQueue(helperMember)))
+
+        const closableQueues = this.queues.filter(
+            queue => helperMember.roles.cache
+                .map(role => role.name)
+                .includes(queue.name));
+        await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)))
             .catch(() => Promise.reject(new ServerError(
                 'You are not currently hosting.'
             )));
-        // Since each queue maintains a helper object, we take the one with maximum time (argmax)
-        // The time offsets between each queue is negligible
-        const maxHelpTime = helpTimes.reduce((prev, curr) =>
-            prev.helpEnd.getTime() > curr.helpStart.getTime()
-                ? prev
-                : curr
-        );
-        console.log(`- Help time of ${maxHelpTime.member.displayName} is ` +
-            `${maxHelpTime.helpEnd.getTime() - maxHelpTime.helpStart.getTime()}ms.`);
+
+        helper.helpEnd = new Date();
+        this.helpers.delete(helperMember.id);
+
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onHelperStopHelping(this, maxHelpTime)
+            extension => extension.onHelperStopHelping(this, helper as Required<Helper>)
         ));
-        return maxHelpTime;
+        console.log(`- Help time of ${helper.member.displayName} is ` +
+            `${msToHourMins(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
+        return helper as Required<Helper>;
     }
 
     /**
@@ -547,8 +530,9 @@ class AttendingServerV2 {
             const queueToAnnounce = this.queues
                 .get(targetQueue.parentCategoryId);
             if (queueToAnnounce === undefined ||
-                !(queueToAnnounce.helperIDs.has(helperMember.id) ||
-                    helperMember.roles.cache.some(role => role.name === 'Bot Admin'))) {
+                // do this first, so the expensive Array.some() won't be called unless this is false
+                !queueToAnnounce.helperIDs.has(helperMember.id) &&
+                helperMember.roles.cache.some(role => role.name === 'Bot Admin')) {
                 return Promise.reject(new ServerError(
                     `You don't have permission to announce in ${targetQueue.queueName}. ` +
                     `Check your class roles.`
@@ -602,11 +586,11 @@ class AttendingServerV2 {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
             .filter(
-                ch =>
-                    ch.type === "GUILD_CATEGORY" &&
-                    ch.name === "Bot Commands Help"
+                channel =>
+                    channel.type === "GUILD_CATEGORY" &&
+                    channel.name === "Bot Commands Help"
             )
-            .map(ch => ch as CategoryChannel);
+            .map(channel => channel as CategoryChannel);
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
             console.log(
@@ -763,11 +747,9 @@ class AttendingServerV2 {
                 const file = messageContents.find(
                     val => val.channelName === ch.name
                 )?.file;
-                if (file) {
-                    file.forEach(async message => {
-                        await ch.send(message);
-                    });
-                }
+                file && file.forEach(async message => {
+                    await ch.send(message);
+                });
             })
         );
     }

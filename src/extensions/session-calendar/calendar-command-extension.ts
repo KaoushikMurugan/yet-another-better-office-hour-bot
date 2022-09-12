@@ -45,6 +45,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         private readonly guild: Guild
     ) { super(); }
 
+    static helpEmbedsSent = false;
+
     static async load(
         guild: Guild,
         serverMap: Collection<string, AttendingServerV2>
@@ -55,7 +57,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
         const instance = new CalendarInteractionExtension(guild);
         instance.serverMap = serverMap;
-        appendCalendarHelpEmbeds();
+        appendCalendarHelpEmbeds(CalendarInteractionExtension.helpEmbedsSent);
+        CalendarInteractionExtension.helpEmbedsSent = true;
         return instance;
     }
 

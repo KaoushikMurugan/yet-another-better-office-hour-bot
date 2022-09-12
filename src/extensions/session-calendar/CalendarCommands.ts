@@ -88,13 +88,11 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
 ];
 
 // Prevent repeated pushing for multiple instances
-let sent = false;
-function appendCalendarHelpEmbeds(): void {
+function appendCalendarHelpEmbeds(sent: boolean): void {
     if (!sent) {
         adminCommandsEmbed.push(...calendarAdminCommandsEmbed);
         helperCommandsEmbed.push(...calendarHelperCommandsEmbed);
         studentCommandsEmbed.push(...calendarStudentCommandsEmbed);
-        sent = true;
     }
 }
 

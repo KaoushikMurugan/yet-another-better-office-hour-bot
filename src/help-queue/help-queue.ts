@@ -3,7 +3,7 @@ import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
 import { QueueBackup } from '../extensions/firebase-backup/firebase-models/backups';
-import { Helper, Helpee } from '../models/member-states';
+import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError, QueueRenderError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
@@ -20,8 +20,8 @@ class HelpQueueV2 {
 
     // lateinit, used for server exit procedure only
     intervalID!: NodeJS.Timer;
-    // Key is Guildmember.id
-    private helpers: Collection<string, Helper> = new Collection();
+
+    private helperIds: Set<string> = new Set();
     private students: Helpee[] = [];
     // Key is Guildmember.id
     private notifGroup: Collection<string, GuildMember> = new Collection();
@@ -34,28 +34,28 @@ class HelpQueueV2 {
      * @param backupData If defined, use this data to restore the students array
     */
     protected constructor(
-        user: User,
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
+        user: User,
         backupData?: QueueBackup
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
-        // If we choose to use backup,
-        // restore members with queueChannel.channelObj.members.get()
-        if (backupData !== undefined) {
-            backupData.studentsInQueue.forEach(studentBackup => {
-                // forEach backup, if there's a corresponding channel member, push it into queue
-                const correspondingMember = this.queueChannel.channelObj.members
-                    .get(studentBackup.memberId);
-                if (correspondingMember !== undefined) {
-                    this.students.push({
-                        waitStart: studentBackup.waitStart,
-                        upNext: studentBackup.upNext,
-                        member: correspondingMember
-                    });
-                }
-            });
+        if (backupData === undefined) {
+            // if no backup then we are done initializing
+            return;
+        }
+        for (const studentBackup of backupData.studentsInQueue) {
+            // forEach backup, if there's a corresponding channel member, push it into queue
+            const correspondingMember = this.queueChannel.channelObj.members
+                .get(studentBackup.memberId);
+            if (correspondingMember !== undefined) {
+                this.students.push({
+                    waitStart: studentBackup.waitStart,
+                    upNext: studentBackup.upNext,
+                    member: correspondingMember
+                });
+            }
         }
     }
 
@@ -80,11 +80,8 @@ class HelpQueueV2 {
     get studentsInQueue(): ReadonlyArray<Helpee> {
         return this.students;
     }
-    get currentHelpers(): Collection<string, Helper> {
-        return this.helpers;
-    }
-    get helperIDs(): ReadonlySet<string> { // set of helper IDs. Use this only for lookup
-        return new Set(this.helpers.keys());
+    get helperIDs(): ReadonlySet<string> { // set of helper IDs. enforce readonly
+        return this.helperIds;
     }
 
     /**
@@ -115,10 +112,10 @@ class HelpQueueV2 {
 
         const display = new QueueDisplayV2(user, queueChannel);
         const queue = new HelpQueueV2(
-            user,
             queueChannel,
             queueExtensions,
             display,
+            user,
             backupData
         );
 
@@ -155,19 +152,14 @@ class HelpQueueV2 {
      * @throws QueueError: do nothing if helperMemeber is already helping
     */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
-        if (this.helpers.has(helperMember.id)) {
+        if (this.helperIds.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'Queue is already open',
                 this.name));
         } // won't actually be seen, will be caught
-        const helper: Helper = {
-            helpStart: new Date(),
-            helpedMembers: [],
-            member: helperMember
-        };
 
         this.isOpen = true;
-        this.helpers.set(helperMember.id, helper);
+        this.helperIds.add(helperMember.id);
 
         await Promise.all([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
@@ -186,29 +178,26 @@ class HelpQueueV2 {
      * @param helperMember member with Staff/Admin that used /stop
      * @throws QueueError: do nothing if queue is closed
     */
-    async closeQueue(helperMember: GuildMember): Promise<Required<Helper>> {
-        const helper = this.helpers.get(helperMember.id);
+    async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'Queue is already closed',
                 this.name));
         }
-        if (!helper) {
+        if (!this.helperIds.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'You are not one of the helpers',
                 this.name));
         }
 
-        this.helpers.delete(helperMember.id);
-        this.isOpen = this.helpers.size > 0;
-        helper.helpEnd = new Date();
+        this.helperIds.delete(helperMember.id);
+        this.isOpen = this.helperIds.size > 0;
 
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueClose(this))
-        );
-        await this.triggerRender();
-        return helper as Required<Helper>;
+        await Promise.all([
+            this.queueExtensions.map(extension => extension.onQueueClose(this)),
+            this.triggerRender()
+        ].flat() as Promise<void>[]);
     }
 
     /**
@@ -229,7 +218,7 @@ class HelpQueueV2 {
                 this.name
             ));
         }
-        if (this.helpers.has(studentMember.id)) {
+        if (this.helperIds.has(studentMember.id)) {
             return Promise.reject(new QueueError(
                 `You can't enqueue yourself while helping.`,
                 this.name
@@ -243,19 +232,21 @@ class HelpQueueV2 {
         };
         this.students.push(student);
 
+        // converted to use Array.map
+        const helperIdArray = [...this.helperIds];
         // the Promise<void> cast is for combining 2 different promise types
         // so that they can be launched in parallel
         // we won't use the return values so it's safe to cast
         await Promise.all([
-            this.helpers.map(helper =>
-                helper.member.send(SimpleEmbed(
+            helperIdArray.map(helperId =>
+                this.queueChannel.channelObj.members.get(helperId)?.send(SimpleEmbed(
                     `Heads up! ${student.member.displayName} has joined "${this.name}".`,
                     EmbedColor.Neutral,
                     `<@${student.member.user.id}>`))
             ),
-            this.queueExtensions.map(extension => extension.onEnqueue(this, student))
+            this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
+            this.triggerRender()
         ].flat() as Promise<void>[]);
-        await this.triggerRender();
     }
 
     /**
@@ -273,7 +264,6 @@ class HelpQueueV2 {
         helperMember: GuildMember,
         targetStudentMember?: GuildMember
     ): Promise<Readonly<Helpee>> {
-        const helper = this.helpers.get(helperMember.id);
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 'This queue is not open. Did you mean to use `/start`?',
@@ -286,7 +276,7 @@ class HelpQueueV2 {
                 this.name
             ));
         }
-        if (!helper) {
+        if (!this.helperIds.has(helperMember.id)) {
             return Promise.reject(new QueueError(
                 'You don\'t have permission to help this queue',
                 this.name
@@ -305,7 +295,6 @@ class HelpQueueV2 {
             // already checked for idx === -1
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const foundStudent = this.students[studentIndex]!;
-            helper.helpedMembers.push(foundStudent.member);
             this.students.splice(studentIndex, 1);
             await Promise.all(this.queueExtensions.map(
                 extension => extension.onDequeue(this, foundStudent))
@@ -316,7 +305,6 @@ class HelpQueueV2 {
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this.students.shift()!;
-        helper.helpedMembers.push(firstStudent.member);
         await Promise.all([
             this.queueExtensions.map(
                 extension => extension.onDequeue(this, firstStudent)),
@@ -344,10 +332,11 @@ class HelpQueueV2 {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const removedStudent = this.students[idx]!;
         this.students.splice(idx, 1);
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onStudentRemove(this, removedStudent))
-        );
-        await this.triggerRender();
+        await Promise.all([
+            this.triggerRender(),
+            this.queueExtensions.map(
+                extension => extension.onStudentRemove(this, removedStudent))
+        ].flat() as Promise<void>[]);
     }
 
     /**
@@ -403,7 +392,7 @@ class HelpQueueV2 {
     async cleanUpQueueChannel(): Promise<void> {
         const viewModel: QueueViewModel = {
             queueName: this.name,
-            helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
+            helperIDs: [...this.helperIds].map(helperId => `<@${helperId}>`),
             studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',
             isOpen: this.isOpen
@@ -425,7 +414,7 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.name,
-            helperIDs: this.helpers.map(helper => `<@${helper.member.id}>`),
+            helperIDs: [...this.helperIds].map(helperId => `<@${helperId}>`),
             studentDisplayNames: this.students.map(student => student.member.displayName),
             calendarString: '',
             isOpen: this.isOpen
