@@ -1,6 +1,7 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel, User, VoiceChannel, VoiceState,
+    GuildMember, MessageOptions, TextChannel,
+    User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
@@ -10,8 +11,8 @@ import { ServerError } from "../utils/error-types";
 import { Helpee, Helper } from "../models/member-states";
 
 import { IServerExtension } from "../extensions/extension-interface";
-import { AttendanceExtension } from "../extensions/attendance/attendance-extension";
-import { FirebaseLoggingExtension } from '../extensions/firebase-backup/firebase-extension';
+import { GoogleSheetLoggingExtension } from "../extensions/google-sheet-logging/google-sheet-logging";
+import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
 import {
     FgBlue, FgCyan, FgGreen,
@@ -107,8 +108,8 @@ class AttendingServerV2 {
         const serverExtensions = disableExtensions
             ? []
             : await Promise.all([
-                AttendanceExtension.load(guild.name),
-                FirebaseLoggingExtension.load(guild.name, guild.id)
+                GoogleSheetLoggingExtension.load(guild.name),
+                FirebaseServerBackupExtension.load(guild.name, guild.id)
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy

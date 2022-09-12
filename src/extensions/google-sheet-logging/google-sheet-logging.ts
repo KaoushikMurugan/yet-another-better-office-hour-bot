@@ -10,6 +10,12 @@ import attendanceConfig from '../extension-credentials/attendance-config.json';
 import { Collection, GuildMember, VoiceChannel } from "discord.js";
 import { msToHourMins } from "../../utils/util-functions";
 
+/**
+ * Attendance entry for each helper
+ * ----
+ * The Helper part is stored by reference
+ * - when attending server mutates it, this will also change
+*/
 type AttendanceEntry = Helper & {
     latestStudentJoinTimeStamp?: Date;
     activeTimeMs: number;
@@ -42,8 +48,8 @@ class AttendanceError extends Error {
     }
 }
 
-class AttendanceExtension extends BaseServerExtension {
-
+class GoogleSheetLoggingExtension extends BaseServerExtension {
+    // Credit of all the update logic goes to Kaoushik
     // key is student member.id
     private studentsJustDequeued: Collection<string, Helpee> = new Collection();
     // key is helper member.id
@@ -56,7 +62,7 @@ class AttendanceExtension extends BaseServerExtension {
         private googleSheet: GoogleSpreadsheet
     ) { super(); }
 
-    static async load(serverName: string): Promise<AttendanceExtension> {
+    static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
         if (attendanceConfig.YABOB_GOOGLE_SHEET_ID.length === 0) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n` +
@@ -64,9 +70,9 @@ class AttendanceExtension extends BaseServerExtension {
                 ` and Google Cloud credentials in gcs_service_account_key.json`
             ));
         }
-        const attendanceDoc = new GoogleSpreadsheet(attendanceConfig.YABOB_GOOGLE_SHEET_ID);
-        await attendanceDoc.useServiceAccountAuth(gcsCreds);
-        await attendanceDoc.loadInfo()
+        const googleSheet = new GoogleSpreadsheet(attendanceConfig.YABOB_GOOGLE_SHEET_ID);
+        await googleSheet.useServiceAccountAuth(gcsCreds);
+        await googleSheet.loadInfo()
             .catch(() => {
                 return Promise.reject(new ExtensionSetupError(
                     `${FgRed}Failed to load google sheet for ${serverName}. ` +
@@ -76,9 +82,9 @@ class AttendanceExtension extends BaseServerExtension {
         console.log(
             `[${FgBlue}Attendance Extension${ResetColor}] ` +
             `successfully loaded for '${serverName}'!\n` +
-            ` - Using this google sheet: ${attendanceDoc.title}`
+            ` - Using this google sheet: ${googleSheet.title}`
         );
-        return new AttendanceExtension(serverName, attendanceDoc);
+        return new GoogleSheetLoggingExtension(serverName, googleSheet);
     }
 
     override async onDequeueFirst(
@@ -117,12 +123,12 @@ class AttendanceExtension extends BaseServerExtension {
                 'Queue Name': student.queue.name,
                 'Wait Time (Ms)': (new Date()).getTime() - student.waitStart.getTime(),
             };
-
             this.helpSessionEntries.set(studentId, helpSessionEntry);
             if (this.attendanceEntries.has(helper.member.id)) {
                 // ts doesn't recognize map.has
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.attendanceEntries.get(helper.member.id)!.latestStudentJoinTimeStamp = new Date();
+                this.attendanceEntries.get(helper.member.id)!
+                    .latestStudentJoinTimeStamp = new Date();
             }
         }
     }
@@ -175,11 +181,9 @@ class AttendanceExtension extends BaseServerExtension {
             return Promise.reject(error);
         }
         entry.helpEnd = helper.helpEnd;
-        this.studentsJustDequeued
-            .filter(student => helper.helpedMembers
-                .some(helpedMember => helpedMember.member.id === student.member.id))
-            .forEach(studentToDelete => this.studentsJustDequeued
-                .delete(studentToDelete.member.id));
+        helper.helpedMembers
+            .map(student => this.studentsJustDequeued.delete(student.member.id));
+
         await this.updateAttendance(entry as Required<AttendanceEntry>)
             .catch(() => Promise.reject(error));
         this.attendanceEntries.delete(helper.member.id);
@@ -188,7 +192,6 @@ class AttendanceExtension extends BaseServerExtension {
     /**
      * Updates the attendance for 1 helper
      * ----
-     * @param entry for 1 helper 
     */
     private async updateAttendance(
         entry: Required<AttendanceEntry>
@@ -230,6 +233,10 @@ class AttendanceExtension extends BaseServerExtension {
         });
     }
 
+    /**
+     * Updates the help session stats for 1 student
+     * ----
+    */
     private async updateHelpSession(
         entry: Required<HelpSessionEntry>
     ): Promise<void> {
@@ -252,4 +259,4 @@ class AttendanceExtension extends BaseServerExtension {
     }
 }
 
-export { AttendanceExtension };
+export { GoogleSheetLoggingExtension };

@@ -7,28 +7,30 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
 
-class FirebaseLoggingExtension extends BaseServerExtension {
+class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
         private readonly firebase_db: Firestore,
         private readonly serverId: string,
         private readonly serverName: string
-    ) {
-        super();
-    }
+    ) { super(); }
 
-    static async load(serverName: string, serverId: string): Promise<FirebaseLoggingExtension> {
+    static async load(
+        serverName: string,
+        serverId: string
+    ): Promise<FirebaseServerBackupExtension> {
         if (getApps().length === 0) {
             initializeApp({
                 credential: cert(firebaseCredentials)
             });
         }
-        const instance = new FirebaseLoggingExtension(
+        const instance = new FirebaseServerBackupExtension(
             getFirestore(),
             serverId,
             serverName
         );
         console.log(
-            `[${FgBlue}Firebase Logging Extension${ResetColor}] successfully loaded for '${serverName}'!`
+            `[${FgBlue}Firebase Logging Extension${ResetColor}] ` +
+            `successfully loaded for '${serverName}'!`
         );
         return instance;
     }
@@ -96,4 +98,4 @@ class FirebaseLoggingExtension extends BaseServerExtension {
     }
 }
 
-export { FirebaseLoggingExtension };
+export { FirebaseServerBackupExtension };
