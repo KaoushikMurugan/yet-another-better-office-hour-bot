@@ -198,7 +198,7 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const serverId = oldVoiceState.guild.id;
     const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
-    isLeaveVC && await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member, newVoiceState);
+    isLeaveVC && await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member);
     isJoinVC && await serversV2.get(serverId)?.onMemberJoinVC(newVoiceState.member, newVoiceState);
 });
 

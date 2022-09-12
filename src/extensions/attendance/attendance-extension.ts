@@ -7,23 +7,7 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
 import attendanceConfig from '../extension-credentials/attendance-config.json';
-
-const requiredHeaders = [
-    "Username",
-    "Time In",
-    "Time Out",
-    "Helped Students",
-    "Discord ID",
-    "Session Time",
-    "Active Time",
-    "Number of Students Helped",
-] as const;
-
-// create a key for each item in requiredHeaders 
-// then set the key value as type string
-type AttendanceStats = {
-    [K in typeof requiredHeaders[number]]: string
-}
+import { AttendanceEntry } from "../../attending-server/stats-collector";
 
 class AttendanceError extends Error {
     constructor(message: string) {
@@ -68,51 +52,67 @@ class AttendanceExtension extends BaseServerExtension {
     }
 
     override async onHelperStopHelping(
-        _server: Readonly<AttendingServerV2>,
+        server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
-        await this.updateAttendance(helper)
-            .catch(() => Promise.reject(
-                new AttendanceError(
-                    `Failed to update attendace. ` +
-                    `The attendance sheet might have missing headers.\n` +
-                    `Don't worry, your time is still being logged, ` +
-                    `just not viewable on Google Sheets. ` +
-                    `Please contact @Officer to manually update.`
-                )
-            ));
+        const entry = server.statsCollector.exportAttendanceStats(helper.member.id);
+        const error = new AttendanceError(
+            `Failed to update attendace. ` +
+            `The attendance sheet might have missing headers.\n` +
+            `Don't worry, your time is still being logged, ` +
+            `just not viewable on Google Sheets. ` +
+            `Please contact @Officer to manually update.`
+        );
+        if (entry === undefined) {
+            return Promise.reject(error);
+        }
+        await this.updateAttendance(entry)
+            .catch(() => Promise.reject(error));
     }
 
     /**
      * Updates the attendance for 1 helper
      * ----
-     * @param helper The complete Helper model with all the attendance data
+     * @param entry for 1 helper 
     */
     private async updateAttendance(
-        helper: Readonly<Required<Helper>>
+        entry: Required<AttendanceEntry>
     ): Promise<void> {
         // try to find existing sheet
         // if not created, make a new one
-        const sheetForThisServer =
-            this.attendanceDoc.sheetsByTitle[this.serverName]
+        const requiredHeaders = [
+            "Username",
+            "Time In",
+            "Time Out",
+            "Helped Students",
+            "Discord ID",
+            "Session Time (ms)",
+            "Active Time (ms)",
+            "Number of Students Helped",
+        ];
+
+        const attendanceSheet =
+            this.attendanceDoc.sheetsByTitle[`${this.serverName} Attendance`]
             ?? await this.attendanceDoc.addSheet({
-                title: this.serverName,
-                // concat nothing to convert back to mutable array
-                headerValues: requiredHeaders.concat()
+                title: `${this.serverName} Attendance`,
+                headerValues: requiredHeaders
             });
 
-        await sheetForThisServer.addRow({
-            "Username": helper.member.user.username,
-            "Time In": `${helper.helpStart.toLocaleDateString()} ` +
-                `${helper.helpStart.toLocaleTimeString()}`,
-            "Time Out": `${helper.helpEnd.toLocaleDateString()} ` +
-                `${helper.helpEnd.toLocaleTimeString()}`,
-            "Helped Students": JSON.stringify(
-                helper.helpedMembers.map(student => new Object({
-                    displayName: student.nickname ?? student.displayName,
-                    username: student.user.username
+        await attendanceSheet.setHeaderRow(requiredHeaders);
+        await attendanceSheet.addRow({
+            "Username": entry.member.user.username,
+            "Time In": entry.helpStart.toLocaleString(),
+            "Time Out": entry.helpEnd.toLocaleString(),
+            "Helped Students": JSON.stringify(entry.helpedMembers
+                .map(student => new Object({
+                    displayName: student.member.displayName,
+                    username: student.member.user.username
                 }))),
-        });
+            "Discord ID": entry.member.id,
+            "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),
+            "Active Time (ms)": entry.activeTimeMs,
+            "Number of Students Helped": entry.helpedMembers.length,
+        }).catch(console.error);
     }
 }
 

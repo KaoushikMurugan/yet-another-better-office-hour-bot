@@ -53,7 +53,8 @@ class HelpQueueV2 {
                 this.students.push({
                     waitStart: studentBackup.waitStart,
                     upNext: studentBackup.upNext,
-                    member: correspondingMember
+                    member: correspondingMember,
+                    queue: this
                 });
             }
         }
@@ -228,7 +229,8 @@ class HelpQueueV2 {
         const student: Helpee = {
             waitStart: new Date(),
             upNext: this.students.length === 0,
-            member: studentMember
+            member: studentMember,
+            queue: this
         };
         this.students.push(student);
 

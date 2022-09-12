@@ -278,7 +278,7 @@ class CentralCommandDispatcher {
                     msToHourMins((new Date()).valueOf() - (helper.helpStart.valueOf()))
                 ])
             )
-            .setWidths([15, 20, 15])
+            .setWidths([15, 15, 15])
             .setWrapped(1)
             .setWrapped(2)
             .setWrapped(3);

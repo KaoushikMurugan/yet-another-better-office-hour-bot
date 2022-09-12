@@ -1,4 +1,5 @@
 import { GuildMember } from "discord.js";
+import { HelpQueueV2 } from "../help-queue/help-queue";
 
 /**
  * Represents a student in the queue.
@@ -9,6 +10,7 @@ import { GuildMember } from "discord.js";
 type Helpee = {
     waitStart: Date;
     upNext: boolean;
+    queue: HelpQueueV2;
     readonly member: GuildMember // backref
 }
 
@@ -21,7 +23,7 @@ type Helpee = {
 type Helper = {
     helpStart: Date; // time when /start is used
     helpEnd?: Date; // time when /stop is used
-    helpedMembers: GuildMember[]; // TODO: Change to Helpee
+    helpedMembers: Helpee[]; // TODO: Change to Helpee
     readonly member: GuildMember; // backref
 }
 

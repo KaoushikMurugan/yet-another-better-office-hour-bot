@@ -17,7 +17,7 @@ import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
-import { ServerStatsCollector } from "../utils/stats-collector";
+import { ServerStatsCollector } from "./stats-collector";
 import { msToHourMins } from "../utils/util-functions";
 
 
@@ -41,14 +41,16 @@ class AttendingServerV2 {
     intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
     afterSessionMessage = "";
+    // initializes a fresh collector for server stats
+    statsCollector = new ServerStatsCollector();
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<string, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
     // unique active helpers, key is member.id
     private activeHelpers: Collection<string, Helper> = new Collection();
-    // initializes a fresh collector for server stats
-    private statsCollector = new ServerStatsCollector();
+    // keep students that just got dequeued
+    private studentsJustDequeued: Collection<string, Helpee> = new Collection();
 
     protected constructor(
         readonly user: User,
@@ -164,22 +166,42 @@ class AttendingServerV2 {
         return server;
     }
 
-    async onMemberJoinVC(member: GuildMember, voiceState: VoiceState): Promise<void> {
+    async onMemberJoinVC(
+        member: GuildMember,
+        newVoiceState: VoiceState
+    ): Promise<void> {
         // if there is more than 2 people (should be the helper & this student), return
-        if (voiceState.channel && voiceState.channel?.members.size !== 2) {
+        const memberIsStudent = this.activeHelpers
+            .some(helper => helper.helpedMembers
+                .some(helpedMember => helpedMember.member.id === member.id));
+        // checked in app.ts, if this function is called then channel is definitely not null
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const [helpersInVC, studentsInVC] = newVoiceState.channel!.members
+            .partition(member => this.helpers.has(member.id));
+        if (!memberIsStudent || helpersInVC.size === 0) {
             return;
         }
-        // checked in app.ts, if this function is called then channels is definitely not null
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const [helpersInVC, studentsInVC] = voiceState.channel!.members
-            .partition(member => this.helpers.has(member.id));
+        this.statsCollector.collectOnStudentsJoinVC(
+            this.helpers,
+            this.studentsJustDequeued
+                .filter(student => studentsInVC
+                    .some(studentInVC => studentInVC.id === student.member.id))
+        );
+        studentsInVC.forEach(student => this.studentsJustDequeued.delete(student.id));
     }
 
-    async onMemberLeaveVC(member: GuildMember, voiceState: VoiceState): Promise<void> {
+    async onMemberLeaveVC(
+        member: GuildMember
+    ): Promise<void> {
         // the member is a student if there exists a helper that has helped thi-s member
-        const memberIsStudent = false;
-        console.log(`leave vc evnt ${member.displayName}` + `${memberIsStudent ? "student" : ""}`);
-        if (memberIsStudent && this.afterSessionMessage !== '') {
+        const memberIsStudent = this.activeHelpers
+            .some(helper => helper.helpedMembers
+                .some(helpedMember => helpedMember.member.id === member.id));
+        if (!memberIsStudent) {
+            return;
+        }
+        this.statsCollector.collectOnStudentsLeaveVC([member.id]);
+        if (this.afterSessionMessage !== '') {
             await member
                 .send(SimpleEmbed(this.afterSessionMessage))
                 .catch(console.error);
@@ -385,6 +407,10 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue
             .dequeueWithHelper(helperMember, targetStudentMember);
+
+        this.activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        this.studentsJustDequeued.set(student.member.id, student);
+
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             VIEW_CHANNEL: true,
             CONNECT: true,
@@ -428,11 +454,13 @@ class AttendingServerV2 {
             )));
 
         const helper: Helper = {
-            helpStart: new Date,
+            helpStart: new Date(),
             helpedMembers: [],
             member: helperMember
         };
+
         this.helpers.set(helperMember.id, helper);
+        this.statsCollector.collectOnHelperStart(helper);
 
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStartHelping(this, helper)
@@ -453,7 +481,6 @@ class AttendingServerV2 {
                 'You are not currently hosting.'
             ));
         }
-
         const closableQueues = this.queues.filter(
             queue => helperMember.roles.cache
                 .map(role => role.name)
@@ -464,20 +491,21 @@ class AttendingServerV2 {
             )));
 
         helper.helpEnd = new Date();
+        this.statsCollector.collectOnHelperStop(helper as Required<Helper>);
         this.helpers.delete(helperMember.id);
+        console.log(`- Help time of ${helper.member.displayName} is ` +
+            `${msToHourMins(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
 
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(this, helper as Required<Helper>)
         ));
-        console.log(`- Help time of ${helper.member.displayName} is ` +
-            `${msToHourMins(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
         return helper as Required<Helper>;
     }
 
     /**
      * Removes a student from a given queue
      * ----
-     * @param studentMember student that used /leave or the leave button
+     * @param studentMember student that used /leave or the cleave button
      * @param targetQueue the queue to leave from
      * @throws QueueError: if @param targetQueue rejects
     */
