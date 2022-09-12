@@ -629,9 +629,6 @@ class AttendingServerV2 {
                         SEND_MESSAGES: false,
                         VIEW_CHANNEL: false
                     });
-                await commandCh.permissionOverwrites.create(
-                    this.user,
-                    { SEND_MESSAGES: true });
                 await Promise.all(
                     this.guild.roles.cache
                         .filter(role => roleConfig.visibility.includes(role.name))

@@ -6,7 +6,7 @@ import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
-import attendanceConfig from '../extension-credentials/attendance-config.json';
+import attendanceConfig from '../extension-credentials/google-sheet-config.json';
 import { Collection, GuildMember, VoiceChannel } from "discord.js";
 import { msToHourMins } from "../../utils/util-functions";
 
@@ -143,7 +143,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (helpSessionEntries === undefined) {
             return;
         }
-        helpSessionEntries?.forEach(entry => entry['Session End'] = new Date());
+        helpSessionEntries.forEach(entry => entry['Session End'] = new Date());
         this.attendanceEntries.forEach(entry => {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs += (new Date()).getTime() -
@@ -159,11 +159,11 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
-        const attendanceEntry: AttendanceEntry = {
+        const entry: AttendanceEntry = {
             ...helper,
             activeTimeMs: 0
         };
-        this.attendanceEntries.set(helper.member.id, attendanceEntry);
+        this.attendanceEntries.set(helper.member.id, entry);
         return Promise.resolve(); // ts gets really angry if i don't return
     }
 
