@@ -81,7 +81,7 @@ class HelpQueueV2 {
     get studentsInQueue(): ReadonlyArray<Helpee> {
         return this.students;
     }
-    get helperIDs(): ReadonlySet<string> { // set of helper IDs. enforce readonly
+    get activeHelperIds(): ReadonlySet<string> { // set of helper IDs. enforce readonly
         return this.helperIds;
     }
 

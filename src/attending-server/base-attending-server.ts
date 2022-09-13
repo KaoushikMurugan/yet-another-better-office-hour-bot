@@ -353,7 +353,7 @@ class AttendingServerV2 {
     */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this.queues
-            .filter(queue => queue.helperIDs.has(helperMember.id));
+            .filter(queue => queue.activeHelperIds.has(helperMember.id));
         if (currentlyHelpingQueues.size === 0) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
@@ -416,7 +416,7 @@ class AttendingServerV2 {
         specificQueue?: QueueChannel,
     ): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this.queues
-            .filter(queue => queue.helperIDs.has(helperMember.id));
+            .filter(queue => queue.activeHelperIds.has(helperMember.id));
         if (currentlyHelpingQueues.size === 0) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
@@ -605,35 +605,36 @@ class AttendingServerV2 {
         message: string,
         targetQueue?: QueueChannel
     ): Promise<void> {
-        if (targetQueue) {
+        if (targetQueue !== undefined) {
             const queueToAnnounce = this.queues
                 .get(targetQueue.parentCategoryId);
             if (queueToAnnounce === undefined ||
-                // do this first, so the expensive Array.some() won't be called unless this is false
-                // shouldn't require helper to be active
-                // !queueToAnnounce.helperIDs.has(helperMember.id) &&
-                !helperMember.roles.cache.some(role => role.name === 'Bot Admin')) {
+                !helperMember.roles.cache
+                    .some(role =>
+                        role.name === targetQueue.queueName ||
+                        role.name === 'Bot Admin')
+            ) {
                 return Promise.reject(new ServerError(
                     `You don't have permission to announce in ${targetQueue.queueName}. ` +
-                    `Check your class roles.`
+                    `You can only announce to queues that you have a role of.`
                 ));
             }
             await Promise.all(queueToAnnounce.studentsInQueue
                 .map(student => student.member.send(SimpleEmbed(
-                    `Staff member ${helperMember.displayName} announced:\n\n${message}`,
+                    `Staff member ${helperMember.displayName} announced:\n${message}`,
                     EmbedColor.Aqua,
                     `In queue: ${targetQueue.queueName}`
                 )))
             );
             return;
         }
-        // from this.queues select queue where queue.helpers has helperMember.id
+        // from this.queues select queue where helper roles has queue name
         await Promise.all(this.queues
-            .filter(queue => queue.helperIDs.has(helperMember.id))
+            .filter(queue => helperMember.roles.cache.some(role => role.name === queue.name))
             .map(queueToAnnounce => queueToAnnounce.studentsInQueue)
             .flat()
             .map(student => student.member.send((SimpleEmbed(
-                `Staff member ${helperMember.displayName} announced:\n\n${message}`,
+                `Staff member ${helperMember.displayName} announced:\n${message}`,
                 EmbedColor.Aqua
             ))))
         );
