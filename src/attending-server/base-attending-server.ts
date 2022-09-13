@@ -388,7 +388,10 @@ class AttendingServerV2 {
             VIEW_CHANNEL: true,
             CONNECT: true,
         });
-        const invite = await helperVoiceChannel.createInvite();
+        const invite = await helperVoiceChannel.createInvite({
+            maxAge: 15 * 60, // 15 minutes
+            maxUses: 1
+        });
         await Promise.all([
             this.serverExtensions.map(
                 extension => extension.onDequeueFirst(this, student)
@@ -461,7 +464,10 @@ class AttendingServerV2 {
             VIEW_CHANNEL: true,
             CONNECT: true,
         });
-        const invite = await helperVoiceChannel.createInvite();
+        const invite = await helperVoiceChannel.createInvite({
+            maxAge: 15 * 60, // 15 minutes
+            maxUses: 1
+        });
         await Promise.all([
             this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
@@ -604,8 +610,9 @@ class AttendingServerV2 {
                 .get(targetQueue.parentCategoryId);
             if (queueToAnnounce === undefined ||
                 // do this first, so the expensive Array.some() won't be called unless this is false
-                !queueToAnnounce.helperIDs.has(helperMember.id) &&
-                helperMember.roles.cache.some(role => role.name === 'Bot Admin')) {
+                // shouldn't require helper to be active
+                // !queueToAnnounce.helperIDs.has(helperMember.id) &&
+                !helperMember.roles.cache.some(role => role.name === 'Bot Admin')) {
                 return Promise.reject(new ServerError(
                     `You don't have permission to announce in ${targetQueue.queueName}. ` +
                     `Check your class roles.`
@@ -613,7 +620,7 @@ class AttendingServerV2 {
             }
             await Promise.all(queueToAnnounce.studentsInQueue
                 .map(student => student.member.send(SimpleEmbed(
-                    `Staff member ${helperMember.displayName} announced: ${message}`,
+                    `Staff member ${helperMember.displayName} announced:\n\n${message}`,
                     EmbedColor.Aqua,
                     `In queue: ${targetQueue.queueName}`
                 )))
@@ -626,7 +633,7 @@ class AttendingServerV2 {
             .map(queueToAnnounce => queueToAnnounce.studentsInQueue)
             .flat()
             .map(student => student.member.send((SimpleEmbed(
-                `Staff member ${helperMember.displayName} announced: ${message}`,
+                `Staff member ${helperMember.displayName} announced:\n\n${message}`,
                 EmbedColor.Aqua
             ))))
         );

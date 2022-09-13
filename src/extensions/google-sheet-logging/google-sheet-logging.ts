@@ -152,7 +152,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             }
         });
         // entry is now complete, safe to cast
-        await this.updateHelpSession(helpSessionEntries as Array<Required<HelpSessionEntry>>);
+        // TODO: complete the .catch() here
+        await this.updateHelpSession(helpSessionEntries as Array<Required<HelpSessionEntry>>)
+            .catch();
         this.helpSessionEntries.delete(studentMember.id);
     }
 

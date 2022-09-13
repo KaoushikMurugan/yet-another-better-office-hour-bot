@@ -100,12 +100,6 @@ const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
             .setName("queue_name")
             .setDescription("The queue to clear")
             .setRequired(true)
-    )
-    .addBooleanOption((option) =>
-        option
-            .setName("all")
-            .setDescription("Clear all queues?")
-            .setRequired(false)
     );
 
 const clearAllCommand = new SlashCommandBuilder()
