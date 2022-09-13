@@ -409,10 +409,11 @@ class HelpQueueV2 {
             studentDisplayNames: this.students.map(student => student.member.displayName),
             isOpen: this.isOpen
         };
-        await this.display.requestQueueRender(viewModel);
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this, this.display))
-        );
+        await Promise.all([
+            this.display.requestQueueRender(viewModel),
+            this.queueExtensions.map(
+                extension => extension.onQueueRender(this, this.display))
+        ].flat());
     }
 }
 

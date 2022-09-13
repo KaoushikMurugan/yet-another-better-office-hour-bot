@@ -91,7 +91,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * Embeds the upcoming hours into the queue channel
      * ----
     */
-    override async onQueueRenderComplete(
+    override async onQueueRender(
         _queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
     ): Promise<void> {

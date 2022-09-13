@@ -92,7 +92,7 @@ interface IQueueExtension {
         queue: Readonly<HelpQueueV2>,
         students: ReadonlyArray<Helpee>
     ) => Promise<void>;
-    onQueueRenderComplete: (
+    onQueueRender: (
         queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
     ) => Promise<void>;
@@ -208,7 +208,7 @@ class BaseQueueExtension implements IQueueExtension {
     ): Promise<void> {
         return Promise.resolve();
     }
-    onQueueRenderComplete(
+    onQueueRender(
         queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
     ): Promise<void> {

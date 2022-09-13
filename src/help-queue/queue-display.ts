@@ -31,11 +31,11 @@ class QueueDisplayV2 {
     private embedMessageIdMap: Collection<number, string> = new Collection();
 
     /**
-     * lock any edits during cleanup
-     * - there's a short timeframe where the channel has 0 messages
-     * - any edits during that time will throw unknown message api error
+     * lock the render method during render
+     * - avoids the message.delete method from being called on a deleted message
+     * - queue and extensions can still request render and update their embeds in queueChannelEmbeds
     */
-    private isCleaningUp = false;
+    private isRendering = false;
 
     constructor(
         private readonly user: User,
@@ -102,7 +102,7 @@ class QueueDisplayV2 {
             },
             renderIndex: 0
         });
-        !this.isCleaningUp && await this.render();
+        !this.isRendering && await this.render();
     }
 
     async requestNonQueueEmbedRender(
@@ -118,10 +118,11 @@ class QueueDisplayV2 {
             contents: embedElements,
             renderIndex: renderIndex
         });
-        !this.isCleaningUp && await this.render();
+        !this.isRendering && await this.render();
     }
 
     private async render(): Promise<void> {
+        this.isRendering = true;
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
@@ -138,7 +139,6 @@ class QueueDisplayV2 {
             .every(message => this.embedMessageIdMap
                 .some(id => id === message.id));
         if (!safeToEdit) {
-            this.isCleaningUp = true;
             await Promise.all((await this.queueChannel.channelObj.messages.fetch())
                 .map(msg => msg.delete()));
             // sort by render index
@@ -149,7 +149,6 @@ class QueueDisplayV2 {
                 const newEmbedMessage = await this.queueChannel.channelObj.send(embed.contents);
                 this.embedMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
             }
-            this.isCleaningUp = false;
         } else {
             await Promise.all(this.queueChannelEmbeds.map(embed =>
                 YABOBMessages
@@ -157,6 +156,7 @@ class QueueDisplayV2 {
                     ?.edit(embed.contents)
             ));
         }
+        this.isRendering = false;
     }
 
     private composeAsciiTable(queue: QueueViewModel): string {
