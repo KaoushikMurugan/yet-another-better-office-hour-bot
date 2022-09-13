@@ -15,11 +15,18 @@ import { EmbedColor } from '../utils/embed-helper';
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
 
+    /**
+     * keeps track of the actual embeds, key is render index
+     * - queue has render index 0
+     * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
+    */
     private queueChannelEmbeds
         = new Collection<number, Pick<MessageOptions, 'embeds' | 'components'>>();
-    // lock any edits during cleanup
-    // there's a short timeframe where the channel has 0 messages
-    // any edits will throw unknown message api error
+    /**
+     * lock any edits during cleanup
+     * - there's a short timeframe where the channel has 0 messages
+     * - any edits during that time will throw unknown message api error
+    */
     private isCleaningUp = false;
 
     constructor(
@@ -27,12 +34,7 @@ class QueueDisplayV2 {
         private readonly queueChannel: QueueChannel,
     ) { }
 
-    async renderQueue(queue: QueueViewModel): Promise<void> {
-        const queueMessages = await this.queueChannel
-            .channelObj
-            .messages
-            .fetch();
-        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
+    async requestQueueRender(queue: QueueViewModel): Promise<void> {
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
@@ -84,10 +86,19 @@ class QueueDisplayV2 {
             embeds: embedList,
             components: [joinLeaveButtons, notifButtons]
         });
+        if (!this.queueChannel.channelObj.guild.channels.cache
+            .has(this.queueChannel.channelObj.id)) {
+            // temporary fix, do nothing if #queue doesn't exist
+            return;
+        }
+        const queueMessages = await this.queueChannel
+            .channelObj
+            .messages
+            .fetch();
+        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
         // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
         const messageCountMatch = YABOBMessages.size === queueMessages.size &&
             queueMessages.size === this.queueChannelEmbeds.size;
-
         if (!messageCountMatch) {
             await this.cleanupRender();
             return; // return here or we get cache mismatch
@@ -100,11 +111,16 @@ class QueueDisplayV2 {
         }
     }
 
-    async renderNonQueueEmbeds(
+    async requestNonQueueEmbedRender(
         embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
         renderIndex: number
     ): Promise<void> {
         this.queueChannelEmbeds.set(renderIndex, embedElements);
+        if (!this.queueChannel.channelObj.guild.channels.cache
+            .has(this.queueChannel.channelObj.id)) {
+            // temporary fix, do nothing if #queue doesn't exist
+            return;
+        }
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
@@ -123,7 +139,7 @@ class QueueDisplayV2 {
         }
     }
 
-    async cleanupRender(): Promise<void> {
+    private async cleanupRender(): Promise<void> {
         this.isCleaningUp = true;
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));

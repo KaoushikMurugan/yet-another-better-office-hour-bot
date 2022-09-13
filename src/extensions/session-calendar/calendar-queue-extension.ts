@@ -151,7 +151,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     .setStyle("PRIMARY")
             );
 
-        await this.display?.renderNonQueueEmbeds(
+        await this.display?.requestNonQueueEmbedRender(
             {
                 embeds: [upcomingHoursEmbed],
                 components: [refreshButton]

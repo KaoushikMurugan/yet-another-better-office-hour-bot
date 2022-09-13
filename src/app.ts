@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Client, Guild, Intents, Collection } from "discord.js";
+import { Client, Guild, Intents, Collection, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
@@ -201,6 +201,20 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
     isLeaveVC && await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member);
     isJoinVC && await serversV2.get(serverId)?.onMemberJoinVC(newVoiceState.member, newVoiceState);
+});
+
+client.on('channelDelete', async channel => {
+    if (!(channel.isText() && (channel as TextChannel).name === 'queue')) {
+        return;
+    }
+    await serversV2.get((channel as TextChannel)?.guild.id ?? '')?.getQueueChannels(false);
+});
+
+client.on('channelCreate', async channel => {
+    if (!(channel.isText() && (channel as TextChannel).name === 'queue')) {
+        return;
+    }
+    await serversV2.get((channel as TextChannel)?.guild.id ?? '')?.getQueueChannels(false);
 });
 
 
