@@ -329,7 +329,7 @@ class HelpQueueV2 {
      * @param targetStudent the student to remove
      * @throws QueueError: the student is not in the queue
     */
-    async removeStudent(targetStudent: GuildMember): Promise<void> {
+    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this.students
             .findIndex(student => student.member.id === targetStudent.id);
         if (idx === -1) {
@@ -347,6 +347,7 @@ class HelpQueueV2 {
                 extension => extension.onStudentRemove(this, removedStudent)),
             this.triggerRender()
         ].flat() as Promise<void>[]);
+        return removedStudent;
     }
 
     /**

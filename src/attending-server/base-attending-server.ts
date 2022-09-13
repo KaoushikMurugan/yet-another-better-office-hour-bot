@@ -346,29 +346,12 @@ class AttendingServerV2 {
      * Dequeue the student that has been waiting for the longest
      * ----
      * @param helperMember the helper that used /next
-     * @param specificQueue if specified, dequeue from this queue
-     * @param targetStudentMember if specified, dequeue this student
      * - ignored if specified queue is undefined
      * @throws
      * - ServerError: if specificQueue is given but helper doesn't have the role
      * - QueueError: if the queue to dequeue from rejects
     */
-    async dequeueFirst(
-        helperMember: GuildMember,
-        specificQueue?: QueueChannel,
-        targetStudentMember?: GuildMember
-    ): Promise<Readonly<Helpee>> {
-        if (specificQueue !== undefined) {
-            if (!helperMember.roles.cache.some(role => role.name === specificQueue.queueName)) {
-                return Promise.reject(new ServerError(
-                    `You don't have the permission to dequeue `
-                    + `\`${specificQueue.queueName}\`.`
-                ));
-            }
-            await this.queues
-                .get(specificQueue.parentCategoryId)
-                ?.dequeueWithHelper(helperMember, targetStudentMember);
-        }
+    async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this.queues
             .filter(queue => queue.helperIDs.has(helperMember.id));
         if (currentlyHelpingQueues.size === 0) {
@@ -384,6 +367,7 @@ class AttendingServerV2 {
         }
         const nonEmptyQueues = currentlyHelpingQueues
             .filter(queue => queue.currentlyOpen && queue.length !== 0);
+        // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
             return Promise.reject(new ServerError(
                 `There's no one left to help. You should get some coffee!`
@@ -397,9 +381,7 @@ class AttendingServerV2 {
                     ? prev
                     : curr
         );
-        const student = await queueToDequeue
-            .dequeueWithHelper(helperMember, targetStudentMember);
-
+        const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this.activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
@@ -410,6 +392,80 @@ class AttendingServerV2 {
         await Promise.all([
             this.serverExtensions.map(
                 extension => extension.onDequeueFirst(this, student)
+            ),
+            student.member.send(SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
+            ))
+        ].flat() as Promise<void>[]);
+        return student;
+    }
+
+    /**
+     * Handle /next with arguments
+     * ----
+     * @param specificQueue if specified, dequeue from this queue
+     * @param targetStudentMember if specified, remove this student and override queue order
+    */
+    async dequeueWithArgs(
+        helperMember: GuildMember,
+        targetStudentMember?: GuildMember,
+        specificQueue?: QueueChannel,
+    ): Promise<Readonly<Helpee>> {
+        const currentlyHelpingQueues = this.queues
+            .filter(queue => queue.helperIDs.has(helperMember.id));
+        if (currentlyHelpingQueues.size === 0) {
+            return Promise.reject(new ServerError(
+                'You are not currently hosting.'
+            ));
+        }
+        const helperVoiceChannel = helperMember.voice.channel;
+        if (helperVoiceChannel === null) {
+            return Promise.reject(new ServerError(
+                `You need to be in a voice channel first.`
+            ));
+        }
+        let student: Readonly<Helpee> | undefined;
+        if (specificQueue !== undefined) {
+            // if queue is specified, find the queue and let queue dequeue
+            if (!helperMember.roles.cache.some(role => role.name === specificQueue.queueName)) {
+                return Promise.reject(new ServerError(
+                    `You don't have the permission to dequeue `
+                    + `\`${specificQueue.queueName}\`.`
+                ));
+            }
+            student = await this.queues
+                .get(specificQueue.parentCategoryId)
+                ?.dequeueWithHelper(helperMember, targetStudentMember);
+        } else if (targetStudentMember !== undefined) {
+            const queue = this.queues
+                .find(queue => queue.studentsInQueue
+                    .some(student => student.member.id === targetStudentMember.id));
+            student = await queue?.removeStudent(targetStudentMember);
+            if (student === undefined) {
+                return Promise.reject(new ServerError(
+                    `The student ${targetStudentMember.displayName} is not in any of the queues.`
+                ));
+            }
+        }
+        if (student === undefined) {
+            // won't be seen, only the above error messages will be sent
+            // this is just here for semantics
+            return Promise.reject(new ServerError(
+                'Dequeue with the given arguments failed.'
+            ));
+        }
+        this.activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        // this api call is slow
+        await helperVoiceChannel.permissionOverwrites.create(student.member, {
+            VIEW_CHANNEL: true,
+            CONNECT: true,
+        });
+        const invite = await helperVoiceChannel.createInvite();
+        await Promise.all([
+            this.serverExtensions.map(
+                // ts doesn't recognize the undefined check for some reason
+                extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
             ),
             student.member.send(SimpleEmbed(
                 `It's your turn! Join the call: ${invite.toString()}`,

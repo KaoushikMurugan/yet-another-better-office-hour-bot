@@ -161,9 +161,15 @@ class CentralCommandDispatcher {
         const targetStudent = interaction.options.getMember('user', false) === null
             ? undefined
             : interaction.options.getMember('user', true) as GuildMember;
-        const dequeuedStudent = await this.serverMap
-            .get(serverId)
-            ?.dequeueFirst(helperMember, targetQueue, targetStudent);
+        // if either target queue or target student is specified, use dequeueWithArgs
+        // otherwise use dequeueGlobalFirst
+        const dequeuedStudent = targetQueue || targetStudent
+            ? await this.serverMap
+                .get(serverId)
+                ?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
+            : await this.serverMap
+                .get(serverId)
+                ?.dequeueGlobalFirst(helperMember);
         return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
     }
 
