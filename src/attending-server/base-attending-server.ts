@@ -86,21 +86,21 @@ class AttendingServerV2 {
             !guild.me.permissions.has("ADMINISTRATOR")
         ) {
             const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `Sorry, I need full administrator permission for "${guild.name}"`,
-                    EmbedColor.Error));
+            await owner.send(SimpleEmbed(
+                `Sorry, I need full administrator permission for "${guild.name}"`,
+                EmbedColor.Error
+            ));
             await guild.leave();
             return Promise.reject(Error("YABOB doesn't have admin permission."));
         }
         if (guild.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `It seems like I'm joining a server with existing roles. ` +
-                    `Please go to server settings -> Roles and change ${user.username} ` +
-                    `to the highest role.\n`,
-                    EmbedColor.Error));
+            await owner.send(SimpleEmbed(
+                `It seems like I'm joining a server with existing roles. ` +
+                `Please go to server settings -> Roles and change ${user.username} ` +
+                `to the highest role.\n`,
+                EmbedColor.Error
+            ));
             return Promise.reject(Error("YABOB doesn't have highest role."));
         }
         // Load ServerExtensions here
@@ -115,14 +115,14 @@ class AttendingServerV2 {
         // Change behavior here depending on backup strategy
         const externalBackup = disableExtensions
             ? undefined
-            : await Promise.all(
-                serverExtensions.map(extension => extension.loadExternalServerData(guild.id))
-            );
+            : await Promise.all(serverExtensions.map(
+                extension => extension.loadExternalServerData(guild.id)
+            ));
         const externalServerData = externalBackup?.find(backup => backup !== undefined);
         if (externalServerData !== undefined) {
             console.log(
                 `${FgCyan}Found external backup for ${guild.name}.` +
-                ` Restoring...${ResetColor}`
+                ` Restoring.${ResetColor}`
             );
         }
         const server = new AttendingServerV2(
@@ -154,8 +154,8 @@ class AttendingServerV2 {
         server.intervalID = setInterval(async () =>
             await Promise.all(serverExtensions
                 .map(extension => extension.onServerPeriodicUpdate(server)))
-            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000));
-
+            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000)
+        );
         console.log(
             `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
         );
@@ -178,7 +178,8 @@ class AttendingServerV2 {
                 member,
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 newVoiceState.channel! as VoiceChannel
-            )));
+            )
+        ));
     }
 
     async onMemberLeaveVC(
@@ -231,7 +232,7 @@ class AttendingServerV2 {
                 } as QueueChannel;
             });
         const duplicateQueues = this.queueChannelsCache
-            .map(q => q.queueName)
+            .map(queue => queue.queueName)
             .filter((item, index, arr) =>
                 arr.indexOf(item) !== index);
         if (duplicateQueues.length > 0) {
@@ -244,7 +245,6 @@ class AttendingServerV2 {
                 Please update category names as soon as possible.`
             );
         }
-
         return this.queueChannelsCache;
     }
 
@@ -658,10 +658,9 @@ class AttendingServerV2 {
     async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
-            .filter(
-                channel =>
-                    channel.type === "GUILD_CATEGORY" &&
-                    channel.name === "Bot Commands Help"
+            .filter(channel =>
+                channel.type === "GUILD_CATEGORY" &&
+                channel.name === "Bot Commands Help"
             )
             .map(channel => channel as CategoryChannel);
         // If no help category is found, initialize
@@ -670,13 +669,11 @@ class AttendingServerV2 {
                 `${FgCyan}Found no help channels in ${this.guild.name}. ` +
                 `Creating new ones.${ResetColor}`
             );
-
             const helpCategory = await this.guild.channels.create(
                 "Bot Commands Help",
                 { type: "GUILD_CATEGORY" }
             );
             existingHelpCategory.push(helpCategory);
-
             // Change the config object and add more functions here if needed
             await Promise.all(commandChConfigs.map(async roleConfig => {
                 const commandCh = await helpCategory
@@ -686,7 +683,8 @@ class AttendingServerV2 {
                     {
                         SEND_MESSAGES: false,
                         VIEW_CHANNEL: false
-                    });
+                    }
+                );
                 await Promise.all(
                     this.guild.roles.cache
                         .filter(role => roleConfig.visibility.includes(role.name))
@@ -694,7 +692,8 @@ class AttendingServerV2 {
                             commandCh.permissionOverwrites.create(
                                 roleWithViewPermission,
                                 { VIEW_CHANNEL: true })
-                        ));
+                        )
+                );
             }));
         } else {
             console.log(
@@ -794,14 +793,16 @@ class AttendingServerV2 {
     /**
      * Overwrites the existing command help channel and send new help messages
      * ----
+     * @param helpCategories the category named "Bot Commands Help"
+     * @param messageContents array of embeds to send to each help channel
     */
     private async sendCommandHelpMessages(
         helpCategories: CategoryChannel[],
-        messageContents: {
+        messageContents: Array<{
             channelName: string;
-            file: Pick<MessageOptions, "embeds">[];
+            file: Array<Pick<MessageOptions, "embeds">>;
             visibility: string[];
-        }[],
+        }>
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
