@@ -121,21 +121,6 @@ class QueueDisplayV2 {
         !this.isCleaningUp && await this.render();
     }
 
-    async cleanupRender(): Promise<void> {
-        this.isCleaningUp = true;
-        await Promise.all((await this.queueChannel.channelObj.messages.fetch())
-            .map(msg => msg.delete()));
-        // sort by render index
-        const sortedEmbeds = this.queueChannelEmbeds
-            .sort((embed1, embed2) => embed1.renderIndex - embed2.renderIndex);
-        // Cannot promise all here, contents need to be sent in order
-        for (const embed of sortedEmbeds.values()) {
-            const newEmbedMessage = await this.queueChannel.channelObj.send(embed.contents);
-            this.embedMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
-        }
-        this.isCleaningUp = false;
-    }
-
     private async render(): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
@@ -153,7 +138,18 @@ class QueueDisplayV2 {
             .every(message => this.embedMessageIdMap
                 .some(id => id === message.id));
         if (!safeToEdit) {
-            await this.cleanupRender();
+            this.isCleaningUp = true;
+            await Promise.all((await this.queueChannel.channelObj.messages.fetch())
+                .map(msg => msg.delete()));
+            // sort by render index
+            const sortedEmbeds = this.queueChannelEmbeds
+                .sort((embed1, embed2) => embed1.renderIndex - embed2.renderIndex);
+            // Cannot promise all here, contents need to be sent in order
+            for (const embed of sortedEmbeds.values()) {
+                const newEmbedMessage = await this.queueChannel.channelObj.send(embed.contents);
+                this.embedMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
+            }
+            this.isCleaningUp = false;
         } else {
             await Promise.all(this.queueChannelEmbeds.map(embed =>
                 YABOBMessages
