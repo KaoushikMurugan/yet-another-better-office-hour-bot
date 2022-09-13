@@ -41,6 +41,7 @@ class CentralCommandDispatcher {
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
+        ['cleanup_all', (interaction: CommandInteraction) => this.cleanupAllQueues(interaction)],
         ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
         ['clear_all', (interaction: CommandInteraction) => this.clearAll(interaction)],
@@ -332,6 +333,23 @@ class CentralCommandDispatcher {
         ]);
         await this.serverMap.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
+    }
+
+    private async cleanupAllQueues(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'cleanup',
+                ['Bot Admin']
+            ),
+        ]);
+        await Promise.all(
+            (await this.serverMap.get(serverId)?.getQueueChannels())
+                ?.map(queueChannel => this.serverMap.get(serverId)
+                    ?.cleanUpQueue(queueChannel)) as Promise<void>[]
+        );
+        return `All queues has been cleaned up.`;
     }
 
     private async cleanupHelpChannel(interaction: CommandInteraction): Promise<string> {

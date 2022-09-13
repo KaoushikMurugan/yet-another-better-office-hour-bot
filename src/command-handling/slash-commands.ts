@@ -133,13 +133,19 @@ const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
 const cleanupQueue = new SlashCommandBuilder()
     .setName("cleanup")
     .setDescription(
-        "Debug feature: Forces updates of embed in all #queue channels"
+        "Debug feature: Forces updates of embed in the specified queue's #queue channel"
     )
     .addChannelOption((option) =>
         option
             .setName("queue_name")
             .setDescription("The queue to clean")
             .setRequired(true)
+    );
+
+const cleanupAllQueues = new SlashCommandBuilder()
+    .setName("cleanup_all")
+    .setDescription(
+        "Debug feature: Forces updates of embed in all #queue channels"
     );
 
 const cleanupHelpChannelCommand = new SlashCommandBuilder()
@@ -177,6 +183,7 @@ const commandData = [
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
     cleanupQueue.toJSON(),
+    cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
     setAfterSessionMessageCommand.toJSON()
 ];
