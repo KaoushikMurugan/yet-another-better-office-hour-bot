@@ -17,6 +17,10 @@ class QueueDisplayV2 {
 
     private queueChannelEmbeds
         = new Collection<number, Pick<MessageOptions, 'embeds' | 'components'>>();
+    // lock any edits during cleanup
+    // there's a short timeframe where the channel has 0 messages
+    // any edits will throw unknown message api error
+    private isCleaningUp = false;
 
     constructor(
         private readonly user: User,
@@ -28,6 +32,7 @@ class QueueDisplayV2 {
             .channelObj
             .messages
             .fetch();
+        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
@@ -79,15 +84,20 @@ class QueueDisplayV2 {
             embeds: embedList,
             components: [joinLeaveButtons, notifButtons]
         });
-        // If YABOB's message is not the first one, call cleanup
-        if (queueMessages.size !== this.queueChannelEmbeds.size) {
+        // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
+        const messageCountMatch = YABOBMessages.size === queueMessages.size &&
+            queueMessages.size === this.queueChannelEmbeds.size;
+
+        if (!messageCountMatch) {
             await this.cleanupRender();
-            return;
+            return; // return here or we get cache mismatch
         }
-        await this.queueChannel.channelObj.messages.cache.at(0)?.edit({
-            embeds: embedList,
-            components: [joinLeaveButtons, notifButtons]
-        });
+        if (!this.isCleaningUp) {
+            await this.queueChannel.channelObj.messages.cache.at(0)?.edit({
+                embeds: embedList,
+                components: [joinLeaveButtons, notifButtons]
+            });
+        }
     }
 
     async renderNonQueueEmbeds(
@@ -99,16 +109,22 @@ class QueueDisplayV2 {
             .channelObj
             .messages
             .fetch();
-        if (queueMessages.size !== this.queueChannelEmbeds.size) {
+        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
+        const messageCountMatch = YABOBMessages.size === queueMessages.size &&
+            queueMessages.size === this.queueChannelEmbeds.size;
+        if (!messageCountMatch) {
             await this.cleanupRender();
             return;
         }
-        await this.queueChannel.channelObj.messages.cache
-            .at(renderIndex)
-            ?.edit(embedElements);
+        if (!this.isCleaningUp) {
+            await this.queueChannel.channelObj.messages.cache
+                .at(renderIndex)
+                ?.edit(embedElements);
+        }
     }
 
     async cleanupRender(): Promise<void> {
+        this.isCleaningUp = true;
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
         // sort by render index
@@ -119,6 +135,7 @@ class QueueDisplayV2 {
         for (const content of sortedEmbeds) {
             await this.queueChannel.channelObj.send(content);
         }
+        this.isCleaningUp = false;
     }
 
     private composeAsciiTable(queue: QueueViewModel): string {

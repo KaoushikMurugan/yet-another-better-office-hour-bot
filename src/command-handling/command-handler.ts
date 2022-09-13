@@ -331,6 +331,11 @@ class CentralCommandDispatcher {
                 ['Bot Admin']
             ),
         ]);
+        if ((interaction.channel as GuildChannel)?.name === 'queue') {
+            return Promise.reject(new CommandParseError(
+                'Please use this command outside the queue.'
+            ));
+        }
         await this.serverMap.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
     }
@@ -344,6 +349,12 @@ class CentralCommandDispatcher {
                 ['Bot Admin']
             ),
         ]);
+        // no idea why, it will always throw Unknown message error if used in a queue
+        if ((interaction.channel as GuildChannel)?.name === 'queue') {
+            return Promise.reject(new CommandParseError(
+                'Please use this command outside the queue.'
+            ));
+        }
         await Promise.all(
             (await this.serverMap.get(serverId)?.getQueueChannels())
                 ?.map(queueChannel => this.serverMap.get(serverId)
