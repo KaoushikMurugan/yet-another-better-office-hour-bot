@@ -24,7 +24,7 @@ import {
 class CalendarQueueExtension extends BaseQueueExtension {
 
     private upcomingHours: UpComingSessionViewModel[] = [];
-    private display!: Readonly<QueueDisplayV2>; // late init in onQueueCreate
+    private display?: Readonly<QueueDisplayV2>; 
 
     private constructor(
         private readonly renderIndex: number,
@@ -65,26 +65,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
-     * Grabs the display instance
-     * ----
-     * @param display the instance
-    */
-    override async onQueueCreate(
-        _queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
-    ): Promise<void> {
-        this.display = display;
-    }
-
-    /**
      * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
      * ----
     */
     override async onQueuePeriodicUpdate(
         _queue: Readonly<HelpQueueV2>,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        isFirstCall = false
+        isFirstCall: boolean
     ): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
@@ -96,20 +83,20 @@ class CalendarQueueExtension extends BaseQueueExtension {
         );
         // avoid unnecessary render
         if (!isFirstCall) {
-            await this.renderCalendarEmbeds();
+            await this.renderCalendarEmbeds(false);
         }
     }
 
     /**
      * Embeds the upcoming hours into the queue channel
      * ----
-     * @param isClenupRender if the queue requested a cleanup
     */
     override async onQueueRenderComplete(
         _queue: Readonly<HelpQueueV2>,
-        isClenupRender = false
+        display: Readonly<QueueDisplayV2>
     ): Promise<void> {
-        await this.renderCalendarEmbeds(false, isClenupRender);
+        this.display = display;
+        await this.renderCalendarEmbeds(false);
     }
 
     override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
@@ -127,13 +114,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
     async onCalendarExtensionStateChange(): Promise<void> {
         // true for refresh b/c the refresh button was used.
         // false for isCleanup b/c we are just editing the embed
-        await this.renderCalendarEmbeds(true, false);
+        await this.renderCalendarEmbeds(true);
     }
 
-    private async renderCalendarEmbeds(
-        refresh = false,
-        isCleanupRender = false
-    ): Promise<void> {
+    private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
@@ -167,22 +151,12 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     .setStyle("PRIMARY")
             );
 
-        await this.display.renderNonQueueEmbeds(
+        await this.display?.renderNonQueueEmbeds(
             {
                 embeds: [upcomingHoursEmbed],
                 components: [refreshButton]
             },
-            this.renderIndex,
-            isCleanupRender
-        ).catch(async () =>
-            this.display.renderNonQueueEmbeds(
-                {
-                    embeds: [upcomingHoursEmbed],
-                    components: [refreshButton]
-                },
-                this.renderIndex,
-                true
-            )
+            this.renderIndex
         );
     }
 }

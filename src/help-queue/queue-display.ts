@@ -3,43 +3,31 @@ import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { QueueViewModel } from './help-queue';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import {
+    Collection,
     MessageActionRow,
     MessageButton,
     MessageEmbed,
     MessageOptions,
     User
 } from 'discord.js';
-import { QueueRenderError } from '../utils/error-types';
 import { EmbedColor } from '../utils/embed-helper';
 
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
 
-    // Key is renderIndex, Value is ready or not
-    // If nonQueueEmbedReadyState[renderIndex] is true, then it's safe to edit
-    private nonQueueEmbedReadyStates = new Map<number, boolean>();
+    private queueChannelEmbeds
+        = new Collection<number, Pick<MessageOptions, 'embeds' | 'components'>>();
 
     constructor(
         private readonly user: User,
         private readonly queueChannel: QueueChannel,
     ) { }
 
-    async renderQueue(queue: QueueViewModel, sendNew = false): Promise<void> {
+    async renderQueue(queue: QueueViewModel): Promise<void> {
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
             .fetch();
-
-        // If YABOB's message is not the first one, reject
-        if (!sendNew && queueMessages.first()?.author.id !== this.user.id) {
-            return Promise.reject(new QueueRenderError(
-                'This queue is not safe to re-render. '
-                + `Use the /cleanup ${this.queueChannel.queueName} command `
-                + 'to clean up the channel',
-                this.queueChannel.queueName
-            ));
-        }
-
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
@@ -47,7 +35,6 @@ class QueueDisplayV2 {
                 : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
             .setDescription(this.composeAsciiTable(queue))
             .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple1);
-
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -80,9 +67,7 @@ class QueueDisplayV2 {
                     .setLabel("Remove Notifications")
                     .setStyle("PRIMARY")
             );
-
         const embedList = [embedTableMsg];
-
         if (queue.helperIDs.length !== 0) {
             const helperList = new MessageEmbed();
             helperList
@@ -90,51 +75,49 @@ class QueueDisplayV2 {
                 .setDescription(queue.helperIDs.join('\n'));
             embedList.push(helperList);
         }
-
-        if (sendNew) {
-            await this.queueChannel.channelObj.send({
-                embeds: embedList,
-                components: [joinLeaveButtons, notifButtons]
-            });
-        } else {
-            await this.queueChannel.channelObj.messages.cache.first()?.edit({
-                embeds: embedList,
-                components: [joinLeaveButtons, notifButtons]
-            });
+        this.queueChannelEmbeds.set(0, {
+            embeds: embedList,
+            components: [joinLeaveButtons, notifButtons]
+        });
+        // If YABOB's message is not the first one, call cleanup
+        if (queueMessages.size !== this.queueChannelEmbeds.size) {
+            await this.cleanupRender();
+            return;
         }
+        await this.queueChannel.channelObj.messages.cache.at(0)?.edit({
+            embeds: embedList,
+            components: [joinLeaveButtons, notifButtons]
+        });
     }
 
     async renderNonQueueEmbeds(
         embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
-        renderIndex: number,
-        isCleanupRender = false
+        renderIndex: number
     ): Promise<void> {
+        this.queueChannelEmbeds.set(renderIndex, embedElements);
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
             .fetch();
-
-        // see if the embed is already sent (ready)
-        // if not ready(values is false or undefined, falsy either way) or non existent
-        // send a new one
-        const sendNew = !this.nonQueueEmbedReadyStates.get(renderIndex) || isCleanupRender;
-
-        // if the message at renderIndex is not from YABOB, reject and let HelpQueueV2 call cleanup
-        if (!sendNew &&
-            queueMessages.first(renderIndex + 1)[renderIndex]?.author.id !== this.user.id) {
-            return Promise.reject(new QueueRenderError(
-                'This queue is not safe to re-render. Use /cleanup to do a clean render.',
-                this.queueChannel.queueName
-            ));
+        if (queueMessages.size !== this.queueChannelEmbeds.size) {
+            await this.cleanupRender();
+            return;
         }
+        await this.queueChannel.channelObj.messages.cache
+            .at(renderIndex)
+            ?.edit(embedElements);
+    }
 
-        if (sendNew) {
-            await this.queueChannel.channelObj.send(embedElements);
-            this.nonQueueEmbedReadyStates.set(renderIndex, true);
-        } else {
-            await this.queueChannel.channelObj.messages.cache
-                .first(renderIndex + 1)[renderIndex]
-                ?.edit(embedElements);
+    async cleanupRender(): Promise<void> {
+        await Promise.all((await this.queueChannel.channelObj.messages.fetch())
+            .map(msg => msg.delete()));
+        // sort by render index
+        const sortedEmbeds = [...this.queueChannelEmbeds.entries()]
+            .sort((embed1, embed2) => embed1[0] - embed2[0])
+            .map(embed => embed[1]);
+        // Cannot promise all here, contents need to be sent in order
+        for (const content of sortedEmbeds) {
+            await this.queueChannel.channelObj.send(content);
         }
     }
 
@@ -159,7 +142,6 @@ class QueueDisplayV2 {
                 table.addRow(`Did you find the cat?`);
             }
         }
-
         return "```" + table.toString() + "```";
     }
 }

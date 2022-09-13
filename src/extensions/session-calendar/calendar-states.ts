@@ -5,11 +5,12 @@ import { initializeApp } from "firebase-admin";
 import { getApps, cert } from "firebase-admin/app";
 import { Firestore, getFirestore } from "firebase-admin/firestore";
 import { CalendarQueueExtension } from "./calendar-queue-extension";
-import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
-import calendarConfig from '../extension-credentials/calendar-config.json';
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 import { BaseServerExtension } from "../extension-interface";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
+
+import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
+import calendarConfig from '../extension-credentials/calendar-config.json';
 
 type CalendarConfigBackup = {
     calendarId: string;

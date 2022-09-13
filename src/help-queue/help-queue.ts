@@ -5,14 +5,13 @@ import { IQueueExtension } from '../extensions/extension-interface';
 import { QueueBackup } from '../extensions/firebase-backup/firebase-models/backups';
 import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { QueueError, QueueRenderError } from '../utils/error-types';
+import { QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 
 type QueueViewModel = {
     queueName: string;
     helperIDs: Array<string>;
     studentDisplayNames: Array<string>;
-    calendarString?: string;
     isOpen: boolean;
 }
 
@@ -99,9 +98,7 @@ class HelpQueueV2 {
         everyoneRole: Role,
         backupData?: QueueBackup
     ): Promise<HelpQueueV2> {
-        // * Load QueueExtensions here
         const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-
         const queueExtensions = disableExtensions
             ? []
             : await Promise.all([
@@ -110,7 +107,6 @@ class HelpQueueV2 {
                     queueChannel
                 )
             ]);
-
         const display = new QueueDisplayV2(user, queueChannel);
         const queue = new HelpQueueV2(
             queueChannel,
@@ -119,11 +115,10 @@ class HelpQueueV2 {
             user,
             backupData
         );
-
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(queueExtensions.map(extension =>
-            extension.onQueueCreate(queue, display))
+            extension.onQueueCreate(queue))
         );
         await Promise.all(queueExtensions.map(extension =>
             extension.onQueuePeriodicUpdate(queue, true))
@@ -138,14 +133,13 @@ class HelpQueueV2 {
                     ADD_REACTIONS: false
                 }
             ),
-            queue.cleanUpQueueChannel()
+            queue.triggerRender()
         ]);
         queue.intervalID = setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue, false)
             )); // Random offset to avoid spamming the APIs
-        }, (1000 * 60 * 30) + Math.floor(Math.random() * 1000));
-
+        }, (1000 * 60 * 10) + Math.floor(Math.random() * 1000));
         return queue;
     }
 
@@ -393,30 +387,6 @@ class HelpQueueV2 {
     }
 
     /**
-     * Cleans up the #queue channel, removes every message then resend
-     * ----
-     * onQueueRenderComplete will be emitted
-     * Very slow, non of the 3 promises can be parallelized
-     * - because msg.delete must happen first
-     * Will not be called unless QueueDisplay rejects a re-render
-    */
-    async cleanUpQueueChannel(): Promise<void> {
-        const viewModel: QueueViewModel = {
-            queueName: this.name,
-            helperIDs: [...this.helperIds].map(helperId => `<@${helperId}>`),
-            studentDisplayNames: this.students.map(student => student.member.displayName),
-            calendarString: '',
-            isOpen: this.isOpen
-        };
-        await Promise.all((await this.queueChannel.channelObj.messages.fetch())
-            .map(msg => msg.delete()));
-        await this.display.renderQueue(viewModel, true);
-        await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this, true))
-        );
-    }
-
-    /**
      * Queue delete procedure, let the extension process first before getting deleted
      * ----
     */
@@ -431,28 +401,19 @@ class HelpQueueV2 {
      * ----
      * Composes the queue view model, then sends it to QueueDisplay
     */
-    private async triggerRender(): Promise<void> {
+    async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.name,
             helperIDs: [...this.helperIds].map(helperId => `<@${helperId}>`),
             studentDisplayNames: this.students.map(student => student.member.displayName),
-            calendarString: '',
             isOpen: this.isOpen
         };
-        await this.display.renderQueue(viewModel)
-            .catch(async (err: QueueRenderError) => {
-                console.error(`- Force rerender in ${err.queueName}.`);
-                await this.cleanUpQueueChannel();
-            });
+        await this.display.renderQueue(viewModel);
         await Promise.all(this.queueExtensions.map(
-            extension => extension.onQueueRenderComplete(this))
-        ).catch(async (err: QueueRenderError) => {
-            console.error(`- Force rerender in ${err.queueName}.`);
-            await this.cleanUpQueueChannel();
-        });
+            extension => extension.onQueueRenderComplete(this, this.display))
+        );
     }
 }
-
 
 export { HelpQueueV2, QueueViewModel };

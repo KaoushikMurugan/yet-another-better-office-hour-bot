@@ -72,8 +72,7 @@ interface IServerExtension {
 // Extensions for individual queues
 interface IQueueExtension {
     onQueueCreate: (
-        queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        queue: Readonly<HelpQueueV2>
     ) => Promise<void>;
     onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
@@ -95,7 +94,7 @@ interface IQueueExtension {
     ) => Promise<void>;
     onQueueRenderComplete: (
         queue: Readonly<HelpQueueV2>,
-        isClenupRender?: boolean
+        display: Readonly<QueueDisplayV2>
     ) => Promise<void>;
     onQueuePeriodicUpdate: (
         queue: Readonly<HelpQueueV2>,
@@ -205,14 +204,13 @@ class BaseServerExtension implements IServerExtension {
 */
 class BaseQueueExtension implements IQueueExtension {
     onQueueCreate(
-        queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        queue: Readonly<HelpQueueV2>
     ): Promise<void> {
         return Promise.resolve();
     }
     onQueueRenderComplete(
         queue: Readonly<HelpQueueV2>,
-        isClenupRender?: boolean
+        display: Readonly<QueueDisplayV2>
     ): Promise<void> {
         return Promise.resolve();
     }

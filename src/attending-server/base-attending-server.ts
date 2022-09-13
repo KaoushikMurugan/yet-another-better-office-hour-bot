@@ -648,7 +648,7 @@ class AttendingServerV2 {
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
         await this.queues
             .get(targetQueue.parentCategoryId)
-            ?.cleanUpQueueChannel();
+            ?.triggerRender();
     }
 
     async setAfterSessionMessage(newMessage: string): Promise<void> {
