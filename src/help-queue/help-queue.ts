@@ -417,6 +417,16 @@ class HelpQueueV2 {
     }
 
     /**
+     * Queue delete procedure, let the extension process first before getting deleted
+     * ----
+    */
+    async gracefulDelete(): Promise<void> {
+        await Promise.all(this.queueExtensions.map(
+            extension => extension.onQueueDelete(this)
+        ));
+    }
+
+    /**
      * Re-renders the queue message.
      * ----
      * Composes the queue view model, then sends it to QueueDisplay

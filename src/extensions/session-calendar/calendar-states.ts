@@ -8,6 +8,8 @@ import { CalendarQueueExtension } from "./calendar-queue-extension";
 import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
 import calendarConfig from '../extension-credentials/calendar-config.json';
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
+import { BaseServerExtension } from "../extension-interface";
+import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 type CalendarConfigBackup = {
     calendarId: string;
@@ -100,9 +102,16 @@ class CalendarExtensionState {
             .catch((err: Error) => console.error(err.message));
     }
 }
-// TODO: Might lead to memory leak. Need to delete on server exit
-// static, key is server id, value is 1 calendar extension state
-const serverIdStateMap = new Collection<string, CalendarExtensionState>();
 
-export { CalendarExtensionState, serverIdStateMap };
+class CalendarServerEventListener extends BaseServerExtension {
+    override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
+        serverIdCalendarStateMap.delete(server.guild.id);
+        return Promise.resolve();
+    }
+}
+
+// static, key is server id, value is 1 calendar extension state
+const serverIdCalendarStateMap = new Collection<string, CalendarExtensionState>();
+
+export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener};
 

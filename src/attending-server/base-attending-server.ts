@@ -13,6 +13,8 @@ import { Helpee, Helper } from "../models/member-states";
 import { IServerExtension } from "../extensions/extension-interface";
 import { GoogleSheetLoggingExtension } from "../extensions/google-sheet-logging/google-sheet-logging";
 import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
+import { CalendarServerEventListener } from "../extensions/session-calendar/calendar-states";
+
 import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
 import {
     FgBlue, FgCyan, FgGreen,
@@ -105,11 +107,12 @@ class AttendingServerV2 {
         }
         // Load ServerExtensions here
         const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-        const serverExtensions = disableExtensions
+        const serverExtensions: IServerExtension[] = disableExtensions
             ? []
             : await Promise.all([
                 GoogleSheetLoggingExtension.load(guild.name),
-                FirebaseServerBackupExtension.load(guild.name, guild.id)
+                FirebaseServerBackupExtension.load(guild.name, guild.id),
+                new CalendarServerEventListener()
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
@@ -150,11 +153,11 @@ class AttendingServerV2 {
                 extension.onServerInitSuccess(server),
                 extension.onServerPeriodicUpdate(server, true)
             ]).flat());
-        // Call onServerPeriodicUpdate every 30min +- 1 second
+        // Call onServerPeriodicUpdate every 15min +- 1 second
         server.intervalID = setInterval(async () =>
             await Promise.all(serverExtensions
-                .map(extension => extension.onServerPeriodicUpdate(server)))
-            , 1000 * 60 * 30 + Math.floor(Math.random() * 1000)
+                .map(extension => extension.onServerPeriodicUpdate(server, false)))
+            , 1000 * 60 * 15 + Math.floor(Math.random() * 1000)
         );
         console.log(
             `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
@@ -311,17 +314,15 @@ class AttendingServerV2 {
                 `API Failure: ${err.name}\n${err.message}`
             ));
         });
-        // now delete category and role
+        // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
             parentCategory?.delete(),
             (await this.guild.roles.fetch())
                 .find(role => role.name === parentCategory.name)
                 ?.delete(),
-            Promise.all(this.serverExtensions.map(
-                extension => extension.onQueueDelete(this, queue)
-            ))
+            queue.gracefulDelete()
         ]);
-        // finally delete queue model and refresh cache
+        // finally delete queue data model and refresh cache
         this.queues.delete(queueCategoryID);
         await this.getQueueChannels(false);
     }
@@ -711,6 +712,12 @@ class AttendingServerV2 {
         }
         await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
         console.log(`${FgMagenta}✓ Updated help channels ✓${ResetColor}`);
+    }
+
+    async gracefulDelete(): Promise<void> {
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerDelete(this)
+        ));
     }
 
     /**

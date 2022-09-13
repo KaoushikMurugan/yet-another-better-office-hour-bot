@@ -1,5 +1,5 @@
 import { BaseInteractionExtension } from "../extension-interface";
-import { serverIdStateMap, CalendarExtensionState } from './calendar-states';
+import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
     CommandInteraction, Guild, GuildMember, Role
@@ -16,28 +16,17 @@ import {
     isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
 import {
-    buildCalendarURL,
+    checkCalendarConnection,
     getUpComingTutoringEvents,
 } from './shared-calendar-functions';
-import { calendar_v3 } from "googleapis";
 import { FgCyan, ResetColor } from "../../utils/command-line-colors";
 import { calendarCommands } from './calendar-slash-commands';
 
-import calendarConfig from '../extension-credentials/calendar-config.json';
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { getQueueRoles } from "../../utils/util-functions";
 import { appendCalendarHelpEmbeds } from './CalendarCommands';
+import { CalendarConnectionError } from './shared-calendar-functions';
 
-
-class CalendarConnectionError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = "CalendarConnectionError";
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
@@ -51,7 +40,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         guild: Guild,
         serverMap: Collection<string, AttendingServerV2>
     ): Promise<CalendarInteractionExtension> {
-        serverIdStateMap.set(
+        serverIdCalendarStateMap.set(
             guild.id,
             await CalendarExtensionState.load(guild.id, guild.name)
         );
@@ -171,7 +160,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const [newCalendarName] = await Promise.all([
-            this.checkCalendarConnection(
+            checkCalendarConnection(
                 newCalendarId
             ).catch(() => Promise.reject(
                 new CalendarConnectionError('This new calendar ID is not valid.')
@@ -182,9 +171,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ['Bot Admin']
             )
         ]);
-        await serverIdStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
+        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
         await Promise.all(
-            serverIdStateMap
+            serverIdCalendarStateMap
                 .get(this.guild.id)
                 ?.listeners
                 .map(listener => listener.onCalendarExtensionStateChange()) ?? []
@@ -275,13 +264,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 return Promise.resolve(category);
             }));
         }
-        await serverIdStateMap
+        await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(
                 calendarDisplayName,
                 interaction.user.id
             );
-        await Promise.all(serverIdStateMap.get(this.guild.id)?.listeners
+        await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
         return Promise.resolve(
             `${calendarDisplayName} - ` +
@@ -289,27 +278,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
-    private async checkCalendarConnection(
-        newCalendarId: string
-    ): Promise<string> {
-        const nextWeek = new Date();
-        nextWeek.setDate(nextWeek.getDate() + 7);
-        const url = buildCalendarURL({
-            calendarId: newCalendarId,
-            timeMin: new Date(),
-            timeMax: nextWeek,
-            apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
-        });
-        const response = await fetch(url);
-        if (response.status !== 200) {
-            return Promise.reject('Calendar request failed.');
-        }
-        const responseJSON = await response.json();
-        return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
-    }
-
     private async requestCalendarRefresh(queueName: string): Promise<string> {
-        await serverIdStateMap
+        await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.listeners
             .get(queueName)

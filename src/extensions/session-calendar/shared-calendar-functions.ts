@@ -1,6 +1,5 @@
 import { calendar_v3 } from "googleapis";
-import { CalendarConnectionError } from "./calendar-command-extension";
-import { serverIdStateMap } from "./calendar-states";
+import { serverIdCalendarStateMap } from "./calendar-states";
 import calendarConfig from '../extension-credentials/calendar-config.json';
 
 // ViewModel for 1 tutor's upcoming session
@@ -12,6 +11,16 @@ type UpComingSessionViewModel = {
     eventQueue: string;
     discordId?: string;
 };
+
+class CalendarConnectionError extends Error {
+    constructor(message: string) {
+        super(message);
+        this.name = "CalendarConnectionError";
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
+}
 
 /**
  * Fetches the calendar and build the embed view model
@@ -27,7 +36,7 @@ async function getUpComingTutoringEvents(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: serverIdStateMap.get(serverId)?.calendarId ?? "",
+        calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? "",
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek
@@ -65,6 +74,25 @@ async function getUpComingTutoringEvents(
         return [];
     }
     return definedEvents as UpComingSessionViewModel[];
+}
+
+async function checkCalendarConnection(
+    newCalendarId: string
+): Promise<string> {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const url = buildCalendarURL({
+        calendarId: newCalendarId,
+        timeMin: new Date(),
+        timeMax: nextWeek,
+        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
+    });
+    const response = await fetch(url);
+    if (response.status !== 200) {
+        return Promise.reject('Calendar request failed.');
+    }
+    const responseJSON = await response.json();
+    return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
 }
 
 /**
@@ -115,7 +143,7 @@ function composeViewModel(
         eventQueue: targetQueue,
         rawSummary: summary,
         displayName: tutorName,
-        discordId: serverIdStateMap
+        discordId: serverIdCalendarStateMap
             .get(serverId)
             ?.calendarNameDiscordIdMap
             .get(tutorName)
@@ -147,5 +175,7 @@ export {
     getUpComingTutoringEvents,
     composeViewModel,
     buildCalendarURL,
-    UpComingSessionViewModel
+    UpComingSessionViewModel,
+    checkCalendarConnection,
+    CalendarConnectionError
 };

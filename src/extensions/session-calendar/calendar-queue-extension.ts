@@ -4,13 +4,15 @@ import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
-import { serverIdStateMap } from './calendar-states';
+import { serverIdCalendarStateMap } from './calendar-states';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
 import calendarConfig from '../extension-credentials/calendar-config.json';
 import {
     getUpComingTutoringEvents,
-    UpComingSessionViewModel
+    checkCalendarConnection,
+    UpComingSessionViewModel,
+    CalendarConnectionError
 } from './shared-calendar-functions';
 
 /**
@@ -45,19 +47,17 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 `& API key in calendar-config.ts.${ResetColor}`
             ));
         }
-        if (!serverIdStateMap.has(queueChannel.channelObj.guild.id)) {
+        if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}The command level extension is required.${ResetColor}`
             ));
         }
-
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
-        await getUpComingTutoringEvents(
-            queueChannel.channelObj.guild.id,
-            queueChannel.queueName
-        ).catch(() => Promise.reject((`Failed to load calendar extension.`)));
-
-        serverIdStateMap
+        await checkCalendarConnection(calendarConfig.YABOB_DEFAULT_CALENDAR_ID)
+            .catch(() => Promise.reject(new CalendarConnectionError(
+                `The default calendar id is not valid.`
+            )));
+        serverIdCalendarStateMap
             .get(queueChannel.channelObj.guild.id)
             ?.listeners
             .set(queueChannel.queueName, instance);
@@ -110,6 +110,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
         isClenupRender = false
     ): Promise<void> {
         await this.renderCalendarEmbeds(false, isClenupRender);
+    }
+
+    override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
+        serverIdCalendarStateMap
+            .get(this.queueChannel.channelObj.guild.id)
+            ?.listeners.delete(deletedQueue.name);
+        // now garbage collector should clean up this instance
+        // when server deletes the queue from queue collection
     }
 
     /**

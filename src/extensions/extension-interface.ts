@@ -40,10 +40,6 @@ interface IServerExtension {
         server: Readonly<AttendingServerV2>,
         allQueues: ReadonlyArray<HelpQueueV2>
     ) => Promise<void>;
-    onQueueDelete: (
-        server: Readonly<AttendingServerV2>,
-        deletedQueue: Readonly<HelpQueueV2>
-    ) => Promise<void>;
     onDequeueFirst: (
         server: Readonly<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
@@ -69,6 +65,7 @@ interface IServerExtension {
         server: Readonly<AttendingServerV2>,
         studentMember: GuildMember,
     ) => Promise<void>;
+    onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
 }
 
@@ -103,6 +100,9 @@ interface IQueueExtension {
     onQueuePeriodicUpdate: (
         queue: Readonly<HelpQueueV2>,
         isFirstCall: boolean
+    ) => Promise<void>;
+    onQueueDelete: (
+        deletedQueue: Readonly<HelpQueueV2>
     ) => Promise<void>;
 }
 
@@ -152,12 +152,6 @@ class BaseServerExtension implements IServerExtension {
     ): Promise<void> {
         return Promise.resolve();
     }
-    onQueueDelete(
-        server: Readonly<AttendingServerV2>,
-        deletedQueue: Readonly<HelpQueueV2>
-    ): Promise<void> {
-        return Promise.resolve();
-    }
     onDequeueFirst(
         server: Readonly<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
@@ -178,7 +172,7 @@ class BaseServerExtension implements IServerExtension {
     }
     onServerPeriodicUpdate(
         server: Readonly<AttendingServerV2>,
-        isFirstCall = false
+        isFirstCall: boolean
     ): Promise<void> {
         return Promise.resolve();
     }
@@ -195,6 +189,9 @@ class BaseServerExtension implements IServerExtension {
     ): Promise<void> {
         return Promise.resolve();
     }
+    onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
+        return Promise.resolve();
+    }
     loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
         return Promise.resolve(undefined);
     }
@@ -207,7 +204,10 @@ class BaseServerExtension implements IServerExtension {
  * - Override the events that you want to trigger
 */
 class BaseQueueExtension implements IQueueExtension {
-    onQueueCreate(queue: Readonly<HelpQueueV2>, display: Readonly<QueueDisplayV2>): Promise<void> {
+    onQueueCreate(
+        queue: Readonly<HelpQueueV2>,
+        display: Readonly<QueueDisplayV2>
+    ): Promise<void> {
         return Promise.resolve();
     }
     onQueueRenderComplete(
@@ -218,7 +218,7 @@ class BaseQueueExtension implements IQueueExtension {
     }
     onQueuePeriodicUpdate(
         queue: Readonly<HelpQueueV2>,
-        isFirstCall = false
+        isFirstCall: boolean
     ): Promise<void> {
         return Promise.resolve();
     }
@@ -250,6 +250,9 @@ class BaseQueueExtension implements IQueueExtension {
         queue: Readonly<HelpQueueV2>,
         students: ReadonlyArray<Helpee>
     ): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
 }
