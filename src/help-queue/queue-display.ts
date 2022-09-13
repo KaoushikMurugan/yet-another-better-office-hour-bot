@@ -20,8 +20,16 @@ class QueueDisplayV2 {
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
     */
-    private queueChannelEmbeds
-        = new Collection<number, Pick<MessageOptions, 'embeds' | 'components'>>();
+    private queueChannelEmbeds: Collection<
+        number,
+        {
+            contents: Pick<MessageOptions, 'embeds' | 'components'>,
+            renderIndex: number
+        }
+    > = new Collection();
+    // key is renderIndex, value is message id
+    private embedMessageIdMap: Collection<number, string> = new Collection();
+
     /**
      * lock any edits during cleanup
      * - there's a short timeframe where the channel has 0 messages
@@ -35,6 +43,11 @@ class QueueDisplayV2 {
     ) { }
 
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
+        if (!this.queueChannel.channelObj.guild.channels.cache
+            .has(this.queueChannel.channelObj.id)) {
+            // temporary fix, do nothing if #queue doesn't exist
+            return;
+        }
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
@@ -83,75 +96,71 @@ class QueueDisplayV2 {
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {
-            embeds: embedList,
-            components: [joinLeaveButtons, notifButtons]
-        });
-        if (!this.queueChannel.channelObj.guild.channels.cache
-            .has(this.queueChannel.channelObj.id)) {
-            // temporary fix, do nothing if #queue doesn't exist
-            return;
-        }
-        const queueMessages = await this.queueChannel
-            .channelObj
-            .messages
-            .fetch();
-        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
-        // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
-        const messageCountMatch = YABOBMessages.size === queueMessages.size &&
-            queueMessages.size === this.queueChannelEmbeds.size;
-        if (!messageCountMatch) {
-            await this.cleanupRender();
-            return; // return here or we get cache mismatch
-        }
-        if (!this.isCleaningUp) {
-            await this.queueChannel.channelObj.messages.cache.at(0)?.edit({
+            contents: {
                 embeds: embedList,
                 components: [joinLeaveButtons, notifButtons]
-            });
-        }
+            },
+            renderIndex: 0
+        });
+        !this.isCleaningUp && await this.render();
     }
 
     async requestNonQueueEmbedRender(
         embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
         renderIndex: number
     ): Promise<void> {
-        this.queueChannelEmbeds.set(renderIndex, embedElements);
         if (!this.queueChannel.channelObj.guild.channels.cache
             .has(this.queueChannel.channelObj.id)) {
             // temporary fix, do nothing if #queue doesn't exist
             return;
         }
-        const queueMessages = await this.queueChannel
-            .channelObj
-            .messages
-            .fetch();
-        const YABOBMessages = queueMessages.filter(msg => msg.author.id === this.user.id);
-        const messageCountMatch = YABOBMessages.size === queueMessages.size &&
-            queueMessages.size === this.queueChannelEmbeds.size;
-        if (!messageCountMatch) {
-            await this.cleanupRender();
-            return;
-        }
-        if (!this.isCleaningUp) {
-            await this.queueChannel.channelObj.messages.cache
-                .at(renderIndex)
-                ?.edit(embedElements);
-        }
+        this.queueChannelEmbeds.set(renderIndex, {
+            contents: embedElements,
+            renderIndex: renderIndex
+        });
+        !this.isCleaningUp && await this.render();
     }
 
-    private async cleanupRender(): Promise<void> {
+    async cleanupRender(): Promise<void> {
         this.isCleaningUp = true;
         await Promise.all((await this.queueChannel.channelObj.messages.fetch())
             .map(msg => msg.delete()));
         // sort by render index
-        const sortedEmbeds = [...this.queueChannelEmbeds.entries()]
-            .sort((embed1, embed2) => embed1[0] - embed2[0])
-            .map(embed => embed[1]);
+        const sortedEmbeds = this.queueChannelEmbeds
+            .sort((embed1, embed2) => embed1.renderIndex - embed2.renderIndex);
         // Cannot promise all here, contents need to be sent in order
-        for (const content of sortedEmbeds) {
-            await this.queueChannel.channelObj.send(content);
+        for (const embed of sortedEmbeds.values()) {
+            const newEmbedMessage = await this.queueChannel.channelObj.send(embed.contents);
+            this.embedMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
         }
         this.isCleaningUp = false;
+    }
+
+    private async render(): Promise<void> {
+        const queueMessages = await this.queueChannel
+            .channelObj
+            .messages
+            .fetch();
+        const YABOBMessages = queueMessages.filter(msg =>
+            msg.author.id === this.user.id &&
+            msg.type !== 'REPLY'
+        );
+        // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
+        const messageCountMatch =
+            YABOBMessages.size === queueMessages.size &&
+            queueMessages.size === this.queueChannelEmbeds.size;
+        const safeToEdit = messageCountMatch && YABOBMessages
+            .every(message => this.embedMessageIdMap
+                .some(id => id === message.id));
+        if (!safeToEdit) {
+            await this.cleanupRender();
+        } else {
+            await Promise.all(this.queueChannelEmbeds.map(embed =>
+                YABOBMessages
+                    .get(this.embedMessageIdMap.get(embed.renderIndex) ?? '')
+                    ?.edit(embed.contents)
+            ));
+        }
     }
 
     private composeAsciiTable(queue: QueueViewModel): string {

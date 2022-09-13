@@ -207,6 +207,18 @@ client.on('channelDelete', async channel => {
     if (!(channel.isText() && (channel as TextChannel).name === 'queue')) {
         return;
     }
+    const deletedChannel = channel as TextChannel;
+    // finds all channel deletions in the log
+    const auditLog = await deletedChannel.guild.fetchAuditLogs({ 'type': 'CHANNEL_DELETE' });
+    const deletionEntry = auditLog.entries.find(entry => entry.target.id === deletedChannel.id);
+    if (deletionEntry !== undefined) {
+        const author = deletionEntry.executor;
+        await author?.send(SimpleEmbed(
+            `It seems that you just deleted a queue channel.` + 
+            `The current version of YABOB cannot handle unexpected queue deletion yet. ` + 
+            `So please manually delete queue category and queue role.`
+        ));
+    }
     await serversV2.get((channel as TextChannel)?.guild.id ?? '')?.getQueueChannels(false);
 });
 

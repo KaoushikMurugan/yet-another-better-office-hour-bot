@@ -360,7 +360,7 @@ class CentralCommandDispatcher {
                 ?.map(queueChannel => this.serverMap.get(serverId)
                     ?.cleanUpQueue(queueChannel)) as Promise<void>[]
         );
-        return `All queues has been cleaned up.`;
+        return `All queues have been cleaned up.`;
     }
 
     private async cleanupHelpChannel(interaction: CommandInteraction): Promise<string> {
