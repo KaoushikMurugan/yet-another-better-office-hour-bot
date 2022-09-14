@@ -709,7 +709,7 @@ class AttendingServerV2 {
             );
         }
         await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
-        console.log(`${FgMagenta}✓ Updated help channels ✓${ResetColor}`);
+        console.log(`${FgMagenta}✓ Updated help channels on ${this.guild.name} ✓${ResetColor}`);
     }
 
     async gracefulDelete(): Promise<void> {

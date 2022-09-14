@@ -1,6 +1,6 @@
 import { ButtonInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { FgCyan, ResetColor } from "../utils/command-line-colors";
+import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
 import {
     CommandParseError,
@@ -41,16 +41,17 @@ class ButtonCommandDispatcher {
             ),
             ephemeral: true
         });
-
+        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(interactionName);
-
         if (buttonMethod !== undefined) {
             console.log(
                 `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+                `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
+                `(${interaction.user.id}) ` +
                 `pressed [${interactionName}] ` +
                 `in queue: ${queueName}.`
             );
@@ -59,15 +60,16 @@ class ButtonCommandDispatcher {
                     await interaction.editReply(SimpleEmbed(
                         successMsg,
                         EmbedColor.Success),
-                    ))
+                    ).catch(() => console.error(logEditFailure)))
                 .catch(async (err: UserViewableError) =>
+                    // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    )); // Central error handling, reply to user with the error
+                    ).catch(() => console.error(logEditFailure)));
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
-            );
+            ).catch(logEditFailure);
         }
     }
 

@@ -19,7 +19,7 @@ import {
     checkCalendarConnection,
     getUpComingTutoringEvents,
 } from './shared-calendar-functions';
-import { FgCyan, ResetColor } from "../../utils/command-line-colors";
+import { FgCyan, FgYellow, ResetColor } from "../../utils/command-line-colors";
 import { calendarCommands } from './calendar-slash-commands';
 
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
@@ -84,6 +84,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in command-handler.ts
     */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
+        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.reply({
             ...SimpleEmbed(
                 'Processing command...',
@@ -95,13 +96,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         if (commandMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This external command does not exist.')
-            ));
+            )).catch(logEditFailure);
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
-            ` User ${interaction.user.username}` +
-            ` used ${interaction.toString()}`
+            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
+            `User ${interaction.user.username} ` +
+            `(${interaction.user.id}) ` +
+            `used ${interaction.toString()}`
         );
         await commandMethod(interaction)
             // if the method didn't directly reply, the center handler replies
@@ -110,17 +113,18 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     SimpleEmbed(
                         successMsg,
                         EmbedColor.Success)
-                ))
-            .catch(async (err: UserViewableError) =>
-                await interaction.editReply(
-                    ErrorEmbed(err)
-                ));
+                ).catch(logEditFailure)
+                    .catch(async (err: UserViewableError) =>
+                        await interaction.editReply(
+                            ErrorEmbed(err)
+                        ).catch(logEditFailure)));
     }
 
     /**
      * Button handler. Almost the same as the built in button-handler.ts
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
+        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.reply({
             ...SimpleEmbed(
                 'Processing button...',
@@ -140,8 +144,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         }
         console.log(
             `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
-            `pressed [${interaction.customId}] `
+            `(${interaction.user.id}) ` +
+            `pressed [${interactionName}] ` +
+            `in queue: ${queueName}.`
         );
         await buttonMethod(interaction, queueName)
             // if the method didn't directly reply, the center handler replies
@@ -150,13 +157,18 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     SimpleEmbed(
                         successMsg,
                         EmbedColor.Success)
-                ))
+                ).catch(logEditFailure))
             .catch(async (err: UserViewableError) =>
                 await interaction.editReply(
                     ErrorEmbed(err)
-                ));
+                ).catch(logEditFailure));
     }
 
+    /**
+     * Updates the calendar id in the shared calendar extension states
+     * - triggers the queue level extensions to update
+     * 
+    */
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const [newCalendarName] = await Promise.all([
@@ -188,6 +200,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
+    /**
+     * Builds the embed for /when_next
+     * ----
+    */
     private async listUpComingHours(interaction: CommandInteraction): Promise<undefined> {
         const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
@@ -209,7 +225,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     .join('\n')
                 : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`
         );
-        await interaction.editReply(embed);
+        await interaction.editReply(embed)
+            .catch(() => console.error(`Edit reply failed with ${interaction.toJSON()}`));
         return undefined;
     }
 

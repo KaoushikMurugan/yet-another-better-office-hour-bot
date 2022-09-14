@@ -1,6 +1,6 @@
 import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { FgCyan, ResetColor } from "../utils/command-line-colors";
+import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
@@ -40,9 +40,9 @@ class CentralCommandDispatcher {
         (interaction: CommandInteraction) => Promise<string | undefined>
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
-        ['cleanup', (interaction: CommandInteraction) => this.cleanup(interaction)],
+        ['cleanup_queue', (interaction: CommandInteraction) => this.cleanup(interaction)],
         ['cleanup_all', (interaction: CommandInteraction) => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_ch', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
+        ['cleanup_help_channels', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
         ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
         ['clear_all', (interaction: CommandInteraction) => this.clearAll(interaction)],
         ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
@@ -76,12 +76,15 @@ class CentralCommandDispatcher {
             ephemeral: true
         });
         // Check the hashmap to see if the command exists as a key
+        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
             console.log(
-                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}]` +
-                ` User ${interaction.user.username}` +
-                ` used ${interaction.toString()}`
+                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+                `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
+                `User ${interaction.user.username} ` +
+                `(${interaction.user.id}) ` +
+                `used ${interaction.toString()}`
             );
             await commandMethod(interaction)
                 // shorthand syntax, if successMsg is undefined, don't run the rhs
@@ -90,15 +93,16 @@ class CentralCommandDispatcher {
                         SimpleEmbed(
                             successMsg,
                             EmbedColor.Success)
-                    ))
+                    ).catch(logEditFailure))
                 .catch(async (err: UserViewableError) =>
+                    // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    )); // Central error handling, reply to user with the error
+                    ).catch(logEditFailure));
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')
-            ));
+            )).catch(logEditFailure);
         }
     }
 
@@ -295,7 +299,7 @@ class CentralCommandDispatcher {
             'Current Helpers',
             EmbedColor.Aqua,
             '```' + table.toString() + '```'
-        ));
+        )).catch(() => console.error(`Edit reply failed with ${interaction.toJSON()}`));
         return undefined;
     }
 

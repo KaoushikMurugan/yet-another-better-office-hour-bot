@@ -19,6 +19,7 @@ class QueueDisplayV2 {
      * keeps track of the actual embeds, key is render index
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
+     * - acts like a graphics card memory
     */
     private queueChannelEmbeds: Collection<
         number,
@@ -28,6 +29,8 @@ class QueueDisplayV2 {
         }
     > = new Collection();
     // key is renderIndex, value is message id
+    // - binds the render index with a specific message
+    // - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
     private embedMessageIdMap: Collection<number, string> = new Collection();
 
     /**
@@ -43,17 +46,12 @@ class QueueDisplayV2 {
     ) { }
 
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
-        if (!this.queueChannel.channelObj.guild.channels.cache
-            .has(this.queueChannel.channelObj.id)) {
-            // temporary fix, do nothing if #queue doesn't exist
-            return;
-        }
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
                 ? "**OPEN**\t (ﾟ∀ﾟ )"
                 : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
-            .setDescription(this.composeAsciiTable(queue))
+            .setDescription(this.composeQueueAsciiTable(queue))
             .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple1);
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
@@ -109,11 +107,6 @@ class QueueDisplayV2 {
         embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
         renderIndex: number
     ): Promise<void> {
-        if (!this.queueChannel.channelObj.guild.channels.cache
-            .has(this.queueChannel.channelObj.id)) {
-            // temporary fix, do nothing if #queue doesn't exist
-            return;
-        }
         this.queueChannelEmbeds.set(renderIndex, {
             contents: embedElements,
             renderIndex: renderIndex
@@ -123,13 +116,18 @@ class QueueDisplayV2 {
 
     private async render(): Promise<void> {
         this.isRendering = true;
+        if (!this.queueChannel.channelObj.guild.channels.cache
+            .has(this.queueChannel.channelObj.id)) {
+            // temporary fix, do nothing if #queue doesn't exist
+            return;
+        }
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
             .fetch();
         const YABOBMessages = queueMessages.filter(msg =>
             msg.author.id === this.user.id &&
-            msg.type !== 'REPLY'
+            msg.type !== 'REPLY' // filters out YABOB's replay to interactions
         );
         // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
         const messageCountMatch =
@@ -159,7 +157,7 @@ class QueueDisplayV2 {
         this.isRendering = false;
     }
 
-    private composeAsciiTable(queue: QueueViewModel): string {
+    private composeQueueAsciiTable(queue: QueueViewModel): string {
         const table = new AsciiTable3();
         if (queue.studentDisplayNames.length > 0) {
             table.setHeading('Position', 'Student Name')

@@ -131,7 +131,7 @@ const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
     .setDescription("See who is online and helping.");
 
 const cleanupQueue = new SlashCommandBuilder()
-    .setName("cleanup")
+    .setName("cleanup_queue")
     .setDescription(
         "Debug feature: Forces updates of embed in the specified queue's #queue channel"
     )
@@ -149,7 +149,7 @@ const cleanupAllQueues = new SlashCommandBuilder()
     );
 
 const cleanupHelpChannelCommand = new SlashCommandBuilder()
-    .setName("cleanup_help_ch")
+    .setName("cleanup_help_channels")
     .setDescription(
         "Debug feature: Force updates the command help channels"
     );

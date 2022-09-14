@@ -68,6 +68,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
      * ----
+     * @param isFirstCall, don't render on initial call, wait for onQueueRender
     */
     override async onQueuePeriodicUpdate(
         _queue: Readonly<HelpQueueV2>,
@@ -113,7 +114,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
     */
     async onCalendarExtensionStateChange(): Promise<void> {
         // true for refresh b/c the refresh button was used.
-        // false for isCleanup b/c we are just editing the embed
         await this.renderCalendarEmbeds(true);
     }
 

@@ -19,9 +19,9 @@ type CalendarConfigBackup = {
 
 class CalendarExtensionState {
     calendarId: string = calendarConfig.YABOB_DEFAULT_CALENDAR_ID;
-    // save the data from /make_calendar_string
+    // save the data from /make_calendar_string, key is calendar display name, value is discord id
     calendarNameDiscordIdMap: Collection<string, string> = new Collection();
-    // event listeners, their onCalendarStateChange will be called
+    // event listeners, their onCalendarStateChange will be called, key is queue name
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
 
     constructor(
