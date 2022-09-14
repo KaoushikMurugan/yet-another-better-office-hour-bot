@@ -284,8 +284,6 @@ class AttendingServerV2 {
             ),
             this.createClassRoles()
         ]);
-        // update cache
-        this.queueChannelsCache.push(queueChannel);
         this.queues.set(parentCategory.id, helpQueue);
     }
 
@@ -792,7 +790,7 @@ class AttendingServerV2 {
     private async createClassRoles(): Promise<void> {
         const existingRoles = new Set(this.guild.roles.cache
             .map(role => role.name));
-        const queueNames = (await this.getQueueChannels())
+        const queueNames = (await this.getQueueChannels(false))
             .map(ch => ch.queueName);
         await Promise.all(
             queueNames
