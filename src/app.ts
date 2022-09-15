@@ -203,34 +203,6 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     isJoinVC && await serversV2.get(serverId)?.onMemberJoinVC(newVoiceState.member, newVoiceState);
 });
 
-client.on('channelDelete', async channel => {
-    if (!(channel.isText() && (channel as TextChannel).name === 'queue')) {
-        return;
-    }
-    const deletedChannel = channel as TextChannel;
-    // finds all channel deletions in the log
-    const auditLog = await deletedChannel.guild.fetchAuditLogs({ 'type': 'CHANNEL_DELETE' });
-    const deletionEntry = auditLog.entries.find(entry => entry.target.id === deletedChannel.id);
-    if (deletionEntry !== undefined) {
-        const author = deletionEntry.executor;
-        await author?.send(SimpleEmbed(
-            `It seems that you just deleted a queue channel. ` +
-            `The current version of YABOB cannot handle unexpected queue deletion yet, ` +
-            `so please manually delete queue category and queue role.`,
-            EmbedColor.Warning
-        ));
-    }
-    await serversV2.get(deletedChannel?.guild.id ?? '')?.getQueueChannels(false);
-});
-
-client.on('channelCreate', async channel => {
-    if (!(channel.isText() && (channel as TextChannel).name === 'queue')) {
-        return;
-    }
-    await serversV2.get((channel as TextChannel)?.guild.id ?? '')?.getQueueChannels(false);
-});
-
-
 process.on('exit', () => {
     console.log(centeredText('-------- End of Server Log --------'));
     console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
