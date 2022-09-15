@@ -94,9 +94,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
-            await interaction.editReply(ErrorEmbed(
-                new CommandNotImplementedError('This external command does not exist.')
-            )).catch(logEditFailure);
+            await interaction.editReply(
+                ErrorEmbed(new CommandNotImplementedError(
+                    'This external command does not exist.'
+                ))
+            ).catch(logEditFailure);
             return;
         }
         console.log(
@@ -114,10 +116,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                         successMsg,
                         EmbedColor.Success)
                 ).catch(logEditFailure)
-                    .catch(async (err: UserViewableError) =>
-                        await interaction.editReply(
-                            ErrorEmbed(err)
-                        ).catch(logEditFailure)));
+            )
+            .catch(async (err: UserViewableError) =>
+                await interaction.editReply(
+                    ErrorEmbed(err)
+                ).catch(logEditFailure)
+            );
     }
 
     /**
@@ -157,11 +161,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     SimpleEmbed(
                         successMsg,
                         EmbedColor.Success)
-                ).catch(logEditFailure))
-            .catch(async (err: UserViewableError) =>
+                ).catch(logEditFailure)
+            ).catch(async (err: UserViewableError) =>
                 await interaction.editReply(
                     ErrorEmbed(err)
-                ).catch(logEditFailure));
+                ).catch(logEditFailure)
+            );
     }
 
     /**
@@ -195,7 +200,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ` ${newCalendarName.length > 0
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "}` +
-            `The calendar embed will refresh soon. ` +
+            `The calendar embeds will refresh soon. ` +
             `Or you can manually refresh it using the refresh button.`
         );
     }

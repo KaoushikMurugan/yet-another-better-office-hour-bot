@@ -24,7 +24,7 @@ import {
 class CalendarQueueExtension extends BaseQueueExtension {
 
     private upcomingHours: UpComingSessionViewModel[] = [];
-    private display?: Readonly<QueueDisplayV2>; 
+    private display?: Readonly<QueueDisplayV2>;
 
     private constructor(
         private readonly renderIndex: number,

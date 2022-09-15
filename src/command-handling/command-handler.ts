@@ -93,12 +93,13 @@ class CentralCommandDispatcher {
                         SimpleEmbed(
                             successMsg,
                             EmbedColor.Success)
-                    ).catch(logEditFailure))
-                .catch(async (err: UserViewableError) =>
+                    ).catch(logEditFailure)
+                ).catch(async (err: UserViewableError) =>
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(logEditFailure));
+                    ).catch(logEditFailure)
+                );
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')

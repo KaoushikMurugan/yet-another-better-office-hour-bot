@@ -1,5 +1,7 @@
 import { calendar_v3 } from "googleapis";
 import { serverIdCalendarStateMap } from "./calendar-states";
+import axios from 'axios';
+
 import calendarConfig from '../extension-credentials/calendar-config.json';
 
 // ViewModel for 1 tutor's upcoming session
@@ -41,14 +43,14 @@ async function getUpComingTutoringEvents(
         timeMin: new Date(),
         timeMax: nextWeek
     });
-    const response = await fetch(calendarUrl);
+    const response = await axios.get(calendarUrl);
     if (response.status !== 200) {
         return Promise.reject(new CalendarConnectionError(
             'Failed to connect to Google Calendar. ' +
             'The calendar might be deleted or set to private.'
         ));
     }
-    const responseJSON = await response.json();
+    const responseJSON = await response.data;
     const events = (responseJSON as calendar_v3.Schema$Events).items;
     if (!events || events.length === 0) {
         return [];
@@ -81,17 +83,17 @@ async function checkCalendarConnection(
 ): Promise<string> {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
-    const url = buildCalendarURL({
+    const calendarUrl = buildCalendarURL({
         calendarId: newCalendarId,
         timeMin: new Date(),
         timeMax: nextWeek,
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
     });
-    const response = await fetch(url);
+    const response = await axios.get(calendarUrl);
     if (response.status !== 200) {
         return Promise.reject('Calendar request failed.');
     }
-    const responseJSON = await response.json();
+    const responseJSON = await response.data;
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
 }
 
@@ -116,27 +118,21 @@ function composeViewModel(
     if (words.length !== 2) {
         return undefined;
     }
-
     const punctuations = /[,]/g;
     const tutorName = words[0]?.trim();
     const eventQueues = words[1]?.trim().split(', ')
         .map(eventQueue => eventQueue
             ?.replace(punctuations, '')
             .trim());
-
     // eventQueues will be:
     // ["ECS 20", "ECS 36A", "ECS 36B", "ECS 122A", "ECS 122B"]
-
     if (eventQueues?.length === 0 || tutorName === undefined) {
         return undefined;
     }
-
     const targetQueue = eventQueues?.find(eventQueue => queueName === eventQueue);
-
     if (targetQueue === undefined) {
         return undefined;
     }
-
     return {
         start: start,
         end: end,

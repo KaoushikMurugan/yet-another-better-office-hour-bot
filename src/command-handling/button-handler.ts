@@ -60,12 +60,13 @@ class ButtonCommandDispatcher {
                     await interaction.editReply(SimpleEmbed(
                         successMsg,
                         EmbedColor.Success),
-                    ).catch(() => console.error(logEditFailure)))
-                .catch(async (err: UserViewableError) =>
+                    ).catch(logEditFailure)
+                ).catch(async (err: UserViewableError) =>
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(() => console.error(logEditFailure)));
+                    ).catch(logEditFailure)
+                );
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
