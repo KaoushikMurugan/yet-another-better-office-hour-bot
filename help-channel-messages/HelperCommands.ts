@@ -28,7 +28,6 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: "`mute_notif: boolean`\nDon't notify users that have enabled notifications for queues assigned to a Helper/Admin.",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/start`',
@@ -52,7 +51,6 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: "None",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/stop`',
@@ -76,7 +74,6 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: "`queue_name: Channel`\nDequeue the first student from a particular queue\n\n`user: User`\nDequeue a specific user.",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/next`',
@@ -100,7 +97,6 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: "`queue_name: Channel`\nSends the message to only those in a queue specficied in`queue_name`",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/announce some announcement`',
@@ -124,7 +120,6 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: "`queue_name: Channel`\nThe queue to clear",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/clear class A`',

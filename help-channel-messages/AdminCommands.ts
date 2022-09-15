@@ -28,10 +28,9 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: '`queue_name: string`\nThe name of the new queue category. Can contain any characters that are allowed by discord for category names other than comma (,).',
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/queue add new queue!`',
+                    value: '`/queue add New Queue`',
                     inline: true
                 },
             ]
@@ -52,10 +51,9 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: '`queue_name: Channel`\nThe queue category you want to delete.',
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/queue remove existing queue`',
+                    value: '`/queue remove Existing Queue`',
                     inline: true
                 },
             ]
@@ -76,7 +74,6 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: '`queue_name: Channel`\nThe queue to clean',
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/cleanup class A`',
@@ -88,7 +85,7 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
     {
         embeds: [{
             color: EmbedColor.NoColor,
-            title: 'Command: `/clean_up_help_ch`',
+            title: 'Command: `/clean_up_help_channel`',
             fields: [
                 {
                     name: 'Description',
@@ -99,10 +96,9 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: 'None',
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
-                    value: '`/clean_up_help_ch',
+                    value: '`/clean_up_help_channel`',
                     inline: true
                 },
             ]
@@ -123,7 +119,6 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                     value: 'None',
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/clear_all`',

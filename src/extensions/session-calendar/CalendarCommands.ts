@@ -8,61 +8,6 @@ const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
     {
         embeds: [{
             color: EmbedColor.NoColor,
-            title: 'Command: `/enqueue [queue_name]`',
-            fields: [
-                {
-                    name: 'Description',
-                    value: 'Adds sender to the back of the queue `queue_name`',
-                    inline: false
-                },
-                {
-                    name: 'Options',
-                    value: "None",
-                    inline: true
-                },
-                { name: '\u0002', value: '\u0002', inline: true },
-                {
-                    name: 'Example Usage',
-                    value: '`/enqueue ECS32A`',
-                    inline: true
-                },
-            ]
-        }]
-    },
-];
-
-const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
-        embeds: [{
-            color: EmbedColor.NoColor,
-            title: 'Command: `/make_calendar_string [displayName] (queue_1) (queue_2) ...`',
-            fields: [
-                {
-                    name: 'Description',
-                    value: 'Generates a calendar summary (aka title) that the bot will recognize',
-                    inline: false
-                },
-                {
-                    name: 'Options',
-                    value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
-                `queue_i: Channel`\nThe channel(s) you want to tutor for the event",
-                    inline: true
-                },
-                { name: '\u0002', value: '\u0002', inline: true },
-                {
-                    name: 'Example Usage',
-                    value: '`/make_calendar_string real_name ECS 20 ECS 50`',
-                    inline: true
-                },
-            ]
-        }]
-    },
-];
-
-const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
-        embeds: [{
-            color: EmbedColor.NoColor,
             title: 'Command: `/set_calendar [calendar_id]`',
             fields: [
                 {
@@ -76,10 +21,85 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/set_calendar qwerty12345@calendar.google.com`',
+                    inline: true
+                },
+            ]
+        }]
+    },
+];
+
+const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
+    {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/make_calendar_string [displayName] (queue_1) (queue_2) ...`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Generates a calendar summary (aka title) that the bot will recognize for the queues you specify',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
+                `queue_i: Channel`\nThe channel(s) you want to tutor for the event",
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/make_calendar_string real_name ECS 20 ECS 50`',
+                        inline: true
+                    },
+                ]
+            },
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/make_calendar_string_all [displayName]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Generates a calendar summary (aka title) that the bot will recognize for all the queues you are approved for.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.",
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/make_calendar_string_all Real Name`',
+                        inline: true
+                    },
+                ]
+            }
+        ]
+    },
+];
+
+const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
+    {
+        embeds: [{
+            color: EmbedColor.NoColor,
+            title: 'Command: `/when_next`',
+            fields: [
+                {
+                    name: 'Description',
+                    value: 'Shows upcoming help sessions for 1 queue.',
+                    inline: false
+                },
+                {
+                    name: 'Options',
+                    value: "`queue_name: string`\n Specifies a queue to list upcoming help sessions for. If not specified, defauts to current queue if used in a valid queue.",
+                    inline: true
+                },
+                {
+                    name: 'Example Usage',
+                    value: '`/when_next`\n `/when_next ECS 140A`',
                     inline: true
                 },
             ]

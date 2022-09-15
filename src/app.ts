@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-import { Client, Guild, Intents, Collection, TextChannel } from "discord.js";
+import { Client, Guild, Intents, Collection } from "discord.js";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";

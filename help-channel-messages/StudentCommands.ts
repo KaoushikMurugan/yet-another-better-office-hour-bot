@@ -28,7 +28,6 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                     value: "None",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/enqueue ECS32A`',
@@ -52,7 +51,6 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                     value: "None",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/leave`',
@@ -76,7 +74,6 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                     value: "None",
                     inline: true
                 },
-                { name: '\u0002', value: '\u0002', inline: true },
                 {
                     name: 'Example Usage',
                     value: '`/list_helpers`',
@@ -84,55 +81,7 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
-        embeds: [{
-            color: EmbedColor.NoColor,
-            title: 'Command: `/notify_me [queue_name]`',
-            fields: [
-                {
-                    name: 'Description',
-                    value: 'Adds a user to the notifcation list for a queue. They will be sent a direct message once the queue they listed is open.',
-                    inline: false
-                },
-                {
-                    name: 'Options',
-                    value: "`queue_name: Channel`\nThe queue to be notified of.",
-                    inline: true
-                },
-                { name: '\u0002', value: '\u0002', inline: true },
-                {
-                    name: 'Example Usage',
-                    value: '`/announce some announcement`',
-                    inline: true
-                },
-            ]
-        }]
-    },
-    {
-        embeds: [{
-            color: EmbedColor.NoColor,
-            title: 'Command: `/remove_notif [queue_name]`',
-            fields: [
-                {
-                    name: 'Description',
-                    value: 'Removes a user from the notification list for a queue.',
-                    inline: false
-                },
-                {
-                    name: 'Options',
-                    value: "Required: `queue_name: Channel`\nThe queue to remove notification from.",
-                    inline: true
-                },
-                { name: '\u0002', value: '\u0002', inline: true },
-                {
-                    name: 'Example Usage',
-                    value: '`/remove_notif ECS32A`',
-                    inline: true
-                },
-            ]
-        }]
-    },
+    }
 ];
 
 export { studentCommandsEmbed };
