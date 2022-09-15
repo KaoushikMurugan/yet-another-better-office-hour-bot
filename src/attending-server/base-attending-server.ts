@@ -777,7 +777,9 @@ class AttendingServerV2 {
         // Give everyone the student role
         const studentRole = this.guild.roles.cache.find(role => role.name === 'Student');
         await Promise.all(this.guild.members.cache.map(async member => {
-            if (member.user.id !== this.user.id && studentRole) {
+            if (member.user.id !== this.user.id &&
+                studentRole &&
+                !member.roles.cache.has(studentRole.id)) {
                 await member.roles.add(studentRole);
             }
         }));
