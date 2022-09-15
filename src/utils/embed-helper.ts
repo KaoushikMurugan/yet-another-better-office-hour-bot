@@ -30,7 +30,7 @@ export function SimpleEmbed(
                 timestamp: new Date(),
                 description: description,
                 author: {
-                    name: 'YABOB V4.',
+                    name: 'YABOB',
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],
@@ -42,7 +42,7 @@ export function SimpleEmbed(
                 description: message + '\n\n' + description,
                 timestamp: new Date(),
                 author: {
-                    name: 'YABOB V4.',
+                    name: 'YABOB',
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],
@@ -79,7 +79,7 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
                 + `please post a screenshot of this message in the #help channel `
                 + `and ping @Officers.`,
             author: {
-                name: 'YABOB V4.',
+                name: 'YABOB',
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             },
             fields: embedFields

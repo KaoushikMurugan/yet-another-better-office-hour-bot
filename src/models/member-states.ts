@@ -23,7 +23,7 @@ type Helpee = {
 type Helper = {
     helpStart: Date; // time when /start is used
     helpEnd?: Date; // time when /stop is used
-    helpedMembers: Helpee[]; // TODO: Change to Helpee
+    helpedMembers: Helpee[];
     readonly member: GuildMember; // backref
 }
 

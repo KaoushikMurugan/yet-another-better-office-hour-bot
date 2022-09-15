@@ -20,7 +20,7 @@ import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
-import { msToHourMins } from "../utils/util-functions";
+import { convertMsToTime } from "../utils/util-functions";
 
 
 // Wrapper for TextChannel
@@ -544,7 +544,7 @@ class AttendingServerV2 {
         helper.helpEnd = new Date();
         this.helpers.delete(helperMember.id);
         console.log(`- Help time of ${helper.member.displayName} is ` +
-            `${msToHourMins(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
+            `${convertMsToTime(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
 
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(this, helper as Required<Helper>)

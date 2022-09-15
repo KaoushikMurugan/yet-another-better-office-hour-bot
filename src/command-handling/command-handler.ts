@@ -11,7 +11,7 @@ import {
     hasValidQueueArgument,
     isFromGuildMember
 } from './common-validations';
-import { msToHourMins } from '../utils/util-functions';
+import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 
@@ -203,7 +203,7 @@ class CentralCommandDispatcher {
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
         return `You helped for ` +
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            msToHourMins(helpTime!.helpEnd.getTime() - helpTime!.helpStart.getTime()) +
+            convertMsToTime(helpTime!.helpEnd.getTime() - helpTime!.helpStart.getTime()) +
             `. See you later!`;
     }
 
@@ -287,7 +287,7 @@ class CentralCommandDispatcher {
                         .filter(role => allQueues
                             .find(queue => queue.queueName === role.name) !== undefined)
                         .map(role => role.name).toString()),
-                    msToHourMins((new Date()).valueOf() - (helper.helpStart.valueOf()))
+                    convertMsToTime((new Date()).valueOf() - (helper.helpStart.valueOf()))
                 ])
             )
             .setWidths([15, 15, 15])

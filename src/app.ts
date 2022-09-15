@@ -216,7 +216,8 @@ client.on('channelDelete', async channel => {
         await author?.send(SimpleEmbed(
             `It seems that you just deleted a queue channel. ` +
             `The current version of YABOB cannot handle unexpected queue deletion yet, ` +
-            `so please manually delete queue category and queue role.`
+            `so please manually delete queue category and queue role.`,
+            EmbedColor.Warning
         ));
     }
     await serversV2.get(deletedChannel?.guild.id ?? '')?.getQueueChannels(false);
