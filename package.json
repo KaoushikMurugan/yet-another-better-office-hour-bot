@@ -30,6 +30,7 @@
   "dependencies": {
     "@discordjs/builders": "^0.6.0",
     "@discordjs/rest": "^0.1.0-canary.0",
+    "@google-cloud/local-auth": "^2.1.0",
     "ascii-table": "^0.0.9",
     "ascii-table3": "^0.7.7",
     "axios": "^0.27.2",
@@ -38,8 +39,7 @@
     "discord.js": "^13.7.0",
     "dotenv": "^10.0.0",
     "firebase-admin": "^10.2.0",
-    "google-spreadsheet": "^3.1.15",
-    "@google-cloud/local-auth": "^2.1.0",
+    "google-spreadsheet": "^3.3.0",
     "googleapis": "^100.0.0",
     "y18n": "^5.0.8"
   },
