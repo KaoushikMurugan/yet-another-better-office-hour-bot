@@ -219,11 +219,15 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await attendanceSheet.setHeaderRow(requiredHeaders);
+        await attendanceSheet.loadHeaderRow();
+        if (!attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+            // very slow, O(n^2 * m) string array comparison is faster than this
+            await attendanceSheet.setHeaderRow(requiredHeaders);
+        }
         await attendanceSheet.addRow({
             "Helper Username": entry.member.user.username,
-            "Time In": entry.helpStart.toLocaleString(),
-            "Time Out": entry.helpEnd.toLocaleString(),
+            "Time In": entry.helpStart.toLocaleString('us-PT'),
+            "Time Out": entry.helpEnd.toLocaleString('us-PT'),
             "Helped Students": JSON.stringify(entry.helpedMembers
                 .map(student => new Object({
                     displayName: student.member.displayName,
@@ -254,10 +258,16 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
+
+        await helpSessionSheet.loadHeaderRow();
+        if (!helpSessionSheet.headerValues.every(header =>
+            [...requiredHeaders, 'Session Time (ms)'].includes(header))
+        ) {
+            await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
+        }
         await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
             ...requiredHeaders.map(header => entry[header] instanceof Date
-                ? [header, entry[header].toLocaleString()]
+                ? [header, entry[header].toLocaleString('us-PT')]
                 : [header, entry[header].toString()]
             ),
             [

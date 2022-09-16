@@ -77,7 +77,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             .doc(this.serverId)
             .set(serverBackup)
             .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString()}${ResetColor}] ` +
+                `[${FgCyan}${(new Date()).toLocaleString('us-PT')}${ResetColor}] ` +
                 `Backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));
