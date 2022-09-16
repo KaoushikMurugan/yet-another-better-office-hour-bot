@@ -158,7 +158,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         this.helpSessionEntries.delete(studentMember.id);
     }
 
-    override onHelperStartHelping(
+    override async onHelperStartHelping(
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
@@ -167,7 +167,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             activeTimeMs: 0
         };
         this.attendanceEntries.set(helper.member.id, entry);
-        return Promise.resolve(); // ts gets really angry if i don't return
     }
 
     override async onHelperStopHelping(

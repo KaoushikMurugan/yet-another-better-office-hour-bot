@@ -494,6 +494,12 @@ class AttendingServerV2 {
                 'You are already hosting.'
             ));
         }
+        const helper: Helper = {
+            helpStart: new Date(),
+            helpedMembers: [],
+            member: helperMember
+        };
+        this.activeHelpers.set(helperMember.id, helper);
         const openableQueues = this.queues
             .filter(queue => helperMember.roles.cache
                 .map(role => role.name)
@@ -506,12 +512,6 @@ class AttendingServerV2 {
             ));
         }
         await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember, notify)));
-        const helper: Helper = {
-            helpStart: new Date(),
-            helpedMembers: [],
-            member: helperMember
-        };
-        this.activeHelpers.set(helperMember.id, helper);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStartHelping(this, helper)
         ));
@@ -531,15 +531,15 @@ class AttendingServerV2 {
                 'You are not currently hosting.'
             ));
         }
+        helper.helpEnd = new Date();
+        this.activeHelpers.delete(helperMember.id);
+        console.log(`- Help time of ${helper.member.displayName} is ` +
+            `${convertMsToTime(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
         const closableQueues = this.queues.filter(
             queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
-        helper.helpEnd = new Date();
-        this.activeHelpers.delete(helperMember.id);
-        console.log(`- Help time of ${helper.member.displayName} is ` +
-            `${convertMsToTime(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(this, helper as Required<Helper>)
         ));
