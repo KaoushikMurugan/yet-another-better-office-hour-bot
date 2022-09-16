@@ -85,12 +85,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -129,12 +128,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
                 EmbedColor.Neutral
             ),
-            ephemeral: true
         });
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);

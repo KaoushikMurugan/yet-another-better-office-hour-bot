@@ -68,12 +68,11 @@ class CentralCommandDispatcher {
     */
     async process(interaction: CommandInteraction): Promise<void> {
         // Immediately replay to show that YABOB has received the interaction
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         // Check the hashmap to see if the command exists as a key
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);

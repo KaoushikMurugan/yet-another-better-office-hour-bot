@@ -34,12 +34,11 @@ class ButtonCommandDispatcher {
     constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const delimiterPosition = interaction.customId.indexOf(" ");
