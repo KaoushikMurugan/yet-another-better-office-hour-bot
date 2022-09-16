@@ -279,7 +279,7 @@ class CentralCommandDispatcher {
             .setAlign(2, AlignmentEnum.CENTER)
             .setAlign(3, AlignmentEnum.CENTER)
             .setStyle('unicode-mix')
-            .addRowMatrix(helpers
+            .addRowMatrix([...helpers.values()]
                 .map(helper => [
                     helper.member.displayName,
                     ((helper.member.roles as GuildMemberRoleManager)

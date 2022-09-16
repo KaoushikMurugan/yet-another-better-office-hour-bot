@@ -62,7 +62,7 @@ class AttendingServerV2 {
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this.queues.map(queue => queue.studentsInQueue).flat();
     }
-    get helpers(): Readonly<Collection<string, Helper>> {
+    get helpers(): ReadonlyMap<string, Helper> {
         return this.activeHelpers;
     }
 
@@ -489,6 +489,11 @@ class AttendingServerV2 {
      * - If the helper is already hosting
     */
     async openAllOpenableQueues(helperMember: GuildMember, notify: boolean): Promise<void> {
+        if (this.activeHelpers.has(helperMember.id)) {
+            return Promise.reject(new ServerError(
+                'You are already hosting.'
+            ));
+        }
         const openableQueues = this.queues
             .filter(queue => helperMember.roles.cache
                 .map(role => role.name)
@@ -500,19 +505,13 @@ class AttendingServerV2 {
                 `In the meantime, you can help students through DMs.`
             ));
         }
-        await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember, notify)))
-            .catch(() => Promise.reject(new ServerError(
-                'You are already hosting.'
-            )));
-
+        await Promise.all(openableQueues.map(queue => queue.openQueue(helperMember, notify)));
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
             member: helperMember
         };
-
-        this.helpers.set(helperMember.id, helper);
-
+        this.activeHelpers.set(helperMember.id, helper);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStartHelping(this, helper)
         ));
@@ -526,7 +525,7 @@ class AttendingServerV2 {
     * @throws ServerError: If the helper is not hosting
    */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
-        const helper = this.helpers.get(helperMember.id);
+        const helper = this.activeHelpers.get(helperMember.id);
         if (helper === undefined) {
             return Promise.reject(new ServerError(
                 'You are not currently hosting.'
@@ -536,16 +535,11 @@ class AttendingServerV2 {
             queue => helperMember.roles.cache
                 .map(role => role.name)
                 .includes(queue.name));
-        await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)))
-            .catch(() => Promise.reject(new ServerError(
-                'You are not currently hosting.'
-            )));
-
+        await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         helper.helpEnd = new Date();
-        this.helpers.delete(helperMember.id);
+        this.activeHelpers.delete(helperMember.id);
         console.log(`- Help time of ${helper.member.displayName} is ` +
             `${convertMsToTime(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
-
         await Promise.all(this.serverExtensions.map(
             extension => extension.onHelperStopHelping(this, helper as Required<Helper>)
         ));
