@@ -1,7 +1,6 @@
 import { calendar_v3 } from "googleapis";
 import { serverIdCalendarStateMap } from "./calendar-states";
 import axios from 'axios';
-
 import calendarConfig from '../extension-credentials/calendar-config.json';
 
 // ViewModel for 1 tutor's upcoming session
@@ -9,7 +8,6 @@ type UpComingSessionViewModel = {
     start: Date;
     end: Date;
     eventSummary: string;
-    parsingString: string;
     displayName: string;
     eventQueue: string;
     discordId?: string;
@@ -39,7 +37,7 @@ async function getUpComingTutoringEvents(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? "",
+        calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek
@@ -57,24 +55,28 @@ async function getUpComingTutoringEvents(
         return [];
     }
     const definedEvents = events
-        .filter(event => event.start?.dateTime && event.end?.dateTime)
+        .filter(event => event.start?.dateTime && event.end?.dateTime && event.description)
         .map((event) => {
-            // we already checked for dateTime existence
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const start = event.start!.dateTime!;
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            const end = event.end!.dateTime!;
+            // we already checked for all 3 values' existence
+            const [start, end, description] = [
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                event.start!.dateTime!,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                event.end!.dateTime!,
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                event.description!
+            ];
 
-            let getParsingString = event.description!.substring(
-                event.description!.indexOf('YABOB_START') + 'YABOB_START'.length,
-                event.description!.indexOf('YABOB_END')
+            const parsableCalendarString = description.substring(
+                description.indexOf('YABOB_START') + 'YABOB_START'.length,
+                description.indexOf('YABOB_END')
             ).trimStart().trimEnd();
 
             return composeViewModel(
                 serverId,
                 queueName,
                 event.summary ?? '',
-                getParsingString ?? '',
+                parsableCalendarString ?? '',
                 new Date(start),
                 new Date(end),
             );
@@ -108,7 +110,8 @@ async function checkCalendarConnection(
 /**
  * Parses the summary string and builds the view model for the current queue
  * ----
- * @param parsingString string from getUpComingTutoringEvents
+ * @param rawSummary unmodified calendar event summary
+ * @param parsingString string found the the calendar event description
  * @param start start Date
  * @param end end Date
  * @returns undefined if any parsing failed, otherwise a complete view model
@@ -116,12 +119,12 @@ async function checkCalendarConnection(
 function composeViewModel(
     serverId: string,
     queueName: string,
-    summary: string,
+    rawSummary: string,
     parsingString: string,
     start: Date,
     end: Date,
 ): UpComingSessionViewModel | undefined {
-    // Summary example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
+    // parsingString example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
     // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
     const words = parsingString.split('-');
     if (words.length !== 2) {
@@ -146,8 +149,7 @@ function composeViewModel(
         start: start,
         end: end,
         eventQueue: targetQueue,
-        eventSummary: summary,
-        parsingString: parsingString,
+        eventSummary: rawSummary,
         displayName: tutorName,
         discordId: serverIdCalendarStateMap
             .get(serverId)
