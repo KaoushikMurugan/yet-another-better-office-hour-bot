@@ -70,8 +70,6 @@ async function getUpComingTutoringEvents(
                 event.description!.indexOf('YABOB_END')
             ).trimStart().trimEnd();
 
-            console.log(getParsingString);
-
             return composeViewModel(
                 serverId,
                 queueName,

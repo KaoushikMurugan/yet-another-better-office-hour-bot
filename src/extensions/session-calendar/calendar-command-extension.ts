@@ -2,7 +2,7 @@ import { BaseInteractionExtension } from "../extension-interface";
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
-    CommandInteraction, Guild, GuildMember, Role
+    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role
 } from 'discord.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -255,12 +255,30 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         const calendarDisplayName = interaction.options.getString('your_name', true);
         let validQueues: (CategoryChannel | Role)[] = [];
 
+        let memberToUpdate = interaction.member as GuildMember;
+
+        const user = interaction.options.getUser('user', false);
+        if (user !== null) {
+            const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
+            // if they are not admin or doesn't have the queue role, reject
+            if (!memberRoles.cache
+                .some(role => role.name === 'Bot Admin') || 
+                user.id === interaction.user.id
+            ) {
+                return Promise.reject(new CommandParseError(
+                    `Only Bot Admins have permission to update calendar string for users that are not yourself. `
+                ));
+            } else {
+                memberToUpdate = await interaction.guild!.members.fetch(user);
+            }
+        }
+
         if (generateAll) {
             validQueues = await getQueueRoles(
                 // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.serverMap.get(serverId)!,
-                interaction.member as GuildMember
+                memberToUpdate as GuildMember
             );
         } else {
             const commandArgs = [...this.guild.channels.cache
@@ -290,7 +308,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(
                 calendarDisplayName,
-                interaction.user.id
+                memberToUpdate!.id
             );
         await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
