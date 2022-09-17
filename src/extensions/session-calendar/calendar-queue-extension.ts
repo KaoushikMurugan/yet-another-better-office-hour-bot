@@ -135,6 +135,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
                                 ? `<@${viewModel.discordId}>`
                                 : viewModel.displayName
                             }**\t|\t` +
+                            `**${viewModel.eventSummary}**\n` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
                         .join('\n')

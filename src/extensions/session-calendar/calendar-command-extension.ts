@@ -295,8 +295,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
         return Promise.resolve(
+            `Copy and paste the following into the calendar **description**.:\n\n` +
+            `YABOB_START ` +
             `${calendarDisplayName} - ` +
-            `${validQueues.map(queue => queue.name).join(', ')}`
+            `${validQueues.map(queue => queue.name).join(', ')} ` +
+            `YABOB_END\n`
         );
     }
 

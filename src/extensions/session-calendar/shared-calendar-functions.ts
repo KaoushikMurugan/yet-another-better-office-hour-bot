@@ -8,7 +8,8 @@ import calendarConfig from '../extension-credentials/calendar-config.json';
 type UpComingSessionViewModel = {
     start: Date;
     end: Date;
-    rawSummary: string;
+    eventSummary: string;
+    parsingString: string;
     displayName: string;
     eventQueue: string;
     discordId?: string;
@@ -63,10 +64,19 @@ async function getUpComingTutoringEvents(
             const start = event.start!.dateTime!;
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const end = event.end!.dateTime!;
+
+            let getParsingString = event.description!.substring(
+                event.description!.indexOf('YABOB_START') + 'YABOB_START'.length,
+                event.description!.indexOf('YABOB_END')
+            ).trimStart().trimEnd();
+
+            console.log(getParsingString);
+
             return composeViewModel(
                 serverId,
                 queueName,
                 event.summary ?? '',
+                getParsingString ?? '',
                 new Date(start),
                 new Date(end),
             );
@@ -100,7 +110,7 @@ async function checkCalendarConnection(
 /**
  * Parses the summary string and builds the view model for the current queue
  * ----
- * @param summary string from getUpComingTutoringEvents
+ * @param parsingString string from getUpComingTutoringEvents
  * @param start start Date
  * @param end end Date
  * @returns undefined if any parsing failed, otherwise a complete view model
@@ -109,12 +119,13 @@ function composeViewModel(
     serverId: string,
     queueName: string,
     summary: string,
+    parsingString: string,
     start: Date,
     end: Date,
 ): UpComingSessionViewModel | undefined {
     // Summary example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
     // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
-    const words = summary.split('-');
+    const words = parsingString.split('-');
     if (words.length !== 2) {
         return undefined;
     }
@@ -137,7 +148,8 @@ function composeViewModel(
         start: start,
         end: end,
         eventQueue: targetQueue,
-        rawSummary: summary,
+        eventSummary: summary,
+        parsingString: parsingString,
         displayName: tutorName,
         discordId: serverIdCalendarStateMap
             .get(serverId)
