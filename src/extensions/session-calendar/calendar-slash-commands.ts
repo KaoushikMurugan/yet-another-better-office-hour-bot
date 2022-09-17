@@ -12,7 +12,7 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-const unSetCalendar = new SlashCommandBuilder()
+const unsetCalendar = new SlashCommandBuilder()
     .setName("unset_calendar")
     .setDescription("Desyncs the bot from the current calendar and sets it to the default calendar");
 
@@ -69,7 +69,7 @@ const makeCalendarStringAll = new SlashCommandBuilder()
 
 const calendarCommands = [
     setCalendar.toJSON(),
-    unSetCalendar.toJSON(),
+    unsetCalendar.toJSON(),
     whenNext.toJSON(),
     makeCalendarStringCommand().toJSON(),
     makeCalendarStringAll.toJSON()
