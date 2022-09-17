@@ -230,7 +230,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             "Helped Students": JSON.stringify(entry.helpedMembers
                 .map(student => new Object({
                     displayName: student.member.displayName,
-                    username: student.member.user.username
+                    username: student.member.user.username,
+                    id: student.member.id,
                 }))),
             "Discord ID": entry.member.id,
             "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),

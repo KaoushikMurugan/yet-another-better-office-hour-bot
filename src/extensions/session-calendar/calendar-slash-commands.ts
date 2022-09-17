@@ -12,6 +12,10 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+const unSetCalendar = new SlashCommandBuilder()
+    .setName("unset_calendar")
+    .setDescription("Desyncs the bot from the current calendar and sets it to the default calendar");
+
 const whenNext = new SlashCommandBuilder()
     .setName("when_next")
     .setDescription("View the upcoming tutoring hours")
@@ -30,9 +34,9 @@ function makeCalendarStringCommand():
         .setName("make_calendar_string")
         .setDescription("Generates a valid calendar string that can be parsed by YABOB")
         .addStringOption(option => option
-            .setRequired(true)
-            .setName('your_name')
-            .setDescription("Your display name on the calendar"));
+            .setName('calendar_name')
+            .setDescription("Your display name on the calendar")
+            .setRequired(true));
 
     Array(20).fill(undefined).forEach((_, idx) =>
         command.addChannelOption(option =>
@@ -42,6 +46,11 @@ function makeCalendarStringCommand():
                 )
                 .setRequired(idx === 0)) // make the first one required
     );
+
+    command.addUserOption(option => option
+        .setName('user')
+        .setDescription('The user to modify the calendar string for')
+        .setRequired(false));
     return command;
 }
 
@@ -49,13 +58,18 @@ const makeCalendarStringAll = new SlashCommandBuilder()
     .setName('make_calendar_string_all')
     .setDescription("Generates a valid calendar string for all your approved queues")
     .addStringOption(option => option
-        .setRequired(true)
-        .setName('your_name')
-        .setDescription("Your display name on the calendar"));
+        .setName('calendar_name')
+        .setDescription("Your display name on the calendar")
+        .setRequired(true))
+    .addUserOption(option => option
+        .setName('user')
+        .setDescription('The user to modify the calendar string for')
+        .setRequired(false));
 
 
 const calendarCommands = [
     setCalendar.toJSON(),
+    unSetCalendar.toJSON(),
     whenNext.toJSON(),
     makeCalendarStringCommand().toJSON(),
     makeCalendarStringAll.toJSON()
