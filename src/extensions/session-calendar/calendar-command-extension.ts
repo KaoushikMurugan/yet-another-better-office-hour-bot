@@ -257,7 +257,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
         let validQueues: (CategoryChannel | Role)[] = [];
         let memberToUpdate = interaction.member as GuildMember;
-
         if (user !== null) {
             const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
             // if they are not admin or doesn't have the queue role, reject
@@ -274,7 +273,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 memberToUpdate = await interaction.guild!.members.fetch(user);
             }
         }
-
         if (generateAll) {
             validQueues = await getQueueRoles(
                 // already checked in isServerInteraction
