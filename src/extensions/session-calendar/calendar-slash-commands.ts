@@ -32,7 +32,7 @@ function makeCalendarStringCommand():
         .addStringOption(option => option
             .setName('your_name')
             .setDescription("Your display name on the calendar")
-            .setRequired(true))
+            .setRequired(true));
 
     Array(20).fill(undefined).forEach((_, idx) =>
         command.addChannelOption(option =>

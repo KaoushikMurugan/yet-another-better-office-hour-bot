@@ -253,22 +253,24 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             )
         ]);
         const calendarDisplayName = interaction.options.getString('your_name', true);
-        let validQueues: (CategoryChannel | Role)[] = [];
+        const user = interaction.options.getUser('user', false);
 
+        let validQueues: (CategoryChannel | Role)[] = [];
         let memberToUpdate = interaction.member as GuildMember;
 
-        const user = interaction.options.getUser('user', false);
         if (user !== null) {
             const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
             // if they are not admin or doesn't have the queue role, reject
             if (!memberRoles.cache
-                .some(role => role.name === 'Bot Admin') || 
+                .some(role => role.name === 'Bot Admin') ||
                 user.id === interaction.user.id
             ) {
                 return Promise.reject(new CommandParseError(
                     `Only Bot Admins have permission to update calendar string for users that are not yourself. `
                 ));
             } else {
+                // already checked in isServerInteraction
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 memberToUpdate = await interaction.guild!.members.fetch(user);
             }
         }
@@ -308,12 +310,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(
                 calendarDisplayName,
-                memberToUpdate!.id
+                memberToUpdate.id
             );
         await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
         return Promise.resolve(
-            `Copy and paste the following into the calendar **description**.:\n\n` +
+            `Copy and paste the following into the calendar **description**:\n\n` +
             `YABOB_START ` +
             `${calendarDisplayName} - ` +
             `${validQueues.map(queue => queue.name).join(', ')} ` +
