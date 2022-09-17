@@ -286,7 +286,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
             // if they are not admin or doesn't have the queue role, reject
             if (!memberRoles.cache
-                .some(role => role.name === 'Bot Admin') || 
+                .some(role => role.name === 'Bot Admin') && 
                 user.id !== interaction.user.id
             ) {
                 return Promise.reject(new CommandParseError(
