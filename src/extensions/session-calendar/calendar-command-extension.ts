@@ -26,6 +26,7 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import { getQueueRoles } from "../../utils/util-functions";
 import { appendCalendarHelpEmbeds } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
+import calendarConfig from '../extension-credentials/calendar-config.json';
 
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
@@ -60,6 +61,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['set_calendar', (interaction: CommandInteraction) =>
             this.updateCalendarId(interaction)],
+        ['unset_calendar', (interaction: CommandInteraction) =>
+            this.unSetCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) =>
             this.listUpComingHours(interaction)],
         ['make_calendar_string', (interaction: CommandInteraction) =>
@@ -205,6 +208,27 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
+    private async unSetCalendarId(interaction: CommandInteraction): Promise<string> {
+        await isTriggeredByUserWithRoles(
+            interaction,
+            "unset_calendar",
+            ['Bot Admin']
+        );
+        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(calendarConfig.YABOB_DEFAULT_CALENDAR_ID);
+        await Promise.all(
+            serverIdCalendarStateMap
+                .get(this.guild.id)
+                ?.listeners
+                .map(listener => listener.onCalendarExtensionStateChange()) ?? []
+        );
+        return Promise.resolve(
+            `Successfully unset the calendar. ` +
+            `The calendar embeds will refresh soon. ` +
+            `Or you can manually refresh it using the refresh button.`
+        );
+    }
+    
+
     /**
      * Builds the embed for /when_next
      * ----
@@ -263,7 +287,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             // if they are not admin or doesn't have the queue role, reject
             if (!memberRoles.cache
                 .some(role => role.name === 'Bot Admin') || 
-                user.id === interaction.user.id
+                user.id !== interaction.user.id
             ) {
                 return Promise.reject(new CommandParseError(
                     `Only Bot Admins have permission to update calendar string for users that are not yourself. `

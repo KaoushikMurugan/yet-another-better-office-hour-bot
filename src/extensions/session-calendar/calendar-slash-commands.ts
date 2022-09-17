@@ -12,6 +12,10 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+const unSetCalendar = new SlashCommandBuilder()
+    .setName("unset_calendar")
+    .setDescription("Desyncs the bot from the current calendar and sets it to the default calendar");
+
 const whenNext = new SlashCommandBuilder()
     .setName("when_next")
     .setDescription("View the upcoming tutoring hours")
@@ -30,7 +34,7 @@ function makeCalendarStringCommand():
         .setName("make_calendar_string")
         .setDescription("Generates a valid calendar string that can be parsed by YABOB")
         .addStringOption(option => option
-            .setName('your_name')
+            .setName('calendar_name')
             .setDescription("Your display name on the calendar")
             .setRequired(true))
 
@@ -54,7 +58,7 @@ const makeCalendarStringAll = new SlashCommandBuilder()
     .setName('make_calendar_string_all')
     .setDescription("Generates a valid calendar string for all your approved queues")
     .addStringOption(option => option
-        .setName('your_name')
+        .setName('calendar_name')
         .setDescription("Your display name on the calendar")
         .setRequired(true))
     .addUserOption(option => option
@@ -65,6 +69,7 @@ const makeCalendarStringAll = new SlashCommandBuilder()
 
 const calendarCommands = [
     setCalendar.toJSON(),
+    unSetCalendar.toJSON(),
     whenNext.toJSON(),
     makeCalendarStringCommand().toJSON(),
     makeCalendarStringAll.toJSON()
