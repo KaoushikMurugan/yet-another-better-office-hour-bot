@@ -32,7 +32,7 @@ YABOB is a server managment automation bot. This means that YABOB handles logist
 YABOB is also a ***self-hosted*** bot meaning that you will need to host
 and maintain your own instance.
 
-See the [Setup Guide]() to get started with running the bot.
+See the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide) to get started with running the bot.
 
 # Office Hours (OH) Session Protocol
 
