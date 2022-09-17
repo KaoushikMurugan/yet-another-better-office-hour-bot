@@ -124,7 +124,7 @@ class QueueDisplayV2 {
         const queueMessages = await this.queueChannel
             .channelObj
             .messages
-            .fetch();
+            .fetch(undefined, { force: true });
         const YABOBMessages = queueMessages.filter(msg =>
             msg.author.id === this.user.id &&
             msg.type !== 'REPLY' // filters out YABOB's replay to interactions
@@ -137,8 +137,12 @@ class QueueDisplayV2 {
             .every(message => this.embedMessageIdMap
                 .some(id => id === message.id));
         if (!safeToEdit) {
-            await Promise.all((await this.queueChannel.channelObj.messages.fetch())
-                .map(msg => msg.delete()));
+            await Promise.all(
+                (await this.queueChannel
+                    .channelObj
+                    .messages
+                    .fetch(undefined, { force: true })
+                ).map(msg => msg.delete()));
             // sort by render index
             const sortedEmbeds = this.queueChannelEmbeds
                 .sort((embed1, embed2) => embed1.renderIndex - embed2.renderIndex);

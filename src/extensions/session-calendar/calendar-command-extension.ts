@@ -2,7 +2,7 @@ import { BaseInteractionExtension } from "../extension-interface";
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
-    CommandInteraction, Guild, GuildMember, Role
+    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role
 } from 'discord.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
@@ -26,6 +26,7 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import { getQueueRoles } from "../../utils/util-functions";
 import { appendCalendarHelpEmbeds } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
+import calendarConfig from '../extension-credentials/calendar-config.json';
 
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
@@ -60,6 +61,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['set_calendar', (interaction: CommandInteraction) =>
             this.updateCalendarId(interaction)],
+        ['unset_calendar', (interaction: CommandInteraction) =>
+            this.unSetCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) =>
             this.listUpComingHours(interaction)],
         ['make_calendar_string', (interaction: CommandInteraction) =>
@@ -85,12 +88,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -102,7 +104,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
             `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `(${interaction.user.id}) ` +
@@ -129,12 +131,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
                 EmbedColor.Neutral
             ),
-            ephemeral: true
         });
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
@@ -147,7 +148,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
             `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `(${interaction.user.id}) ` +
@@ -205,6 +206,27 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
+    private async unSetCalendarId(interaction: CommandInteraction): Promise<string> {
+        await isTriggeredByUserWithRoles(
+            interaction,
+            "unset_calendar",
+            ['Bot Admin']
+        );
+        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(calendarConfig.YABOB_DEFAULT_CALENDAR_ID);
+        await Promise.all(
+            serverIdCalendarStateMap
+                .get(this.guild.id)
+                ?.listeners
+                .map(listener => listener.onCalendarExtensionStateChange()) ?? []
+        );
+        return Promise.resolve(
+            `Successfully unset the calendar. ` +
+            `The calendar embeds will refresh soon. ` +
+            `Or you can manually refresh it using the refresh button.`
+        );
+    }
+    
+
     /**
      * Builds the embed for /when_next
      * ----
@@ -253,14 +275,32 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             )
         ]);
         const calendarDisplayName = interaction.options.getString('your_name', true);
-        let validQueues: (CategoryChannel | Role)[] = [];
+        const user = interaction.options.getUser('user', false);
 
+        let validQueues: (CategoryChannel | Role)[] = [];
+        let memberToUpdate = interaction.member as GuildMember;
+        if (user !== null) {
+            const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
+            // if they are not admin or doesn't have the queue role, reject
+            if (!memberRoles.cache
+                .some(role => role.name === 'Bot Admin') && 
+                user.id !== interaction.user.id
+            ) {
+                return Promise.reject(new CommandParseError(
+                    `Only Bot Admins have permission to update calendar string for users that are not yourself. `
+                ));
+            } else {
+                // already checked in isServerInteraction
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                memberToUpdate = await interaction.guild!.members.fetch(user);
+            }
+        }
         if (generateAll) {
             validQueues = await getQueueRoles(
                 // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 this.serverMap.get(serverId)!,
-                interaction.member as GuildMember
+                memberToUpdate as GuildMember
             );
         } else {
             const commandArgs = [...this.guild.channels.cache
@@ -290,13 +330,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(
                 calendarDisplayName,
-                interaction.user.id
+                memberToUpdate.id
             );
         await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
             .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
         return Promise.resolve(
+            `Copy and paste the following into the calendar **description**:\n\n` +
+            `YABOB_START ` +
             `${calendarDisplayName} - ` +
-            `${validQueues.map(queue => queue.name).join(', ')}`
+            `${validQueues.map(queue => queue.name).join(', ')} ` +
+            `YABOB_END\n`
         );
     }
 

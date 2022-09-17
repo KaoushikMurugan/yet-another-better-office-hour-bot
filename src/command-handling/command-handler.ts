@@ -68,19 +68,18 @@ class CentralCommandDispatcher {
     */
     async process(interaction: CommandInteraction): Promise<void> {
         // Immediately replay to show that YABOB has received the interaction
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         // Check the hashmap to see if the command exists as a key
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
             console.log(
-                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+                `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
                 `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
                 `(${interaction.user.id}) ` +
@@ -280,7 +279,7 @@ class CentralCommandDispatcher {
             .setAlign(2, AlignmentEnum.CENTER)
             .setAlign(3, AlignmentEnum.CENTER)
             .setStyle('unicode-mix')
-            .addRowMatrix(helpers
+            .addRowMatrix([...helpers.values()]
                 .map(helper => [
                     helper.member.displayName,
                     ((helper.member.roles as GuildMemberRoleManager)

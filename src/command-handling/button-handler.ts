@@ -34,12 +34,11 @@ class ButtonCommandDispatcher {
     constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply({
+        await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
                 EmbedColor.Neutral
-            ),
-            ephemeral: true
+            )
         });
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const delimiterPosition = interaction.customId.indexOf(" ");
@@ -48,7 +47,7 @@ class ButtonCommandDispatcher {
         const buttonMethod = this.buttonMethodMap.get(interactionName);
         if (buttonMethod !== undefined) {
             console.log(
-                `[${FgCyan}${(new Date).toLocaleString()}${ResetColor}] ` +
+                `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
                 `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
                 `User ${interaction.user.username} ` +
                 `(${interaction.user.id}) ` +

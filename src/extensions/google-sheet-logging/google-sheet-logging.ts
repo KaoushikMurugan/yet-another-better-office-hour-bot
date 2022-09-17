@@ -158,7 +158,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         this.helpSessionEntries.delete(studentMember.id);
     }
 
-    override onHelperStartHelping(
+    override async onHelperStartHelping(
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
@@ -167,7 +167,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             activeTimeMs: 0
         };
         this.attendanceEntries.set(helper.member.id, entry);
-        return Promise.resolve(); // ts gets really angry if i don't return
     }
 
     override async onHelperStopHelping(
@@ -219,15 +218,20 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await attendanceSheet.setHeaderRow(requiredHeaders);
+        await attendanceSheet.loadHeaderRow();
+        if (!attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+            // very slow, O(n^2 * m) string array comparison is faster than this
+            await attendanceSheet.setHeaderRow(requiredHeaders);
+        }
         await attendanceSheet.addRow({
             "Helper Username": entry.member.user.username,
-            "Time In": entry.helpStart.toLocaleString(),
-            "Time Out": entry.helpEnd.toLocaleString(),
+            "Time In": entry.helpStart.toLocaleString('us-PT'),
+            "Time Out": entry.helpEnd.toLocaleString('us-PT'),
             "Helped Students": JSON.stringify(entry.helpedMembers
                 .map(student => new Object({
                     displayName: student.member.displayName,
-                    username: student.member.user.username
+                    username: student.member.user.username,
+                    id: student.member.id,
                 }))),
             "Discord ID": entry.member.id,
             "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),
@@ -254,10 +258,16 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
+
+        await helpSessionSheet.loadHeaderRow();
+        if (!helpSessionSheet.headerValues.every(header =>
+            [...requiredHeaders, 'Session Time (ms)'].includes(header))
+        ) {
+            await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
+        }
         await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
             ...requiredHeaders.map(header => entry[header] instanceof Date
-                ? [header, entry[header].toLocaleString()]
+                ? [header, entry[header].toLocaleString('us-PT')]
                 : [header, entry[header].toString()]
             ),
             [
