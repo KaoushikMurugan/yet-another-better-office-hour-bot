@@ -121,21 +121,18 @@ class QueueDisplayV2 {
             // temporary fix, do nothing if #queue doesn't exist
             return;
         }
-        const queueMessages = await this.queueChannel
+        const queueMessages = this.queueChannel
             .channelObj
             .messages
-            .fetch(undefined, { force: true });
-        const YABOBMessages = queueMessages.filter(msg =>
-            msg.author.id === this.user.id &&
-            msg.type !== 'REPLY' // filters out YABOB's replay to interactions
-        );
-        // If the channel doesn't have exactly all YABOB messages and the right amount, cleanup
-        const messageCountMatch =
-            YABOBMessages.size === queueMessages.size &&
-            queueMessages.size === this.queueChannelEmbeds.size;
-        const safeToEdit = messageCountMatch && YABOBMessages
-            .every(message => this.embedMessageIdMap
-                .some(id => id === message.id));
+            .cache;
+        const [YABOBMessages, nonYABOBMessages] =
+            queueMessages.partition(msg => msg.author.id === this.user.id);
+        const existingEmbeds = YABOBMessages
+            .filter(msg => this.embedMessageIdMap.some(id => id === msg.id));
+        // all required messages exist and there are no other messages
+        const safeToEdit =
+            existingEmbeds.size === this.queueChannelEmbeds.size &&
+            nonYABOBMessages.size === 0;
         if (!safeToEdit) {
             await Promise.all(
                 (await this.queueChannel
@@ -153,7 +150,7 @@ class QueueDisplayV2 {
             }
         } else {
             await Promise.all(this.queueChannelEmbeds.map(embed =>
-                YABOBMessages
+                existingEmbeds
                     .get(this.embedMessageIdMap.get(embed.renderIndex) ?? '')
                     ?.edit(embed.contents)
             ));
