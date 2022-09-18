@@ -30,7 +30,7 @@ class CalendarExtensionState {
         private readonly firebase_db?: Firestore
     ) { }
 
-    static async load(serverId: string, serverName: string): Promise<CalendarExtensionState> {
+    static async create(serverId: string, serverName: string): Promise<CalendarExtensionState> {
         if (
             firebaseCredentials.clientEmail === "" &&
             firebaseCredentials.privateKey === "" &&
@@ -54,7 +54,10 @@ class CalendarExtensionState {
 
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
-        await this.backupToFirebase();
+        await Promise.all([
+            this.backupToFirebase(),
+            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ].flat() as Promise<void>[]);
     }
 
     async updateNameDiscordIdMap(
@@ -62,7 +65,10 @@ class CalendarExtensionState {
         discordId: string
     ): Promise<void> {
         this.calendarNameDiscordIdMap.set(displayName, discordId);
-        await this.backupToFirebase();
+        await Promise.all([
+            this.backupToFirebase(),
+            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ].flat() as Promise<void>[]);
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {
@@ -114,5 +120,5 @@ class CalendarServerEventListener extends BaseServerExtension {
 // static, key is server id, value is 1 calendar extension state
 const serverIdCalendarStateMap = new Collection<string, CalendarExtensionState>();
 
-export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener};
+export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };
 

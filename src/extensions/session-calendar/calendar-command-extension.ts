@@ -43,7 +43,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     ): Promise<CalendarInteractionExtension> {
         serverIdCalendarStateMap.set(
             guild.id,
-            await CalendarExtensionState.load(guild.id, guild.name)
+            await CalendarExtensionState.create(guild.id, guild.name)
         );
         const instance = new CalendarInteractionExtension(guild);
         instance.serverMap = serverMap;
@@ -62,7 +62,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ['set_calendar', (interaction: CommandInteraction) =>
             this.updateCalendarId(interaction)],
         ['unset_calendar', (interaction: CommandInteraction) =>
-            this.unSetCalendarId(interaction)],
+            this.unsetCalendarId(interaction)],
         ['when_next', (interaction: CommandInteraction) =>
             this.listUpComingHours(interaction)],
         ['make_calendar_string', (interaction: CommandInteraction) =>
@@ -172,8 +172,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     /**
      * Updates the calendar id in the shared calendar extension states
-     * - triggers the queue level extensions to update
-     * 
+     * ----
+     * - Triggers the queue level extensions to update
     */
     private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
@@ -189,13 +189,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ['Bot Admin']
             )
         ]);
-        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
-        await Promise.all(
-            serverIdCalendarStateMap
-                .get(this.guild.id)
-                ?.listeners
-                .map(listener => listener.onCalendarExtensionStateChange()) ?? []
-        );
+        await serverIdCalendarStateMap
+            .get(this.guild.id)
+            ?.setCalendarId(newCalendarId);
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
@@ -206,26 +202,25 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
-    private async unSetCalendarId(interaction: CommandInteraction): Promise<string> {
+    /**
+     * Resets the calendar id to default
+     * ----
+     */
+    private async unsetCalendarId(interaction: CommandInteraction): Promise<string> {
         await isTriggeredByUserWithRoles(
             interaction,
             "unset_calendar",
             ['Bot Admin']
         );
-        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(calendarConfig.YABOB_DEFAULT_CALENDAR_ID);
-        await Promise.all(
-            serverIdCalendarStateMap
-                .get(this.guild.id)
-                ?.listeners
-                .map(listener => listener.onCalendarExtensionStateChange()) ?? []
-        );
+        await serverIdCalendarStateMap
+            .get(this.guild.id)
+            ?.setCalendarId(calendarConfig.YABOB_DEFAULT_CALENDAR_ID);
         return Promise.resolve(
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +
             `Or you can manually refresh it using the refresh button.`
         );
     }
-    
 
     /**
      * Builds the embed for /when_next
@@ -274,7 +269,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ['Bot Admin', 'Staff']
             )
         ]);
-        const calendarDisplayName = interaction.options.getString('your_name', true);
+        const calendarDisplayName = interaction.options.getString('calendar_name', true);
         const user = interaction.options.getUser('user', false);
 
         let validQueues: (CategoryChannel | Role)[] = [];
@@ -283,7 +278,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
             // if they are not admin or doesn't have the queue role, reject
             if (!memberRoles.cache
-                .some(role => role.name === 'Bot Admin') && 
+                .some(role => role.name === 'Bot Admin') &&
                 user.id !== interaction.user.id
             ) {
                 return Promise.reject(new CommandParseError(
@@ -332,8 +327,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 calendarDisplayName,
                 memberToUpdate.id
             );
-        await Promise.all(serverIdCalendarStateMap.get(this.guild.id)?.listeners
-            .map(listener => listener.onCalendarExtensionStateChange()) ?? []);
         return Promise.resolve(
             `Copy and paste the following into the calendar **description**:\n\n` +
             `YABOB_START ` +
