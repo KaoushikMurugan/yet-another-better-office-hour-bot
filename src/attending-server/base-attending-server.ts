@@ -153,11 +153,11 @@ class AttendingServerV2 {
                 extension.onServerInitSuccess(server),
                 extension.onServerPeriodicUpdate(server, true)
             ]).flat());
-        // Call onServerPeriodicUpdate every 15min +- 1 second
+        // Call onServerPeriodicUpdate every 15min +- 1min
         server.intervalID = setInterval(async () =>
             await Promise.all(serverExtensions
                 .map(extension => extension.onServerPeriodicUpdate(server, false)))
-            , 1000 * 60 * 15 + Math.floor(Math.random() * 1000)
+            , 1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
         );
         console.log(
             `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`

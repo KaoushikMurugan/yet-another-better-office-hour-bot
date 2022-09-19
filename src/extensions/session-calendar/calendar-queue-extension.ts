@@ -74,17 +74,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
         _queue: Readonly<HelpQueueV2>,
         isFirstCall: boolean
     ): Promise<void> {
-        const [serverId, queueName] = [
-            this.queueChannel.channelObj.guild.id,
-            this.queueChannel.queueName
-        ];
-        this.upcomingHours = await getUpComingTutoringEvents(
-            serverId,
-            queueName
-        );
         // avoid unnecessary render
         if (!isFirstCall) {
-            await this.renderCalendarEmbeds(false);
+            await this.renderCalendarEmbeds(true);
         }
     }
 

@@ -237,7 +237,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),
             "Active Time (ms)": entry.activeTimeMs,
             "Number of Students Helped": entry.helpedMembers.length,
-        });
+        }, { raw: true, insert: true });
     }
 
     /**
@@ -274,7 +274,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 'Session Time (ms)',
                 entry['Session End'].getTime() - entry['Session Start'].getTime()
             ]
-        ])));
+        ])), { raw: true, insert: true });
     }
 }
 
