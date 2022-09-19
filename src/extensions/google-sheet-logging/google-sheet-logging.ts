@@ -80,7 +80,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 ));
             });
         console.log(
-            `[${FgBlue}Attendance Extension${ResetColor}] ` +
+            `[${FgBlue}Google Sheet Logging${ResetColor}] ` +
             `successfully loaded for '${serverName}'!\n` +
             ` - Using this google sheet: ${googleSheet.title}`
         );

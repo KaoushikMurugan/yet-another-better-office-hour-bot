@@ -65,7 +65,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         serverIdCalendarStateMap.get(guild.id)!.calendarId = calendarConfig.YABOB_DEFAULT_CALENDAR_ID;
         console.log(
-            `[${FgBlue}Attendance Extension${ResetColor}] ` +
+            `[${FgBlue}Session Calendar${ResetColor}] ` +
             `successfully loaded for '${guild.name}'!\n` + 
             `- Using ${calendarName} as the default calendar`
         );

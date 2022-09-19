@@ -207,7 +207,7 @@ class CentralCommandDispatcher {
         ]);
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
-        return `You have started helping! Have Fun!`;
+        return `You have started helping! Have fun!`;
     }
 
     private async stop(interaction: CommandInteraction): Promise<string> {
