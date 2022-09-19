@@ -7,12 +7,10 @@ import { FgRed, ResetColor } from '../../utils/command-line-colors';
 import { serverIdCalendarStateMap } from './calendar-states';
 import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
-import calendarConfig from '../extension-credentials/calendar-config.json';
 import {
     getUpComingTutoringEvents,
-    checkCalendarConnection,
     UpComingSessionViewModel,
-    CalendarConnectionError
+    restorePublicEmbedURL
 } from './shared-calendar-functions';
 
 /**
@@ -41,22 +39,12 @@ class CalendarQueueExtension extends BaseQueueExtension {
         renderIndex: number,
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
-        if (calendarConfig.YABOB_DEFAULT_CALENDAR_ID.length === 0) {
-            return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Make sure you have Calendar ID ` +
-                `& API key in calendar-config.ts.${ResetColor}`
-            ));
-        }
         if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
             return Promise.reject(new ExtensionSetupError(
                 `${FgRed}The command level extension is required.${ResetColor}`
             ));
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
-        await checkCalendarConnection(calendarConfig.YABOB_DEFAULT_CALENDAR_ID)
-            .catch(() => Promise.reject(new CalendarConnectionError(
-                `The default calendar id is not valid.`
-            )));
         serverIdCalendarStateMap
             .get(queueChannel.channelObj.guild.id)
             ?.listeners
@@ -134,7 +122,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     : `There are no upcoming sessions for ${queueName} in the next 7 days.`
             )
             .setColor(EmbedColor.NoColor);
-
+        const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        if (calendarId !== undefined) {
+            upcomingHoursEmbed.addField(
+                `Full Calendar`,
+                `[Link](${restorePublicEmbedURL(calendarId)})`,
+                false
+            );
+        }
         const refreshButton = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -143,7 +138,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     .setLabel("Refresh Upcoming Hours")
                     .setStyle("PRIMARY")
             );
-
         await this.display?.requestNonQueueEmbedRender(
             {
                 embeds: [upcomingHoursEmbed],

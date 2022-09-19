@@ -8,6 +8,7 @@ import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError,
+    ExtensionSetupError,
     UserViewableError
 } from "../../utils/error-types";
 import { CommandData } from '../../command-handling/slash-commands';
@@ -19,7 +20,7 @@ import {
     checkCalendarConnection,
     getUpComingTutoringEvents,
 } from './shared-calendar-functions';
-import { FgCyan, FgYellow, ResetColor } from "../../utils/command-line-colors";
+import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from "../../utils/command-line-colors";
 import { calendarCommands } from './calendar-slash-commands';
 
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
@@ -41,6 +42,17 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         guild: Guild,
         serverMap: Collection<string, AttendingServerV2>
     ): Promise<CalendarInteractionExtension> {
+        if (calendarConfig.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
+            calendarConfig.YABOB_GOOGLE_API_KEY.length === 0) {
+            return Promise.reject(new ExtensionSetupError(
+                `${FgRed}Make sure you have Calendar ID ` +
+                `& API key in calendar-config.json.${ResetColor}`
+            ));
+        }
+        const calendarName = await checkCalendarConnection(calendarConfig.YABOB_DEFAULT_CALENDAR_ID)
+            .catch(() => Promise.reject(new CalendarConnectionError(
+                `The default calendar id is not valid.`
+            )));
         serverIdCalendarStateMap.set(
             guild.id,
             await CalendarExtensionState.create(guild.id, guild.name)
@@ -49,6 +61,14 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         instance.serverMap = serverMap;
         appendCalendarHelpEmbeds(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
+        // set was just called, so it's safe
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        serverIdCalendarStateMap.get(guild.id)!.calendarId = calendarConfig.YABOB_DEFAULT_CALENDAR_ID;
+        console.log(
+            `[${FgBlue}Attendance Extension${ResetColor}] ` +
+            `successfully loaded for '${guild.name}'!\n` + 
+            `- Using ${calendarName} as the default calendar`
+        );
         return instance;
     }
 
