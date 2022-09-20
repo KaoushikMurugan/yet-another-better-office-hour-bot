@@ -29,7 +29,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             serverName
         );
         console.log(
-            `[${FgBlue}Firebase Logging Extension${ResetColor}] ` +
+            `[${FgBlue}Firebase Backup${ResetColor}] ` +
             `successfully loaded for '${serverName}'!`
         );
         return instance;

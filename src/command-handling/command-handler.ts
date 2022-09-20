@@ -68,14 +68,14 @@ class CentralCommandDispatcher {
     */
     async process(interaction: CommandInteraction): Promise<void> {
         // Immediately replay to show that YABOB has received the interaction
+        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
                 EmbedColor.Neutral
             )
-        });
+        }).catch(logEditFailure);
         // Check the hashmap to see if the command exists as a key
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {
             console.log(
@@ -188,7 +188,7 @@ class CentralCommandDispatcher {
         ]);
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
-        return `You have started helping! Have Fun!`;
+        return `You have started helping! Have fun!`;
     }
 
     private async stop(interaction: CommandInteraction): Promise<string> {

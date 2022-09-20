@@ -177,11 +177,18 @@ function buildCalendarURL(args: {
         + `&singleEvents=true`;
 }
 
+function restorePublicEmbedURL(calendarId: string): string {
+    const actualId = calendarId.split('@')[0];
+    return `https://calendar.google.com/calendar/embed?src=${actualId}%40group.calendar.google.com&ctz=America%2FLos_Angeles`;
+}
+
+
 export {
     getUpComingTutoringEvents,
     composeViewModel,
     buildCalendarURL,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    CalendarConnectionError
+    CalendarConnectionError,
+    restorePublicEmbedURL
 };

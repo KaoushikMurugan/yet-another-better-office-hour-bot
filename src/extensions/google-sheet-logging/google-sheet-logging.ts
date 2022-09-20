@@ -80,7 +80,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 ));
             });
         console.log(
-            `[${FgBlue}Attendance Extension${ResetColor}] ` +
+            `[${FgBlue}Google Sheet Logging${ResetColor}] ` +
             `successfully loaded for '${serverName}'!\n` +
             ` - Using this google sheet: ${googleSheet.title}`
         );
@@ -218,26 +218,39 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await attendanceSheet.loadHeaderRow();
-        if (!attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+        if (attendanceSheet.headerValues === undefined ||
+            attendanceSheet.headerValues.length !== requiredHeaders.length ||
+            !attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+            console.log('set');
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
-        await attendanceSheet.addRow({
-            "Helper Username": entry.member.user.username,
-            "Time In": entry.helpStart.toLocaleString('us-PT'),
-            "Time Out": entry.helpEnd.toLocaleString('us-PT'),
-            "Helped Students": JSON.stringify(entry.helpedMembers
-                .map(student => new Object({
-                    displayName: student.member.displayName,
-                    username: student.member.user.username,
-                    id: student.member.id,
-                }))),
-            "Discord ID": entry.member.id,
-            "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),
-            "Active Time (ms)": entry.activeTimeMs,
-            "Number of Students Helped": entry.helpedMembers.length,
-        });
+
+        // Fire the promise then forget, if an exception comes back just log it to the console
+        void Promise.all([
+            attendanceSheet.addRow(
+                {
+                    "Helper Username": entry.member.user.username,
+                    "Time In": entry.helpStart.toLocaleString('us-PT'),
+                    "Time Out": entry.helpEnd.toLocaleString('us-PT'),
+                    "Helped Students": JSON.stringify(entry.helpedMembers
+                        .map(student => new Object({
+                            displayName: student.member.displayName,
+                            username: student.member.user.username,
+                            id: student.member.id,
+                        }))),
+                    "Discord ID": entry.member.id,
+                    "Session Time (ms)": (entry.helpEnd.getTime()) -
+                        (entry.helpStart.getTime()),
+                    "Active Time (ms)": entry.activeTimeMs,
+                    "Number of Students Helped": entry.helpedMembers.length,
+                },
+                {
+                    raw: true,
+                    insert: true
+                }),
+            attendanceSheet.loadHeaderRow()
+        ]).catch((err: Error) => console.error(err.name, err.message));
     }
 
     /**
@@ -259,22 +272,27 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 headerValues: requiredHeaders
             });
 
-        await helpSessionSheet.loadHeaderRow();
-        if (!helpSessionSheet.headerValues.every(header =>
-            [...requiredHeaders, 'Session Time (ms)'].includes(header))
+        if (helpSessionSheet.headerValues === undefined ||
+            helpSessionSheet.headerValues.length !== [...requiredHeaders, 'Session Time (ms)'].length ||
+            !helpSessionSheet.headerValues.every(header =>
+                [...requiredHeaders, 'Session Time (ms)'].includes(header))
         ) {
+            console.log('set');
             await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
         }
-        await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
-            ...requiredHeaders.map(header => entry[header] instanceof Date
-                ? [header, entry[header].toLocaleString('us-PT')]
-                : [header, entry[header].toString()]
-            ),
-            [
-                'Session Time (ms)',
-                entry['Session End'].getTime() - entry['Session Start'].getTime()
-            ]
-        ])));
+        void Promise.all([
+            helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
+                ...requiredHeaders.map(header => entry[header] instanceof Date
+                    ? [header, entry[header].toLocaleString('us-PT')]
+                    : [header, entry[header].toString()]
+                ),
+                [
+                    'Session Time (ms)',
+                    entry['Session End'].getTime() - entry['Session Start'].getTime()
+                ]
+            ])), { raw: true, insert: true }),
+            helpSessionSheet.loadHeaderRow()
+        ]).catch((err: Error) => console.error(err.name, err.message));
     }
 }
 

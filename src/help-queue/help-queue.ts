@@ -138,8 +138,8 @@ class HelpQueueV2 {
         queue.intervalID = setInterval(async () => {
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue, false)
-            )); // Random offset to avoid spamming the APIs
-        }, (1000 * 60 * 10) + Math.floor(Math.random() * 1000));
+            )); // Random 0~2min offset to avoid spamming the APIs
+        }, (1000 * 60 * 10) + Math.floor(Math.random() * 1000 * 60 * 2));
         return queue;
     }
 
