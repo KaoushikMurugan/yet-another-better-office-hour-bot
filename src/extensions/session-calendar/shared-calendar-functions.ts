@@ -182,8 +182,7 @@ function buildCalendarURL(args: {
 }
 
 function restorePublicEmbedURL(calendarId: string): string {
-    const actualId = calendarId.split('@')[0];
-    return `https://calendar.google.com/calendar/embed?src=${actualId}%40group.calendar.google.com&ctz=America%2FLos_Angeles`;
+    return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
 }
 
 
