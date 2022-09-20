@@ -54,7 +54,6 @@ class CentralCommandDispatcher {
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
     ]);
-    lastStartOrStopTimestamp = new Date();
 
     // key is Guild.id, same as servers map from app.ts
     constructor(public serverMap: Map<string, AttendingServerV2>) { }
@@ -76,24 +75,6 @@ class CentralCommandDispatcher {
                 EmbedColor.Neutral
             )
         }).catch(logEditFailure);
-        if (interaction.commandName === 'start' || interaction.commandName === 'stop') {
-            const timeDelta = (new Date()).getTime() - this.lastStartOrStopTimestamp.getTime();
-            console.log(timeDelta);
-            if (timeDelta <= 1000 * 90) {
-                await interaction.editReply(
-                    SimpleEmbed(
-                        `A lot of helpers are using \`/start\` and \`/stop\` right now, ` +
-                        `so this command might take up to 30 seconds to finish. ` +
-                        `Please wait...`,
-                        EmbedColor.Neutral,
-                        `We are monitoring this issue here: ` +
-                        `[Github Issue](https://github.com/KaoushikMurugan/YABOB/issues/40)`
-                    )
-                ).catch(logEditFailure);
-            } else {
-                this.lastStartOrStopTimestamp = new Date();
-            }
-        }
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod !== undefined) {

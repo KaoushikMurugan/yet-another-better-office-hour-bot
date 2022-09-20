@@ -2,7 +2,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Helpee, Helper } from "../../models/member-states";
 import { BaseServerExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
-import { FgBlue, FgMagenta, FgRed, ResetColor } from "../../utils/command-line-colors";
+import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
@@ -221,6 +221,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (attendanceSheet.headerValues === undefined ||
             attendanceSheet.headerValues.length !== requiredHeaders.length ||
             !attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+            console.log('set');
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
@@ -271,22 +272,27 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 headerValues: requiredHeaders
             });
 
-        await helpSessionSheet.loadHeaderRow();
-        if (!helpSessionSheet.headerValues.every(header =>
-            [...requiredHeaders, 'Session Time (ms)'].includes(header))
+        if (helpSessionSheet.headerValues === undefined ||
+            helpSessionSheet.headerValues.length !== [...requiredHeaders, 'Session Time (ms)'].length ||
+            !helpSessionSheet.headerValues.every(header =>
+                [...requiredHeaders, 'Session Time (ms)'].includes(header))
         ) {
+            console.log('set');
             await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
         }
-        await helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
-            ...requiredHeaders.map(header => entry[header] instanceof Date
-                ? [header, entry[header].toLocaleString('us-PT')]
-                : [header, entry[header].toString()]
-            ),
-            [
-                'Session Time (ms)',
-                entry['Session End'].getTime() - entry['Session Start'].getTime()
-            ]
-        ])), { raw: true, insert: true });
+        void Promise.all([
+            helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
+                ...requiredHeaders.map(header => entry[header] instanceof Date
+                    ? [header, entry[header].toLocaleString('us-PT')]
+                    : [header, entry[header].toString()]
+                ),
+                [
+                    'Session Time (ms)',
+                    entry['Session End'].getTime() - entry['Session Start'].getTime()
+                ]
+            ])), { raw: true, insert: true }),
+            helpSessionSheet.loadHeaderRow()
+        ]).catch((err: Error) => console.error(err.name, err.message));
     }
 }
 
