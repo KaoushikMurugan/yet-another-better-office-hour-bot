@@ -2,7 +2,7 @@ import { GoogleSpreadsheet } from "google-spreadsheet";
 import { Helpee, Helper } from "../../models/member-states";
 import { BaseServerExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
-import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
+import { FgBlue, FgMagenta, FgRed, ResetColor } from "../../utils/command-line-colors";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
@@ -218,26 +218,38 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-        await attendanceSheet.loadHeaderRow();
-        if (!attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
+        if (attendanceSheet.headerValues === undefined ||
+            attendanceSheet.headerValues.length !== requiredHeaders.length ||
+            !attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
-        await attendanceSheet.addRow({
-            "Helper Username": entry.member.user.username,
-            "Time In": entry.helpStart.toLocaleString('us-PT'),
-            "Time Out": entry.helpEnd.toLocaleString('us-PT'),
-            "Helped Students": JSON.stringify(entry.helpedMembers
-                .map(student => new Object({
-                    displayName: student.member.displayName,
-                    username: student.member.user.username,
-                    id: student.member.id,
-                }))),
-            "Discord ID": entry.member.id,
-            "Session Time (ms)": (entry.helpEnd.getTime()) - (entry.helpStart.getTime()),
-            "Active Time (ms)": entry.activeTimeMs,
-            "Number of Students Helped": entry.helpedMembers.length,
-        }, { raw: true, insert: true });
+
+        // Fire the promise then forget, if an exception comes back just log it to the console
+        void Promise.all([
+            attendanceSheet.addRow(
+                {
+                    "Helper Username": entry.member.user.username,
+                    "Time In": entry.helpStart.toLocaleString('us-PT'),
+                    "Time Out": entry.helpEnd.toLocaleString('us-PT'),
+                    "Helped Students": JSON.stringify(entry.helpedMembers
+                        .map(student => new Object({
+                            displayName: student.member.displayName,
+                            username: student.member.user.username,
+                            id: student.member.id,
+                        }))),
+                    "Discord ID": entry.member.id,
+                    "Session Time (ms)": (entry.helpEnd.getTime()) -
+                        (entry.helpStart.getTime()),
+                    "Active Time (ms)": entry.activeTimeMs,
+                    "Number of Students Helped": entry.helpedMembers.length,
+                },
+                {
+                    raw: true,
+                    insert: true
+                }),
+            attendanceSheet.loadHeaderRow()
+        ]).catch((err: Error) => console.error(err.name, err.message));
     }
 
     /**
