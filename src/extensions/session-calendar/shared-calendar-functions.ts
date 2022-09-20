@@ -40,7 +40,8 @@ async function getUpComingTutoringEvents(
         calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
         apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
-        timeMax: nextWeek
+        timeMax: nextWeek,
+        maxResults: 10
     });
     const response = await axios.get(calendarUrl);
     if (response.status !== 200) {
@@ -95,7 +96,8 @@ async function checkCalendarConnection(
         calendarId: newCalendarId,
         timeMin: new Date(),
         timeMax: nextWeek,
-        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY
+        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
+        maxResults: 2
     });
     const response = await axios.get(calendarUrl);
     if (response.status !== 200) {
@@ -169,11 +171,13 @@ function buildCalendarURL(args: {
     apiKey: string,
     timeMin: Date,
     timeMax: Date,
+    maxResults: number
 }): string {
     return `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?`
         + `&key=${args.apiKey}`
         + `&timeMax=${args.timeMax.toISOString()}`
         + `&timeMin=${args.timeMin.toISOString()}`
+        + `&maxResults=${args.maxResults.toString()}`
         + `&singleEvents=true`;
 }
 

@@ -221,7 +221,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (attendanceSheet.headerValues === undefined ||
             attendanceSheet.headerValues.length !== requiredHeaders.length ||
             !attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))) {
-            console.log('set');
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
@@ -277,7 +276,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             !helpSessionSheet.headerValues.every(header =>
                 [...requiredHeaders, 'Session Time (ms)'].includes(header))
         ) {
-            console.log('set');
             await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
         }
         void Promise.all([

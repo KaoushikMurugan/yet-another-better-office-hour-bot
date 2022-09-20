@@ -36,7 +36,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         private readonly guild: Guild
     ) { super(); }
 
-    static helpEmbedsSent = false;
+    private static helpEmbedsSent = false;
 
     static async load(
         guild: Guild,
@@ -61,9 +61,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         instance.serverMap = serverMap;
         appendCalendarHelpEmbeds(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
-        // set was just called, so it's safe
-        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        serverIdCalendarStateMap.get(guild.id)!.calendarId = calendarConfig.YABOB_DEFAULT_CALENDAR_ID;
         console.log(
             `[${FgBlue}Session Calendar${ResetColor}] ` +
             `successfully loaded for '${guild.name}'!\n` + 

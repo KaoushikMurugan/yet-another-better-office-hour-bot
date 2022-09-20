@@ -56,16 +56,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
      * ----
-     * @param isFirstCall, don't render on initial call, wait for onQueueRender
     */
     override async onQueuePeriodicUpdate(
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _queue: Readonly<HelpQueueV2>,
-        isFirstCall: boolean
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        _isFirstCall: boolean
     ): Promise<void> {
-        // avoid unnecessary render
-        if (!isFirstCall) {
-            await this.renderCalendarEmbeds(true);
-        }
+        await this.renderCalendarEmbeds(true);
     }
 
     /**
@@ -106,10 +104,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingHours;
         const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
-        const calendar_link_text = calendarId 
-            ? `\n\n[Click here to view to the full calendar](${restorePublicEmbedURL(calendarId)})` 
+        const calendarLinkText = calendarId !== undefined
+            ? `\n\n[Click here to view to the full calendar](${restorePublicEmbedURL(calendarId)}) ` +
+            `\nThis embed shows up to 10 most recent upcoming hours.`
             : ``;
-
         const upcomingHoursEmbed = new MessageEmbed()
             .setTitle(`Upcoming Hours for ${queueName}`)
             .setDescription(
@@ -123,11 +121,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
                             `**${viewModel.eventSummary}**\n` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                        .join('\n') + calendar_link_text
-                    : `There are no upcoming sessions for ${queueName} in the next 7 days.` + calendar_link_text
+                        .join('\n') + calendarLinkText
+                    : `There are no upcoming sessions for ${queueName} in the next 7 days.` + calendarLinkText
             )
             .setColor(EmbedColor.NoColor);
-        
         const refreshButton = new MessageActionRow()
             .addComponents(
                 new MessageButton()
