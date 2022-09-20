@@ -8,6 +8,7 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
 import attendanceConfig from '../extension-credentials/google-sheet-config.json';
 import { Collection, GuildMember, VoiceChannel } from "discord.js";
+import { GuildMemberId } from "../../utils/type-aliases";
 
 /**
  * Attendance entry for each helper
@@ -51,11 +52,11 @@ class AttendanceError extends Error {
 class GoogleSheetLoggingExtension extends BaseServerExtension {
     // Credit of all the update logic goes to Kaoushik
     // key is student member.id, value is corresponding helpee object
-    private studentsJustDequeued: Collection<string, Helpee> = new Collection();
+    private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     // key is helper member.id, value is entry for this helper
-    private attendanceEntries: Collection<string, AttendanceEntry> = new Collection();
+    private attendanceEntries: Collection<GuildMemberId, AttendanceEntry> = new Collection();
     // key is student member.id, value is an array of entries to handle multiple helpers
-    private helpSessionEntries: Collection<string, HelpSessionEntry[]> = new Collection();
+    private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> = new Collection();
 
     constructor(
         private serverName: string,

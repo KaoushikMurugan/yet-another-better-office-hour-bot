@@ -7,6 +7,7 @@ import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
+import { GuildMemberId } from '../utils/type-aliases';
 
 type QueueViewModel = {
     queueName: string;
@@ -23,7 +24,7 @@ class HelpQueueV2 {
     private helperIds: Set<string> = new Set();
     private students: Helpee[] = [];
     // Key is Guildmember.id
-    private notifGroup: Collection<string, GuildMember> = new Collection();
+    private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
     private isOpen = false;
 
     /**

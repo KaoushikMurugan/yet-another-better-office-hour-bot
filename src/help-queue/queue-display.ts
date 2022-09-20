@@ -11,6 +11,7 @@ import {
     User
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper';
+import { RenderIndex, MessageId } from '../utils/type-aliases';
 
 // The only responsibility is to interface with the ascii table
 class QueueDisplayV2 {
@@ -22,16 +23,16 @@ class QueueDisplayV2 {
      * - acts like a graphics card memory
     */
     private queueChannelEmbeds: Collection<
-        number,
+        RenderIndex,
         {
             contents: Pick<MessageOptions, 'embeds' | 'components'>,
-            renderIndex: number
+            renderIndex: RenderIndex
         }
     > = new Collection();
     // key is renderIndex, value is message id
     // - binds the render index with a specific message
     // - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
-    private embedMessageIdMap: Collection<number, string> = new Collection();
+    private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
 
     /**
      * lock the render method during render

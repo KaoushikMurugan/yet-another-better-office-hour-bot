@@ -21,6 +21,7 @@ import {
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
 import { convertMsToTime } from "../utils/util-functions";
+import { CategoryChannelId, GuildMemberId } from "../utils/type-aliases";
 
 
 // Wrapper for TextChannel
@@ -28,7 +29,7 @@ import { convertMsToTime } from "../utils/util-functions";
 type QueueChannel = {
     channelObj: TextChannel;
     queueName: string;
-    parentCategoryId: string;
+    parentCategoryId: CategoryChannelId;
 };
 
 /**
@@ -42,13 +43,13 @@ class AttendingServerV2 {
     // late init, used for clearAllIntervals only
     intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
-    afterSessionMessage = "";
+    afterSessionMessage = '';
     // Key is CategoryChannel.id of the parent catgory of #queue
-    private queues: Collection<string, HelpQueueV2> = new Collection();
+    private queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
     // unique active helpers, key is member.id
-    private activeHelpers: Collection<string, Helper> = new Collection();
+    private activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
     protected constructor(
         readonly user: User,

@@ -14,6 +14,7 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
+import { GuildId } from "../utils/type-aliases";
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -56,7 +57,7 @@ class CentralCommandDispatcher {
     ]);
 
     // key is Guild.id, same as servers map from app.ts
-    constructor(public serverMap: Map<string, AttendingServerV2>) { }
+    constructor(public serverMap: Map<GuildId, AttendingServerV2>) { }
 
     /**
      * Main processor for command interactions

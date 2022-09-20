@@ -11,6 +11,7 @@ import { AttendingServerV2 } from "../../attending-server/base-attending-server"
 
 import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
 import calendarConfig from '../extension-credentials/calendar-config.json';
+import { GuildId } from "../../utils/type-aliases";
 
 type CalendarConfigBackup = {
     calendarId: string;
@@ -117,8 +118,8 @@ class CalendarServerEventListener extends BaseServerExtension {
     }
 }
 
-// static, key is server id, value is 1 calendar extension state
-const serverIdCalendarStateMap = new Collection<string, CalendarExtensionState>();
+// static, key is guild id, value is 1 calendar extension state
+const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
 
 export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };
 

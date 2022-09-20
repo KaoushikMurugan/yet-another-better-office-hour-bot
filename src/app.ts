@@ -11,6 +11,7 @@ import { postSlashCommands } from "./command-handling/slash-commands";
 import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from "./extensions/extension-interface";
+import { GuildId } from "./utils/type-aliases";
 
 dotenv.config();
 console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
@@ -42,8 +43,8 @@ const client = new Client({
 });
 
 // key is Guild.id
-const serversV2: Collection<string, AttendingServerV2> = new Collection();
-const interactionExtensions: Collection<string, IInteractionExtension[]> = new Collection();
+const serversV2: Collection<GuildId, AttendingServerV2> = new Collection();
+const interactionExtensions: Collection<GuildId, IInteractionExtension[]> = new Collection();
 const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
 const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
 
