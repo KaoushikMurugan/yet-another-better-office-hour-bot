@@ -105,6 +105,11 @@ class CalendarQueueExtension extends BaseQueueExtension {
         this.upcomingHours = refresh
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingHours;
+        const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        const calendar_link_text = calendarId 
+            ? `\n\n[Click here to view to the full calendar](${restorePublicEmbedURL(calendarId)})` 
+            : ``;
+
         const upcomingHoursEmbed = new MessageEmbed()
             .setTitle(`Upcoming Hours for ${queueName}`)
             .setDescription(
@@ -118,18 +123,11 @@ class CalendarQueueExtension extends BaseQueueExtension {
                             `**${viewModel.eventSummary}**\n` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                        .join('\n')
-                    : `There are no upcoming sessions for ${queueName} in the next 7 days.`
+                        .join('\n') + calendar_link_text
+                    : `There are no upcoming sessions for ${queueName} in the next 7 days.` + calendar_link_text
             )
             .setColor(EmbedColor.NoColor);
-        const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
-        if (calendarId !== undefined) {
-            upcomingHoursEmbed.addField(
-                `Full Calendar`,
-                `[Link](${restorePublicEmbedURL(calendarId)})`,
-                false
-            );
-        }
+        
         const refreshButton = new MessageActionRow()
             .addComponents(
                 new MessageButton()

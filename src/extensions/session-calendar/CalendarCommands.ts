@@ -58,13 +58,14 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar summary (aka title) that the bot will recognize for the queues you specify',
+                        value: 'Generates a calendar string to put in the event description that the bot will recognize for the queues you specify',
                         inline: false
                     },
                     {
                         name: 'Options',
                         value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
-                `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: The user you want to change the calendar string for (Bot Admin only)`",
+                `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
+                The user you want to change the calendar string for (Bot Admin only)",
                         inline: true
                     },
                     {
@@ -83,13 +84,13 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar summary (aka title) that the bot will recognize for all the queues you are approved for.',
+                        value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
                         inline: false
                     },
                     {
                         name: 'Options',
                         value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                        \n`user: The user you want to change the calendar string for (Bot Admin only)`",
+                        \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
                         inline: true
                     },
                     {
