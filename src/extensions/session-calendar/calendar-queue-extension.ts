@@ -21,7 +21,7 @@ import {
 */
 class CalendarQueueExtension extends BaseQueueExtension {
 
-    private upcomingHours: UpComingSessionViewModel[] = [];
+    private upcomingSessions: UpComingSessionViewModel[] = [];
     private display?: Readonly<QueueDisplayV2>;
 
     private constructor(
@@ -95,24 +95,26 @@ class CalendarQueueExtension extends BaseQueueExtension {
         await this.renderCalendarEmbeds(true);
     }
 
+    /**
+     * Composes the calendar embed and sends a render request to the display
+     * ----
+     * @param refresh whether to refresh the upcomingSessions cache
+    */
     private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
         ];
-        this.upcomingHours = refresh
+        this.upcomingSessions = refresh
             ? await getUpComingTutoringEvents(serverId, queueName)
-            : this.upcomingHours;
+            : this.upcomingSessions;
         const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
-        const calendarLinkText = calendarId !== undefined
-            ? `\n\n[Click here to view to the full calendar](${restorePublicEmbedURL(calendarId)}) ` +
-            `\nThis embed shows up to 10 most recent upcoming hours.`
-            : ``;
-        const upcomingHoursEmbed = new MessageEmbed()
-            .setTitle(`Upcoming Hours for ${queueName}`)
+        const upcomingSessionsEmbed = new MessageEmbed()
+            .setTitle(`Upcoming Sessions for ${queueName}`)
+            .setURL(restorePublicEmbedURL(calendarId ?? ''))
             .setDescription(
-                this.upcomingHours.length > 0
-                    ? this.upcomingHours
+                this.upcomingSessions.length > 0
+                    ? this.upcomingSessions
                         .map(viewModel =>
                             `**${viewModel.discordId !== undefined
                                 ? `<@${viewModel.discordId}>`
@@ -121,21 +123,25 @@ class CalendarQueueExtension extends BaseQueueExtension {
                             `**${viewModel.eventSummary}**\n` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
                             `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                        .join('\n') + calendarLinkText
-                    : `There are no upcoming sessions for ${queueName} in the next 7 days.` + calendarLinkText
+                        .join('\n')
+                    : `There are no upcoming sessions for ${queueName} in the next 7 days.`
             )
-            .setColor(EmbedColor.NoColor);
+            .setColor(EmbedColor.NoColor)
+            .setFooter({
+                text: `This embed shows up to 10 most recent upcoming sessions. Click the title to see the full calendar.`,
+                iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
+            });
         const refreshButton = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("refresh " + queueName)
+                    .setCustomId('refresh ' + queueName)
                     .setEmoji("🔄")
-                    .setLabel("Refresh Upcoming Hours")
+                    .setLabel("Refresh Upcoming Sessions")
                     .setStyle("PRIMARY")
             );
         await this.display?.requestNonQueueEmbedRender(
             {
-                embeds: [upcomingHoursEmbed],
+                embeds: [upcomingSessionsEmbed],
                 components: [refreshButton]
             },
             this.renderIndex
