@@ -1,4 +1,8 @@
 {
+    "discordBotCredentials": {
+        "YABOB_APP_ID": "",
+        "YABOB_BOT_TOKEN": ""
+    },
     "googleSheetLogging": {
         "YABOB_GOOGLE_SHEET_ID": ""
     },

@@ -13,8 +13,8 @@ import { IInteractionExtension } from "./extensions/extension-interface";
 import { GuildId } from "./utils/type-aliases";
 import environment from './environment/environment-manager';
 
-if (process.env.YABOB_BOT_TOKEN === undefined ||
-    process.env.YABOB_APP_ID === undefined
+if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
+    environment.discordBotCredentials.YABOB_APP_ID.length === 0
 ) {
     throw new Error("Missing token or bot ID. Aborting setup.");
 }
@@ -41,7 +41,7 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> = new 
 const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
 const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
 
-client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
+client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
     throw err;
 });
