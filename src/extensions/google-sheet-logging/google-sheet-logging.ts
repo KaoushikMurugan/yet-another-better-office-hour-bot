@@ -4,11 +4,10 @@ import { BaseServerExtension } from "../extension-interface";
 import { ExtensionSetupError } from '../../utils/error-types';
 import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-
-import gcsCreds from "../extension-credentials/gcs_service_account_key.json";
-import attendanceConfig from '../extension-credentials/google-sheet-config.json';
 import { Collection, GuildMember, VoiceChannel } from "discord.js";
 import { GuildMemberId } from "../../utils/type-aliases";
+
+import environment from '../../environment/environment-manager';
 
 /**
  * Attendance entry for each helper
@@ -64,15 +63,13 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     ) { super(); }
 
     static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
-        if (attendanceConfig.YABOB_GOOGLE_SHEET_ID.length === 0) {
+        if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             return Promise.reject(new ExtensionSetupError(
-                `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n` +
-                ` - Make sure you have the google sheets id in attendance-config.ts ` +
-                ` and Google Cloud credentials in gcs_service_account_key.json`
+                `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n`
             ));
         }
-        const googleSheet = new GoogleSpreadsheet(attendanceConfig.YABOB_GOOGLE_SHEET_ID);
-        await googleSheet.useServiceAccountAuth(gcsCreds);
+        const googleSheet = new GoogleSpreadsheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID);
+        await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
         await googleSheet.loadInfo()
             .catch(() => {
                 return Promise.reject(new ExtensionSetupError(

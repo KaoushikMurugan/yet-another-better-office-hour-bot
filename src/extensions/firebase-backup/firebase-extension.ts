@@ -2,10 +2,11 @@ import { BaseServerExtension } from "../extension-interface";
 import { Firestore } from "firebase-admin/firestore";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
-import firebaseCredentials from "../extension-credentials/fbs_service_account_key.json";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { QueueBackup, ServerBackup } from "./firebase-models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
+
+import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -20,7 +21,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     ): Promise<FirebaseServerBackupExtension> {
         if (getApps().length === 0) {
             initializeApp({
-                credential: cert(firebaseCredentials)
+                credential: cert(environment.firebaseCredentials)
             });
         }
         const instance = new FirebaseServerBackupExtension(

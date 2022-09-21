@@ -1,7 +1,7 @@
 import { calendar_v3 } from "googleapis";
 import { serverIdCalendarStateMap } from "./calendar-states";
 import axios from 'axios';
-import calendarConfig from '../extension-credentials/calendar-config.json';
+import environment from '../../environment/environment-manager';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -39,7 +39,7 @@ async function getUpComingTutoringEvents(
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
         calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
-        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
+        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
         maxResults: 10
@@ -105,7 +105,7 @@ async function checkCalendarConnection(
         calendarId: newCalendarId,
         timeMin: new Date(),
         timeMax: nextWeek,
-        apiKey: calendarConfig.YABOB_GOOGLE_API_KEY,
+        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         maxResults: 2
     });
     const response = await axios.get(calendarUrl);
