@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { Client, Guild, Intents, Collection } from "discord.js";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
@@ -12,13 +11,7 @@ import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from "./extensions/extension-interface";
 import { GuildId } from "./utils/type-aliases";
-
-dotenv.config();
-console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
-
-if (process.env.NODE_ENV === 'Production') {
-    process.removeAllListeners('warning');
-}
+import environment from './environment/environment-manager';
 
 if (process.env.YABOB_BOT_TOKEN === undefined ||
     process.env.YABOB_APP_ID === undefined
@@ -26,7 +19,7 @@ if (process.env.YABOB_BOT_TOKEN === undefined ||
     throw new Error("Missing token or bot ID. Aborting setup.");
 }
 
-if (process.argv.slice(2)[0]?.split('=')[1] === 'true') {
+if (environment.disableExtensions) {
     console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
 }
 
@@ -228,8 +221,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
 
-    const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-    if (!disableExtension) {
+    if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
             await Promise.all([

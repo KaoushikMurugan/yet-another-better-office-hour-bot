@@ -23,6 +23,7 @@ import {
 import { convertMsToTime } from "../utils/util-functions";
 import { CategoryChannelId, GuildMemberId } from "../utils/type-aliases";
 
+import environment from '../environment/environment-manager';
 
 // Wrapper for TextChannel
 // Guarantees that a queueName and parentCategoryId exists
@@ -107,8 +108,7 @@ class AttendingServerV2 {
             return Promise.reject(Error("YABOB doesn't have highest role."));
         }
         // Load ServerExtensions here
-        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-        const serverExtensions: IServerExtension[] = disableExtensions
+        const serverExtensions: IServerExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                 GoogleSheetLoggingExtension.load(guild.name),
@@ -117,7 +117,7 @@ class AttendingServerV2 {
             ]);
         // Retrieve backup from all sources. Take the first one that's not undefined 
         // Change behavior here depending on backup strategy
-        const externalBackup = disableExtensions
+        const externalBackup = environment.disableExtensions
             ? undefined
             : await Promise.all(serverExtensions.map(
                 extension => extension.loadExternalServerData(guild.id)
@@ -700,7 +700,7 @@ class AttendingServerV2 {
         } else {
             console.log(
                 `${FgYellow}Found existing help channels in ${this.guild.name}, ` +
-                ` updating command help files${ResetColor}`
+                `updating command help files${ResetColor}.`
             );
         }
         await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
@@ -740,9 +740,8 @@ class AttendingServerV2 {
                         backup.parentCategoryId === channel.parentCategoryId)
                 )))
         );
-        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
         console.log(`All queues in '${this.guild.name}' successfully created` +
-            `${disableExtensions
+            `${environment.disableExtensions
                 ? ''
                 : ` ${FgBlue}with their extensions${ResetColor}`}!`
         );
