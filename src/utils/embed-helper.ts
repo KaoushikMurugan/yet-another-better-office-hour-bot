@@ -14,7 +14,7 @@ export enum EmbedColor {
     Warning = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8, // Aqua
-    Purple1 = 0xa6a5c4,
+    Purple = 0xa6a5c4,
 }
 
 export function SimpleEmbed(
@@ -77,7 +77,7 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
             timestamp: new Date(),
             description: `If you need help or think this is a mistake, `
                 + `please post a screenshot of this message in the #help channel `
-                + `and ping @Officers.`,
+                + `and ping @Bot Admin.`,
             author: {
                 name: 'YABOB',
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'

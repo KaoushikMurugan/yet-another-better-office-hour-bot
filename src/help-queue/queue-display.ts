@@ -50,10 +50,10 @@ class QueueDisplayV2 {
         const embedTableMsg = new MessageEmbed();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
-                ? "**OPEN**\t (ﾟ∀ﾟ )"
-                : "**CLOSED**\t 😴"}`)
+                ? '**OPEN**\t(ﾟ∀ﾟ )'
+                : '**CLOSED**\t◦<(¦3[___]'}`)
             .setDescription(this.composeQueueAsciiTable(queue))
-            .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple1);
+            .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
@@ -91,7 +91,8 @@ class QueueDisplayV2 {
             const helperList = new MessageEmbed();
             helperList
                 .setTitle(`Currently available helpers`)
-                .setDescription(queue.helperIDs.join('\n'));
+                .setDescription(queue.helperIDs.join('\n'))
+                .setColor(EmbedColor.NoColor);
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {
@@ -176,7 +177,7 @@ class QueueDisplayV2 {
                 .setStyle('unicode-mix');
             if (rand <= 0.1) {
                 table.addRow(`=^ Φ ω Φ ^=`);
-            } else if (rand <= 0.2) {
+            } else if (rand <= 0.3 && rand >= 0.11) {
                 table.addRow(`Did you find the cat?`);
             }
         }

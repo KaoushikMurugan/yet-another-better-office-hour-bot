@@ -180,7 +180,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             `The attendance sheet might have missing headers.\n` +
             `Don't worry, your time is still being logged, ` +
             `just not viewable on Google Sheets. ` +
-            `Please contact @Officer to manually update.`
+            `Please contact @Bot Admin to manually update.`
         );
         if (entry === undefined) {
             return Promise.reject(error);

@@ -63,7 +63,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
             `[${FgBlue}Session Calendar${ResetColor}] ` +
-            `successfully loaded for '${guild.name}'!\n` + 
+            `successfully loaded for '${guild.name}'!\n` +
             `- Using ${calendarName} as the default calendar`
         );
         return instance;
@@ -215,7 +215,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "}` +
             `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button.`
+            `Or you can manually refresh it using the refresh button. `+
+            `This ID has also been backed up to firebase.`
         );
     }
 
