@@ -11,6 +11,7 @@ type UpComingSessionViewModel = {
     displayName: string;
     eventQueue: string; // the queue that this event corrsponds to
     discordId?: string;
+    location?: string;
 };
 
 class CalendarConnectionError extends Error {
@@ -56,34 +57,42 @@ async function getUpComingTutoringEvents(
         return [];
     }
     const definedViewModels = events
-        .filter(event => event.start?.dateTime && event.end?.dateTime && event.description)
+        .filter(event =>
+            event.start?.dateTime &&
+            event.end?.dateTime &&
+            event.description)
         .map(cleanEvent => {
-            // we already checked for all 3 values' existence
+            // we already checked for all 4 values' existence
             const [start, end, description] = [
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 cleanEvent.start!.dateTime!,
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 cleanEvent.end!.dateTime!,
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.description!
+                cleanEvent.description!,
             ];
             const parsableCalendarString = description.substring(
                 description.indexOf('YABOB_START') + 'YABOB_START'.length,
                 description.indexOf('YABOB_END')
             ).trimStart().trimEnd();
-            return composeViewModel(
+            const viewModel = composeViewModel(
                 serverId,
                 queueName,
                 cleanEvent.summary ?? '',
                 parsableCalendarString ?? '',
                 new Date(start),
                 new Date(end),
+                cleanEvent.location ?? undefined
             );
+            // trim to avoid overflow
+            if (viewModel?.location !== undefined) {
+                viewModel.location = viewModel.location?.length > 25
+                    ? viewModel.location?.substring(0, 25) + '...'
+                    : viewModel.location;
+            }
+            return viewModel;
         })
         .filter(viewModel => viewModel !== undefined);
-    if (definedViewModels.length === 0) {
-        return [];
-    }
     return definedViewModels as UpComingSessionViewModel[];
 }
 
@@ -114,6 +123,7 @@ async function checkCalendarConnection(
  * @param parsingString string found the the calendar event description
  * @param start start date of 1 session
  * @param end end date of 1 session
+ * @param location where the help session will happen
  * @returns undefined if any parsing failed, otherwise a complete view model
 */
 function composeViewModel(
@@ -123,6 +133,7 @@ function composeViewModel(
     parsingString: string,
     start: Date,
     end: Date,
+    location?: string
 ): UpComingSessionViewModel | undefined {
     // parsingString example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
     // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
@@ -154,7 +165,8 @@ function composeViewModel(
         discordId: serverIdCalendarStateMap
             .get(serverId)
             ?.calendarNameDiscordIdMap
-            .get(tutorName)
+            .get(tutorName),
+        location: location
     };
 }
 

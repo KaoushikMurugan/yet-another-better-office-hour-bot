@@ -122,8 +122,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
                             }**\t|\t` +
                             `**${viewModel.eventSummary}**\n` +
                             `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
-                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>`)
-                        .join('\n')
+                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+                            `${viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``}`)
+                        .join(`\n${'-'.repeat(20)}\n`)
                     : `There are no upcoming sessions for ${queueName} in the next 7 days.`
             )
             .setColor(EmbedColor.NoColor)
