@@ -707,6 +707,11 @@ class AttendingServerV2 {
         console.log(`${FgMagenta}✓ Updated help channels on ${this.guild.name} ✓${ResetColor}`);
     }
 
+    /**
+     * Called when leaving a server
+     * ----
+     * - let all the extensions clean up their own memory
+    */
     async gracefulDelete(): Promise<void> {
         await Promise.all(this.serverExtensions.map(
             extension => extension.onServerDelete(this)

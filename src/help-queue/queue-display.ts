@@ -51,7 +51,7 @@ class QueueDisplayV2 {
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
                 ? "**OPEN**\t (ﾟ∀ﾟ )"
-                : "**CLOSED**\t ◦<(¦3[▓▓]"}`)
+                : "**CLOSED**\t 😴"}`)
             .setDescription(this.composeQueueAsciiTable(queue))
             .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple1);
         const joinLeaveButtons = new MessageActionRow()
