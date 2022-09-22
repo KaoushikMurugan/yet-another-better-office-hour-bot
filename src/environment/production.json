@@ -1,0 +1,22 @@
+{
+    "discordBotCredentials": {
+        "YABOB_APP_ID": "",
+        "YABOB_BOT_TOKEN": ""
+    },
+    "googleSheetLogging": {
+        "YABOB_GOOGLE_SHEET_ID": ""
+    },
+    "sessionCalendar": {
+        "YABOB_DEFAULT_CALENDAR_ID": "",
+        "YABOB_GOOGLE_API_KEY": ""
+    },
+    "firebaseCredentials": {
+        "projectId": "",
+        "privateKey": "",
+        "clientEmail": ""
+    },
+    "googleCloudCredentials": {
+        "client_email": "",
+        "private_key": ""
+    }
+}

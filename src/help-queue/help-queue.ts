@@ -9,6 +9,8 @@ import { QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 import { GuildMemberId } from '../utils/type-aliases';
 
+import environment from '../environment/environment-manager';
+
 type QueueViewModel = {
     queueName: string;
     helperIDs: Array<string>;
@@ -99,8 +101,7 @@ class HelpQueueV2 {
         everyoneRole: Role,
         backupData?: QueueBackup
     ): Promise<HelpQueueV2> {
-        const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-        const queueExtensions = disableExtensions
+        const queueExtensions = environment.disableExtensions
             ? []
             : await Promise.all([
                 CalendarQueueExtension.load(

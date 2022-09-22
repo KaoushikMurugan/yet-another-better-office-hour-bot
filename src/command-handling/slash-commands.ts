@@ -11,6 +11,7 @@ import { REST } from "@discordjs/rest";
 import { Routes } from "discord-api-types/v9";
 import { Guild } from "discord.js";
 import { FgMagenta, ResetColor } from "../utils/command-line-colors";
+import environment from '../environment/environment-manager';
 
 const queueCommand = new SlashCommandBuilder() // /queue
     .setName("queue")
@@ -189,17 +190,17 @@ const commandData = [
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
-    if (process.env.YABOB_APP_ID === undefined) {
+    if (environment.discordBotCredentials.YABOB_APP_ID.length === 0) {
         throw new Error('Failed to post commands. APP_ID is undefined');
     }
-    if (process.env.YABOB_BOT_TOKEN === undefined) {
+    if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0) {
         throw new Error('Failed to post commands. BOT_TOKEN is undefined');
     }
     const rest = new REST({ version: "9" }).setToken(
-        process.env.YABOB_BOT_TOKEN
+        environment.discordBotCredentials.YABOB_BOT_TOKEN
     );
     await rest.put(Routes.applicationGuildCommands(
-        process.env.YABOB_APP_ID,
+        environment.discordBotCredentials.YABOB_APP_ID,
         guild.id),
         { body: commandData.concat(externalCommands) }
     ).catch(e => console.error(e));

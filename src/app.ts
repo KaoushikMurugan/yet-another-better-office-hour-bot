@@ -1,4 +1,3 @@
-import dotenv from "dotenv";
 import { Client, Guild, Intents, Collection } from "discord.js";
 import { AttendingServerV2 } from "./attending-server/base-attending-server";
 import { ButtonCommandDispatcher } from "./command-handling/button-handler";
@@ -12,21 +11,15 @@ import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from "./extensions/extension-interface";
 import { GuildId } from "./utils/type-aliases";
+import environment from './environment/environment-manager';
 
-dotenv.config();
-console.log(`Environment: ${FgCyan}${process.env.NODE_ENV}${ResetColor}`);
-
-if (process.env.NODE_ENV === 'Production') {
-    process.removeAllListeners('warning');
-}
-
-if (process.env.YABOB_BOT_TOKEN === undefined ||
-    process.env.YABOB_APP_ID === undefined
+if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
+    environment.discordBotCredentials.YABOB_APP_ID.length === 0
 ) {
     throw new Error("Missing token or bot ID. Aborting setup.");
 }
 
-if (process.argv.slice(2)[0]?.split('=')[1] === 'true') {
+if (environment.disableExtensions) {
     console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
 }
 
@@ -48,7 +41,7 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> = new 
 const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
 const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
 
-client.login(process.env.YABOB_BOT_TOKEN).catch((err: Error) => {
+client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error("Login Unsuccessful. Check YABOBs credentials.");
     throw err;
 });
@@ -228,8 +221,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
 
-    const disableExtension = process.argv.slice(2)[0]?.split('=')[1] === 'true';
-    if (!disableExtension) {
+    if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
             await Promise.all([

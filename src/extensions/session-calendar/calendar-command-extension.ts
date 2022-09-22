@@ -22,12 +22,12 @@ import {
 } from './shared-calendar-functions';
 import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from "../../utils/command-line-colors";
 import { calendarCommands } from './calendar-slash-commands';
-
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { getQueueRoles } from "../../utils/util-functions";
 import { appendCalendarHelpEmbeds } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
-import calendarConfig from '../extension-credentials/calendar-config.json';
+
+import environment from '../../environment/environment-manager';
 
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
@@ -42,14 +42,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         guild: Guild,
         serverMap: Collection<string, AttendingServerV2>
     ): Promise<CalendarInteractionExtension> {
-        if (calendarConfig.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
-            calendarConfig.YABOB_GOOGLE_API_KEY.length === 0) {
+        if (environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
+            environment.sessionCalendar.YABOB_GOOGLE_API_KEY.length === 0) {
             return Promise.reject(new ExtensionSetupError(
-                `${FgRed}Make sure you have Calendar ID ` +
-                `& API key in calendar-config.json.${ResetColor}`
+                `${FgRed}Make sure you have Calendar ID and API key${ResetColor}`
             ));
         }
-        const calendarName = await checkCalendarConnection(calendarConfig.YABOB_DEFAULT_CALENDAR_ID)
+        const calendarName = await checkCalendarConnection(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID)
             .catch(() => Promise.reject(new CalendarConnectionError(
                 `The default calendar id is not valid.`
             )));
@@ -232,7 +231,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
         await serverIdCalendarStateMap
             .get(this.guild.id)
-            ?.setCalendarId(calendarConfig.YABOB_DEFAULT_CALENDAR_ID);
+            ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
         return Promise.resolve(
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +
