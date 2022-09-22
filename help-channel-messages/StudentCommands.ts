@@ -14,6 +14,7 @@ const studentCommandsTileMessage: MessageOptions = {
         }
     }]
 }
+
 const enqueueHelp: HelpMessage = {
     name: "enqueue",
     message: {
@@ -40,6 +41,7 @@ const enqueueHelp: HelpMessage = {
         }]
     }
 };
+
 const leaveHelp: HelpMessage = {
     name: "leave",
     message: {
@@ -66,6 +68,7 @@ const leaveHelp: HelpMessage = {
         }]
     }
 };
+
 const listHelpersHelp: HelpMessage = {
     name: "list_helpers",
     message: {

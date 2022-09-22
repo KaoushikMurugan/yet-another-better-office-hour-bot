@@ -14,6 +14,7 @@ const helperCommandsTileMessage: MessageOptions =
         }
     }]
 };
+
 const startHelp: HelpMessage = {
     name: "start",
     message: {
@@ -40,6 +41,7 @@ const startHelp: HelpMessage = {
         }]
     }
 };
+
 const stopHelp: HelpMessage = {
     name: "stop",
     message: {
@@ -66,6 +68,7 @@ const stopHelp: HelpMessage = {
         }]
     }
 };
+
 const nextHelp: HelpMessage = {
     name: "next",
     message: {
@@ -92,6 +95,7 @@ const nextHelp: HelpMessage = {
         }]
     }
 };
+
 const announceHelp: HelpMessage = {
     name: "announce",
     message: {
@@ -118,6 +122,7 @@ const announceHelp: HelpMessage = {
         }]
     }
 };
+
 const clearHelp: HelpMessage = {
     name: "clear",
     message: {

@@ -85,6 +85,7 @@ const makeCalendarStringHelp: HelpMessage = {
         ]
     }
 };
+
 const makeCalendarStringAllHelp: HelpMessage = {
     name: "make_calendar_string_all",
     message: {

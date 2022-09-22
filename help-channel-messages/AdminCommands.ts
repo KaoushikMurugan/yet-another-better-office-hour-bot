@@ -66,12 +66,13 @@ const queueRemoveHelp: HelpMessage = {
         }]
     }
 };
+
 const cleanupHelp: HelpMessage = {
-    name: "cleanup",
+    name: "cleanup_queue",
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
-            title: 'Command: `/cleanup (queue_name)`',
+            title: 'Command: `/cleanup_queue (queue_name)`',
             fields: [
                 {
                     name: 'Description',
@@ -92,6 +93,7 @@ const cleanupHelp: HelpMessage = {
         }]
     }
 };
+
 const cleanupHelpChannelHelp: HelpMessage = {
     name: "clean_up_help_channel",
     message: {
@@ -117,6 +119,7 @@ const cleanupHelpChannelHelp: HelpMessage = {
         }]
     }
 };
+
 const clearAllHelp: HelpMessage = {
     name: "clear_all",
     message: {
