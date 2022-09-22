@@ -1,8 +1,8 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../../utils/embed-helper";
-import { adminCommandsEmbed } from '../../../help-channel-messages/AdminCommands';
-import { helperCommandsEmbed } from '../../../help-channel-messages/HelperCommands';
-import { studentCommandsEmbed } from '../../../help-channel-messages/StudentCommands';
+import { adminHelpChannelEmbeds } from '../../../help-channel-messages/AdminCommands';
+import { helperHelpChannelEmbeds } from '../../../help-channel-messages/HelperCommands';
+import { studentHelpChannelEmbeds } from '../../../help-channel-messages/StudentCommands';
 
 const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
     {
@@ -133,9 +133,9 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
 // Prevent repeated pushing for multiple instances
 function appendCalendarHelpEmbeds(sent: boolean): void {
     if (!sent) {
-        adminCommandsEmbed.push(...calendarAdminCommandsEmbed);
-        helperCommandsEmbed.push(...calendarHelperCommandsEmbed);
-        studentCommandsEmbed.push(...calendarStudentCommandsEmbed);
+        adminHelpChannelEmbeds.push(...calendarAdminCommandsEmbed);
+        helperHelpChannelEmbeds.push(...calendarHelperCommandsEmbed);
+        studentHelpChannelEmbeds.push(...calendarStudentCommandsEmbed);
     }
 }
 

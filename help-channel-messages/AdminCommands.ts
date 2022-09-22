@@ -1,19 +1,22 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
+import { HelpMessage } from "../src/utils/type-aliases";
 
-const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
-    {
-        embeds: [{
-            color: EmbedColor.Neutral,
-            title: 'Bot Admin Only Commands',
-            timestamp: new Date(),
-            author: {
-                name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-            }
-        }]
-    },
-    {
+const adminCommandsTileMessage: MessageOptions = {
+    embeds: [{
+        color: EmbedColor.Neutral,
+        title: 'Bot Admin Only Commands',
+        timestamp: new Date(),
+        author: {
+            name: 'YABOB V4.',
+            iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+    }]
+};
+
+const queueAddHelp: HelpMessage = {
+    name: "queue-add",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/queue add [queue_name]`',
@@ -35,8 +38,11 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const queueRemoveHelp: HelpMessage = {
+    name: "queue-remove",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/queue remove`',
@@ -58,8 +64,11 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const cleanupHelp: HelpMessage = {
+    name: "cleanup",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/cleanup (queue_name)`',
@@ -81,8 +90,11 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const cleanupHelpChannelHelp: HelpMessage = {
+    name: "clean_up_help_channel",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/clean_up_help_channel`',
@@ -103,8 +115,11 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const clearAllHelp: HelpMessage = {
+    name: "clear_all",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/clear_all`',
@@ -126,7 +141,16 @@ const adminCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
+    }
+};
+
+const adminHelpChannelEmbeds: Pick<MessageOptions, 'embeds'>[] = [
+    adminCommandsTileMessage,
+    queueAddHelp.message,
+    queueRemoveHelp.message,
+    cleanupHelp.message,
+    cleanupHelpChannelHelp.message,
+    clearAllHelp.message,
 ];
 
-export { adminCommandsEmbed };
+export { adminHelpChannelEmbeds };

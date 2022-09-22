@@ -1,19 +1,22 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
+import { HelpMessage } from "../src/utils/type-aliases";
 
-const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
-    {
-        embeds: [{
-            color: EmbedColor.Neutral,
-            title: 'Bot Admin & Helper Only Commands',
-            timestamp: new Date(),
-            author: {
-                name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-            }
-        }]
-    },
-    {
+const helperCommandsTileMessage: MessageOptions =
+{
+    embeds: [{
+        color: EmbedColor.Neutral,
+        title: 'Bot Admin & Helper Only Commands',
+        timestamp: new Date(),
+        author: {
+            name: 'YABOB V4.',
+            iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+    }]
+};
+const startHelp: HelpMessage = {
+    name: "start",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/start (mute_notif)`',
@@ -35,8 +38,11 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const stopHelp: HelpMessage = {
+    name: "stop",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/stop`',
@@ -58,8 +64,11 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const nextHelp: HelpMessage = {
+    name: "next",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/next (queue_name) (user)`',
@@ -81,8 +90,11 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const announceHelp: HelpMessage = {
+    name: "announce",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/announce [message] (queue_name)`',
@@ -104,8 +116,11 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const clearHelp: HelpMessage = {
+    name: "clear",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/clear (queue_name)`',
@@ -127,7 +142,16 @@ const helperCommandsEmbed: Pick<MessageOptions, 'embeds'>[] = [
                 },
             ]
         }]
-    },
+    }
+};
+
+const helperHelpChannelEmbeds: Pick<MessageOptions, 'embeds'>[] = [
+    helperCommandsTileMessage,
+    startHelp.message,
+    stopHelp.message,
+    nextHelp.message,
+    announceHelp.message,
+    clearHelp.message,
 ];
 
-export { helperCommandsEmbed };
+export { helperHelpChannelEmbeds };

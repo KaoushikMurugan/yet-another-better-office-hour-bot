@@ -1,19 +1,22 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
+import { HelpMessage } from "../src/utils/type-aliases";
 
-const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
-        embeds: [{
-            color: EmbedColor.Neutral,
-            title: 'Commands Available To Everyone (Admin, Helper, Student)',
-            timestamp: new Date(),
-            author: {
-                name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-            }
-        }]
-    },
-    {
+
+const studentCommandsTileMessage: MessageOptions = {
+    embeds: [{
+        color: EmbedColor.Neutral,
+        title: 'Commands Available To Everyone (Admin, Helper, Student)',
+        timestamp: new Date(),
+        author: {
+            name: 'YABOB V4.',
+            iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+    }]
+}
+const enqueueHelp: HelpMessage = {
+    name: "enqueue",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/enqueue [queue_name]`',
@@ -35,8 +38,11 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const leaveHelp: HelpMessage = {
+    name: "leave",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/leave`',
@@ -58,8 +64,11 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+const listHelpersHelp: HelpMessage = {
+    name: "list_helpers",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/list_helpers`',
@@ -82,6 +91,13 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
             ]
         }]
     }
+};
+
+const studentHelpChannelEmbeds: Pick<MessageOptions, "embeds">[] = [
+    studentCommandsTileMessage,
+    enqueueHelp.message,
+    leaveHelp.message,
+    listHelpersHelp.message,
 ];
 
-export { studentCommandsEmbed };
+export { studentHelpChannelEmbeds };
