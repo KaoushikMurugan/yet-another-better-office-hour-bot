@@ -3,9 +3,11 @@ import { EmbedColor } from "../../utils/embed-helper";
 import { adminHelpChannelEmbeds } from '../../../help-channel-messages/AdminCommands';
 import { helperHelpChannelEmbeds } from '../../../help-channel-messages/HelperCommands';
 import { studentHelpChannelEmbeds } from '../../../help-channel-messages/StudentCommands';
+import { HelpMessage } from "../../utils/type-aliases";
 
-const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const setCalendarHelp: HelpMessage = {
+    name: "set_calendar",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/set_calendar [calendar_id]`',
@@ -28,8 +30,12 @@ const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+
+const unsetCalendarHelp: HelpMessage = {
+    name: "unset_calendar",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/unset_calendar `',
@@ -46,11 +52,12 @@ const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-];
+    }
+};
 
-const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const makeCalendarStringHelp: HelpMessage = {
+    name: "make_calendar_string",
+    message: {
         embeds: [
             {
                 color: EmbedColor.NoColor,
@@ -64,8 +71,8 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                     {
                         name: 'Options',
                         value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
-                `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
-                The user you want to change the calendar string for (Bot Admin only)",
+                    `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
+                    The user you want to change the calendar string for (Bot Admin only)",
                         inline: true
                     },
                     {
@@ -76,36 +83,40 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 ]
             }
         ]
-    },
-    {
+    }
+};
+const makeCalendarStringAllHelp: HelpMessage = {
+    name: "make_calendar_string_all",
+    message: {
         embeds: [{
-                color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string_all [displayName]`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
-                        inline: false
-                    },
-                    {
-                        name: 'Options',
-                        value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                        \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/make_calendar_string_all Real Name`',
-                        inline: true
-                    },
-                ]
-            }
+            color: EmbedColor.NoColor,
+            title: 'Command: `/make_calendar_string_all [displayName]`',
+            fields: [
+                {
+                    name: 'Description',
+                    value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
+                    inline: false
+                },
+                {
+                    name: 'Options',
+                    value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
+                            \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
+                    inline: true
+                },
+                {
+                    name: 'Example Usage',
+                    value: '`/make_calendar_string_all Real Name`',
+                    inline: true
+                },
+            ]
+        }
         ]
     },
-];
+};
 
-const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const whenNextHelp: HelpMessage = {
+    name: "when_next",
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/when_next`',
@@ -127,7 +138,21 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
+    }
+};
+
+const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
+    setCalendarHelp.message,
+    unsetCalendarHelp.message,
+];
+
+const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
+    makeCalendarStringHelp.message,
+    makeCalendarStringAllHelp.message,
+];
+
+const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
+    whenNextHelp.message,
 ];
 
 // Prevent repeated pushing for multiple instances
