@@ -52,9 +52,9 @@ Below is the standard Office Hours (OH) Session Protocol we follow:
 student are allowed to enter and leave the queue whenever they like
 while OH is being held.
 
-There are three roles in the **YABOB** server
+There are three roles that **YABOB** will interact with on your server
 
-- **Admin**: The Admin Role has total control of bot functionality and server interfaces.
+- **Bot Admin**: The Bot Admin Role has total control of bot functionality and server interfaces.
 - **Staff**: The Staff\* Role allows control over OH sessions and locked channels.
 - **Student**: The Student Role allows for the ability to interface with OH-Queue.
 
