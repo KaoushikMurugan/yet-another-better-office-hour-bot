@@ -2,21 +2,28 @@ import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 import { HelpMessage } from "../src/utils/type-aliases";
 
-const helperCommandsTileMessage: MessageOptions =
+const helperCommandsTileMessage: HelpMessage =
 {
-    embeds: [{
-        color: EmbedColor.Neutral,
-        title: 'Bot Admin & Helper Only Commands',
-        timestamp: new Date(),
-        author: {
-            name: 'YABOB V4.',
-            iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-        }
-    }]
-};
+    nameValuePair: ["Helper Commands Title", "helper-commands-title"],
+    useInHelpChannel: true,
+    useInHelpCommand: false,
+    message: {
+        embeds: [{
+            color: EmbedColor.Neutral,
+            title: 'Bot Admin & Helper Only Commands',
+            timestamp: new Date(),
+            author: {
+                name: 'YABOB V4.',
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            }
+        }]
+    }
+}
 
 const startHelp: HelpMessage = {
     nameValuePair: ["start", "start"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -44,6 +51,8 @@ const startHelp: HelpMessage = {
 
 const stopHelp: HelpMessage = {
     nameValuePair: ["stop", "stop"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -71,6 +80,8 @@ const stopHelp: HelpMessage = {
 
 const nextHelp: HelpMessage = {
     nameValuePair: ["next", "next"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -98,6 +109,8 @@ const nextHelp: HelpMessage = {
 
 const announceHelp: HelpMessage = {
     nameValuePair: ["announce", "announce"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -125,6 +138,8 @@ const announceHelp: HelpMessage = {
 
 const clearHelp: HelpMessage = {
     nameValuePair: ["clear", "clear"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -150,16 +165,8 @@ const clearHelp: HelpMessage = {
     }
 };
 
-const helperHelpChannelEmbeds: Pick<MessageOptions, 'embeds'>[] = [
-    helperCommandsTileMessage,
-    startHelp.message,
-    stopHelp.message,
-    nextHelp.message,
-    announceHelp.message,
-    clearHelp.message,
-];
-
 const helperCommandHelpMessages: HelpMessage[] = [
+    helperCommandsTileMessage,
     startHelp,
     stopHelp,
     nextHelp,
@@ -167,4 +174,4 @@ const helperCommandHelpMessages: HelpMessage[] = [
     clearHelp,
 ];
 
-export { helperHelpChannelEmbeds, helperCommandHelpMessages };
+export { helperCommandHelpMessages };

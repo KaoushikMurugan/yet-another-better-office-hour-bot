@@ -183,13 +183,18 @@ function generateHelpCommand():
         .setName("command")
         .setDescription("The command to get help with")
         .setRequired(true)
-        .addChoices(
-            adminCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair).concat(
-                helperCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair),
-                studentCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair)
-            )
-        )
-    );
+        .addChoices([
+            ...adminCommandHelpMessages
+                .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                .map(helpMessage => helpMessage.nameValuePair),            
+            ...helperCommandHelpMessages
+                .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                .map(helpMessage => helpMessage.nameValuePair),
+            ...studentCommandHelpMessages
+                .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                .map(helpMessage => helpMessage.nameValuePair)
+        ])
+        );
 }
 
 // Get the raw data that can be sent to Discord
@@ -224,6 +229,7 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
         environment.discordBotCredentials.YABOB_APP_ID,
         guild.id),
         { body: commandData.concat(externalCommands, generateHelpCommand().toJSON()) }
+        // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
     ).catch(e => console.error(e));
     console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
 }

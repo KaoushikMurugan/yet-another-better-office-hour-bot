@@ -21,9 +21,10 @@ import {
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
 import { convertMsToTime } from "../utils/util-functions";
-import { CategoryChannelId, GuildMemberId } from "../utils/type-aliases";
+import { CategoryChannelId, GuildMemberId, HelpMessage } from "../utils/type-aliases";
 
 import environment from '../environment/environment-manager';
+import { isFromGuildMember } from "../command-handling/common-validations";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName and parentCategoryId exists
@@ -703,7 +704,7 @@ class AttendingServerV2 {
                 `updating command help files${ResetColor}.`
             );
         }
-        await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
+        await this.sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
         console.log(`${FgMagenta}✓ Updated help channels on ${this.guild.name} ✓${ResetColor}`);
     }
 
@@ -810,11 +811,11 @@ class AttendingServerV2 {
      * @param helpCategories the category named "Bot Commands Help"
      * @param messageContents array of embeds to send to each help channel
     */
-    private async sendCommandHelpMessages(
+    private async sendCommandHelpChannelMessages(
         helpCategories: CategoryChannel[],
         messageContents: Array<{
             channelName: string;
-            file: Array<Pick<MessageOptions, "embeds">>;
+            file: Array<HelpMessage>;
             visibility: string[];
         }>
     ): Promise<void> {
@@ -832,8 +833,9 @@ class AttendingServerV2 {
                 const file = messageContents.find(
                     val => val.channelName === ch.name
                 )?.file;
-                file && file.forEach(async message => {
-                    await ch.send(message);
+                file && file.filter(helpMessage => helpMessage.useInHelpChannel)
+                .forEach(async helpMessage => {
+                    await ch.send(helpMessage.message);
                 });
             })
         );

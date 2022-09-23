@@ -1,12 +1,14 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../../utils/embed-helper";
-import { adminHelpChannelEmbeds, adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
-import { helperHelpChannelEmbeds, helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
-import { studentHelpChannelEmbeds, studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
 import { HelpMessage } from "../../utils/type-aliases";
 
 const setCalendarHelp: HelpMessage = {
     nameValuePair: ["set_calendar", "set_calendar"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -35,6 +37,8 @@ const setCalendarHelp: HelpMessage = {
 
 const unsetCalendarHelp: HelpMessage = {
     nameValuePair: ["unset_calendar", "unset_calendar"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -57,6 +61,8 @@ const unsetCalendarHelp: HelpMessage = {
 
 const makeCalendarStringHelp: HelpMessage = {
     nameValuePair: ["make_calendar_string", "make_calendar_string"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -88,6 +94,8 @@ const makeCalendarStringHelp: HelpMessage = {
 
 const makeCalendarStringAllHelp: HelpMessage = {
     nameValuePair: ["make_calendar_string_all", "make_calendar_string_all"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -117,6 +125,8 @@ const makeCalendarStringAllHelp: HelpMessage = {
 
 const whenNextHelp: HelpMessage = {
     nameValuePair: ["when_next", "when_next"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -171,13 +181,6 @@ const calendarStudentHelpMessages: HelpMessage[] = [
 ];
 
 // Prevent repeated pushing for multiple instances
-function appendCalendarHelpEmbeds(sent: boolean): void {
-    if (!sent) {
-        adminHelpChannelEmbeds.push(...calendarAdminCommandsEmbed);
-        helperHelpChannelEmbeds.push(...calendarHelperCommandsEmbed);
-        studentHelpChannelEmbeds.push(...calendarStudentCommandsEmbed);
-    }
-}
 
 function appendCalendarHelpMessages(sent: boolean): void {
     if(!sent) {
@@ -187,4 +190,4 @@ function appendCalendarHelpMessages(sent: boolean): void {
     }
 }
 
-export { appendCalendarHelpEmbeds, appendCalendarHelpMessages };
+export { appendCalendarHelpMessages };

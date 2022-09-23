@@ -24,7 +24,7 @@ import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from "../../utils/command
 import { calendarCommands } from './calendar-slash-commands';
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
 import { getQueueRoles } from "../../utils/util-functions";
-import { appendCalendarHelpEmbeds, appendCalendarHelpMessages } from './CalendarCommands';
+import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
 
 import environment from '../../environment/environment-manager';
@@ -59,7 +59,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         const instance = new CalendarInteractionExtension(guild);
         instance.serverMap = serverMap;
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
-        appendCalendarHelpEmbeds(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
             `[${FgBlue}Session Calendar${ResetColor}] ` +

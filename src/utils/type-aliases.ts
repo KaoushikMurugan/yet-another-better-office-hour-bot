@@ -12,7 +12,10 @@ type MessageId = string;
 
 type HelpMessage = { 
     nameValuePair: [name: string, value: string], 
-    message: MessageOptions };
+    useInHelpChannel: boolean,
+    useInHelpCommand: boolean,
+    message: MessageOptions 
+};
 
 export {
     GuildId,

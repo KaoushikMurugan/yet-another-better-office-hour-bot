@@ -3,20 +3,27 @@ import { EmbedColor } from "../src/utils/embed-helper";
 import { HelpMessage } from "../src/utils/type-aliases";
 
 
-const studentCommandsTileMessage: MessageOptions = {
-    embeds: [{
-        color: EmbedColor.Neutral,
-        title: 'Commands Available To Everyone (Admin, Helper, Student)',
-        timestamp: new Date(),
-        author: {
-            name: 'YABOB V4.',
-            iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-        }
-    }]
+const studentCommandsTileMessage: HelpMessage = {
+    nameValuePair: ["Student Commands Title", "student-commands-title"],
+    useInHelpChannel: true,
+    useInHelpCommand: false,
+    message: {
+        embeds: [{
+            color: EmbedColor.Neutral,
+            title: 'Commands Available To Everyone (Admin, Helper, Student)',
+            timestamp: new Date(),
+            author: {
+                name: 'YABOB V4.',
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            }
+        }]
+    }
 }
 
 const enqueueHelp: HelpMessage = {
     nameValuePair: ["enqueue", "enqueue"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -44,6 +51,8 @@ const enqueueHelp: HelpMessage = {
 
 const leaveHelp: HelpMessage = {
     nameValuePair: ["leave", "leave"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -71,6 +80,8 @@ const leaveHelp: HelpMessage = {
 
 const listHelpersHelp: HelpMessage = {
     nameValuePair: ["list_helpers", "list helpers"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -96,17 +107,11 @@ const listHelpersHelp: HelpMessage = {
     }
 };
 
-const studentHelpChannelEmbeds: Pick<MessageOptions, "embeds">[] = [
-    studentCommandsTileMessage,
-    enqueueHelp.message,
-    leaveHelp.message,
-    listHelpersHelp.message,
-];
-
 const studentCommandHelpMessages: HelpMessage[] = [
+    studentCommandsTileMessage,
     enqueueHelp,
     leaveHelp,
     listHelpersHelp,
 ];
 
-export { studentHelpChannelEmbeds, studentCommandHelpMessages };
+export { studentCommandHelpMessages };
