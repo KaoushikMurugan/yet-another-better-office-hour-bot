@@ -174,8 +174,9 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
         .setRequired(true)
     );
 
-
-const helpCommand = new SlashCommandBuilder()
+function generateHelpCommand():
+    Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
+    return new SlashCommandBuilder()
     .setName("help")
     .setDescription("Get help with the bot")
     .addStringOption(option => option
@@ -189,6 +190,7 @@ const helpCommand = new SlashCommandBuilder()
             )
         )
     );
+}
 
 // Get the raw data that can be sent to Discord
 const commandData = [
@@ -206,7 +208,6 @@ const commandData = [
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
     setAfterSessionMessageCommand.toJSON(),
-    helpCommand.toJSON(),
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
@@ -222,11 +223,11 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
     await rest.put(Routes.applicationGuildCommands(
         environment.discordBotCredentials.YABOB_APP_ID,
         guild.id),
-        { body: commandData.concat(externalCommands) }
+        { body: commandData.concat(externalCommands, generateHelpCommand().toJSON()) }
     ).catch(e => console.error(e));
     console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
 }
 
 type CommandData = typeof commandData;
 
-export { postSlashCommands, CommandData};
+export { postSlashCommands, CommandData };
