@@ -12,6 +12,9 @@ import { Routes } from "discord-api-types/v9";
 import { Guild } from "discord.js";
 import { FgMagenta, ResetColor } from "../utils/command-line-colors";
 import environment from '../environment/environment-manager';
+import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
+import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
+import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
 
 const queueCommand = new SlashCommandBuilder() // /queue
     .setName("queue")
@@ -171,6 +174,29 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
         .setRequired(true)
     );
 
+function generateHelpCommand():
+    Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
+    return new SlashCommandBuilder()
+        .setName("help")
+        .setDescription("Get help with the bot")
+        .addStringOption(option => option
+            .setName("command")
+            .setDescription("The command to get help with")
+            .setRequired(true)
+            .addChoices([
+                ...adminCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair),
+                ...helperCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair),
+                ...studentCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair)
+            ])
+        );
+}
+
 // Get the raw data that can be sent to Discord
 const commandData = [
     queueCommand.toJSON(),
@@ -186,7 +212,7 @@ const commandData = [
     cleanupQueue.toJSON(),
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
-    setAfterSessionMessageCommand.toJSON()
+    setAfterSessionMessageCommand.toJSON(),
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {
@@ -202,7 +228,8 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
     await rest.put(Routes.applicationGuildCommands(
         environment.discordBotCredentials.YABOB_APP_ID,
         guild.id),
-        { body: commandData.concat(externalCommands) }
+        { body: commandData.concat(externalCommands, generateHelpCommand().toJSON()) }
+        // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
     ).catch(e => console.error(e));
     console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
 }

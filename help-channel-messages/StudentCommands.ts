@@ -1,8 +1,12 @@
-import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
+import { HelpMessage } from "../src/utils/type-aliases";
 
-const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+
+const studentCommandsTileMessage: HelpMessage = {
+    nameValuePair: ["Student Commands Title", "student-commands-title"],
+    useInHelpChannel: true,
+    useInHelpCommand: false,
+    message: {
         embeds: [{
             color: EmbedColor.Neutral,
             title: 'Commands Available To Everyone (Admin, Helper, Student)',
@@ -12,8 +16,14 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }]
-    },
-    {
+    }
+};
+
+const enqueueHelp: HelpMessage = {
+    nameValuePair: ["enqueue", "enqueue"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/enqueue [queue_name]`',
@@ -35,8 +45,14 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+
+const leaveHelp: HelpMessage = {
+    nameValuePair: ["leave", "leave"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/leave`',
@@ -58,8 +74,14 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+
+const listHelpersHelp: HelpMessage = {
+    nameValuePair: ["list_helpers", "list helpers"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/list_helpers`',
@@ -82,6 +104,13 @@ const studentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
             ]
         }]
     }
+};
+
+const studentCommandHelpMessages: HelpMessage[] = [
+    studentCommandsTileMessage,
+    enqueueHelp,
+    leaveHelp,
+    listHelpersHelp,
 ];
 
-export { studentCommandsEmbed };
+export { studentCommandHelpMessages };

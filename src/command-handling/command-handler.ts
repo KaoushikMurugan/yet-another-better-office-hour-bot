@@ -15,6 +15,9 @@ import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { GuildId } from "../utils/type-aliases";
+import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
+import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
+import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -54,6 +57,7 @@ class CentralCommandDispatcher {
         ['set_after_session_msg', (interaction: CommandInteraction) => this.setAfterSessionMessage(interaction)],
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
+        ['help', (interaction: CommandInteraction) => this.help(interaction)],
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -90,9 +94,7 @@ class CentralCommandDispatcher {
                 // shorthand syntax, if successMsg is undefined, don't run the rhs
                 .then(async successMsg => successMsg &&
                     await interaction.editReply(
-                        SimpleEmbed(
-                            successMsg,
-                            EmbedColor.Success)
+                        SimpleEmbed(successMsg, EmbedColor.Success)
                     ).catch(logEditFailure)
                 ).catch(async (err: UserViewableError) =>
                     // Central error handling, reply to user with the error
@@ -381,9 +383,7 @@ class CentralCommandDispatcher {
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
-    private async setAfterSessionMessage(
-        interaction: CommandInteraction
-    ): Promise<string> {
+    private async setAfterSessionMessage(interaction: CommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -396,9 +396,21 @@ class CentralCommandDispatcher {
         const newAfterSessionMessage = enableAfterSessionMessage
             ? interaction.options.getString(`message`, true)
             : "";
-
         await this.serverMap.get(serverId)?.setAfterSessionMessage(newAfterSessionMessage);
         return `Successfully updated after session message.`;
+    }
+
+    private async help(interaction: CommandInteraction): Promise<undefined> {
+        const commandName = interaction.options.getString('command', true);
+        const helpMessage = adminCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
+            ?? helperCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
+            ?? studentCommandHelpMessages.find(message => message.nameValuePair[1] === commandName);
+        if (helpMessage !== undefined) {
+            await interaction.editReply(helpMessage?.message);
+        } else {
+            return Promise.reject(new CommandParseError('Command not found.'));
+        }
+        return undefined;
     }
 
     /**

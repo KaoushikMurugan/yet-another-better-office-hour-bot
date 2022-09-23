@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel,
+    GuildMember, TextChannel,
     User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
@@ -21,7 +21,7 @@ import {
     FgMagenta, FgRed, FgYellow, ResetColor
 } from "../utils/command-line-colors";
 import { convertMsToTime } from "../utils/util-functions";
-import { CategoryChannelId, GuildMemberId } from "../utils/type-aliases";
+import { CategoryChannelId, GuildMemberId, HelpMessage } from "../utils/type-aliases";
 
 import environment from '../environment/environment-manager';
 
@@ -703,7 +703,7 @@ class AttendingServerV2 {
                 `updating command help files${ResetColor}.`
             );
         }
-        await this.sendCommandHelpMessages(existingHelpCategory, commandChConfigs);
+        await this.sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
         console.log(`${FgMagenta}✓ Updated help channels on ${this.guild.name} ✓${ResetColor}`);
     }
 
@@ -810,11 +810,11 @@ class AttendingServerV2 {
      * @param helpCategories the category named "Bot Commands Help"
      * @param messageContents array of embeds to send to each help channel
     */
-    private async sendCommandHelpMessages(
+    private async sendCommandHelpChannelMessages(
         helpCategories: CategoryChannel[],
         messageContents: Array<{
             channelName: string;
-            file: Array<Pick<MessageOptions, "embeds">>;
+            file: Array<HelpMessage>;
             visibility: string[];
         }>
     ): Promise<void> {
@@ -827,16 +827,13 @@ class AttendingServerV2 {
                 .then(messages => messages.map(msg => msg.delete())))
         );
         // send new ones
-        await Promise.all(
-            allHelpChannels.map(async ch => {
-                const file = messageContents.find(
-                    val => val.channelName === ch.name
-                )?.file;
-                file && file.forEach(async message => {
-                    await ch.send(message);
-                });
-            })
-        );
+        await Promise.all(allHelpChannels.map(async ch =>
+            messageContents.find(
+                val => val.channelName === ch.name
+            )?.file
+                ?.filter(helpMessage => helpMessage.useInHelpChannel)
+                .map(helpMessage => ch.send(helpMessage.message))
+        ));
     }
 }
 

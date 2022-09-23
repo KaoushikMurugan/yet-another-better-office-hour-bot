@@ -1,11 +1,14 @@
-import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../../utils/embed-helper";
-import { adminCommandsEmbed } from '../../../help-channel-messages/AdminCommands';
-import { helperCommandsEmbed } from '../../../help-channel-messages/HelperCommands';
-import { studentCommandsEmbed } from '../../../help-channel-messages/StudentCommands';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
+import { HelpMessage } from "../../utils/type-aliases";
 
-const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const setCalendarHelp: HelpMessage = {
+    nameValuePair: ["set_calendar", "set_calendar"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/set_calendar [calendar_id]`',
@@ -28,11 +31,17 @@ const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-    {
+    }
+};
+
+const unsetCalendarHelp: HelpMessage = {
+    nameValuePair: ["unset_calendar", "unset_calendar"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
-            title: 'Command: `/unset_calendar `',
+            title: 'Command: `/unset_calendar`',
             fields: [
                 {
                     name: 'Description',
@@ -46,11 +55,14 @@ const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
-];
+    }
+};
 
-const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const makeCalendarStringHelp: HelpMessage = {
+    nameValuePair: ["make_calendar_string", "make_calendar_string"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [
             {
                 color: EmbedColor.NoColor,
@@ -64,8 +76,8 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                     {
                         name: 'Options',
                         value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
-                `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
-                The user you want to change the calendar string for (Bot Admin only)",
+                    `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
+                    The user you want to change the calendar string for (Bot Admin only)",
                         inline: true
                     },
                     {
@@ -76,36 +88,45 @@ const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 ]
             }
         ]
-    },
-    {
+    }
+};
+
+const makeCalendarStringAllHelp: HelpMessage = {
+    nameValuePair: ["make_calendar_string_all", "make_calendar_string_all"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
-                color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string_all [displayName]`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
-                        inline: false
-                    },
-                    {
-                        name: 'Options',
-                        value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                        \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/make_calendar_string_all Real Name`',
-                        inline: true
-                    },
-                ]
-            }
+            color: EmbedColor.NoColor,
+            title: 'Command: `/make_calendar_string_all [displayName]`',
+            fields: [
+                {
+                    name: 'Description',
+                    value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
+                    inline: false
+                },
+                {
+                    name: 'Options',
+                    value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
+                            \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
+                    inline: true
+                },
+                {
+                    name: 'Example Usage',
+                    value: '`/make_calendar_string_all Real Name`',
+                    inline: true
+                },
+            ]
+        }
         ]
     },
-];
+};
 
-const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    {
+const whenNextHelp: HelpMessage = {
+    nameValuePair: ["when_next", "when_next"],
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
         embeds: [{
             color: EmbedColor.NoColor,
             title: 'Command: `/when_next`',
@@ -127,16 +148,30 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
                 },
             ]
         }]
-    },
+    }
+};
+
+const calendarAdminHelpMessages: HelpMessage[] = [
+    setCalendarHelp,
+    unsetCalendarHelp,
+];
+
+const calendarHelperHelpMessages: HelpMessage[] = [
+    makeCalendarStringHelp,
+    makeCalendarStringAllHelp,
+];
+
+const calendarStudentHelpMessages: HelpMessage[] = [
+    whenNextHelp,
 ];
 
 // Prevent repeated pushing for multiple instances
-function appendCalendarHelpEmbeds(sent: boolean): void {
+function appendCalendarHelpMessages(sent: boolean): void {
     if (!sent) {
-        adminCommandsEmbed.push(...calendarAdminCommandsEmbed);
-        helperCommandsEmbed.push(...calendarHelperCommandsEmbed);
-        studentCommandsEmbed.push(...calendarStudentCommandsEmbed);
+        adminCommandHelpMessages.push(...calendarAdminHelpMessages);
+        helperCommandHelpMessages.push(...calendarHelperHelpMessages);
+        studentCommandHelpMessages.push(...calendarStudentHelpMessages);
     }
 }
 
-export { appendCalendarHelpEmbeds };
+export { appendCalendarHelpMessages };
