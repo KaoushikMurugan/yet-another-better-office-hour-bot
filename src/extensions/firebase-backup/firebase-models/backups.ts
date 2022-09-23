@@ -14,6 +14,7 @@ type ServerBackup = {
     timeStamp: Date;
     queues: QueueBackup[];
     afterSessionMessage: string;
+    loggingChannel: string;
 }
 
 export { QueueBackup, ServerBackup };

@@ -70,7 +70,8 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             serverName: this.serverName,
             queues: queueBackups,
             timeStamp: new Date(),
-            afterSessionMessage: server.afterSessionMessage
+            afterSessionMessage: server.afterSessionMessage,
+            loggingChannel: server.loggingChannel?.id ?? ''
         };
 
         this.firebase_db

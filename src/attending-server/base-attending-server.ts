@@ -52,7 +52,7 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
     // optional channel where yabob will log message. if undefined, doesn't log on the server
-    private loggingChannel: TextChannel | undefined;
+    loggingChannel: TextChannel | undefined;
 
     protected constructor(
         readonly user: User,
@@ -137,6 +137,11 @@ class AttendingServerV2 {
             serverExtensions
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
+        if(externalServerData?.loggingChannel !== undefined) {
+            server.loggingChannel = server.guild.channels.cache.get(externalServerData?.loggingChannel) as TextChannel;
+        } else {
+            server.loggingChannel = undefined;
+        }
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
