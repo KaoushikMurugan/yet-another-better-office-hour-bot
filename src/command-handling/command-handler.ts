@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
+import { EmbedColor, SimpleEmbed, ErrorEmbed, slashCommandLogEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
@@ -104,6 +104,23 @@ class CentralCommandDispatcher {
                         ErrorEmbed(err)
                     ).catch(logEditFailure)
                 );
+            const [serverId] = await Promise.all([
+                this.isServerInteraction(interaction),
+            ]);
+            if (serverId !== undefined) {
+                // If the command is from a server, log it
+                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(
+                    interaction.user,
+                    interaction.commandName,
+                    interaction.options.data.map((option) => {
+                        return {
+                            name: option.name,
+                            value: option.value,
+                        }
+                    }),
+                    interaction.channel!,
+                ));
+            }
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')

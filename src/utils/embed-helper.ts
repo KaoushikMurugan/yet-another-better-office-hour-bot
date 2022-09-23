@@ -121,3 +121,48 @@ export function buttonLogEmbed(
         }],
     };
 }
+
+export function slashCommandLogEmbed(
+    user: User,
+    commandName: string,
+    optionNameValuePair: {
+        name: string,
+        value: any
+    } [],
+    channel: TextBasedChannel,
+): Pick<MessageOptions, 'embeds'> {
+    const embedFields = [
+        {
+            name: "User",
+            value: user.toString(),
+            inline: true
+        },
+        {
+            name: 'Command Name',
+            value: commandName,
+            inline: true
+        },
+        {
+            name: 'Channel',
+            value: channel.toString(),
+            inline: true
+        }
+    ];
+    if(optionNameValuePair.length > 0) {
+        embedFields.push({
+            name: 'Options',
+            value: optionNameValuePair.map((option) => {
+                return `**${option.name}:** ${option.value}`;
+            }).join('\n'),
+            inline: false
+        });
+    }
+    return {
+        embeds: [{
+            color: EmbedColor.Aqua,
+            title: `Slash Command Used at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
+            timestamp: new Date(),
+            fields: embedFields
+        }],
+    };
+}
