@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, TextChannel,
+    GuildMember, MessageOptions, TextChannel,
     User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
@@ -720,6 +720,7 @@ class AttendingServerV2 {
             extension => extension.onServerDelete(this)
         ));
     }
+
     /**
      * Set the logging channel for this server
      * ----
@@ -729,6 +730,14 @@ class AttendingServerV2 {
     async setLoggingChannel(newLoggingChannel: TextChannel | undefined): Promise<void> {
         this.loggingChannel = newLoggingChannel;
     }
+
+    async sendLogMessage(message: MessageOptions | string) : Promise<void> {
+        if (this.loggingChannel === undefined) {
+            return;
+        }
+        await this.loggingChannel.send(message);
+    }
+
 
     /**
      * Creates all the office hour queues

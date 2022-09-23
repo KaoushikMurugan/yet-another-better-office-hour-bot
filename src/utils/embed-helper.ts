@@ -1,4 +1,4 @@
-import { MessageOptions } from "discord.js";
+import { MessageOptions, TextBasedChannel, TextChannel, User } from "discord.js";
 import {
     QueueError,
     ServerError,
@@ -83,6 +83,41 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             },
             fields: embedFields
+        }],
+    };
+}
+
+export function buttonLogEmbed(
+    user: User,
+    interactionName: string,
+    channel: TextBasedChannel,
+): Pick<MessageOptions, 'embeds'> {
+    return {
+        embeds: [{
+            color: EmbedColor.Aqua,
+            title: `Button Pressed at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
+            timestamp: new Date(),
+            fields: [
+                {
+                    name: "User",
+                    value: user.toString(),
+                    inline: true
+                },
+                {
+                    name: 'Button Name',
+                    value: interactionName,
+                    inline: true
+                },
+                {
+                    name: 'Channel',
+                    value: channel.toString(),
+                    inline: true
+                }
+            ],
+            author: {
+                name: 'YABOB',
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            },
         }],
     };
 }
