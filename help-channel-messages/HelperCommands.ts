@@ -1,4 +1,3 @@
-import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 import { HelpMessage } from "../src/utils/type-aliases";
 
@@ -18,7 +17,7 @@ const helperCommandsTileMessage: HelpMessage =
             }
         }]
     }
-}
+};
 
 const startHelp: HelpMessage = {
     nameValuePair: ["start", "start"],

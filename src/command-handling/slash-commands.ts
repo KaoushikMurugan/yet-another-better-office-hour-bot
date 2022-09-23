@@ -177,23 +177,23 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
 function generateHelpCommand():
     Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup"> {
     return new SlashCommandBuilder()
-    .setName("help")
-    .setDescription("Get help with the bot")
-    .addStringOption(option => option
-        .setName("command")
-        .setDescription("The command to get help with")
-        .setRequired(true)
-        .addChoices([
-            ...adminCommandHelpMessages
-                .filter(helpMessage => helpMessage.useInHelpCommand === true)
-                .map(helpMessage => helpMessage.nameValuePair),            
-            ...helperCommandHelpMessages
-                .filter(helpMessage => helpMessage.useInHelpCommand === true)
-                .map(helpMessage => helpMessage.nameValuePair),
-            ...studentCommandHelpMessages
-                .filter(helpMessage => helpMessage.useInHelpCommand === true)
-                .map(helpMessage => helpMessage.nameValuePair)
-        ])
+        .setName("help")
+        .setDescription("Get help with the bot")
+        .addStringOption(option => option
+            .setName("command")
+            .setDescription("The command to get help with")
+            .setRequired(true)
+            .addChoices([
+                ...adminCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair),
+                ...helperCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair),
+                ...studentCommandHelpMessages
+                    .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                    .map(helpMessage => helpMessage.nameValuePair)
+            ])
         );
 }
 

@@ -1,4 +1,3 @@
-import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../../utils/embed-helper";
 import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
@@ -42,7 +41,7 @@ const unsetCalendarHelp: HelpMessage = {
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
-            title: 'Command: `/unset_calendar `',
+            title: 'Command: `/unset_calendar`',
             fields: [
                 {
                     name: 'Description',
@@ -152,20 +151,6 @@ const whenNextHelp: HelpMessage = {
     }
 };
 
-const calendarAdminCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    setCalendarHelp.message,
-    unsetCalendarHelp.message,
-];
-
-const calendarHelperCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    makeCalendarStringHelp.message,
-    makeCalendarStringAllHelp.message,
-];
-
-const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
-    whenNextHelp.message,
-];
-
 const calendarAdminHelpMessages: HelpMessage[] = [
     setCalendarHelp,
     unsetCalendarHelp,
@@ -181,9 +166,8 @@ const calendarStudentHelpMessages: HelpMessage[] = [
 ];
 
 // Prevent repeated pushing for multiple instances
-
 function appendCalendarHelpMessages(sent: boolean): void {
-    if(!sent) {
+    if (!sent) {
         adminCommandHelpMessages.push(...calendarAdminHelpMessages);
         helperCommandHelpMessages.push(...calendarHelperHelpMessages);
         studentCommandHelpMessages.push(...calendarStudentHelpMessages);

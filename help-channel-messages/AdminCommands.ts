@@ -1,4 +1,3 @@
-import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../src/utils/embed-helper";
 import { HelpMessage } from "../src/utils/type-aliases";
 
@@ -17,7 +16,7 @@ const adminCommandsTileMessage: HelpMessage = {
             }
         }]
     }
-}
+};
 
 const queueAddHelp: HelpMessage = {
     nameValuePair: ["queue add", "queue-add"],

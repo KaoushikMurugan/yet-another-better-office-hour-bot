@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, MessageOptions } from "discord.js";
+import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
@@ -14,7 +14,7 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { GuildId, HelpMessage } from "../utils/type-aliases";
+import { GuildId } from "../utils/type-aliases";
 import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
 import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
 import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
@@ -41,8 +41,8 @@ class CentralCommandDispatcher {
     // - If a call returns undefined, processCommand won't edit the reply
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | undefined | MessageOptions>
-    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined | MessageOptions>>([
+        (interaction: CommandInteraction) => Promise<string | undefined>
+    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
         ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
         ['cleanup_queue', (interaction: CommandInteraction) => this.cleanup(interaction)],
         ['cleanup_all', (interaction: CommandInteraction) => this.cleanupAllQueues(interaction)],
@@ -94,11 +94,7 @@ class CentralCommandDispatcher {
                 // shorthand syntax, if successMsg is undefined, don't run the rhs
                 .then(async successMsg => successMsg &&
                     await interaction.editReply(
-                        typeof successMsg === "string"
-                        ? SimpleEmbed(
-                            successMsg,
-                            EmbedColor.Success)
-                        : successMsg
+                        SimpleEmbed(successMsg, EmbedColor.Success)
                     ).catch(logEditFailure)
                 ).catch(async (err: UserViewableError) =>
                     // Central error handling, reply to user with the error
@@ -400,24 +396,21 @@ class CentralCommandDispatcher {
         const newAfterSessionMessage = enableAfterSessionMessage
             ? interaction.options.getString(`message`, true)
             : "";
-
         await this.serverMap.get(serverId)?.setAfterSessionMessage(newAfterSessionMessage);
         return `Successfully updated after session message.`;
     }
 
-    private async help(interaction: CommandInteraction): Promise<MessageOptions | string> {
+    private async help(interaction: CommandInteraction): Promise<undefined> {
         const commandName = interaction.options.getString('command', true);
-        let help_message: HelpMessage | undefined;
-        help_message = adminCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName)
-        ?? helperCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName)
-        ?? studentCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName);
-        if(help_message === undefined) {
-            return Promise.reject(new CommandParseError(
-                'Command not found.'
-            ));
+        const helpMessage = adminCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
+            ?? helperCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
+            ?? studentCommandHelpMessages.find(message => message.nameValuePair[1] === commandName);
+        if (helpMessage !== undefined) {
+            await interaction.editReply(helpMessage?.message);
         } else {
-            return help_message.message;
+            return Promise.reject(new CommandParseError('Command not found.'));
         }
+        return undefined;
     }
 
     /**

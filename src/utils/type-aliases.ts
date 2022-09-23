@@ -13,7 +13,7 @@ type MessageId = string;
 type HelpMessage = { 
     nameValuePair: [name: string, value: string], 
     useInHelpChannel: boolean,
-    useInHelpCommand: boolean,
+    useInHelpCommand: boolean, // whether it's displayed by /help
     message: MessageOptions 
 };
 

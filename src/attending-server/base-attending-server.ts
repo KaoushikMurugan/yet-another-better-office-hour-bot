@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel,
+    GuildMember, TextChannel,
     User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
@@ -24,7 +24,6 @@ import { convertMsToTime } from "../utils/util-functions";
 import { CategoryChannelId, GuildMemberId, HelpMessage } from "../utils/type-aliases";
 
 import environment from '../environment/environment-manager';
-import { isFromGuildMember } from "../command-handling/common-validations";
 
 // Wrapper for TextChannel
 // Guarantees that a queueName and parentCategoryId exists
@@ -828,17 +827,13 @@ class AttendingServerV2 {
                 .then(messages => messages.map(msg => msg.delete())))
         );
         // send new ones
-        await Promise.all(
-            allHelpChannels.map(async ch => {
-                const file = messageContents.find(
-                    val => val.channelName === ch.name
-                )?.file;
-                file && file.filter(helpMessage => helpMessage.useInHelpChannel)
-                .forEach(async helpMessage => {
-                    await ch.send(helpMessage.message);
-                });
-            })
-        );
+        await Promise.all(allHelpChannels.map(async ch =>
+            messageContents.find(
+                val => val.channelName === ch.name
+            )?.file
+                ?.filter(helpMessage => helpMessage.useInHelpChannel)
+                .map(helpMessage => ch.send(helpMessage.message))
+        ));
     }
 }
 
