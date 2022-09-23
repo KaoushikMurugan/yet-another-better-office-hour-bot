@@ -12,6 +12,9 @@ import { Routes } from "discord-api-types/v9";
 import { Guild } from "discord.js";
 import { FgMagenta, ResetColor } from "../utils/command-line-colors";
 import environment from '../environment/environment-manager';
+import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
+import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
+import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
 
 const queueCommand = new SlashCommandBuilder() // /queue
     .setName("queue")
@@ -171,6 +174,22 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
         .setRequired(true)
     );
 
+
+const helpCommand = new SlashCommandBuilder()
+    .setName("help")
+    .setDescription("Get help with the bot")
+    .addStringOption(option => option
+        .setName("command")
+        .setDescription("The command to get help with")
+        .setRequired(true)
+        .addChoices(
+            [
+                ["queue add", "queue-add"],
+                ["when_next", "when_next"]
+            ]
+        )
+    );
+
 // Get the raw data that can be sent to Discord
 const commandData = [
     queueCommand.toJSON(),
@@ -186,7 +205,8 @@ const commandData = [
     cleanupQueue.toJSON(),
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
-    setAfterSessionMessageCommand.toJSON()
+    setAfterSessionMessageCommand.toJSON(),
+    helpCommand.toJSON(),
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {

@@ -40,6 +40,7 @@ const queueAddHelp: HelpMessage = {
         }]
     }
 };
+
 const queueRemoveHelp: HelpMessage = {
     name: "queue-remove",
     message: {
@@ -156,4 +157,12 @@ const adminHelpChannelEmbeds: Pick<MessageOptions, 'embeds'>[] = [
     clearAllHelp.message,
 ];
 
-export { adminHelpChannelEmbeds };
+const adminCommandHelpMessages: HelpMessage[] = [
+    queueAddHelp,
+    queueRemoveHelp,
+    cleanupHelp,
+    cleanupHelpChannelHelp,
+    clearAllHelp,
+];
+
+export { adminHelpChannelEmbeds, adminCommandHelpMessages };

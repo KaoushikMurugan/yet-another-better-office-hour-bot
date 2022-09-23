@@ -103,4 +103,10 @@ const studentHelpChannelEmbeds: Pick<MessageOptions, "embeds">[] = [
     listHelpersHelp.message,
 ];
 
-export { studentHelpChannelEmbeds };
+const studentCommandHelpMessages: HelpMessage[] = [
+    enqueueHelp,
+    leaveHelp,
+    listHelpersHelp,
+];
+
+export { studentHelpChannelEmbeds, studentCommandHelpMessages };

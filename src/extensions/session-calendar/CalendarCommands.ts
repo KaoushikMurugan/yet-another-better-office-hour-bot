@@ -1,8 +1,8 @@
 import { MessageOptions } from "discord.js";
 import { EmbedColor } from "../../utils/embed-helper";
-import { adminHelpChannelEmbeds } from '../../../help-channel-messages/AdminCommands';
-import { helperHelpChannelEmbeds } from '../../../help-channel-messages/HelperCommands';
-import { studentHelpChannelEmbeds } from '../../../help-channel-messages/StudentCommands';
+import { adminHelpChannelEmbeds, adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
+import { helperHelpChannelEmbeds, helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
+import { studentHelpChannelEmbeds, studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
 import { HelpMessage } from "../../utils/type-aliases";
 
 const setCalendarHelp: HelpMessage = {
@@ -156,13 +156,33 @@ const calendarStudentCommandsEmbed: Pick<MessageOptions, "embeds">[] = [
     whenNextHelp.message,
 ];
 
-// Prevent repeated pushing for multiple instances
+const calendarAdminHelpMessages: HelpMessage[] = [
+    setCalendarHelp,
+    unsetCalendarHelp,
+];
+
+const calendarHelperHelpMessages: HelpMessage[] = [
+    makeCalendarStringHelp,
+    makeCalendarStringAllHelp,
+];
+
+const calendarStudentHelpMessages: HelpMessage[] = [
+    whenNextHelp,
+];
+
 function appendCalendarHelpEmbeds(sent: boolean): void {
-    if (!sent) {
         adminHelpChannelEmbeds.push(...calendarAdminCommandsEmbed);
         helperHelpChannelEmbeds.push(...calendarHelperCommandsEmbed);
         studentHelpChannelEmbeds.push(...calendarStudentCommandsEmbed);
+}
+
+// Prevent repeated pushing for multiple instances
+function appendCalendarHelpMessages(sent: boolean): void {
+    if (!sent) {
+        adminCommandHelpMessages.push(...calendarAdminHelpMessages);
+        helperCommandHelpMessages.push(...calendarHelperHelpMessages);
+        studentCommandHelpMessages.push(...calendarStudentHelpMessages);
     }
 }
 
-export { appendCalendarHelpEmbeds };
+export { appendCalendarHelpEmbeds, appendCalendarHelpMessages };

@@ -159,4 +159,12 @@ const helperHelpChannelEmbeds: Pick<MessageOptions, 'embeds'>[] = [
     clearHelp.message,
 ];
 
-export { helperHelpChannelEmbeds };
+const helperCommandHelpMessages: HelpMessage[] = [
+    startHelp,
+    stopHelp,
+    nextHelp,
+    announceHelp,
+    clearHelp,
+];
+
+export { helperHelpChannelEmbeds, helperCommandHelpMessages };
