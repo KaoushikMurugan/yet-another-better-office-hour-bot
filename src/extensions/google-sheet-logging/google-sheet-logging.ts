@@ -208,8 +208,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             "Number of Students Helped",
         ];
         // try to find existing sheet
-        // if not created, make a new one
-        const sheetTitle = `${this.serverName} Attendance`;
+        // if not created, make a new one, also trim off colon because google api bug
+        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Attendance`
+            .replace(/\s{2,}/g, ' ');
         const attendanceSheet =
             this.googleSheet.sheetsByTitle[sheetTitle]
             ?? await this.googleSheet.addSheet({
@@ -260,7 +261,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         if (entries[0] === undefined) {
             return;
         }
-        const sheetTitle = `${this.serverName} Help Sessions`;
+        // trim off colon because google api bug, then trim off any excess spaces
+        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Help Sessions`
+            .replace(/\s{2,}/g, ' ');
         const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
             this.googleSheet.sheetsByTitle[sheetTitle]
