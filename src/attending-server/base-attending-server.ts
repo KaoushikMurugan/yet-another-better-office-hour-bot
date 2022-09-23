@@ -51,6 +51,8 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     // unique active helpers, key is member.id
     private activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
+    // optional channel where yabob will log message. if undefined, doesn't log on the server
+    private loggingChannel: TextChannel | undefined;
 
     protected constructor(
         readonly user: User,
@@ -636,6 +638,7 @@ class AttendingServerV2 {
 
     /**
      * Cleans up the given queue and resend all embeds
+     * ----
      * @param targetQueue the queue to clean
     */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
@@ -716,6 +719,15 @@ class AttendingServerV2 {
         await Promise.all(this.serverExtensions.map(
             extension => extension.onServerDelete(this)
         ));
+    }
+    /**
+     * Set the logging channel for this server
+     * ----
+     * @param newLoggingChannel the new logging channel. if undefined, disables
+     * logging for this server
+     */
+    async setLoggingChannel(newLoggingChannel: TextChannel | undefined): Promise<void> {
+        this.loggingChannel = newLoggingChannel;
     }
 
     /**

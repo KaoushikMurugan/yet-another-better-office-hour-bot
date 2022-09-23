@@ -197,6 +197,19 @@ function generateHelpCommand():
         );
 }
 
+const setLoggingChannelCommand = new SlashCommandBuilder()
+    .setName("set_logging_channel")
+    .setDescription("Sets the channel where the bot will log events")
+    .addChannelOption(option => option
+        .setName("channel")
+        .setDescription("The channel to log events to")
+        .setRequired(true)
+    );
+
+const stopLoggingCommand = new SlashCommandBuilder()
+    .setName("stop_logging")
+    .setDescription("Stops the bot from logging events");
+
 // Get the raw data that can be sent to Discord
 const commandData = [
     queueCommand.toJSON(),
@@ -213,6 +226,8 @@ const commandData = [
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
     setAfterSessionMessageCommand.toJSON(),
+    setLoggingChannelCommand.toJSON(),
+    stopLoggingCommand.toJSON(),
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {

@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager } from "discord.js";
+import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
 import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
@@ -58,6 +58,8 @@ class CentralCommandDispatcher {
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
         ['help', (interaction: CommandInteraction) => this.help(interaction)],
+        ['set_logging_channel', (interaction: CommandInteraction) => this.setLoggingChannel(interaction)],
+        ['stop_logging', (interaction: CommandInteraction) => this.stopLogging(interaction)],
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -411,6 +413,36 @@ class CentralCommandDispatcher {
             return Promise.reject(new CommandParseError('Command not found.'));
         }
         return undefined;
+    }
+
+    private async setLoggingChannel(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'set_logging_channel',
+                ['Bot Admin']
+            ),
+        ]);
+        const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
+        if(loggingChannel.type !== 'GUILD_TEXT') {
+            return Promise.reject(new CommandParseError('Channel must be a text channel.'));
+        }
+        await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
+        return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
+    }
+
+    private async stopLogging(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'stop_logging',
+                ['Bot Admin']
+            ),
+        ]);
+        await this.serverMap.get(serverId)?.setLoggingChannel(undefined);
+        return `Successfully stopped logging.`;
     }
 
     /**
