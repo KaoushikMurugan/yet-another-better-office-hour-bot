@@ -230,13 +230,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         );
     }
 
-    await postSlashCommands(
-        guild,
-        interactionExtensions
-            .get(guild.id)
-            ?.flatMap(ext => ext.slashCommandData)
-    );
-
+    
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     serversV2.set(guild.id, server);
@@ -244,9 +238,16 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     builtinCommandHandler.serverMap = serversV2;
     builtinButtonHandler.serverMap = serversV2;
     [...interactionExtensions.values()]
-        .flat()
-        .forEach(extension => extension.serverMap = serversV2);
-
+    .flat()
+    .forEach(extension => extension.serverMap = serversV2);
+    
+    await postSlashCommands(
+        guild,
+        interactionExtensions
+            .get(guild.id)
+            ?.flatMap(ext => ext.slashCommandData)
+    );
+    
     return server;
 }
 

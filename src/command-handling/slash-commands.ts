@@ -183,10 +183,10 @@ const helpCommand = new SlashCommandBuilder()
         .setDescription("The command to get help with")
         .setRequired(true)
         .addChoices(
-            [
-                ["queue add", "queue-add"],
-                ["when_next", "when_next"]
-            ]
+            adminCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair).concat(
+                helperCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair),
+                studentCommandHelpMessages.map(helpMessage => helpMessage.nameValuePair)
+            )
         )
     );
 
@@ -229,4 +229,4 @@ async function postSlashCommands(guild: Guild, externalCommands: CommandData = [
 
 type CommandData = typeof commandData;
 
-export { postSlashCommands, CommandData };
+export { postSlashCommands, CommandData};

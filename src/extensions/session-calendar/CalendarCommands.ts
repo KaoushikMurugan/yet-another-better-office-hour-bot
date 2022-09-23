@@ -6,7 +6,7 @@ import { studentHelpChannelEmbeds, studentCommandHelpMessages } from '../../../h
 import { HelpMessage } from "../../utils/type-aliases";
 
 const setCalendarHelp: HelpMessage = {
-    name: "set_calendar",
+    nameValuePair: ["set_calendar", "set_calendar"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -34,7 +34,7 @@ const setCalendarHelp: HelpMessage = {
 };
 
 const unsetCalendarHelp: HelpMessage = {
-    name: "unset_calendar",
+    nameValuePair: ["unset_calendar", "unset_calendar"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -56,7 +56,7 @@ const unsetCalendarHelp: HelpMessage = {
 };
 
 const makeCalendarStringHelp: HelpMessage = {
-    name: "make_calendar_string",
+    nameValuePair: ["make_calendar_string", "make_calendar_string"],
     message: {
         embeds: [
             {
@@ -87,7 +87,7 @@ const makeCalendarStringHelp: HelpMessage = {
 };
 
 const makeCalendarStringAllHelp: HelpMessage = {
-    name: "make_calendar_string_all",
+    nameValuePair: ["make_calendar_string_all", "make_calendar_string_all"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -116,7 +116,7 @@ const makeCalendarStringAllHelp: HelpMessage = {
 };
 
 const whenNextHelp: HelpMessage = {
-    name: "when_next",
+    nameValuePair: ["when_next", "when_next"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -170,15 +170,17 @@ const calendarStudentHelpMessages: HelpMessage[] = [
     whenNextHelp,
 ];
 
+// Prevent repeated pushing for multiple instances
 function appendCalendarHelpEmbeds(sent: boolean): void {
+    if (!sent) {
         adminHelpChannelEmbeds.push(...calendarAdminCommandsEmbed);
         helperHelpChannelEmbeds.push(...calendarHelperCommandsEmbed);
         studentHelpChannelEmbeds.push(...calendarStudentCommandsEmbed);
+    }
 }
 
-// Prevent repeated pushing for multiple instances
 function appendCalendarHelpMessages(sent: boolean): void {
-    if (!sent) {
+    if(!sent) {
         adminCommandHelpMessages.push(...calendarAdminHelpMessages);
         helperCommandHelpMessages.push(...calendarHelperHelpMessages);
         studentCommandHelpMessages.push(...calendarStudentHelpMessages);

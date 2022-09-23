@@ -15,7 +15,7 @@ const adminCommandsTileMessage: MessageOptions = {
 };
 
 const queueAddHelp: HelpMessage = {
-    name: "queue-add",
+    nameValuePair: ["queue add", "queue-add"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -42,7 +42,7 @@ const queueAddHelp: HelpMessage = {
 };
 
 const queueRemoveHelp: HelpMessage = {
-    name: "queue-remove",
+    nameValuePair: ["queue remove", "queue_remove"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -69,7 +69,7 @@ const queueRemoveHelp: HelpMessage = {
 };
 
 const cleanupHelp: HelpMessage = {
-    name: "cleanup_queue",
+    nameValuePair: ["cleanup_queue", "cleanup_queue"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -96,7 +96,7 @@ const cleanupHelp: HelpMessage = {
 };
 
 const cleanupHelpChannelHelp: HelpMessage = {
-    name: "clean_up_help_channel",
+    nameValuePair: ["clean_up_help_channel", "clean_up_help_channel"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -122,7 +122,7 @@ const cleanupHelpChannelHelp: HelpMessage = {
 };
 
 const clearAllHelp: HelpMessage = {
-    name: "clear_all",
+    nameValuePair: ["clear_all", "clear_all"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,

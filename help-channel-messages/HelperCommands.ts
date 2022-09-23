@@ -16,7 +16,7 @@ const helperCommandsTileMessage: MessageOptions =
 };
 
 const startHelp: HelpMessage = {
-    name: "start",
+    nameValuePair: ["start", "start"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -43,7 +43,7 @@ const startHelp: HelpMessage = {
 };
 
 const stopHelp: HelpMessage = {
-    name: "stop",
+    nameValuePair: ["stop", "stop"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -70,7 +70,7 @@ const stopHelp: HelpMessage = {
 };
 
 const nextHelp: HelpMessage = {
-    name: "next",
+    nameValuePair: ["next", "next"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -97,7 +97,7 @@ const nextHelp: HelpMessage = {
 };
 
 const announceHelp: HelpMessage = {
-    name: "announce",
+    nameValuePair: ["announce", "announce"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -124,7 +124,7 @@ const announceHelp: HelpMessage = {
 };
 
 const clearHelp: HelpMessage = {
-    name: "clear",
+    nameValuePair: ["clear", "clear"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,

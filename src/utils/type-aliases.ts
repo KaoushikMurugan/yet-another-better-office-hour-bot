@@ -10,7 +10,9 @@ type CategoryChannelId = string;
 type RenderIndex = number;
 type MessageId = string;
 
-type HelpMessage = { name: string, message: MessageOptions };
+type HelpMessage = { 
+    nameValuePair: [name: string, value: string], 
+    message: MessageOptions };
 
 export {
     GuildId,

@@ -16,7 +16,7 @@ const studentCommandsTileMessage: MessageOptions = {
 }
 
 const enqueueHelp: HelpMessage = {
-    name: "enqueue",
+    nameValuePair: ["enqueue", "enqueue"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -43,7 +43,7 @@ const enqueueHelp: HelpMessage = {
 };
 
 const leaveHelp: HelpMessage = {
-    name: "leave",
+    nameValuePair: ["leave", "leave"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,
@@ -70,7 +70,7 @@ const leaveHelp: HelpMessage = {
 };
 
 const listHelpersHelp: HelpMessage = {
-    name: "list_helpers",
+    nameValuePair: ["list_helpers", "list helpers"],
     message: {
         embeds: [{
             color: EmbedColor.NoColor,

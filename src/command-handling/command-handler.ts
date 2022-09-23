@@ -408,9 +408,9 @@ class CentralCommandDispatcher {
     private async help(interaction: CommandInteraction): Promise<MessageOptions | string> {
         const commandName = interaction.options.getString('command', true);
         let help_message: HelpMessage | undefined;
-        help_message = adminCommandHelpMessages.find(helpMessage => helpMessage.name === commandName)
-        ?? helperCommandHelpMessages.find(helpMessage => helpMessage.name === commandName)
-        ?? studentCommandHelpMessages.find(helpMessage => helpMessage.name === commandName);
+        help_message = adminCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName)
+        ?? helperCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName)
+        ?? studentCommandHelpMessages.find(helpMessage => helpMessage.nameValuePair[1] === commandName);
         if(help_message === undefined) {
             return Promise.reject(new CommandParseError(
                 'Command not found.'
