@@ -67,6 +67,7 @@ interface IServerExtension {
     ) => Promise<void>;
     onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
+    onServerRequestBackup: (server: Readonly<AttendingServerV2>) => Promise<void>;
 }
 
 // Extensions for individual queues
@@ -193,6 +194,9 @@ class BaseServerExtension implements IServerExtension {
     }
     loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
         return Promise.resolve(undefined);
+    }
+    onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+        return Promise.resolve();
     }
 }
 

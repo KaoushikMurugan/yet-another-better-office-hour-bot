@@ -51,6 +51,33 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         if (isFirstCall) {
             return Promise.resolve();
         }
+        await this.backupServerToFirebase(server);
+    }
+
+    /**
+     * Gets the backup from firebase
+     * ----
+     * If there's no backup for this serverId, return undefined
+     * @param serverId the server to retrieve backup for. This is the id from Guild.id
+    */
+    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+        const backupData = await this.firebase_db
+            .collection("serverBackups")
+            .doc(serverId)
+            .get();
+        return <ServerBackup>backupData.data();
+    }
+
+    override async onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+        await this.backupServerToFirebase(server);
+    }
+
+    /**
+     * Builds the backup data and sends it to firebase
+     * ----
+     * @param server the server to backup
+    */
+    private async backupServerToFirebase(server: Readonly<AttendingServerV2>): Promise<void> {
         const queues = server.helpQueues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
@@ -85,19 +112,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 
-    /**
-     * Gets the backup from firebase
-     * ----
-     * If there's no backup for this serverId, return undefined
-     * @param serverId the server to retrieve backup for. This is the id from Guild.id
-    */
-    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
-        const backupData = await this.firebase_db
-            .collection("serverBackups")
-            .doc(serverId)
-            .get();
-        return <ServerBackup>backupData.data();
-    }
 }
 
 export { FirebaseServerBackupExtension };

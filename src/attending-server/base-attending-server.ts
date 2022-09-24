@@ -138,9 +138,8 @@ class AttendingServerV2 {
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
         if (externalServerData?.loggingChannel !== undefined) {
-            server.loggingChannel = server.guild.channels.cache.get(externalServerData?.loggingChannel) as TextChannel;
-        } else {
-            server.loggingChannel = undefined;
+            server.loggingChannel = server.guild.channels.cache
+                .get(externalServerData?.loggingChannel) as TextChannel;
         }
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
@@ -656,7 +655,7 @@ class AttendingServerV2 {
         this.afterSessionMessage = newMessage;
         // trigger anything listening to internal updates
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onServerPeriodicUpdate(this, false)
+            extension => extension.onServerRequestBackup(this)
         ));
     }
 
@@ -734,6 +733,9 @@ class AttendingServerV2 {
      */
     async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
         this.loggingChannel = loggingChannel;
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerRequestBackup(this)
+        ));
     }
 
     async sendLogMessage(message: MessageOptions | string): Promise<void> {
