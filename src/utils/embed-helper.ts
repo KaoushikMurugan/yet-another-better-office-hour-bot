@@ -78,16 +78,12 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
             description: `If you need help or think this is a mistake, `
                 + `please post a screenshot of this message in the #help channel `
                 + `and ping @Bot Admin.`,
-            author: {
-                name: 'YABOB',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-            },
             fields: embedFields
         }],
     };
 }
 
-export function buttonLogEmbed(
+export function ButtonLogEmbed(
     user: User,
     interactionName: string,
     channel: TextBasedChannel,
@@ -114,24 +110,24 @@ export function buttonLogEmbed(
                     inline: true
                 }
             ],
-            author: {
-                name: 'YABOB',
+            footer: {
+                text: `YABOB`,
                 iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
-            },
+            }
         }],
     };
 }
 
-export function slashCommandLogEmbed(
+export function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction,
-    ): Pick<MessageOptions, 'embeds'> {
-        let commandName = commandInteraction.commandName;
-        let optionsData = commandInteraction.options.data;
-        if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
-            commandName += ` ${optionsData[0].name}`;
-            optionsData = optionsData[0].options ?? [];
-        }
-        const embedFields = [
+): Pick<MessageOptions, 'embeds'> {
+    let commandName = commandInteraction.commandName;
+    let optionsData = commandInteraction.options.data;
+    if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
+        commandName += ` ${optionsData[0].name}`;
+        optionsData = optionsData[0].options ?? [];
+    }
+    const embedFields = [
         {
             name: "User",
             value: commandInteraction.user.toString(),
@@ -148,12 +144,12 @@ export function slashCommandLogEmbed(
             inline: true
         }
     ];
-    if(optionsData.length > 0) {
+    if (optionsData.length > 0) {
         embedFields.push({
             name: 'Options',
             // Need to manually format the options as they are parsed as a string | number | boolean | undefined
             value: optionsData.map((option) => {
-                switch(option.type) {
+                switch (option.type) {
                     case 'CHANNEL':
                         return `**${option.name}**: <#${option.value}>`;
                     case 'USER' || 'ROLE' || 'MENTIONABLE':
@@ -170,7 +166,11 @@ export function slashCommandLogEmbed(
             color: EmbedColor.Aqua,
             title: `Slash Command Used at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
             timestamp: new Date(),
-            fields: embedFields
+            fields: embedFields,
+            footer: {
+                text: `YABOB`,
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            }
         }],
     };
 }

@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, SimpleEmbed, ErrorEmbed, slashCommandLogEmbed } from "../utils/embed-helper";
+import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
@@ -108,7 +108,7 @@ class CentralCommandDispatcher {
                 this.isServerInteraction(interaction),
             ]);
             if (serverId !== undefined) {
-                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(interaction));
+                this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
             }
         } else {
             await interaction.editReply(ErrorEmbed(

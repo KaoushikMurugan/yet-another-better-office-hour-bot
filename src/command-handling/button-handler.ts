@@ -1,7 +1,7 @@
 import { ButtonInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, ErrorEmbed, buttonLogEmbed, SimpleEmbed } from "../utils/embed-helper";
+import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed } from "../utils/embed-helper";
 import {
     CommandParseError,
     CommandNotImplementedError,
@@ -84,7 +84,7 @@ class ButtonCommandDispatcher {
         ]);
         const server = await this.serverMap.get(serverId);
         server?.enqueueStudent(member, queueChannel)
-        server?.sendLogMessage(buttonLogEmbed(
+        server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Join",
             queueChannel.channelObj
@@ -104,7 +104,7 @@ class ButtonCommandDispatcher {
 
         const server = await this.serverMap.get(serverId);
         server?.removeStudentFromQueue(member, queueChannel);
-        server?.sendLogMessage(buttonLogEmbed(
+        server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Leave",
             queueChannel.channelObj
@@ -124,7 +124,7 @@ class ButtonCommandDispatcher {
 
         const server = await this.serverMap.get(serverId);
         server?.addStudentToNotifGroup(member, queueChannel);
-        server?.sendLogMessage(buttonLogEmbed(
+        server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Notify When Open",
             queueChannel.channelObj
@@ -144,7 +144,7 @@ class ButtonCommandDispatcher {
 
         const server = await this.serverMap.get(serverId);
         server?.removeStudentFromNotifGroup(member, queueChannel);
-        server?.sendLogMessage(buttonLogEmbed(
+        server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Join",
             queueChannel.channelObj

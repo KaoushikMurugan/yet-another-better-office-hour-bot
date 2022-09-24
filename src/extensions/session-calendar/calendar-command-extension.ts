@@ -2,9 +2,9 @@ import { BaseInteractionExtension } from "../extension-interface";
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
-    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role
+    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
+import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError,
@@ -89,10 +89,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     override buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) => Promise<string | undefined>
+        (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
     > = new Map([
-        ['refresh', (_: ButtonInteraction, queueName: string) =>
-            this.requestCalendarRefresh(queueName)]
+        ['refresh', (queueName: string, interaction: ButtonInteraction) =>
+            this.requestCalendarRefresh(queueName, interaction)]
     ]);
 
     override get slashCommandData(): CommandData {
@@ -140,6 +140,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     ErrorEmbed(err)
                 ).catch(logEditFailure)
             );
+            const [serverId] = await Promise.all([
+                this.isServerInteraction(interaction),
+            ]);
+            if (serverId !== undefined) {
+                this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
+            }
     }
 
     /**
@@ -171,7 +177,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `pressed [${interactionName}] ` +
             `in queue: ${queueName}.`
         );
-        await buttonMethod(interaction, queueName)
+        await buttonMethod(queueName, interaction)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
                 await interaction.editReply(
@@ -214,7 +220,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "}` +
             `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button. `+
+            `Or you can manually refresh it using the refresh button. ` +
             `This ID has also been backed up to firebase.`
         );
     }
@@ -353,12 +359,21 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
-    private async requestCalendarRefresh(queueName: string): Promise<string> {
-        await serverIdCalendarStateMap
+    private async requestCalendarRefresh(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
+        const queueChannel = await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.listeners
             .get(queueName)
-            ?.onCalendarExtensionStateChange();
+
+        queueChannel?.onCalendarExtensionStateChange();
+        this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            "Notify When Open",
+            interaction.channel as TextBasedChannel,
+        ));
         return `Successfully refreshed upcoming hours for ${queueName}`;
     }
 

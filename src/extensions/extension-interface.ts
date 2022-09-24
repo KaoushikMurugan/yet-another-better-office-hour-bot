@@ -25,7 +25,7 @@ interface IInteractionExtension {
     >;
     buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) =>
+        (queueName: string, interaction: ButtonInteraction) =>
             Promise<string | undefined>
     >;
     slashCommandData: CommandData;
@@ -116,7 +116,7 @@ class BaseInteractionExtension implements IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2> = new Collection();
     buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) =>
+        (queueName: string, interaction: ButtonInteraction) =>
             Promise<string | undefined>
     > = new Map();
     commandMethodMap: ReadonlyMap<
