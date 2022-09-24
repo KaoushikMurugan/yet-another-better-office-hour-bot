@@ -1,13 +1,13 @@
 {
   "name": "yet-another-better-oh-bot",
-  "version": "4.0.0",
+  "version": "4.0.1",
   "description": "Yet another better discord bot for managing office hours",
   "scripts": {
-    "lint": "eslint . --ext .ts",
+    "lint": "eslint src/",
     "build": "npx tsc",
     "test": "nyc mocha -r ts-node/register test/*.ts",
     "start": "node dist/src/app.js",
-    "dev": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
+    "dev": "echo 'Linting...' && npx eslint src/ && echo 'Linter passed. Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
     "prod": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production node dist/src/app.js"
   },
   "devDependencies": {

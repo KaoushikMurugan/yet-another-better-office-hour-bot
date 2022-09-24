@@ -3,10 +3,11 @@ import { Firestore } from "firebase-admin/firestore";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { QueueBackup, ServerBackup } from "./firebase-models/backups";
+import { QueueBackup, ServerBackup } from "../../models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 import environment from '../../environment/environment-manager';
+import { SimpleLogEmbed } from "../../utils/embed-helper";
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -50,7 +51,33 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         if (isFirstCall) {
             return Promise.resolve();
         }
+        await this.backupServerToFirebase(server);
+    }
 
+    /**
+     * Gets the backup from firebase
+     * ----
+     * If there's no backup for this serverId, return undefined
+     * @param serverId the server to retrieve backup for. This is the id from Guild.id
+    */
+    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+        const backupData = await this.firebase_db
+            .collection("serverBackups")
+            .doc(serverId)
+            .get();
+        return <ServerBackup>backupData.data();
+    }
+
+    override async onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+        await this.backupServerToFirebase(server);
+    }
+
+    /**
+     * Builds the backup data and sends it to firebase
+     * ----
+     * @param server the server to backup
+    */
+    private async backupServerToFirebase(server: Readonly<AttendingServerV2>): Promise<void> {
         const queues = server.helpQueues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
@@ -70,9 +97,9 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             serverName: this.serverName,
             queues: queueBackups,
             timeStamp: new Date(),
-            afterSessionMessage: server.afterSessionMessage
+            afterSessionMessage: server.afterSessionMessage,
+            loggingChannel: server.loggingChannel?.id ?? ''
         };
-
         this.firebase_db
             .collection("serverBackups")
             .doc(this.serverId)
@@ -82,21 +109,9 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                 `Backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));
+        await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 
-    /**
-     * Gets the backup from firebase
-     * ----
-     * If there's no backup for this serverId, return undefined
-     * @param serverId the server to retrieve backup for. This is the id from Guild.id
-    */
-    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
-        const backupData = await this.firebase_db
-            .collection("serverBackups")
-            .doc(serverId)
-            .get();
-        return <ServerBackup>backupData.data();
-    }
 }
 
 export { FirebaseServerBackupExtension };

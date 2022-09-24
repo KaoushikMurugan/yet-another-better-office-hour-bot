@@ -4,7 +4,7 @@ import { ButtonCommandDispatcher } from "./command-handling/button-handler";
 import { CentralCommandDispatcher } from "./command-handling/command-handler";
 import {
     BgMagenta, FgBlack, FgCyan, BgYellow,
-    FgGreen, FgMagenta, FgRed, FgYellow, ResetColor
+    FgGreen, FgMagenta, FgRed, FgYellow, ResetColor, BgCyan
 } from './utils/command-line-colors';
 import { postSlashCommands } from "./command-handling/slash-commands";
 import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
@@ -60,6 +60,7 @@ client.on("ready", async () => {
             "Login Unsuccessful. Check YABOB's Discord Credentials"
         );
     }
+    console.log(`Env: ${BgCyan}${environment.env}${ResetColor}`);
     printTitleString();
     console.log(`Logged in as ${client.user.tag}!`);
     console.log("Scanning servers I am a part of...");

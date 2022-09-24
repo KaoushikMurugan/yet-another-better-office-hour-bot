@@ -1,7 +1,7 @@
-import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager } from "discord.js";
+import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, SimpleEmbed, ErrorEmbed } from "../utils/embed-helper";
+import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
@@ -9,7 +9,8 @@ import {
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
-    isFromGuildMember
+    isFromGuildMember,
+    logEditFailure
 } from './common-validations';
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
@@ -58,6 +59,8 @@ class CentralCommandDispatcher {
         ['start', (interaction: CommandInteraction) => this.start(interaction)],
         ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
         ['help', (interaction: CommandInteraction) => this.help(interaction)],
+        ['set_logging_channel', (interaction: CommandInteraction) => this.setLoggingChannel(interaction)],
+        ['stop_logging', (interaction: CommandInteraction) => this.stopLogging(interaction)],
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -72,8 +75,9 @@ class CentralCommandDispatcher {
      * - If thrown but the command is implemented, make sure commandMethodMap has it
     */
     async process(interaction: CommandInteraction): Promise<void> {
+        const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
+        this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         // Immediately replay to show that YABOB has received the interaction
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
@@ -96,12 +100,13 @@ class CentralCommandDispatcher {
                     await interaction.editReply(
                         SimpleEmbed(successMsg, EmbedColor.Success)
                     ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) =>
+                ).catch(async (err: UserViewableError) => {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(logEditFailure)
-                );
+                    ).catch(logEditFailure);
+                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                });
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')
@@ -411,6 +416,36 @@ class CentralCommandDispatcher {
             return Promise.reject(new CommandParseError('Command not found.'));
         }
         return undefined;
+    }
+
+    private async setLoggingChannel(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'set_logging_channel',
+                ['Bot Admin']
+            ),
+        ]);
+        const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
+        if (loggingChannel.type !== 'GUILD_TEXT') {
+            return Promise.reject(new CommandParseError('Channel must be a text channel.'));
+        }
+        await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
+        return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
+    }
+
+    private async stopLogging(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'stop_logging',
+                ['Bot Admin']
+            ),
+        ]);
+        await this.serverMap.get(serverId)?.setLoggingChannel(undefined);
+        return `Successfully stopped logging.`;
     }
 
     /**

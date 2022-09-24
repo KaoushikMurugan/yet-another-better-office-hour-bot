@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, TextChannel,
+    GuildMember, MessageOptions, TextChannel,
     User, VoiceChannel, VoiceState,
 } from "discord.js";
 import { HelpQueueV2 } from "../help-queue/help-queue";
@@ -15,7 +15,7 @@ import { GoogleSheetLoggingExtension } from "../extensions/google-sheet-logging/
 import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
 import { CalendarServerEventListener } from "../extensions/session-calendar/calendar-states";
 
-import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
+import { QueueBackup } from "../models/backups";
 import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
@@ -45,6 +45,8 @@ class AttendingServerV2 {
     intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
     afterSessionMessage = '';
+    // optional channel where yabob will log message. if undefined, doesn't log on the server
+    loggingChannel?: TextChannel;
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
@@ -135,6 +137,10 @@ class AttendingServerV2 {
             serverExtensions
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
+        if (externalServerData?.loggingChannel !== undefined) {
+            server.loggingChannel = server.guild.channels.cache
+                .get(externalServerData?.loggingChannel) as TextChannel;
+        }
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
@@ -636,6 +642,7 @@ class AttendingServerV2 {
 
     /**
      * Cleans up the given queue and resend all embeds
+     * ----
      * @param targetQueue the queue to clean
     */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
@@ -648,7 +655,7 @@ class AttendingServerV2 {
         this.afterSessionMessage = newMessage;
         // trigger anything listening to internal updates
         await Promise.all(this.serverExtensions.map(
-            extension => extension.onServerPeriodicUpdate(this, false)
+            extension => extension.onServerRequestBackup(this)
         ));
     }
 
@@ -716,6 +723,23 @@ class AttendingServerV2 {
         await Promise.all(this.serverExtensions.map(
             extension => extension.onServerDelete(this)
         ));
+    }
+
+    /**
+     * Sets the logging channel for this server
+     * ----
+     * @param loggingChannel the new logging channel. 
+     * - If undefined, disables logging for this server
+     */
+    async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
+        this.loggingChannel = loggingChannel;
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerRequestBackup(this)
+        ));
+    }
+
+    async sendLogMessage(message: MessageOptions | string): Promise<void> {
+        this.loggingChannel && await this.loggingChannel.send(message);
     }
 
     /**

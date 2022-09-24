@@ -2,9 +2,9 @@ import { BaseInteractionExtension } from "../extension-interface";
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
-    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role
+    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../../utils/embed-helper";
+import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError,
@@ -14,7 +14,8 @@ import {
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles
+    isTriggeredByUserWithRoles,
+    logEditFailure
 } from '../../command-handling/common-validations';
 import {
     checkCalendarConnection,
@@ -89,10 +90,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     override buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) => Promise<string | undefined>
+        (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
     > = new Map([
-        ['refresh', (_: ButtonInteraction, queueName: string) =>
-            this.requestCalendarRefresh(queueName)]
+        ['refresh', (queueName: string, interaction: ButtonInteraction) =>
+            this.requestCalendarRefresh(queueName, interaction)]
     ]);
 
     override get slashCommandData(): CommandData {
@@ -103,7 +104,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in command-handler.ts
     */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
+        //Send logs before* processing the command
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+        ]);
+        if (serverId !== undefined) {
+            await this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
+        }
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
@@ -146,7 +153,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in button-handler.ts
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
@@ -171,7 +177,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `pressed [${interactionName}] ` +
             `in queue: ${queueName}.`
         );
-        await buttonMethod(interaction, queueName)
+        await buttonMethod(queueName, interaction)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => successMsg &&
                 await interaction.editReply(
@@ -208,13 +214,14 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(newCalendarId);
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
                 ? ` '${newCalendarName}'. `
                 : ", but it doesn't have a name. "}` +
             `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button. `+
+            `Or you can manually refresh it using the refresh button. ` +
             `This ID has also been backed up to firebase.`
         );
     }
@@ -232,6 +239,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +
@@ -288,7 +296,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ]);
         const calendarDisplayName = interaction.options.getString('calendar_name', true);
         const user = interaction.options.getUser('user', false);
-
         let validQueues: (CategoryChannel | Role)[] = [];
         let memberToUpdate = interaction.member as GuildMember;
         if (user !== null) {
@@ -344,6 +351,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 calendarDisplayName,
                 memberToUpdate.id
             );
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`));
         return Promise.resolve(
             `Copy and paste the following into the calendar **description**:\n\n` +
             `YABOB_START ` +
@@ -353,12 +361,20 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
     }
 
-    private async requestCalendarRefresh(queueName: string): Promise<string> {
-        await serverIdCalendarStateMap
+    private async requestCalendarRefresh(
+        queueName: string,
+        interaction: ButtonInteraction
+    ): Promise<string> {
+        const queueChannel = serverIdCalendarStateMap
             .get(this.guild.id)
             ?.listeners
-            .get(queueName)
-            ?.onCalendarExtensionStateChange();
+            .get(queueName);
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            `Refresh Upcoming Sessions`,
+            interaction.channel as TextBasedChannel,
+        ));
+        await queueChannel?.onCalendarExtensionStateChange();
         return `Successfully refreshed upcoming hours for ${queueName}`;
     }
 

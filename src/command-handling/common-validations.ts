@@ -122,10 +122,15 @@ async function isFromGuildMember(
     ));
 }
 
+function logEditFailure(interaction: ButtonInteraction | CommandInteraction): void {
+    console.error(`Edit reply failed with ${interaction.toJSON()}`);
+}
+
 export {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromQueueChannelWithParent,
     isFromGuildMember,
-    isTriggeredByUserWithValidEmail
+    isTriggeredByUserWithValidEmail,
+    logEditFailure
 };

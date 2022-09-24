@@ -23,5 +23,5 @@ export {
     CategoryChannelId,
     RenderIndex,
     MessageId,
-    HelpMessage
+    HelpMessage,
 };

@@ -12,7 +12,7 @@ import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { HelpQueueV2 } from "../help-queue/help-queue";
 import { QueueDisplayV2 } from "../help-queue/queue-display";
 import { Helpee, Helper } from "../models/member-states";
-import { ServerBackup } from "./firebase-backup/firebase-models/backups";
+import { ServerBackup } from "../models/backups";
 import { CommandData } from '../command-handling/slash-commands';
 
 // Command level extensions
@@ -25,7 +25,7 @@ interface IInteractionExtension {
     >;
     buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) =>
+        (queueName: string, interaction: ButtonInteraction) =>
             Promise<string | undefined>
     >;
     slashCommandData: CommandData;
@@ -67,6 +67,7 @@ interface IServerExtension {
     ) => Promise<void>;
     onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
+    onServerRequestBackup: (server: Readonly<AttendingServerV2>) => Promise<void>;
 }
 
 // Extensions for individual queues
@@ -116,7 +117,7 @@ class BaseInteractionExtension implements IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2> = new Collection();
     buttonMethodMap: ReadonlyMap<
         string,
-        (interaction: ButtonInteraction, queueName: string) =>
+        (queueName: string, interaction: ButtonInteraction) =>
             Promise<string | undefined>
     > = new Map();
     commandMethodMap: ReadonlyMap<
@@ -193,6 +194,9 @@ class BaseServerExtension implements IServerExtension {
     }
     loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
         return Promise.resolve(undefined);
+    }
+    onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+        return Promise.resolve();
     }
 }
 

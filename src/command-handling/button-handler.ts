@@ -1,13 +1,17 @@
 import { ButtonInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from "../utils/embed-helper";
+import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from "../utils/embed-helper";
 import {
     CommandParseError,
     CommandNotImplementedError,
     UserViewableError
 } from "../utils/error-types";
-import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
+import {
+    isFromQueueChannelWithParent,
+    isFromGuildMember,
+    logEditFailure
+} from './common-validations';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -40,7 +44,6 @@ class ButtonCommandDispatcher {
                 EmbedColor.Neutral
             )
         });
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
@@ -60,12 +63,14 @@ class ButtonCommandDispatcher {
                         successMsg,
                         EmbedColor.Success),
                     ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) =>
+                ).catch(async (err: UserViewableError) => {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(logEditFailure)
-                );
+                    ).catch(logEditFailure);
+                    const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
+                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                });
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
@@ -82,9 +87,13 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
-        await this.serverMap.get(serverId)
-            ?.enqueueStudent(member, queueChannel);
+        const server = this.serverMap.get(serverId);
+        await server?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            "Join",
+            queueChannel.channelObj
+        ));
+        await server?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueName}\`.`;
     }
 
@@ -97,9 +106,13 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
-        await this.serverMap.get(serverId)
-            ?.removeStudentFromQueue(member, queueChannel);
+        const server = this.serverMap.get(serverId);
+        await server?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            "Leave",
+            queueChannel.channelObj
+        ));
+        await server?.removeStudentFromQueue(member, queueChannel);
         return `Successfully left \`${queueName}\`.`;
     }
 
@@ -112,8 +125,13 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
-        await this.serverMap.get(serverId)?.addStudentToNotifGroup(member, queueChannel);
+        const server = this.serverMap.get(serverId);
+        await server?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            "Notify When Open",
+            queueChannel.channelObj
+        ));
+        await server?.addStudentToNotifGroup(member, queueChannel);
         return `Successfully joined notification group for \`${queueName}\``;
     }
 
@@ -126,8 +144,13 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
-        await this.serverMap.get(serverId)?.removeStudentFromNotifGroup(member, queueChannel);
+        const server = this.serverMap.get(serverId);
+        await server?.sendLogMessage(ButtonLogEmbed(
+            interaction.user,
+            "Remove Notifications",
+            queueChannel.channelObj
+        ));
+        await server?.removeStudentFromNotifGroup(member, queueChannel);
         return `Successfully left notification group for \`${queueName}\``;
     }
 
