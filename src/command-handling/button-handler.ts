@@ -85,12 +85,12 @@ class ButtonCommandDispatcher {
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
         const server = this.serverMap.get(serverId);
-        await server?.enqueueStudent(member, queueChannel)
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Join",
             queueChannel.channelObj
         ));
+        await server?.enqueueStudent(member, queueChannel)
         return `Successfully joined \`${queueName}\`.`;
     }
 
@@ -105,12 +105,12 @@ class ButtonCommandDispatcher {
         ]);
 
         const server = this.serverMap.get(serverId);
-        await server?.removeStudentFromQueue(member, queueChannel);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Leave",
             queueChannel.channelObj
         ));
+        await server?.removeStudentFromQueue(member, queueChannel);
         return `Successfully left \`${queueName}\`.`;
     }
 
@@ -125,12 +125,12 @@ class ButtonCommandDispatcher {
         ]);
 
         const server = this.serverMap.get(serverId);
-        await server?.addStudentToNotifGroup(member, queueChannel);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Notify When Open",
             queueChannel.channelObj
         ));
+        await server?.addStudentToNotifGroup(member, queueChannel);
         return `Successfully joined notification group for \`${queueName}\``;
     }
 
@@ -145,12 +145,12 @@ class ButtonCommandDispatcher {
         ]);
 
         const server = this.serverMap.get(serverId);
-        await server?.removeStudentFromNotifGroup(member, queueChannel);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Remove Notifications",
             queueChannel.channelObj
         ));
+        await server?.removeStudentFromNotifGroup(member, queueChannel);
         return `Successfully left notification group for \`${queueName}\``;
     }
 

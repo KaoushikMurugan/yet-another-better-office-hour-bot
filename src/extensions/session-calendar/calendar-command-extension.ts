@@ -367,17 +367,17 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const queueChannel = await serverIdCalendarStateMap
+        const queueChannel = serverIdCalendarStateMap
             .get(this.guild.id)
             ?.listeners
-            .get(queueName)
+            .get(queueName);
 
-        await queueChannel?.onCalendarExtensionStateChange();
         await this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             `Refresh Upcoming Sessions`,
             interaction.channel as TextBasedChannel,
         ));
+        await queueChannel?.onCalendarExtensionStateChange();
         return `Successfully refreshed upcoming hours for ${queueName}`;
     }
 

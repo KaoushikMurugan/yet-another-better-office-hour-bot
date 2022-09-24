@@ -88,10 +88,15 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
+            name: 'User',
+            value: interaction.user.toString(),
+            inline: true,
+        },
+        {
             name: 'Error Type',
             value: err.name,
             inline: true
-        }
+        },
     ];
     if (err instanceof QueueError) {
         color = EmbedColor.Aqua;
@@ -101,13 +106,19 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
             inline: true
         });
     }
+    embedFields.push(
+        {
+            name: 'Error Message',
+            value: err.message,
+            inline: false
+        });
     if (err instanceof ServerError) {
         color = EmbedColor.Error;
     }
     return {
         embeds: [{
             color: color,
-            title: err.message,
+            title: `Error occured at <t:${new Date().getTime().toString().slice(0, -3)}:F> `,
             timestamp: new Date(),
             fields: embedFields,
             footer: {
@@ -120,9 +131,9 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
 
 export function SimpleLogEmbed(
     message: string
-) : Pick<MessageOptions, 'embeds'> {
+): Pick<MessageOptions, 'embeds'> {
     message += `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`
-    if(message.length <= 256) {
+    if (message.length <= 256) {
         return {
             embeds: [{
                 color: EmbedColor.Pink,
@@ -145,7 +156,7 @@ export function SimpleLogEmbed(
                     iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }],
-            
+
         };
     }
 }
