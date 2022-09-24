@@ -17,12 +17,6 @@ type HelpMessage = {
     message: MessageOptions 
 };
 
-type slashCommandOptionData = {
-    name: string,
-    value: any,
-    type: string
-};
-
 export {
     GuildId,
     GuildMemberId,
@@ -30,5 +24,4 @@ export {
     RenderIndex,
     MessageId,
     HelpMessage,
-    slashCommandOptionData
 };

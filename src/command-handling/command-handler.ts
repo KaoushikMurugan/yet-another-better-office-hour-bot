@@ -14,7 +14,7 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { GuildId, slashCommandOptionData} from "../utils/type-aliases";
+import { GuildId } from "../utils/type-aliases";
 import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
 import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
 import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
@@ -108,31 +108,22 @@ class CentralCommandDispatcher {
                 this.isServerInteraction(interaction),
             ]);
             if (serverId !== undefined) {
-                let interactionOptionData: slashCommandOptionData[] = [];
                 let commandName = interaction.commandName;
                 let optionsData = interaction.options.data;
                 if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
-                    optionsData[0].options?.map((option) => {
-                        interactionOptionData.push({
-                            name: option.name,
-                            value: option.value,
-                            type: option.type
-                        }
-                    )});
                     commandName += ` ${optionsData[0].name}`;
-                } else { // for commands that don't have subcommands
-                    interactionOptionData = optionsData.map((option) => {
-                        return {
-                            name: option.name,
-                            value: option.value,
-                            type: option.type
-                        }
-                    })
+                    optionsData = optionsData[0].options ?? [];
                 }
                 this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(
                     interaction.user,
                     commandName,
-                    interactionOptionData,
+                    optionsData.map(option => {
+                        return {
+                            name: option.name,
+                            value: option.value,
+                            type: option.type
+                        };
+                    }),
                     interaction.channel!,
                 ));
             } else {

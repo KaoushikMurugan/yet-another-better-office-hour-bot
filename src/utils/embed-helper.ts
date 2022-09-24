@@ -1,4 +1,4 @@
-import { MessageOptions, TextBasedChannel, TextChannel, User } from "discord.js";
+import { MessageOptions, TextBasedChannel, User } from "discord.js";
 import {
     QueueError,
     ServerError,
@@ -127,7 +127,7 @@ export function slashCommandLogEmbed(
     commandName: string,
     optionData: {
         name: string,
-        value: any,
+        value: string | number | boolean | undefined,
         type: string
     } [],
     channel: TextBasedChannel,
@@ -152,16 +152,15 @@ export function slashCommandLogEmbed(
     if(optionData.length > 0) {
         embedFields.push({
             name: 'Options',
+            // Need to manually format the options as they are parsed as a string | number | boolean | undefined
             value: optionData.map((option) => {
                 switch(option.type) {
-                    case 'STRING' || 'INTEGER' || 'NUMBER' || 'BOOLEAN':
-                        return `\`${option.name}\`: ${option.value}`;
                     case 'CHANNEL':
-                        return `\`${option.name}\`: <#${option.value}>`;
+                        return `**${option.name}**: <#${option.value}>`;
                     case 'USER' || 'ROLE' || 'MENTIONABLE':
-                        return `\`${option.name}\`: <@${option.value}>`;
+                        return `**${option.name}**: <@${option.value}>`;
                     default:
-                        return `\`${option.name}\`: ${option.value}`;
+                        return `**${option.name}**: ${option.value}`;
                 }
             }).join('\n'),
             inline: false
