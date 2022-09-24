@@ -64,7 +64,7 @@ class ButtonCommandDispatcher {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(logEditFailure)
+                    ).catch(logEditFailure);
                     const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
                     this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
                 });
@@ -90,7 +90,7 @@ class ButtonCommandDispatcher {
             "Join",
             queueChannel.channelObj
         ));
-        await server?.enqueueStudent(member, queueChannel)
+        await server?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueName}\`.`;
     }
 

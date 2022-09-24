@@ -104,7 +104,7 @@ class CentralCommandDispatcher {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
-                    ).catch(logEditFailure)
+                    ).catch(logEditFailure);
                     this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
                 });
         } else {

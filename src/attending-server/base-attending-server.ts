@@ -45,14 +45,14 @@ class AttendingServerV2 {
     intervalID!: NodeJS.Timer;
     // message sent to students after they leave 
     afterSessionMessage = '';
+    // optional channel where yabob will log message. if undefined, doesn't log on the server
+    loggingChannel?: TextChannel;
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
     private queueChannelsCache: QueueChannel[] = [];
     // unique active helpers, key is member.id
     private activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
-    // optional channel where yabob will log message. if undefined, doesn't log on the server
-    loggingChannel: TextChannel | undefined;
 
     protected constructor(
         readonly user: User,
@@ -137,7 +137,7 @@ class AttendingServerV2 {
             serverExtensions
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
-        if(externalServerData?.loggingChannel !== undefined) {
+        if (externalServerData?.loggingChannel !== undefined) {
             server.loggingChannel = server.guild.channels.cache.get(externalServerData?.loggingChannel) as TextChannel;
         } else {
             server.loggingChannel = undefined;
@@ -727,22 +727,18 @@ class AttendingServerV2 {
     }
 
     /**
-     * Set the logging channel for this server
+     * Sets the logging channel for this server
      * ----
-     * @param newLoggingChannel the new logging channel. if undefined, disables
-     * logging for this server
+     * @param loggingChannel the new logging channel. 
+     * - If undefined, disables logging for this server
      */
-    async setLoggingChannel(newLoggingChannel: TextChannel | undefined): Promise<void> {
-        this.loggingChannel = newLoggingChannel;
+    async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
+        this.loggingChannel = loggingChannel;
     }
 
-    async sendLogMessage(message: MessageOptions | string) : Promise<void> {
-        if (this.loggingChannel === undefined) {
-            return;
-        }
-        await this.loggingChannel.send(message);
+    async sendLogMessage(message: MessageOptions | string): Promise<void> {
+        this.loggingChannel && await this.loggingChannel.send(message);
     }
-
 
     /**
      * Creates all the office hour queues

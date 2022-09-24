@@ -51,7 +51,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         if (isFirstCall) {
             return Promise.resolve();
         }
-
         const queues = server.helpQueues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
@@ -74,7 +73,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             afterSessionMessage: server.afterSessionMessage,
             loggingChannel: server.loggingChannel?.id ?? ''
         };
-
         this.firebase_db
             .collection("serverBackups")
             .doc(this.serverId)
@@ -84,7 +82,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                 `Backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));
-        server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
+        await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 
     /**

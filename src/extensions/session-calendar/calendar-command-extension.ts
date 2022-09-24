@@ -108,7 +108,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             this.isServerInteraction(interaction),
         ]);
         if (serverId !== undefined) {
-            this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
+            await this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
@@ -215,7 +215,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(newCalendarId);
-        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
@@ -240,7 +240,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
-        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +
@@ -353,7 +353,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 calendarDisplayName,
                 memberToUpdate.id
             );
-        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`));
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`));
         return Promise.resolve(
             `Copy and paste the following into the calendar **description**:\n\n` +
             `YABOB_START ` +
@@ -371,7 +371,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             .get(this.guild.id)
             ?.listeners
             .get(queueName);
-
         await this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             `Refresh Upcoming Sessions`,
