@@ -5,7 +5,6 @@ import {
     UserViewableError
 } from '../utils/error-types';
 
-
 export enum EmbedColor {
     Success = 0xa9dc76, // Green
     Error = 0xff6188, // Red
@@ -132,12 +131,12 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
 export function SimpleLogEmbed(
     message: string
 ): Pick<MessageOptions, 'embeds'> {
-    message += `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`
+    const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     if (message.length <= 256) {
         return {
             embeds: [{
                 color: EmbedColor.Pink,
-                title: message,
+                title: message + timeStampString,
                 timestamp: new Date(),
                 footer: {
                     text: `YABOB`,
@@ -149,7 +148,7 @@ export function SimpleLogEmbed(
         return {
             embeds: [{
                 color: EmbedColor.Pink,
-                description: message,
+                description: message + timeStampString,
                 timestamp: new Date(),
                 footer: {
                     text: `YABOB`,
@@ -218,7 +217,7 @@ export function SlashCommandLogEmbed(
         },
         {
             name: 'Channel',
-            value: commandInteraction.channel!.toString() ?? `unknown channel`,
+            value: commandInteraction.channel?.toString() ?? `unknown channel`,
             inline: true
         }
     ];

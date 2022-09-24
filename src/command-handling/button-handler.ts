@@ -103,7 +103,6 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
@@ -123,7 +122,6 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
@@ -143,7 +141,6 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
