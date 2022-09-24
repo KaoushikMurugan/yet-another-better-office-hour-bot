@@ -108,29 +108,12 @@ class CentralCommandDispatcher {
                 this.isServerInteraction(interaction),
             ]);
             if (serverId !== undefined) {
-                let commandName = interaction.commandName;
-                let optionsData = interaction.options.data;
-                if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
-                    commandName += ` ${optionsData[0].name}`;
-                    optionsData = optionsData[0].options ?? [];
-                }
-                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(
-                    interaction.user,
-                    commandName,
-                    optionsData.map(option => {
-                        return {
-                            name: option.name,
-                            value: option.value,
-                            type: option.type
-                        };
-                    }),
-                    interaction.channel!,
-                ));
-            } else {
-                await interaction.editReply(ErrorEmbed(
-                    new CommandNotImplementedError('This command does not exist.')
-                )).catch(logEditFailure);
+                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(interaction));
             }
+        } else {
+            await interaction.editReply(ErrorEmbed(
+                new CommandNotImplementedError('This command does not exist.')
+            )).catch(logEditFailure);
         }
     }
 

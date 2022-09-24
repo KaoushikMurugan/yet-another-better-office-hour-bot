@@ -1,4 +1,4 @@
-import { MessageOptions, TextBasedChannel, User } from "discord.js";
+import { CommandInteraction, MessageOptions, TextBasedChannel, User } from "discord.js";
 import {
     QueueError,
     ServerError,
@@ -123,19 +123,18 @@ export function buttonLogEmbed(
 }
 
 export function slashCommandLogEmbed(
-    user: User,
-    commandName: string,
-    optionData: {
-        name: string,
-        value: string | number | boolean | undefined,
-        type: string
-    } [],
-    channel: TextBasedChannel,
-): Pick<MessageOptions, 'embeds'> {
-    const embedFields = [
+    commandInteraction: CommandInteraction,
+    ): Pick<MessageOptions, 'embeds'> {
+        let commandName = commandInteraction.commandName;
+        let optionsData = commandInteraction.options.data;
+        if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
+            commandName += ` ${optionsData[0].name}`;
+            optionsData = optionsData[0].options ?? [];
+        }
+        const embedFields = [
         {
             name: "User",
-            value: user.toString(),
+            value: commandInteraction.user.toString(),
             inline: true
         },
         {
@@ -145,15 +144,15 @@ export function slashCommandLogEmbed(
         },
         {
             name: 'Channel',
-            value: channel.toString(),
+            value: commandInteraction.channel!.toString() ?? `unknown channel`,
             inline: true
         }
     ];
-    if(optionData.length > 0) {
+    if(optionsData.length > 0) {
         embedFields.push({
             name: 'Options',
             // Need to manually format the options as they are parsed as a string | number | boolean | undefined
-            value: optionData.map((option) => {
+            value: optionsData.map((option) => {
                 switch(option.type) {
                     case 'CHANNEL':
                         return `**${option.name}**: <#${option.value}>`;
