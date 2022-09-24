@@ -7,7 +7,11 @@ import {
     CommandNotImplementedError,
     UserViewableError
 } from "../utils/error-types";
-import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
+import {
+    isFromQueueChannelWithParent,
+    isFromGuildMember,
+    logEditFailure
+} from './common-validations';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -40,7 +44,6 @@ class ButtonCommandDispatcher {
                 EmbedColor.Neutral
             )
         });
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         const delimiterPosition = interaction.customId.indexOf(" ");
         const interactionName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);

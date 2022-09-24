@@ -14,7 +14,8 @@ import {
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles
+    isTriggeredByUserWithRoles,
+    logEditFailure
 } from '../../command-handling/common-validations';
 import {
     checkCalendarConnection,
@@ -110,7 +111,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         if (serverId !== undefined) {
             await this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
@@ -153,7 +153,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in button-handler.ts
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing button...',
@@ -297,7 +296,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ]);
         const calendarDisplayName = interaction.options.getString('calendar_name', true);
         const user = interaction.options.getUser('user', false);
-
         let validQueues: (CategoryChannel | Role)[] = [];
         let memberToUpdate = interaction.member as GuildMember;
         if (user !== null) {

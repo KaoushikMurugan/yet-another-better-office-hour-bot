@@ -9,7 +9,8 @@ import {
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
-    isFromGuildMember
+    isFromGuildMember,
+    logEditFailure
 } from './common-validations';
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
@@ -77,7 +78,6 @@ class CentralCommandDispatcher {
         const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
         this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         // Immediately replay to show that YABOB has received the interaction
-        const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
                 'Processing command...',
