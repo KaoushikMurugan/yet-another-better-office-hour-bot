@@ -1,7 +1,7 @@
 import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed } from "../utils/embed-helper";
+import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from "../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
@@ -74,6 +74,8 @@ class CentralCommandDispatcher {
      * - If thrown but the command is implemented, make sure commandMethodMap has it
     */
     async process(interaction: CommandInteraction): Promise<void> {
+        const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
+        this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         // Immediately replay to show that YABOB has received the interaction
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
@@ -98,18 +100,13 @@ class CentralCommandDispatcher {
                     await interaction.editReply(
                         SimpleEmbed(successMsg, EmbedColor.Success)
                     ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) =>
+                ).catch(async (err: UserViewableError) => {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
                     ).catch(logEditFailure)
-                );
-            const [serverId] = await Promise.all([
-                this.isServerInteraction(interaction),
-            ]);
-            if (serverId !== undefined) {
-                this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
-            }
+                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                });
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')

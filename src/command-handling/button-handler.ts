@@ -1,7 +1,7 @@
 import { ButtonInteraction } from "discord.js";
 import { AttendingServerV2 } from "../attending-server/base-attending-server";
 import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed } from "../utils/embed-helper";
+import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from "../utils/embed-helper";
 import {
     CommandParseError,
     CommandNotImplementedError,
@@ -60,12 +60,14 @@ class ButtonCommandDispatcher {
                         successMsg,
                         EmbedColor.Success),
                     ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) =>
+                ).catch(async (err: UserViewableError) => {
                     // Central error handling, reply to user with the error
                     await interaction.editReply(
                         ErrorEmbed(err)
                     ).catch(logEditFailure)
-                );
+                    const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
+                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                });
         } else {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
@@ -82,9 +84,9 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-        const server = await this.serverMap.get(serverId);
-        server?.enqueueStudent(member, queueChannel)
-        server?.sendLogMessage(ButtonLogEmbed(
+        const server = this.serverMap.get(serverId);
+        await server?.enqueueStudent(member, queueChannel)
+        await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Join",
             queueChannel.channelObj
@@ -102,9 +104,9 @@ class ButtonCommandDispatcher {
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
-        const server = await this.serverMap.get(serverId);
-        server?.removeStudentFromQueue(member, queueChannel);
-        server?.sendLogMessage(ButtonLogEmbed(
+        const server = this.serverMap.get(serverId);
+        await server?.removeStudentFromQueue(member, queueChannel);
+        await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Leave",
             queueChannel.channelObj
@@ -122,9 +124,9 @@ class ButtonCommandDispatcher {
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
-        const server = await this.serverMap.get(serverId);
-        server?.addStudentToNotifGroup(member, queueChannel);
-        server?.sendLogMessage(ButtonLogEmbed(
+        const server = this.serverMap.get(serverId);
+        await server?.addStudentToNotifGroup(member, queueChannel);
+        await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             "Notify When Open",
             queueChannel.channelObj
@@ -142,11 +144,11 @@ class ButtonCommandDispatcher {
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
 
-        const server = await this.serverMap.get(serverId);
-        server?.removeStudentFromNotifGroup(member, queueChannel);
-        server?.sendLogMessage(ButtonLogEmbed(
+        const server = this.serverMap.get(serverId);
+        await server?.removeStudentFromNotifGroup(member, queueChannel);
+        await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Join",
+            "Remove Notifications",
             queueChannel.channelObj
         ));
         return `Successfully left notification group for \`${queueName}\``;

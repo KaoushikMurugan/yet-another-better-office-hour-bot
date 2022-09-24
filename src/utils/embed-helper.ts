@@ -1,4 +1,4 @@
-import { CommandInteraction, MessageOptions, TextBasedChannel, User } from "discord.js";
+import { CommandInteraction, Interaction, MessageOptions, TextBasedChannel, User } from "discord.js";
 import {
     QueueError,
     ServerError,
@@ -15,6 +15,7 @@ export enum EmbedColor {
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8, // Aqua
     Purple = 0xa6a5c4,
+    Pink = 0xffb7c5,
 }
 
 export function SimpleEmbed(
@@ -77,8 +78,42 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
             timestamp: new Date(),
             description: `If you need help or think this is a mistake, `
                 + `please post a screenshot of this message in the #help channel `
-                + `and ping @Bot Admin.`,
+                + `(or equivalent) and ping @Bot Admin.`,
             fields: embedFields
+        }],
+    };
+}
+
+export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<MessageOptions, 'embeds'> {
+    let color = EmbedColor.KindaBad;
+    const embedFields = [
+        {
+            name: 'Error Type',
+            value: err.name,
+            inline: true
+        }
+    ];
+    if (err instanceof QueueError) {
+        color = EmbedColor.Aqua;
+        embedFields.push({
+            name: 'In Queue',
+            value: err.queueName,
+            inline: true
+        });
+    }
+    if (err instanceof ServerError) {
+        color = EmbedColor.Error;
+    }
+    return {
+        embeds: [{
+            color: color,
+            title: err.message,
+            timestamp: new Date(),
+            fields: embedFields,
+            footer: {
+                text: `YABOB`,
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            }
         }],
     };
 }
@@ -90,7 +125,7 @@ export function SimpleLogEmbed(
     if(message.length <= 256) {
         return {
             embeds: [{
-                color: EmbedColor.Aqua,
+                color: EmbedColor.Pink,
                 title: message,
                 timestamp: new Date(),
                 footer: {
@@ -102,7 +137,7 @@ export function SimpleLogEmbed(
     } else { // temporary solution: Force the message into description
         return {
             embeds: [{
-                color: EmbedColor.NoColor,
+                color: EmbedColor.Pink,
                 description: message,
                 timestamp: new Date(),
                 footer: {
@@ -122,7 +157,7 @@ export function ButtonLogEmbed(
 ): Pick<MessageOptions, 'embeds'> {
     return {
         embeds: [{
-            color: EmbedColor.Aqua,
+            color: EmbedColor.Pink,
             title: `Button Pressed at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
             timestamp: new Date(),
             fields: [
@@ -195,7 +230,7 @@ export function SlashCommandLogEmbed(
     }
     return {
         embeds: [{
-            color: EmbedColor.Aqua,
+            color: EmbedColor.Pink,
             title: `Slash Command Used at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
             timestamp: new Date(),
             fields: embedFields,

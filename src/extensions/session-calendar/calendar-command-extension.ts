@@ -372,8 +372,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ?.listeners
             .get(queueName)
 
-        queueChannel?.onCalendarExtensionStateChange();
-        this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
+        await queueChannel?.onCalendarExtensionStateChange();
+        await this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
             `Refresh Upcoming Sessions`,
             interaction.channel as TextBasedChannel,
