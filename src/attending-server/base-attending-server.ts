@@ -15,7 +15,7 @@ import { GoogleSheetLoggingExtension } from "../extensions/google-sheet-logging/
 import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
 import { CalendarServerEventListener } from "../extensions/session-calendar/calendar-states";
 
-import { QueueBackup } from "../extensions/firebase-backup/firebase-models/backups";
+import { QueueBackup } from "../models/backups";
 import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor

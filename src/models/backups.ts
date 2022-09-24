@@ -1,4 +1,4 @@
-import { Helpee } from "../../../models/member-states";
+import { Helpee } from "./member-states";
 
 type QueueBackup = {
     studentsInQueue: ReadonlyArray<Omit<Helpee, 'member'|'queue'> & {

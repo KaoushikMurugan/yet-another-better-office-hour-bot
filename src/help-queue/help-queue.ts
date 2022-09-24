@@ -2,7 +2,7 @@ import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
-import { QueueBackup } from '../extensions/firebase-backup/firebase-models/backups';
+import { QueueBackup } from '../models/backups';
 import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';

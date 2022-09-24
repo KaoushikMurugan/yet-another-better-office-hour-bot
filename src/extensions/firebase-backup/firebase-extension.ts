@@ -3,7 +3,7 @@ import { Firestore } from "firebase-admin/firestore";
 import { initializeApp, cert, getApps } from "firebase-admin/app";
 import { getFirestore } from "firebase-admin/firestore";
 import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { QueueBackup, ServerBackup } from "./firebase-models/backups";
+import { QueueBackup, ServerBackup } from "../../models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 import environment from '../../environment/environment-manager';
