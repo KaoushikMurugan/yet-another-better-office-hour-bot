@@ -125,9 +125,10 @@ export function buttonLogEmbed(
 export function slashCommandLogEmbed(
     user: User,
     commandName: string,
-    optionNameValuePair: {
+    optionData: {
         name: string,
-        value: any
+        value: any,
+        type: string
     } [],
     channel: TextBasedChannel,
 ): Pick<MessageOptions, 'embeds'> {
@@ -139,7 +140,7 @@ export function slashCommandLogEmbed(
         },
         {
             name: 'Command Name',
-            value: commandName,
+            value: `\`/${commandName}\``,
             inline: true
         },
         {
@@ -148,11 +149,20 @@ export function slashCommandLogEmbed(
             inline: true
         }
     ];
-    if(optionNameValuePair.length > 0) {
+    if(optionData.length > 0) {
         embedFields.push({
             name: 'Options',
-            value: optionNameValuePair.map((option) => {
-                return `**${option.name}:** ${option.value}`;
+            value: optionData.map((option) => {
+                switch(option.type) {
+                    case 'STRING' || 'INTEGER' || 'NUMBER' || 'BOOLEAN':
+                        return `\`${option.name}\`: ${option.value}`;
+                    case 'CHANNEL':
+                        return `\`${option.name}\`: <#${option.value}>`;
+                    case 'USER' || 'ROLE' || 'MENTIONABLE':
+                        return `\`${option.name}\`: <@${option.value}>`;
+                    default:
+                        return `\`${option.name}\`: ${option.value}`;
+                }
             }).join('\n'),
             inline: false
         });

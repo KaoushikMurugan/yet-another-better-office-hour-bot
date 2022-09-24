@@ -14,7 +14,7 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { GuildId } from "../utils/type-aliases";
+import { GuildId, slashCommandOptionData} from "../utils/type-aliases";
 import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
 import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
 import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
@@ -108,23 +108,38 @@ class CentralCommandDispatcher {
                 this.isServerInteraction(interaction),
             ]);
             if (serverId !== undefined) {
-                // If the command is from a server, log it
-                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(
-                    interaction.user,
-                    interaction.commandName,
-                    interaction.options.data.map((option) => {
+                let interactionOptionData: slashCommandOptionData[] = [];
+                let commandName = interaction.commandName;
+                let optionsData = interaction.options.data;
+                if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
+                    optionsData[0].options?.map((option) => {
+                        interactionOptionData.push({
+                            name: option.name,
+                            value: option.value,
+                            type: option.type
+                        }
+                    )});
+                    commandName += ` ${optionsData[0].name}`;
+                } else { // for commands that don't have subcommands
+                    interactionOptionData = optionsData.map((option) => {
                         return {
                             name: option.name,
                             value: option.value,
+                            type: option.type
                         }
-                    }),
+                    })
+                }
+                this.serverMap.get(serverId)?.sendLogMessage(slashCommandLogEmbed(
+                    interaction.user,
+                    commandName,
+                    interactionOptionData,
                     interaction.channel!,
                 ));
+            } else {
+                await interaction.editReply(ErrorEmbed(
+                    new CommandNotImplementedError('This command does not exist.')
+                )).catch(logEditFailure);
             }
-        } else {
-            await interaction.editReply(ErrorEmbed(
-                new CommandNotImplementedError('This command does not exist.')
-            )).catch(logEditFailure);
         }
     }
 
@@ -442,7 +457,7 @@ class CentralCommandDispatcher {
             ),
         ]);
         const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
-        if(loggingChannel.type !== 'GUILD_TEXT') {
+        if (loggingChannel.type !== 'GUILD_TEXT') {
             return Promise.reject(new CommandParseError('Channel must be a text channel.'));
         }
         await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
