@@ -83,6 +83,38 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
     };
 }
 
+export function SimpleLogEmbed(
+    message: string
+) : Pick<MessageOptions, 'embeds'> {
+    message += `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`
+    if(message.length <= 256) {
+        return {
+            embeds: [{
+                color: EmbedColor.Aqua,
+                title: message,
+                timestamp: new Date(),
+                footer: {
+                    text: `YABOB`,
+                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                }
+            }],
+        };
+    } else { // temporary solution: Force the message into description
+        return {
+            embeds: [{
+                color: EmbedColor.NoColor,
+                description: message,
+                timestamp: new Date(),
+                footer: {
+                    text: `YABOB`,
+                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                }
+            }],
+            
+        };
+    }
+}
+
 export function ButtonLogEmbed(
     user: User,
     interactionName: string,

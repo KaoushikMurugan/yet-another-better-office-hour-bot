@@ -4,7 +4,7 @@ import {
     ButtonInteraction, CategoryChannel, Collection,
     CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
-import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper";
+import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper";
 import {
     CommandNotImplementedError,
     CommandParseError,
@@ -103,6 +103,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in command-handler.ts
     */
     override async processCommand(interaction: CommandInteraction): Promise<void> {
+        //Send logs before* processing the command
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+        ]);
+        if (serverId !== undefined) {
+            this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
+        }
         const logEditFailure = () => console.error(`Edit reply failed with ${interaction.toJSON()}`);
         await interaction.editReply({
             ...SimpleEmbed(
@@ -140,12 +147,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     ErrorEmbed(err)
                 ).catch(logEditFailure)
             );
-            const [serverId] = await Promise.all([
-                this.isServerInteraction(interaction),
-            ]);
-            if (serverId !== undefined) {
-                this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
-            }
     }
 
     /**
@@ -214,6 +215,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(newCalendarId);
+        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
@@ -238,6 +240,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await serverIdCalendarStateMap
             .get(this.guild.id)
             ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
+        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar ID and stored in firebase`));
         return Promise.resolve(
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +
@@ -350,6 +353,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 calendarDisplayName,
                 memberToUpdate.id
             );
+        this.serverMap.get(this.guild.id)?.sendLogMessage(SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`));
         return Promise.resolve(
             `Copy and paste the following into the calendar **description**:\n\n` +
             `YABOB_START ` +
@@ -371,7 +375,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         queueChannel?.onCalendarExtensionStateChange();
         this.serverMap.get(this.guild.id)?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Notify When Open",
+            `Refresh Upcoming Sessions`,
             interaction.channel as TextBasedChannel,
         ));
         return `Successfully refreshed upcoming hours for ${queueName}`;

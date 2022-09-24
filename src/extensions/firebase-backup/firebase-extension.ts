@@ -7,6 +7,7 @@ import { QueueBackup, ServerBackup } from "./firebase-models/backups";
 import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
 
 import environment from '../../environment/environment-manager';
+import { SimpleLogEmbed } from "../../utils/embed-helper";
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -83,6 +84,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                 `Backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));
+        server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 
     /**
