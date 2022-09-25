@@ -117,9 +117,9 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 `queue ${interaction.options.getSubcommand()}`,
-                ['Bot Admin'])
+                ['Bot Admin']
+            )
         ]);
-
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
             case 'add': {
@@ -207,7 +207,6 @@ class CentralCommandDispatcher {
                 ['Bot Admin', 'Staff']
             )
         ]);
-
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
         return `You helped for ` +
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -302,7 +301,6 @@ class CentralCommandDispatcher {
             .setWrapped(1)
             .setWrapped(2)
             .setWrapped(3);
-
         await interaction.editReply(SimpleEmbed(
             'Current Helpers',
             EmbedColor.Aqua,

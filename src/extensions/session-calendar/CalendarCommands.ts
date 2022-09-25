@@ -162,7 +162,7 @@ const calendarHelperHelpMessages: HelpMessage[] = [
 ];
 
 const calendarStudentHelpMessages: HelpMessage[] = [
-    whenNextHelp,
+    whenNextHelp
 ];
 
 // Prevent repeated pushing for multiple instances

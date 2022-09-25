@@ -223,7 +223,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
-
         // Fire the promise then forget, if an exception comes back just log it to the console
         void Promise.all([
             attendanceSheet.addRow(
@@ -271,7 +270,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 title: sheetTitle,
                 headerValues: requiredHeaders
             });
-
         if (helpSessionSheet.headerValues === undefined ||
             helpSessionSheet.headerValues.length !== [...requiredHeaders, 'Session Time (ms)'].length ||
             !helpSessionSheet.headerValues.every(header =>

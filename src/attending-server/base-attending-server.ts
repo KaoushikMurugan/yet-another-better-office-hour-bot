@@ -717,14 +717,13 @@ class AttendingServerV2 {
                         VIEW_CHANNEL: false
                     }
                 );
-                await Promise.all(
-                    this.guild.roles.cache
-                        .filter(role => roleConfig.visibility.includes(role.name))
-                        .map(roleWithViewPermission =>
-                            commandCh.permissionOverwrites.create(
-                                roleWithViewPermission,
-                                { VIEW_CHANNEL: true })
-                        )
+                await Promise.all(this.guild.roles.cache
+                    .filter(role => roleConfig.visibility.includes(role.name))
+                    .map(roleWithViewPermission =>
+                        commandCh.permissionOverwrites.create(
+                            roleWithViewPermission,
+                            { VIEW_CHANNEL: true })
+                    )
                 );
             }));
         } else {
@@ -851,14 +850,12 @@ class AttendingServerV2 {
             .map(role => role.name));
         const queueNames = (await this.getQueueChannels(false))
             .map(ch => ch.queueName);
-        await Promise.all(
-            queueNames
-                .filter(queue => !existingRoles.has(queue))
-                .map(async roleToCreate =>
-                    await this.guild.roles.create({
-                        name: roleToCreate,
-                        position: 1,
-                    }))
+        await Promise.all(queueNames
+            .filter(queue => !existingRoles.has(queue))
+            .map(roleToCreate => this.guild.roles.create({
+                name: roleToCreate,
+                position: 1,
+            }))
         );
     }
 
@@ -879,18 +876,17 @@ class AttendingServerV2 {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
                 .filter(ch => ch.type === 'GUILD_TEXT') as TextChannel[]);
-        await Promise.all(
-            allHelpChannels.map(async ch => await ch.messages
-                .fetch()
-                .then(messages => messages.map(msg => msg.delete())))
-        );
-        // send new ones
         await Promise.all(allHelpChannels.map(async ch =>
-            messageContents.find(
-                val => val.channelName === ch.name
-            )?.file
-                ?.filter(helpMessage => helpMessage.useInHelpChannel)
-                .map(helpMessage => ch.send(helpMessage.message))
+            await ch.messages
+                .fetch()
+                .then(messages => messages.map(msg => msg.delete()))
+        ));
+        // send new ones
+        await Promise.all(allHelpChannels.map(channel => messageContents
+            .find(val => val.channelName === channel.name)
+            ?.file
+            ?.filter(helpMessage => helpMessage.useInHelpChannel)
+            .map(helpMessage => channel.send(helpMessage.message))
         ));
     }
 }
