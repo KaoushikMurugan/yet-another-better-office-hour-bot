@@ -10,7 +10,6 @@ import {
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
-    logEditFailure
 } from './common-validations';
 
 /**
@@ -44,8 +43,9 @@ class ButtonCommandDispatcher {
                 EmbedColor.Neutral
             )
         });
-        // cast is safe b/c the way we set the customId in queueDisplay
-        const [buttonName, queueName] = interaction.customId.split(' ') as [string, string];
+        const delimiterPosition = interaction.customId.indexOf(' ');
+        const buttonName = interaction.customId.substring(0, delimiterPosition);
+        const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
@@ -66,7 +66,7 @@ class ButtonCommandDispatcher {
                 await interaction.editReply(SimpleEmbed(
                     successMsg,
                     EmbedColor.Success),
-                ).catch(logEditFailure)
+                )
             ).catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
                 await interaction.editReply(

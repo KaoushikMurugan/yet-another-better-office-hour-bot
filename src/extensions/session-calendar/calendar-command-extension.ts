@@ -158,8 +158,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 EmbedColor.Neutral
             ),
         });
-        // casting is safe b/c the way the customId is set up in queue display
-        const [buttonName, queueName] = interaction.customId.split(' ') as [string, string];
+        const delimiterPosition = interaction.customId.indexOf(' ');
+        const buttonName = interaction.customId.substring(0, delimiterPosition);
+        const queueName = interaction.customId.substring(delimiterPosition + 1);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
