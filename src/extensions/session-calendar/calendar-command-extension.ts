@@ -110,12 +110,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         if (serverId !== undefined) {
             await this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
-        await interaction.editReply({
-            ...SimpleEmbed(
-                'Processing command...',
-                EmbedColor.Neutral
-            )
-        });
+        await interaction.editReply(SimpleEmbed(
+            'Processing command...',
+            EmbedColor.Neutral
+        ));
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
             await interaction.editReply(
@@ -152,12 +150,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in button-handler.ts
     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        await interaction.editReply({
-            ...SimpleEmbed(
-                'Processing button...',
-                EmbedColor.Neutral
-            ),
-        });
+        await interaction.editReply(SimpleEmbed(
+            'Processing button...',
+            EmbedColor.Neutral
+        ));
         const delimiterPosition = interaction.customId.indexOf(' ');
         const buttonName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);

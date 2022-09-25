@@ -77,12 +77,10 @@ class CentralCommandDispatcher {
         const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
         this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         // Immediately replay to show that YABOB has received the interaction
-        await interaction.editReply({
-            ...SimpleEmbed(
-                'Processing command...',
-                EmbedColor.Neutral
-            )
-        });
+        await interaction.editReply(SimpleEmbed(
+            'Processing command...',
+            EmbedColor.Neutral
+        ));
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -101,14 +99,13 @@ class CentralCommandDispatcher {
         await commandMethod(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs
             .then(async successMsg => successMsg &&
-                await interaction.editReply(
-                    SimpleEmbed(successMsg, EmbedColor.Success)
-                )
+                await interaction.editReply(SimpleEmbed(
+                    successMsg,
+                    EmbedColor.Success
+                ))
             ).catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
-                await interaction.editReply(
-                    ErrorEmbed(err)
-                );
+                await interaction.editReply(ErrorEmbed(err));
                 this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
             });
     }

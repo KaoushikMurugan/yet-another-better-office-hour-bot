@@ -37,12 +37,10 @@ class ButtonCommandDispatcher {
     constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.editReply({
-            ...SimpleEmbed(
-                'Processing button...',
-                EmbedColor.Neutral
-            )
-        });
+        await interaction.editReply(SimpleEmbed(
+            'Processing button...',
+            EmbedColor.Neutral
+        ));
         const delimiterPosition = interaction.customId.indexOf(' ');
         const buttonName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
@@ -65,8 +63,8 @@ class ButtonCommandDispatcher {
             .then(async successMsg =>
                 await interaction.editReply(SimpleEmbed(
                     successMsg,
-                    EmbedColor.Success),
-                )
+                    EmbedColor.Success
+                ))
             ).catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
                 await interaction.editReply(
