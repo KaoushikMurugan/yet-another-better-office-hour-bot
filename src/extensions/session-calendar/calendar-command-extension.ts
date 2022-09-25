@@ -1,16 +1,16 @@
-import { BaseInteractionExtension } from "../extension-interface";
+import { BaseInteractionExtension } from '../extension-interface';
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, Collection,
     CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
-import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper";
+import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from '../../utils/embed-helper';
 import {
     CommandNotImplementedError,
     CommandParseError,
     ExtensionSetupError,
     UserViewableError
-} from "../../utils/error-types";
+} from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
@@ -20,10 +20,10 @@ import {
     checkCalendarConnection,
     getUpComingTutoringEvents,
 } from './shared-calendar-functions';
-import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from "../../utils/command-line-colors";
+import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { getQueueRoles } from "../../utils/util-functions";
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
 
@@ -205,7 +205,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             )),
             isTriggeredByUserWithRoles(
                 interaction,
-                "set_calendar",
+                'set_calendar',
                 ['Bot Admin']
             )
         ]);
@@ -217,7 +217,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `Successfully changed to new calendar` +
             ` ${newCalendarName.length > 0
                 ? ` '${newCalendarName}'. `
-                : ", but it doesn't have a name. "}` +
+                : ', but it doesn\'t have a name. '}` +
             `The calendar embeds will refresh soon. ` +
             `Or you can manually refresh it using the refresh button. ` +
             `This ID has also been backed up to firebase.`
@@ -231,7 +231,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     private async unsetCalendarId(interaction: CommandInteraction): Promise<string> {
         await isTriggeredByUserWithRoles(
             interaction,
-            "unset_calendar",
+            'unset_calendar',
             ['Bot Admin']
         );
         await serverIdCalendarStateMap
@@ -288,7 +288,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
-                "make_calendar_string",
+                'make_calendar_string',
                 ['Bot Admin', 'Staff']
             )
         ]);

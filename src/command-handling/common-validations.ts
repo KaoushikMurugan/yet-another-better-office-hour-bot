@@ -1,6 +1,6 @@
-import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from "discord.js";
-import { QueueChannel } from "../attending-server/base-attending-server";
-import { CommandParseError } from "../utils/error-types";
+import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from 'discord.js';
+import { QueueChannel } from '../attending-server/base-attending-server';
+import { CommandParseError } from '../utils/error-types';
 
 /**
  * Checks if the triggerer has the required roles
@@ -36,7 +36,7 @@ async function hasValidQueueArgument(
     interaction: CommandInteraction,
     required = false
 ): Promise<QueueChannel> {
-    const parentCategory = interaction.options.getChannel("queue_name", required) ??
+    const parentCategory = interaction.options.getChannel('queue_name', required) ??
         (interaction.channel as GuildChannel).parent;
     // null check is done here by optional property access
     if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {

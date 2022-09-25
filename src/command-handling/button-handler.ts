@@ -1,12 +1,12 @@
-import { ButtonInteraction } from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from "../utils/embed-helper";
+import { ButtonInteraction } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from '../utils/embed-helper';
 import {
     CommandParseError,
     CommandNotImplementedError,
     UserViewableError
-} from "../utils/error-types";
+} from '../utils/error-types';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
@@ -89,7 +89,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Join",
+            'Join',
             queueChannel.channelObj
         ));
         await server?.enqueueStudent(member, queueChannel);
@@ -108,7 +108,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Leave",
+            'Leave',
             queueChannel.channelObj
         ));
         await server?.removeStudentFromQueue(member, queueChannel);
@@ -127,7 +127,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Notify When Open",
+            'Notify When Open',
             queueChannel.channelObj
         ));
         await server?.addStudentToNotifGroup(member, queueChannel);
@@ -146,7 +146,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Remove Notifications",
+            'Remove Notifications',
             queueChannel.channelObj
         ));
         await server?.removeStudentFromNotifGroup(member, queueChannel);

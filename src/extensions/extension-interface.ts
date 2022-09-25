@@ -7,12 +7,12 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
-import { ButtonInteraction, Collection, CommandInteraction, GuildMember, VoiceChannel, VoiceState } from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { HelpQueueV2 } from "../help-queue/help-queue";
-import { QueueDisplayV2 } from "../help-queue/queue-display";
-import { Helpee, Helper } from "../models/member-states";
-import { ServerBackup } from "../models/backups";
+import { ButtonInteraction, Collection, CommandInteraction, GuildMember, VoiceChannel, VoiceState } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { HelpQueueV2 } from '../help-queue/help-queue';
+import { QueueDisplayV2 } from '../help-queue/queue-display';
+import { Helpee, Helper } from '../models/member-states';
+import { ServerBackup } from '../models/backups';
 import { CommandData } from '../command-handling/slash-commands';
 
 // Command level extensions

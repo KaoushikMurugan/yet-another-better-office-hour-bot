@@ -2,26 +2,26 @@ import {
     CategoryChannel, Collection, Guild,
     GuildMember, MessageOptions, TextChannel,
     User, VoiceChannel, VoiceState,
-} from "discord.js";
-import { HelpQueueV2 } from "../help-queue/help-queue";
-import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
-import { commandChConfigs } from "./command-ch-constants";
-import { hierarchyRoleConfigs } from "../models/hierarchy-roles";
-import { ServerError } from "../utils/error-types";
-import { Helpee, Helper } from "../models/member-states";
+} from 'discord.js';
+import { HelpQueueV2 } from '../help-queue/help-queue';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
+import { commandChConfigs } from './command-ch-constants';
+import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
+import { ServerError } from '../utils/error-types';
+import { Helpee, Helper } from '../models/member-states';
 
-import { IServerExtension } from "../extensions/extension-interface";
-import { GoogleSheetLoggingExtension } from "../extensions/google-sheet-logging/google-sheet-logging";
+import { IServerExtension } from '../extensions/extension-interface';
+import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging';
 import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
-import { CalendarServerEventListener } from "../extensions/session-calendar/calendar-states";
+import { CalendarServerEventListener } from '../extensions/session-calendar/calendar-states';
 
-import { QueueBackup } from "../models/backups";
+import { QueueBackup } from '../models/backups';
 import {
     FgBlue, FgCyan, FgGreen,
     FgMagenta, FgRed, FgYellow, ResetColor
-} from "../utils/command-line-colors";
-import { convertMsToTime } from "../utils/util-functions";
-import { CategoryChannelId, GuildMemberId, HelpMessage } from "../utils/type-aliases";
+} from '../utils/command-line-colors';
+import { convertMsToTime } from '../utils/util-functions';
+import { CategoryChannelId, GuildMemberId, HelpMessage } from '../utils/type-aliases';
 
 import environment from '../environment/environment-manager';
 
@@ -89,15 +89,15 @@ class AttendingServerV2 {
      */
     static async create(user: User, guild: Guild): Promise<AttendingServerV2> {
         if (guild.me === null ||
-            !guild.me.permissions.has("ADMINISTRATOR")
+            !guild.me.permissions.has('ADMINISTRATOR')
         ) {
             const owner = await guild.fetchOwner();
             await owner.send(SimpleEmbed(
-                `Sorry, I need full administrator permission for "${guild.name}"`,
+                `Sorry, I need full administrator permission for '${guild.name}'`,
                 EmbedColor.Error
             ));
             await guild.leave();
-            return Promise.reject(Error("YABOB doesn't have admin permission."));
+            return Promise.reject(Error('YABOB doesn\'t have admin permission.'));
         }
         if (guild.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
             const owner = await guild.fetchOwner();
@@ -107,7 +107,7 @@ class AttendingServerV2 {
                 `to the highest role.\n`,
                 EmbedColor.Error
             ));
-            return Promise.reject(Error("YABOB doesn't have highest role."));
+            return Promise.reject(Error('YABOB doesn\'t have highest role.'));
         }
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
@@ -136,7 +136,7 @@ class AttendingServerV2 {
             guild,
             serverExtensions
         );
-        server.afterSessionMessage = externalServerData?.afterSessionMessage ?? "";
+        server.afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
         if (externalServerData?.loggingChannel !== undefined) {
             server.loggingChannel = server.guild.channels.cache
                 .get(externalServerData?.loggingChannel) as TextChannel;
@@ -223,13 +223,13 @@ class AttendingServerV2 {
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request
         this.queueChannelsCache = allChannels
-            .filter(ch => ch.type === "GUILD_CATEGORY")
+            .filter(ch => ch.type === 'GUILD_CATEGORY')
             // ch has type 'AnyChannel', have to cast, type already checked
             .map(category => [
                 (category as CategoryChannel).children.find(
                     child =>
-                        child.name === "queue" &&
-                        child.type === "GUILD_TEXT"),
+                        child.name === 'queue' &&
+                        child.type === 'GUILD_TEXT'),
                 (category as CategoryChannel).name,
                 (category as CategoryChannel).id
             ])
@@ -247,7 +247,7 @@ class AttendingServerV2 {
                 arr.indexOf(item) !== index);
         if (duplicateQueues.length > 0) {
             console.warn(
-                `Server["${this.guild.name}"] contains these duplicate queues:`
+                `Server['${this.guild.name}'] contains these duplicate queues:`
             );
             console.warn(duplicateQueues);
             console.warn(
@@ -272,7 +272,7 @@ class AttendingServerV2 {
         }
         const parentCategory = await this.guild.channels.create(
             newQueueName,
-            { type: "GUILD_CATEGORY" }
+            { type: 'GUILD_CATEGORY' }
         );
         const [queueTextChannel] = await Promise.all([
             parentCategory.createChannel('queue'),
@@ -668,8 +668,8 @@ class AttendingServerV2 {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
             .filter(channel =>
-                channel.type === "GUILD_CATEGORY" &&
-                channel.name === "Bot Commands Help"
+                channel.type === 'GUILD_CATEGORY' &&
+                channel.name === 'Bot Commands Help'
             )
             .map(channel => channel as CategoryChannel);
         // If no help category is found, initialize
@@ -679,8 +679,8 @@ class AttendingServerV2 {
                 `Creating new ones.${ResetColor}`
             );
             const helpCategory = await this.guild.channels.create(
-                "Bot Commands Help",
-                { type: "GUILD_CATEGORY" }
+                'Bot Commands Help',
+                { type: 'GUILD_CATEGORY' }
             );
             existingHelpCategory.push(helpCategory);
             // Change the config object and add more functions here if needed
@@ -750,7 +750,7 @@ class AttendingServerV2 {
      */
     private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
         if (this.queues.size !== 0) {
-            console.warn("Overriding existing queues.");
+            console.warn('Overriding existing queues.');
         }
         const queueChannels = await this.getQueueChannels(false);
         await Promise.all(queueChannels
@@ -790,7 +790,7 @@ class AttendingServerV2 {
                 .map(roleConfig => this.guild.roles.create(roleConfig))
         );
         if (createdRoles.length !== 0) {
-            console.log("Created roles:");
+            console.log('Created roles:');
             console.log(createdRoles
                 .map(r => { return { name: r.name, pos: r.position }; })
                 .sort((a, b) => a.pos - b.pos));
@@ -831,7 +831,7 @@ class AttendingServerV2 {
     /**
      * Overwrites the existing command help channel and send new help messages
      * ----
-     * @param helpCategories the category named "Bot Commands Help"
+     * @param helpCategories the category named 'Bot Commands Help'
      * @param messageContents array of embeds to send to each help channel
     */
     private async sendCommandHelpChannelMessages(
@@ -844,7 +844,7 @@ class AttendingServerV2 {
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
             category => [...category.children.values()]
-                .filter(ch => ch.type === "GUILD_TEXT") as TextChannel[]);
+                .filter(ch => ch.type === 'GUILD_TEXT') as TextChannel[]);
         await Promise.all(
             allHelpChannels.map(async ch => await ch.messages
                 .fetch()

@@ -6,7 +6,7 @@
 class CommandParseError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CommandParseError";
+        this.name = 'CommandParseError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -21,7 +21,7 @@ class CommandParseError extends Error {
 class ServerError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "ServerError";
+        this.name = 'ServerError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -38,7 +38,7 @@ class QueueError extends Error {
         public queueName: string
     ) {
         super(message);
-        this.name = "QueueError";
+        this.name = 'QueueError';
     }
     briefErrorString(): string {
         return `**${this.name}** at ${this.queueName}: ${this.message}`;
@@ -52,7 +52,7 @@ class QueueError extends Error {
 class CommandNotImplementedError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CommandNotImplementedError";
+        this.name = 'CommandNotImplementedError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -66,7 +66,7 @@ class CommandNotImplementedError extends Error {
 class ExtensionSetupError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "ExtensionSetupError";
+        this.name = 'ExtensionSetupError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -81,7 +81,7 @@ class QueueRenderError extends Error {
     constructor(message: string,
         public queueName: string) {
         super(message);
-        this.name = "QueueError";
+        this.name = 'QueueError';
     }
     briefErrorString(): string {
         return `**Queue Render Failed in ${this.queueName}**: ${this.message}`;

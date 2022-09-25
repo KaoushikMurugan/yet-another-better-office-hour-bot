@@ -1,12 +1,12 @@
-import { Collection } from "discord.js";
-import { initializeApp } from "firebase-admin";
-import { getApps, cert } from "firebase-admin/app";
-import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { CalendarQueueExtension } from "./calendar-queue-extension";
-import { FgCyan, ResetColor } from "../../utils/command-line-colors";
-import { BaseServerExtension } from "../extension-interface";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { GuildId, GuildMemberId } from "../../utils/type-aliases";
+import { Collection } from 'discord.js';
+import { initializeApp } from 'firebase-admin';
+import { getApps, cert } from 'firebase-admin/app';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { CalendarQueueExtension } from './calendar-queue-extension';
+import { FgCyan, ResetColor } from '../../utils/command-line-colors';
+import { BaseServerExtension } from '../extension-interface';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
 
 import environment from '../../environment/environment-manager';
@@ -76,7 +76,7 @@ class CalendarExtensionState {
             return;
         }
         const backupDoc = await this.firebaseDB
-            .collection("calendarBackups")
+            .collection('calendarBackups')
             .doc(serverId)
             .get();
 
@@ -101,7 +101,7 @@ class CalendarExtensionState {
                 Object.fromEntries(this.displayNameDiscordIdMap.dump().map(([key, LRUEntry]) => [key, LRUEntry.value]))
         };
         this.firebaseDB
-            .collection("calendarBackups")
+            .collection('calendarBackups')
             .doc(this.serverId)
             .set(backupData)
             .then(() => console.log(

@@ -1,7 +1,7 @@
-import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from "../utils/embed-helper";
+import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from '../utils/embed-helper';
 import {
     CommandNotImplementedError,
     CommandParseError, UserViewableError
@@ -14,10 +14,10 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { GuildId } from "../utils/type-aliases";
-import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
-import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
-import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
+import { GuildId } from '../utils/type-aliases';
+import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
+import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
+import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -124,12 +124,12 @@ class CentralCommandDispatcher {
 
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
-            case "add": {
-                const queueName = interaction.options.getString("queue_name", true);
+            case 'add': {
+                const queueName = interaction.options.getString('queue_name', true);
                 await this.serverMap.get(serverId)?.createQueue(queueName);
                 return `Successfully created \`${queueName}\`.`;
             }
-            case "remove": {
+            case 'remove': {
                 const targetQueue = await hasValidQueueArgument(interaction, true);
                 if ((interaction.channel as GuildChannel).parent?.id ===
                     targetQueue.parentCategoryId) {
@@ -164,7 +164,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
-                "next",
+                'next',
                 ['Bot Admin', 'Staff']
             )
         ]);
@@ -191,7 +191,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
-                "start",
+                'start',
                 ['Bot Admin', 'Staff']
             )
         ]);
@@ -205,7 +205,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
-                "stop",
+                'stop',
                 ['Bot Admin', 'Staff']
             )
         ]);
@@ -233,7 +233,7 @@ class CentralCommandDispatcher {
             hasValidQueueArgument(interaction, true),
             isTriggeredByUserWithRoles(
                 interaction,
-                "clear",
+                'clear',
                 ['Bot Admin', 'Staff']
             )
         ]);
@@ -259,7 +259,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
                 interaction,
-                "clear_all",
+                'clear_all',
                 ['Bot Admin']
             )
         ]);
@@ -322,8 +322,8 @@ class CentralCommandDispatcher {
                 ['Bot Admin', 'Staff']
             )
         ]);
-        const announcement = interaction.options.getString("message", true);
-        const optionalChannel = interaction.options.getChannel("queue_name", false);
+        const announcement = interaction.options.getString('message', true);
+        const optionalChannel = interaction.options.getChannel('queue_name', false);
         if (optionalChannel !== null) {
             const queueChannel = await hasValidQueueArgument(interaction, true);
             await this.serverMap.get(serverId)
@@ -396,7 +396,7 @@ class CentralCommandDispatcher {
         const enableAfterSessionMessage = interaction.options.getBoolean(`enable`, true);
         const newAfterSessionMessage = enableAfterSessionMessage
             ? interaction.options.getString(`message`, true)
-            : "";
+            : '';
         await this.serverMap.get(serverId)?.setAfterSessionMessage(newAfterSessionMessage);
         return `Successfully updated after session message.`;
     }

@@ -1,5 +1,5 @@
-import { GuildMember, GuildMemberRoleManager, Role } from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
+import { GuildMember, GuildMemberRoleManager, Role } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
 
 /**
  * Converts the time delta in miliseconds into a readable format

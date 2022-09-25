@@ -1,5 +1,5 @@
-import { calendar_v3 } from "googleapis";
-import { serverIdCalendarStateMap } from "./calendar-states";
+import { calendar_v3 } from 'googleapis';
+import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
 
@@ -17,7 +17,7 @@ type UpComingSessionViewModel = {
 class CalendarConnectionError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CalendarConnectionError";
+        this.name = 'CalendarConnectionError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -147,8 +147,8 @@ function composeViewModel(
     end: Date,
     location?: string
 ): UpComingSessionViewModel | undefined {
-    // parsingString example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
-    // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
+    // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
+    // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
     const words = parsingString.split('-');
     if (words.length !== 2) {
         return undefined;
@@ -160,7 +160,7 @@ function composeViewModel(
             ?.replace(punctuations, '')
             .trim());
     // eventQueues will be:
-    // ["ECS 20", "ECS 36A", "ECS 36B", "ECS 122A", "ECS 122B"]
+    // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
     if (eventQueueNames?.length === 0 || tutorName === undefined) {
         return undefined;
     }

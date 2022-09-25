@@ -1,13 +1,13 @@
-import { BaseServerExtension } from "../extension-interface";
-import { Firestore } from "firebase-admin/firestore";
-import { initializeApp, cert, getApps } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { QueueBackup, ServerBackup } from "../../models/backups";
-import { FgBlue, FgCyan, ResetColor } from "../../utils/command-line-colors";
+import { BaseServerExtension } from '../extension-interface';
+import { Firestore } from 'firebase-admin/firestore';
+import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { QueueBackup, ServerBackup } from '../../models/backups';
+import { FgBlue, FgCyan, ResetColor } from '../../utils/command-line-colors';
 
 import environment from '../../environment/environment-manager';
-import { SimpleLogEmbed } from "../../utils/embed-helper";
+import { SimpleLogEmbed } from '../../utils/embed-helper';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -62,7 +62,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     */
     override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
         const backupData = await this.firebase_db
-            .collection("serverBackups")
+            .collection('serverBackups')
             .doc(serverId)
             .get();
         return <ServerBackup>backupData.data();
@@ -101,7 +101,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             loggingChannel: server.loggingChannel?.id ?? ''
         };
         this.firebase_db
-            .collection("serverBackups")
+            .collection('serverBackups')
             .doc(this.serverId)
             .set(serverBackup)
             .then(() => console.log(
