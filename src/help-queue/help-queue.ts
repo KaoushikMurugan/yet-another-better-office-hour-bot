@@ -8,7 +8,6 @@ import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 import { GuildMemberId } from '../utils/type-aliases';
-
 import environment from '../environment/environment-manager';
 
 type QueueViewModel = {
@@ -19,6 +18,7 @@ type QueueViewModel = {
 }
 
 type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
+
 type AutoClearTimeout = number | 'AUTO_CLEAR_DISABLED';
 
 class HelpQueueV2 {
@@ -33,8 +33,8 @@ class HelpQueueV2 {
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
     // open status
     private isOpen = false;
-    // when to automatically clear everyone
-    private hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
+    // when to automatically remove everyone
+    private _hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
 
     /**
      * @param user YABOB's user object for QueueDisplay
@@ -47,13 +47,14 @@ class HelpQueueV2 {
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
         user: User,
-        backupData?: QueueBackup
+        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout }
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
         if (backupData === undefined) {
             // if no backup then we are done initializing
             return;
         }
+        this._hoursUntilAutoClear = backupData.hoursUntilAutoClear;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
             const correspondingMember = this.queueChannel.channelObj.members
@@ -93,6 +94,9 @@ class HelpQueueV2 {
     get activeHelperIds(): ReadonlySet<string> { // set of helper IDs. enforce readonly
         return this._activeHelperIds;
     }
+    get hoursUntilAutoClear(): AutoClearTimeout {
+        return this._hoursUntilAutoClear;
+    }
 
     clearAllQueueTimers(): void {
         this.timers.forEach(clearInterval);
@@ -111,10 +115,10 @@ class HelpQueueV2 {
         if (!enable) {
             existingTimerId && clearInterval(existingTimerId);
             this.timers.delete('QUEUE_AUTO_CLEAR');
-            this.hoursUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this._hoursUntilAutoClear = 'AUTO_CLEAR_DISABLED';
             return;
         }
-        this.hoursUntilAutoClear = hours;
+        this._hoursUntilAutoClear = hours;
     }
 
     /**
@@ -129,7 +133,7 @@ class HelpQueueV2 {
         queueChannel: QueueChannel,
         user: User,
         everyoneRole: Role,
-        backupData?: QueueBackup
+        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout }
     ): Promise<HelpQueueV2> {
         const queueExtensions = environment.disableExtensions
             ? []
@@ -221,7 +225,7 @@ class HelpQueueV2 {
         }
         this._activeHelperIds.delete(helperMember.id);
         this.isOpen = this._activeHelperIds.size > 0;
-        if (!this.isOpen){
+        if (!this.isOpen) {
             this.startAutoClearTimer();
         }
         await Promise.all([
@@ -239,7 +243,8 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             return Promise.reject(new QueueError(
                 `Queue is not open.`,
-                this.queueName));
+                this.queueName
+            ));
         }
         if (this._students
             .find(s => s.member.id === studentMember.id) !== undefined) {
@@ -332,7 +337,6 @@ class HelpQueueV2 {
                     extension => extension.onDequeue(this, foundStudent)),
                 this.triggerRender()
             ].flat() as Promise<void>[]);
-
             return foundStudent;
         }
         // assertion is safe becasue we already checked for length
@@ -378,7 +382,6 @@ class HelpQueueV2 {
      * ----
     */
     async removeAllStudents(): Promise<void> {
-        console.log('called remove');
         await Promise.all(this.queueExtensions.map(
             extension => extension.onRemoveAllStudents(this, this._students))
         );
@@ -454,15 +457,15 @@ class HelpQueueV2 {
      * ----
     */
     private startAutoClearTimer(): void {
-        if (this.hoursUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
+        if (this._hoursUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
         const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
         existingTimer && clearTimeout(existingTimer);
         this.timers.set('QUEUE_AUTO_CLEAR', setTimeout(async () => {
             await this.removeAllStudents();
-        }, this.hoursUntilAutoClear * 1000));
+        }, this._hoursUntilAutoClear * 1000 * 60 * 60));
     }
 }
 
-export { HelpQueueV2, QueueViewModel };
+export { HelpQueueV2, QueueViewModel, AutoClearTimeout };

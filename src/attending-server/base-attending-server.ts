@@ -3,7 +3,7 @@ import {
     GuildMember, MessageOptions, TextChannel,
     User, VoiceChannel, VoiceState,
 } from 'discord.js';
-import { HelpQueueV2 } from '../help-queue/help-queue';
+import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { commandChConfigs } from './command-ch-constants';
 import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
@@ -68,7 +68,7 @@ class AttendingServerV2 {
         private readonly serverExtensions: IServerExtension[],
     ) { }
 
-    get helpQueues(): ReadonlyArray<HelpQueueV2> {
+    get queues(): ReadonlyArray<HelpQueueV2> {
         return [...this._queues.values()];
     }
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
@@ -86,16 +86,6 @@ class AttendingServerV2 {
         this.timers.forEach(clearInterval);
         this.timers.clear();
         this._queues.forEach(queue => queue.clearAllQueueTimers());
-    }
-
-    /**
-     * Sets up queue auto clear for this server
-     * ----
-     * @param hours the number of hours to wait before clearing the queue
-     * @param enable whether to disable auto clear, overrides 'hours'
-    */
-    setQueueAutoClear(hours: number, enable: boolean): void {
-        this._queues.forEach(queue => queue.setAutoClear(hours, enable));
     }
 
     /**
@@ -156,15 +146,15 @@ class AttendingServerV2 {
             serverExtensions
         );
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
-        if (externalServerData?.loggingChannel !== undefined) {
+        if (externalServerData?.loggingChannelId !== undefined) {
             server.loggingChannel = server.guild.channels.cache
-                .get(externalServerData?.loggingChannel) as TextChannel;
+                .get(externalServerData?.loggingChannelId) as TextChannel;
         }
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
-            server.initAllQueues(externalServerData?.queues),
+            server.initAllQueues(externalServerData?.queues, externalServerData?.hoursUntilAutoClear),
             server.createClassRoles(),
             server.updateCommandHelpChannels()
         ]).catch(err => {
@@ -680,6 +670,19 @@ class AttendingServerV2 {
     }
 
     /**
+     * Sets up queue auto clear for this server
+     * ----
+     * @param hours the number of hours to wait before clearing the queue
+     * @param enable whether to disable auto clear, overrides 'hours'
+    */
+    async setQueueAutoClear(hours: number, enable: boolean): Promise<void> {
+        this._queues.forEach(queue => queue.setAutoClear(hours, enable));
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
      * Updates the help channel messages
      * ----
      * Removes all messages in the help channel and posts new ones
@@ -768,21 +771,32 @@ class AttendingServerV2 {
      * @param queueBackups
      * - if a backup extension is enabled, this is the queue data to load
      */
-    private async initAllQueues(queueBackups?: QueueBackup[]): Promise<void> {
+    private async initAllQueues(
+        queueBackups?: QueueBackup[],
+        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED'
+    ): Promise<void> {
         if (this._queues.size !== 0) {
             console.warn('Overriding existing queues.');
         }
         const queueChannels = await this.getQueueChannels(false);
         await Promise.all(queueChannels
-            .map(async channel => this._queues.set(channel.parentCategoryId,
-                await HelpQueueV2.create(
-                    channel,
-                    this.user,
-                    this.guild.roles.everyone,
-                    // TODO: this is N^2, a bit slow
-                    queueBackups?.find(backup =>
-                        backup.parentCategoryId === channel.parentCategoryId)
-                )))
+            .map(async channel => {
+                const backup = queueBackups?.find(backup =>
+                    backup.parentCategoryId === channel.parentCategoryId);
+                const completeBackup = backup ? {
+                    ...backup,
+                    hoursUntilAutoClear: hoursUntilAutoClear
+                } : undefined;
+                this._queues.set(
+                    channel.parentCategoryId,
+                    await HelpQueueV2.create(
+                        channel,
+                        this.user,
+                        this.guild.roles.everyone,
+                        completeBackup
+                    )
+                );
+            })
         );
         console.log(`All queues in '${this.guild.name}' successfully created` +
             `${environment.disableExtensions

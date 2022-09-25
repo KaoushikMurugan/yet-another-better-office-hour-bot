@@ -78,7 +78,11 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
             description: `If you need help or think this is a mistake, `
                 + `please post a screenshot of this message in the #help channel `
                 + `(or equivalent) and ping @Bot Admin.`,
-            fields: embedFields
+            fields: embedFields,
+            author: {
+                name: 'YABOB',
+                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            },
         }],
     };
 }

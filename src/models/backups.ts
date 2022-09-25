@@ -1,3 +1,4 @@
+import { AutoClearTimeout } from '../help-queue/help-queue';
 import { Helpee } from './member-states';
 
 type QueueBackup = {
@@ -14,7 +15,8 @@ type ServerBackup = {
     timeStamp: Date;
     queues: QueueBackup[];
     afterSessionMessage: string;
-    loggingChannel: string;
+    loggingChannelId: string;
+    hoursUntilAutoClear: AutoClearTimeout;
 }
 
 export { QueueBackup, ServerBackup };

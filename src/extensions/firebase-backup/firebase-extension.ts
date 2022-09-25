@@ -78,7 +78,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
      * @param server the server to backup
     */
     private async backupServerToFirebase(server: Readonly<AttendingServerV2>): Promise<void> {
-        const queues = server.helpQueues;
+        const queues = server.queues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
@@ -90,7 +90,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                     };
                 }),
                 name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId
+                parentCategoryId: queue.parentCategoryId,
             };
         });
         const serverBackup: ServerBackup = {
@@ -98,7 +98,8 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             queues: queueBackups,
             timeStamp: new Date(),
             afterSessionMessage: server.afterSessionMessage,
-            loggingChannel: server.loggingChannel?.id ?? ''
+            loggingChannelId: server.loggingChannel?.id ?? '',
+            hoursUntilAutoClear: server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
         };
         this.firebase_db
             .collection('serverBackups')
