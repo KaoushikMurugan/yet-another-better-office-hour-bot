@@ -457,13 +457,17 @@ class HelpQueueV2 {
      * ----
     */
     private startAutoClearTimer(): void {
+        const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
+        existingTimer && clearTimeout(existingTimer);
         if (this._hoursUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
-        const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
-        existingTimer && clearTimeout(existingTimer);
         this.timers.set('QUEUE_AUTO_CLEAR', setTimeout(async () => {
-            await this.removeAllStudents();
+            // if the queue is open when the timer finishes, do nothing
+            // if auto clear is disabled half way, do nothing
+            if (!this.isOpen && this.hoursUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
+                await this.removeAllStudents();
+            }
         }, this._hoursUntilAutoClear * 1000 * 60 * 60));
     }
 }
