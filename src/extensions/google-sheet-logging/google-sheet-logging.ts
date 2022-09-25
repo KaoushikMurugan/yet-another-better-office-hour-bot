@@ -1,11 +1,11 @@
-import { GoogleSpreadsheet } from "google-spreadsheet";
-import { Helpee, Helper } from "../../models/member-states";
-import { BaseServerExtension } from "../extension-interface";
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { Helpee, Helper } from '../../models/member-states';
+import { BaseServerExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
-import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { Collection, GuildMember, VoiceChannel } from "discord.js";
-import { GuildMemberId } from "../../utils/type-aliases";
+import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { Collection, GuildMember, VoiceChannel } from 'discord.js';
+import { GuildMemberId } from '../../utils/type-aliases';
 
 import environment from '../../environment/environment-manager';
 
@@ -41,7 +41,7 @@ type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 class AttendanceError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "AttendanceError";
+        this.name = 'AttendanceError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -198,14 +198,14 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         entry: Required<AttendanceEntry>
     ): Promise<void> {
         const requiredHeaders = [
-            "Helper Username",
-            "Time In",
-            "Time Out",
-            "Helped Students",
-            "Discord ID",
-            "Session Time (ms)",
-            "Active Time (ms)",
-            "Number of Students Helped",
+            'Helper Username',
+            'Time In',
+            'Time Out',
+            'Helped Students',
+            'Discord ID',
+            'Session Time (ms)',
+            'Active Time (ms)',
+            'Number of Students Helped',
         ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
@@ -228,20 +228,20 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         void Promise.all([
             attendanceSheet.addRow(
                 {
-                    "Helper Username": entry.member.user.username,
-                    "Time In": entry.helpStart.toLocaleString('us-PT'),
-                    "Time Out": entry.helpEnd.toLocaleString('us-PT'),
-                    "Helped Students": JSON.stringify(entry.helpedMembers
+                    'Helper Username': entry.member.user.username,
+                    'Time In': entry.helpStart.toLocaleString('us-PT'),
+                    'Time Out': entry.helpEnd.toLocaleString('us-PT'),
+                    'Helped Students': JSON.stringify(entry.helpedMembers
                         .map(student => new Object({
                             displayName: student.member.displayName,
                             username: student.member.user.username,
                             id: student.member.id,
                         }))),
-                    "Discord ID": entry.member.id,
-                    "Session Time (ms)": (entry.helpEnd.getTime()) -
+                    'Discord ID': entry.member.id,
+                    'Session Time (ms)': (entry.helpEnd.getTime()) -
                         (entry.helpStart.getTime()),
-                    "Active Time (ms)": entry.activeTimeMs,
-                    "Number of Students Helped": entry.helpedMembers.length,
+                    'Active Time (ms)': entry.activeTimeMs,
+                    'Number of Students Helped': entry.helpedMembers.length,
                 },
                 {
                     raw: true,

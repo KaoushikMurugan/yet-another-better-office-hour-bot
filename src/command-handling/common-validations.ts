@@ -1,6 +1,6 @@
-import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from "discord.js";
-import { QueueChannel } from "../attending-server/base-attending-server";
-import { CommandParseError } from "../utils/error-types";
+import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from 'discord.js';
+import { QueueChannel } from '../attending-server/base-attending-server';
+import { CommandParseError } from '../utils/error-types';
 
 /**
  * Checks if the triggerer has the required roles
@@ -36,12 +36,13 @@ async function hasValidQueueArgument(
     interaction: CommandInteraction,
     required = false
 ): Promise<QueueChannel> {
-    const parentCategory = interaction.options.getChannel("queue_name", required) ??
+    const parentCategory = interaction.options.getChannel('queue_name', required) ??
         (interaction.channel as GuildChannel).parent;
     // null check is done here by optional property access
     if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {
         return Promise.reject(new CommandParseError(
-            `\`${parentCategory?.name}\` is not a valid queue category.`));
+            `\`${parentCategory?.name}\` is not a valid queue category.`
+        ));
     }
     const queueTextChannel = parentCategory.children
         .find(child =>
@@ -51,7 +52,8 @@ async function hasValidQueueArgument(
         return Promise.reject(new CommandParseError(
             `This category does not have a \`#queue\` text channel.\n` +
             `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
-            `to generate one.`));
+            `to generate one.`
+        ));
     }
     const queueChannel: QueueChannel = {
         channelObj: queueTextChannel as TextChannel,
@@ -76,7 +78,8 @@ async function isTriggeredByUserWithValidEmail(
     if (!(interaction.member instanceof GuildMember &&
         roles.includes('Verified Email'))) {
         return Promise.reject(new CommandParseError(
-            `You need to have a verified email to use \`/${commandName}\`.`));
+            `You need to have a verified email to use \`/${commandName}\`.`
+        ));
     }
     return interaction.member as GuildMember;
 }
@@ -97,7 +100,6 @@ async function isFromQueueChannelWithParent(
             'Make sure this channel has a parent category.'
         ));
     }
-
     const queueChannel: QueueChannel = {
         channelObj: interaction.channel as TextChannel,
         queueName: queueName,

@@ -1,4 +1,4 @@
-import { CommandInteraction, Interaction, MessageOptions, TextBasedChannel, User } from "discord.js";
+import { CommandInteraction, Interaction, MessageOptions, TextBasedChannel, User } from 'discord.js';
 import {
     QueueError,
     ServerError,
@@ -172,7 +172,7 @@ export function ButtonLogEmbed(
             timestamp: new Date(),
             fields: [
                 {
-                    name: "User",
+                    name: 'User',
                     value: user.toString(),
                     inline: true
                 },
@@ -206,7 +206,7 @@ export function SlashCommandLogEmbed(
     }
     const embedFields = [
         {
-            name: "User",
+            name: 'User',
             value: commandInteraction.user.toString(),
             inline: true
         },

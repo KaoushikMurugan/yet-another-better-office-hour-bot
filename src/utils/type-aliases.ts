@@ -2,7 +2,7 @@
  * These are just aliases to make keys of collections easier to read
  */
 
-import { MessageOptions } from "discord.js";
+import { MessageOptions } from 'discord.js';
 
 type GuildId = string;
 type GuildMemberId = string;

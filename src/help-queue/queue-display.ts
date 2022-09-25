@@ -57,34 +57,34 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("join " + queue.queueName)
-                    .setEmoji("✅")
+                    .setCustomId('join ' + queue.queueName)
+                    .setEmoji('✅')
                     .setDisabled(!queue.isOpen)
-                    .setLabel("Join")
-                    .setStyle("SUCCESS")
+                    .setLabel('Join')
+                    .setStyle('SUCCESS')
             )
             .addComponents(
                 new MessageButton()
-                    .setCustomId("leave " + queue.queueName)
-                    .setEmoji("❎")
+                    .setCustomId('leave ' + queue.queueName)
+                    .setEmoji('❎')
                     .setDisabled(!queue.isOpen)
-                    .setLabel("Leave")
-                    .setStyle("DANGER")
+                    .setLabel('Leave')
+                    .setStyle('DANGER')
             );
         const notifButtons = new MessageActionRow()
             .addComponents(
                 new MessageButton()
-                    .setCustomId("notif " + queue.queueName)
-                    .setEmoji("🔔")
-                    .setLabel("Notify When Open")
-                    .setStyle("PRIMARY")
+                    .setCustomId('notif ' + queue.queueName)
+                    .setEmoji('🔔')
+                    .setLabel('Notify When Open')
+                    .setStyle('PRIMARY')
             )
             .addComponents(
                 new MessageButton()
-                    .setCustomId("removeN " + queue.queueName)
-                    .setEmoji("🔕")
-                    .setLabel("Remove Notifications")
-                    .setStyle("PRIMARY")
+                    .setCustomId('removeN ' + queue.queueName)
+                    .setEmoji('🔕')
+                    .setLabel('Remove Notifications')
+                    .setStyle('PRIMARY')
             );
         const embedList = [embedTableMsg];
         if (queue.helperIDs.length !== 0) {
@@ -181,7 +181,7 @@ class QueueDisplayV2 {
                 table.addRow(`Did you find the cat?`);
             }
         }
-        return "```" + table.toString() + "```";
+        return '```' + table.toString() + '```';
     }
 }
 

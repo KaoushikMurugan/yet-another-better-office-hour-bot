@@ -1,4 +1,4 @@
-import { BaseQueueExtension } from "../extension-interface";
+import { BaseQueueExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
@@ -91,7 +91,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * ----
     */
     async onCalendarExtensionStateChange(): Promise<void> {
+
         // true for refresh b/c the refresh button was used.
+        const timoutId: NodeJS.Timeout = setTimeout(() => clearTimeout(timoutId), Math.random() * 3000);
         await this.renderCalendarEmbeds(true);
     }
 
@@ -136,9 +138,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
             .addComponents(
                 new MessageButton()
                     .setCustomId('refresh ' + queueName)
-                    .setEmoji("🔄")
-                    .setLabel("Refresh Upcoming Sessions")
-                    .setStyle("PRIMARY")
+                    .setEmoji('🔄')
+                    .setLabel('Refresh Upcoming Sessions')
+                    .setStyle('PRIMARY')
             );
         await this.display?.requestNonQueueEmbedRender(
             {

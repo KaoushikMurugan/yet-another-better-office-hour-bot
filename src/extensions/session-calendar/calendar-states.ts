@@ -1,12 +1,13 @@
-import { Collection } from "discord.js";
-import { initializeApp } from "firebase-admin";
-import { getApps, cert } from "firebase-admin/app";
-import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { CalendarQueueExtension } from "./calendar-queue-extension";
-import { FgCyan, ResetColor } from "../../utils/command-line-colors";
-import { BaseServerExtension } from "../extension-interface";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { GuildId } from "../../utils/type-aliases";
+import { Collection } from 'discord.js';
+import { initializeApp } from 'firebase-admin';
+import { getApps, cert } from 'firebase-admin/app';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { CalendarQueueExtension } from './calendar-queue-extension';
+import { FgCyan, ResetColor } from '../../utils/command-line-colors';
+import { BaseServerExtension } from '../extension-interface';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases';
+import LRU from 'lru-cache';
 
 import environment from '../../environment/environment-manager';
 
@@ -18,22 +19,22 @@ type CalendarConfigBackup = {
 class CalendarExtensionState {
     calendarId: string = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
     // save the data from /make_calendar_string, key is calendar display name, value is discord id
-    calendarNameDiscordIdMap: Collection<string, string> = new Collection();
+    displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     // event listeners, their onCalendarStateChange will be called, key is queue name
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
 
     constructor(
         private readonly serverId: string,
         private readonly serverName: string,
-        private readonly firebase_db?: Firestore
+        private readonly firebaseDB?: Firestore
     ) { }
 
     static async create(serverId: string, serverName: string): Promise<CalendarExtensionState> {
         const firebaseCredentials = environment.firebaseCredentials;
         if (
-            firebaseCredentials.clientEmail === "" &&
-            firebaseCredentials.privateKey === "" &&
-            firebaseCredentials.projectId === ""
+            firebaseCredentials.clientEmail === '' &&
+            firebaseCredentials.privateKey === '' &&
+            firebaseCredentials.projectId === ''
         ) {
             return new CalendarExtensionState(serverId, serverName);
         }
@@ -63,7 +64,7 @@ class CalendarExtensionState {
         displayName: string,
         discordId: string
     ): Promise<void> {
-        this.calendarNameDiscordIdMap.set(displayName, discordId);
+        this.displayNameDiscordIdMap.set(displayName, discordId);
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
@@ -71,11 +72,11 @@ class CalendarExtensionState {
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {
-        if (this.firebase_db === undefined) {
+        if (this.firebaseDB === undefined) {
             return;
         }
-        const backupDoc = await this.firebase_db
-            .collection("calendarBackups")
+        const backupDoc = await this.firebaseDB
+            .collection('calendarBackups')
             .doc(serverId)
             .get();
 
@@ -84,21 +85,23 @@ class CalendarExtensionState {
         }
         const calendarBackup = backupDoc.data() as CalendarConfigBackup;
         this.calendarId = calendarBackup.calendarId;
-        this.calendarNameDiscordIdMap
-            = new Collection(Object.entries(calendarBackup.calendarNameDiscordIdMap));
+        this.displayNameDiscordIdMap.load(
+            Object.entries(calendarBackup.calendarNameDiscordIdMap)
+                .map(([key, value]) => [key, { value: value }])
+        );
     }
 
     private async backupToFirebase(): Promise<void> {
-        if (this.firebase_db === undefined) {
+        if (this.firebaseDB === undefined) {
             return;
         }
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
             calendarNameDiscordIdMap:
-                Object.fromEntries(this.calendarNameDiscordIdMap)
+                Object.fromEntries(this.displayNameDiscordIdMap.dump().map(([key, LRUEntry]) => [key, LRUEntry.value]))
         };
-        this.firebase_db
-            .collection("calendarBackups")
+        this.firebaseDB
+            .collection('calendarBackups')
             .doc(this.serverId)
             .set(backupData)
             .then(() => console.log(

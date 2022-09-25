@@ -1,16 +1,15 @@
-import { ButtonInteraction } from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { FgCyan, FgYellow, ResetColor } from "../utils/command-line-colors";
-import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from "../utils/embed-helper";
+import { ButtonInteraction } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from '../utils/embed-helper';
 import {
     CommandParseError,
     CommandNotImplementedError,
     UserViewableError
-} from "../utils/error-types";
+} from '../utils/error-types';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
-    logEditFailure
 } from './common-validations';
 
 /**
@@ -38,44 +37,42 @@ class ButtonCommandDispatcher {
     constructor(public serverMap: Map<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.editReply({
-            ...SimpleEmbed(
-                'Processing button...',
-                EmbedColor.Neutral
-            )
-        });
-        const delimiterPosition = interaction.customId.indexOf(" ");
-        const interactionName = interaction.customId.substring(0, delimiterPosition);
+        await interaction.editReply(SimpleEmbed(
+            'Processing button...',
+            EmbedColor.Neutral
+        ));
+        const delimiterPosition = interaction.customId.indexOf(' ');
+        const buttonName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
-        const buttonMethod = this.buttonMethodMap.get(interactionName);
-        if (buttonMethod !== undefined) {
-            console.log(
-                `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
-                `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-                `User ${interaction.user.username} ` +
-                `(${interaction.user.id}) ` +
-                `pressed [${interactionName}] ` +
-                `in queue: ${queueName}.`
-            );
-            await buttonMethod(queueName, interaction)
-                .then(async successMsg =>
-                    await interaction.editReply(SimpleEmbed(
-                        successMsg,
-                        EmbedColor.Success),
-                    ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) => {
-                    // Central error handling, reply to user with the error
-                    await interaction.editReply(
-                        ErrorEmbed(err)
-                    ).catch(logEditFailure);
-                    const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
-                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
-                });
-        } else {
+        const buttonMethod = this.buttonMethodMap.get(buttonName);
+        if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
-            ).catch(logEditFailure);
+            );
+            return;
         }
+        console.log(
+            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
+            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
+            `User ${interaction.user.username} ` +
+            `(${interaction.user.id}) ` +
+            `pressed [${buttonName}] ` +
+            `in queue: ${queueName}.`
+        );
+        await buttonMethod(queueName, interaction)
+            .then(async successMsg =>
+                await interaction.editReply(SimpleEmbed(
+                    successMsg,
+                    EmbedColor.Success
+                ))
+            ).catch(async (err: UserViewableError) => {
+                // Central error handling, reply to user with the error
+                await interaction.editReply(
+                    ErrorEmbed(err)
+                );
+                const serverId = await this.isServerInteraction(interaction) ?? '';
+                this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+            });
     }
 
     private async join(
@@ -90,7 +87,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Join",
+            'Join',
             queueChannel.channelObj
         ));
         await server?.enqueueStudent(member, queueChannel);
@@ -109,7 +106,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Leave",
+            'Leave',
             queueChannel.channelObj
         ));
         await server?.removeStudentFromQueue(member, queueChannel);
@@ -128,7 +125,7 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Notify When Open",
+            'Notify When Open',
             queueChannel.channelObj
         ));
         await server?.addStudentToNotifGroup(member, queueChannel);
@@ -147,16 +144,18 @@ class ButtonCommandDispatcher {
         const server = this.serverMap.get(serverId);
         await server?.sendLogMessage(ButtonLogEmbed(
             interaction.user,
-            "Remove Notifications",
+            'Remove Notifications',
             queueChannel.channelObj
         ));
         await server?.removeStudentFromNotifGroup(member, queueChannel);
         return `Successfully left notification group for \`${queueName}\``;
     }
 
-
-    // Begin Validation functions
-
+    /**
+     * Checks if the button came from a server with correctly initialized YABOB
+     * ----
+     * @returns string: the server id
+    */
     private async isServerInteraction(
         interaction: ButtonInteraction
     ): Promise<string> {

@@ -1,5 +1,5 @@
-import { calendar_v3 } from "googleapis";
-import { serverIdCalendarStateMap } from "./calendar-states";
+import { calendar_v3 } from 'googleapis';
+import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
 
@@ -17,7 +17,7 @@ type UpComingSessionViewModel = {
 class CalendarConnectionError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = "CalendarConnectionError";
+        this.name = 'CalendarConnectionError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -44,7 +44,13 @@ async function getUpComingTutoringEvents(
         timeMax: nextWeek,
         maxResults: 10
     });
-    const response = await axios.get(calendarUrl);
+    const response = await axios({
+        url: calendarUrl,
+        timeout: 2000,
+        method: 'GET'
+    }).catch(() => Promise.reject(new CalendarConnectionError(
+        'This calendar refresh timed out. Please try again later.'
+    )));
     if (response.status !== 200) {
         return Promise.reject(new CalendarConnectionError(
             'Failed to connect to Google Calendar. ' +
@@ -108,9 +114,15 @@ async function checkCalendarConnection(
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         maxResults: 2
     });
-    const response = await axios.get(calendarUrl);
+    const response = await axios({
+        url: calendarUrl,
+        timeout: 2000,
+        method: 'GET'
+    }).catch(() => Promise.reject(new CalendarConnectionError(
+        'This calendar refresh timed out. Please try again later.'
+    )));
     if (response.status !== 200) {
-        return Promise.reject('Calendar request failed.');
+        return Promise.reject(new CalendarConnectionError('Calendar request failed.'));
     }
     const responseJSON = await response.data;
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
@@ -135,8 +147,8 @@ function composeViewModel(
     end: Date,
     location?: string
 ): UpComingSessionViewModel | undefined {
-    // parsingString example: "Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"
-    // words will be ["TutorName ", " ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B"]
+    // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
+    // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
     const words = parsingString.split('-');
     if (words.length !== 2) {
         return undefined;
@@ -148,7 +160,7 @@ function composeViewModel(
             ?.replace(punctuations, '')
             .trim());
     // eventQueues will be:
-    // ["ECS 20", "ECS 36A", "ECS 36B", "ECS 122A", "ECS 122B"]
+    // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
     if (eventQueueNames?.length === 0 || tutorName === undefined) {
         return undefined;
     }
@@ -164,7 +176,7 @@ function composeViewModel(
         displayName: tutorName,
         discordId: serverIdCalendarStateMap
             .get(serverId)
-            ?.calendarNameDiscordIdMap
+            ?.displayNameDiscordIdMap
             .get(tutorName),
         location: location
     };
@@ -193,10 +205,12 @@ function buildCalendarURL(args: {
         + `&singleEvents=true`;
 }
 
+/**
+ * Creates a url from calendar id that takes the user to the public embed
+*/
 function restorePublicEmbedURL(calendarId: string): string {
     return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
 }
-
 
 export {
     getUpComingTutoringEvents,

@@ -238,7 +238,7 @@ class HelpQueueV2 {
                 this.queueChannel.channelObj.members
                     .get(helperId)
                     ?.send(SimpleEmbed(
-                        `Heads up! ${student.member.displayName} has joined "${this.name}".`,
+                        `Heads up! ${student.member.displayName} has joined '${this.name}'.`,
                         EmbedColor.Neutral,
                         `<@${student.member.user.id}>`))
             ),

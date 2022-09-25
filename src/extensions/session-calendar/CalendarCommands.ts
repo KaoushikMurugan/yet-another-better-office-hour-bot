@@ -1,11 +1,11 @@
-import { EmbedColor } from "../../utils/embed-helper";
+import { EmbedColor } from '../../utils/embed-helper';
 import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
-import { HelpMessage } from "../../utils/type-aliases";
+import { HelpMessage } from '../../utils/type-aliases';
 
 const setCalendarHelp: HelpMessage = {
-    nameValuePair: ["set_calendar", "set_calendar"],
+    nameValuePair: ['set_calendar', 'set_calendar'],
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -20,8 +20,8 @@ const setCalendarHelp: HelpMessage = {
                 },
                 {
                     name: 'Options',
-                    value: "`calendar_id: string`\nGo to that particular calendar's Settings and Sharing tab.\
-                Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.",
+                    value: '`calendar_id: string`\nGo to that particular calendar\'s Settings and Sharing tab.\
+                Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.',
                     inline: true
                 },
                 {
@@ -35,7 +35,7 @@ const setCalendarHelp: HelpMessage = {
 };
 
 const unsetCalendarHelp: HelpMessage = {
-    nameValuePair: ["unset_calendar", "unset_calendar"],
+    nameValuePair: ['unset_calendar', 'unset_calendar'],
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -59,7 +59,7 @@ const unsetCalendarHelp: HelpMessage = {
 };
 
 const makeCalendarStringHelp: HelpMessage = {
-    nameValuePair: ["make_calendar_string", "make_calendar_string"],
+    nameValuePair: ['make_calendar_string', 'make_calendar_string'],
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -75,9 +75,9 @@ const makeCalendarStringHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
+                        value: '`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
                     `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
-                    The user you want to change the calendar string for (Bot Admin only)",
+                    The user you want to change the calendar string for (Bot Admin only)',
                         inline: true
                     },
                     {
@@ -92,7 +92,7 @@ const makeCalendarStringHelp: HelpMessage = {
 };
 
 const makeCalendarStringAllHelp: HelpMessage = {
-    nameValuePair: ["make_calendar_string_all", "make_calendar_string_all"],
+    nameValuePair: ['make_calendar_string_all', 'make_calendar_string_all'],
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -107,8 +107,8 @@ const makeCalendarStringAllHelp: HelpMessage = {
                 },
                 {
                     name: 'Options',
-                    value: "`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                            \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)",
+                    value: '`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
+                            \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)',
                     inline: true
                 },
                 {
@@ -123,7 +123,7 @@ const makeCalendarStringAllHelp: HelpMessage = {
 };
 
 const whenNextHelp: HelpMessage = {
-    nameValuePair: ["when_next", "when_next"],
+    nameValuePair: ['when_next', 'when_next'],
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -138,7 +138,7 @@ const whenNextHelp: HelpMessage = {
                 },
                 {
                     name: 'Options',
-                    value: "`queue_name: string`\n Specifies a queue to list upcoming help sessions for. If not specified, defauts to current queue if used in a valid queue.",
+                    value: '`queue_name: string`\n Specifies a queue to list upcoming help sessions for. If not specified, defauts to current queue if used in a valid queue.',
                     inline: true
                 },
                 {
