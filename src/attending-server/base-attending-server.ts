@@ -33,6 +33,10 @@ type QueueChannel = {
     parentCategoryId: CategoryChannelId;
 };
 
+// used as keys to keep track of the timers we spin up
+// prevents unused timers from staying in the js event queue
+type ServerTimerType = 'SERVER_PERIODIC_UPDATE' | 'ALL_QUEUES_AUTO_CLEAR';
+
 /**
  * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
@@ -41,12 +45,13 @@ type QueueChannel = {
 */
 class AttendingServerV2 {
 
-    // late init, used for clearAllIntervals only
-    intervalID!: NodeJS.Timer;
+    // Keeps track of all the setTimout/setIntervals we started
+    timerIds: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
     // message sent to students after they leave 
     afterSessionMessage = '';
-    // optional channel where yabob will log message. if undefined, doesn't log on the server
+    // optional, channel where yabob will log message. if undefined, don't log on the server
     loggingChannel?: TextChannel;
+    // number of HOURS to wait until an auto clear happens
     // Key is CategoryChannel.id of the parent catgory of #queue
     private queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     // cached result of getQueueChannels
@@ -75,8 +80,33 @@ class AttendingServerV2 {
      * ----
     */
     clearAllIntervals(): void {
-        clearInterval(this.intervalID);
+        this.timerIds.forEach(clearInterval);
         this.queues.forEach(queue => clearInterval(queue.intervalID));
+    }
+
+    /**
+     * Sets up queue auto clear for this server
+     * ----
+     * @param hours the number of hours to wait before clearing the queue
+     * @param enable whether to disable auto clear, overrides 'hours'
+    */
+    setQueueAutoClear(hours: number, enable: boolean): void {
+        const oldTimerId = this.timerIds.get('ALL_QUEUES_AUTO_CLEAR') as number | undefined;
+        if (!enable) {
+            clearInterval(oldTimerId);
+            this.timerIds.delete('ALL_QUEUES_AUTO_CLEAR');
+            return;
+        }
+        if (hours <= 0) {
+            throw new ServerError('The number of timeout hours cannot be non-positive');
+        }
+        // cleanup the old one
+        if (this.timerIds.has('ALL_QUEUES_AUTO_CLEAR')) {
+            clearInterval(oldTimerId);
+        }
+        this.timerIds.set('ALL_QUEUES_AUTO_CLEAR', setInterval(async () => {
+            await Promise.all(this.queues.map(queue => queue.removeAllStudents()));
+        }, hours * 1000));
     }
 
     /**
@@ -161,11 +191,11 @@ class AttendingServerV2 {
                 extension.onServerPeriodicUpdate(server, true)
             ]).flat());
         // Call onServerPeriodicUpdate every 15min +- 1min
-        server.intervalID = setInterval(async () =>
+        server.timerIds.set('SERVER_PERIODIC_UPDATE', setInterval(async () =>
             await Promise.all(serverExtensions
                 .map(extension => extension.onServerPeriodicUpdate(server, false)))
             , 1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
-        );
+        ));
         console.log(
             `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
         );
@@ -186,6 +216,7 @@ class AttendingServerV2 {
             extension => extension.onStudentJoinVC(
                 this,
                 member,
+                // already checked
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 newVoiceState.channel! as VoiceChannel
             )

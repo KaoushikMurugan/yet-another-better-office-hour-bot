@@ -158,10 +158,8 @@ class HelpQueueV2 {
                 'Queue is already open',
                 this.name));
         } // won't actually be seen, will be caught
-
         this.isOpen = true;
         this.helperIds.add(helperMember.id);
-
         await Promise.all([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notify && notifMember.send(
@@ -191,10 +189,8 @@ class HelpQueueV2 {
                 'You are not one of the helpers',
                 this.name));
         }
-
         this.helperIds.delete(helperMember.id);
         this.isOpen = this.helperIds.size > 0;
-
         await Promise.all([
             this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
@@ -225,7 +221,6 @@ class HelpQueueV2 {
                 this.name
             ));
         }
-
         const student: Helpee = {
             waitStart: new Date(),
             upNext: this.students.length === 0,
@@ -233,7 +228,6 @@ class HelpQueueV2 {
             queue: this
         };
         this.students.push(student);
-
         // converted to use Array.map
         const helperIdArray = [...this.helperIds];
         // the Promise<void> cast is for combining 2 different promise types
@@ -347,15 +341,18 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove a student from the queue. Used for /clear
+     * Remove all students from the queue. Used for /clear_all
      * ----
     */
     async removeAllStudents(): Promise<void> {
         await Promise.all(this.queueExtensions.map(
             extension => extension.onRemoveAllStudents(this, this.students))
         );
-        this.students = [];
-        await this.triggerRender();
+        if (this.students.length !== 0) {
+            // avoid unnecessary render
+            this.students = [];
+            await this.triggerRender();
+        }
     }
 
     /**

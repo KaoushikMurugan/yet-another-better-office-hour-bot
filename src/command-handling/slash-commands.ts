@@ -206,6 +206,18 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
         .setRequired(true)
     );
 
+const setQueueAutoClear = new SlashCommandBuilder()
+    .setName('set_queue_auto_clear')
+    .setDescription('Sets the timeout before automatically clearing all the queues')
+    .addIntegerOption(option => option
+        .setName('hours')
+        .setDescription('Number of hours before next queue auto clear')
+        .setRequired(true))
+    .addBooleanOption(option => option
+        .setName('enable')
+        .setDescription('Whether to enable auto clear, overrides the \'hours\' parameter')
+        .setRequired(true));
+
 const stopLoggingCommand = new SlashCommandBuilder()
     .setName("stop_logging")
     .setDescription("Stops the bot from logging events");
@@ -228,6 +240,7 @@ const commandData = [
     setAfterSessionMessageCommand.toJSON(),
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
+    setQueueAutoClear.toJSON()
 ];
 
 async function postSlashCommands(guild: Guild, externalCommands: CommandData = []): Promise<void> {

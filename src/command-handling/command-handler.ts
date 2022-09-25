@@ -61,6 +61,7 @@ class CentralCommandDispatcher {
         ['help', (interaction: CommandInteraction) => this.help(interaction)],
         ['set_logging_channel', (interaction: CommandInteraction) => this.setLoggingChannel(interaction)],
         ['stop_logging', (interaction: CommandInteraction) => this.stopLogging(interaction)],
+        ['set_queue_auto_clear', (interaction: CommandInteraction) => this.setQueueAutoClear(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -429,10 +430,31 @@ class CentralCommandDispatcher {
         ]);
         const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
         if (loggingChannel.type !== 'GUILD_TEXT') {
-            return Promise.reject(new CommandParseError('Channel must be a text channel.'));
+            return Promise.reject(new CommandParseError(
+                `${loggingChannel.name} is not a text channel.`
+            ));
         }
         await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
         return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
+    }
+
+    private async setQueueAutoClear(interaction: CommandInteraction): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(
+                interaction,
+                'set_queue_auto_clear',
+                ['Bot Admin']
+            ),
+        ]);
+        const hours = interaction.options.getInteger('hours', true);
+        const enable = interaction.options.getBoolean('enable', true);
+        this.serverMap.get(serverId)?.setQueueAutoClear(hours, enable);
+        return Promise.resolve(
+            enable
+                ? `Successfully changed the auto clear timeout to be ${hours} hours.`
+                : 'Successfully disabled queue auto clear.'
+        );
     }
 
     private async stopLogging(interaction: CommandInteraction): Promise<string> {
