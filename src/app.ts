@@ -12,6 +12,7 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from "./extensions/extension-interface";
 import { GuildId } from "./utils/type-aliases";
 import environment from './environment/environment-manager';
+import { logEditFailure } from "./command-handling/common-validations";
 
 if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
     environment.discordBotCredentials.YABOB_APP_ID.length === 0
@@ -118,35 +119,39 @@ client.on("interactionCreate", async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     if (interaction.isCommand()) {
-        // there's the 3 second rule, we have to catch it asap
         await interaction.deferReply({ ephemeral: true });
-        if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
-            await builtinCommandHandler.process(interaction);
-        } else {
-            const externalCommandHandler = interactionExtensions
-                .get(interaction.guild?.id ?? '')
-                ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
-            if (!externalCommandHandler) {
-                return;
+        await (async () => {
+            // there's the 3 second rule, we have to catch it asap
+            if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
+                await builtinCommandHandler.process(interaction);
+            } else {
+                const externalCommandHandler = interactionExtensions
+                    .get(interaction.guild?.id ?? '')
+                    ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
+                if (!externalCommandHandler) {
+                    return;
+                }
+                await externalCommandHandler.processCommand(interaction);
             }
-            await externalCommandHandler.processCommand(interaction);
-        }
+        })().catch(logEditFailure);
     }
     if (interaction.isButton()) {
         await interaction.deferReply({ ephemeral: true });
-        const buttonName = interaction.customId.split(' ')[0] ?? '';
-        if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
-            builtinButtonHandler.serverMap = serversV2;
-            await builtinButtonHandler.process(interaction);
-        } else {
-            const externalButtonHandler = interactionExtensions
-                .get(interaction.guild?.id ?? '')
-                ?.find(ext => ext.buttonMethodMap.has(buttonName));
-            if (!externalButtonHandler) {
-                return;
+        await (async () => {
+            const buttonName = interaction.customId.split(' ')[0] ?? '';
+            if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
+                builtinButtonHandler.serverMap = serversV2;
+                await builtinButtonHandler.process(interaction);
+            } else {
+                const externalButtonHandler = interactionExtensions
+                    .get(interaction.guild?.id ?? '')
+                    ?.find(ext => ext.buttonMethodMap.has(buttonName));
+                if (!externalButtonHandler) {
+                    return;
+                }
+                await externalButtonHandler.processButton(interaction);
             }
-            await externalButtonHandler.processButton(interaction);
-        }
+        })().catch(logEditFailure);
     }
 });
 

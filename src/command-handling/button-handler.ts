@@ -44,38 +44,37 @@ class ButtonCommandDispatcher {
                 EmbedColor.Neutral
             )
         });
-        const delimiterPosition = interaction.customId.indexOf(" ");
-        const interactionName = interaction.customId.substring(0, delimiterPosition);
-        const queueName = interaction.customId.substring(delimiterPosition + 1);
-        const buttonMethod = this.buttonMethodMap.get(interactionName);
-        if (buttonMethod !== undefined) {
-            console.log(
-                `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
-                `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-                `User ${interaction.user.username} ` +
-                `(${interaction.user.id}) ` +
-                `pressed [${interactionName}] ` +
-                `in queue: ${queueName}.`
-            );
-            await buttonMethod(queueName, interaction)
-                .then(async successMsg =>
-                    await interaction.editReply(SimpleEmbed(
-                        successMsg,
-                        EmbedColor.Success),
-                    ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) => {
-                    // Central error handling, reply to user with the error
-                    await interaction.editReply(
-                        ErrorEmbed(err)
-                    ).catch(logEditFailure);
-                    const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
-                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
-                });
-        } else {
+        // cast is safe b/c the way we set the customId in queueDisplay
+        const [buttonName, queueName] = interaction.customId.split(' ') as [string, string];
+        const buttonMethod = this.buttonMethodMap.get(buttonName);
+        if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.'))
-            ).catch(logEditFailure);
+            );
+            return;
         }
+        console.log(
+            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
+            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
+            `User ${interaction.user.username} ` +
+            `(${interaction.user.id}) ` +
+            `pressed [${buttonName}] ` +
+            `in queue: ${queueName}.`
+        );
+        await buttonMethod(queueName, interaction)
+            .then(async successMsg =>
+                await interaction.editReply(SimpleEmbed(
+                    successMsg,
+                    EmbedColor.Success),
+                ).catch(logEditFailure)
+            ).catch(async (err: UserViewableError) => {
+                // Central error handling, reply to user with the error
+                await interaction.editReply(
+                    ErrorEmbed(err)
+                );
+                const serverId = await this.isServerInteraction(interaction) ?? '';
+                this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+            });
     }
 
     private async join(

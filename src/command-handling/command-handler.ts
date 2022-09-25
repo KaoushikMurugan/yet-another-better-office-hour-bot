@@ -10,7 +10,6 @@ import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromGuildMember,
-    logEditFailure
 } from './common-validations';
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
@@ -83,35 +82,35 @@ class CentralCommandDispatcher {
                 'Processing command...',
                 EmbedColor.Neutral
             )
-        }).catch(logEditFailure);
+        });
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
-        if (commandMethod !== undefined) {
-            console.log(
-                `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
-                `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-                `User ${interaction.user.username} ` +
-                `(${interaction.user.id}) ` +
-                `used ${interaction.toString()}`
-            );
-            await commandMethod(interaction)
-                // shorthand syntax, if successMsg is undefined, don't run the rhs
-                .then(async successMsg => successMsg &&
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    ).catch(logEditFailure)
-                ).catch(async (err: UserViewableError) => {
-                    // Central error handling, reply to user with the error
-                    await interaction.editReply(
-                        ErrorEmbed(err)
-                    ).catch(logEditFailure);
-                    this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
-                });
-        } else {
+        if (commandMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This command does not exist.')
-            )).catch(logEditFailure);
+            ));
+            return;
         }
+        console.log(
+            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
+            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
+            `User ${interaction.user.username} ` +
+            `(${interaction.user.id}) ` +
+            `used ${interaction.toString()}`
+        );
+        await commandMethod(interaction)
+            // shorthand syntax, if successMsg is undefined, don't run the rhs
+            .then(async successMsg => successMsg &&
+                await interaction.editReply(
+                    SimpleEmbed(successMsg, EmbedColor.Success)
+                )
+            ).catch(async (err: UserViewableError) => {
+                // Central error handling, reply to user with the error
+                await interaction.editReply(
+                    ErrorEmbed(err)
+                );
+                this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+            });
     }
 
     private async queue(interaction: CommandInteraction): Promise<string> {
@@ -166,7 +165,8 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "next",
-                ['Bot Admin', 'Staff'])
+                ['Bot Admin', 'Staff']
+            )
         ]);
         const targetQueue = interaction.options.getChannel('queue_name', false) === null
             ? undefined
@@ -192,7 +192,8 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "start",
-                ['Bot Admin', 'Staff'])
+                ['Bot Admin', 'Staff']
+            )
         ]);
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
@@ -205,7 +206,8 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(
                 interaction,
                 "stop",
-                ['Bot Admin', 'Staff'])
+                ['Bot Admin', 'Staff']
+            )
         ]);
 
         const helpTime = await this.serverMap.get(serverId)?.closeAllClosableQueues(member);
@@ -361,12 +363,6 @@ class CentralCommandDispatcher {
                 ['Bot Admin']
             ),
         ]);
-        // no idea why, it will always throw Unknown message error if used in a queue
-        if ((interaction.channel as GuildChannel)?.name === 'queue') {
-            return Promise.reject(new CommandParseError(
-                'Please use this command outside the queue.'
-            ));
-        }
         await Promise.all(
             (await this.serverMap.get(serverId)?.getQueueChannels())
                 ?.map(queueChannel => this.serverMap.get(serverId)

@@ -14,8 +14,7 @@ import {
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles,
-    logEditFailure
+    isTriggeredByUserWithRoles
 } from '../../command-handling/common-validations';
 import {
     checkCalendarConnection,
@@ -123,7 +122,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ErrorEmbed(new CommandNotImplementedError(
                     'This external command does not exist.'
                 ))
-            ).catch(logEditFailure);
+            );
             return;
         }
         console.log(
@@ -140,12 +139,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     SimpleEmbed(
                         successMsg,
                         EmbedColor.Success)
-                ).catch(logEditFailure)
+                )
             )
             .catch(async (err: UserViewableError) =>
                 await interaction.editReply(
                     ErrorEmbed(err)
-                ).catch(logEditFailure)
+                )
             );
     }
 
@@ -159,10 +158,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 EmbedColor.Neutral
             ),
         });
-        const delimiterPosition = interaction.customId.indexOf(" ");
-        const interactionName = interaction.customId.substring(0, delimiterPosition);
-        const queueName = interaction.customId.substring(delimiterPosition + 1);
-        const buttonMethod = this.buttonMethodMap.get(interactionName);
+        // casting is safe b/c the way the customId is set up in queue display
+        const [buttonName, queueName] = interaction.customId.split(' ') as [string, string];
+        const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
             await interaction.editReply(ErrorEmbed(
                 new CommandNotImplementedError('This external command does not exist.')
@@ -174,7 +172,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `(${interaction.user.id}) ` +
-            `pressed [${interactionName}] ` +
+            `pressed [${buttonName}] ` +
             `in queue: ${queueName}.`
         );
         await buttonMethod(queueName, interaction)
@@ -184,11 +182,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     SimpleEmbed(
                         successMsg,
                         EmbedColor.Success)
-                ).catch(logEditFailure)
+                )
             ).catch(async (err: UserViewableError) =>
                 await interaction.editReply(
                     ErrorEmbed(err)
-                ).catch(logEditFailure)
+                )
             );
     }
 
