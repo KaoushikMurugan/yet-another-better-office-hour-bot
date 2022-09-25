@@ -81,7 +81,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         const queues = server.helpQueues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
-                studentsInQueue: queue.studentsInQueue.map(student => {
+                studentsInQueue: queue.students.map(student => {
                     return {
                         waitStart: student.waitStart,
                         upNext: student.upNext,
@@ -89,7 +89,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                         memberId: student.member.id
                     };
                 }),
-                name: queue.name,
+                name: queue.queueName,
                 parentCategoryId: queue.parentCategoryId
             };
         });

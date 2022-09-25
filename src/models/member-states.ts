@@ -10,7 +10,7 @@ import { HelpQueueV2 } from '../help-queue/help-queue';
 type Helpee = {
     waitStart: Date;
     upNext: boolean;
-    queue: HelpQueueV2;
+    queue: HelpQueueV2; // backref
     readonly member: GuildMember // backref
 }
 

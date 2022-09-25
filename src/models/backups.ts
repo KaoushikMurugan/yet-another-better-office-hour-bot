@@ -1,7 +1,7 @@
 import { Helpee } from './member-states';
 
 type QueueBackup = {
-    studentsInQueue: ReadonlyArray<Omit<Helpee, 'member'|'queue'> & {
+    studentsInQueue: ReadonlyArray<Omit<Helpee, 'member' | 'queue'> & {
         displayName: string,
         memberId: string
     }>;

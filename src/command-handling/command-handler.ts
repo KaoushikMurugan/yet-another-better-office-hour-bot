@@ -275,7 +275,7 @@ class CentralCommandDispatcher {
 
     private async listHelpers(interaction: CommandInteraction): Promise<undefined> {
         const serverId = await this.isServerInteraction(interaction);
-        const helpers = this.serverMap.get(serverId)?.helpers;
+        const helpers = this.serverMap.get(serverId)?.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
             return undefined;
@@ -442,6 +442,11 @@ class CentralCommandDispatcher {
         ]);
         const hours = interaction.options.getInteger('hours', true);
         const enable = interaction.options.getBoolean('enable', true);
+        if (hours <= 0 && enable) {
+            return Promise.reject(new CommandParseError(
+                'The number of hours must be greater than 0 to enable queue auto clear.'
+            ));
+        }
         this.serverMap.get(serverId)?.setQueueAutoClear(hours, enable);
         return Promise.resolve(
             enable

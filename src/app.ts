@@ -105,7 +105,7 @@ client.on('guildCreate', async guild => {
 client.on('guildDelete', async guild => {
     const server = serversV2.get(guild.id);
     if (server !== undefined) {
-        server.clearAllIntervals();
+        server.clearAllServerTimers();
         await server.gracefulDelete();
         serversV2.delete(guild.id);
         console.log(

@@ -98,7 +98,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         voiceChannel: VoiceChannel
     ): Promise<void> {
         const helpersInVC = voiceChannel.members
-            .filter(member => server.helpers.has(member.id));
+            .filter(member => server.activeHelpers.has(member.id));
         const [studentId, student] = [
             studentMember.id,
             this.studentsJustDequeued.get(studentMember.id)
@@ -107,7 +107,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             return;
         }
         this.studentsJustDequeued.delete(studentId);
-        for (const helper of helpersInVC.map(helperInVC => server.helpers.get(helperInVC.id))) {
+        for (const helper of helpersInVC.map(helperInVC => server.activeHelpers.get(helperInVC.id))) {
             if (helper === undefined) {
                 continue;
             }
@@ -119,7 +119,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 'Session Start': new Date(),
                 'Session End': undefined,
                 'Wait Start': student.waitStart,
-                'Queue Name': student.queue.name,
+                'Queue Name': student.queue.queueName,
                 'Wait Time (ms)': (new Date()).getTime() - student.waitStart.getTime(),
             };
             this.helpSessionEntries.has(studentId)

@@ -81,7 +81,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
     override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
         serverIdCalendarStateMap
             .get(this.queueChannel.channelObj.guild.id)
-            ?.listeners.delete(deletedQueue.name);
+            ?.listeners.delete(deletedQueue.queueName);
         // now garbage collector should clean up this instance
         // when server deletes the queue from queue collection
     }
