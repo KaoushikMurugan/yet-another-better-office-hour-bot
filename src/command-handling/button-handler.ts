@@ -154,9 +154,11 @@ class ButtonCommandDispatcher {
         return `Successfully left notification group for \`${queueName}\``;
     }
 
-
-    // Begin Validation functions
-
+    /**
+     * Checks if the button came from a server with correctly initialized YABOB
+     * ----
+     * @returns string: the server id
+    */
     private async isServerInteraction(
         interaction: ButtonInteraction
     ): Promise<string> {

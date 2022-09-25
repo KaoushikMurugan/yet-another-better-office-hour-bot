@@ -176,7 +176,7 @@ function composeViewModel(
         displayName: tutorName,
         discordId: serverIdCalendarStateMap
             .get(serverId)
-            ?.calendarNameDiscordIdMap
+            ?.displayNameDiscordIdMap
             .get(tutorName),
         location: location
     };

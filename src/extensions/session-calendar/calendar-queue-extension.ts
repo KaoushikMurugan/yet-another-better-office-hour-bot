@@ -91,9 +91,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * ----
     */
     async onCalendarExtensionStateChange(): Promise<void> {
-        const randomOffset = setTimeout(() => undefined, Math.random() * 1000);
+
         // true for refresh b/c the refresh button was used.
-        clearTimeout(randomOffset);
+        const timoutId: NodeJS.Timeout = setTimeout(() => clearTimeout(timoutId), Math.random() * 3000);
         await this.renderCalendarEmbeds(true);
     }
 

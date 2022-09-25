@@ -97,7 +97,6 @@ async function isFromQueueChannelWithParent(
             'Make sure this channel has a parent category.'
         ));
     }
-
     const queueChannel: QueueChannel = {
         channelObj: interaction.channel as TextChannel,
         queueName: queueName,

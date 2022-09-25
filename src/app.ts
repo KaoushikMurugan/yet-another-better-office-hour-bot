@@ -64,24 +64,20 @@ client.on("ready", async () => {
     printTitleString();
     console.log(`Logged in as ${client.user.tag}!`);
     console.log("Scanning servers I am a part of...");
-
     // allGuilds is all the servers this YABOB instance has joined
     const allGuilds = await Promise.all(
         (await client.guilds.fetch()).map(guild => guild.fetch())
     );
-
     // Launch all startup sequences in parallel
     const setupResult = await Promise.allSettled(allGuilds.map(guild => joinGuild(guild)));
     setupResult.forEach(result =>
         result.status === 'rejected' &&
         console.log(`${result.reason}`)
     );
-
     if (setupResult.filter(res => res.status === 'fulfilled').length === 0) {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-
     console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
     console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
     return;
@@ -219,9 +215,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
             'to manage the server'
         );
     }
-
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
-
     if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
@@ -230,7 +224,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
             ])
         );
     }
-
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     serversV2.set(guild.id, server);
@@ -240,19 +233,17 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     [...interactionExtensions.values()]
         .flat()
         .forEach(extension => extension.serverMap = serversV2);
-
     await postSlashCommands(
         guild,
         interactionExtensions
             .get(guild.id)
             ?.flatMap(ext => ext.slashCommandData)
     );
-
     return server;
 }
 
 function printTitleString(): void {
-    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4.0";
+    const titleString = "YABOB: Yet-Another-Better-OH-Bot V4.1";
     console.log(
         `\n${FgBlack}${BgMagenta}${' '.repeat((process.stdout.columns - titleString.length) / 2)}` +
         `${titleString}` +
