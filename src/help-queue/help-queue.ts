@@ -460,6 +460,8 @@ class HelpQueueV2 {
         if (this._hoursUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
+        const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
+        existingTimer && clearTimeout(existingTimer);
         this.timers.set('QUEUE_AUTO_CLEAR', setTimeout(async () => {
             await this.removeAllStudents();
         }, this._hoursUntilAutoClear * 1000 * 60 * 60));
