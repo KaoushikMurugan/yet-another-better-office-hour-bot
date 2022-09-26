@@ -27,9 +27,7 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
-
 import environment from '../../environment/environment-manager';
-
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
@@ -219,7 +217,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ', but it doesn\'t have a name. '}` +
             `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button. ` +
+            `Don't forget sure to use \`/set_public_embed_url\` if you are using a 3rd party calendar public embed. ` +
             `This ID has also been backed up to firebase.`
         );
     }

@@ -58,6 +58,8 @@ class CalendarExtensionState {
 
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
+        // fall back to default embed in case the user forgets to set up a new public embed
+        this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
