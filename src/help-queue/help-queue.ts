@@ -171,11 +171,12 @@ class HelpQueueV2 {
             ),
             queue.triggerRender()
         ]);
-        queue.timers.set('QUEUE_PERIODIC_UPDATE', setInterval(async () => {
+        queue.timers.set('QUEUE_PERIODIC_UPDATE', setInterval(async () =>
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue, false)
-            )); // Random 0~2min offset to avoid spamming the APIs
-        }, (1000 * 60 * 10) + Math.floor(Math.random() * 1000 * 60 * 2)));
+            )).catch(console.error), // Random 0~2min offset to avoid spamming the APIs
+            (1000 * 60 * 10) + Math.floor(Math.random() * 1000 * 60 * 2)
+        ));
         return queue;
     }
 

@@ -171,9 +171,10 @@ class AttendingServerV2 {
             ]).flat());
         // Call onServerPeriodicUpdate every 15min +- 1min
         server.timers.set('SERVER_PERIODIC_UPDATE', setInterval(async () =>
-            await Promise.all(serverExtensions
-                .map(extension => extension.onServerPeriodicUpdate(server, false)))
-            , 1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
+            await Promise.all(serverExtensions.map(
+                extension => extension.onServerPeriodicUpdate(server, false)
+            )).catch(console.error),
+            1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
         ));
         console.log(
             `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
