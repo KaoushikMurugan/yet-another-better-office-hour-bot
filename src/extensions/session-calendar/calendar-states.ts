@@ -19,7 +19,7 @@ type CalendarConfigBackup = {
 }
 
 class CalendarExtensionState {
-    calendarId: string = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+    calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
     // save the data from /make_calendar_string, key is calendar display name, value is discord id
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     // event listeners, their onCalendarStateChange will be called, key is queue name
@@ -93,13 +93,15 @@ class CalendarExtensionState {
             .collection('calendarBackups')
             .doc(serverId)
             .get();
-
         if (backupDoc.data() === undefined) {
             return;
         }
         const calendarBackup = backupDoc.data() as CalendarConfigBackup;
         this.calendarId = calendarBackup.calendarId;
-        this.publicCalendarEmbedUrl = calendarBackup.publicCalendarEmbedUrl;
+        // TODO: coalescing is temporary, this is just migration code
+        // once all servers have migrated to the new backup model we can safely remove it
+        this.publicCalendarEmbedUrl = calendarBackup.publicCalendarEmbedUrl
+            ?? restorePublicEmbedURL(this.calendarId);
         this.displayNameDiscordIdMap.load(
             Object.entries(calendarBackup.calendarNameDiscordIdMap)
                 .map(([key, value]) => [key, { value: value }])
@@ -113,8 +115,9 @@ class CalendarExtensionState {
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
             publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,
-            calendarNameDiscordIdMap:
-                Object.fromEntries(this.displayNameDiscordIdMap.dump().map(([key, LRUEntry]) => [key, LRUEntry.value]))
+            calendarNameDiscordIdMap: Object.fromEntries(this.displayNameDiscordIdMap
+                .dump().map(([key, LRUEntry]) => [key, LRUEntry.value])
+            )
         };
         this.firebaseDB
             .collection('calendarBackups')
