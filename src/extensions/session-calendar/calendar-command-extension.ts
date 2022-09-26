@@ -19,6 +19,7 @@ import {
 import {
     checkCalendarConnection,
     getUpComingTutoringEvents,
+    restorePublicEmbedURL,
 } from './shared-calendar-functions';
 import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
@@ -84,7 +85,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ['make_calendar_string', (interaction: CommandInteraction) =>
             this.makeParsableCalendarTitle(interaction, false)],
         ['make_calendar_string_all', (interaction: CommandInteraction) =>
-            this.makeParsableCalendarTitle(interaction, true)]
+            this.makeParsableCalendarTitle(interaction, true)],
+        ['set_public_embd_url', (interaction: CommandInteraction) =>
+            this.setPublicEmbedUrl(interaction)],
     ]);
 
     override buttonMethodMap: ReadonlyMap<
@@ -354,6 +357,33 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `${validQueues.map(queue => queue.name).join(', ')} ` +
             `YABOB_END\n`
         );
+    }
+
+    private async setPublicEmbedUrl(
+        interaction: CommandInteraction
+    ): Promise<string> {
+        const rawUrl = interaction.options.getString('url', true);
+        const enable = interaction.options.getBoolean('enable', true);
+        await isTriggeredByUserWithRoles(
+            interaction,
+            'set_calendar',
+            ['Bot Admin']
+        );
+        if (enable) {
+            try {
+                // call this constructor to check if URL is valid
+                new URL(rawUrl);
+            } catch {
+                return Promise.reject(new CommandParseError('Please provide a valid and complete URL.'));
+            }
+            // now rawUrl is valid
+            await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
+            return `Successfullt changed the public embed url. The links in the titles of calendar queue embed will refresh soon.`;
+        } else {
+            const state = serverIdCalendarStateMap.get(this.guild.id);
+            await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+            return `Successfullt changed to default embed url. The links in the titles of calendar queue embed will refresh soon.`;
+        }
     }
 
     private async requestCalendarRefresh(

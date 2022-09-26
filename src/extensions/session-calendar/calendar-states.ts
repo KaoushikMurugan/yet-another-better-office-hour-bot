@@ -10,9 +10,11 @@ import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
 
 import environment from '../../environment/environment-manager';
+import { restorePublicEmbedURL } from './shared-calendar-functions';
 
 type CalendarConfigBackup = {
     calendarId: string;
+    publicCalendarEmbedUrl: string;
     calendarNameDiscordIdMap: { [key: string]: string; }
 }
 
@@ -22,6 +24,8 @@ class CalendarExtensionState {
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     // event listeners, their onCalendarStateChange will be called, key is queue name
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
+    // full url to the public calendar embed
+    publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
     constructor(
         private readonly serverId: string,
@@ -60,6 +64,14 @@ class CalendarExtensionState {
         ].flat() as Promise<void>[]);
     }
 
+    async setPublicEmbedUrl(validUrl: string): Promise<void> {
+        this.publicCalendarEmbedUrl = validUrl;
+        await Promise.all([
+            this.backupToFirebase(),
+            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ].flat() as Promise<void>[]);
+    }
+
     async updateNameDiscordIdMap(
         displayName: string,
         discordId: string
@@ -85,6 +97,7 @@ class CalendarExtensionState {
         }
         const calendarBackup = backupDoc.data() as CalendarConfigBackup;
         this.calendarId = calendarBackup.calendarId;
+        this.publicCalendarEmbedUrl = calendarBackup.publicCalendarEmbedUrl;
         this.displayNameDiscordIdMap.load(
             Object.entries(calendarBackup.calendarNameDiscordIdMap)
                 .map(([key, value]) => [key, { value: value }])
@@ -97,6 +110,7 @@ class CalendarExtensionState {
         }
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
+            publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,
             calendarNameDiscordIdMap:
                 Object.fromEntries(this.displayNameDiscordIdMap.dump().map(([key, LRUEntry]) => [key, LRUEntry.value]))
         };

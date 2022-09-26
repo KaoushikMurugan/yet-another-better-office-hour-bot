@@ -9,8 +9,8 @@ import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
 import {
     getUpComingTutoringEvents,
-    UpComingSessionViewModel,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    UpComingSessionViewModel
 } from './shared-calendar-functions';
 
 /**
@@ -92,7 +92,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
     */
     async onCalendarExtensionStateChange(): Promise<void> {
         // true for refresh b/c the refresh button was used.
-        const timoutId: NodeJS.Timeout = setTimeout(() => clearTimeout(timoutId), Math.random() * 3000);
         await this.renderCalendarEmbeds(true);
     }
 
@@ -109,10 +108,15 @@ class CalendarQueueExtension extends BaseQueueExtension {
         this.upcomingSessions = refresh
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
-        const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        const calendarId = serverIdCalendarStateMap
+            .get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        const publicEmbedUrl = serverIdCalendarStateMap
+            .get(this.queueChannel.channelObj.guild.id)?.publicCalendarEmbedUrl;
         const upcomingSessionsEmbed = new MessageEmbed()
             .setTitle(`Upcoming Sessions for ${queueName}`)
-            .setURL(restorePublicEmbedURL(calendarId ?? ''))
+            .setURL(publicEmbedUrl && publicEmbedUrl?.length > 0
+                ? publicEmbedUrl
+                : restorePublicEmbedURL(calendarId ?? ''))
             .setDescription(
                 this.upcomingSessions.length > 0
                     ? this.upcomingSessions
