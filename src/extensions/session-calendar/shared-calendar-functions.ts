@@ -202,6 +202,7 @@ function buildCalendarURL(args: {
         + `&timeMax=${args.timeMax.toISOString()}`
         + `&timeMin=${args.timeMin.toISOString()}`
         + `&maxResults=${args.maxResults.toString()}`
+        + `&orderBy=startTime`
         + `&singleEvents=true`;
 }
 
