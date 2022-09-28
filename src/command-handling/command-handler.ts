@@ -438,7 +438,7 @@ class CentralCommandDispatcher {
                 ['Bot Admin']
             ),
         ]);
-        const hours = interaction.options.getInteger('hours', true);
+        const hours = interaction.options.getNumber('hours', true);
         const enable = interaction.options.getBoolean('enable', true);
         if (hours <= 0 && enable) {
             return Promise.reject(new CommandParseError(

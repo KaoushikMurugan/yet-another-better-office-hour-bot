@@ -209,7 +209,7 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
 const setQueueAutoClear = new SlashCommandBuilder()
     .setName('set_queue_auto_clear')
     .setDescription('Sets the timeout before automatically clearing all the queues')
-    .addIntegerOption(option => option
+    .addNumberOption(option => option
         .setName('hours')
         .setDescription('Number of hours before next queue auto clear')
         .setRequired(true))

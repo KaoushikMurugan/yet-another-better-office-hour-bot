@@ -468,7 +468,7 @@ class HelpQueueV2 {
             if (!this.isOpen && this.hoursUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
                 await this.removeAllStudents();
             }
-        }, this._hoursUntilAutoClear * 1000 * 60 * 60));
+        }, Math.floor(this._hoursUntilAutoClear * 1000 * 60 * 60)));
     }
 }
 
