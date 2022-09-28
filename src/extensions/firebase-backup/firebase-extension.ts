@@ -109,7 +109,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                 `[${FgCyan}${(new Date()).toLocaleString('us-PT')}${ResetColor}] ` +
                 `Backup successful for ${this.serverName}`
             ))
-            .catch((err: Error) => console.error(err.message));
+            .catch((err: Error) => console.error('Firebase backup failed.' ,err.message));
         await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 

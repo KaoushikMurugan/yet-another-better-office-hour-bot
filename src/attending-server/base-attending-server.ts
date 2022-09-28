@@ -7,7 +7,7 @@ import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { commandChConfigs } from './command-ch-constants';
 import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
-import { ServerError } from '../utils/error-types';
+import { PeriodicUpdateError, ServerError } from '../utils/error-types';
 import { Helpee, Helper } from '../models/member-states';
 
 import { IServerExtension } from '../extensions/extension-interface';
@@ -173,7 +173,10 @@ class AttendingServerV2 {
         server.timers.set('SERVER_PERIODIC_UPDATE', setInterval(async () =>
             await Promise.all(serverExtensions.map(
                 extension => extension.onServerPeriodicUpdate(server, false)
-            )).catch(console.error),
+            )).catch((err: Error) => console.error(new PeriodicUpdateError(
+                `${err.name}: ${err.message}`,
+                'Server'
+            ))),
             1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
         ));
         console.log(

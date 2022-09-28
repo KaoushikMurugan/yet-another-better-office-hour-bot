@@ -88,6 +88,16 @@ class QueueRenderError extends Error {
     }
 }
 
+class PeriodicUpdateError extends Error {
+    constructor(message: string, public level: 'Server' | 'Queue') {
+        super(message);
+        this.name = 'PeriodicUpdateError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
+}
+
 // All 4 errors will be presented to the user
 type UserViewableError =
     | CommandParseError
@@ -103,5 +113,6 @@ export {
     QueueRenderError,
     CommandNotImplementedError,
     UserViewableError,
-    ExtensionSetupError
+    ExtensionSetupError,
+    PeriodicUpdateError
 };

@@ -46,7 +46,7 @@ async function getUpComingTutoringEvents(
     });
     const response = await axios({
         url: calendarUrl,
-        timeout: 2000,
+        timeout: 7000,
         method: 'GET'
     }).catch(() => Promise.reject(new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'
@@ -116,7 +116,7 @@ async function checkCalendarConnection(
     });
     const response = await axios({
         url: calendarUrl,
-        timeout: 2000,
+        timeout: 7000,
         method: 'GET'
     }).catch(() => Promise.reject(new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'

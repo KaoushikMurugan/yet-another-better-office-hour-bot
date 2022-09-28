@@ -5,7 +5,7 @@ import { IQueueExtension } from '../extensions/extension-interface';
 import { QueueBackup } from '../models/backups';
 import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { QueueError } from '../utils/error-types';
+import { PeriodicUpdateError, QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 import { GuildMemberId } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
@@ -22,7 +22,6 @@ type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
 type AutoClearTimeout = number | 'AUTO_CLEAR_DISABLED';
 
 class HelpQueueV2 {
-
     // Keeps track of all the setTimout/setIntervals we started
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
     // set of active helpers' ids
@@ -174,7 +173,10 @@ class HelpQueueV2 {
         queue.timers.set('QUEUE_PERIODIC_UPDATE', setInterval(async () =>
             await Promise.all(queueExtensions.map(
                 extension => extension.onQueuePeriodicUpdate(queue, false)
-            )).catch(console.error), // Random 0~2min offset to avoid spamming the APIs
+            )).catch((err: Error) => console.error(new PeriodicUpdateError(
+                `${err.name}: ${err.message}`,
+                'Queue'
+            ))), // Random 0~2min offset to avoid spamming the APIs
             (1000 * 60 * 10) + Math.floor(Math.random() * 1000 * 60 * 2)
         ));
         return queue;
