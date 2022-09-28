@@ -63,7 +63,7 @@ class CalendarExtensionState {
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
@@ -71,7 +71,7 @@ class CalendarExtensionState {
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     async updateNameDiscordIdMap(
@@ -82,7 +82,7 @@ class CalendarExtensionState {
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {

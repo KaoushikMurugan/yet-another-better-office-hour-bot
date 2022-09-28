@@ -376,11 +376,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             }
             // now rawUrl is valid
             await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
-            return `Successfullt changed the public embed url. The links in the titles of calendar queue embed will refresh soon.`;
+            return `Successfully changed the public embed url. The links in the titles of calendar queue embed will refresh soon.`;
         } else {
             const state = serverIdCalendarStateMap.get(this.guild.id);
             await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
-            return `Successfullt changed to default embed url. The links in the titles of calendar queue embed will refresh soon.`;
+            return `Successfully changed to default embed url. The links in the titles of calendar queue embed will refresh soon.`;
         }
     }
 
