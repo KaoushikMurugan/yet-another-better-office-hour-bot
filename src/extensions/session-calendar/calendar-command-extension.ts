@@ -125,7 +125,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
             `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `(${interaction.user.id}) ` +
@@ -166,7 +166,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('us-PT')}${ResetColor}] ` +
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
             `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
             `User ${interaction.user.username} ` +
             `(${interaction.user.id}) ` +

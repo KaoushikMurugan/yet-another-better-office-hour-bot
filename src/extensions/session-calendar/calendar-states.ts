@@ -124,7 +124,7 @@ class CalendarExtensionState {
             .doc(this.serverId)
             .set(backupData)
             .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString('us-PT')}${ResetColor}] ` +
+                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
                 `Calendar config backup successful for ${this.serverName}`
             ))
             .catch((err: Error) => console.error(err.message));

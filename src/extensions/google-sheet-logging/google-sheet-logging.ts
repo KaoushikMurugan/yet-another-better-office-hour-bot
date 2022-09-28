@@ -228,8 +228,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
             attendanceSheet.addRow(
                 {
                     'Helper Username': entry.member.user.username,
-                    'Time In': entry.helpStart.toLocaleString('us-PT'),
-                    'Time Out': entry.helpEnd.toLocaleString('us-PT'),
+                    'Time In': entry.helpStart.toLocaleString('en-US', { timeZone: 'PST8PDT' }),
+                    'Time Out': entry.helpEnd.toLocaleString('en-US', { timeZone: 'PST8PDT' }),
                     'Helped Students': JSON.stringify(entry.helpedMembers
                         .map(student => new Object({
                             displayName: student.member.displayName,
@@ -280,7 +280,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         void Promise.all([
             helpSessionSheet.addRows(entries.map(entry => Object.fromEntries([
                 ...requiredHeaders.map(header => entry[header] instanceof Date
-                    ? [header, entry[header].toLocaleString('us-PT')]
+                    ? [header, (entry[header] as Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })]
                     : [header, entry[header].toString()]
                 ),
                 [
