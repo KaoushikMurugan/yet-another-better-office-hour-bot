@@ -9,8 +9,8 @@ import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
 import {
     getUpComingTutoringEvents,
-    UpComingSessionViewModel,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    UpComingSessionViewModel
 } from './shared-calendar-functions';
 
 /**
@@ -92,7 +92,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
     */
     async onCalendarExtensionStateChange(): Promise<void> {
         // true for refresh b/c the refresh button was used.
-        const timoutId: NodeJS.Timeout = setTimeout(() => clearTimeout(timoutId), Math.random() * 3000);
         await this.renderCalendarEmbeds(true);
     }
 
@@ -109,10 +108,15 @@ class CalendarQueueExtension extends BaseQueueExtension {
         this.upcomingSessions = refresh
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
-        const calendarId = serverIdCalendarStateMap.get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        const calendarId = serverIdCalendarStateMap
+            .get(this.queueChannel.channelObj.guild.id)?.calendarId;
+        const publicEmbedUrl = serverIdCalendarStateMap
+            .get(this.queueChannel.channelObj.guild.id)?.publicCalendarEmbedUrl;
         const upcomingSessionsEmbed = new MessageEmbed()
             .setTitle(`Upcoming Sessions for ${queueName}`)
-            .setURL(restorePublicEmbedURL(calendarId ?? ''))
+            .setURL(publicEmbedUrl && publicEmbedUrl?.length > 0
+                ? publicEmbedUrl
+                : restorePublicEmbedURL(calendarId ?? ''))
             .setDescription(
                 this.upcomingSessions.length > 0
                     ? this.upcomingSessions
@@ -130,7 +134,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             )
             .setColor(EmbedColor.NoColor)
             .setFooter({
-                text: `This embed shows up to 10 most recent upcoming sessions. Click the title to see the full calendar.`,
+                text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every 15 minutes. Click the title to see the full calendar.`,
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
         const refreshButton = new MessageActionRow()

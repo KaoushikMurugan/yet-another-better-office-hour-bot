@@ -66,13 +66,32 @@ const makeCalendarStringAll = new SlashCommandBuilder()
         .setDescription('The user to modify the calendar string for')
         .setRequired(false));
 
+const setPublicEmbedUrl = new SlashCommandBuilder()
+    .setName('set_public_embd_url')
+    .setDescription('Use another public calendar embed')
+    .addStringOption((option) =>
+        option
+            .setName('url')
+            .setDescription('The full URL to the public calendar embed')
+            .setRequired(true)
+    )
+    .addBooleanOption(option =>
+        option
+            .setName('enable')
+            .setDescription(
+                'Whether to switch to this new public url. ' +
+                'If false, the value in `url` will be ignored'
+            )
+            .setRequired(true)
+    );
 
 const calendarCommands = [
     setCalendar.toJSON(),
     unsetCalendar.toJSON(),
     whenNext.toJSON(),
     makeCalendarStringCommand().toJSON(),
-    makeCalendarStringAll.toJSON()
+    makeCalendarStringAll.toJSON(),
+    setPublicEmbedUrl.toJSON()
 ];
 
 export { calendarCommands };

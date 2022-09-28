@@ -10,18 +10,22 @@ import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
 
 import environment from '../../environment/environment-manager';
+import { restorePublicEmbedURL } from './shared-calendar-functions';
 
 type CalendarConfigBackup = {
     calendarId: string;
+    publicCalendarEmbedUrl: string;
     calendarNameDiscordIdMap: { [key: string]: string; }
 }
 
 class CalendarExtensionState {
-    calendarId: string = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+    calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
     // save the data from /make_calendar_string, key is calendar display name, value is discord id
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     // event listeners, their onCalendarStateChange will be called, key is queue name
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
+    // full url to the public calendar embed
+    publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
     constructor(
         private readonly serverId: string,
@@ -54,6 +58,16 @@ class CalendarExtensionState {
 
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
+        // fall back to default embed in case the user forgets to set up a new public embed
+        this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
+        await Promise.all([
+            this.backupToFirebase(),
+            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ].flat() as Promise<void>[]);
+    }
+
+    async setPublicEmbedUrl(validUrl: string): Promise<void> {
+        this.publicCalendarEmbedUrl = validUrl;
         await Promise.all([
             this.backupToFirebase(),
             this.listeners.map(listener => listener.onCalendarExtensionStateChange())
@@ -79,12 +93,15 @@ class CalendarExtensionState {
             .collection('calendarBackups')
             .doc(serverId)
             .get();
-
         if (backupDoc.data() === undefined) {
             return;
         }
         const calendarBackup = backupDoc.data() as CalendarConfigBackup;
         this.calendarId = calendarBackup.calendarId;
+        // TODO: coalescing is temporary, this is just migration code
+        // once all servers have migrated to the new backup model we can safely remove it
+        this.publicCalendarEmbedUrl = calendarBackup.publicCalendarEmbedUrl
+            ?? restorePublicEmbedURL(this.calendarId);
         this.displayNameDiscordIdMap.load(
             Object.entries(calendarBackup.calendarNameDiscordIdMap)
                 .map(([key, value]) => [key, { value: value }])
@@ -97,8 +114,10 @@ class CalendarExtensionState {
         }
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
-            calendarNameDiscordIdMap:
-                Object.fromEntries(this.displayNameDiscordIdMap.dump().map(([key, LRUEntry]) => [key, LRUEntry.value]))
+            publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,
+            calendarNameDiscordIdMap: Object.fromEntries(this.displayNameDiscordIdMap
+                .dump().map(([key, LRUEntry]) => [key, LRUEntry.value])
+            )
         };
         this.firebaseDB
             .collection('calendarBackups')

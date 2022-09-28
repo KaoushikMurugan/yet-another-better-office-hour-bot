@@ -19,6 +19,7 @@ import {
 import {
     checkCalendarConnection,
     getUpComingTutoringEvents,
+    restorePublicEmbedURL,
 } from './shared-calendar-functions';
 import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
@@ -26,9 +27,7 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
-
 import environment from '../../environment/environment-manager';
-
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
@@ -84,7 +83,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ['make_calendar_string', (interaction: CommandInteraction) =>
             this.makeParsableCalendarTitle(interaction, false)],
         ['make_calendar_string_all', (interaction: CommandInteraction) =>
-            this.makeParsableCalendarTitle(interaction, true)]
+            this.makeParsableCalendarTitle(interaction, true)],
+        ['set_public_embd_url', (interaction: CommandInteraction) =>
+            this.setPublicEmbedUrl(interaction)],
     ]);
 
     override buttonMethodMap: ReadonlyMap<
@@ -216,7 +217,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 ? ` '${newCalendarName}'. `
                 : ', but it doesn\'t have a name. '}` +
             `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button. ` +
+            `Don't forget sure to use \`/set_public_embed_url\` if you are using a 3rd party calendar public embed. ` +
             `This ID has also been backed up to firebase.`
         );
     }
@@ -354,6 +355,33 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `${validQueues.map(queue => queue.name).join(', ')} ` +
             `YABOB_END\n`
         );
+    }
+
+    private async setPublicEmbedUrl(
+        interaction: CommandInteraction
+    ): Promise<string> {
+        const rawUrl = interaction.options.getString('url', true);
+        const enable = interaction.options.getBoolean('enable', true);
+        await isTriggeredByUserWithRoles(
+            interaction,
+            'set_calendar',
+            ['Bot Admin']
+        );
+        if (enable) {
+            try {
+                // call this constructor to check if URL is valid
+                new URL(rawUrl);
+            } catch {
+                return Promise.reject(new CommandParseError('Please provide a valid and complete URL.'));
+            }
+            // now rawUrl is valid
+            await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
+            return `Successfullt changed the public embed url. The links in the titles of calendar queue embed will refresh soon.`;
+        } else {
+            const state = serverIdCalendarStateMap.get(this.guild.id);
+            await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+            return `Successfullt changed to default embed url. The links in the titles of calendar queue embed will refresh soon.`;
+        }
     }
 
     private async requestCalendarRefresh(
