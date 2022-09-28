@@ -1,4 +1,4 @@
-import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
+import { GuildMember, Role, TextChannel, User, Collection, Message } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
@@ -195,7 +195,7 @@ class HelpQueueV2 {
         } // won't actually be seen, will be caught
         this.isOpen = true;
         this._activeHelperIds.add(helperMember.id);
-        await Promise.all([
+        await Promise.all<void | boolean | Message<boolean>>([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
             this.notifGroup.map(notifMember => notify && notifMember.send(
                 SimpleEmbed(`Queue \`${this.queueName}\` is open!`)
@@ -203,7 +203,7 @@ class HelpQueueV2 {
             this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             notify && this.notifGroup.clear(),
             this.triggerRender()
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     /**
@@ -232,7 +232,7 @@ class HelpQueueV2 {
         await Promise.all([
             this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     /**
@@ -272,7 +272,7 @@ class HelpQueueV2 {
         // the Promise<void> cast is for combining 2 different promise types
         // so that they can be launched in parallel
         // we won't use the return values so it's safe to cast
-        await Promise.all([
+        await Promise.all<void | undefined | Message<boolean>>([
             helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
@@ -283,7 +283,7 @@ class HelpQueueV2 {
             ),
             this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     /**
@@ -337,7 +337,7 @@ class HelpQueueV2 {
                 this.queueExtensions.map(
                     extension => extension.onDequeue(this, foundStudent)),
                 this.triggerRender()
-            ].flat() as Promise<void>[]);
+            ].flat());
             return foundStudent;
         }
         // assertion is safe becasue we already checked for length
@@ -347,7 +347,7 @@ class HelpQueueV2 {
             this.queueExtensions.map(
                 extension => extension.onDequeue(this, firstStudent)),
             await this.triggerRender()
-        ].flat() as Promise<void>[]);
+        ].flat());
         return firstStudent;
     }
 
@@ -374,7 +374,7 @@ class HelpQueueV2 {
             this.queueExtensions.map(
                 extension => extension.onStudentRemove(this, removedStudent)),
             this.triggerRender()
-        ].flat() as Promise<void>[]);
+        ].flat());
         return removedStudent;
     }
 

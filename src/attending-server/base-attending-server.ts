@@ -1,6 +1,6 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, MessageOptions, TextChannel,
+    GuildMember, Message, MessageOptions, TextChannel,
     User, VoiceChannel, VoiceState,
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
@@ -212,12 +212,12 @@ class AttendingServerV2 {
         if (!memberIsStudent) {
             return;
         }
-        await Promise.all([
+        await Promise.all<void | boolean | Message<boolean>>([
             this.serverExtensions.map(extension =>
                 extension.onStudentLeaveVC(this, member)
             ),
             this.afterSessionMessage !== '' && member.send(SimpleEmbed(this.afterSessionMessage))
-        ].flat() as Promise<void>[]);
+        ].flat());
     }
 
     /**
@@ -409,7 +409,7 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
-        await Promise.all([
+        await Promise.all<void | Message<boolean>>([
             this.serverExtensions.map(
                 extension => extension.onDequeueFirst(this, student)
             ),
@@ -417,7 +417,7 @@ class AttendingServerV2 {
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             ))
-        ].flat() as Promise<void>[]);
+        ].flat());
         return student;
     }
 
@@ -485,7 +485,7 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
-        await Promise.all([
+        await Promise.all<void | Message<boolean>>([
             this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
                 extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
@@ -494,7 +494,7 @@ class AttendingServerV2 {
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             ))
-        ].flat() as Promise<void>[]);
+        ].flat());
         return student;
     }
 
