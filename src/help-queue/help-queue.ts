@@ -30,8 +30,6 @@ class HelpQueueV2 {
     private _students: Helpee[] = [];
     // Key is Guildmember.id
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
-    // open status
-    private isOpen = false;
     // when to automatically remove everyone
     private _hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
 
@@ -72,8 +70,8 @@ class HelpQueueV2 {
     get length(): number { // number of students
         return this._students.length;
     }
-    get currentlyOpen(): boolean { // is the queue open
-        return this.isOpen;
+    get isOpen(): boolean { // is the queue open
+        return this.activeHelperIds.size > 0;
     }
     get queueName(): string { // name of corresponding queue
         return this.queueChannel.queueName;
@@ -195,7 +193,6 @@ class HelpQueueV2 {
                 'Queue is already open',
                 this.queueName));
         } // won't actually be seen, will be caught
-        this.isOpen = true;
         this._activeHelperIds.add(helperMember.id);
         await Promise.all<void | boolean | Message<boolean>>([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
@@ -227,7 +224,6 @@ class HelpQueueV2 {
                 this.queueName));
         }
         this._activeHelperIds.delete(helperMember.id);
-        this.isOpen = this._activeHelperIds.size > 0;
         if (!this.isOpen) {
             this.startAutoClearTimer();
         }
@@ -347,8 +343,9 @@ class HelpQueueV2 {
         const firstStudent = this._students.shift()!;
         await Promise.all([
             this.queueExtensions.map(
-                extension => extension.onDequeue(this, firstStudent)),
-            await this.triggerRender()
+                extension => extension.onDequeue(this, firstStudent)
+            ),
+            this.triggerRender()
         ].flat());
         return firstStudent;
     }

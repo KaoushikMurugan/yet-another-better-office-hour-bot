@@ -386,7 +386,7 @@ class AttendingServerV2 {
             ));
         }
         const nonEmptyQueues = currentlyHelpingQueues
-            .filter(queue => queue.currentlyOpen && queue.length !== 0);
+            .filter(queue => queue.isOpen && queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
             return Promise.reject(new ServerError(
