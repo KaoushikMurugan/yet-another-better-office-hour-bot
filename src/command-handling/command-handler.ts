@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, TextChannel } from 'discord.js';
+import { CacheType, ChannelType, ChatInputCommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, Interaction, TextChannel } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
 import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from '../utils/embed-helper';
@@ -41,26 +41,26 @@ class CentralCommandDispatcher {
     // - If a call returns undefined, processCommand won't edit the reply
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | undefined>
-    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
-        ['announce', (interaction: CommandInteraction) => this.announce(interaction)],
-        ['cleanup_queue', (interaction: CommandInteraction) => this.cleanup(interaction)],
-        ['cleanup_all', (interaction: CommandInteraction) => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_channels', (interaction: CommandInteraction) => this.cleanupHelpChannel(interaction)],
-        ['clear', (interaction: CommandInteraction) => this.clear(interaction)],
-        ['clear_all', (interaction: CommandInteraction) => this.clearAll(interaction)],
-        ['enqueue', (interaction: CommandInteraction) => this.enqueue(interaction)],
-        ['leave', (interaction: CommandInteraction) => this.leave(interaction)],
-        ['list_helpers', (interaction: CommandInteraction) => this.listHelpers(interaction)],
-        ['next', (interaction: CommandInteraction) => this.next(interaction)],
-        ['queue', (interaction: CommandInteraction) => this.queue(interaction)],
-        ['set_after_session_msg', (interaction: CommandInteraction) => this.setAfterSessionMessage(interaction)],
-        ['start', (interaction: CommandInteraction) => this.start(interaction)],
-        ['stop', (interaction: CommandInteraction) => this.stop(interaction)],
-        ['help', (interaction: CommandInteraction) => this.help(interaction)],
-        ['set_logging_channel', (interaction: CommandInteraction) => this.setLoggingChannel(interaction)],
-        ['stop_logging', (interaction: CommandInteraction) => this.stopLogging(interaction)],
-        ['set_queue_auto_clear', (interaction: CommandInteraction) => this.setQueueAutoClear(interaction)]
+        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
+    > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
+        ['announce', (interaction: ChatInputCommandInteraction) => this.announce(interaction)],
+        ['cleanup_queue', (interaction: ChatInputCommandInteraction) => this.cleanup(interaction)],
+        ['cleanup_all', (interaction: ChatInputCommandInteraction) => this.cleanupAllQueues(interaction)],
+        ['cleanup_help_channels', (interaction: ChatInputCommandInteraction) => this.cleanupHelpChannel(interaction)],
+        ['clear', (interaction: ChatInputCommandInteraction) => this.clear(interaction)],
+        ['clear_all', (interaction: ChatInputCommandInteraction) => this.clearAll(interaction)],
+        ['enqueue', (interaction: ChatInputCommandInteraction) => this.enqueue(interaction)],
+        ['leave', (interaction: ChatInputCommandInteraction) => this.leave(interaction)],
+        ['list_helpers', (interaction: ChatInputCommandInteraction) => this.listHelpers(interaction)],
+        ['next', (interaction: ChatInputCommandInteraction) => this.next(interaction)],
+        ['queue', (interaction: ChatInputCommandInteraction) => this.queue(interaction)],
+        ['set_after_session_msg', (interaction: ChatInputCommandInteraction) => this.setAfterSessionMessage(interaction)],
+        ['start', (interaction: ChatInputCommandInteraction) => this.start(interaction)],
+        ['stop', (interaction: ChatInputCommandInteraction) => this.stop(interaction)],
+        ['help', (interaction: ChatInputCommandInteraction) => this.help(interaction)],
+        ['set_logging_channel', (interaction: ChatInputCommandInteraction) => this.setLoggingChannel(interaction)],
+        ['stop_logging', (interaction: ChatInputCommandInteraction) => this.stopLogging(interaction)],
+        ['set_queue_auto_clear', (interaction: ChatInputCommandInteraction) => this.setQueueAutoClear(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
@@ -74,7 +74,7 @@ class CentralCommandDispatcher {
      * @throws CommandNotImplementedError: if the command is not implemented
      * - If thrown but the command is implemented, make sure commandMethodMap has it
     */
-    async process(interaction: CommandInteraction): Promise<void> {
+    async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const serverId = await this.isServerInteraction(interaction) ?? 'unknown';
         this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
         // Immediately replay to show that YABOB has received the interaction
@@ -107,11 +107,11 @@ class CentralCommandDispatcher {
             ).catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
                 await interaction.editReply(ErrorEmbed(err));
-                this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                this.serverMap.get(serverId)?.sendLogMessage(ErrorLogEmbed(err, interaction as Interaction<CacheType>));
             });
     }
 
-    private async queue(interaction: CommandInteraction): Promise<string> {
+    private async queue(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -147,7 +147,7 @@ class CentralCommandDispatcher {
         }
     }
 
-    private async enqueue(interaction: CommandInteraction): Promise<string> {
+    private async enqueue(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, queueChannel, member] = await Promise.all([
             this.isServerInteraction(interaction),
             hasValidQueueArgument(interaction),
@@ -157,7 +157,7 @@ class CentralCommandDispatcher {
         return `Successfully joined \`${queueChannel.queueName}\`.`;
     }
 
-    private async next(interaction: CommandInteraction): Promise<string> {
+    private async next(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, helperMember] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -169,9 +169,9 @@ class CentralCommandDispatcher {
         const targetQueue = interaction.options.getChannel('queue_name', false) === null
             ? undefined
             : await hasValidQueueArgument(interaction, true);
-        const targetStudent = interaction.options.getMember('user', false) === null
+        const targetStudent = interaction.options.getMember('user') === null
             ? undefined
-            : interaction.options.getMember('user', true) as GuildMember;
+            : interaction.options.getMember('user') as GuildMember;
         // if either target queue or target student is specified, use dequeueWithArgs
         // otherwise use dequeueGlobalFirst
         const dequeuedStudent = targetQueue || targetStudent
@@ -184,7 +184,7 @@ class CentralCommandDispatcher {
         return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
     }
 
-    private async start(interaction: CommandInteraction): Promise<string> {
+    private async start(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -198,7 +198,7 @@ class CentralCommandDispatcher {
         return `You have started helping! Have fun!`;
     }
 
-    private async stop(interaction: CommandInteraction): Promise<string> {
+    private async stop(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -214,7 +214,7 @@ class CentralCommandDispatcher {
             `. See you later!`;
     }
 
-    private async leave(interaction: CommandInteraction): Promise<string> {
+    private async leave(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member, queue] = await Promise.all([
             this.isServerInteraction(interaction),
             isFromGuildMember(interaction),
@@ -224,7 +224,7 @@ class CentralCommandDispatcher {
         return `You have successfully left from queue ${queue.queueName}.`;
     }
 
-    private async clear(interaction: CommandInteraction): Promise<string> {
+    private async clear(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
@@ -251,7 +251,7 @@ class CentralCommandDispatcher {
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
-    private async clearAll(interaction: CommandInteraction): Promise<string> {
+    private async clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -272,7 +272,7 @@ class CentralCommandDispatcher {
         return `All queues on ${server?.guild.name} was cleard.`;
     }
 
-    private async listHelpers(interaction: CommandInteraction): Promise<undefined> {
+    private async listHelpers(interaction: ChatInputCommandInteraction): Promise<undefined> {
         const serverId = await this.isServerInteraction(interaction);
         const helpers = this.serverMap.get(serverId)?.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
@@ -309,7 +309,7 @@ class CentralCommandDispatcher {
         return undefined;
     }
 
-    private async announce(interaction: CommandInteraction): Promise<string> {
+    private async announce(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -331,7 +331,7 @@ class CentralCommandDispatcher {
         return `Your announcement: ${announcement} has been sent!`;
     }
 
-    private async cleanup(interaction: CommandInteraction): Promise<string> {
+    private async cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, queue] = await Promise.all([
             this.isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
@@ -350,7 +350,7 @@ class CentralCommandDispatcher {
         return `Queue ${queue.queueName} has been cleaned up.`;
     }
 
-    private async cleanupAllQueues(interaction: CommandInteraction): Promise<string> {
+    private async cleanupAllQueues(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -367,7 +367,7 @@ class CentralCommandDispatcher {
         return `All queues have been cleaned up.`;
     }
 
-    private async cleanupHelpChannel(interaction: CommandInteraction): Promise<string> {
+    private async cleanupHelpChannel(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -380,7 +380,7 @@ class CentralCommandDispatcher {
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
-    private async setAfterSessionMessage(interaction: CommandInteraction): Promise<string> {
+    private async setAfterSessionMessage(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -397,11 +397,11 @@ class CentralCommandDispatcher {
         return `Successfully updated after session message.`;
     }
 
-    private async help(interaction: CommandInteraction): Promise<undefined> {
+    private async help(interaction: ChatInputCommandInteraction): Promise<undefined> {
         const commandName = interaction.options.getString('command', true);
-        const helpMessage = adminCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
-            ?? helperCommandHelpMessages.find(message => message.nameValuePair[1] === commandName)
-            ?? studentCommandHelpMessages.find(message => message.nameValuePair[1] === commandName);
+        const helpMessage = adminCommandHelpMessages.find(message => message.nameValuePair.name === commandName)
+            ?? helperCommandHelpMessages.find(message => message.nameValuePair.name === commandName)
+            ?? studentCommandHelpMessages.find(message => message.nameValuePair.name === commandName);
         if (helpMessage !== undefined) {
             await interaction.editReply(helpMessage?.message);
         } else {
@@ -410,7 +410,7 @@ class CentralCommandDispatcher {
         return undefined;
     }
 
-    private async setLoggingChannel(interaction: CommandInteraction): Promise<string> {
+    private async setLoggingChannel(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -420,7 +420,7 @@ class CentralCommandDispatcher {
             ),
         ]);
         const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
-        if (loggingChannel.type !== 'GUILD_TEXT') {
+        if (loggingChannel.type !== ChannelType.GuildText) {
             return Promise.reject(new CommandParseError(
                 `${loggingChannel.name} is not a text channel.`
             ));
@@ -429,7 +429,7 @@ class CentralCommandDispatcher {
         return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
     }
 
-    private async setQueueAutoClear(interaction: CommandInteraction): Promise<string> {
+    private async setQueueAutoClear(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -453,7 +453,7 @@ class CentralCommandDispatcher {
         );
     }
 
-    private async stopLogging(interaction: CommandInteraction): Promise<string> {
+    private async stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(
@@ -473,7 +473,7 @@ class CentralCommandDispatcher {
      * @returns string: the server id
     */
     private async isServerInteraction(
-        interaction: CommandInteraction
+        interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {

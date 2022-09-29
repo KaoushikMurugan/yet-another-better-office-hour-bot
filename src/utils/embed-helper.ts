@@ -1,4 +1,5 @@
-import { CommandInteraction, Interaction, MessageOptions, TextBasedChannel, User } from 'discord.js';
+import { CommandInteraction, Interaction, BaseMessageOptions, TextBasedChannel, User, ApplicationCommandOptionType } from 'discord.js';
+import { isOptionalTypeNode } from 'typescript';
 import {
     QueueError,
     ServerError,
@@ -21,17 +22,17 @@ export function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
     description = '',
-): Pick<MessageOptions, 'embeds'> {
+): Pick<BaseMessageOptions, 'embeds'> {
     if (message.length <= 256) {
         return {
             embeds: [{
                 color: color,
                 title: message,
-                timestamp: new Date(),
+                timestamp: new Date().toISOString(),
                 description: description,
                 author: {
                     name: 'YABOB',
-                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],
         };
@@ -40,17 +41,17 @@ export function SimpleEmbed(
             embeds: [{
                 color: color,
                 description: message + '\n\n' + description,
-                timestamp: new Date(),
+                timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB',
-                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 },
             }],
         };
     }
 }
 
-export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds'> {
+export function ErrorEmbed(err: UserViewableError): Pick<BaseMessageOptions, 'embeds'> {
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -74,20 +75,20 @@ export function ErrorEmbed(err: UserViewableError): Pick<MessageOptions, 'embeds
         embeds: [{
             color: color,
             title: err.message,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             description: `If you need help or think this is a mistake, `
                 + `please post a screenshot of this message in the #help channel `
                 + `(or equivalent) and ping @Bot Admin.`,
             fields: embedFields,
             author: {
                 name: 'YABOB',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             },
         }],
     };
 }
 
-export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<MessageOptions, 'embeds'> {
+export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<BaseMessageOptions, 'embeds'> {
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -122,11 +123,11 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
         embeds: [{
             color: color,
             title: `Error occured at <t:${new Date().getTime().toString().slice(0, -3)}:F> `,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             fields: embedFields,
             footer: {
                 text: `YABOB`,
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }],
     };
@@ -134,17 +135,17 @@ export function ErrorLogEmbed(err: Error, interaction: Interaction): Pick<Messag
 
 export function SimpleLogEmbed(
     message: string
-): Pick<MessageOptions, 'embeds'> {
-    const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
+): Pick<BaseMessageOptions, 'embeds'> {
+    const timeStampString = `\nat <t:${new Date().toISOString().toString().slice(0, -3)}:F>`;
     if (message.length <= 256) {
         return {
             embeds: [{
                 color: EmbedColor.Pink,
                 title: message + timeStampString,
-                timestamp: new Date(),
+                timestamp: new Date().toISOString(),
                 footer: {
                     text: `YABOB`,
-                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }],
         };
@@ -153,10 +154,10 @@ export function SimpleLogEmbed(
             embeds: [{
                 color: EmbedColor.Pink,
                 description: message + timeStampString,
-                timestamp: new Date(),
+                timestamp: new Date().toISOString(),
                 footer: {
                     text: `YABOB`,
-                    iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }],
 
@@ -168,12 +169,12 @@ export function ButtonLogEmbed(
     user: User,
     interactionName: string,
     channel: TextBasedChannel,
-): Pick<MessageOptions, 'embeds'> {
+): Pick<BaseMessageOptions, 'embeds'> {
     return {
         embeds: [{
             color: EmbedColor.Pink,
-            title: `Button Pressed at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
-            timestamp: new Date(),
+            title: `Button Pressed at <t:${new Date().toISOString().toString().slice(0, -3)}:F>`,
+            timestamp: new Date().toISOString(),
             fields: [
                 {
                     name: 'User',
@@ -193,7 +194,7 @@ export function ButtonLogEmbed(
             ],
             footer: {
                 text: `YABOB`,
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }],
     };
@@ -201,10 +202,10 @@ export function ButtonLogEmbed(
 
 export function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction,
-): Pick<MessageOptions, 'embeds'> {
+): Pick<BaseMessageOptions, 'embeds'> {
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;
-    if (optionsData[0]?.type === 'SUB_COMMAND') { // add condition for subcommand group later
+    if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) { // add condition for subcommand group later
         commandName += ` ${optionsData[0].name}`;
         optionsData = optionsData[0].options ?? [];
     }
@@ -231,9 +232,11 @@ export function SlashCommandLogEmbed(
             // Need to manually format the options as they are parsed as a string | number | boolean | undefined
             value: optionsData.map((option) => {
                 switch (option.type) {
-                    case 'CHANNEL':
+                    case ApplicationCommandOptionType.Channel:
                         return `**${option.name}**: <#${option.value}>`;
-                    case 'USER' || 'ROLE' || 'MENTIONABLE':
+                    case ApplicationCommandOptionType.User
+                    || ApplicationCommandOptionType.Role
+                    || ApplicationCommandOptionType.Mentionable:
                         return `**${option.name}**: <@${option.value}>`;
                     default:
                         return `**${option.name}**: ${option.value}`;
@@ -246,11 +249,11 @@ export function SlashCommandLogEmbed(
         embeds: [{
             color: EmbedColor.Pink,
             title: `Slash Command Used at <t:${new Date().getTime().toString().slice(0, -3)}:F>`,
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             fields: embedFields,
             footer: {
                 text: `YABOB`,
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }],
     };

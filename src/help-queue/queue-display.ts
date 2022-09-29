@@ -4,11 +4,12 @@ import { QueueViewModel } from './help-queue';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import {
     Collection,
-    MessageActionRow,
-    MessageButton,
-    MessageEmbed,
-    MessageOptions,
-    User
+    ActionRowBuilder,
+    ButtonBuilder,
+    EmbedBuilder,
+    BaseMessageOptions,
+    User,
+    ButtonStyle
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper';
 import { RenderIndex, MessageId } from '../utils/type-aliases';
@@ -25,7 +26,7 @@ class QueueDisplayV2 {
     private queueChannelEmbeds: Collection<
         RenderIndex,
         {
-            contents: Pick<MessageOptions, 'embeds' | 'components'>,
+            contents: Pick<BaseMessageOptions, 'embeds' | 'components'>,
             renderIndex: RenderIndex
         }
     > = new Collection();
@@ -47,48 +48,48 @@ class QueueDisplayV2 {
     ) { }
 
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
-        const embedTableMsg = new MessageEmbed();
+        const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(`Queue for〚${queue.queueName}〛is\t${queue.isOpen
                 ? '**OPEN**\t(ﾟ∀ﾟ )'
                 : '**CLOSED**\t◦<(¦3[___]'}`)
             .setDescription(this.composeQueueAsciiTable(queue))
             .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
-        const joinLeaveButtons = new MessageActionRow()
+        const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('join ' + queue.queueName)
                     .setEmoji('✅')
                     .setDisabled(!queue.isOpen)
                     .setLabel('Join')
-                    .setStyle('SUCCESS')
+                    .setStyle(ButtonStyle.Success)
             )
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('leave ' + queue.queueName)
                     .setEmoji('❎')
                     .setDisabled(!queue.isOpen)
                     .setLabel('Leave')
-                    .setStyle('DANGER')
+                    .setStyle(ButtonStyle.Danger)
             );
-        const notifButtons = new MessageActionRow()
+        const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('notif ' + queue.queueName)
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
-                    .setStyle('PRIMARY')
+                    .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('removeN ' + queue.queueName)
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
-                    .setStyle('PRIMARY')
+                    .setStyle(ButtonStyle.Primary)
             );
         const embedList = [embedTableMsg];
         if (queue.helperIDs.length !== 0) {
-            const helperList = new MessageEmbed();
+            const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
                 .setDescription(queue.helperIDs.join('\n'))
@@ -106,7 +107,7 @@ class QueueDisplayV2 {
     }
 
     async requestNonQueueEmbedRender(
-        embedElements: Pick<MessageOptions, 'embeds' | 'components'>,
+        embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
         renderIndex: number
     ): Promise<void> {
         this.queueChannelEmbeds.set(renderIndex, {
@@ -140,7 +141,7 @@ class QueueDisplayV2 {
                 (await this.queueChannel
                     .channelObj
                     .messages
-                    .fetch(undefined, { force: true })
+                    .fetch(undefined)
                 ).map(msg => msg.delete()));
             // sort by render index
             const sortedEmbeds = this.queueChannelEmbeds

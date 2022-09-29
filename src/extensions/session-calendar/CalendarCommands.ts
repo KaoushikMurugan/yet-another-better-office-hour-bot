@@ -5,7 +5,10 @@ import { studentCommandHelpMessages } from '../../../help-channel-messages/Stude
 import { HelpMessage } from '../../utils/type-aliases';
 
 const setCalendarHelp: HelpMessage = {
-    nameValuePair: ['set_calendar', 'set_calendar'],
+    nameValuePair: {
+        name: 'set_calendar',
+        value: 'set_calendar'
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -35,7 +38,10 @@ const setCalendarHelp: HelpMessage = {
 };
 
 const unsetCalendarHelp: HelpMessage = {
-    nameValuePair: ['unset_calendar', 'unset_calendar'],
+    nameValuePair: {
+        name: 'unset_calendar',
+        value: 'unset_calendar'
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -59,7 +65,10 @@ const unsetCalendarHelp: HelpMessage = {
 };
 
 const makeCalendarStringHelp: HelpMessage = {
-    nameValuePair: ['make_calendar_string', 'make_calendar_string'],
+    nameValuePair: {
+        name: 'make_calendar_string',
+        value: 'make_calendar_string'
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -92,7 +101,10 @@ const makeCalendarStringHelp: HelpMessage = {
 };
 
 const makeCalendarStringAllHelp: HelpMessage = {
-    nameValuePair: ['make_calendar_string_all', 'make_calendar_string_all'],
+    nameValuePair: {
+        name: 'make_calendar_string_all',
+        value: 'make_calendar_string_all'
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -123,7 +135,10 @@ const makeCalendarStringAllHelp: HelpMessage = {
 };
 
 const whenNextHelp: HelpMessage = {
-    nameValuePair: ['when_next', 'when_next'],
+    nameValuePair: {
+        name: 'when_next',
+        value: 'when_next'
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {

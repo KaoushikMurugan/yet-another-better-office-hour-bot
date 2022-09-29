@@ -1,7 +1,7 @@
 import { BaseInteractionExtension } from '../extension-interface';
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
-    ButtonInteraction, CategoryChannel, Collection,
+    ButtonInteraction, CategoryChannel, ChannelType, ChatInputCommandInteraction, Collection,
     CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
 import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from '../../utils/embed-helper';
@@ -72,19 +72,19 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     // - If a call returns undefined, processCommand won't edit the reply
     override commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | undefined>
-    > = new Map<string, (interaction: CommandInteraction) => Promise<string | undefined>>([
-        ['set_calendar', (interaction: CommandInteraction) =>
+        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
+    > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
+        ['set_calendar', (interaction: ChatInputCommandInteraction) =>
             this.updateCalendarId(interaction)],
-        ['unset_calendar', (interaction: CommandInteraction) =>
+        ['unset_calendar', (interaction: ChatInputCommandInteraction) =>
             this.unsetCalendarId(interaction)],
-        ['when_next', (interaction: CommandInteraction) =>
+        ['when_next', (interaction: ChatInputCommandInteraction) =>
             this.listUpComingHours(interaction)],
-        ['make_calendar_string', (interaction: CommandInteraction) =>
+        ['make_calendar_string', (interaction: ChatInputCommandInteraction) =>
             this.makeParsableCalendarTitle(interaction, false)],
-        ['make_calendar_string_all', (interaction: CommandInteraction) =>
+        ['make_calendar_string_all', (interaction: ChatInputCommandInteraction) =>
             this.makeParsableCalendarTitle(interaction, true)],
-        ['set_public_embd_url', (interaction: CommandInteraction) =>
+        ['set_public_embd_url', (interaction: ChatInputCommandInteraction) =>
             this.setPublicEmbedUrl(interaction)],
     ]);
 
@@ -103,7 +103,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     /**
      * Button handler. Almost the same as the built in command-handler.ts
     */
-    override async processCommand(interaction: CommandInteraction): Promise<void> {
+    override async processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         //Send logs before* processing the command
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
@@ -193,7 +193,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * ----
      * - Triggers the queue level extensions to update
     */
-    private async updateCalendarId(interaction: CommandInteraction): Promise<string> {
+    private async updateCalendarId(interaction: ChatInputCommandInteraction): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const [newCalendarName] = await Promise.all([
             checkCalendarConnection(
@@ -226,7 +226,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Resets the calendar id to default
      * ----
      */
-    private async unsetCalendarId(interaction: CommandInteraction): Promise<string> {
+    private async unsetCalendarId(interaction: ChatInputCommandInteraction): Promise<string> {
         await isTriggeredByUserWithRoles(
             interaction,
             'unset_calendar',
@@ -247,7 +247,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Builds the embed for /when_next
      * ----
     */
-    private async listUpComingHours(interaction: CommandInteraction): Promise<undefined> {
+    private async listUpComingHours(interaction: ChatInputCommandInteraction): Promise<undefined> {
         const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
             this.guild.id,
@@ -279,7 +279,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * @param generateAll whether to generate string for all the queue roles
     */
     private async makeParsableCalendarTitle(
-        interaction: CommandInteraction,
+        interaction: ChatInputCommandInteraction,
         generateAll: boolean
     ): Promise<string> {
         const [serverId] = await Promise.all([
@@ -319,26 +319,26 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             );
         } else {
             const commandArgs = [...this.guild.channels.cache
-                .filter(channel => channel.type === 'GUILD_CATEGORY')]
+                .filter(channel => channel.type === ChannelType.GuildCategory)]
                 .map((_, idx) => interaction.options
                     .getChannel(`queue_name_${idx + 1}`, idx === 0))
                 .filter(queueArg => queueArg !== undefined && queueArg !== null);
             validQueues = await Promise.all(commandArgs.map(category => {
-                if (category?.type !== 'GUILD_CATEGORY' || category === null) {
+                if (category?.type !== ChannelType.GuildCategory || category === null) {
                     return Promise.reject(new CommandParseError(
                         `\`${category?.name}\` is not a valid queue category.`
                     ));
                 }
-                const queueTextChannel = category.children
+                const queueTextChannel = (category as CategoryChannel).children.cache
                     .find(child =>
                         child.name === 'queue' &&
-                        child.type === 'GUILD_TEXT');
+                        child.type === ChannelType.GuildText);
                 if (queueTextChannel === undefined) {
                     return Promise.reject(new CommandParseError(
                         `'${category.name}' does not have a \`#queue\` text channel.`
                     ));
                 }
-                return Promise.resolve(category);
+                return Promise.resolve(category as CategoryChannel);
             }));
         }
         await serverIdCalendarStateMap
@@ -358,7 +358,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     private async setPublicEmbedUrl(
-        interaction: CommandInteraction
+        interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
@@ -402,7 +402,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     private async isServerInteraction(
-        interaction: CommandInteraction
+        interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {

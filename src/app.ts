@@ -1,4 +1,4 @@
-import { Client, Guild, Intents, Collection } from 'discord.js';
+import { Client, Guild, GatewayIntentBits, Partials, Collection } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
@@ -26,13 +26,13 @@ if (environment.disableExtensions) {
 
 const client = new Client({
     intents: [
-        Intents.FLAGS.GUILDS,
-        Intents.FLAGS.GUILD_MEMBERS,
-        Intents.FLAGS.GUILD_INVITES,
-        Intents.FLAGS.GUILD_VOICE_STATES,
-        Intents.FLAGS.GUILD_PRESENCES,
-        Intents.FLAGS.GUILD_MESSAGES,
-        Intents.FLAGS.DIRECT_MESSAGES,
+        GatewayIntentBits.Guilds,
+        GatewayIntentBits.GuildMembers,
+        GatewayIntentBits.GuildInvites,
+        GatewayIntentBits.GuildVoiceStates,
+        GatewayIntentBits.GuildPresences,
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.DirectMessages,
     ],
 });
 
@@ -118,7 +118,7 @@ client.on('guildDelete', async guild => {
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
-    if (interaction.isCommand()) {
+    if (interaction.isChatInputCommand()) {
         await interaction.deferReply({ ephemeral: true });
         await (async () => {
             // there's the 3 second rule, we have to catch it asap

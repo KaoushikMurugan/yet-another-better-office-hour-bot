@@ -7,7 +7,7 @@
  * To avoid race conditions, do not let extensions modify shared data values
 */
 
-import { ButtonInteraction, Collection, CommandInteraction, GuildMember, VoiceChannel, VoiceState } from 'discord.js';
+import { ButtonInteraction, Collection, ChatInputCommandInteraction, GuildMember, VoiceChannel } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { HelpQueueV2 } from '../help-queue/help-queue';
 import { QueueDisplayV2 } from '../help-queue/queue-display';
@@ -20,7 +20,7 @@ interface IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2>;
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) =>
+        (interaction: ChatInputCommandInteraction) =>
             Promise<string | undefined>
     >;
     buttonMethodMap: ReadonlyMap<
@@ -29,7 +29,7 @@ interface IInteractionExtension {
             Promise<string | undefined>
     >;
     slashCommandData: CommandData;
-    processCommand: (interaction: CommandInteraction) => Promise<void>;
+    processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
     processButton: (interaction: ButtonInteraction) => Promise<void>;
 }
 
@@ -122,13 +122,13 @@ class BaseInteractionExtension implements IInteractionExtension {
     > = new Map();
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: CommandInteraction) => Promise<string | undefined>
+        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
     > = new Map();
 
     get slashCommandData(): CommandData {
         return [];
     }
-    processCommand(interaction: CommandInteraction): Promise<void> {
+    processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         return Promise.resolve();
     }
     processButton(interaction: ButtonInteraction): Promise<void> {

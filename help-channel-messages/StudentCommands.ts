@@ -3,24 +3,30 @@ import { HelpMessage } from "../src/utils/type-aliases";
 
 
 const studentCommandsTileMessage: HelpMessage = {
-    nameValuePair: ["Student Commands Title", "student-commands-title"],
+    nameValuePair: {
+        name: "Student Commands Title",
+        value: "student-commands-title"
+    },
     useInHelpChannel: true,
     useInHelpCommand: false,
     message: {
         embeds: [{
             color: EmbedColor.Neutral,
             title: 'Commands Available To Everyone (Admin, Helper, Student)',
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             author: {
                 name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }]
     }
 };
 
 const enqueueHelp: HelpMessage = {
-    nameValuePair: ["enqueue", "enqueue"],
+    nameValuePair: {
+        name: "enqueue",
+        value: "enqueue",
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -49,7 +55,10 @@ const enqueueHelp: HelpMessage = {
 };
 
 const leaveHelp: HelpMessage = {
-    nameValuePair: ["leave", "leave"],
+    nameValuePair: {
+        name: "leave",
+        value: "leave"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -78,7 +87,10 @@ const leaveHelp: HelpMessage = {
 };
 
 const listHelpersHelp: HelpMessage = {
-    nameValuePair: ["list_helpers", "list helpers"],
+    nameValuePair: {
+        name: "list_helpers",
+        value: "list helpers"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
