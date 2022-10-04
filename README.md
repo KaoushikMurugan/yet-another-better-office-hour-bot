@@ -1,7 +1,9 @@
 <div align="center">
-<div>
-<img height="100" alt="BOB_pfp" src="https://user-images.githubusercontent.com/60045212/193523729-065a039d-4ed1-435b-bcbc-8ecde1fc2989.png"/>&nbsp<img src="https://user-images.githubusercontent.com/60045212/193524707-ef3dcaf7-faae-43e7-a4de-d891909d7cc7.svg"/>
-</div></div>
+      <div>
+      <img width="10%" alt="BOB_pfp" src="https://user-images.githubusercontent.com/60045212/193523729-065a039d-4ed1-435b-bcbc-8ecde1fc2989.png"/>&nbsp
+<img width="80%" src="https://user-images.githubusercontent.com/60045212/193725877-69b94cad-cfb5-4837-80e0-d3485c787395.svg"/>
+      </div>
+</div>
 <br>
 
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![TypeScript](https://img.shields.io/badge/--3178C6?logo=typescript&logoColor=ffffff)](https://www.typescriptlang.org/) 
