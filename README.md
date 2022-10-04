@@ -6,7 +6,7 @@
 </div>
 <br>
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0) [![TypeScript](https://img.shields.io/badge/--3178C6?logo=typescript&logoColor=ffffff)](https://www.typescriptlang.org/) 
+<a href='https://www.gnu.org/licenses/gpl-3.0.en.html' target="_blank"><img alt='' src='https://img.shields.io/badge/GPL_V3-100000?style=for-the-badge&logo=&logoColor=white&labelColor=007acc&color=FE6F6E'/></a> <a href='https://www.typescriptlang.org/' target="_blank"><img alt='Typescript' src='https://img.shields.io/badge/Typescript-100000?style=for-the-badge&logo=Typescript&logoColor=white&labelColor=007acc&color=F0F0F0'/></a> <a href='https://nodejs.org/en/' target="_blank"><img alt='Node.js' src='https://img.shields.io/badge/Node_>= 16.17-100000?style=for-the-badge&logo=Node.js&logoColor=white&labelColor=3c873a&color=F0F0F0'/></a>
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
@@ -44,7 +44,7 @@ Below is the standard Office Hours (OH) Session Protocol we follow:
 
 1. Helpers open queues that correspond to a course/office hours slot they help for.
 2. Students enter the queue of their choice.
-3. Helpers issues a `dequeue` command, which invites a student to join their voice channel.
+3. Helpers issues a `/next` command, which invites a student to join their voice channel.
 4. Once their Office Hours session is over, Helpers close their queues.
 5. Multiple Helpers can help for the same queue. A queue will close if and only if there are no helpers for that queue.
 
