@@ -1,15 +1,16 @@
 <div align="center">
       <div>
-      <img width="10%" alt="BOB_pfp" src="https://user-images.githubusercontent.com/60045212/193523729-065a039d-4ed1-435b-bcbc-8ecde1fc2989.png"/>&nbsp
-<img width="80%" src="https://user-images.githubusercontent.com/60045212/193725877-69b94cad-cfb5-4837-80e0-d3485c787395.svg"/>
+      <img width="10%" alt="BOB_pfp" src="https://user-images.githubusercontent.com/60045212/193987558-2bd2c3e3-d542-444a-b6d3-a8fa770ad32a.png"/>&nbsp
+<img width="80%" src="https://user-images.githubusercontent.com/60045212/193987690-1b16efa2-996b-48eb-980a-8ba1344c5b11.svg"/>
       </div>
 </div>
 <br>
 
 <div align = "center">
-<a href='https://www.gnu.org/licenses/gpl-3.0.en.html' target="_blank"><img alt='' src='https://img.shields.io/badge/GPL_V3-100000?style=for-the-badge&logo=&logoColor=white&labelColor=007acc&color=FE6F6E'/></a> <a href='https://www.typescriptlang.org/' target="_blank"><img alt='Typescript' src='https://img.shields.io/badge/Typescript-100000?style=for-the-badge&logo=Typescript&logoColor=white&labelColor=007acc&color=F0F0F0'/></a> <a href='https://nodejs.org/en/' target="_blank"><img alt='Node.js' src='https://img.shields.io/badge/Node_>= 16.17-100000?style=for-the-badge&logo=Node.js&logoColor=white&labelColor=3c873a&color=F0F0F0'/></a> <a href='https://discord.gg/p7HS92mHsG' target="_blank"><img alt='Discord' src='https://img.shields.io/badge/Join_our discord-100000?style=for-the-badge&logo=Discord&logoColor=white&labelColor=5865F2&color=F0F0F0'/></a>
+<a href='https://www.gnu.org/licenses/gpl-3.0.en.html' target="_blank"><img alt='' src='https://img.shields.io/badge/GPL_V3-100000?style=for-the-badge&logo=&logoColor=white&labelColor=007acc&color=FE6F6E'/></a> <a href='https://www.typescriptlang.org/' target="_blank"><img alt='Typescript' src='https://img.shields.io/badge/Typescript-100000?style=for-the-badge&logo=Typescript&logoColor=white&labelColor=007acc&color=007acc'/></a> <a href='https://nodejs.org/en/' target="_blank"><img alt='Node.js' src='https://img.shields.io/badge/Node.JS_>= 16.17-100000?style=for-the-badge&logo=Node.js&logoColor=white&labelColor=339933&color=339933'/></a> <a href='https://discord.gg/p7HS92mHsG' target="_blank"><img alt='Discord' src='https://img.shields.io/badge/Join_our discord-100000?style=for-the-badge&logo=Discord&logoColor=white&labelColor=5865F2&color=5865F2'/></a>
 </div>
 <br>
+
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
