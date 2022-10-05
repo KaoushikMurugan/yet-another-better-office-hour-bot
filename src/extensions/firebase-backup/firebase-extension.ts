@@ -21,14 +21,13 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         serverName: string,
         serverId: string
     ): Promise<FirebaseServerBackupExtension> {
-        let asdf: firebaseAppAdmin.app.App | undefined = undefined;; 
         if (getApps().length === 0) {
-            asdf = firebaseAppAdmin.initializeApp({
+            firebaseAppAdmin.initializeApp({
                 credential: cert(environment.firebaseCredentials)
             });
         }
         const instance = new FirebaseServerBackupExtension(
-            getFirestore(asdf ?? undefined),
+            getFirestore(),
             serverId,
             serverName
         );
