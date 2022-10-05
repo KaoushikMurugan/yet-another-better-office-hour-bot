@@ -360,6 +360,9 @@ class AttendingServerV2 {
         await this._queues
             .get(queue.parentCategoryId)
             ?.enqueue(studentMember);
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerRequestBackup(this)
+        ));
     }
 
     /**
@@ -421,6 +424,9 @@ class AttendingServerV2 {
                 EmbedColor.Success
             ))
         ].flat());
+        await Promise.all(this.serverExtensions.map(
+            extension => extension.onServerRequestBackup(this)
+        ));
         return student;
     }
 
@@ -498,6 +504,7 @@ class AttendingServerV2 {
                 EmbedColor.Success
             ))
         ].flat());
+        await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
         return student;
     }
 
@@ -581,12 +588,14 @@ class AttendingServerV2 {
         await this._queues
             .get(targetQueue.parentCategoryId)
             ?.removeStudent(studentMember);
+        await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
     }
 
     async clearQueue(targetQueue: QueueChannel): Promise<void> {
         await this._queues
             .get(targetQueue.parentCategoryId)
             ?.removeAllStudents();
+        await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
     }
 
     async addStudentToNotifGroup(

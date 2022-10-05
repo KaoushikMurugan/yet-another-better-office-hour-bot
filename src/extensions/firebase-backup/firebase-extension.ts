@@ -38,23 +38,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     }
 
     /**
-     * Periodically backs up server data to firebase
-     * ----
-     * @param server the server to read data from
-     * @param isFirstCall whether it's triggeredon server create
-    */
-    override async onServerPeriodicUpdate(
-        server: Readonly<AttendingServerV2>,
-        isFirstCall = false
-    ): Promise<void> {
-        // if invoked on server init, don't back up yet to prevent accidental override
-        if (isFirstCall) {
-            return Promise.resolve();
-        }
-        await this.backupServerToFirebase(server);
-    }
-
-    /**
      * Gets the backup from firebase
      * ----
      * If there's no backup for this serverId, return undefined
