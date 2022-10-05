@@ -1,4 +1,4 @@
-import { Client, Guild, GatewayIntentBits, Partials, Collection } from 'discord.js';
+import { Client, Guild, GatewayIntentBits, Collection } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';

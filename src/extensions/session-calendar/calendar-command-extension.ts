@@ -2,7 +2,7 @@ import { BaseInteractionExtension } from '../extension-interface';
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction, CategoryChannel, ChannelType, ChatInputCommandInteraction, Collection,
-    CommandInteraction, Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
+    Guild, GuildMember, GuildMemberRoleManager, Role, TextBasedChannel
 } from 'discord.js';
 import { ButtonLogEmbed, EmbedColor, ErrorEmbed, SimpleEmbed, SimpleLogEmbed, SlashCommandLogEmbed } from '../../utils/embed-helper';
 import {

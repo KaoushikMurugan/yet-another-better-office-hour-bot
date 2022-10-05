@@ -1,5 +1,4 @@
 import { CommandInteraction, Interaction, BaseMessageOptions, TextBasedChannel, User, ApplicationCommandOptionType } from 'discord.js';
-import { isOptionalTypeNode } from 'typescript';
 import {
     QueueError,
     ServerError,
