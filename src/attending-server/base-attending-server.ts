@@ -216,11 +216,11 @@ class AttendingServerV2 {
             return;
         }
         await Promise.all<void | boolean | Message<boolean>>([
-            this.serverExtensions.map(extension =>
+            ...this.serverExtensions.map(extension =>
                 extension.onStudentLeaveVC(this, member)
             ),
             this.afterSessionMessage !== '' && member.send(SimpleEmbed(this.afterSessionMessage))
-        ].flat());
+        ]);
     }
 
     /**
@@ -416,14 +416,14 @@ class AttendingServerV2 {
             maxUses: 1
         });
         await Promise.all<void | Message<boolean>>([
-            this.serverExtensions.map(
+            ...this.serverExtensions.map(
                 extension => extension.onDequeueFirst(this, student)
             ),
             student.member.send(SimpleEmbed(
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             ))
-        ].flat());
+        ]);
         await Promise.all(this.serverExtensions.map(
             extension => extension.onServerRequestBackup(this)
         ));
@@ -495,7 +495,7 @@ class AttendingServerV2 {
             maxUses: 1
         });
         await Promise.all<void | Message<boolean>>([
-            this.serverExtensions.map(
+            ...this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
                 extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
             ),
@@ -503,7 +503,7 @@ class AttendingServerV2 {
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             ))
-        ].flat());
+        ]);
         await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
         return student;
     }
