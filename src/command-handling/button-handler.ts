@@ -7,6 +7,7 @@ import {
     CommandNotImplementedError,
     UserViewableError
 } from '../utils/error-types';
+import { ButtonCallback } from '../utils/type-aliases';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
@@ -20,21 +21,15 @@ import {
  * The difference here is that a button command is guaranteed to happen in a queue as of right now
 */
 class ButtonCommandDispatcher {
-    buttonMethodMap: ReadonlyMap<
-        string,
-        (queueName: string, interaction: ButtonInteraction) => Promise<string>
-    > = new Map([
-        ['join', (queueName: string,
-            interaction: ButtonInteraction) => this.join(queueName, interaction)],
-        ['leave', (queueName: string,
-            interaction: ButtonInteraction) => this.leave(queueName, interaction)],
-        ['notif', (queueName: string,
-            interaction: ButtonInteraction) => this.joinNotifGroup(queueName, interaction)],
-        ['removeN', (queueName: string,
-            interaction: ButtonInteraction) => this.leaveNotifGroup(queueName, interaction)]
-    ]);
+    buttonMethodMap: ReadonlyMap<string, ButtonCallback>
+        = new Map<string, ButtonCallback>([
+            ['join', (queueName, interaction) => this.join(queueName, interaction)],
+            ['leave', (queueName, interaction) => this.leave(queueName, interaction)],
+            ['notif', (queueName, interaction) => this.joinNotifGroup(queueName, interaction)],
+            ['removeN', (queueName, interaction) => this.leaveNotifGroup(queueName, interaction)]
+        ]);
 
-    constructor(public serverMap: Map<string, AttendingServerV2>) { }
+    constructor(public serverMap: ReadonlyMap<string, AttendingServerV2>) { }
 
     async process(interaction: ButtonInteraction): Promise<void> {
         await interaction.editReply(SimpleEmbed(
@@ -56,11 +51,11 @@ class ButtonCommandDispatcher {
             `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n`+
+            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n` +
             ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)
-            .then(async successMsg =>
+            .then(async successMsg => successMsg &&
                 await interaction.editReply(SimpleEmbed(
                     successMsg,
                     EmbedColor.Success

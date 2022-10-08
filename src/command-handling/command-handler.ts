@@ -14,7 +14,7 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { GuildId } from '../utils/type-aliases';
+import { CommandCallback, GuildId } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
@@ -39,32 +39,30 @@ class CentralCommandDispatcher {
     // - arrow function wrapper is required because of the closure of 'this'
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    commandMethodMap: ReadonlyMap<
-        string,
-        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
-    > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
-        ['announce', interaction => this.announce(interaction)],
-        ['cleanup_queue', interaction => this.cleanup(interaction)],
-        ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_channels', interaction => this.cleanupHelpChannel(interaction)],
-        ['clear', interaction => this.clear(interaction)],
-        ['clear_all', interaction => this.clearAll(interaction)],
-        ['enqueue', interaction => this.enqueue(interaction)],
-        ['leave', interaction => this.leave(interaction)],
-        ['list_helpers', interaction => this.listHelpers(interaction)],
-        ['next', interaction => this.next(interaction)],
-        ['queue', interaction => this.queue(interaction)],
-        ['set_after_session_msg', interaction => this.setAfterSessionMessage(interaction)],
-        ['start', interaction => this.start(interaction)],
-        ['stop', interaction => this.stop(interaction)],
-        ['help', interaction => this.help(interaction)],
-        ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
-        ['stop_logging', interaction => this.stopLogging(interaction)],
-        ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
-    ]);
+    commandMethodMap: ReadonlyMap<string, CommandCallback>
+        = new Map<string, CommandCallback>([
+            ['announce', interaction => this.announce(interaction)],
+            ['cleanup_queue', interaction => this.cleanup(interaction)],
+            ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
+            ['cleanup_help_channels', interaction => this.cleanupHelpChannel(interaction)],
+            ['clear', interaction => this.clear(interaction)],
+            ['clear_all', interaction => this.clearAll(interaction)],
+            ['enqueue', interaction => this.enqueue(interaction)],
+            ['leave', interaction => this.leave(interaction)],
+            ['list_helpers', interaction => this.listHelpers(interaction)],
+            ['next', interaction => this.next(interaction)],
+            ['queue', interaction => this.queue(interaction)],
+            ['set_after_session_msg', interaction => this.setAfterSessionMessage(interaction)],
+            ['start', interaction => this.start(interaction)],
+            ['stop', interaction => this.stop(interaction)],
+            ['help', interaction => this.help(interaction)],
+            ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
+            ['stop_logging', interaction => this.stopLogging(interaction)],
+            ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
+        ]);
 
     // key is Guild.id, same as servers map from app.ts
-    constructor(public serverMap: Map<GuildId, AttendingServerV2>) { }
+    constructor(public serverMap: ReadonlyMap<GuildId, AttendingServerV2>) { }
 
     /**
      * Main processor for command interactions

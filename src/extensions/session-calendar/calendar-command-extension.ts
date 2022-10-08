@@ -28,6 +28,7 @@ import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
 import environment from '../../environment/environment-manager';
+import { ButtonCallback, CommandCallback } from '../../utils/type-aliases';
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
 
@@ -70,31 +71,27 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     // I know this is very verbose but TS gets angry if I don't write all this :(
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    override commandMethodMap: ReadonlyMap<
-        string,
-        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
-    > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
-        ['set_calendar', interaction =>
-            this.updateCalendarId(interaction)],
-        ['unset_calendar', interaction =>
-            this.unsetCalendarId(interaction)],
-        ['when_next', interaction =>
-            this.listUpComingHours(interaction)],
-        ['make_calendar_string', interaction =>
-            this.makeParsableCalendarTitle(interaction, false)],
-        ['make_calendar_string_all', interaction =>
-            this.makeParsableCalendarTitle(interaction, true)],
-        ['set_public_embd_url', interaction =>
-            this.setPublicEmbedUrl(interaction)],
-    ]);
+    override commandMethodMap: ReadonlyMap<string, CommandCallback>
+        = new Map<string, CommandCallback>([
+            ['set_calendar', interaction =>
+                this.updateCalendarId(interaction)],
+            ['unset_calendar', interaction =>
+                this.unsetCalendarId(interaction)],
+            ['when_next', interaction =>
+                this.listUpComingHours(interaction)],
+            ['make_calendar_string', interaction =>
+                this.makeParsableCalendarTitle(interaction, false)],
+            ['make_calendar_string_all', interaction =>
+                this.makeParsableCalendarTitle(interaction, true)],
+            ['set_public_embd_url', interaction =>
+                this.setPublicEmbedUrl(interaction)],
+        ]);
 
-    override buttonMethodMap: ReadonlyMap<
-        string,
-        (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
-    > = new Map([
-        ['refresh', (queueName: string, interaction: ButtonInteraction) =>
-            this.requestCalendarRefresh(queueName, interaction)]
-    ]);
+    override buttonMethodMap: ReadonlyMap<string, ButtonCallback>
+        = new Map<string, ButtonCallback>([
+            ['refresh', (queueName, interaction) =>
+                this.requestCalendarRefresh(queueName, interaction)]
+        ]);
 
     override get slashCommandData(): CommandData {
         return calendarCommands;
@@ -128,7 +125,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
             `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n`+
+            ` - Server Id: ${interaction.guildId}\n` +
             ` - Command Used: ${FgMagenta}${interaction.toString()}${ResetColor}`
         );
         await commandMethod(interaction)
@@ -170,7 +167,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n`+
+            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n` +
             ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)

@@ -14,6 +14,7 @@ import { QueueDisplayV2 } from '../help-queue/queue-display';
 import { Helpee, Helper } from '../models/member-states';
 import { ServerBackup } from '../models/backups';
 import { CommandData } from '../command-handling/slash-commands';
+import { ButtonCallback, CommandCallback } from '../utils/type-aliases';
 
 // Command level extensions
 interface IInteractionExtension {
@@ -115,15 +116,8 @@ interface IQueueExtension {
 */
 class BaseInteractionExtension implements IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2> = new Collection();
-    buttonMethodMap: ReadonlyMap<
-        string,
-        (queueName: string, interaction: ButtonInteraction) =>
-            Promise<string | undefined>
-    > = new Map();
-    commandMethodMap: ReadonlyMap<
-        string,
-        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
-    > = new Map();
+    buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map();
+    commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map();
 
     get slashCommandData(): CommandData {
         return [];
