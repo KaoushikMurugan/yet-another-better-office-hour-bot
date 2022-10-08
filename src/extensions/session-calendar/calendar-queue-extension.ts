@@ -91,7 +91,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * ----
     */
     async onCalendarExtensionStateChange(): Promise<void> {
-        // true for refresh b/c the refresh button was used.
         await this.renderCalendarEmbeds(true);
     }
 
