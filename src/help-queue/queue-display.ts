@@ -68,7 +68,6 @@ class QueueDisplayV2 {
                 new ButtonBuilder()
                     .setCustomId('leave ' + queue.queueName)
                     .setEmoji('❎')
-                    .setDisabled(!queue.isOpen)
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
             );
