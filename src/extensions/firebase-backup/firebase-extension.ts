@@ -5,9 +5,8 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { FgBlue, FgCyan, ResetColor } from '../../utils/command-line-colors';
-
-import environment from '../../environment/environment-manager';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
+import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -48,7 +47,8 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             .collection('serverBackups')
             .doc(serverId)
             .get();
-        return <ServerBackup>backupData.data();
+        // TODO: add a typeguard here to check if schema match
+        return backupData.data() as ServerBackup;
     }
 
     override async onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
