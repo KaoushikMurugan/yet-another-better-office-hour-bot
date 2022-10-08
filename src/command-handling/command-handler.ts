@@ -268,7 +268,7 @@ class CentralCommandDispatcher {
                 `You can use \`/queue add <name>\` to create one`
             ));
         }
-        await Promise.all(allQueues.map(queue => server?.clearQueue(queue)));
+        await server?.clearAllQueues();
         return `All queues on ${server?.guild.name} was cleard.`;
     }
 

@@ -598,6 +598,11 @@ class AttendingServerV2 {
         await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
     }
 
+    async clearAllQueues(): Promise<void> {
+        await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
+        await Promise.all(this.serverExtensions.map(extension => extension.onServerRequestBackup(this)));
+    }
+
     async addStudentToNotifGroup(
         studentMember: GuildMember,
         targetQueue: QueueChannel
