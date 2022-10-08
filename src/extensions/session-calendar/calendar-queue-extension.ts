@@ -5,7 +5,7 @@ import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor } from '../../utils/embed-helper';
 import { FgRed, ResetColor } from '../../utils/command-line-colors';
 import { serverIdCalendarStateMap } from './calendar-states';
-import { MessageEmbed, MessageActionRow, MessageButton } from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
 import {
     getUpComingTutoringEvents,
@@ -112,7 +112,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             .get(this.queueChannel.channelObj.guild.id)?.calendarId;
         const publicEmbedUrl = serverIdCalendarStateMap
             .get(this.queueChannel.channelObj.guild.id)?.publicCalendarEmbedUrl;
-        const upcomingSessionsEmbed = new MessageEmbed()
+        const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
             .setURL(publicEmbedUrl && publicEmbedUrl?.length > 0
                 ? publicEmbedUrl
@@ -137,13 +137,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every 15 minutes. Click the title to see the full calendar.`,
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
-        const refreshButton = new MessageActionRow()
+        const refreshButton = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
-                new MessageButton()
+                new ButtonBuilder()
                     .setCustomId('refresh ' + queueName)
                     .setEmoji('🔄')
                     .setLabel('Refresh Upcoming Sessions')
-                    .setStyle('PRIMARY')
+                    .setStyle(ButtonStyle.Primary)
             );
         await this.display?.requestNonQueueEmbedRender(
             {

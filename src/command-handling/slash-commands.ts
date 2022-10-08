@@ -183,7 +183,7 @@ function generateHelpCommand():
             .setName('command')
             .setDescription('The command to get help with')
             .setRequired(true)
-            .addChoices([
+            .addChoices(
                 ...adminCommandHelpMessages
                     .filter(helpMessage => helpMessage.useInHelpCommand === true)
                     .map(helpMessage => helpMessage.nameValuePair),
@@ -193,9 +193,11 @@ function generateHelpCommand():
                 ...studentCommandHelpMessages
                     .filter(helpMessage => helpMessage.useInHelpCommand === true)
                     .map(helpMessage => helpMessage.nameValuePair)
-            ])
+            )
         );
 }
+
+
 
 const setLoggingChannelCommand = new SlashCommandBuilder()
     .setName('set_logging_channel')

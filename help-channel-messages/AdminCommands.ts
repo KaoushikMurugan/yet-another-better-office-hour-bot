@@ -2,24 +2,30 @@ import { EmbedColor } from "../src/utils/embed-helper";
 import { HelpMessage } from "../src/utils/type-aliases";
 
 const adminCommandsTileMessage: HelpMessage = {
-    nameValuePair: ["Admin Commands Title", "admin-commands-title"],
+    nameValuePair: {
+        name: "Admin Commands Title", 
+        value: "admin-commands-title"
+    },
     useInHelpChannel: true,
     useInHelpCommand: false,
     message: {
         embeds: [{
             color: EmbedColor.Neutral,
             title: 'Bot Admin Only Commands',
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             author: {
                 name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }]
     }
 };
 
 const queueAddHelp: HelpMessage = {
-    nameValuePair: ["queue add", "queue-add"],
+    nameValuePair: {
+        name: "queue add", 
+        value: "queue-add"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -48,7 +54,10 @@ const queueAddHelp: HelpMessage = {
 };
 
 const queueRemoveHelp: HelpMessage = {
-    nameValuePair: ["queue remove", "queue_remove"],
+    nameValuePair: {
+        name: "queue remove",
+        value: "queue_remove"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -77,7 +86,9 @@ const queueRemoveHelp: HelpMessage = {
 };
 
 const cleanupHelp: HelpMessage = {
-    nameValuePair: ["cleanup_queue", "cleanup_queue"],
+    nameValuePair: {
+        name: "cleanup_queue", value: "cleanup_queue"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -106,7 +117,10 @@ const cleanupHelp: HelpMessage = {
 };
 
 const cleanupHelpChannelHelp: HelpMessage = {
-    nameValuePair: ["clean_up_help_channel", "clean_up_help_channel"],
+    nameValuePair: {
+        name: "clean_up_help_channel",
+        value: "clean_up_help_channel"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -134,7 +148,10 @@ const cleanupHelpChannelHelp: HelpMessage = {
 };
 
 const clearAllHelp: HelpMessage = {
-    nameValuePair: ["clear_all", "clear_all"],
+    nameValuePair: {
+        name: "clear_all",
+        value: "clear_all"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {

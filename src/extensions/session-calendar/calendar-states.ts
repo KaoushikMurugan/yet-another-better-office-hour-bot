@@ -1,5 +1,5 @@
 import { Collection } from 'discord.js';
-import { initializeApp } from 'firebase-admin';
+import firebaseAppAdmin from 'firebase-admin';
 import { getApps, cert } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { CalendarQueueExtension } from './calendar-queue-extension';
@@ -43,7 +43,7 @@ class CalendarExtensionState {
             return new CalendarExtensionState(serverId, serverName);
         }
         if (getApps().length === 0) {
-            initializeApp({
+            firebaseAppAdmin.initializeApp({
                 credential: cert(firebaseCredentials)
             });
         }

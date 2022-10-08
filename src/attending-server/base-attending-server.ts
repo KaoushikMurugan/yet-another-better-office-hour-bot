@@ -1,7 +1,7 @@
 import {
     CategoryChannel, Collection, Guild,
-    GuildMember, Message, MessageOptions, TextChannel,
-    User, VoiceChannel, VoiceState,
+    GuildMember, Message, BaseMessageOptions, TextChannel,
+    User, VoiceChannel, VoiceState, ChannelType,
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
@@ -97,8 +97,8 @@ class AttendingServerV2 {
      * @throws ServerError
      */
     static async create(user: User, guild: Guild): Promise<AttendingServerV2> {
-        if (guild.me === null ||
-            !guild.me.permissions.has('ADMINISTRATOR')
+        if (guild.members.me === null ||
+            !guild.members.me.permissions.has('Administrator')
         ) {
             const owner = await guild.fetchOwner();
             await owner.send(SimpleEmbed(
@@ -108,7 +108,7 @@ class AttendingServerV2 {
             await guild.leave();
             return Promise.reject(Error('YABOB doesn\'t have admin permission.'));
         }
-        if (guild.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
+        if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
             const owner = await guild.fetchOwner();
             await owner.send(SimpleEmbed(
                 `It seems like I'm joining a server with existing roles. ` +
@@ -237,13 +237,13 @@ class AttendingServerV2 {
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request
         this.queueChannelsCache = allChannels
-            .filter(ch => ch.type === 'GUILD_CATEGORY')
+            .filter(ch => ch !== null && ch.type === ChannelType.GuildCategory)
             // ch has type 'AnyChannel', have to cast, type already checked
             .map(category => [
-                (category as CategoryChannel).children.find(
+                (category as CategoryChannel).children.cache.find(
                     child =>
                         child.name === 'queue' &&
-                        child.type === 'GUILD_TEXT'),
+                        child.type === ChannelType.GuildText),
                 (category as CategoryChannel).name,
                 (category as CategoryChannel).id
             ])
@@ -284,13 +284,13 @@ class AttendingServerV2 {
             return Promise.reject(new ServerError(
                 `Queue ${newQueueName} already exists`));
         }
-        const parentCategory = await this.guild.channels.create(
-            newQueueName,
-            { type: 'GUILD_CATEGORY' }
-        );
+        const parentCategory = await this.guild.channels.create({
+            name: newQueueName,
+            type: ChannelType.GuildCategory
+        });
         const [queueTextChannel] = await Promise.all([
-            parentCategory.createChannel('queue'),
-            parentCategory.createChannel('chat')
+            parentCategory.children.create({ name: 'queue' }),
+            parentCategory.children.create({ name: 'chat' }),
         ]);
         const queueChannel: QueueChannel = {
             channelObj: queueTextChannel,
@@ -321,11 +321,11 @@ class AttendingServerV2 {
             return Promise.reject(new ServerError('This queue does not exist.'));
         }
         const parentCategory = await (await this.guild.channels.fetch())
-            .find(ch => ch.id === queueCategoryID)
+            .find(ch => ch !== null && ch.id === queueCategoryID)
             ?.fetch() as CategoryChannel;
         // delete child channels first
         await Promise.all(parentCategory
-            ?.children
+            ?.children.cache
             .map(child => child.delete())
             .filter(promise => promise !== undefined) as Promise<TextChannel>[]
         ).catch((err: Error) => {
@@ -408,8 +408,8 @@ class AttendingServerV2 {
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            VIEW_CHANNEL: true,
-            CONNECT: true,
+            ViewChannel: true,
+            Connect: true,
         });
         const invite = await helperVoiceChannel.createInvite({
             maxAge: 15 * 60, // 15 minutes
@@ -487,8 +487,8 @@ class AttendingServerV2 {
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            VIEW_CHANNEL: true,
-            CONNECT: true,
+            ViewChannel: true,
+            Connect: true,
         });
         const invite = await helperVoiceChannel.createInvite({
             maxAge: 15 * 60, // 15 minutes
@@ -704,7 +704,8 @@ class AttendingServerV2 {
         const allChannels = await this.guild.channels.fetch();
         const existingHelpCategory = allChannels
             .filter(channel =>
-                channel.type === 'GUILD_CATEGORY' &&
+                channel !== null &&
+                channel.type === ChannelType.GuildCategory &&
                 channel.name === 'Bot Commands Help'
             )
             .map(channel => channel as CategoryChannel);
@@ -714,20 +715,20 @@ class AttendingServerV2 {
                 `${FgCyan}Found no help channels in ${this.guild.name}. ` +
                 `Creating new ones.${ResetColor}`
             );
-            const helpCategory = await this.guild.channels.create(
-                'Bot Commands Help',
-                { type: 'GUILD_CATEGORY' }
-            );
+            const helpCategory = await this.guild.channels.create({
+                name: 'Bot Commands Help',
+                type: ChannelType.GuildCategory,
+            });
             existingHelpCategory.push(helpCategory);
             // Change the config object and add more functions here if needed
             await Promise.all(commandChConfigs.map(async roleConfig => {
-                const commandCh = await helpCategory
-                    .createChannel(roleConfig.channelName);
+                const commandCh = await helpCategory.children
+                    .create({ name: roleConfig.channelName });
                 await commandCh.permissionOverwrites.create(
                     this.guild.roles.everyone,
                     {
-                        SEND_MESSAGES: false,
-                        VIEW_CHANNEL: false
+                        SendMessages: false,
+                        ViewChannel: false
                     }
                 );
                 await Promise.all(this.guild.roles.cache
@@ -735,7 +736,7 @@ class AttendingServerV2 {
                     .map(roleWithViewPermission =>
                         commandCh.permissionOverwrites.create(
                             roleWithViewPermission,
-                            { VIEW_CHANNEL: true })
+                            { ViewChannel: true })
                     )
                 );
             }));
@@ -773,7 +774,7 @@ class AttendingServerV2 {
         ));
     }
 
-    async sendLogMessage(message: MessageOptions | string): Promise<void> {
+    async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
         this.loggingChannel && await this.loggingChannel.send(message);
     }
 
@@ -887,8 +888,8 @@ class AttendingServerV2 {
         }>
     ): Promise<void> {
         const allHelpChannels = helpCategories.flatMap(
-            category => [...category.children.values()]
-                .filter(ch => ch.type === 'GUILD_TEXT') as TextChannel[]);
+            category => [...category.children.cache.values()]
+                .filter(ch => ch.type === ChannelType.GuildText) as TextChannel[]);
         await Promise.all(allHelpChannels.map(async ch =>
             await ch.messages
                 .fetch()

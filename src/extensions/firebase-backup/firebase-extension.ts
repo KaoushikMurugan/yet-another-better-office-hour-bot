@@ -1,7 +1,8 @@
 import { BaseServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
-import { initializeApp, cert, getApps } from 'firebase-admin/app';
+import { cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import firebaseAppAdmin from 'firebase-admin';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { FgBlue, FgCyan, ResetColor } from '../../utils/command-line-colors';
@@ -20,7 +21,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         serverId: string
     ): Promise<FirebaseServerBackupExtension> {
         if (getApps().length === 0) {
-            initializeApp({
+            firebaseAppAdmin.initializeApp({
                 credential: cert(environment.firebaseCredentials)
             });
         }

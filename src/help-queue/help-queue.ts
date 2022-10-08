@@ -160,10 +160,10 @@ class HelpQueueV2 {
             queueChannel.channelObj.permissionOverwrites.create(
                 everyoneRole,
                 {
-                    SEND_MESSAGES: false,
-                    CREATE_PRIVATE_THREADS: false,
-                    CREATE_PUBLIC_THREADS: false,
-                    ADD_REACTIONS: false
+                    SendMessages: false,
+                    CreatePrivateThreads: false,
+                    CreatePublicThreads: false,
+                    AddReactions: false
                 }
             ),
             queue.triggerRender()

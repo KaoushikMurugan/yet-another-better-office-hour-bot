@@ -1,4 +1,4 @@
-import { CommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction } from 'discord.js';
+import {  ChatInputCommandInteraction, GuildMember, GuildChannel, TextChannel, ButtonInteraction, ChannelType, CategoryChannel } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CommandParseError } from '../utils/error-types';
 
@@ -10,7 +10,7 @@ import { CommandParseError } from '../utils/error-types';
  * @returns GuildMember: object of the triggerer
 */
 async function isTriggeredByUserWithRoles(
-    interaction: CommandInteraction | ButtonInteraction,
+    interaction:  ChatInputCommandInteraction | ButtonInteraction,
     commandName: string,
     requiredRoles: string[]
 ): Promise<GuildMember> {
@@ -33,21 +33,21 @@ async function isTriggeredByUserWithRoles(
  * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
  * */
 async function hasValidQueueArgument(
-    interaction: CommandInteraction,
+    interaction:  ChatInputCommandInteraction,
     required = false
 ): Promise<QueueChannel> {
     const parentCategory = interaction.options.getChannel('queue_name', required) ??
         (interaction.channel as GuildChannel).parent;
     // null check is done here by optional property access
-    if (parentCategory?.type !== 'GUILD_CATEGORY' || parentCategory === null) {
+    if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
         return Promise.reject(new CommandParseError(
             `\`${parentCategory?.name}\` is not a valid queue category.`
         ));
     }
-    const queueTextChannel = parentCategory.children
+    const queueTextChannel = (parentCategory as CategoryChannel).children.cache
         .find(child =>
             child.name === 'queue' &&
-            child.type === 'GUILD_TEXT');
+            child.type === ChannelType.GuildText);
     if (queueTextChannel === undefined) {
         return Promise.reject(new CommandParseError(
             `This category does not have a \`#queue\` text channel.\n` +
@@ -70,7 +70,7 @@ async function hasValidQueueArgument(
  * @returns GuildMember: object of the triggerer
 */
 async function isTriggeredByUserWithValidEmail(
-    interaction: CommandInteraction | ButtonInteraction,
+    interaction:  ChatInputCommandInteraction | ButtonInteraction,
     commandName: string
 ): Promise<GuildMember> {
     const roles = (await (interaction.member as GuildMember)?.fetch())
@@ -90,10 +90,10 @@ async function isTriggeredByUserWithValidEmail(
  * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
  */
 async function isFromQueueChannelWithParent(
-    interaction: ButtonInteraction | CommandInteraction,
+    interaction: ButtonInteraction |  ChatInputCommandInteraction,
     queueName: string
 ): Promise<QueueChannel> {
-    if (interaction.channel?.type !== 'GUILD_TEXT' ||
+    if (interaction.channel?.type !== ChannelType.GuildText||
         interaction.channel.parent === null) {
         return Promise.reject(new CommandParseError(
             'Invalid button press / Command. ' +
@@ -114,7 +114,7 @@ async function isFromQueueChannelWithParent(
  * @returns GuildMember: object of the triggerer
 */
 async function isFromGuildMember(
-    interaction: ButtonInteraction | CommandInteraction
+    interaction: ButtonInteraction |  ChatInputCommandInteraction
 ): Promise<GuildMember> {
     if (interaction.member) {
         return interaction.member as GuildMember;
@@ -124,7 +124,7 @@ async function isFromGuildMember(
     ));
 }
 
-function logEditFailure(interaction: ButtonInteraction | CommandInteraction): void {
+function logEditFailure(interaction: ButtonInteraction |  ChatInputCommandInteraction): void {
     console.error(`Edit reply failed with ${interaction.toJSON()}`);
 }
 

@@ -3,24 +3,30 @@ import { HelpMessage } from "../src/utils/type-aliases";
 
 const helperCommandsTileMessage: HelpMessage =
 {
-    nameValuePair: ["Helper Commands Title", "helper-commands-title"],
+    nameValuePair: {
+        name: "Helper Commands Title",
+        value: "helper-commands-title"
+    },
     useInHelpChannel: true,
     useInHelpCommand: false,
     message: {
         embeds: [{
             color: EmbedColor.Neutral,
             title: 'Bot Admin & Helper Only Commands',
-            timestamp: new Date(),
+            timestamp: new Date().toISOString(),
             author: {
                 name: 'YABOB V4.',
-                iconURL: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
             }
         }]
     }
 };
 
 const startHelp: HelpMessage = {
-    nameValuePair: ["start", "start"],
+    nameValuePair: {
+        name: "start",
+        value: "start"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -49,7 +55,10 @@ const startHelp: HelpMessage = {
 };
 
 const stopHelp: HelpMessage = {
-    nameValuePair: ["stop", "stop"],
+    nameValuePair: {
+        name: "stop",
+        value: "stop"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -78,7 +87,10 @@ const stopHelp: HelpMessage = {
 };
 
 const nextHelp: HelpMessage = {
-    nameValuePair: ["next", "next"],
+    nameValuePair: {
+        name: "next",
+        value: "next"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -107,7 +119,10 @@ const nextHelp: HelpMessage = {
 };
 
 const announceHelp: HelpMessage = {
-    nameValuePair: ["announce", "announce"],
+    nameValuePair: {
+        name: "announce",
+        value: "announce"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
@@ -136,7 +151,10 @@ const announceHelp: HelpMessage = {
 };
 
 const clearHelp: HelpMessage = {
-    nameValuePair: ["clear", "clear"],
+    nameValuePair: {
+        name: "clear",
+        value: "clear"
+    },
     useInHelpChannel: true,
     useInHelpCommand: true,
     message: {
