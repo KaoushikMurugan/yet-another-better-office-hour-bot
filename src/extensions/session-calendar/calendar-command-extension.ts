@@ -21,7 +21,7 @@ import {
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
 } from './shared-calendar-functions';
-import { FgBlue, FgCyan, FgRed, FgYellow, ResetColor } from '../../utils/command-line-colors';
+import { FgBlue, FgCyan, FgMagenta, FgRed, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { getQueueRoles } from '../../utils/util-functions';
@@ -62,7 +62,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         console.log(
             `[${FgBlue}Session Calendar${ResetColor}] ` +
             `successfully loaded for '${guild.name}'!\n` +
-            `- Using ${calendarName} as the default calendar`
+            ` - Using ${calendarName} as the default calendar`
         );
         return instance;
     }
@@ -125,11 +125,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-            `User ${interaction.user.username} ` +
-            `(${interaction.user.id}) ` +
-            `used ${interaction.toString()}`
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+            `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n`+
+            ` - Command Used: ${FgMagenta}${interaction.toString()}${ResetColor}`
         );
         await commandMethod(interaction)
             // if the method didn't directly reply, the center handler replies
@@ -166,12 +166,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-            `User ${interaction.user.username} ` +
-            `(${interaction.user.id}) ` +
-            `pressed [${buttonName}] ` +
-            `in queue: ${queueName}.`
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+            `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n`+
+            ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)
             // if the method didn't directly reply, the center handler replies

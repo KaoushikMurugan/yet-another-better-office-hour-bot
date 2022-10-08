@@ -5,7 +5,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import firebaseAppAdmin from 'firebase-admin';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
-import { FgBlue, FgCyan, ResetColor } from '../../utils/command-line-colors';
+import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
 import environment from '../../environment/environment-manager';
 
@@ -90,10 +90,11 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             .doc(this.serverId)
             .set(serverBackup)
             .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-                `Backup successful for ${this.serverName}`
+                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+                `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                ` - Server & queue data backup successful`
             ))
-            .catch((err: Error) => console.error('Firebase backup failed.' ,err.message));
+            .catch((err: Error) => console.error('Firebase server backup failed.' ,err.message));
         await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
     }
 

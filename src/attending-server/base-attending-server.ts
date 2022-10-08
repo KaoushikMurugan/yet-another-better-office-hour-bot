@@ -847,7 +847,7 @@ class AttendingServerV2 {
                 .map(r => { return { name: r.name, pos: r.position }; })
                 .sort((a, b) => a.pos - b.pos));
         } else {
-            console.log('All required roles exist!');
+            console.log(`All required roles exist in ${this.guild.name}!`);
         }
         // Give everyone the student role
         const studentRole = this.guild.roles.cache.find(role => role.name === 'Student');

@@ -1,6 +1,6 @@
 import { CacheType, ChannelType, ChatInputCommandInteraction, GuildChannel, GuildMember, GuildMemberRoleManager, Interaction, TextChannel } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
-import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
 import { EmbedColor, SimpleEmbed, ErrorEmbed, SlashCommandLogEmbed, ErrorLogEmbed } from '../utils/embed-helper';
 import {
     CommandNotImplementedError,
@@ -91,11 +91,11 @@ class CentralCommandDispatcher {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-            `User ${interaction.user.username} ` +
-            `(${interaction.user.id}) ` +
-            `used ${interaction.toString()}`
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+            `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Command Used: ${FgMagenta}${interaction.toString()}${ResetColor}`
         );
         await commandMethod(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs

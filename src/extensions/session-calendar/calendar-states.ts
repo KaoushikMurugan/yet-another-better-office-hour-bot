@@ -3,7 +3,7 @@ import firebaseAppAdmin from 'firebase-admin';
 import { getApps, cert } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { CalendarQueueExtension } from './calendar-queue-extension';
-import { FgCyan, ResetColor } from '../../utils/command-line-colors';
+import { FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { BaseServerExtension } from '../extension-interface';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases';
@@ -126,10 +126,11 @@ class CalendarExtensionState {
             .doc(this.serverId)
             .set(backupData)
             .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-                `Calendar config backup successful for ${this.serverName}`
+                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+                `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                ` - Calendar config backup successful`
             ))
-            .catch((err: Error) => console.error(err.message));
+            .catch((err: Error) => console.error('Firebase calendar backup failed.', err.message));
     }
 }
 

@@ -1,6 +1,6 @@
 import { ButtonInteraction } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
-import { FgCyan, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
 import { EmbedColor, ErrorEmbed, ButtonLogEmbed, SimpleEmbed, ErrorLogEmbed } from '../utils/embed-helper';
 import {
     CommandParseError,
@@ -52,12 +52,12 @@ class ButtonCommandDispatcher {
             return;
         }
         console.log(
-            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor}] ` +
-            `[${FgYellow}${interaction.guild?.name}, ${interaction.guildId}${ResetColor}] ` +
-            `User ${interaction.user.username} ` +
-            `(${interaction.user.id}) ` +
-            `pressed [${buttonName}] ` +
-            `in queue: ${queueName}.`
+            `[${FgCyan}${(new Date).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
+            `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n`+
+            ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)
             .then(async successMsg =>
