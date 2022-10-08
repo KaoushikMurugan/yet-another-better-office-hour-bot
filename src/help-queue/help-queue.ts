@@ -196,13 +196,13 @@ class HelpQueueV2 {
         this._activeHelperIds.add(helperMember.id);
         await Promise.all<void | boolean | Message<boolean>>([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
-            this.notifGroup.map(notifMember => notify && notifMember.send(
+            ...this.notifGroup.map(notifMember => notify && notifMember.send(
                 SimpleEmbed(`Queue \`${this.queueName}\` is open!`)
             )),
-            this.queueExtensions.map(extension => extension.onQueueOpen(this)),
+            ... this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             notify && this.notifGroup.clear(),
             this.triggerRender()
-        ].flat());
+        ]);
     }
 
     /**
@@ -228,9 +228,9 @@ class HelpQueueV2 {
             this.startAutoClearTimer();
         }
         await Promise.all([
-            this.queueExtensions.map(extension => extension.onQueueClose(this)),
+            ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
-        ].flat());
+        ]);
     }
 
     /**
@@ -271,7 +271,7 @@ class HelpQueueV2 {
         // so that they can be launched in parallel
         // we won't use the return values so it's safe to cast
         await Promise.all<void | undefined | Message<boolean>>([
-            helperIdArray.map(helperId =>
+            ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
                     ?.send(SimpleEmbed(
@@ -279,9 +279,9 @@ class HelpQueueV2 {
                         EmbedColor.Neutral,
                         `<@${student.member.user.id}>`))
             ),
-            this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
+            ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
-        ].flat());
+        ]);
     }
 
     /**
@@ -332,21 +332,21 @@ class HelpQueueV2 {
             const foundStudent = this._students[studentIndex]!;
             this._students.splice(studentIndex, 1);
             await Promise.all([
-                this.queueExtensions.map(
+                ...this.queueExtensions.map(
                     extension => extension.onDequeue(this, foundStudent)),
                 this.triggerRender()
-            ].flat());
+            ]);
             return foundStudent;
         }
         // assertion is safe becasue we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this._students.shift()!;
         await Promise.all([
-            this.queueExtensions.map(
+            ...this.queueExtensions.map(
                 extension => extension.onDequeue(this, firstStudent)
             ),
             this.triggerRender()
-        ].flat());
+        ]);
         return firstStudent;
     }
 
@@ -370,10 +370,10 @@ class HelpQueueV2 {
         const removedStudent = this._students[idx]!;
         this._students.splice(idx, 1);
         await Promise.all([
-            this.queueExtensions.map(
+            ...this.queueExtensions.map(
                 extension => extension.onStudentRemove(this, removedStudent)),
             this.triggerRender()
-        ].flat());
+        ]);
         return removedStudent;
     }
 
@@ -447,9 +447,9 @@ class HelpQueueV2 {
         };
         await Promise.all([
             this.display.requestQueueRender(viewModel),
-            this.queueExtensions.map(
+            ...this.queueExtensions.map(
                 extension => extension.onQueueRender(this, this.display))
-        ].flat());
+        ]);
     }
 
     /**
