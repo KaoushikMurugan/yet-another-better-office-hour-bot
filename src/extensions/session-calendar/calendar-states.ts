@@ -62,16 +62,16 @@ class CalendarExtensionState {
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         await Promise.all([
             this.backupToFirebase(),
-            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ].flat());
+            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ]);
     }
 
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;
         await Promise.all([
             this.backupToFirebase(),
-            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ].flat());
+            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ]);
     }
 
     async updateNameDiscordIdMap(

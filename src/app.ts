@@ -47,9 +47,7 @@ client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Erro
     throw err;
 });
 
-client.on('error', error => {
-    console.error(error);
-});
+client.on('error', console.error);
 
 /**
  * After login startup seqence
