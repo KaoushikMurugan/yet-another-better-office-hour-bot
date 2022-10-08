@@ -74,17 +74,17 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         string,
         (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
     > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
-        ['set_calendar', (interaction: ChatInputCommandInteraction) =>
+        ['set_calendar', interaction =>
             this.updateCalendarId(interaction)],
-        ['unset_calendar', (interaction: ChatInputCommandInteraction) =>
+        ['unset_calendar', interaction =>
             this.unsetCalendarId(interaction)],
-        ['when_next', (interaction: ChatInputCommandInteraction) =>
+        ['when_next', interaction =>
             this.listUpComingHours(interaction)],
-        ['make_calendar_string', (interaction: ChatInputCommandInteraction) =>
+        ['make_calendar_string', interaction =>
             this.makeParsableCalendarTitle(interaction, false)],
-        ['make_calendar_string_all', (interaction: ChatInputCommandInteraction) =>
+        ['make_calendar_string_all', interaction =>
             this.makeParsableCalendarTitle(interaction, true)],
-        ['set_public_embd_url', (interaction: ChatInputCommandInteraction) =>
+        ['set_public_embd_url', interaction =>
             this.setPublicEmbedUrl(interaction)],
     ]);
 

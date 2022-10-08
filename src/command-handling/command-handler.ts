@@ -43,24 +43,24 @@ class CentralCommandDispatcher {
         string,
         (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
     > = new Map<string, (interaction: ChatInputCommandInteraction) => Promise<string | undefined>>([
-        ['announce', (interaction: ChatInputCommandInteraction) => this.announce(interaction)],
-        ['cleanup_queue', (interaction: ChatInputCommandInteraction) => this.cleanup(interaction)],
-        ['cleanup_all', (interaction: ChatInputCommandInteraction) => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_channels', (interaction: ChatInputCommandInteraction) => this.cleanupHelpChannel(interaction)],
-        ['clear', (interaction: ChatInputCommandInteraction) => this.clear(interaction)],
-        ['clear_all', (interaction: ChatInputCommandInteraction) => this.clearAll(interaction)],
-        ['enqueue', (interaction: ChatInputCommandInteraction) => this.enqueue(interaction)],
-        ['leave', (interaction: ChatInputCommandInteraction) => this.leave(interaction)],
-        ['list_helpers', (interaction: ChatInputCommandInteraction) => this.listHelpers(interaction)],
-        ['next', (interaction: ChatInputCommandInteraction) => this.next(interaction)],
-        ['queue', (interaction: ChatInputCommandInteraction) => this.queue(interaction)],
-        ['set_after_session_msg', (interaction: ChatInputCommandInteraction) => this.setAfterSessionMessage(interaction)],
-        ['start', (interaction: ChatInputCommandInteraction) => this.start(interaction)],
-        ['stop', (interaction: ChatInputCommandInteraction) => this.stop(interaction)],
-        ['help', (interaction: ChatInputCommandInteraction) => this.help(interaction)],
-        ['set_logging_channel', (interaction: ChatInputCommandInteraction) => this.setLoggingChannel(interaction)],
-        ['stop_logging', (interaction: ChatInputCommandInteraction) => this.stopLogging(interaction)],
-        ['set_queue_auto_clear', (interaction: ChatInputCommandInteraction) => this.setQueueAutoClear(interaction)]
+        ['announce', interaction => this.announce(interaction)],
+        ['cleanup_queue', interaction => this.cleanup(interaction)],
+        ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
+        ['cleanup_help_channels', interaction => this.cleanupHelpChannel(interaction)],
+        ['clear', interaction => this.clear(interaction)],
+        ['clear_all', interaction => this.clearAll(interaction)],
+        ['enqueue', interaction => this.enqueue(interaction)],
+        ['leave', interaction => this.leave(interaction)],
+        ['list_helpers', interaction => this.listHelpers(interaction)],
+        ['next', interaction => this.next(interaction)],
+        ['queue', interaction => this.queue(interaction)],
+        ['set_after_session_msg', interaction => this.setAfterSessionMessage(interaction)],
+        ['start', interaction => this.start(interaction)],
+        ['stop', interaction => this.stop(interaction)],
+        ['help', interaction => this.help(interaction)],
+        ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
+        ['stop_logging', interaction => this.stopLogging(interaction)],
+        ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
     ]);
 
     // key is Guild.id, same as servers map from app.ts
