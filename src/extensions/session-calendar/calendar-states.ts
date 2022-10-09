@@ -1,16 +1,16 @@
-import { Collection } from "discord.js";
-import firebaseAppAdmin from "firebase-admin";
-import { getApps, cert } from "firebase-admin/app";
-import { Firestore, getFirestore } from "firebase-admin/firestore";
-import { CalendarQueueExtension } from "./calendar-queue-extension";
-import { FgCyan, FgYellow, ResetColor } from "../../utils/command-line-colors";
-import { BaseServerExtension } from "../extension-interface";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { GuildId, GuildMemberId } from "../../utils/type-aliases";
-import LRU from "lru-cache";
+import { Collection } from 'discord.js';
+import firebaseAppAdmin from 'firebase-admin';
+import { getApps, cert } from 'firebase-admin/app';
+import { Firestore, getFirestore } from 'firebase-admin/firestore';
+import { CalendarQueueExtension } from './calendar-queue-extension';
+import { FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
+import { BaseServerExtension } from '../extension-interface';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases';
+import LRU from 'lru-cache';
 
-import environment from "../../environment/environment-manager";
-import { restorePublicEmbedURL } from "./shared-calendar-functions";
+import environment from '../../environment/environment-manager';
+import { restorePublicEmbedURL } from './shared-calendar-functions';
 
 type CalendarConfigBackup = {
   calendarId: string;
@@ -39,22 +39,18 @@ class CalendarExtensionState {
   ): Promise<CalendarExtensionState> {
     const firebaseCredentials = environment.firebaseCredentials;
     if (
-      firebaseCredentials.clientEmail === "" &&
-      firebaseCredentials.privateKey === "" &&
-      firebaseCredentials.projectId === ""
+      firebaseCredentials.clientEmail === '' &&
+      firebaseCredentials.privateKey === '' &&
+      firebaseCredentials.projectId === ''
     ) {
       return new CalendarExtensionState(serverId, serverName);
     }
     if (getApps().length === 0) {
       firebaseAppAdmin.initializeApp({
-        credential: cert(firebaseCredentials),
+        credential: cert(firebaseCredentials)
       });
     }
-    const instance = new CalendarExtensionState(
-      serverId,
-      serverName,
-      getFirestore()
-    );
+    const instance = new CalendarExtensionState(serverId, serverName, getFirestore());
     await instance.restoreFromBackup(serverId);
     return instance;
   }
@@ -65,9 +61,7 @@ class CalendarExtensionState {
     this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
     await Promise.all([
       this.backupToFirebase(),
-      ...this.listeners.map((listener) =>
-        listener.onCalendarExtensionStateChange()
-      ),
+      ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
     ]);
   }
 
@@ -75,23 +69,16 @@ class CalendarExtensionState {
     this.publicCalendarEmbedUrl = validUrl;
     await Promise.all([
       this.backupToFirebase(),
-      ...this.listeners.map((listener) =>
-        listener.onCalendarExtensionStateChange()
-      ),
+      ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
     ]);
   }
 
-  async updateNameDiscordIdMap(
-    displayName: string,
-    discordId: string
-  ): Promise<void> {
+  async updateNameDiscordIdMap(displayName: string, discordId: string): Promise<void> {
     this.displayNameDiscordIdMap.set(displayName, discordId);
     await this.backupToFirebase();
     // fire and forget, calendar api is slow and should not block yabob's response
     void Promise.all(
-      this.listeners.map((listener) =>
-        listener.onCalendarExtensionStateChange()
-      )
+      this.listeners.map(listener => listener.onCalendarExtensionStateChange())
     ).catch(() =>
       console.error(
         `Calendar refresh timed out from updateNameDiscordIdMap triggered by ${displayName}`
@@ -104,7 +91,7 @@ class CalendarExtensionState {
       return;
     }
     const backupDoc = await this.firebaseDB
-      .collection("calendarBackups")
+      .collection('calendarBackups')
       .doc(serverId)
       .get();
     if (backupDoc.data() === undefined) {
@@ -115,12 +102,12 @@ class CalendarExtensionState {
     // TODO: coalescing is temporary, this is just migration code
     // once all servers have migrated to the new backup model we can safely remove it
     this.publicCalendarEmbedUrl =
-      calendarBackup.publicCalendarEmbedUrl ??
-      restorePublicEmbedURL(this.calendarId);
+      calendarBackup.publicCalendarEmbedUrl ?? restorePublicEmbedURL(this.calendarId);
     this.displayNameDiscordIdMap.load(
-      Object.entries(calendarBackup.calendarNameDiscordIdMap).map(
-        ([key, value]) => [key, { value: value }]
-      )
+      Object.entries(calendarBackup.calendarNameDiscordIdMap).map(([key, value]) => [
+        key,
+        { value: value }
+      ])
     );
   }
 
@@ -135,23 +122,23 @@ class CalendarExtensionState {
         this.displayNameDiscordIdMap
           .dump()
           .map(([key, LRUEntry]) => [key, LRUEntry.value])
-      ),
+      )
     };
     this.firebaseDB
-      .collection("calendarBackups")
+      .collection('calendarBackups')
       .doc(this.serverId)
       .set(backupData)
       .then(() =>
         console.log(
-          `[${FgCyan}${new Date().toLocaleString("en-US", {
-            timeZone: "PST8PDT",
+          `[${FgCyan}${new Date().toLocaleString('en-US', {
+            timeZone: 'PST8PDT'
           })}${ResetColor} ` +
             `${FgYellow}${this.serverName}${ResetColor}]\n` +
             ` - Calendar config backup successful`
         )
       )
       .catch((err: Error) =>
-        console.error("Firebase calendar backup failed.", err.message)
+        console.error('Firebase calendar backup failed.', err.message)
       );
   }
 }
@@ -164,13 +151,6 @@ class CalendarServerEventListener extends BaseServerExtension {
 }
 
 // static, key is guild id, value is 1 calendar extension state
-const serverIdCalendarStateMap = new Collection<
-  GuildId,
-  CalendarExtensionState
->();
+const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
 
-export {
-  CalendarExtensionState,
-  serverIdCalendarStateMap,
-  CalendarServerEventListener,
-};
+export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };

@@ -1,48 +1,42 @@
-import { SlashCommandBuilder } from "@discordjs/builders";
+import { SlashCommandBuilder } from '@discordjs/builders';
 
 const setCalendar = new SlashCommandBuilder()
-  .setName("set_calendar")
-  .setDescription(
-    "Commands to modify the resources connected to the /when_next command"
-  )
-  .addStringOption((option) =>
+  .setName('set_calendar')
+  .setDescription('Commands to modify the resources connected to the /when_next command')
+  .addStringOption(option =>
     option
-      .setName("calendar_id")
-      .setDescription("The link to the calendar")
+      .setName('calendar_id')
+      .setDescription('The link to the calendar')
       .setRequired(true)
   );
 
 const unsetCalendar = new SlashCommandBuilder()
-  .setName("unset_calendar")
+  .setName('unset_calendar')
   .setDescription(
-    "Desyncs the bot from the current calendar and sets it to the default calendar"
+    'Desyncs the bot from the current calendar and sets it to the default calendar'
   );
 
 const whenNext = new SlashCommandBuilder()
-  .setName("when_next")
-  .setDescription("View the upcoming tutoring hours")
-  .addChannelOption((option) =>
+  .setName('when_next')
+  .setDescription('View the upcoming tutoring hours')
+  .addChannelOption(option =>
     option
-      .setName("queue_name")
-      .setDescription(
-        "The course for which you want to view the next tutoring hours"
-      )
+      .setName('queue_name')
+      .setDescription('The course for which you want to view the next tutoring hours')
       .setRequired(false)
   );
 
 function makeCalendarStringCommand(): Omit<
   SlashCommandBuilder,
-  "addSubcommand" | "addSubcommandGroup"
+  'addSubcommand' | 'addSubcommandGroup'
 > {
   const command = new SlashCommandBuilder()
-    .setName("make_calendar_string")
-    .setDescription(
-      "Generates a valid calendar string that can be parsed by YABOB"
-    )
-    .addStringOption((option) =>
+    .setName('make_calendar_string')
+    .setDescription('Generates a valid calendar string that can be parsed by YABOB')
+    .addStringOption(option =>
       option
-        .setName("calendar_name")
-        .setDescription("Your display name on the calendar")
+        .setName('calendar_name')
+        .setDescription('Your display name on the calendar')
         .setRequired(true)
     );
 
@@ -50,56 +44,54 @@ function makeCalendarStringCommand(): Omit<
     .fill(undefined)
     .forEach(
       (_, idx) =>
-        command.addChannelOption((option) =>
+        command.addChannelOption(option =>
           option
             .setName(`queue_name_${idx + 1}`)
-            .setDescription("The courses you tutor for")
+            .setDescription('The courses you tutor for')
             .setRequired(idx === 0)
         ) // make the first one required
     );
 
-  command.addUserOption((option) =>
+  command.addUserOption(option =>
     option
-      .setName("user")
-      .setDescription("The user to modify the calendar string for")
+      .setName('user')
+      .setDescription('The user to modify the calendar string for')
       .setRequired(false)
   );
   return command;
 }
 
 const makeCalendarStringAll = new SlashCommandBuilder()
-  .setName("make_calendar_string_all")
-  .setDescription(
-    "Generates a valid calendar string for all your approved queues"
-  )
-  .addStringOption((option) =>
+  .setName('make_calendar_string_all')
+  .setDescription('Generates a valid calendar string for all your approved queues')
+  .addStringOption(option =>
     option
-      .setName("calendar_name")
-      .setDescription("Your display name on the calendar")
+      .setName('calendar_name')
+      .setDescription('Your display name on the calendar')
       .setRequired(true)
   )
-  .addUserOption((option) =>
+  .addUserOption(option =>
     option
-      .setName("user")
-      .setDescription("The user to modify the calendar string for")
+      .setName('user')
+      .setDescription('The user to modify the calendar string for')
       .setRequired(false)
   );
 
 const setPublicEmbedUrl = new SlashCommandBuilder()
-  .setName("set_public_embd_url")
-  .setDescription("Use another public calendar embed")
-  .addStringOption((option) =>
+  .setName('set_public_embd_url')
+  .setDescription('Use another public calendar embed')
+  .addStringOption(option =>
     option
-      .setName("url")
-      .setDescription("The full URL to the public calendar embed")
+      .setName('url')
+      .setDescription('The full URL to the public calendar embed')
       .setRequired(true)
   )
-  .addBooleanOption((option) =>
+  .addBooleanOption(option =>
     option
-      .setName("enable")
+      .setName('enable')
       .setDescription(
-        "Whether to switch to this new public url. " +
-          "If false, the value in `url` will be ignored"
+        'Whether to switch to this new public url. ' +
+          'If false, the value in `url` will be ignored'
       )
       .setRequired(true)
   );
@@ -110,7 +102,7 @@ const calendarCommands = [
   whenNext.toJSON(),
   makeCalendarStringCommand().toJSON(),
   makeCalendarStringAll.toJSON(),
-  setPublicEmbedUrl.toJSON(),
+  setPublicEmbedUrl.toJSON()
 ];
 
 export { calendarCommands };

@@ -1,18 +1,13 @@
-import { BaseServerExtension } from "../extension-interface";
-import { Firestore } from "firebase-admin/firestore";
-import { cert, getApps } from "firebase-admin/app";
-import { getFirestore } from "firebase-admin/firestore";
-import firebaseAppAdmin from "firebase-admin";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { QueueBackup, ServerBackup } from "../../models/backups";
-import {
-  FgBlue,
-  FgCyan,
-  FgYellow,
-  ResetColor,
-} from "../../utils/command-line-colors";
-import { SimpleLogEmbed } from "../../utils/embed-helper";
-import environment from "../../environment/environment-manager";
+import { BaseServerExtension } from '../extension-interface';
+import { Firestore } from 'firebase-admin/firestore';
+import { cert, getApps } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
+import firebaseAppAdmin from 'firebase-admin';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { QueueBackup, ServerBackup } from '../../models/backups';
+import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
+import { SimpleLogEmbed } from '../../utils/embed-helper';
+import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
   private constructor(
@@ -29,7 +24,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
   ): Promise<FirebaseServerBackupExtension> {
     if (getApps().length === 0) {
       firebaseAppAdmin.initializeApp({
-        credential: cert(environment.firebaseCredentials),
+        credential: cert(environment.firebaseCredentials)
       });
     }
     const instance = new FirebaseServerBackupExtension(
@@ -54,7 +49,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     serverId: string
   ): Promise<ServerBackup | undefined> {
     const backupData = await this.firebase_db
-      .collection("serverBackups")
+      .collection('serverBackups')
       .doc(serverId)
       .get();
     // TODO: add a typeguard here to check if schema match
@@ -76,18 +71,18 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     server: Readonly<AttendingServerV2>
   ): Promise<void> {
     const queues = server.queues;
-    const queueBackups: QueueBackup[] = queues.map((queue) => {
+    const queueBackups: QueueBackup[] = queues.map(queue => {
       return {
-        studentsInQueue: queue.students.map((student) => {
+        studentsInQueue: queue.students.map(student => {
           return {
             waitStart: student.waitStart,
             upNext: student.upNext,
             displayName: student.member.displayName,
-            memberId: student.member.id,
+            memberId: student.member.id
           };
         }),
         name: queue.queueName,
-        parentCategoryId: queue.parentCategoryId,
+        parentCategoryId: queue.parentCategoryId
       };
     });
     const serverBackup: ServerBackup = {
@@ -95,25 +90,24 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
       queues: queueBackups,
       timeStamp: new Date(),
       afterSessionMessage: server.afterSessionMessage,
-      loggingChannelId: server.loggingChannel?.id ?? "",
-      hoursUntilAutoClear:
-        server.queues[0]?.hoursUntilAutoClear ?? "AUTO_CLEAR_DISABLED",
+      loggingChannelId: server.loggingChannel?.id ?? '',
+      hoursUntilAutoClear: server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
     };
     this.firebase_db
-      .collection("serverBackups")
+      .collection('serverBackups')
       .doc(this.serverId)
       .set(serverBackup)
       .then(() =>
         console.log(
-          `[${FgCyan}${new Date().toLocaleString("en-US", {
-            timeZone: "PST8PDT",
+          `[${FgCyan}${new Date().toLocaleString('en-US', {
+            timeZone: 'PST8PDT'
           })}${ResetColor} ` +
             `${FgYellow}${this.serverName}${ResetColor}]\n` +
             ` - Server & queue data backup successful`
         )
       )
       .catch((err: Error) =>
-        console.error("Firebase server backup failed.", err.message)
+        console.error('Firebase server backup failed.', err.message)
       );
     await server.sendLogMessage(
       SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)

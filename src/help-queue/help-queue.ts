@@ -1,21 +1,14 @@
-import {
-  GuildMember,
-  Role,
-  TextChannel,
-  User,
-  Collection,
-  Message,
-} from "discord.js";
-import { QueueChannel } from "../attending-server/base-attending-server";
-import { CalendarQueueExtension } from "../extensions/session-calendar/calendar-queue-extension";
-import { IQueueExtension } from "../extensions/extension-interface";
-import { QueueBackup } from "../models/backups";
-import { Helpee } from "../models/member-states";
-import { EmbedColor, SimpleEmbed } from "../utils/embed-helper";
-import { PeriodicUpdateError, QueueError } from "../utils/error-types";
-import { QueueDisplayV2 } from "./queue-display";
-import { GuildMemberId } from "../utils/type-aliases";
-import environment from "../environment/environment-manager";
+import { GuildMember, Role, TextChannel, User, Collection, Message } from 'discord.js';
+import { QueueChannel } from '../attending-server/base-attending-server';
+import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
+import { IQueueExtension } from '../extensions/extension-interface';
+import { QueueBackup } from '../models/backups';
+import { Helpee } from '../models/member-states';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
+import { PeriodicUpdateError, QueueError } from '../utils/error-types';
+import { QueueDisplayV2 } from './queue-display';
+import { GuildMemberId } from '../utils/type-aliases';
+import environment from '../environment/environment-manager';
 
 type QueueViewModel = {
   queueName: string;
@@ -24,14 +17,13 @@ type QueueViewModel = {
   isOpen: boolean;
 };
 
-type QueueTimerType = "QUEUE_PERIODIC_UPDATE" | "QUEUE_AUTO_CLEAR";
+type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
 
-type AutoClearTimeout = number | "AUTO_CLEAR_DISABLED";
+type AutoClearTimeout = number | 'AUTO_CLEAR_DISABLED';
 
 class HelpQueueV2 {
   // Keeps track of all the setTimout/setIntervals we started
-  timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> =
-    new Collection();
+  timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
   // set of active helpers' ids
   private _activeHelperIds: Set<string> = new Set();
   // queue of students
@@ -39,7 +31,7 @@ class HelpQueueV2 {
   // Key is Guildmember.id
   private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
   // when to automatically remove everyone
-  private _hoursUntilAutoClear: AutoClearTimeout = "AUTO_CLEAR_DISABLED";
+  private _hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
 
   /**
    * @param user YABOB's user object for QueueDisplay
@@ -70,7 +62,7 @@ class HelpQueueV2 {
           waitStart: studentBackup.waitStart,
           upNext: studentBackup.upNext,
           member: correspondingMember,
-          queue: this,
+          queue: this
         });
       }
     }
@@ -123,11 +115,11 @@ class HelpQueueV2 {
    * @param enable whether to enable auto clear, overrides 'hours'
    */
   setAutoClear(hours: number, enable: boolean): void {
-    const existingTimerId = this.timers.get("QUEUE_AUTO_CLEAR");
+    const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
     if (!enable) {
       existingTimerId && clearInterval(existingTimerId);
-      this.timers.delete("QUEUE_AUTO_CLEAR");
-      this._hoursUntilAutoClear = "AUTO_CLEAR_DISABLED";
+      this.timers.delete('QUEUE_AUTO_CLEAR');
+      this._hoursUntilAutoClear = 'AUTO_CLEAR_DISABLED';
       return;
     }
     this._hoursUntilAutoClear = hours;
@@ -153,7 +145,7 @@ class HelpQueueV2 {
           CalendarQueueExtension.load(
             1, // renderIndex
             queueChannel
-          ),
+          )
         ]);
     const display = new QueueDisplayV2(user, queueChannel);
     const queue = new HelpQueueV2(
@@ -165,35 +157,29 @@ class HelpQueueV2 {
     );
     // They need to happen first
     // because extensions need to rerender in cleanUpQueueChannel()
+    await Promise.all(queueExtensions.map(extension => extension.onQueueCreate(queue)));
     await Promise.all(
-      queueExtensions.map((extension) => extension.onQueueCreate(queue))
-    );
-    await Promise.all(
-      queueExtensions.map((extension) =>
-        extension.onQueuePeriodicUpdate(queue, true)
-      )
+      queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
     );
     await Promise.all([
       queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
         SendMessages: false,
         CreatePrivateThreads: false,
         CreatePublicThreads: false,
-        AddReactions: false,
+        AddReactions: false
       }),
-      queue.triggerRender(),
+      queue.triggerRender()
     ]);
     queue.timers.set(
-      "QUEUE_PERIODIC_UPDATE",
+      'QUEUE_PERIODIC_UPDATE',
       setInterval(
         async () =>
           await Promise.all(
-            queueExtensions.map((extension) =>
+            queueExtensions.map(extension =>
               extension.onQueuePeriodicUpdate(queue, false)
             )
           ).catch((err: Error) =>
-            console.error(
-              new PeriodicUpdateError(`${err.name}: ${err.message}`, "Queue")
-            )
+            console.error(new PeriodicUpdateError(`${err.name}: ${err.message}`, 'Queue'))
           ), // Random 0~2min offset to avoid spamming the APIs
         1000 * 60 * 10 + Math.floor(Math.random() * 1000 * 60 * 2)
       )
@@ -210,21 +196,18 @@ class HelpQueueV2 {
    */
   async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
     if (this._activeHelperIds.has(helperMember.id)) {
-      return Promise.reject(
-        new QueueError("Queue is already open", this.queueName)
-      );
+      return Promise.reject(new QueueError('Queue is already open', this.queueName));
     } // won't actually be seen, will be caught
     this._activeHelperIds.add(helperMember.id);
     await Promise.all<void | boolean | Message<boolean>>([
       // shorthand syntax, the RHS of && will be invoked if LHS is true
       ...this.notifGroup.map(
-        (notifMember) =>
-          notify &&
-          notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
+        notifMember =>
+          notify && notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
       ),
-      ...this.queueExtensions.map((extension) => extension.onQueueOpen(this)),
+      ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
       notify && this.notifGroup.clear(),
-      this.triggerRender(),
+      this.triggerRender()
     ]);
   }
 
@@ -237,13 +220,11 @@ class HelpQueueV2 {
   async closeQueue(helperMember: GuildMember): Promise<void> {
     // These will be caught and show 'You are not currently helping'
     if (!this.isOpen) {
-      return Promise.reject(
-        new QueueError("Queue is already closed", this.queueName)
-      );
+      return Promise.reject(new QueueError('Queue is already closed', this.queueName));
     }
     if (!this._activeHelperIds.has(helperMember.id)) {
       return Promise.reject(
-        new QueueError("You are not one of the helpers", this.queueName)
+        new QueueError('You are not one of the helpers', this.queueName)
       );
     }
     this._activeHelperIds.delete(helperMember.id);
@@ -251,8 +232,8 @@ class HelpQueueV2 {
       this.startAutoClearTimer();
     }
     await Promise.all([
-      ...this.queueExtensions.map((extension) => extension.onQueueClose(this)),
-      this.triggerRender(),
+      ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
+      this.triggerRender()
     ]);
   }
 
@@ -263,30 +244,23 @@ class HelpQueueV2 {
    */
   async enqueue(studentMember: GuildMember): Promise<void> {
     if (!this.isOpen) {
-      return Promise.reject(
-        new QueueError(`Queue is not open.`, this.queueName)
-      );
+      return Promise.reject(new QueueError(`Queue is not open.`, this.queueName));
     }
-    if (
-      this._students.find((s) => s.member.id === studentMember.id) !== undefined
-    ) {
+    if (this._students.find(s => s.member.id === studentMember.id) !== undefined) {
       return Promise.reject(
         new QueueError(`You are already in the queue.`, this.queueName)
       );
     }
     if (this._activeHelperIds.has(studentMember.id)) {
       return Promise.reject(
-        new QueueError(
-          `You can't enqueue yourself while helping.`,
-          this.queueName
-        )
+        new QueueError(`You can't enqueue yourself while helping.`, this.queueName)
       );
     }
     const student: Helpee = {
       waitStart: new Date(),
       upNext: this._students.length === 0,
       member: studentMember,
-      queue: this,
+      queue: this
     };
     this._students.push(student);
     // converted to use Array.map
@@ -295,7 +269,7 @@ class HelpQueueV2 {
     // so that they can be launched in parallel
     // we won't use the return values so it's safe to cast
     await Promise.all<void | undefined | Message<boolean>>([
-      ...helperIdArray.map((helperId) =>
+      ...helperIdArray.map(helperId =>
         this.queueChannel.channelObj.members
           .get(helperId)
           ?.send(
@@ -306,10 +280,8 @@ class HelpQueueV2 {
             )
           )
       ),
-      ...this.queueExtensions.map((extension) =>
-        extension.onEnqueue(this, student)
-      ),
-      this.triggerRender(),
+      ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
+      this.triggerRender()
     ]);
   }
 
@@ -331,7 +303,7 @@ class HelpQueueV2 {
     if (!this.isOpen) {
       return Promise.reject(
         new QueueError(
-          "This queue is not open. Did you mean to use `/start`?",
+          'This queue is not open. Did you mean to use `/start`?',
           this.queueName
         )
       );
@@ -343,15 +315,12 @@ class HelpQueueV2 {
     }
     if (!this._activeHelperIds.has(helperMember.id)) {
       return Promise.reject(
-        new QueueError(
-          "You don't have permission to help this queue",
-          this.queueName
-        )
+        new QueueError("You don't have permission to help this queue", this.queueName)
       );
     }
     if (targetStudentMember !== undefined) {
       const studentIndex = this._students.findIndex(
-        (student) => student.member.id === targetStudentMember.id
+        student => student.member.id === targetStudentMember.id
       );
       if (studentIndex === -1) {
         return Promise.reject(
@@ -367,10 +336,8 @@ class HelpQueueV2 {
       const foundStudent = this._students[studentIndex]!;
       this._students.splice(studentIndex, 1);
       await Promise.all([
-        ...this.queueExtensions.map((extension) =>
-          extension.onDequeue(this, foundStudent)
-        ),
-        this.triggerRender(),
+        ...this.queueExtensions.map(extension => extension.onDequeue(this, foundStudent)),
+        this.triggerRender()
       ]);
       return foundStudent;
     }
@@ -378,10 +345,8 @@ class HelpQueueV2 {
     // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const firstStudent = this._students.shift()!;
     await Promise.all([
-      ...this.queueExtensions.map((extension) =>
-        extension.onDequeue(this, firstStudent)
-      ),
-      this.triggerRender(),
+      ...this.queueExtensions.map(extension => extension.onDequeue(this, firstStudent)),
+      this.triggerRender()
     ]);
     return firstStudent;
   }
@@ -394,14 +359,11 @@ class HelpQueueV2 {
    */
   async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
     const idx = this._students.findIndex(
-      (student) => student.member.id === targetStudent.id
+      student => student.member.id === targetStudent.id
     );
     if (idx === -1) {
       return Promise.reject(
-        new QueueError(
-          `${targetStudent.displayName} is not in the queue`,
-          this.queueName
-        )
+        new QueueError(`${targetStudent.displayName} is not in the queue`, this.queueName)
       );
     }
     // we checked for idx === -1, so it will not be null
@@ -409,10 +371,10 @@ class HelpQueueV2 {
     const removedStudent = this._students[idx]!;
     this._students.splice(idx, 1);
     await Promise.all([
-      ...this.queueExtensions.map((extension) =>
+      ...this.queueExtensions.map(extension =>
         extension.onStudentRemove(this, removedStudent)
       ),
-      this.triggerRender(),
+      this.triggerRender()
     ]);
     return removedStudent;
   }
@@ -423,7 +385,7 @@ class HelpQueueV2 {
    */
   async removeAllStudents(): Promise<void> {
     await Promise.all(
-      this.queueExtensions.map((extension) =>
+      this.queueExtensions.map(extension =>
         extension.onRemoveAllStudents(this, this._students)
       )
     );
@@ -442,10 +404,7 @@ class HelpQueueV2 {
   async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
     if (this.notifGroup.has(targetStudent.id)) {
       return Promise.reject(
-        new QueueError(
-          "You are already in the notification squad.",
-          this.queueName
-        )
+        new QueueError('You are already in the notification squad.', this.queueName)
       );
     }
     this.notifGroup.set(targetStudent.id, targetStudent);
@@ -459,7 +418,7 @@ class HelpQueueV2 {
   async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
     if (!this.notifGroup.has(targetStudent.id)) {
       return Promise.reject(
-        new QueueError("You are not in the notification squad.", this.queueName)
+        new QueueError('You are not in the notification squad.', this.queueName)
       );
     }
     this.notifGroup.delete(targetStudent.id);
@@ -471,7 +430,7 @@ class HelpQueueV2 {
    */
   async gracefulDelete(): Promise<void> {
     await Promise.all(
-      this.queueExtensions.map((extension) => extension.onQueueDelete(this))
+      this.queueExtensions.map(extension => extension.onQueueDelete(this))
     );
   }
 
@@ -484,17 +443,15 @@ class HelpQueueV2 {
     // build viewModel, then call display.render()
     const viewModel: QueueViewModel = {
       queueName: this.queueName,
-      helperIDs: [...this._activeHelperIds].map((helperId) => `<@${helperId}>`),
-      studentDisplayNames: this._students.map(
-        (student) => student.member.displayName
-      ),
-      isOpen: this.isOpen,
+      helperIDs: [...this._activeHelperIds].map(helperId => `<@${helperId}>`),
+      studentDisplayNames: this._students.map(student => student.member.displayName),
+      isOpen: this.isOpen
     };
     await Promise.all([
       this.display.requestQueueRender(viewModel),
-      ...this.queueExtensions.map((extension) =>
+      ...this.queueExtensions.map(extension =>
         extension.onQueueRender(this, this.display)
-      ),
+      )
     ]);
   }
 
@@ -503,20 +460,17 @@ class HelpQueueV2 {
    * ----
    */
   private startAutoClearTimer(): void {
-    const existingTimer = this.timers.get("QUEUE_AUTO_CLEAR");
+    const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
     existingTimer && clearTimeout(existingTimer);
-    if (this._hoursUntilAutoClear === "AUTO_CLEAR_DISABLED") {
+    if (this._hoursUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
       return;
     }
     this.timers.set(
-      "QUEUE_AUTO_CLEAR",
+      'QUEUE_AUTO_CLEAR',
       setTimeout(async () => {
         // if the queue is open when the timer finishes, do nothing
         // if auto clear is disabled half way, do nothing
-        if (
-          !this.isOpen &&
-          this.hoursUntilAutoClear !== "AUTO_CLEAR_DISABLED"
-        ) {
+        if (!this.isOpen && this.hoursUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
           await this.removeAllStudents();
         }
       }, Math.floor(this._hoursUntilAutoClear * 1000 * 60 * 60))

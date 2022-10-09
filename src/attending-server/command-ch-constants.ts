@@ -1,21 +1,21 @@
-import { adminCommandHelpMessages } from "../../help-channel-messages/AdminCommands";
-import { helperCommandHelpMessages } from "../../help-channel-messages/HelperCommands";
-import { studentCommandHelpMessages } from "../../help-channel-messages/StudentCommands";
+import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
+import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
+import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 
 export const commandChConfigs = [
   {
-    channelName: "admin-commands",
+    channelName: 'admin-commands',
     file: adminCommandHelpMessages,
-    visibility: ["Bot Admin"],
+    visibility: ['Bot Admin']
   },
   {
-    channelName: "staff-commands",
+    channelName: 'staff-commands',
     file: helperCommandHelpMessages,
-    visibility: ["Bot Admin", "Staff"],
+    visibility: ['Bot Admin', 'Staff']
   },
   {
-    channelName: "student-commands",
+    channelName: 'student-commands',
     file: studentCommandHelpMessages,
-    visibility: ["Bot Admin", "Staff", "Student"],
-  },
+    visibility: ['Bot Admin', 'Staff', 'Student']
+  }
 ];

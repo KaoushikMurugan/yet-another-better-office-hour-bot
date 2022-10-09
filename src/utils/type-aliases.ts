@@ -6,8 +6,8 @@ import {
   APIApplicationCommandOptionChoice,
   BaseMessageOptions,
   ButtonInteraction,
-  ChatInputCommandInteraction,
-} from "discord.js";
+  ChatInputCommandInteraction
+} from 'discord.js';
 
 type GuildId = string;
 type GuildMemberId = string;
@@ -38,5 +38,5 @@ export {
   MessageId,
   HelpMessage,
   CommandCallback,
-  ButtonCallback,
+  ButtonCallback
 };

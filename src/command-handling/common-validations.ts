@@ -5,10 +5,10 @@ import {
   TextChannel,
   ButtonInteraction,
   ChannelType,
-  CategoryChannel,
-} from "discord.js";
-import { QueueChannel } from "../attending-server/base-attending-server";
-import { CommandParseError } from "../utils/error-types";
+  CategoryChannel
+} from 'discord.js';
+import { QueueChannel } from '../attending-server/base-attending-server';
+import { CommandParseError } from '../utils/error-types';
 
 /**
  * Checks if the triggerer has the required roles
@@ -22,20 +22,18 @@ async function isTriggeredByUserWithRoles(
   commandName: string,
   requiredRoles: string[]
 ): Promise<GuildMember> {
-  const userRoles = (
-    await (interaction.member as GuildMember)?.fetch()
-  ).roles.cache.map((role) => role.name);
+  const userRoles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(
+    role => role.name
+  );
   if (
     !(
       interaction.member instanceof GuildMember &&
-      userRoles.some((role) => requiredRoles.includes(role))
+      userRoles.some(role => requiredRoles.includes(role))
     )
   ) {
     return Promise.reject(
       new CommandParseError(
-        `You need to have: [${requiredRoles.join(
-          " or "
-        )}] to use \`/${commandName}\`.`
+        `You need to have: [${requiredRoles.join(' or ')}] to use \`/${commandName}\`.`
       )
     );
   }
@@ -55,23 +53,16 @@ async function hasValidQueueArgument(
   required = false
 ): Promise<QueueChannel> {
   const parentCategory =
-    interaction.options.getChannel("queue_name", required) ??
+    interaction.options.getChannel('queue_name', required) ??
     (interaction.channel as GuildChannel).parent;
   // null check is done here by optional property access
-  if (
-    parentCategory?.type !== ChannelType.GuildCategory ||
-    parentCategory === null
-  ) {
+  if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
     return Promise.reject(
-      new CommandParseError(
-        `\`${parentCategory?.name}\` is not a valid queue category.`
-      )
+      new CommandParseError(`\`${parentCategory?.name}\` is not a valid queue category.`)
     );
   }
-  const queueTextChannel = (
-    parentCategory as CategoryChannel
-  ).children.cache.find(
-    (child) => child.name === "queue" && child.type === ChannelType.GuildText
+  const queueTextChannel = (parentCategory as CategoryChannel).children.cache.find(
+    child => child.name === 'queue' && child.type === ChannelType.GuildText
   );
   if (queueTextChannel === undefined) {
     return Promise.reject(
@@ -85,7 +76,7 @@ async function hasValidQueueArgument(
   const queueChannel: QueueChannel = {
     channelObj: queueTextChannel as TextChannel,
     queueName: parentCategory.name,
-    parentCategoryId: parentCategory.id,
+    parentCategoryId: parentCategory.id
   };
   return queueChannel;
 }
@@ -100,15 +91,10 @@ async function isTriggeredByUserWithValidEmail(
   interaction: ChatInputCommandInteraction | ButtonInteraction,
   commandName: string
 ): Promise<GuildMember> {
-  const roles = (
-    await (interaction.member as GuildMember)?.fetch()
-  ).roles.cache.map((role) => role.name);
-  if (
-    !(
-      interaction.member instanceof GuildMember &&
-      roles.includes("Verified Email")
-    )
-  ) {
+  const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(
+    role => role.name
+  );
+  if (!(interaction.member instanceof GuildMember && roles.includes('Verified Email'))) {
     return Promise.reject(
       new CommandParseError(
         `You need to have a verified email to use \`/${commandName}\`.`
@@ -133,15 +119,15 @@ async function isFromQueueChannelWithParent(
   ) {
     return Promise.reject(
       new CommandParseError(
-        "Invalid button press / Command. " +
-          "Make sure this channel has a parent category."
+        'Invalid button press / Command. ' +
+          'Make sure this channel has a parent category.'
       )
     );
   }
   const queueChannel: QueueChannel = {
     channelObj: interaction.channel as TextChannel,
     queueName: queueName,
-    parentCategoryId: interaction.channel.parent.id,
+    parentCategoryId: interaction.channel.parent.id
   };
   return Promise.resolve(queueChannel);
 }
@@ -158,7 +144,7 @@ async function isFromGuildMember(
     return interaction.member as GuildMember;
   }
   return Promise.reject(
-    new CommandParseError("Sorry, I only accept server base interactions.")
+    new CommandParseError('Sorry, I only accept server base interactions.')
   );
 }
 
@@ -174,5 +160,5 @@ export {
   isFromQueueChannelWithParent,
   isFromGuildMember,
   isTriggeredByUserWithValidEmail,
-  logEditFailure,
+  logEditFailure
 };

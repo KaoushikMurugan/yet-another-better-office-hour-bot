@@ -1,9 +1,9 @@
-import { AutoClearTimeout } from "../help-queue/help-queue";
-import { Helpee } from "./member-states";
+import { AutoClearTimeout } from '../help-queue/help-queue';
+import { Helpee } from './member-states';
 
 type QueueBackup = {
   studentsInQueue: ReadonlyArray<
-    Omit<Helpee, "member" | "queue"> & {
+    Omit<Helpee, 'member' | 'queue'> & {
       displayName: string;
       memberId: string;
     }

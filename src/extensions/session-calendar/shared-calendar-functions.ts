@@ -1,7 +1,7 @@
-import { calendar_v3 } from "googleapis";
-import { serverIdCalendarStateMap } from "./calendar-states";
-import axios from "axios";
-import environment from "../../environment/environment-manager";
+import { calendar_v3 } from 'googleapis';
+import { serverIdCalendarStateMap } from './calendar-states';
+import axios from 'axios';
+import environment from '../../environment/environment-manager';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -17,7 +17,7 @@ type UpComingSessionViewModel = {
 class CalendarConnectionError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "CalendarConnectionError";
+    this.name = 'CalendarConnectionError';
   }
   briefErrorString(): string {
     return `**${this.name}**: ${this.message}`;
@@ -38,28 +38,28 @@ async function getUpComingTutoringEvents(
   nextWeek.setDate(nextWeek.getDate() + 7);
   const calendarUrl = buildCalendarURL({
     // defaults to empty to let the api call reject, then prompt user to fix the id
-    calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? "",
+    calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
     apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
     timeMin: new Date(),
     timeMax: nextWeek,
-    maxResults: 10,
+    maxResults: 10
   });
   const response = await axios({
     url: calendarUrl,
     timeout: 5000,
-    method: "GET",
+    method: 'GET'
   }).catch(() =>
     Promise.reject(
       new CalendarConnectionError(
-        "This calendar refresh timed out. Please try again later."
+        'This calendar refresh timed out. Please try again later.'
       )
     )
   );
   if (response.status !== 200) {
     return Promise.reject(
       new CalendarConnectionError(
-        "Failed to connect to Google Calendar. " +
-          "The calendar might be deleted or set to private."
+        'Failed to connect to Google Calendar. ' +
+          'The calendar might be deleted or set to private.'
       )
     );
   }
@@ -69,11 +69,8 @@ async function getUpComingTutoringEvents(
     return [];
   }
   const definedViewModels = events
-    .filter(
-      (event) =>
-        event.start?.dateTime && event.end?.dateTime && event.description
-    )
-    .map((cleanEvent) => {
+    .filter(event => event.start?.dateTime && event.end?.dateTime && event.description)
+    .map(cleanEvent => {
       // we already checked for all 4 values' existence
       const [start, end, description] = [
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -81,20 +78,20 @@ async function getUpComingTutoringEvents(
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         cleanEvent.end!.dateTime!,
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        cleanEvent.description!,
+        cleanEvent.description!
       ];
       const parsableCalendarString = description
         .substring(
-          description.indexOf("YABOB_START") + "YABOB_START".length,
-          description.indexOf("YABOB_END")
+          description.indexOf('YABOB_START') + 'YABOB_START'.length,
+          description.indexOf('YABOB_END')
         )
         .trimStart()
         .trimEnd();
       const viewModel = composeViewModel(
         serverId,
         queueName,
-        cleanEvent.summary ?? "",
-        parsableCalendarString ?? "",
+        cleanEvent.summary ?? '',
+        parsableCalendarString ?? '',
         new Date(start),
         new Date(end),
         cleanEvent.location ?? undefined
@@ -103,12 +100,12 @@ async function getUpComingTutoringEvents(
       if (viewModel?.location !== undefined) {
         viewModel.location =
           viewModel.location?.length > 25
-            ? viewModel.location?.substring(0, 25) + "..."
+            ? viewModel.location?.substring(0, 25) + '...'
             : viewModel.location;
       }
       return viewModel;
     })
-    .filter((viewModel) => viewModel !== undefined);
+    .filter(viewModel => viewModel !== undefined);
   return definedViewModels as UpComingSessionViewModel[];
 }
 
@@ -120,26 +117,24 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
     timeMin: new Date(),
     timeMax: nextWeek,
     apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
-    maxResults: 2,
+    maxResults: 2
   });
   const response = await axios({
     url: calendarUrl,
     timeout: 5000,
-    method: "GET",
+    method: 'GET'
   }).catch(() =>
     Promise.reject(
       new CalendarConnectionError(
-        "This calendar refresh timed out. Please try again later."
+        'This calendar refresh timed out. Please try again later.'
       )
     )
   );
   if (response.status !== 200) {
-    return Promise.reject(
-      new CalendarConnectionError("Calendar request failed.")
-    );
+    return Promise.reject(new CalendarConnectionError('Calendar request failed.'));
   }
   const responseJSON = await response.data;
-  return (responseJSON as calendar_v3.Schema$Events).summary ?? "";
+  return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
 }
 
 /**
@@ -163,7 +158,7 @@ function composeViewModel(
 ): UpComingSessionViewModel | undefined {
   // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
   // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
-  const words = parsingString.split("-");
+  const words = parsingString.split('-');
   if (words.length !== 2) {
     return undefined;
   }
@@ -171,14 +166,14 @@ function composeViewModel(
   const tutorName = words[0]?.trim();
   const eventQueueNames = words[1]
     ?.trim()
-    .split(", ")
-    .map((eventQueue) => eventQueue?.replace(punctuations, "").trim());
+    .split(', ')
+    .map(eventQueue => eventQueue?.replace(punctuations, '').trim());
   // eventQueues will be:
   // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
   if (eventQueueNames?.length === 0 || tutorName === undefined) {
     return undefined;
   }
-  const targetQueue = eventQueueNames?.find((name) => queueName === name);
+  const targetQueue = eventQueueNames?.find(name => queueName === name);
   if (targetQueue === undefined) {
     return undefined;
   }
@@ -191,7 +186,7 @@ function composeViewModel(
     discordId: serverIdCalendarStateMap
       .get(serverId)
       ?.displayNameDiscordIdMap.get(tutorName),
-    location: location,
+    location: location
   };
 }
 
@@ -235,5 +230,5 @@ export {
   UpComingSessionViewModel,
   checkCalendarConnection,
   CalendarConnectionError,
-  restorePublicEmbedURL,
+  restorePublicEmbedURL
 };

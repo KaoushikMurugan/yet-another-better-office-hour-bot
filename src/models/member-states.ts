@@ -1,5 +1,5 @@
-import { GuildMember } from "discord.js";
-import { HelpQueueV2 } from "../help-queue/help-queue";
+import { GuildMember } from 'discord.js';
+import { HelpQueueV2 } from '../help-queue/help-queue';
 
 /**
  * Represents a student in the queue.

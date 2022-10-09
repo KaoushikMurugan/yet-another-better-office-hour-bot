@@ -12,15 +12,15 @@ import {
   Collection,
   ChatInputCommandInteraction,
   GuildMember,
-  VoiceChannel,
-} from "discord.js";
-import { AttendingServerV2 } from "../attending-server/base-attending-server";
-import { HelpQueueV2 } from "../help-queue/help-queue";
-import { QueueDisplayV2 } from "../help-queue/queue-display";
-import { Helpee, Helper } from "../models/member-states";
-import { ServerBackup } from "../models/backups";
-import { CommandData } from "../command-handling/slash-commands";
-import { ButtonCallback, CommandCallback } from "../utils/type-aliases";
+  VoiceChannel
+} from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { HelpQueueV2 } from '../help-queue/help-queue';
+import { QueueDisplayV2 } from '../help-queue/queue-display';
+import { Helpee, Helper } from '../models/member-states';
+import { ServerBackup } from '../models/backups';
+import { CommandData } from '../command-handling/slash-commands';
+import { ButtonCallback, CommandCallback } from '../utils/type-aliases';
 
 // Command level extensions
 interface IInteractionExtension {
@@ -31,10 +31,7 @@ interface IInteractionExtension {
   >;
   buttonMethodMap: ReadonlyMap<
     string,
-    (
-      queueName: string,
-      interaction: ButtonInteraction
-    ) => Promise<string | undefined>
+    (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
   >;
   slashCommandData: CommandData;
   processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
@@ -54,7 +51,7 @@ interface IServerExtension {
   ) => Promise<void>;
   onHelperStartHelping: (
     server: Readonly<AttendingServerV2>,
-    helper: Readonly<Omit<Helper, "helpEnd">>
+    helper: Readonly<Omit<Helper, 'helpEnd'>>
   ) => Promise<void>;
   onHelperStopHelping: (
     server: Readonly<AttendingServerV2>,
@@ -74,9 +71,7 @@ interface IServerExtension {
     studentMember: GuildMember
   ) => Promise<void>;
   onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
-  loadExternalServerData: (
-    serverId: string
-  ) => Promise<ServerBackup | undefined>;
+  loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
   onServerRequestBackup: (server: Readonly<AttendingServerV2>) => Promise<void>;
 }
 
@@ -85,14 +80,8 @@ interface IQueueExtension {
   onQueueCreate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
   onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
   onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
-  onEnqueue: (
-    queue: Readonly<HelpQueueV2>,
-    student: Readonly<Helpee>
-  ) => Promise<void>;
-  onDequeue: (
-    queue: Readonly<HelpQueueV2>,
-    student: Readonly<Helpee>
-  ) => Promise<void>;
+  onEnqueue: (queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>) => Promise<void>;
+  onDequeue: (queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>) => Promise<void>;
   onStudentRemove: (
     queue: Readonly<HelpQueueV2>,
     student: Readonly<Helpee>
@@ -159,7 +148,7 @@ class BaseServerExtension implements IServerExtension {
   }
   onHelperStartHelping(
     server: Readonly<AttendingServerV2>,
-    helper: Readonly<Omit<Helper, "helpEnd">>
+    helper: Readonly<Omit<Helper, 'helpEnd'>>
   ): Promise<void> {
     return Promise.resolve();
   }
@@ -227,16 +216,10 @@ class BaseQueueExtension implements IQueueExtension {
   onQueueOpen(queue: Readonly<HelpQueueV2>): Promise<void> {
     return Promise.resolve();
   }
-  onEnqueue(
-    queue: Readonly<HelpQueueV2>,
-    student: Readonly<Helpee>
-  ): Promise<void> {
+  onEnqueue(queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>): Promise<void> {
     return Promise.resolve();
   }
-  onDequeue(
-    queue: Readonly<HelpQueueV2>,
-    student: Readonly<Helpee>
-  ): Promise<void> {
+  onDequeue(queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>): Promise<void> {
     return Promise.resolve();
   }
   onStudentRemove(
@@ -262,5 +245,5 @@ export {
   IQueueExtension,
   BaseInteractionExtension,
   BaseServerExtension,
-  BaseQueueExtension,
+  BaseQueueExtension
 };

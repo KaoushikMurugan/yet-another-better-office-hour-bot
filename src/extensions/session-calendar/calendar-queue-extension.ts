@@ -1,22 +1,17 @@
-import { BaseQueueExtension } from "../extension-interface";
-import { ExtensionSetupError } from "../../utils/error-types";
-import { HelpQueueV2 } from "../../help-queue/help-queue";
-import { QueueDisplayV2 } from "../../help-queue/queue-display";
-import { EmbedColor } from "../../utils/embed-helper";
-import { FgRed, ResetColor } from "../../utils/command-line-colors";
-import { serverIdCalendarStateMap } from "./calendar-states";
-import {
-  EmbedBuilder,
-  ActionRowBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-} from "discord.js";
-import { QueueChannel } from "../../attending-server/base-attending-server";
+import { BaseQueueExtension } from '../extension-interface';
+import { ExtensionSetupError } from '../../utils/error-types';
+import { HelpQueueV2 } from '../../help-queue/help-queue';
+import { QueueDisplayV2 } from '../../help-queue/queue-display';
+import { EmbedColor } from '../../utils/embed-helper';
+import { FgRed, ResetColor } from '../../utils/command-line-colors';
+import { serverIdCalendarStateMap } from './calendar-states';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { QueueChannel } from '../../attending-server/base-attending-server';
 import {
   getUpComingTutoringEvents,
   restorePublicEmbedURL,
-  UpComingSessionViewModel,
-} from "./shared-calendar-functions";
+  UpComingSessionViewModel
+} from './shared-calendar-functions';
 
 /**
  * Calendar Extension for individual queues
@@ -85,9 +80,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
     await this.renderCalendarEmbeds(false);
   }
 
-  override async onQueueDelete(
-    deletedQueue: Readonly<HelpQueueV2>
-  ): Promise<void> {
+  override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
     serverIdCalendarStateMap
       .get(this.queueChannel.channelObj.guild.id)
       ?.listeners.delete(deletedQueue.queueName);
@@ -111,7 +104,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
   private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
     const [serverId, queueName] = [
       this.queueChannel.channelObj.guild.id,
-      this.queueChannel.queueName,
+      this.queueChannel.queueName
     ];
     this.upcomingSessions = refresh
       ? await getUpComingTutoringEvents(serverId, queueName)
@@ -127,13 +120,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
       .setURL(
         publicEmbedUrl && publicEmbedUrl?.length > 0
           ? publicEmbedUrl
-          : restorePublicEmbedURL(calendarId ?? "")
+          : restorePublicEmbedURL(calendarId ?? '')
       )
       .setDescription(
         this.upcomingSessions.length > 0
           ? this.upcomingSessions
               .map(
-                (viewModel) =>
+                viewModel =>
                   `**${
                     viewModel.discordId !== undefined
                       ? `<@${viewModel.discordId}>`
@@ -144,35 +137,28 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     .getTime()
                     .toString()
                     .slice(0, -3)}:R>\t|\t` +
-                  `End: <t:${viewModel.end
-                    .getTime()
-                    .toString()
-                    .slice(0, -3)}:R>` +
-                  `${
-                    viewModel.location
-                      ? `\t|\tLocation: ${viewModel.location}`
-                      : ``
-                  }`
+                  `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+                  `${viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``}`
               )
-              .join(`\n${"-".repeat(20)}\n`)
+              .join(`\n${'-'.repeat(20)}\n`)
           : `There are no upcoming sessions for ${queueName} in the next 7 days.`
       )
       .setColor(EmbedColor.NoColor)
       .setFooter({
         text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every 15 minutes. Click the title to see the full calendar.`,
-        iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`,
+        iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
       });
     const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
       new ButtonBuilder()
-        .setCustomId("refresh " + queueName)
-        .setEmoji("🔄")
-        .setLabel("Refresh Upcoming Sessions")
+        .setCustomId('refresh ' + queueName)
+        .setEmoji('🔄')
+        .setLabel('Refresh Upcoming Sessions')
         .setStyle(ButtonStyle.Primary)
     );
     await this.display?.requestNonQueueEmbedRender(
       {
         embeds: [upcomingSessionsEmbed],
-        components: [refreshButton],
+        components: [refreshButton]
       },
       this.renderIndex
     );

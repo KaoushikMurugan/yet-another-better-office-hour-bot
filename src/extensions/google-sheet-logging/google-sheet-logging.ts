@@ -1,13 +1,13 @@
-import { GoogleSpreadsheet } from "google-spreadsheet";
-import { Helpee, Helper } from "../../models/member-states";
-import { BaseServerExtension } from "../extension-interface";
-import { ExtensionSetupError } from "../../utils/error-types";
-import { FgBlue, FgRed, ResetColor } from "../../utils/command-line-colors";
-import { AttendingServerV2 } from "../../attending-server/base-attending-server";
-import { Collection, GuildMember, VoiceChannel } from "discord.js";
-import { GuildMemberId } from "../../utils/type-aliases";
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { Helpee, Helper } from '../../models/member-states';
+import { BaseServerExtension } from '../extension-interface';
+import { ExtensionSetupError } from '../../utils/error-types';
+import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { Collection, GuildMember, VoiceChannel } from 'discord.js';
+import { GuildMemberId } from '../../utils/type-aliases';
 
-import environment from "../../environment/environment-manager";
+import environment from '../../environment/environment-manager';
 
 /**
  * Attendance entry for each helper
@@ -25,15 +25,15 @@ type AttendanceEntry = Helper & {
  * ----
  */
 type HelpSessionEntry = {
-  "Student Username": string;
-  "Student Discord ID": string;
-  "Helper Username": string;
-  "Helper Discord ID": string;
-  "Session Start": Date; // time join VC
-  "Session End"?: Date; // time leave VC
-  "Wait Start": Date; // Helpee.waitStart
-  "Queue Name": string;
-  "Wait Time (ms)": number; // wait end - wait start
+  'Student Username': string;
+  'Student Discord ID': string;
+  'Helper Username': string;
+  'Helper Discord ID': string;
+  'Session Start': Date; // time join VC
+  'Session End'?: Date; // time leave VC
+  'Wait Start': Date; // Helpee.waitStart
+  'Queue Name': string;
+  'Wait Time (ms)': number; // wait end - wait start
 };
 
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
@@ -41,7 +41,7 @@ type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 class AttendanceError extends Error {
   constructor(message: string) {
     super(message);
-    this.name = "AttendanceError";
+    this.name = 'AttendanceError';
   }
   briefErrorString(): string {
     return `**${this.name}**: ${this.message}`;
@@ -51,8 +51,7 @@ class AttendanceError extends Error {
 class GoogleSheetLoggingExtension extends BaseServerExtension {
   // Credit of all the update logic goes to Kaoushik
   // key is student member.id, value is corresponding helpee object
-  private studentsJustDequeued: Collection<GuildMemberId, Helpee> =
-    new Collection();
+  private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
   // key is helper member.id, value is entry for this helper
   private attendanceEntries: Collection<GuildMemberId, AttendanceEntry> =
     new Collection();
@@ -60,10 +59,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
   private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
     new Collection();
 
-  constructor(
-    private serverName: string,
-    private googleSheet: GoogleSpreadsheet
-  ) {
+  constructor(private serverName: string, private googleSheet: GoogleSpreadsheet) {
     super();
   }
 
@@ -107,33 +103,33 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     studentMember: GuildMember,
     voiceChannel: VoiceChannel
   ): Promise<void> {
-    const helpersInVC = voiceChannel.members.filter((member) =>
+    const helpersInVC = voiceChannel.members.filter(member =>
       server.activeHelpers.has(member.id)
     );
     const [studentId, student] = [
       studentMember.id,
-      this.studentsJustDequeued.get(studentMember.id),
+      this.studentsJustDequeued.get(studentMember.id)
     ];
     if (helpersInVC.size === 0 || student === undefined) {
       return;
     }
     this.studentsJustDequeued.delete(studentId);
-    for (const helper of helpersInVC.map((helperInVC) =>
+    for (const helper of helpersInVC.map(helperInVC =>
       server.activeHelpers.get(helperInVC.id)
     )) {
       if (helper === undefined) {
         continue;
       }
       const helpSessionEntry: HelpSessionEntry = {
-        "Student Username": student.member.user.username,
-        "Student Discord ID": studentId,
-        "Helper Username": helper.member.user.username,
-        "Helper Discord ID": helper.member.id,
-        "Session Start": new Date(),
-        "Session End": undefined,
-        "Wait Start": student.waitStart,
-        "Queue Name": student.queue.queueName,
-        "Wait Time (ms)": new Date().getTime() - student.waitStart.getTime(),
+        'Student Username': student.member.user.username,
+        'Student Discord ID': studentId,
+        'Helper Username': helper.member.user.username,
+        'Helper Discord ID': helper.member.id,
+        'Session Start': new Date(),
+        'Session End': undefined,
+        'Wait Start': student.waitStart,
+        'Queue Name': student.queue.queueName,
+        'Wait Time (ms)': new Date().getTime() - student.waitStart.getTime()
       };
       this.helpSessionEntries.has(studentId)
         ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
@@ -141,9 +137,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
       if (this.attendanceEntries.has(helper.member.id)) {
         // ts doesn't recognize map.has
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        this.attendanceEntries.get(
-          helper.member.id
-        )!.latestStudentJoinTimeStamp = new Date();
+        this.attendanceEntries.get(helper.member.id)!.latestStudentJoinTimeStamp =
+          new Date();
       }
     }
   }
@@ -156,8 +151,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     if (helpSessionEntries === undefined) {
       return;
     }
-    helpSessionEntries.forEach((entry) => (entry["Session End"] = new Date()));
-    this.attendanceEntries.forEach((entry) => {
+    helpSessionEntries.forEach(entry => (entry['Session End'] = new Date()));
+    this.attendanceEntries.forEach(entry => {
       if (entry.latestStudentJoinTimeStamp !== undefined) {
         entry.activeTimeMs +=
           new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
@@ -173,11 +168,11 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
 
   override async onHelperStartHelping(
     _server: Readonly<AttendingServerV2>,
-    helper: Readonly<Omit<Helper, "helpEnd">>
+    helper: Readonly<Omit<Helper, 'helpEnd'>>
   ): Promise<void> {
     const entry: AttendanceEntry = {
       ...helper,
-      activeTimeMs: 0,
+      activeTimeMs: 0
     };
     this.attendanceEntries.set(helper.member.id, entry);
   }
@@ -198,7 +193,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
       return Promise.reject(error);
     }
     entry.helpEnd = helper.helpEnd;
-    helper.helpedMembers.map((student) =>
+    helper.helpedMembers.map(student =>
       this.studentsJustDequeued.delete(student.member.id)
     );
     await this.updateAttendance(entry as Required<AttendanceEntry>).catch(() =>
@@ -211,37 +206,33 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
    * Updates the attendance for 1 helper
    * ----
    */
-  private async updateAttendance(
-    entry: Required<AttendanceEntry>
-  ): Promise<void> {
+  private async updateAttendance(entry: Required<AttendanceEntry>): Promise<void> {
     const requiredHeaders = [
-      "Helper Username",
-      "Time In",
-      "Time Out",
-      "Helped Students",
-      "Discord ID",
-      "Session Time (ms)",
-      "Active Time (ms)",
-      "Number of Students Helped",
+      'Helper Username',
+      'Time In',
+      'Time Out',
+      'Helped Students',
+      'Discord ID',
+      'Session Time (ms)',
+      'Active Time (ms)',
+      'Number of Students Helped'
     ];
     // try to find existing sheet
     // if not created, make a new one, also trim off colon because google api bug
-    const sheetTitle = `${this.serverName.replace(
-      /:/g,
-      " "
-    )} Attendance`.replace(/\s{2,}/g, " ");
+    const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Attendance`.replace(
+      /\s{2,}/g,
+      ' '
+    );
     const attendanceSheet =
       this.googleSheet.sheetsByTitle[sheetTitle] ??
       (await this.googleSheet.addSheet({
         title: sheetTitle,
-        headerValues: requiredHeaders,
+        headerValues: requiredHeaders
       }));
     if (
       attendanceSheet.headerValues === undefined ||
       attendanceSheet.headerValues.length !== requiredHeaders.length ||
-      !attendanceSheet.headerValues.every((header) =>
-        requiredHeaders.includes(header)
-      )
+      !attendanceSheet.headerValues.every(header => requiredHeaders.includes(header))
     ) {
       // very slow, O(n^2 * m) string array comparison is faster than this
       await attendanceSheet.setHeaderRow(requiredHeaders);
@@ -250,35 +241,34 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     void Promise.all([
       attendanceSheet.addRow(
         {
-          "Helper Username": entry.member.user.username,
-          "Time In": entry.helpStart.toLocaleString("en-US", {
-            timeZone: "PST8PDT",
+          'Helper Username': entry.member.user.username,
+          'Time In': entry.helpStart.toLocaleString('en-US', {
+            timeZone: 'PST8PDT'
           }),
-          "Time Out": entry.helpEnd.toLocaleString("en-US", {
-            timeZone: "PST8PDT",
+          'Time Out': entry.helpEnd.toLocaleString('en-US', {
+            timeZone: 'PST8PDT'
           }),
-          "Helped Students": JSON.stringify(
+          'Helped Students': JSON.stringify(
             entry.helpedMembers.map(
-              (student) =>
+              student =>
                 new Object({
                   displayName: student.member.displayName,
                   username: student.member.user.username,
-                  id: student.member.id,
+                  id: student.member.id
                 })
             )
           ),
-          "Discord ID": entry.member.id,
-          "Session Time (ms)":
-            entry.helpEnd.getTime() - entry.helpStart.getTime(),
-          "Active Time (ms)": entry.activeTimeMs,
-          "Number of Students Helped": entry.helpedMembers.length,
+          'Discord ID': entry.member.id,
+          'Session Time (ms)': entry.helpEnd.getTime() - entry.helpStart.getTime(),
+          'Active Time (ms)': entry.activeTimeMs,
+          'Number of Students Helped': entry.helpedMembers.length
         },
         {
           raw: true,
-          insert: true,
+          insert: true
         }
       ),
-      attendanceSheet.loadHeaderRow(),
+      attendanceSheet.loadHeaderRow()
     ]).catch((err: Error) => console.error(err.name, err.message));
   }
 
@@ -293,53 +283,50 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
       return;
     }
     // trim off colon because google api bug, then trim off any excess spaces
-    const sheetTitle = `${this.serverName.replace(
-      /:/g,
-      " "
-    )} Help Sessions`.replace(/\s{2,}/g, " ");
+    const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Help Sessions`.replace(
+      /\s{2,}/g,
+      ' '
+    );
     const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
     const helpSessionSheet =
       this.googleSheet.sheetsByTitle[sheetTitle] ??
       (await this.googleSheet.addSheet({
         title: sheetTitle,
-        headerValues: requiredHeaders,
+        headerValues: requiredHeaders
       }));
     if (
       helpSessionSheet.headerValues === undefined ||
       helpSessionSheet.headerValues.length !==
-        [...requiredHeaders, "Session Time (ms)"].length ||
-      !helpSessionSheet.headerValues.every((header) =>
-        [...requiredHeaders, "Session Time (ms)"].includes(header)
+        [...requiredHeaders, 'Session Time (ms)'].length ||
+      !helpSessionSheet.headerValues.every(header =>
+        [...requiredHeaders, 'Session Time (ms)'].includes(header)
       )
     ) {
-      await helpSessionSheet.setHeaderRow([
-        ...requiredHeaders,
-        "Session Time (ms)",
-      ]);
+      await helpSessionSheet.setHeaderRow([...requiredHeaders, 'Session Time (ms)']);
     }
     void Promise.all([
       helpSessionSheet.addRows(
-        entries.map((entry) =>
+        entries.map(entry =>
           Object.fromEntries([
-            ...requiredHeaders.map((header) =>
+            ...requiredHeaders.map(header =>
               entry[header] instanceof Date
                 ? [
                     header,
-                    (entry[header] as Date).toLocaleString("en-US", {
-                      timeZone: "PST8PDT",
-                    }),
+                    (entry[header] as Date).toLocaleString('en-US', {
+                      timeZone: 'PST8PDT'
+                    })
                   ]
                 : [header, entry[header].toString()]
             ),
             [
-              "Session Time (ms)",
-              entry["Session End"].getTime() - entry["Session Start"].getTime(),
-            ],
+              'Session Time (ms)',
+              entry['Session End'].getTime() - entry['Session Start'].getTime()
+            ]
           ])
         ),
         { raw: true, insert: true }
       ),
-      helpSessionSheet.loadHeaderRow(),
+      helpSessionSheet.loadHeaderRow()
     ]).catch((err: Error) => console.error(err.name, err.message));
   }
 }

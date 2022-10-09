@@ -1,7 +1,7 @@
-import { Client, Guild, GatewayIntentBits, Collection } from "discord.js";
-import { AttendingServerV2 } from "./attending-server/base-attending-server";
-import { ButtonCommandDispatcher } from "./command-handling/button-handler";
-import { CentralCommandDispatcher } from "./command-handling/command-handler";
+import { Client, Guild, GatewayIntentBits, Collection } from 'discord.js';
+import { AttendingServerV2 } from './attending-server/base-attending-server';
+import { ButtonCommandDispatcher } from './command-handling/button-handler';
+import { CentralCommandDispatcher } from './command-handling/command-handler';
 import {
   BgMagenta,
   FgBlack,
@@ -12,21 +12,21 @@ import {
   FgRed,
   FgYellow,
   ResetColor,
-  BgCyan,
-} from "./utils/command-line-colors";
-import { postSlashCommands } from "./command-handling/slash-commands";
-import { EmbedColor, SimpleEmbed } from "./utils/embed-helper";
-import { CalendarInteractionExtension } from "./extensions/session-calendar/calendar-command-extension";
-import { IInteractionExtension } from "./extensions/extension-interface";
-import { GuildId } from "./utils/type-aliases";
-import environment from "./environment/environment-manager";
-import { logEditFailure } from "./command-handling/common-validations";
+  BgCyan
+} from './utils/command-line-colors';
+import { postSlashCommands } from './command-handling/slash-commands';
+import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
+import { IInteractionExtension } from './extensions/extension-interface';
+import { GuildId } from './utils/type-aliases';
+import environment from './environment/environment-manager';
+import { logEditFailure } from './command-handling/common-validations';
 
 if (
   environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
   environment.discordBotCredentials.YABOB_APP_ID.length === 0
 ) {
-  throw new Error("Missing token or bot ID. Aborting setup.");
+  throw new Error('Missing token or bot ID. Aborting setup.');
 }
 
 if (environment.disableExtensions) {
@@ -41,8 +41,8 @@ const client = new Client({
     GatewayIntentBits.GuildVoiceStates,
     GatewayIntentBits.GuildPresences,
     GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.DirectMessages,
-  ],
+    GatewayIntentBits.DirectMessages
+  ]
 });
 
 // key is Guild.id
@@ -52,44 +52,40 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
 const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
 const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
 
-client
-  .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
-  .catch((err: Error) => {
-    console.error("Login Unsuccessful. Check YABOBs credentials.");
-    throw err;
-  });
+client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
+  console.error('Login Unsuccessful. Check YABOBs credentials.');
+  throw err;
+});
 
-client.on("error", console.error);
+client.on('error', console.error);
 
 /**
  * After login startup seqence
  * ----
  */
-client.on("ready", async () => {
+client.on('ready', async () => {
   if (client.user === null) {
     throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
   }
   console.log(`Env: ${BgCyan}${environment.env}${ResetColor}`);
   printTitleString();
   console.log(`Logged in as ${client.user.tag}!`);
-  console.log("Scanning servers I am a part of...");
+  console.log('Scanning servers I am a part of...');
   // allGuilds is all the servers this YABOB instance has joined
   const allGuilds = await Promise.all(
-    (await client.guilds.fetch()).map((guild) => guild.fetch())
+    (await client.guilds.fetch()).map(guild => guild.fetch())
   );
   // Launch all startup sequences in parallel
-  const setupResult = await Promise.allSettled(
-    allGuilds.map((guild) => joinGuild(guild))
-  );
+  const setupResult = await Promise.allSettled(allGuilds.map(guild => joinGuild(guild)));
   setupResult.forEach(
-    (result) => result.status === "rejected" && console.log(`${result.reason}`)
+    result => result.status === 'rejected' && console.log(`${result.reason}`)
   );
-  if (setupResult.filter((res) => res.status === "fulfilled").length === 0) {
-    console.error("All server setups failed. Aborting.");
+  if (setupResult.filter(res => res.status === 'fulfilled').length === 0) {
+    console.error('All server setups failed. Aborting.');
     process.exit(1);
   }
   console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
-  console.log(`${centeredText("-------- Begin Server Logs --------")}\n`);
+  console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
   return;
 });
 
@@ -97,7 +93,7 @@ client.on("ready", async () => {
  * Server joining procedure
  * ----
  */
-client.on("guildCreate", async (guild) => {
+client.on('guildCreate', async guild => {
   console.log(`${FgMagenta}Got invited to:${ResetColor} '${guild.name}'!`);
   await joinGuild(guild).catch(() =>
     console.error(
@@ -112,7 +108,7 @@ client.on("guildCreate", async (guild) => {
  * - Clears all the periodic updates
  * - Deletes server from server map
  */
-client.on("guildDelete", async (guild) => {
+client.on('guildDelete', async guild => {
   const server = serversV2.get(guild.id);
   if (server !== undefined) {
     server.clearAllServerTimers();
@@ -125,7 +121,7 @@ client.on("guildDelete", async (guild) => {
   }
 });
 
-client.on("interactionCreate", async (interaction) => {
+client.on('interactionCreate', async interaction => {
   // if it's a built-in command/button, process
   // otherwise find an extension that can process it
   if (interaction.isChatInputCommand()) {
@@ -136,8 +132,8 @@ client.on("interactionCreate", async (interaction) => {
         await builtinCommandHandler.process(interaction);
       } else {
         const externalCommandHandler = interactionExtensions
-          .get(interaction.guild?.id ?? "")
-          ?.find((ext) => ext.commandMethodMap.has(interaction.commandName));
+          .get(interaction.guild?.id ?? '')
+          ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
         if (!externalCommandHandler) {
           return;
         }
@@ -148,14 +144,14 @@ client.on("interactionCreate", async (interaction) => {
   if (interaction.isButton()) {
     await interaction.deferReply({ ephemeral: true });
     await (async () => {
-      const buttonName = interaction.customId.split(" ")[0] ?? "";
+      const buttonName = interaction.customId.split(' ')[0] ?? '';
       if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
         builtinButtonHandler.serverMap = serversV2;
         await builtinButtonHandler.process(interaction);
       } else {
         const externalButtonHandler = interactionExtensions
-          .get(interaction.guild?.id ?? "")
-          ?.find((ext) => ext.buttonMethodMap.has(buttonName));
+          .get(interaction.guild?.id ?? '')
+          ?.find(ext => ext.buttonMethodMap.has(buttonName));
         if (!externalButtonHandler) {
           return;
         }
@@ -165,13 +161,10 @@ client.on("interactionCreate", async (interaction) => {
   }
 });
 
-client.on("guildMemberAdd", async (member) => {
-  const server =
-    serversV2.get(member.guild.id) ?? (await joinGuild(member.guild));
-  const studentRole = server.guild.roles.cache.find(
-    (role) => role.name === "Student"
-  );
-  if (studentRole !== undefined) {
+client.on('guildMemberAdd', async member => {
+  const server = serversV2.get(member.guild.id) ?? (await joinGuild(member.guild));
+  const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
+  if (studentRole !== undefined && !member.user.bot) {
     await member.roles.add(studentRole);
   }
 });
@@ -181,7 +174,7 @@ client.on("guildMemberAdd", async (member) => {
  * ----
  * Once YABOB has the highest role, start the initialization call
  */
-client.on("roleUpdate", async (role) => {
+client.on('roleUpdate', async role => {
   if (serversV2.has(role.guild.id)) {
     return;
   }
@@ -201,44 +194,37 @@ client.on("roleUpdate", async (role) => {
           EmbedColor.Success
         )
       ),
-      joinGuild(role.guild),
+      joinGuild(role.guild)
     ]);
   }
 });
 
-client.on("voiceStateUpdate", async (oldVoiceState, newVoiceState) => {
+client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
   if (newVoiceState.member === null) {
-    throw new Error("Received VC event in a server without initialized YABOB.");
+    throw new Error('Received VC event in a server without initialized YABOB.');
   }
   const serverId = oldVoiceState.guild.id;
-  const isLeaveVC =
-    oldVoiceState.channel !== null && newVoiceState.channel === null;
-  const isJoinVC =
-    oldVoiceState.channel === null && newVoiceState.channel !== null;
-  isLeaveVC &&
-    (await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member));
+  const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
+  const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
+  isLeaveVC && (await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member));
   isJoinVC &&
-    (await serversV2
-      .get(serverId)
-      ?.onMemberJoinVC(newVoiceState.member, newVoiceState));
+    (await serversV2.get(serverId)?.onMemberJoinVC(newVoiceState.member, newVoiceState));
 });
 
-process.on("exit", () => {
-  console.log(centeredText("-------- End of Server Log --------"));
-  console.log(`${centeredText("-------- Begin Error Stack Trace --------")}\n`);
+process.on('exit', () => {
+  console.log(centeredText('-------- End of Server Log --------'));
+  console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
 });
 
 /**
- * Initilization sequence
- * ----
+ * YABOB Initilization sequence
  * @param guild server to join
  * @returns AttendingServerV2 if successfully initialized
+ * @throws ServerError if the AttendingServerV2.create failed
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
   if (client.user === null) {
-    throw Error(
-      "Please wait until YABOB has logged in " + "to manage the server"
-    );
+    throw Error('Please wait until YABOB has logged in ' + 'to manage the server');
   }
   console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
   if (!environment.disableExtensions) {
@@ -255,31 +241,29 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
   builtinButtonHandler.serverMap = serversV2;
   [...interactionExtensions.values()]
     .flat()
-    .forEach((extension) => (extension.serverMap = serversV2));
+    .forEach(extension => (extension.serverMap = serversV2));
   await postSlashCommands(
     guild,
-    interactionExtensions.get(guild.id)?.flatMap((ext) => ext.slashCommandData)
+    interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
   );
   return server;
 }
 
 function printTitleString(): void {
-  const titleString = "YABOB: Yet-Another-Better-OH-Bot V4.1";
+  const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.1';
   console.log(
-    `\n${FgBlack}${BgMagenta}${" ".repeat(
+    `\n${FgBlack}${BgMagenta}${' '.repeat(
       (process.stdout.columns - titleString.length) / 2
     )}` +
       `${titleString}` +
-      `${" ".repeat(
-        (process.stdout.columns - titleString.length) / 2
-      )}${ResetColor}\n`
+      `${' '.repeat((process.stdout.columns - titleString.length) / 2)}${ResetColor}\n`
   );
 }
 
 function centeredText(text: string): string {
   return (
-    `${" ".repeat((process.stdout.columns - text.length) / 2)}` +
+    `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
     `${text}` +
-    `${" ".repeat((process.stdout.columns - text.length) / 2)}`
+    `${' '.repeat((process.stdout.columns - text.length) / 2)}`
   );
 }

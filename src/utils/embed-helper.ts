@@ -4,13 +4,9 @@ import {
   BaseMessageOptions,
   TextBasedChannel,
   User,
-  ApplicationCommandOptionType,
-} from "discord.js";
-import {
-  QueueError,
-  ServerError,
-  UserViewableError,
-} from "../utils/error-types";
+  ApplicationCommandOptionType
+} from 'discord.js';
+import { QueueError, ServerError, UserViewableError } from '../utils/error-types';
 
 export enum EmbedColor {
   Success = 0xa9dc76, // Green
@@ -21,14 +17,14 @@ export enum EmbedColor {
   NoColor = 0x2f3137, // the embed background
   Aqua = 0x78dce8, // Aqua
   Purple = 0xa6a5c4,
-  Pink = 0xffb7c5,
+  Pink = 0xffb7c5
 }
 
 export function SimpleEmbed(
   message: string,
   color = EmbedColor.Neutral,
-  description = ""
-): Pick<BaseMessageOptions, "embeds"> {
+  description = ''
+): Pick<BaseMessageOptions, 'embeds'> {
   if (message.length <= 256) {
     return {
       embeds: [
@@ -38,11 +34,11 @@ export function SimpleEmbed(
           timestamp: new Date().toISOString(),
           description: description,
           author: {
-            name: "YABOB",
-            icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-          },
-        },
-      ],
+            name: 'YABOB',
+            icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+          }
+        }
+      ]
     };
   } else {
     // temporary solution: Force the message into description
@@ -50,35 +46,33 @@ export function SimpleEmbed(
       embeds: [
         {
           color: color,
-          description: message + "\n\n" + description,
+          description: message + '\n\n' + description,
           timestamp: new Date().toISOString(),
           author: {
-            name: "YABOB",
-            icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-          },
-        },
-      ],
+            name: 'YABOB',
+            icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+          }
+        }
+      ]
     };
   }
 }
 
-export function ErrorEmbed(
-  err: UserViewableError
-): Pick<BaseMessageOptions, "embeds"> {
+export function ErrorEmbed(err: UserViewableError): Pick<BaseMessageOptions, 'embeds'> {
   let color = EmbedColor.KindaBad;
   const embedFields = [
     {
-      name: "Error Type",
+      name: 'Error Type',
       value: err.name,
-      inline: true,
-    },
+      inline: true
+    }
   ];
   if (err instanceof QueueError) {
     color = EmbedColor.Aqua;
     embedFields.push({
-      name: "In Queue",
+      name: 'In Queue',
       value: err.queueName,
-      inline: true,
+      inline: true
     });
   }
   if (err instanceof ServerError) {
@@ -96,43 +90,43 @@ export function ErrorEmbed(
           `(or equivalent) and ping @Bot Admin.`,
         fields: embedFields,
         author: {
-          name: "YABOB",
-          icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-        },
-      },
-    ],
+          name: 'YABOB',
+          icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+      }
+    ]
   };
 }
 
 export function ErrorLogEmbed(
   err: Error,
   interaction: Interaction
-): Pick<BaseMessageOptions, "embeds"> {
+): Pick<BaseMessageOptions, 'embeds'> {
   let color = EmbedColor.KindaBad;
   const embedFields = [
     {
-      name: "User",
+      name: 'User',
       value: interaction.user.toString(),
-      inline: true,
+      inline: true
     },
     {
-      name: "Error Type",
+      name: 'Error Type',
       value: err.name,
-      inline: true,
-    },
+      inline: true
+    }
   ];
   if (err instanceof QueueError) {
     color = EmbedColor.Aqua;
     embedFields.push({
-      name: "In Queue",
+      name: 'In Queue',
       value: err.queueName,
-      inline: true,
+      inline: true
     });
   }
   embedFields.push({
-    name: "Error Message",
+    name: 'Error Message',
     value: err.message,
-    inline: false,
+    inline: false
   });
   if (err instanceof ServerError) {
     color = EmbedColor.Error;
@@ -141,24 +135,19 @@ export function ErrorLogEmbed(
     embeds: [
       {
         color: color,
-        title: `Error occured at <t:${new Date()
-          .getTime()
-          .toString()
-          .slice(0, -3)}:F> `,
+        title: `Error occured at <t:${new Date().getTime().toString().slice(0, -3)}:F> `,
         timestamp: new Date().toISOString(),
         fields: embedFields,
         footer: {
           text: `YABOB`,
-          icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-        },
-      },
-    ],
+          icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+      }
+    ]
   };
 }
 
-export function SimpleLogEmbed(
-  message: string
-): Pick<BaseMessageOptions, "embeds"> {
+export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
   const timeStampString = `\nat <t:${new Date()
     .toISOString()
     .toString()
@@ -172,10 +161,10 @@ export function SimpleLogEmbed(
           timestamp: new Date().toISOString(),
           footer: {
             text: `YABOB`,
-            icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-          },
-        },
-      ],
+            icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+          }
+        }
+      ]
     };
   } else {
     // temporary solution: Force the message into description
@@ -187,10 +176,10 @@ export function SimpleLogEmbed(
           timestamp: new Date().toISOString(),
           footer: {
             text: `YABOB`,
-            icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-          },
-        },
-      ],
+            icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+          }
+        }
+      ]
     };
   }
 }
@@ -199,7 +188,7 @@ export function ButtonLogEmbed(
   user: User,
   interactionName: string,
   channel: TextBasedChannel
-): Pick<BaseMessageOptions, "embeds"> {
+): Pick<BaseMessageOptions, 'embeds'> {
   return {
     embeds: [
       {
@@ -211,33 +200,33 @@ export function ButtonLogEmbed(
         timestamp: new Date().toISOString(),
         fields: [
           {
-            name: "User",
+            name: 'User',
             value: user.toString(),
-            inline: true,
+            inline: true
           },
           {
-            name: "Button Name",
+            name: 'Button Name',
             value: interactionName,
-            inline: true,
+            inline: true
           },
           {
-            name: "Channel",
+            name: 'Channel',
             value: channel.toString(),
-            inline: true,
-          },
+            inline: true
+          }
         ],
         footer: {
           text: `YABOB`,
-          icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-        },
-      },
-    ],
+          icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+      }
+    ]
   };
 }
 
 export function SlashCommandLogEmbed(
   commandInteraction: CommandInteraction
-): Pick<BaseMessageOptions, "embeds"> {
+): Pick<BaseMessageOptions, 'embeds'> {
   let commandName = commandInteraction.commandName;
   let optionsData = commandInteraction.options.data;
   if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) {
@@ -247,27 +236,27 @@ export function SlashCommandLogEmbed(
   }
   const embedFields = [
     {
-      name: "User",
+      name: 'User',
       value: commandInteraction.user.toString(),
-      inline: true,
+      inline: true
     },
     {
-      name: "Command Name",
+      name: 'Command Name',
       value: `\`/${commandName}\``,
-      inline: true,
+      inline: true
     },
     {
-      name: "Channel",
+      name: 'Channel',
       value: commandInteraction.channel?.toString() ?? `unknown channel`,
-      inline: true,
-    },
+      inline: true
+    }
   ];
   if (optionsData.length > 0) {
     embedFields.push({
-      name: "Options",
+      name: 'Options',
       // Need to manually format the options as they are parsed as a string | number | boolean | undefined
       value: optionsData
-        .map((option) => {
+        .map(option => {
           switch (option.type) {
             case ApplicationCommandOptionType.Channel:
               return `**${option.name}**: <#${option.value}>`;
@@ -279,8 +268,8 @@ export function SlashCommandLogEmbed(
               return `**${option.name}**: ${option.value}`;
           }
         })
-        .join("\n"),
-      inline: false,
+        .join('\n'),
+      inline: false
     });
   }
   return {
@@ -295,9 +284,9 @@ export function SlashCommandLogEmbed(
         fields: embedFields,
         footer: {
           text: `YABOB`,
-          icon_url: "https://i.postimg.cc/dVkg4XFf/BOB-pfp.png",
-        },
-      },
-    ],
+          icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+        }
+      }
+    ]
   };
 }
