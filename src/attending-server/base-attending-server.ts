@@ -561,7 +561,7 @@ class AttendingServerV2 {
         }
         helper.helpEnd = new Date();
         this._activeHelpers.delete(helperMember.id);
-        console.log(`- Help time of ${helper.member.displayName} is ` +
+        console.log(` - Help time of ${helper.member.displayName} is ` +
             `${convertMsToTime(helper.helpEnd.getTime() - helper.helpStart.getTime())}`);
         const closableQueues = this._queues.filter(
             queue => helperMember.roles.cache
