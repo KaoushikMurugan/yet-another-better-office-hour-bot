@@ -11,7 +11,6 @@
 </div>
 <br>
 
-
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
 Based on original **BOB V2** and **BOB V3** created by [Kaoushik Murugan](https://github.com/KaoushikMurugan), [Noah Rose Ledesma](https://github.com/NoahRoseLedesma), [Grant Gilson](https://github.com/GMGilson), and [Stephen Ott](https://github.com/stott531).
@@ -35,7 +34,7 @@ So, we created **YABOB**, the **Yet Another Better Office-hours Bot**, with the 
 
 YABOB is a server managment automation bot. This means that YABOB handles logistical tasks like queue management and queue notifications for students.
 
-YABOB is also a ***self-hosted*** bot meaning that you will need to host
+YABOB is also a **_self-hosted_** bot meaning that you will need to host
 and maintain your own instance.
 
 See the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide) to get started with running the bot.
@@ -44,7 +43,7 @@ See the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide)
 
 Below is the standard Office Hours (OH) Session Protocol we follow:
 
-*Helpers refer to Instructors, TAs, and Tutors.*
+_Helpers refer to Instructors, TAs, and Tutors._
 
 1. Helpers open queues that correspond to a course/office hours slot they help for.
 2. Students enter the queue of their choice.
@@ -68,6 +67,6 @@ There are three roles that **YABOB** will interact with on your server
 
 # License
 
-**Copyright (C) 2022**  Zhongning Li, Kaoushik Murugan, Grant Gilson, Noah Rose Ledesma, Stephen Ott
+**Copyright (C) 2022** Zhongning Li, Kaoushik Murugan, Grant Gilson, Noah Rose Ledesma, Stephen Ott
 
 Released under the [GNU GPL v3](https://www.gnu.org/licenses/gpl-3.0.en.html) license.
