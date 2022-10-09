@@ -32,7 +32,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Initializes the calendar extension
-     * ----
      * @param renderIndex the index of the embed message given by the queue
      * @param queueChannel channel object
      */
@@ -57,7 +56,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
     /**
      * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
-     * ----
      */
     override async onQueuePeriodicUpdate(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -70,7 +68,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Embeds the upcoming hours into the queue channel
-     * ----
      */
     override async onQueueRender(
         _queue: Readonly<HelpQueueV2>,
@@ -90,7 +87,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Event listener/subscriber for changes in calendarExtensionStates
-     * ----
      */
     async onCalendarExtensionStateChange(): Promise<void> {
         await this.renderCalendarEmbeds(true);
@@ -98,7 +94,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Composes the calendar embed and sends a render request to the display
-     * ----
      * @param refresh whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(refresh: boolean): Promise<void> {

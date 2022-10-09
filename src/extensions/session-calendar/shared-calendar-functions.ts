@@ -26,7 +26,6 @@ class CalendarConnectionError extends Error {
 
 /**
  * Fetches the calendar and build the embed view model
- * ----
  * @param serverId guild.id for calendarState.get()
  * @param queueName the name to look for in the calendar event
  */
@@ -141,7 +140,6 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
 
 /**
  * Parses the summary string and builds the view model for the current queue
- * ----
  * @param rawSummary unmodified calendar event summary
  * @param parsingString string found the the calendar event description
  * @param start start date of 1 session
@@ -194,7 +192,6 @@ function composeViewModel(
 
 /**
  * Builds the calendar URL
- * ----
  * @param args.calendar_id id to the PUBLIC calendar
  * @param args.apiKey apiKey found in calendar-config.ts
  * @param args.timeMin the start of the date range

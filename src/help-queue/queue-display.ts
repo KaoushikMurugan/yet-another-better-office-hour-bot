@@ -37,7 +37,7 @@ class QueueDisplayV2 {
     /**
      * lock the render method during render
      * - avoids the message.delete method from being called on a deleted message
-     * - queue and extensions can still request render and update their embeds in queueChannelEmbeds
+     * - queue and extensions can still request render and write to queueChannelEmbeds
      */
     private isRendering = false;
 

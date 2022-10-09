@@ -49,8 +49,8 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
-import environment from '../../environment/environment-manager';
 import { ButtonCallback, CommandCallback } from '../../utils/type-aliases';
+import environment from '../../environment/environment-manager';
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
     protected constructor(private readonly guild: Guild) {
@@ -231,7 +231,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     /**
      * Updates the calendar id in the shared calendar extension states
-     * ----
      * - Triggers the queue level extensions to update
      */
     private async updateCalendarId(
@@ -267,7 +266,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     /**
      * Resets the calendar id to default
-     * ----
      */
     private async unsetCalendarId(
         interaction: ChatInputCommandInteraction
@@ -290,7 +288,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     /**
      * Builds the embed for /when_next
-     * ----
      */
     private async listUpComingHours(
         interaction: ChatInputCommandInteraction
@@ -332,7 +329,6 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
 
     /**
      * Makes calendar titles for all approved queues
-     * ----
      * @param generateAll whether to generate string for all the queue roles
      */
     private async makeParsableCalendarTitle(

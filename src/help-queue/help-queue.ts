@@ -110,7 +110,6 @@ class HelpQueueV2 {
     /**
      * Sets up auto clear parameters
      * - The timer won't start until autoClearQueue is called
-     * ----
      * @param hours clear queue after this many hours
      * @param enable whether to enable auto clear, overrides 'hours'
      */
@@ -127,7 +126,6 @@ class HelpQueueV2 {
 
     /**
      * Asynchronously creates a clean queue
-     * ----
      * @param queueChannel the corresponding text channel and its name
      * @param user YABOB's client object. Used for queue rendering
      * @param everyoneRole used for locking the queue
@@ -196,7 +194,6 @@ class HelpQueueV2 {
 
     /**
      * Open a queue with a helper
-     * ----
      * @param helperMember member with Staff/Admin that used /start
      * @param notify whether to notify everyone in the notif group
      * @throws QueueError: do nothing if helperMemeber is already helping
@@ -223,7 +220,6 @@ class HelpQueueV2 {
 
     /**
      * Close a queue with a helper
-     * ----
      * @param helperMember member with Staff/Admin that used /stop
      * @throws QueueError: do nothing if queue is closed
      */
@@ -302,7 +298,6 @@ class HelpQueueV2 {
 
     /**
      * Dequeue this particular queue with a helper
-     * ----
      * @param helperMember the member that triggered dequeue
      * @param targetStudentMember the student to look for if specified
      * @throws QueueError when
@@ -375,7 +370,6 @@ class HelpQueueV2 {
 
     /**
      * Remove a student from the queue. Used for /leave
-     * ----
      * @param targetStudent the student to remove
      * @throws QueueError: the student is not in the queue
      */
@@ -406,7 +400,6 @@ class HelpQueueV2 {
 
     /**
      * Remove all students from the queue. Used for /clear_all
-     * ----
      */
     async removeAllStudents(): Promise<void> {
         await Promise.all(
@@ -423,7 +416,6 @@ class HelpQueueV2 {
 
     /**
      * Adds a student to the notification group.
-     * ----
      * Used for JoinNotif button
      */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
@@ -440,8 +432,7 @@ class HelpQueueV2 {
 
     /**
      * Adds a student to the notification group.
-     * ----
-     * Used for RemoveNotif button
+     * - Used for RemoveNotif button
      */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
@@ -454,7 +445,6 @@ class HelpQueueV2 {
 
     /**
      * Queue delete procedure, let the extension process first before getting deleted
-     * ----
      */
     async gracefulDelete(): Promise<void> {
         await Promise.all(
@@ -464,7 +454,6 @@ class HelpQueueV2 {
 
     /**
      * Re-renders the queue message.
-     * ----
      * Composes the queue view model, then sends it to QueueDisplay
      */
     async triggerRender(): Promise<void> {
@@ -487,7 +476,6 @@ class HelpQueueV2 {
 
     /**
      * Starts the timer that will clear all the students after a certain number of hours
-     * ----
      */
     private startAutoClearTimer(): void {
         const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');

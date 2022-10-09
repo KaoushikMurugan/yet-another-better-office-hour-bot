@@ -1,7 +1,6 @@
 /**
  * Describes errors that happen during the parsing stage
- * ----
- * This error should be triggered before any server related methods are called
+ * - This error should be triggered before any server related methods are called
  */
 class CommandParseError extends Error {
     constructor(message: string) {
@@ -15,8 +14,7 @@ class CommandParseError extends Error {
 
 /**
  * Describes behavioral errors in the server
- * ----
- * This error should be triggered before any queue related methods are called
+ * - This error should be triggered before any queue related methods are called
  */
 class ServerError extends Error {
     constructor(message: string) {
@@ -30,7 +28,6 @@ class ServerError extends Error {
 
 /**
  * Describes behavioral errors in a HelpQueue
- * ----
  */
 class QueueError extends Error {
     constructor(message: string, public queueName: string) {
@@ -44,7 +41,6 @@ class QueueError extends Error {
 
 /**
  * Error for not implemented commands
- * ----
  */
 class CommandNotImplementedError extends Error {
     constructor(message: string) {
@@ -58,7 +54,6 @@ class CommandNotImplementedError extends Error {
 
 /**
  * Error thrown during extension.load()
- * ----
  */
 class ExtensionSetupError extends Error {
     constructor(message: string) {
@@ -72,7 +67,6 @@ class ExtensionSetupError extends Error {
 
 /**
  * Error thrown during display.renderQueue()
- * ----
  */
 class QueueRenderError extends Error {
     constructor(message: string, public queueName: string) {

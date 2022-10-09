@@ -11,8 +11,7 @@ import environment from '../../environment/environment-manager';
 
 /**
  * Attendance entry for each helper
- * ----
- * The Helper part is stored by reference
+ * - The Helper part is stored by reference
  * - when attending server mutates it, this will also change
  */
 type AttendanceEntry = Helper & {
@@ -21,8 +20,7 @@ type AttendanceEntry = Helper & {
 };
 
 /**
- * Helpsession for each student
- * ----
+ * Help Session for each student
  */
 type HelpSessionEntry = {
     'Student Username': string;
@@ -170,6 +168,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
+        // This is where entry is passed by reference
+        // because we stored it with set()
         const entry: AttendanceEntry = {
             ...helper,
             activeTimeMs: 0
@@ -204,7 +204,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
 
     /**
      * Updates the attendance for 1 helper
-     * ----
      */
     private async updateAttendance(entry: Required<AttendanceEntry>): Promise<void> {
         const requiredHeaders = [
@@ -277,7 +276,6 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
 
     /**
      * Updates the help session stats for 1 student
-     * ----
      */
     private async updateHelpSession(
         entries: Array<Required<HelpSessionEntry>>

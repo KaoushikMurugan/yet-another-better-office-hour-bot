@@ -86,7 +86,6 @@ class CentralCommandDispatcher {
 
     /**
      * Main processor for command interactions
-     * ----
      * @param interaction the raw interaction from discord js
      * @throws UserViewableError: when the command exists but failed
      * @throws CommandNotImplementedError: if the command is not implemented
@@ -500,7 +499,6 @@ class CentralCommandDispatcher {
     /**
      * Checks if the command came from a server with correctly initialized YABOB
      * Each handler will have their own isServerInteraction method
-     * ----
      * @returns string: the server id
      */
     private async isServerInteraction(

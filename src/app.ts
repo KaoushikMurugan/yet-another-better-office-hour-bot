@@ -61,7 +61,6 @@ client.on('error', console.error);
 
 /**
  * After login startup seqence
- * ----
  */
 client.on('ready', async () => {
     if (client.user === null) {
@@ -93,7 +92,6 @@ client.on('ready', async () => {
 
 /**
  * Server joining procedure
- * ----
  */
 client.on('guildCreate', async guild => {
     console.log(`${FgMagenta}Got invited to:${ResetColor} '${guild.name}'!`);
@@ -106,7 +104,6 @@ client.on('guildCreate', async guild => {
 
 /**
  * Server exit procedure
- * ----
  * - Clears all the periodic updates
  * - Deletes server from server map
  */
@@ -173,7 +170,6 @@ client.on('guildMemberAdd', async member => {
 
 /**
  * Used for inviting YABOB to a server with existing roles
- * ----
  * Once YABOB has the highest role, start the initialization call
  */
 client.on('roleUpdate', async role => {

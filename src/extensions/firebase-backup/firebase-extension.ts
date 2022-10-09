@@ -41,7 +41,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
 
     /**
      * Gets the backup from firebase
-     * ----
      * If there's no backup for this serverId, return undefined
      * @param serverId the server to retrieve backup for. This is the id from Guild.id
      */
@@ -64,7 +63,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
 
     /**
      * Builds the backup data and sends it to firebase
-     * ----
      * @param server the server to backup
      */
     private async backupServerToFirebase(

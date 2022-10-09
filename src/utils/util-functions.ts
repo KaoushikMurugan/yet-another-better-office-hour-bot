@@ -3,7 +3,6 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server';
 
 /**
  * Converts the time delta in miliseconds into a readable format
- * ----
  * @param milliseconds the difference to convert
  */
 function convertMsToTime(milliseconds: number): string {
@@ -30,7 +29,6 @@ function convertMsToTime(milliseconds: number): string {
 
 /**
  * Gets all the queue roles of a member
- * ----
  * @param server
  * @param member
  * @returns list of queue roles
