@@ -4,13 +4,13 @@
  * This error should be triggered before any server related methods are called
  */
 class CommandParseError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CommandParseError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}**: ${this.message}`;
-  }
+    constructor(message: string) {
+        super(message);
+        this.name = 'CommandParseError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
 }
 
 /**
@@ -19,13 +19,13 @@ class CommandParseError extends Error {
  * This error should be triggered before any queue related methods are called
  */
 class ServerError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ServerError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}**: ${this.message}`;
-  }
+    constructor(message: string) {
+        super(message);
+        this.name = 'ServerError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
 }
 
 /**
@@ -33,13 +33,13 @@ class ServerError extends Error {
  * ----
  */
 class QueueError extends Error {
-  constructor(message: string, public queueName: string) {
-    super(message);
-    this.name = 'QueueError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}** at ${this.queueName}: ${this.message}`;
-  }
+    constructor(message: string, public queueName: string) {
+        super(message);
+        this.name = 'QueueError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}** at ${this.queueName}: ${this.message}`;
+    }
 }
 
 /**
@@ -47,13 +47,13 @@ class QueueError extends Error {
  * ----
  */
 class CommandNotImplementedError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'CommandNotImplementedError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}**: ${this.message}`;
-  }
+    constructor(message: string) {
+        super(message);
+        this.name = 'CommandNotImplementedError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
 }
 
 /**
@@ -61,13 +61,13 @@ class CommandNotImplementedError extends Error {
  * ----
  */
 class ExtensionSetupError extends Error {
-  constructor(message: string) {
-    super(message);
-    this.name = 'ExtensionSetupError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}**: ${this.message}`;
-  }
+    constructor(message: string) {
+        super(message);
+        this.name = 'ExtensionSetupError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
 }
 
 /**
@@ -75,39 +75,39 @@ class ExtensionSetupError extends Error {
  * ----
  */
 class QueueRenderError extends Error {
-  constructor(message: string, public queueName: string) {
-    super(message);
-    this.name = 'QueueError';
-  }
-  briefErrorString(): string {
-    return `**Queue Render Failed in ${this.queueName}**: ${this.message}`;
-  }
+    constructor(message: string, public queueName: string) {
+        super(message);
+        this.name = 'QueueError';
+    }
+    briefErrorString(): string {
+        return `**Queue Render Failed in ${this.queueName}**: ${this.message}`;
+    }
 }
 
 class PeriodicUpdateError extends Error {
-  constructor(message: string, public level: 'Server' | 'Queue') {
-    super(message);
-    this.name = 'PeriodicUpdateError';
-  }
-  briefErrorString(): string {
-    return `**${this.name}**: ${this.message}`;
-  }
+    constructor(message: string, public level: 'Server' | 'Queue') {
+        super(message);
+        this.name = 'PeriodicUpdateError';
+    }
+    briefErrorString(): string {
+        return `**${this.name}**: ${this.message}`;
+    }
 }
 
 // All 4 errors will be presented to the user
 type UserViewableError =
-  | CommandParseError
-  | ServerError
-  | QueueError
-  | CommandNotImplementedError;
+    | CommandParseError
+    | ServerError
+    | QueueError
+    | CommandNotImplementedError;
 
 export {
-  CommandParseError,
-  ServerError,
-  QueueError,
-  QueueRenderError,
-  CommandNotImplementedError,
-  UserViewableError,
-  ExtensionSetupError,
-  PeriodicUpdateError
+    CommandParseError,
+    ServerError,
+    QueueError,
+    QueueRenderError,
+    CommandNotImplementedError,
+    UserViewableError,
+    ExtensionSetupError,
+    PeriodicUpdateError
 };

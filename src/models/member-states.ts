@@ -8,10 +8,10 @@ import { HelpQueueV2 } from '../help-queue/help-queue';
  * - Removed when a students is dequeued
  */
 type Helpee = {
-  waitStart: Date;
-  upNext: boolean;
-  queue: HelpQueueV2; // backref
-  readonly member: GuildMember; // backref
+    waitStart: Date;
+    upNext: boolean;
+    queue: HelpQueueV2; // backref
+    readonly member: GuildMember; // backref
 };
 
 /**
@@ -21,10 +21,10 @@ type Helpee = {
  * - Removed when a staff member uses /close
  */
 type Helper = {
-  helpStart: Date; // time when /start is used
-  helpEnd?: Date; // time when /stop is used
-  helpedMembers: Helpee[];
-  readonly member: GuildMember; // backref
+    helpStart: Date; // time when /start is used
+    helpEnd?: Date; // time when /stop is used
+    helpedMembers: Helpee[];
+    readonly member: GuildMember; // backref
 };
 
 export { Helpee, Helper };

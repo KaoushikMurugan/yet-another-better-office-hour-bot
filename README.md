@@ -59,9 +59,9 @@ while OH is being held.
 
 There are three roles that **YABOB** will interact with on your server
 
-- **Bot Admin**: The Bot Admin Role has total control of bot functionality and server interfaces.
-- **Staff**: The Staff\* Role allows control over OH sessions and locked channels.
-- **Student**: The Student Role allows for the ability to interface with OH-Queue.
+-   **Bot Admin**: The Bot Admin Role has total control of bot functionality and server interfaces.
+-   **Staff**: The Staff\* Role allows control over OH sessions and locked channels.
+-   **Student**: The Student Role allows for the ability to interface with OH-Queue.
 
 ###### \*Staff is refered to as helper in the code for the bot.
 
