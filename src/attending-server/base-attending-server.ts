@@ -9,7 +9,8 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType
+    ChannelType,
+    OverwriteType
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
@@ -236,7 +237,7 @@ class AttendingServerV2 {
         );
     }
 
-    async onMemberLeaveVC(member: GuildMember): Promise<void> {
+    async onMemberLeaveVC(member: GuildMember, oldVoiceState: VoiceState): Promise<void> {
         const memberIsStudent = this._activeHelpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -245,7 +246,10 @@ class AttendingServerV2 {
         if (!memberIsStudent) {
             return;
         }
-        await Promise.all<void | boolean | Message<boolean>>([
+        await Promise.all<unknown>([
+            ...(oldVoiceState.channel?.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            ) ?? []),
             ...this.serverExtensions.map(extension =>
                 extension.onStudentLeaveVC(this, member)
             ),
@@ -425,6 +429,11 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
+        await Promise.all([
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        ]);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             ViewChannel: true,
             Connect: true
