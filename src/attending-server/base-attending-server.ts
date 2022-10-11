@@ -3,7 +3,6 @@ import {
     Collection,
     Guild,
     GuildMember,
-    Message,
     BaseMessageOptions,
     TextChannel,
     User,
@@ -452,7 +451,7 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
-        await Promise.all<void | Message<boolean>>([
+        await Promise.all<unknown>([
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -541,7 +540,7 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
-        await Promise.all<void | Message<boolean>>([
+        await Promise.all<unknown>([
             ...this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
                 extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)

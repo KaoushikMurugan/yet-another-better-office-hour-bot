@@ -34,7 +34,7 @@ type ButtonCallback = (
  * Marks 1 property in T as required.
  * https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
  */
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] };
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] | NonNullable<T[P]> };
 
 export {
     GuildId,

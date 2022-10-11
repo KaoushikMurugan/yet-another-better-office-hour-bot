@@ -1,4 +1,4 @@
-import { GuildMember, Role, TextChannel, User, Collection, Message } from 'discord.js';
+import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
 import { IQueueExtension } from '../extensions/extension-interface';
@@ -205,7 +205,7 @@ class HelpQueueV2 {
             );
         } // won't actually be seen, will be caught
         this._activeHelperIds.add(helperMember.id);
-        await Promise.all<void | boolean | Message<boolean>>([
+        await Promise.all<unknown>([
             // shorthand syntax, the RHS of && will be invoked if LHS is true
             ...this.notifGroup.map(
                 notifMember =>
@@ -276,10 +276,9 @@ class HelpQueueV2 {
         this._students.push(student);
         // converted to use Array.map
         const helperIdArray = [...this._activeHelperIds];
-        // the Promise<void> cast is for combining 2 different promise types
-        // so that they can be launched in parallel
-        // we won't use the return values so it's safe to cast
-        await Promise.all<void | undefined | Message<boolean>>([
+        // unknown explicitly states that we don't need the return types
+        // this is different from any. Any is skipping type checking
+        await Promise.all<unknown>([
             ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
