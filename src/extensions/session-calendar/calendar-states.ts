@@ -15,8 +15,8 @@ import { restorePublicEmbedURL } from './shared-calendar-functions';
 type CalendarConfigBackup = {
     calendarId: string;
     publicCalendarEmbedUrl: string;
-    calendarNameDiscordIdMap: { [key: string]: string; }
-}
+    calendarNameDiscordIdMap: { [key: string]: string };
+};
 
 class CalendarExtensionState {
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
@@ -31,9 +31,12 @@ class CalendarExtensionState {
         private readonly serverId: string,
         private readonly serverName: string,
         private readonly firebaseDB?: Firestore
-    ) { }
+    ) {}
 
-    static async create(serverId: string, serverName: string): Promise<CalendarExtensionState> {
+    static async create(
+        serverId: string,
+        serverName: string
+    ): Promise<CalendarExtensionState> {
         const firebaseCredentials = environment.firebaseCredentials;
         if (
             firebaseCredentials.clientEmail === '' &&
@@ -47,11 +50,7 @@ class CalendarExtensionState {
                 credential: cert(firebaseCredentials)
             });
         }
-        const instance = new CalendarExtensionState(
-            serverId,
-            serverName,
-            getFirestore()
-        );
+        const instance = new CalendarExtensionState(serverId, serverName, getFirestore());
         await instance.restoreFromBackup(serverId);
         return instance;
     }
@@ -74,17 +73,17 @@ class CalendarExtensionState {
         ]);
     }
 
-    async updateNameDiscordIdMap(
-        displayName: string,
-        discordId: string
-    ): Promise<void> {
+    async updateNameDiscordIdMap(displayName: string, discordId: string): Promise<void> {
         this.displayNameDiscordIdMap.set(displayName, discordId);
         await this.backupToFirebase();
         // fire and forget, calendar api is slow and should not block yabob's response
-        void Promise.all(this.listeners.map(listener => listener.onCalendarExtensionStateChange()))
-            .catch(() => console.error(
+        void Promise.all(
+            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ).catch(() =>
+            console.error(
                 `Calendar refresh timed out from updateNameDiscordIdMap triggered by ${displayName}`
-            ));
+            )
+        );
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {
@@ -102,11 +101,13 @@ class CalendarExtensionState {
         this.calendarId = calendarBackup.calendarId;
         // TODO: coalescing is temporary, this is just migration code
         // once all servers have migrated to the new backup model we can safely remove it
-        this.publicCalendarEmbedUrl = calendarBackup.publicCalendarEmbedUrl
-            ?? restorePublicEmbedURL(this.calendarId);
+        this.publicCalendarEmbedUrl =
+            calendarBackup.publicCalendarEmbedUrl ??
+            restorePublicEmbedURL(this.calendarId);
         this.displayNameDiscordIdMap.load(
-            Object.entries(calendarBackup.calendarNameDiscordIdMap)
-                .map(([key, value]) => [key, { value: value }])
+            Object.entries(calendarBackup.calendarNameDiscordIdMap).map(
+                ([key, value]) => [key, { value: value }]
+            )
         );
     }
 
@@ -117,20 +118,28 @@ class CalendarExtensionState {
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
             publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,
-            calendarNameDiscordIdMap: Object.fromEntries(this.displayNameDiscordIdMap
-                .dump().map(([key, LRUEntry]) => [key, LRUEntry.value])
+            calendarNameDiscordIdMap: Object.fromEntries(
+                this.displayNameDiscordIdMap
+                    .dump()
+                    .map(([key, LRUEntry]) => [key, LRUEntry.value])
             )
         };
         this.firebaseDB
             .collection('calendarBackups')
             .doc(this.serverId)
             .set(backupData)
-            .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
-                `${FgYellow}${this.serverName}${ResetColor}]\n` +
-                ` - Calendar config backup successful`
-            ))
-            .catch((err: Error) => console.error('Firebase calendar backup failed.', err.message));
+            .then(() =>
+                console.log(
+                    `[${FgCyan}${new Date().toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    })}${ResetColor} ` +
+                        `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                        ` - Calendar config backup successful`
+                )
+            )
+            .catch((err: Error) =>
+                console.error('Firebase calendar backup failed.', err.message)
+            );
     }
 }
 
@@ -145,4 +154,3 @@ class CalendarServerEventListener extends BaseServerExtension {
 const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
 
 export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };
-

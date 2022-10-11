@@ -18,45 +18,45 @@ import {
  * ----
  * - All instances read from the calendar in serverIdStateMap.get(serverId)
  * - Each instance only looks for the class it's responsible for
-*/
+ */
 class CalendarQueueExtension extends BaseQueueExtension {
-
     private upcomingSessions: UpComingSessionViewModel[] = [];
     private display?: Readonly<QueueDisplayV2>;
 
     private constructor(
         private readonly renderIndex: number,
         private readonly queueChannel: QueueChannel
-    ) { super(); }
+    ) {
+        super();
+    }
 
     /**
      * Initializes the calendar extension
-     * ----
      * @param renderIndex the index of the embed message given by the queue
      * @param queueChannel channel object
-    */
+     */
     static async load(
         renderIndex: number,
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
         if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
-            return Promise.reject(new ExtensionSetupError(
-                `${FgRed}The command level extension is required.${ResetColor}`
-            ));
+            return Promise.reject(
+                new ExtensionSetupError(
+                    `${FgRed}The command level extension is required.${ResetColor}`
+                )
+            );
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
         serverIdCalendarStateMap
             .get(queueChannel.channelObj.guild.id)
-            ?.listeners
-            .set(queueChannel.queueName, instance);
+            ?.listeners.set(queueChannel.queueName, instance);
         return instance;
     }
 
     /**
      * Every time queue emits onQueuePeriodicUpdate,
      * fecth new events and update cached viewModel
-     * ----
-    */
+     */
     override async onQueuePeriodicUpdate(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _queue: Readonly<HelpQueueV2>,
@@ -68,8 +68,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Embeds the upcoming hours into the queue channel
-     * ----
-    */
+     */
     override async onQueueRender(
         _queue: Readonly<HelpQueueV2>,
         display: Readonly<QueueDisplayV2>
@@ -88,17 +87,15 @@ class CalendarQueueExtension extends BaseQueueExtension {
 
     /**
      * Event listener/subscriber for changes in calendarExtensionStates
-     * ----
-    */
+     */
     async onCalendarExtensionStateChange(): Promise<void> {
         await this.renderCalendarEmbeds(true);
     }
 
     /**
      * Composes the calendar embed and sends a render request to the display
-     * ----
      * @param refresh whether to refresh the upcomingSessions cache
-    */
+     */
     private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
@@ -107,28 +104,45 @@ class CalendarQueueExtension extends BaseQueueExtension {
         this.upcomingSessions = refresh
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
-        const calendarId = serverIdCalendarStateMap
-            .get(this.queueChannel.channelObj.guild.id)?.calendarId;
-        const publicEmbedUrl = serverIdCalendarStateMap
-            .get(this.queueChannel.channelObj.guild.id)?.publicCalendarEmbedUrl;
+        const calendarId = serverIdCalendarStateMap.get(
+            this.queueChannel.channelObj.guild.id
+        )?.calendarId;
+        const publicEmbedUrl = serverIdCalendarStateMap.get(
+            this.queueChannel.channelObj.guild.id
+        )?.publicCalendarEmbedUrl;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
-            .setURL(publicEmbedUrl && publicEmbedUrl?.length > 0
-                ? publicEmbedUrl
-                : restorePublicEmbedURL(calendarId ?? ''))
+            .setURL(
+                publicEmbedUrl && publicEmbedUrl?.length > 0
+                    ? publicEmbedUrl
+                    : restorePublicEmbedURL(calendarId ?? '')
+            )
             .setDescription(
                 this.upcomingSessions.length > 0
                     ? this.upcomingSessions
-                        .map(viewModel =>
-                            `**${viewModel.discordId !== undefined
-                                ? `<@${viewModel.discordId}>`
-                                : viewModel.displayName
-                            }**\t|\t` +
-                            `**${viewModel.eventSummary}**\n` +
-                            `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
-                            `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
-                            `${viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``}`)
-                        .join(`\n${'-'.repeat(20)}\n`)
+                          .map(
+                              viewModel =>
+                                  `**${
+                                      viewModel.discordId !== undefined
+                                          ? `<@${viewModel.discordId}>`
+                                          : viewModel.displayName
+                                  }**\t|\t` +
+                                  `**${viewModel.eventSummary}**\n` +
+                                  `Start: <t:${viewModel.start
+                                      .getTime()
+                                      .toString()
+                                      .slice(0, -3)}:R>\t|\t` +
+                                  `End: <t:${viewModel.end
+                                      .getTime()
+                                      .toString()
+                                      .slice(0, -3)}:R>` +
+                                  `${
+                                      viewModel.location
+                                          ? `\t|\tLocation: ${viewModel.location}`
+                                          : ``
+                                  }`
+                          )
+                          .join(`\n${'-'.repeat(20)}\n`)
                     : `There are no upcoming sessions for ${queueName} in the next 7 days.`
             )
             .setColor(EmbedColor.NoColor)
@@ -136,14 +150,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every 15 minutes. Click the title to see the full calendar.`,
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
-        const refreshButton = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('refresh ' + queueName)
-                    .setEmoji('🔄')
-                    .setLabel('Refresh Upcoming Sessions')
-                    .setStyle(ButtonStyle.Primary)
-            );
+        const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId('refresh ' + queueName)
+                .setEmoji('🔄')
+                .setLabel('Refresh Upcoming Sessions')
+                .setStyle(ButtonStyle.Primary)
+        );
         await this.display?.requestNonQueueEmbedRender(
             {
                 embeds: [upcomingSessionsEmbed],

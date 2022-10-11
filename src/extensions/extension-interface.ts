@@ -1,13 +1,18 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * !! Important !!
- * ----
  * All extensions will be called with Promise.all()
  * this means that extensions will be launched together
  * To avoid race conditions, do not let extensions modify shared data values
-*/
+ */
 
-import { ButtonInteraction, Collection, ChatInputCommandInteraction, GuildMember, VoiceChannel } from 'discord.js';
+import {
+    ButtonInteraction,
+    Collection,
+    ChatInputCommandInteraction,
+    GuildMember,
+    VoiceChannel
+} from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { HelpQueueV2 } from '../help-queue/help-queue';
 import { QueueDisplayV2 } from '../help-queue/queue-display';
@@ -21,13 +26,11 @@ interface IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2>;
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: ChatInputCommandInteraction) =>
-            Promise<string | undefined>
+        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
     >;
     buttonMethodMap: ReadonlyMap<
         string,
-        (queueName: string, interaction: ButtonInteraction) =>
-            Promise<string | undefined>
+        (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
     >;
     slashCommandData: CommandData;
     processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
@@ -64,7 +67,7 @@ interface IServerExtension {
     ) => Promise<void>;
     onStudentLeaveVC: (
         server: Readonly<AttendingServerV2>,
-        studentMember: GuildMember,
+        studentMember: GuildMember
     ) => Promise<void>;
     onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
     loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
@@ -73,19 +76,11 @@ interface IServerExtension {
 
 // Extensions for individual queues
 interface IQueueExtension {
-    onQueueCreate: (
-        queue: Readonly<HelpQueueV2>
-    ) => Promise<void>;
+    onQueueCreate: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueOpen: (queue: Readonly<HelpQueueV2>) => Promise<void>;
     onQueueClose: (queue: Readonly<HelpQueueV2>) => Promise<void>;
-    onEnqueue: (
-        queue: Readonly<HelpQueueV2>,
-        student: Readonly<Helpee>
-    ) => Promise<void>;
-    onDequeue: (
-        queue: Readonly<HelpQueueV2>,
-        student: Readonly<Helpee>
-    ) => Promise<void>;
+    onEnqueue: (queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>) => Promise<void>;
+    onDequeue: (queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>) => Promise<void>;
     onStudentRemove: (
         queue: Readonly<HelpQueueV2>,
         student: Readonly<Helpee>
@@ -102,18 +97,16 @@ interface IQueueExtension {
         queue: Readonly<HelpQueueV2>,
         isFirstCall: boolean
     ) => Promise<void>;
-    onQueueDelete: (
-        deletedQueue: Readonly<HelpQueueV2>
-    ) => Promise<void>;
+    onQueueDelete: (deletedQueue: Readonly<HelpQueueV2>) => Promise<void>;
 }
 
 /**
- * Boilerplate base class of interaction related extensions. 
+ * Boilerplate base class of interaction related extensions.
  * ----
  * - Any INTERACTION extension must inherit from here
  * - Always override postExternalSlashCommands() if you want to post your own commands
  * - override processCommand and/or processButton depending on which type you want
-*/
+ */
 class BaseInteractionExtension implements IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2> = new Collection();
     buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map();
@@ -131,11 +124,11 @@ class BaseInteractionExtension implements IInteractionExtension {
 }
 
 /**
- * Boilerplate base class of server related extensions. 
+ * Boilerplate base class of server related extensions.
  * ----
  * - Any SERVER extension must inherit from here
  * - Override the events that you want to trigger
-*/
+ */
 class BaseServerExtension implements IServerExtension {
     onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
@@ -195,15 +188,13 @@ class BaseServerExtension implements IServerExtension {
 }
 
 /**
- * Boilerplate base class of individual-queue related extensions. 
+ * Boilerplate base class of individual-queue related extensions.
  * ----
  * - Any QUEUE extension must inherit from here
  * - Override the events that you want to trigger
-*/
+ */
 class BaseQueueExtension implements IQueueExtension {
-    onQueueCreate(
-        queue: Readonly<HelpQueueV2>
-    ): Promise<void> {
+    onQueueCreate(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
     onQueueRender(
@@ -224,16 +215,10 @@ class BaseQueueExtension implements IQueueExtension {
     onQueueOpen(queue: Readonly<HelpQueueV2>): Promise<void> {
         return Promise.resolve();
     }
-    onEnqueue(
-        queue: Readonly<HelpQueueV2>,
-        student: Readonly<Helpee>
-    ): Promise<void> {
+    onEnqueue(queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
-    onDequeue(
-        queue: Readonly<HelpQueueV2>,
-        student: Readonly<Helpee>
-    ): Promise<void> {
+    onDequeue(queue: Readonly<HelpQueueV2>, student: Readonly<Helpee>): Promise<void> {
         return Promise.resolve();
     }
     onStudentRemove(
@@ -259,5 +244,5 @@ export {
     IQueueExtension,
     BaseInteractionExtension,
     BaseServerExtension,
-    BaseQueueExtension,
+    BaseQueueExtension
 };

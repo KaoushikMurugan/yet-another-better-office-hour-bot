@@ -1,8 +1,7 @@
 /**
  * Describes errors that happen during the parsing stage
- * ----
- * This error should be triggered before any server related methods are called
-*/
+ * - This error should be triggered before any server related methods are called
+ */
 class CommandParseError extends Error {
     constructor(message: string) {
         super(message);
@@ -15,9 +14,8 @@ class CommandParseError extends Error {
 
 /**
  * Describes behavioral errors in the server
- * ----
- * This error should be triggered before any queue related methods are called
-*/
+ * - This error should be triggered before any queue related methods are called
+ */
 class ServerError extends Error {
     constructor(message: string) {
         super(message);
@@ -30,13 +28,9 @@ class ServerError extends Error {
 
 /**
  * Describes behavioral errors in a HelpQueue
- * ----
-*/
+ */
 class QueueError extends Error {
-    constructor(
-        message: string,
-        public queueName: string
-    ) {
+    constructor(message: string, public queueName: string) {
         super(message);
         this.name = 'QueueError';
     }
@@ -47,8 +41,7 @@ class QueueError extends Error {
 
 /**
  * Error for not implemented commands
- * ----
-*/
+ */
 class CommandNotImplementedError extends Error {
     constructor(message: string) {
         super(message);
@@ -61,8 +54,7 @@ class CommandNotImplementedError extends Error {
 
 /**
  * Error thrown during extension.load()
- * ----
-*/
+ */
 class ExtensionSetupError extends Error {
     constructor(message: string) {
         super(message);
@@ -75,11 +67,9 @@ class ExtensionSetupError extends Error {
 
 /**
  * Error thrown during display.renderQueue()
- * ----
-*/
+ */
 class QueueRenderError extends Error {
-    constructor(message: string,
-        public queueName: string) {
+    constructor(message: string, public queueName: string) {
         super(message);
         this.name = 'QueueError';
     }
@@ -103,8 +93,7 @@ type UserViewableError =
     | CommandParseError
     | ServerError
     | QueueError
-    | CommandNotImplementedError
-
+    | CommandNotImplementedError;
 
 export {
     CommandParseError,

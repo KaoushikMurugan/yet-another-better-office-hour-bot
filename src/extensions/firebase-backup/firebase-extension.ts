@@ -14,7 +14,9 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         private readonly firebase_db: Firestore,
         private readonly serverId: string,
         private readonly serverName: string
-    ) { super(); }
+    ) {
+        super();
+    }
 
     static async load(
         serverName: string,
@@ -32,18 +34,19 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         );
         console.log(
             `[${FgBlue}Firebase Backup${ResetColor}] ` +
-            `successfully loaded for '${serverName}'!`
+                `successfully loaded for '${serverName}'!`
         );
         return instance;
     }
 
     /**
      * Gets the backup from firebase
-     * ----
      * If there's no backup for this serverId, return undefined
      * @param serverId the server to retrieve backup for. This is the id from Guild.id
-    */
-    override async loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+     */
+    override async loadExternalServerData(
+        serverId: string
+    ): Promise<ServerBackup | undefined> {
         const backupData = await this.firebase_db
             .collection('serverBackups')
             .doc(serverId)
@@ -52,16 +55,19 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         return backupData.data() as ServerBackup;
     }
 
-    override async onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+    override async onServerRequestBackup(
+        server: Readonly<AttendingServerV2>
+    ): Promise<void> {
         await this.backupServerToFirebase(server);
     }
 
     /**
      * Builds the backup data and sends it to firebase
-     * ----
      * @param server the server to backup
-    */
-    private async backupServerToFirebase(server: Readonly<AttendingServerV2>): Promise<void> {
+     */
+    private async backupServerToFirebase(
+        server: Readonly<AttendingServerV2>
+    ): Promise<void> {
         const queues = server.queues;
         const queueBackups: QueueBackup[] = queues.map(queue => {
             return {
@@ -74,7 +80,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
                     };
                 }),
                 name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId,
+                parentCategoryId: queue.parentCategoryId
             };
         });
         const serverBackup: ServerBackup = {
@@ -83,21 +89,29 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             timeStamp: new Date(),
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
-            hoursUntilAutoClear: server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+            hoursUntilAutoClear:
+                server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
         };
         this.firebase_db
             .collection('serverBackups')
             .doc(this.serverId)
             .set(serverBackup)
-            .then(() => console.log(
-                `[${FgCyan}${(new Date()).toLocaleString('en-US', { timeZone: 'PST8PDT' })}${ResetColor} ` +
-                `${FgYellow}${this.serverName}${ResetColor}]\n` +
-                ` - Server & queue data backup successful`
-            ))
-            .catch((err: Error) => console.error('Firebase server backup failed.' ,err.message));
-        await server.sendLogMessage(SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`));
+            .then(() =>
+                console.log(
+                    `[${FgCyan}${new Date().toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    })}${ResetColor} ` +
+                        `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                        ` - Server & queue data backup successful`
+                )
+            )
+            .catch((err: Error) =>
+                console.error('Firebase server backup failed.', err.message)
+            );
+        await server.sendLogMessage(
+            SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
+        );
     }
-
 }
 
 export { FirebaseServerBackupExtension };
