@@ -186,7 +186,7 @@ class HelpQueueV2 {
                             )
                         )
                     ), // Random 0~2min offset to avoid spamming the APIs
-                1000 * 60 * 10 + Math.floor(Math.random() * 1000 * 60 * 2)
+                1000 * 60 * 60 + Math.floor(Math.random() * 1000 * 60 * 2)
             )
         );
         return queue;
