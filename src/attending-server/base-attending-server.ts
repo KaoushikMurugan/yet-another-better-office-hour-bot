@@ -33,7 +33,12 @@ import {
     ResetColor
 } from '../utils/command-line-colors';
 import { convertMsToTime } from '../utils/util-functions';
-import { CategoryChannelId, GuildMemberId, HelpMessage } from '../utils/type-aliases';
+import {
+    CategoryChannelId,
+    GuildMemberId,
+    HelpMessage,
+    WithRequired
+} from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
 
 /**
@@ -215,7 +220,10 @@ class AttendingServerV2 {
         return server;
     }
 
-    async onMemberJoinVC(member: GuildMember, newVoiceState: VoiceState): Promise<void> {
+    async onMemberJoinVC(
+        member: GuildMember,
+        newVoiceState: WithRequired<VoiceState, 'channel'>
+    ): Promise<void> {
         const memberIsStudent = this._activeHelpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -230,14 +238,16 @@ class AttendingServerV2 {
                     this,
                     member,
                     // already checked
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    newVoiceState.channel! as VoiceChannel
+                    newVoiceState.channel as VoiceChannel
                 )
             )
         );
     }
 
-    async onMemberLeaveVC(member: GuildMember, oldVoiceState: VoiceState): Promise<void> {
+    async onMemberLeaveVC(
+        member: GuildMember,
+        oldVoiceState: WithRequired<VoiceState, 'channel'>
+    ): Promise<void> {
         const memberIsStudent = this._activeHelpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id

@@ -19,8 +19,8 @@ import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId } from './utils/type-aliases';
-import environment from './environment/environment-manager';
 import { logEditFailure } from './command-handling/common-validations';
+import environment from './environment/environment-manager';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
