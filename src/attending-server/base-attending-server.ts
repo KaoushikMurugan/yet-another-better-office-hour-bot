@@ -532,6 +532,11 @@ class AttendingServerV2 {
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
+        await Promise.all([
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        ]);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             ViewChannel: true,
             Connect: true
