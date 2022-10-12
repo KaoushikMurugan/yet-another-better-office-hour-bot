@@ -961,7 +961,8 @@ class AttendingServerV2 {
                 if (
                     member.user.id !== this.user.id &&
                     studentRole &&
-                    !member.roles.cache.has(studentRole.id)
+                    !member.roles.cache.has(studentRole.id) &&
+                    !member.user.bot
                 ) {
                     await member.roles.add(studentRole);
                 }
