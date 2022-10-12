@@ -1,4 +1,4 @@
-import { Client, Guild, GatewayIntentBits, Collection } from 'discord.js';
+import { Client, Guild, GatewayIntentBits, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
@@ -18,7 +18,7 @@ import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
-import { GuildId } from './utils/type-aliases';
+import { GuildId, WithRequired } from './utils/type-aliases';
 import { logEditFailure } from './command-handling/common-validations';
 import environment from './environment/environment-manager';
 
@@ -204,14 +204,19 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const serverId = oldVoiceState.guild.id;
     const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
-    isLeaveVC &&
-        (await serversV2
-            .get(serverId)
-            ?.onMemberLeaveVC(newVoiceState.member, oldVoiceState));
-    isJoinVC &&
-        (await serversV2
-            .get(serverId)
-            ?.onMemberJoinVC(newVoiceState.member, newVoiceState));
+    if (isLeaveVC) {
+        await serversV2.get(serverId)?.onMemberLeaveVC(
+            newVoiceState.member,
+            // already checked in isLeaveVC condition
+            oldVoiceState as WithRequired<VoiceState, 'channel'>
+        );
+    } else if (isJoinVC) {
+        await serversV2.get(serverId)?.onMemberJoinVC(
+            newVoiceState.member,
+            // already checked in isJoinVC condition
+            newVoiceState as WithRequired<VoiceState, 'channel'>
+        );
+    }
 });
 
 process.on('exit', () => {

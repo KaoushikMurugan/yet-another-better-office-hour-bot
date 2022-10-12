@@ -256,9 +256,9 @@ class AttendingServerV2 {
             return;
         }
         await Promise.all<unknown>([
-            ...(oldVoiceState.channel?.permissionOverwrites.cache.map(
+            ...oldVoiceState.channel.permissionOverwrites.cache.map(
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            ) ?? []),
+            ),
             ...this.serverExtensions.map(extension =>
                 extension.onStudentLeaveVC(this, member)
             ),
