@@ -19,8 +19,8 @@ import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId } from './utils/type-aliases';
-import environment from './environment/environment-manager';
 import { logEditFailure } from './command-handling/common-validations';
+import environment from './environment/environment-manager';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -204,7 +204,10 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const serverId = oldVoiceState.guild.id;
     const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
-    isLeaveVC && (await serversV2.get(serverId)?.onMemberLeaveVC(newVoiceState.member));
+    isLeaveVC &&
+        (await serversV2
+            .get(serverId)
+            ?.onMemberLeaveVC(newVoiceState.member, oldVoiceState));
     isJoinVC &&
         (await serversV2
             .get(serverId)

@@ -41,7 +41,7 @@ async function getUpComingTutoringEvents(
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
-        maxResults: 10
+        maxResults: 100
     });
     const response = await axios({
         url: calendarUrl,

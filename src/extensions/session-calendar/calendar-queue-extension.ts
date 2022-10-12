@@ -120,6 +120,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             .setDescription(
                 this.upcomingSessions.length > 0
                     ? this.upcomingSessions
+                          .slice(0, 10) // take first 10
                           .map(
                               viewModel =>
                                   `**${
@@ -147,7 +148,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             )
             .setColor(EmbedColor.NoColor)
             .setFooter({
-                text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every 15 minutes. Click the title to see the full calendar.`,
+                text: `This embed shows up to 10 most recent upcoming sessions and auto refreshes every hour. Click the title to see the full calendar.`,
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
