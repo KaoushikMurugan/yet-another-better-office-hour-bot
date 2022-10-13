@@ -152,7 +152,7 @@ export function ErrorLogEmbed(
 
 export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     const timeStampString = `\nat <t:${new Date()
-        .toISOString()
+        .getTime()
         .toString()
         .slice(0, -3)}:F>`;
     if (message.length <= 256) {
@@ -197,7 +197,7 @@ export function ButtonLogEmbed(
             {
                 color: EmbedColor.Pink,
                 title: `Button Pressed at <t:${new Date()
-                    .toISOString()
+                    .getTime()
                     .toString()
                     .slice(0, -3)}:F>`,
                 timestamp: new Date().toISOString(),

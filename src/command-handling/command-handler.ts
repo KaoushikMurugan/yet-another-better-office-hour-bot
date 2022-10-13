@@ -1,11 +1,9 @@
 import {
-    CacheType,
     ChannelType,
     ChatInputCommandInteraction,
     GuildChannel,
     GuildMember,
     GuildMemberRoleManager,
-    Interaction,
     TextChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
@@ -93,11 +91,15 @@ class CentralCommandDispatcher {
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const serverId = (await this.isServerInteraction(interaction)) ?? 'unknown';
-        this.serverMap.get(serverId)?.sendLogMessage(SlashCommandLogEmbed(interaction));
-        // Immediately replay to show that YABOB has received the interaction
-        await interaction.editReply(
-            SimpleEmbed('Processing command...', EmbedColor.Neutral)
-        );
+        // Immediately reply to show that YABOB has received the interaction
+        await Promise.all<unknown>([
+            interaction.editReply(
+                SimpleEmbed('Processing command...', EmbedColor.Neutral)
+            ),
+            this.serverMap
+                .get(serverId)
+                ?.sendLogMessage(SlashCommandLogEmbed(interaction))
+        ]);
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -130,7 +132,7 @@ class CentralCommandDispatcher {
                 this.serverMap
                     .get(serverId)
                     ?.sendLogMessage(
-                        ErrorLogEmbed(err, interaction as Interaction<CacheType>)
+                        ErrorLogEmbed(err, interaction)
                     );
             });
     }

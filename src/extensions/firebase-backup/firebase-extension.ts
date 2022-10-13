@@ -68,8 +68,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     private async backupServerToFirebase(
         server: Readonly<AttendingServerV2>
     ): Promise<void> {
-        const queues = server.queues;
-        const queueBackups: QueueBackup[] = queues.map(queue => {
+        const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
                     return {
