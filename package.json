@@ -41,6 +41,7 @@
         "google-spreadsheet": "^3.3.0",
         "googleapis": "^100.0.0",
         "lru-cache": "^7.14.0",
+        "true-myth": "^6.2.0",
         "y18n": "^5.0.8"
     },
     "engines": {

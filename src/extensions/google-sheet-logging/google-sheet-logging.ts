@@ -63,10 +63,8 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
 
     static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
-            return Promise.reject(
-                new ExtensionSetupError(
-                    `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n`
-                )
+            throw new ExtensionSetupError(
+                `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n`
             );
         }
         const googleSheet = new GoogleSpreadsheet(
@@ -74,11 +72,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         );
         await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
         await googleSheet.loadInfo().catch(() => {
-            return Promise.reject(
-                new ExtensionSetupError(
-                    `${FgRed}Failed to load google sheet for ${serverName}. ` +
-                        `Google sheets rejected our connection.${ResetColor}`
-                )
+            throw new ExtensionSetupError(
+                `${FgRed}Failed to load google sheet for ${serverName}. ` +
+                    `Google sheets rejected our connection.${ResetColor}`
             );
         });
         console.log(
@@ -190,15 +186,15 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 `Please contact @Bot Admin to manually update.`
         );
         if (entry === undefined) {
-            return Promise.reject(error);
+            throw error;
         }
         entry.helpEnd = helper.helpEnd;
         helper.helpedMembers.map(student =>
             this.studentsJustDequeued.delete(student.member.id)
         );
-        await this.updateAttendance(entry as Required<AttendanceEntry>).catch(() =>
-            Promise.reject(error)
-        );
+        await this.updateAttendance(entry as Required<AttendanceEntry>).catch(() => {
+            throw error;
+        });
         this.attendanceEntries.delete(helper.member.id);
     }
 

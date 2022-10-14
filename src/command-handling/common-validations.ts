@@ -30,12 +30,10 @@ async function isTriggeredByUserWithRoles(
             userRoles.some(role => requiredRoles.includes(role))
         )
     ) {
-        return Promise.reject(
-            new CommandParseError(
-                `You need to have: [${requiredRoles.join(
-                    ' or '
-                )}] to use \`/${commandName}\`.`
-            )
+        throw new CommandParseError(
+            `You need to have: [${requiredRoles.join(
+                ' or '
+            )}] to use \`/${commandName}\`.`
         );
     }
     return interaction.member as GuildMember;
@@ -58,22 +56,18 @@ async function hasValidQueueArgument(
         (interaction.channel as GuildChannel).parent;
     // null check is done here by optional property access
     if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
-        return Promise.reject(
-            new CommandParseError(
-                `\`${parentCategory?.name}\` is not a valid queue category.`
-            )
+        throw new CommandParseError(
+            `\`${parentCategory?.name}\` is not a valid queue category.`
         );
     }
     const queueTextChannel = (parentCategory as CategoryChannel).children.cache.find(
         child => child.name === 'queue' && child.type === ChannelType.GuildText
     );
     if (queueTextChannel === undefined) {
-        return Promise.reject(
-            new CommandParseError(
-                `This category does not have a \`#queue\` text channel.\n` +
-                    `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
-                    `to generate one.`
-            )
+        throw new CommandParseError(
+            `This category does not have a \`#queue\` text channel.\n` +
+                `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
+                `to generate one.`
         );
     }
     const queueChannel: QueueChannel = {
@@ -99,10 +93,8 @@ async function isTriggeredByUserWithValidEmail(
     if (
         !(interaction.member instanceof GuildMember && roles.includes('Verified Email'))
     ) {
-        return Promise.reject(
-            new CommandParseError(
-                `You need to have a verified email to use \`/${commandName}\`.`
-            )
+        throw new CommandParseError(
+            `You need to have a verified email to use \`/${commandName}\`.`
         );
     }
     return interaction.member as GuildMember;
@@ -120,11 +112,9 @@ async function isFromQueueChannelWithParent(
         interaction.channel?.type !== ChannelType.GuildText ||
         interaction.channel.parent === null
     ) {
-        return Promise.reject(
-            new CommandParseError(
-                'Invalid button press / Command. ' +
-                    'Make sure this channel has a parent category.'
-            )
+        throw new CommandParseError(
+            'Invalid button press / Command. ' +
+                'Make sure this channel has a parent category.'
         );
     }
     const queueChannel: QueueChannel = {
@@ -132,7 +122,7 @@ async function isFromQueueChannelWithParent(
         queueName: queueName,
         parentCategoryId: interaction.channel.parent.id
     };
-    return Promise.resolve(queueChannel);
+    return queueChannel;
 }
 
 /**
@@ -145,9 +135,7 @@ async function isFromGuildMember(
     if (interaction.member) {
         return interaction.member as GuildMember;
     }
-    return Promise.reject(
-        new CommandParseError('Sorry, I only accept server base interactions.')
-    );
+    throw new CommandParseError('Sorry, I only accept server base interactions.');
 }
 
 function logEditFailure(

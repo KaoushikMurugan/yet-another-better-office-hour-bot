@@ -2,11 +2,12 @@ import { BaseServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import firebaseAppAdmin from 'firebase-admin';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
+import Result, { ok } from 'true-myth/dist/public/result';
+import firebaseAppAdmin from 'firebase-admin';
 import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
@@ -64,10 +65,11 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     /**
      * Builds the backup data and sends it to firebase
      * @param server the server to backup
+     * @noexcept, error is logged to the console
      */
     private async backupServerToFirebase(
         server: Readonly<AttendingServerV2>
-    ): Promise<void> {
+    ): Promise<Result<undefined, Error>> {
         const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
@@ -110,6 +112,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         await server.sendLogMessage(
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
+        return ok(undefined);
     }
 }
 

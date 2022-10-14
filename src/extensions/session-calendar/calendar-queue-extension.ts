@@ -40,10 +40,8 @@ class CalendarQueueExtension extends BaseQueueExtension {
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
         if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
-            return Promise.reject(
-                new ExtensionSetupError(
-                    `${FgRed}The command level extension is required.${ResetColor}`
-                )
+            throw new ExtensionSetupError(
+                `${FgRed}The command level extension is required.${ResetColor}`
             );
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
