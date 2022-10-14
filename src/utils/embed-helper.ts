@@ -151,10 +151,7 @@ export function ErrorLogEmbed(
 }
 
 export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
-    const timeStampString = `\nat <t:${new Date()
-        .getTime()
-        .toString()
-        .slice(0, -3)}:F>`;
+    const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     if (message.length <= 256) {
         return {
             embeds: [

@@ -131,9 +131,7 @@ class CentralCommandDispatcher {
                 await interaction.editReply(ErrorEmbed(err));
                 this.serverMap
                     .get(serverId)
-                    ?.sendLogMessage(
-                        ErrorLogEmbed(err, interaction)
-                    );
+                    ?.sendLogMessage(ErrorLogEmbed(err, interaction));
             });
     }
 
