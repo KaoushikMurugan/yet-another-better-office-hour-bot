@@ -123,7 +123,7 @@ class AttendingServerV2 {
                 )
             );
             await guild.leave();
-            return Promise.reject(Error("YABOB doesn't have admin permission."));
+            throw Error("YABOB doesn't have admin permission.");
         }
         if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
             const owner = await guild.fetchOwner();
@@ -135,7 +135,7 @@ class AttendingServerV2 {
                     EmbedColor.Error
                 )
             );
-            return Promise.reject(Error("YABOB doesn't have highest role."));
+            throw Error("YABOB doesn't have highest role.");
         }
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
@@ -322,9 +322,7 @@ class AttendingServerV2 {
             queue => queue.queueName === newQueueName
         );
         if (queueWithSameName !== undefined) {
-            return Promise.reject(
-                new ServerError(`Queue ${newQueueName} already exists`)
-            );
+            throw new ServerError(`Queue ${newQueueName} already exists`);
         }
         const parentCategory = await this.guild.channels.create({
             name: newQueueName,
@@ -355,7 +353,7 @@ class AttendingServerV2 {
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this._queues.get(queueCategoryID);
         if (queue === undefined) {
-            return Promise.reject(new ServerError('This queue does not exist.'));
+            throw new ServerError('This queue does not exist.');
         }
         const parentCategory = (await (await this.guild.channels.fetch())
             .find(ch => ch !== null && ch.id === queueCategoryID)
@@ -366,9 +364,7 @@ class AttendingServerV2 {
                 .map(child => child.delete())
                 .filter(promise => promise !== undefined) as Promise<TextChannel>[]
         ).catch((err: Error) => {
-            return Promise.reject(
-                new ServerError(`API Failure: ${err.name}\n${err.message}`)
-            );
+            throw new ServerError(`API Failure: ${err.name}\n${err.message}`);
         });
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
@@ -409,23 +405,19 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            return Promise.reject(new ServerError('You are not currently hosting.'));
+            throw new ServerError('You are not currently hosting.');
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            return Promise.reject(
-                new ServerError(`You need to be in a voice channel first.`)
-            );
+            throw new ServerError(`You need to be in a voice channel first.`);
         }
         const nonEmptyQueues = currentlyHelpingQueues.filter(
             queue => queue.isOpen && queue.length !== 0
         );
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
-            return Promise.reject(
-                new ServerError(
-                    `There's no one left to help. You should get some coffee!`
-                )
+            throw new ServerError(
+                `There's no one left to help. You should get some coffee!`
             );
         }
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>((prev, curr) =>
@@ -482,13 +474,11 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            return Promise.reject(new ServerError('You are not currently hosting.'));
+            throw new ServerError('You are not currently hosting.');
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            return Promise.reject(
-                new ServerError(`You need to be in a voice channel first.`)
-            );
+            throw new ServerError(`You need to be in a voice channel first.`);
         }
         let student: Readonly<Helpee> | undefined;
         if (specificQueue !== undefined) {
@@ -498,11 +488,9 @@ class AttendingServerV2 {
                     role => role.name === specificQueue.queueName
                 )
             ) {
-                return Promise.reject(
-                    new ServerError(
-                        `You don't have the permission to dequeue ` +
-                            `\`${specificQueue.queueName}\`.`
-                    )
+                throw new ServerError(
+                    `You don't have the permission to dequeue ` +
+                        `\`${specificQueue.queueName}\`.`
                 );
             }
             student = await this._queues
@@ -516,19 +504,15 @@ class AttendingServerV2 {
             );
             student = await queue?.removeStudent(targetStudentMember);
             if (student === undefined) {
-                return Promise.reject(
-                    new ServerError(
-                        `The student ${targetStudentMember.displayName} is not in any of the queues.`
-                    )
+                throw new ServerError(
+                    `The student ${targetStudentMember.displayName} is not in any of the queues.`
                 );
             }
         }
         if (student === undefined) {
             // won't be seen, only the above error messages will be sent
             // this is just here for semantics
-            return Promise.reject(
-                new ServerError('Dequeue with the given arguments failed.')
-            );
+            throw new ServerError('Dequeue with the given arguments failed.');
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
@@ -575,7 +559,7 @@ class AttendingServerV2 {
         notify: boolean
     ): Promise<void> {
         if (this._activeHelpers.has(helperMember.id)) {
-            return Promise.reject(new ServerError('You are already hosting.'));
+            throw new ServerError('You are already hosting.');
         }
         const helper: Helper = {
             helpStart: new Date(),
@@ -587,12 +571,10 @@ class AttendingServerV2 {
             helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            return Promise.reject(
-                new ServerError(
-                    `It seems like you don't have any class roles.\n` +
-                        `This might be a human error. ` +
-                        `In the meantime, you can help students through DMs.`
-                )
+            throw new ServerError(
+                `It seems like you don't have any class roles.\n` +
+                    `This might be a human error. ` +
+                    `In the meantime, you can help students through DMs.`
             );
         }
         await Promise.all(
@@ -613,7 +595,7 @@ class AttendingServerV2 {
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._activeHelpers.get(helperMember.id);
         if (helper === undefined) {
-            return Promise.reject(new ServerError('You are not currently hosting.'));
+            throw new ServerError('You are not currently hosting.');
         }
         helper.helpEnd = new Date();
         this._activeHelpers.delete(helperMember.id);
@@ -723,11 +705,9 @@ class AttendingServerV2 {
                         role.name === targetQueue.queueName || role.name === 'Bot Admin'
                 )
             ) {
-                return Promise.reject(
-                    new ServerError(
-                        `You don't have permission to announce in ${targetQueue.queueName}. ` +
-                            `You can only announce to queues that you have a role of.`
-                    )
+                throw new ServerError(
+                    `You don't have permission to announce in ${targetQueue.queueName}. ` +
+                        `You can only announce to queues that you have a role of.`
                 );
             }
             await Promise.all(

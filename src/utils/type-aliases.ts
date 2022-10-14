@@ -1,7 +1,3 @@
-/**
- * These are just aliases to make keys of collections easier to read
- */
-
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
@@ -9,6 +5,9 @@ import {
     ChatInputCommandInteraction
 } from 'discord.js';
 
+/**
+ * These are just aliases to make keys of collections easier to read
+ */
 type GuildId = string;
 type GuildMemberId = string;
 type CategoryChannelId = string;
@@ -22,6 +21,9 @@ type HelpMessage = {
     message: BaseMessageOptions;
 };
 
+/**
+ * Used in command handlers
+ */
 type CommandCallback = (
     interaction: ChatInputCommandInteraction
 ) => Promise<string | undefined>;
