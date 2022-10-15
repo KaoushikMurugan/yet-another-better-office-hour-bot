@@ -148,7 +148,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 .get(serverId)
                 ?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
-        await interaction.reply(SimpleEmbed('Processing command...', EmbedColor.Neutral));
+        await interaction.reply({
+            ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
+            ephemeral:true
+        });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
             await interaction.editReply(
@@ -188,7 +191,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in button-handler.ts
      */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply(SimpleEmbed('Processing button...', EmbedColor.Neutral));
+        await interaction.reply({
+            ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
+            ephemeral:true
+        });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
@@ -254,14 +260,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
             );
         return (
-            `Successfully changed to new calendar` +
-            ` ${
+            `Successfully changed to new calendar ` +
+            `${
                 newCalendarName.length > 0
                     ? ` '${newCalendarName}'. `
                     : ", but it doesn't have a name. "
             }` +
             `The calendar embeds will refresh soon. ` +
-            `Don't forget sure to use \`/set_public_embed_url\` if you are using a 3rd party calendar public embed. ` +
+            `Don't forget sure to use \`/set_public_embed_url\` ` +
+            `if you are using a 3rd party calendar public embed. ` +
             `This ID has also been backed up to firebase.`
         );
     }
@@ -273,14 +280,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
-        await serverIdCalendarStateMap
-            .get(this.guild.id)
-            ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
-        await this.serverMap
-            .get(this.guild.id)
-            ?.sendLogMessage(
-                SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
-            );
+        await Promise.all([
+            serverIdCalendarStateMap
+                .get(this.guild.id)
+                ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
+            this.serverMap
+                .get(this.guild.id)
+                ?.sendLogMessage(
+                    SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
+                )
+        ]);
         return (
             `Successfully unset the calendar. ` +
             `The calendar embeds will refresh soon. ` +

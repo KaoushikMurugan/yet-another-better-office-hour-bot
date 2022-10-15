@@ -114,6 +114,7 @@ class BaseInteractionExtension implements IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2> = new Collection();
     buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map();
     commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map();
+    modalMethodMap: ReadonlyMap<string, CommandCallback> = new Map();
 
     get slashCommandData(): CommandData {
         return [];

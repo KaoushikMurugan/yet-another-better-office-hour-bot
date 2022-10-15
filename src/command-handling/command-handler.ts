@@ -7,7 +7,6 @@ import {
     GuildMemberRoleManager,
     TextChannel
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
 import {
     EmbedColor,
@@ -29,10 +28,11 @@ import {
 import { convertMsToTime } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, GuildId } from '../utils/type-aliases';
+import { CommandCallback } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
+import { attendingServers } from '../global-states';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -85,9 +85,6 @@ class CentralCommandDispatcher {
         CommandCallback
     >();
 
-    // key is Guild.id, same as servers map from app.ts
-    constructor(public serverMap: ReadonlyMap<GuildId, AttendingServerV2>) {}
-
     canHandle(
         interaction: ChatInputCommandInteraction | ModalSubmitInteraction
     ): boolean {
@@ -108,10 +105,11 @@ class CentralCommandDispatcher {
         const serverId = (await this.isServerInteraction(interaction)) ?? 'unknown';
         // Immediately reply to show that YABOB has received the interaction
         await Promise.all<unknown>([
-            interaction.editReply(
-                SimpleEmbed('Processing command...', EmbedColor.Neutral)
-            ),
-            this.serverMap
+            interaction.reply({
+                ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
+                ephemeral: true
+            }),
+            attendingServers
                 .get(serverId)
                 ?.sendLogMessage(SlashCommandLogEmbed(interaction))
         ]);
@@ -145,7 +143,7 @@ class CentralCommandDispatcher {
                 // Central error handling, reply to user with the error
                 await Promise.all([
                     interaction.editReply(ErrorEmbed(err)),
-                    this.serverMap
+                    attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))
                 ]);
@@ -165,7 +163,7 @@ class CentralCommandDispatcher {
         switch (subcommand) {
             case 'add': {
                 const queueName = interaction.options.getString('queue_name', true);
-                await this.serverMap.get(serverId)?.createQueue(queueName);
+                await attendingServers.get(serverId)?.createQueue(queueName);
                 return `Successfully created \`${queueName}\`.`;
             }
             case 'remove': {
@@ -179,7 +177,7 @@ class CentralCommandDispatcher {
                             ` Otherwise Discord API will reject.`
                     );
                 }
-                await this.serverMap
+                await attendingServers
                     .get(serverId)
                     ?.deleteQueueById(targetQueue.parentCategoryId);
                 return `Successfully deleted \`${targetQueue.queueName}\`.`;
@@ -196,7 +194,7 @@ class CentralCommandDispatcher {
             hasValidQueueArgument(interaction),
             isFromGuildMember(interaction)
         ]);
-        await this.serverMap.get(serverId)?.enqueueStudent(member, queueChannel);
+        await attendingServers.get(serverId)?.enqueueStudent(member, queueChannel);
         return `Successfully joined \`${queueChannel.queueName}\`.`;
     }
 
@@ -217,10 +215,10 @@ class CentralCommandDispatcher {
         // otherwise use dequeueGlobalFirst
         const dequeuedStudent =
             targetQueue || targetStudent
-                ? await this.serverMap
+                ? await attendingServers
                       .get(serverId)
                       ?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
-                : await this.serverMap.get(serverId)?.dequeueGlobalFirst(helperMember);
+                : await attendingServers.get(serverId)?.dequeueGlobalFirst(helperMember);
         return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
     }
 
@@ -230,7 +228,7 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(interaction, 'start', ['Bot Admin', 'Staff'])
         ]);
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
-        await this.serverMap.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
+        await attendingServers.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
         return `You have started helping! Have fun!`;
     }
 
@@ -239,7 +237,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'stop', ['Bot Admin', 'Staff'])
         ]);
-        const helpTime = await this.serverMap
+        const helpTime = await attendingServers
             .get(serverId)
             ?.closeAllClosableQueues(member);
         return (
@@ -259,7 +257,7 @@ class CentralCommandDispatcher {
             isFromGuildMember(interaction),
             hasValidQueueArgument(interaction)
         ]);
-        await this.serverMap.get(serverId)?.removeStudentFromQueue(member, queue);
+        await attendingServers.get(serverId)?.removeStudentFromQueue(member, queue);
         return `You have successfully left from queue ${queue.queueName}.`;
     }
 
@@ -282,7 +280,7 @@ class CentralCommandDispatcher {
                     `You can only clear the queues that you have a role of.`
             );
         }
-        await this.serverMap.get(serverId)?.clearQueue(queue);
+        await attendingServers.get(serverId)?.clearQueue(queue);
         return `Everyone in  queue ${queue.queueName} was removed.`;
     }
 
@@ -291,7 +289,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'clear_all', ['Bot Admin'])
         ]);
-        const server = this.serverMap.get(serverId);
+        const server = attendingServers.get(serverId);
         const allQueues = await server?.getQueueChannels();
         if (allQueues === undefined || allQueues.length === 0) {
             throw new CommandParseError(
@@ -307,13 +305,14 @@ class CentralCommandDispatcher {
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const serverId = await this.isServerInteraction(interaction);
-        const helpers = this.serverMap.get(serverId)?.activeHelpers;
+        const helpers = attendingServers.get(serverId)?.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
             return undefined;
         }
         const table = new AsciiTable3();
-        const allQueues = (await this.serverMap.get(serverId)?.getQueueChannels()) ?? [];
+        const allQueues =
+            (await attendingServers.get(serverId)?.getQueueChannels()) ?? [];
         table
             .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed')
             .setAlign(1, AlignmentEnum.CENTER)
@@ -359,11 +358,11 @@ class CentralCommandDispatcher {
         const optionalChannel = interaction.options.getChannel('queue_name', false);
         if (optionalChannel !== null) {
             const queueChannel = await hasValidQueueArgument(interaction, true);
-            await this.serverMap
+            await attendingServers
                 .get(serverId)
                 ?.announceToStudentsInQueue(member, announcement, queueChannel);
         } else {
-            await this.serverMap
+            await attendingServers
                 .get(serverId)
                 ?.announceToStudentsInQueue(member, announcement);
         }
@@ -379,7 +378,7 @@ class CentralCommandDispatcher {
         if ((interaction.channel as GuildChannel)?.name === 'queue') {
             throw new CommandParseError('Please use this command outside the queue.');
         }
-        await this.serverMap.get(serverId)?.cleanUpQueue(queue);
+        await attendingServers.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
     }
 
@@ -392,9 +391,9 @@ class CentralCommandDispatcher {
         ]);
         await Promise.all(
             (
-                await this.serverMap.get(serverId)?.getQueueChannels()
+                await attendingServers.get(serverId)?.getQueueChannels()
             )?.map(queueChannel =>
-                this.serverMap.get(serverId)?.cleanUpQueue(queueChannel)
+                attendingServers.get(serverId)?.cleanUpQueue(queueChannel)
             ) as Promise<void>[]
         );
         return `All queues have been cleaned up.`;
@@ -407,7 +406,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'cleanup_help_channel', ['Bot Admin'])
         ]);
-        await this.serverMap.get(serverId)?.updateCommandHelpChannels();
+        await attendingServers.get(serverId)?.updateCommandHelpChannels();
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
@@ -424,7 +423,7 @@ class CentralCommandDispatcher {
         const newAfterSessionMessage = enableAfterSessionMessage
             ? interaction.options.getString(`message`, true)
             : '';
-        await this.serverMap
+        await attendingServers
             .get(serverId)
             ?.setAfterSessionMessage(newAfterSessionMessage);
         return `Successfully updated after session message.`;
@@ -464,7 +463,7 @@ class CentralCommandDispatcher {
         if (loggingChannel.type !== ChannelType.GuildText) {
             throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
         }
-        await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
+        await attendingServers.get(serverId)?.setLoggingChannel(loggingChannel);
         return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
     }
 
@@ -482,7 +481,7 @@ class CentralCommandDispatcher {
                 'The number of hours must be greater than 0 to enable queue auto clear.'
             );
         }
-        this.serverMap.get(serverId)?.setQueueAutoClear(hours, enable);
+        attendingServers.get(serverId)?.setQueueAutoClear(hours, enable);
         return enable
             ? `Successfully changed the auto clear timeout to be ${hours} hours.`
             : 'Successfully disabled queue auto clear.';
@@ -493,7 +492,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
         ]);
-        await this.serverMap.get(serverId)?.setLoggingChannel(undefined);
+        await attendingServers.get(serverId)?.setLoggingChannel(undefined);
         return `Successfully stopped logging.`;
     }
 
@@ -506,7 +505,7 @@ class CentralCommandDispatcher {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const serverId = interaction.guild?.id;
-        if (!serverId || !this.serverMap.has(serverId)) {
+        if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(
                 'I can only accept server based interactions. ' +
                     `Are you sure ${interaction.guild?.name} has a initialized YABOB?`

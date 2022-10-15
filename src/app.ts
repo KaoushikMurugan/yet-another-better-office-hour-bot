@@ -20,6 +20,7 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { logEditFailure } from './command-handling/common-validations';
+import { attendingServers } from './global-states';
 import environment from './environment/environment-manager';
 
 if (
@@ -45,12 +46,10 @@ const client = new Client({
     ]
 });
 
-// key is Guild.id
-const serversV2: Collection<GuildId, AttendingServerV2> = new Collection();
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
-const builtinCommandHandler = new CentralCommandDispatcher(serversV2);
-const builtinButtonHandler = new ButtonCommandDispatcher(serversV2);
+const builtinCommandHandler = new CentralCommandDispatcher();
+const builtinButtonHandler = new ButtonCommandDispatcher();
 
 client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error('Login Unsuccessful. Check YABOBs credentials.');
@@ -108,11 +107,11 @@ client.on('guildCreate', async guild => {
  * - Deletes server from server map
  */
 client.on('guildDelete', async guild => {
-    const server = serversV2.get(guild.id);
+    const server = attendingServers.get(guild.id);
     if (server !== undefined) {
         server.clearAllServerTimers();
         await server.gracefulDelete();
-        serversV2.delete(guild.id);
+        attendingServers.delete(guild.id);
         console.log(
             `${FgRed}Leaving ${guild.name}. ` +
                 `Backups will be saved by the extensions.${ResetColor}`
@@ -123,7 +122,7 @@ client.on('guildDelete', async guild => {
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
-    // The IIFE syntax is only used for cleaner catch 
+    // The IIFE syntax is only used for cleaner catch
     // TODO: consider using Result<ReturnType, Error> inside command handler
     if (interaction.isChatInputCommand()) {
         await (async () => {
@@ -144,14 +143,16 @@ client.on('interactionCreate', async interaction => {
     if (interaction.isButton()) {
         await (async () => {
             if (builtinButtonHandler.canHandle(interaction)) {
-                builtinButtonHandler.serverMap = serversV2;
                 await builtinButtonHandler.process(interaction);
             } else {
                 const externalButtonHandler = interactionExtensions
                     .get(interaction.guild?.id ?? '')
                     ?.find(ext => ext.canHandleButton(interaction));
                 if (!externalButtonHandler) {
-                    await interaction.reply('Unknown interaction');
+                    await interaction.reply({
+                        content: 'Unknown interaction',
+                        ephemeral: true
+                    });
                     return;
                 }
                 await externalButtonHandler.processButton(interaction);
@@ -161,7 +162,8 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.on('guildMemberAdd', async member => {
-    const server = serversV2.get(member.guild.id) ?? (await joinGuild(member.guild));
+    const server =
+        attendingServers.get(member.guild.id) ?? (await joinGuild(member.guild));
     const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
     if (studentRole !== undefined && !member.user.bot) {
         await member.roles.add(studentRole);
@@ -173,7 +175,7 @@ client.on('guildMemberAdd', async member => {
  * Once YABOB has the highest role, start the initialization call
  */
 client.on('roleUpdate', async role => {
-    if (serversV2.has(role.guild.id)) {
+    if (attendingServers.has(role.guild.id)) {
         return;
     }
     if (
@@ -205,13 +207,13 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
     if (isLeaveVC) {
-        await serversV2.get(serverId)?.onMemberLeaveVC(
+        await attendingServers.get(serverId)?.onMemberLeaveVC(
             newVoiceState.member,
             // already checked in isLeaveVC condition
             oldVoiceState as WithRequired<VoiceState, 'channel'>
         );
     } else if (isJoinVC) {
-        await serversV2.get(serverId)?.onMemberJoinVC(
+        await attendingServers.get(serverId)?.onMemberJoinVC(
             newVoiceState.member,
             // already checked in isJoinVC condition
             newVoiceState as WithRequired<VoiceState, 'channel'>
@@ -238,18 +240,17 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
-            await Promise.all([CalendarInteractionExtension.load(guild, serversV2)])
+            await Promise.all([
+                CalendarInteractionExtension.load(guild, attendingServers)
+            ])
         );
     }
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
-    serversV2.set(guild.id, server);
-    // update serverMap for all interaction handlers
-    builtinCommandHandler.serverMap = serversV2;
-    builtinButtonHandler.serverMap = serversV2;
+    attendingServers.set(guild.id, server);
     [...interactionExtensions.values()]
         .flat()
-        .forEach(extension => (extension.serverMap = serversV2));
+        .forEach(extension => (extension.serverMap = attendingServers));
     await postSlashCommands(
         guild,
         interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)

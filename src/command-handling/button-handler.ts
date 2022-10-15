@@ -1,5 +1,4 @@
 import { ButtonInteraction } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
 import {
     EmbedColor,
@@ -15,6 +14,7 @@ import {
 } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
+import { attendingServers } from '../global-states';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -40,17 +40,16 @@ class ButtonCommandDispatcher {
         ]
     ]);
 
-    constructor(public serverMap: ReadonlyMap<string, AttendingServerV2>) {}
-
     canHandle(interaction: ButtonInteraction): boolean {
         const [buttonName] = this.splitButtonQueueName(interaction);
         return this.buttonMethodMap.has(buttonName);
     }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply(
-            SimpleEmbed('Processing button...', EmbedColor.Neutral)
-        );
+        await interaction.reply({
+            ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
+            ephemeral: true
+        });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
@@ -81,7 +80,7 @@ class ButtonCommandDispatcher {
                 // Central error handling, reply to user with the error
                 await interaction.editReply(ErrorEmbed(err));
                 const serverId = (await this.isServerInteraction(interaction)) ?? '';
-                this.serverMap
+                attendingServers
                     .get(serverId)
                     ?.sendLogMessage(ErrorLogEmbed(err, interaction));
             });
@@ -103,7 +102,7 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-        const server = this.serverMap.get(serverId);
+        const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
         );
@@ -120,7 +119,7 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-        const server = this.serverMap.get(serverId);
+        const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
         );
@@ -137,7 +136,7 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-        const server = this.serverMap.get(serverId);
+        const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
         );
@@ -154,7 +153,7 @@ class ButtonCommandDispatcher {
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ]);
-        const server = this.serverMap.get(serverId);
+        const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(
                 interaction.user,
@@ -172,7 +171,7 @@ class ButtonCommandDispatcher {
      */
     private async isServerInteraction(interaction: ButtonInteraction): Promise<string> {
         const serverId = interaction.guild?.id;
-        if (!serverId || !this.serverMap.has(serverId)) {
+        if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(
                 'I can only accept server based interactions. ' +
                     `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
