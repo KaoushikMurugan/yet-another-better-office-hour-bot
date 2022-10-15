@@ -2,17 +2,7 @@ import { Guild, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
-import {
-    BgMagenta,
-    FgBlack,
-    FgCyan,
-    FgGreen,
-    FgMagenta,
-    FgRed,
-    FgYellow,
-    ResetColor,
-    BgCyan
-} from './utils/command-line-colors';
+import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
 import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
@@ -52,7 +42,7 @@ client.on('ready', async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    console.log(`\n✅ ${FgGreen}Ready to go!${ResetColor} ✅\n`);
+    console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
     return;
 });
@@ -61,11 +51,9 @@ client.on('ready', async () => {
  * Server joining procedure
  */
 client.on('guildCreate', async guild => {
-    console.log(`${FgMagenta}Got invited to:${ResetColor} '${guild.name}'!`);
+    console.log(`${magenta('Got invited to:')} '${guild.name}'!`);
     await joinGuild(guild).catch(() =>
-        console.error(
-            `${FgRed}Please give me the highest role in: ${ResetColor}'${guild.name}'.`
-        )
+        console.error(`${red('Please give me the highest role in:')} '${guild.name}'.`)
     );
 });
 
@@ -81,8 +69,7 @@ client.on('guildDelete', async guild => {
         await server.gracefulDelete();
         attendingServers.delete(guild.id);
         console.log(
-            `${FgRed}Leaving ${guild.name}. ` +
-                `Backups will be saved by the extensions.${ResetColor}`
+            red(`Leaving ${guild.name}. Backups will be saved by the extensions.`)
         );
     }
 });
@@ -150,9 +137,7 @@ client.on('roleUpdate', async role => {
         role.name === client.user?.username &&
         role.guild.roles.highest.name === client.user.username
     ) {
-        console.log(
-            `${FgCyan}Got the highest Role! Starting server initialization${ResetColor}`
-        );
+        console.log(cyan('Got the highest Role! Starting server initialization'));
         const owner = await role.guild.fetchOwner();
         await Promise.all([
             owner.send(
@@ -204,7 +189,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (client.user === null) {
         throw Error('Please wait until YABOB has logged in ' + 'to manage the server');
     }
-    console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
+    console.log(`Joining guild: ${yellow(guild.name)}`);
     if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
@@ -228,17 +213,18 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
 function printTitleString(username: string): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.1';
-    console.log(`Env: ${BgCyan}${environment.env}${ResetColor}`);
+    console.log(`Environment: ${cyan(environment.env)}`);
     console.log(`Logged in as ${username}!`);
     console.log('Scanning servers I am a part of...');
     console.log(
-        `\n${FgBlack}${BgMagenta}${' '.repeat(
-            (process.stdout.columns - titleString.length) / 2
-        )}` +
-            `${titleString}` +
-            `${' '.repeat(
-                (process.stdout.columns - titleString.length) / 2
-            )}${ResetColor}\n`
+        `\n${black(
+            magenta(
+                ' '.repeat((process.stdout.columns - titleString.length) / 2) +
+                    titleString +
+                    ' '.repeat((process.stdout.columns - titleString.length) / 2),
+                'Bg'
+            )
+        )}\n`
     );
 }
 

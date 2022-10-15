@@ -1,5 +1,5 @@
 import { ButtonInteraction } from 'discord.js';
-import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { cyan, magenta, yellow } from '../utils/command-line-colors';
 import {
     EmbedColor,
     ErrorEmbed,
@@ -59,13 +59,15 @@ class ButtonCommandDispatcher {
             return;
         }
         console.log(
-            `[${FgCyan}${new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })}${ResetColor} ` +
-                `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            `[${cyan(
+                new Date().toLocaleString('en-US', {
+                    timeZone: 'PST8PDT'
+                })
+            )} ` +
+                `${yellow(interaction.guild?.name?? 'Unknown Guild')}]\n` +
                 ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
                 ` - Server Id: ${interaction.guildId}\n` +
-                ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n` +
+                ` - Button Pressed: ${magenta(buttonName)}\n` +
                 ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)

@@ -3,7 +3,7 @@ import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
 import { EmbedColor } from '../../utils/embed-helper';
-import { FgRed, ResetColor } from '../../utils/command-line-colors';
+import { red } from '../../utils/command-line-colors';
 import { serverIdCalendarStateMap } from './calendar-states';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
@@ -41,7 +41,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
     ): Promise<CalendarQueueExtension> {
         if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
             throw new ExtensionSetupError(
-                `${FgRed}The command level extension is required.${ResetColor}`
+                red('The command level extension is required.')
             );
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);

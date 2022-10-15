@@ -36,14 +36,7 @@ import {
     getUpComingTutoringEvents,
     restorePublicEmbedURL
 } from './shared-calendar-functions';
-import {
-    FgBlue,
-    FgCyan,
-    FgMagenta,
-    FgRed,
-    FgYellow,
-    ResetColor
-} from '../../utils/command-line-colors';
+import { blue, cyan, magenta, yellow } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { getQueueRoles } from '../../utils/util-functions';
@@ -67,9 +60,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
             environment.sessionCalendar.YABOB_GOOGLE_API_KEY.length === 0
         ) {
-            throw new ExtensionSetupError(
-                `${FgRed}Make sure you have Calendar ID and API key${ResetColor}`
-            );
+            throw new ExtensionSetupError('Make sure you have Calendar ID and API key');
         }
         const calendarName = await checkCalendarConnection(
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
@@ -85,7 +76,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
-            `[${FgBlue}Session Calendar${ResetColor}] ` +
+            `[${blue('Session Calendar')}] ` +
                 `successfully loaded for '${guild.name}'!\n` +
                 ` - Using ${calendarName} as the default calendar`
         );
@@ -150,7 +141,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         }
         await interaction.reply({
             ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
-            ephemeral:true
+            ephemeral: true
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -164,13 +155,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })}${ResetColor} ` +
-                `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            `[${cyan(
+                new Date().toLocaleString('en-US', {
+                    timeZone: 'PST8PDT'
+                })
+            )} ` +
+                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
                 ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
                 ` - Server Id: ${interaction.guildId}\n` +
-                ` - Command Used: ${FgMagenta}${interaction.toString()}${ResetColor}`
+                ` - Command Used: ${magenta(interaction.toString())}`
         );
         await commandMethod(interaction)
             // if the method didn't directly reply, the center handler replies
@@ -193,7 +186,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
-            ephemeral:true
+            ephemeral: true
         });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
@@ -208,13 +201,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             return;
         }
         console.log(
-            `[${FgCyan}${new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })}${ResetColor} ` +
-                `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            `[${cyan(
+                new Date().toLocaleString('en-US', {
+                    timeZone: 'PST8PDT'
+                })
+            )} ` +
+                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
                 ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
                 ` - Server Id: ${interaction.guildId}\n` +
-                ` - Button Pressed: ${FgMagenta}${buttonName}${ResetColor}\n` +
+                ` - Button Pressed: ${magenta(buttonName)}\n` +
                 ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)

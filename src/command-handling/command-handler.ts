@@ -7,7 +7,7 @@ import {
     GuildMemberRoleManager,
     TextChannel
 } from 'discord.js';
-import { FgCyan, FgMagenta, FgYellow, ResetColor } from '../utils/command-line-colors';
+import { cyan, magenta, yellow } from '../utils/command-line-colors';
 import {
     EmbedColor,
     SimpleEmbed,
@@ -122,13 +122,15 @@ class CentralCommandDispatcher {
             return;
         }
         console.log(
-            `[${FgCyan}${new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })}${ResetColor} ` +
-                `${FgYellow}${interaction.guild?.name}${ResetColor}]\n` +
+            `[${cyan(
+                new Date().toLocaleString('en-US', {
+                    timeZone: 'PST8PDT'
+                })
+            )} ` +
+                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
                 ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
                 ` - Server Id: ${interaction.guildId}\n` +
-                ` - Command Used: ${FgMagenta}${interaction.toString()}${ResetColor}`
+                ` - Command Used: ${magenta(interaction.toString())}`
         );
         await commandMethod(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs

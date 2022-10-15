@@ -4,7 +4,7 @@ import { cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
-import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
+import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
 import firebaseAppAdmin from 'firebase-admin';
 import environment from '../../environment/environment-manager';
@@ -34,8 +34,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             serverName
         );
         console.log(
-            `[${FgBlue}Firebase Backup${ResetColor}] ` +
-                `successfully loaded for '${serverName}'!`
+            `[${blue('Firebase Backup')}] ` + `successfully loaded for '${serverName}'!`
         );
         return instance;
     }
@@ -99,10 +98,12 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             .set(serverBackup)
             .then(() =>
                 console.log(
-                    `[${FgCyan}${new Date().toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    })}${ResetColor} ` +
-                        `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                    `[${cyan(
+                        new Date().toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        })
+                    )} ` +
+                        `${yellow(this.serverName)}]\n` +
                         ` - Server & queue data backup successful`
                 )
             )

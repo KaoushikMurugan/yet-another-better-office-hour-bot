@@ -2,7 +2,7 @@ import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { GuildId } from './utils/type-aliases';
 import environment from './environment/environment-manager';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
-import { BgYellow, FgBlack, ResetColor } from './utils/command-line-colors';
+import { yellow, black } from './utils/command-line-colors';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -12,7 +12,7 @@ if (
 }
 
 if (environment.disableExtensions) {
-    console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
+    console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
 
 const client = new Client({

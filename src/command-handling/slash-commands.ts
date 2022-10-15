@@ -10,7 +10,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { Guild } from 'discord.js';
-import { FgMagenta, ResetColor } from '../utils/command-line-colors';
+import { magenta } from '../utils/command-line-colors';
 import environment from '../environment/environment-manager';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
@@ -266,7 +266,7 @@ async function postSlashCommands(
             // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
         )
         .catch(e => console.error(e));
-    console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
+    console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
 }
 
 type CommandData = typeof commandData;
