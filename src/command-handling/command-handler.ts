@@ -1,11 +1,15 @@
 import {
     ChannelType,
     ChatInputCommandInteraction,
-    ModalSubmitInteraction,
     GuildChannel,
     GuildMember,
     GuildMemberRoleManager,
-    TextChannel
+    TextChannel,
+    ActionRowBuilder,
+    ModalActionRowComponentBuilder,
+    ModalBuilder,
+    TextInputBuilder,
+    TextInputStyle
 } from 'discord.js';
 import { cyan, magenta, yellow } from '../utils/command-line-colors';
 import {
@@ -53,7 +57,7 @@ class CentralCommandDispatcher {
     // - arrow function wrapper is required because of the closure of 'this'
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
+    private commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
         string,
         CommandCallback
     >([
@@ -68,30 +72,22 @@ class CentralCommandDispatcher {
         ['list_helpers', interaction => this.listHelpers(interaction)],
         ['next', interaction => this.next(interaction)],
         ['queue', interaction => this.queue(interaction)],
+        ['start', interaction => this.start(interaction)],
+        ['stop', interaction => this.stop(interaction)],
+        ['help', interaction => this.help(interaction)],
         [
             'set_after_session_msg',
             interaction => this.setAfterSessionMessage(interaction)
         ],
-        ['start', interaction => this.start(interaction)],
-        ['stop', interaction => this.stop(interaction)],
-        ['help', interaction => this.help(interaction)],
         ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
         ['stop_logging', interaction => this.stopLogging(interaction)],
         ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
     ]);
 
-    modalMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
-        string,
-        CommandCallback
-    >();
+    private showModalOnlyCommands = new Set<string>(['set_after_session_msg']);
 
-    canHandle(
-        interaction: ChatInputCommandInteraction | ModalSubmitInteraction
-    ): boolean {
-        if (interaction.isCommand()) {
-            return this.commandMethodMap.has(interaction.commandName);
-        }
-        return this.modalMethodMap.has(interaction.customId);
+    canHandle(interaction: ChatInputCommandInteraction): boolean {
+        return this.commandMethodMap.has(interaction.commandName);
     }
 
     /**
@@ -103,18 +99,15 @@ class CentralCommandDispatcher {
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const serverId = (await this.isServerInteraction(interaction)) ?? 'unknown';
-        // Immediately reply to show that YABOB has received the interaction
-        await Promise.all<unknown>([
-            interaction.reply({
-                ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
-                ephemeral: true
-            }),
-            attendingServers
-                .get(serverId)
-                ?.sendLogMessage(SlashCommandLogEmbed(interaction))
-        ]);
         // Check the hashmap to see if the command exists as a key
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
+        if (!this.showModalOnlyCommands.has(interaction.commandName)) {
+            // Immediately reply to show that YABOB has received the interaction
+            // non modal commands only
+            await interaction.reply(
+                SimpleEmbed('Processing Command...', EmbedColor.Neutral)
+            );
+        }
         if (commandMethod === undefined) {
             await interaction.editReply(
                 ErrorEmbed(new CommandNotImplementedError('This command does not exist.'))
@@ -135,11 +128,15 @@ class CentralCommandDispatcher {
         await commandMethod(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs
             .then(async successMsg => {
-                if (successMsg) {
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    );
-                }
+                await Promise.all<unknown>([
+                    successMsg &&
+                        interaction.editReply(
+                            SimpleEmbed(successMsg, EmbedColor.Success)
+                        ),
+                    attendingServers
+                        .get(serverId)
+                        ?.sendLogMessage(SlashCommandLogEmbed(interaction))
+                ]);
             })
             .catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
@@ -414,21 +411,31 @@ class CentralCommandDispatcher {
 
     private async setAfterSessionMessage(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<undefined> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_after_session_msg', [
                 'Bot Admin'
             ])
         ]);
-        const enableAfterSessionMessage = interaction.options.getBoolean(`enable`, true);
-        const newAfterSessionMessage = enableAfterSessionMessage
-            ? interaction.options.getString(`message`, true)
-            : '';
-        await attendingServers
-            .get(serverId)
-            ?.setAfterSessionMessage(newAfterSessionMessage);
-        return `Successfully updated after session message.`;
+        const afterSessionMessageModal = new ModalBuilder()
+            .setTitle('Set After Session Message')
+            .setCustomId('set_after_session_message_modal')
+            .setComponents(
+                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('after_session_msg')
+                        .setLabel('Leave blank to disable') // There is a character limit for labels
+                        .setPlaceholder('Enter your message here')
+                        .setValue(
+                            attendingServers.get(serverId)?.afterSessionMessage ?? ''
+                        )
+                        .setStyle(TextInputStyle.Paragraph)
+                        .setRequired(false)
+                )
+            );
+        await interaction.showModal(afterSessionMessageModal);
+        return undefined;
     }
 
     private async help(interaction: ChatInputCommandInteraction): Promise<undefined> {

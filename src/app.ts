@@ -8,14 +8,15 @@ import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
-import { logEditFailure } from './command-handling/common-validations';
 import { client, attendingServers } from './global-states';
 import environment from './environment/environment-manager';
+import { ModalDispatcher } from './command-handling/modal-handler';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
 const builtinCommandHandler = new CentralCommandDispatcher();
 const builtinButtonHandler = new ButtonCommandDispatcher();
+const builtinModalHandler = new ModalDispatcher();
 
 /**
  * After login startup seqence
@@ -75,42 +76,59 @@ client.on('guildDelete', async guild => {
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
-    // The IIFE syntax is only used for cleaner catch
+    // removed IIFE because the client.on error catches for us
     // TODO: consider using Result<ReturnType, Error> inside command handler
     if (interaction.isChatInputCommand()) {
-        await (async () => {
-            // there's the 3 second rule, we have to catch it asap
-            if (builtinCommandHandler.canHandle(interaction)) {
-                await builtinCommandHandler.process(interaction);
-            } else {
-                const externalCommandHandler = interactionExtensions
-                    .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.canHandleCommand(interaction));
-                if (!externalCommandHandler) {
-                    return;
-                }
-                await externalCommandHandler.processCommand(interaction);
+        if (builtinCommandHandler.canHandle(interaction)) {
+            await builtinCommandHandler.process(interaction);
+        } else {
+            const externalCommandHandler = interactionExtensions
+                // default value is for semantics only
+                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleCommand(interaction));
+            if (!externalCommandHandler) {
+                await interaction.reply({
+                    content: 'Unknown Slash Command',
+                    ephemeral: true
+                });
+                return;
             }
-        })().catch(logEditFailure);
+            await externalCommandHandler.processCommand(interaction);
+        }
     }
     if (interaction.isButton()) {
-        await (async () => {
-            if (builtinButtonHandler.canHandle(interaction)) {
-                await builtinButtonHandler.process(interaction);
-            } else {
-                const externalButtonHandler = interactionExtensions
-                    .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.canHandleButton(interaction));
-                if (!externalButtonHandler) {
-                    await interaction.reply({
-                        content: 'Unknown interaction',
-                        ephemeral: true
-                    });
-                    return;
-                }
-                await externalButtonHandler.processButton(interaction);
+        if (builtinButtonHandler.canHandle(interaction)) {
+            await builtinButtonHandler.process(interaction);
+        } else {
+            const externalButtonHandler = interactionExtensions
+                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleButton(interaction));
+            if (!externalButtonHandler) {
+                await interaction.reply({
+                    content: 'Unknown Button',
+                    ephemeral: true
+                });
+                return;
             }
-        })().catch(logEditFailure);
+            await externalButtonHandler.processButton(interaction);
+        }
+    }
+    if (interaction.isModalSubmit()) {
+        if (builtinModalHandler.canHandle(interaction)) {
+            await builtinModalHandler.processModal(interaction);
+        } else {
+            const externalModalHandler = interactionExtensions
+                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleModalSubmit(interaction));
+            if (!externalModalHandler) {
+                await interaction.reply({
+                    content: 'Unknown Modal',
+                    ephemeral: true
+                });
+                return;
+            }
+            await externalModalHandler.processModalSubmit(interaction);
+        }
     }
 });
 
@@ -173,11 +191,11 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
 });
 
 client.on('error', err => {
-    console.error(red('Uncaught Error:'), err.message, err.stack);
+    console.error(red('Uncaught DiscordJS Error:'), `${err.message}\n`, err.stack);
 });
 
 client.on('warn', warning => {
-    console.warn(magenta('Uncaught Warning:'), warning);
+    console.warn(magenta('Uncaught DiscordJS Warning:'), warning);
 });
 
 process.on('exit', () => {

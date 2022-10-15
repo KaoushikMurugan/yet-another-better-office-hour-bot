@@ -1,3 +1,5 @@
+import { Optional } from './type-aliases';
+
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const ResetColor = '\x1b[0m';
 export const Bright = '\x1b[1m';
@@ -25,24 +27,29 @@ const BgMagenta = '\x1b[45m';
 const BgCyan = '\x1b[46m';
 const BgWhite = '\x1b[47m';
 
-export function red(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+/**
+ * Util functions to color a given string
+ * @param str: string to color
+ * @param fgOrBg: color the foreground or the background
+ */
+export function red(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgRed : BgRed}${str}${ResetColor}`;
 }
-export function green(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function green(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgGreen : BgGreen}${str}${ResetColor}`;
 }
-export function yellow(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function yellow(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgYellow : BgYellow}${str}${ResetColor}`;
 }
-export function blue(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function blue(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgBlue : BgBlue}${str}${ResetColor}`;
 }
-export function magenta(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function magenta(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgMagenta : BgMagenta}${str}${ResetColor}`;
 }
-export function cyan(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function cyan(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgCyan : BgCyan}${str}${ResetColor}`;
 }
-export function black(str: string, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
+export function black(str: Optional<string>, fgOrBg: 'Fg' | 'Bg' = 'Fg'): string {
     return `${fgOrBg === 'Fg' ? FgBlack : BgBlack}${str}${ResetColor}`;
 }

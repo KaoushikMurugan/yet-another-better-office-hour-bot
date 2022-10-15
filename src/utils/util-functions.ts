@@ -9,6 +9,7 @@ function convertMsToTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
+
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);

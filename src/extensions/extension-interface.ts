@@ -12,7 +12,8 @@ import {
     ChatInputCommandInteraction,
     GuildMember,
     VoiceChannel,
-    CacheType
+    CacheType,
+    ModalSubmitInteraction
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { HelpQueueV2 } from '../help-queue/help-queue';
@@ -27,8 +28,10 @@ interface IInteractionExtension {
     slashCommandData: CommandData;
     canHandleCommand: (interaction: ChatInputCommandInteraction) => boolean;
     canHandleButton: (interaction: ButtonInteraction) => boolean;
+    canHandleModalSubmit: (interaction: ModalSubmitInteraction) => boolean;
     processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
     processButton: (interaction: ButtonInteraction) => Promise<void>;
+    processModalSubmit: (interaction: ModalSubmitInteraction) => Promise<void>;
 }
 
 // Server level extensions
@@ -111,10 +114,16 @@ class BaseInteractionExtension implements IInteractionExtension {
     canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
         return false;
     }
+    canHandleModalSubmit(interaction: ModalSubmitInteraction<CacheType>): boolean {
+        return false;
+    }
     processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         return Promise.resolve();
     }
     processButton(interaction: ButtonInteraction): Promise<void> {
+        return Promise.resolve();
+    }
+    processModalSubmit(interaction: ModalSubmitInteraction<CacheType>) :Promise<void>{
         return Promise.resolve();
     }
 }
