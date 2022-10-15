@@ -14,6 +14,11 @@ if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
 
+/**
+ * Do not reference this object until client has logged in
+ * - use it inside functions not at top level
+ * - because we can't do top level await in modules to wait for the login call
+*/
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -26,6 +31,7 @@ const client = new Client({
     ]
 });
 
+// This is basically unhandled promise and relies on the `client.on` callbacks
 client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error('Login Unsuccessful. Check YABOBs credentials.');
     throw err;
