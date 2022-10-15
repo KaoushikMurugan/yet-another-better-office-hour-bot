@@ -18,7 +18,7 @@ if (environment.disableExtensions) {
  * Do not reference this object until client has logged in
  * - use it inside functions not at top level
  * - because we can't do top level await in modules to wait for the login call
-*/
+ */
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,

@@ -1,11 +1,7 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { AutoClearTimeout } from '../help-queue/help-queue';
 import { cyan, yellow, magenta } from '../utils/command-line-colors';
-import {
-    ErrorEmbed,
-    ErrorLogEmbed,
-    SimpleEmbed
-} from '../utils/embed-helper';
+import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
 import {
     CommandNotImplementedError,
     CommandParseError,

@@ -8,11 +8,9 @@
 
 import {
     ButtonInteraction,
-    Collection,
     ChatInputCommandInteraction,
     GuildMember,
     VoiceChannel,
-    CacheType,
     ModalSubmitInteraction
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
@@ -114,7 +112,7 @@ class BaseInteractionExtension implements IInteractionExtension {
     canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
         return false;
     }
-    canHandleModalSubmit(interaction: ModalSubmitInteraction<CacheType>): boolean {
+    canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
         return false;
     }
     processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -123,7 +121,7 @@ class BaseInteractionExtension implements IInteractionExtension {
     processButton(interaction: ButtonInteraction): Promise<void> {
         return Promise.resolve();
     }
-    processModalSubmit(interaction: ModalSubmitInteraction<CacheType>) :Promise<void>{
+    processModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
         return Promise.resolve();
     }
 }
