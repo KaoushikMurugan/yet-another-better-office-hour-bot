@@ -20,19 +20,10 @@ import { QueueDisplayV2 } from '../help-queue/queue-display';
 import { Helpee, Helper } from '../models/member-states';
 import { ServerBackup } from '../models/backups';
 import { CommandData } from '../command-handling/slash-commands';
-import { ButtonCallback, CommandCallback, Optional } from '../utils/type-aliases';
+import { Optional } from '../utils/type-aliases';
 
 // Command level extensions
 interface IInteractionExtension {
-    serverMap: Collection<string, AttendingServerV2>;
-    commandMethodMap: ReadonlyMap<
-        string,
-        (interaction: ChatInputCommandInteraction) => Promise<Optional<string>>
-    >;
-    buttonMethodMap: ReadonlyMap<
-        string,
-        (queueName: string, interaction: ButtonInteraction) => Promise<Optional<string>>
-    >;
     slashCommandData: CommandData;
     canHandleCommand: (interaction: ChatInputCommandInteraction) => boolean;
     canHandleButton: (interaction: ButtonInteraction) => boolean;
@@ -111,11 +102,6 @@ interface IQueueExtension {
  * - override processCommand and/or processButton depending on which type you want
  */
 class BaseInteractionExtension implements IInteractionExtension {
-    serverMap: Collection<string, AttendingServerV2> = new Collection();
-    buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map();
-    commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map();
-    modalMethodMap: ReadonlyMap<string, CommandCallback> = new Map();
-
     get slashCommandData(): CommandData {
         return [];
     }

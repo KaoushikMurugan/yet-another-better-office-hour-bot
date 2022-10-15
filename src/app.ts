@@ -87,7 +87,7 @@ client.on('interactionCreate', async interaction => {
             } else {
                 const externalCommandHandler = interactionExtensions
                     .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
+                    ?.find(ext => ext.canHandleCommand(interaction));
                 if (!externalCommandHandler) {
                     return;
                 }
@@ -194,16 +194,13 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         interactionExtensions.set(
             guild.id,
             await Promise.all([
-                CalendarInteractionExtension.load(guild, attendingServers)
+                CalendarInteractionExtension.load(guild)
             ])
         );
     }
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     attendingServers.set(guild.id, server);
-    [...interactionExtensions.values()]
-        .flat()
-        .forEach(extension => (extension.serverMap = attendingServers));
     await postSlashCommands(
         guild,
         interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
