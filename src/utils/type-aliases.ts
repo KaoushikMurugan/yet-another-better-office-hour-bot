@@ -39,9 +39,8 @@ type ButtonCallback = (
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
 /**
  * Utility alias for T|undefined, more readable
-*/
+ */
 type Optional<T> = T | undefined;
-
 
 export {
     GuildId,

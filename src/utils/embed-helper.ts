@@ -10,7 +10,7 @@ import { QueueError, ServerError, UserViewableError } from '../utils/error-types
 import { client } from '../global-states';
 
 const YABOB_PFP_URL =
-    client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;
+    client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
 
 export enum EmbedColor {
     Success = 0xa9dc76, // Green

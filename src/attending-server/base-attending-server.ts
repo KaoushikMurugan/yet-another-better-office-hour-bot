@@ -886,7 +886,7 @@ class AttendingServerV2 {
         );
         console.log(
             `All queues in '${this.guild.name}' successfully created` +
-                `${environment.disableExtensions ? '' : blue('with their extensions')}!`
+                `${environment.disableExtensions ? '' : blue(' with their extensions')}!`
         );
         await Promise.all(
             this.serverExtensions.map(extension =>

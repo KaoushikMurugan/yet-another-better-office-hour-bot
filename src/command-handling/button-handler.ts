@@ -64,7 +64,7 @@ class ButtonCommandDispatcher {
                     timeZone: 'PST8PDT'
                 })
             )} ` +
-                `${yellow(interaction.guild?.name?? 'Unknown Guild')}]\n` +
+                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
                 ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
                 ` - Server Id: ${interaction.guildId}\n` +
                 ` - Button Pressed: ${magenta(buttonName)}\n` +

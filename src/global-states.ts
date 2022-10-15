@@ -10,7 +10,6 @@ if (
 ) {
     throw new Error('Missing token or bot ID. Aborting setup.');
 }
-
 if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
@@ -26,11 +25,12 @@ const client = new Client({
         GatewayIntentBits.DirectMessages
     ]
 });
-const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
 client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
     console.error('Login Unsuccessful. Check YABOBs credentials.');
     throw err;
 });
+
+const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
 export { attendingServers, client };

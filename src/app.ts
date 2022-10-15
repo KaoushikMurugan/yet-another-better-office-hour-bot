@@ -17,8 +17,6 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
 const builtinCommandHandler = new CentralCommandDispatcher();
 const builtinButtonHandler = new ButtonCommandDispatcher();
 
-client.on('error', console.error);
-
 /**
  * After login startup seqence
  */
@@ -174,6 +172,14 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     }
 });
 
+client.on('error', err => {
+    console.error(red('Uncaught Error:'), err.message, err.stack);
+});
+
+client.on('warn', warning => {
+    console.warn(magenta('Uncaught Warning:'), warning);
+});
+
 process.on('exit', () => {
     console.log(centeredText('-------- End of Server Log --------'));
     console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
@@ -193,9 +199,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
-            await Promise.all([
-                CalendarInteractionExtension.load(guild)
-            ])
+            await Promise.all([CalendarInteractionExtension.load(guild)])
         );
     }
     // Extensions for server&queue are loaded inside the create method
