@@ -42,13 +42,16 @@ class ButtonCommandDispatcher {
 
     constructor(public serverMap: ReadonlyMap<string, AttendingServerV2>) {}
 
+    canHandle(interaction: ButtonInteraction): boolean {
+        const [buttonName] = this.splitButtonQueueName(interaction);
+        return this.buttonMethodMap.has(buttonName);
+    }
+
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.editReply(
+        await interaction.reply(
             SimpleEmbed('Processing button...', EmbedColor.Neutral)
         );
-        const delimiterPosition = interaction.customId.indexOf(' ');
-        const buttonName = interaction.customId.substring(0, delimiterPosition);
-        const queueName = interaction.customId.substring(delimiterPosition + 1);
+        const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
             await interaction.editReply(
@@ -67,13 +70,13 @@ class ButtonCommandDispatcher {
                 ` - In Queue: ${queueName}`
         );
         await buttonMethod(queueName, interaction)
-            .then(
-                async successMsg =>
-                    successMsg &&
-                    (await interaction.editReply(
+            .then(async successMsg => {
+                if (successMsg) {
+                    await interaction.editReply(
                         SimpleEmbed(successMsg, EmbedColor.Success)
-                    ))
-            )
+                    );
+                }
+            })
             .catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
                 await interaction.editReply(ErrorEmbed(err));
@@ -82,6 +85,13 @@ class ButtonCommandDispatcher {
                     .get(serverId)
                     ?.sendLogMessage(ErrorLogEmbed(err, interaction));
             });
+    }
+
+    private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+        const delimiterPosition = interaction.customId.indexOf(' ');
+        const buttonName = interaction.customId.substring(0, delimiterPosition);
+        const queueName = interaction.customId.substring(delimiterPosition + 1);
+        return [buttonName, queueName];
     }
 
     private async join(

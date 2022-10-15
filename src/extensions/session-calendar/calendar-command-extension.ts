@@ -92,8 +92,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         return instance;
     }
 
-    // I know this is very verbose but TS gets angry if I don't write all this :(
-    // undefined return values is when the method wants to reply to the interaction directly
+    override canHandleButton(interaction: ButtonInteraction): boolean {
+        const [buttonName] = this.splitButtonQueueName(interaction);
+        return this.buttonMethodMap.has(buttonName);
+    }
+
+    override canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
+        return this.commandMethodMap.has(interaction.commandName);
+    }
+    // Undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
     override commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
         string,
@@ -141,9 +148,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 .get(serverId)
                 ?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
-        await interaction.editReply(
-            SimpleEmbed('Processing command...', EmbedColor.Neutral)
-        );
+        await interaction.reply(SimpleEmbed('Processing command...', EmbedColor.Neutral));
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
             await interaction.editReply(
@@ -183,12 +188,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
      * Button handler. Almost the same as the built in button-handler.ts
      */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        await interaction.editReply(
-            SimpleEmbed('Processing button...', EmbedColor.Neutral)
-        );
-        const delimiterPosition = interaction.customId.indexOf(' ');
-        const buttonName = interaction.customId.substring(0, delimiterPosition);
-        const queueName = interaction.customId.substring(delimiterPosition + 1);
+        await interaction.reply(SimpleEmbed('Processing button...', EmbedColor.Neutral));
+        const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         if (buttonMethod === undefined) {
             await interaction.editReply(
@@ -212,17 +213,24 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         );
         await buttonMethod(queueName, interaction)
             // if the method didn't directly reply, the center handler replies
-            .then(
-                async successMsg =>
-                    successMsg &&
-                    (await interaction.editReply(
+            .then(async successMsg => {
+                if (successMsg) {
+                    await interaction.editReply(
                         SimpleEmbed(successMsg, EmbedColor.Success)
-                    ))
-            )
+                    );
+                }
+            })
             .catch(
                 async (err: UserViewableError) =>
                     await interaction.editReply(ErrorEmbed(err))
             );
+    }
+
+    private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+        const delimiterPosition = interaction.customId.indexOf(' ');
+        const buttonName = interaction.customId.substring(0, delimiterPosition);
+        const queueName = interaction.customId.substring(delimiterPosition + 1);
+        return [buttonName, queueName];
     }
 
     /**

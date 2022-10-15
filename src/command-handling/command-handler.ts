@@ -1,6 +1,7 @@
 import {
     ChannelType,
     ChatInputCommandInteraction,
+    ModalSubmitInteraction,
     GuildChannel,
     GuildMember,
     GuildMemberRoleManager,
@@ -79,8 +80,22 @@ class CentralCommandDispatcher {
         ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
     ]);
 
+    modalMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
+        string,
+        CommandCallback
+    >();
+
     // key is Guild.id, same as servers map from app.ts
     constructor(public serverMap: ReadonlyMap<GuildId, AttendingServerV2>) {}
+
+    canHandle(
+        interaction: ChatInputCommandInteraction | ModalSubmitInteraction
+    ): boolean {
+        if (interaction.isCommand()) {
+            return this.commandMethodMap.has(interaction.commandName);
+        }
+        return this.modalMethodMap.has(interaction.customId);
+    }
 
     /**
      * Main processor for command interactions
@@ -119,19 +134,21 @@ class CentralCommandDispatcher {
         );
         await commandMethod(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs
-            .then(
-                async successMsg =>
-                    successMsg &&
-                    (await interaction.editReply(
+            .then(async successMsg => {
+                if (successMsg) {
+                    await interaction.editReply(
                         SimpleEmbed(successMsg, EmbedColor.Success)
-                    ))
-            )
+                    );
+                }
+            })
             .catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
-                await interaction.editReply(ErrorEmbed(err));
-                this.serverMap
-                    .get(serverId)
-                    ?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                await Promise.all([
+                    interaction.editReply(ErrorEmbed(err)),
+                    this.serverMap
+                        .get(serverId)
+                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                ]);
             });
     }
 

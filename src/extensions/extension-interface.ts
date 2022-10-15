@@ -11,7 +11,8 @@ import {
     Collection,
     ChatInputCommandInteraction,
     GuildMember,
-    VoiceChannel
+    VoiceChannel,
+    CacheType
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
 import { HelpQueueV2 } from '../help-queue/help-queue';
@@ -33,6 +34,8 @@ interface IInteractionExtension {
         (queueName: string, interaction: ButtonInteraction) => Promise<Optional<string>>
     >;
     slashCommandData: CommandData;
+    canHandleCommand: (interaction: ChatInputCommandInteraction) => boolean;
+    canHandleButton: (interaction: ButtonInteraction) => boolean;
     processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
     processButton: (interaction: ButtonInteraction) => Promise<void>;
 }
@@ -114,6 +117,12 @@ class BaseInteractionExtension implements IInteractionExtension {
 
     get slashCommandData(): CommandData {
         return [];
+    }
+    canHandleButton(interaction: ButtonInteraction): boolean {
+        return false;
+    }
+    canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
+        return false;
     }
     processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         return Promise.resolve();

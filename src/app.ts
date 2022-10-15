@@ -126,10 +126,9 @@ client.on('interactionCreate', async interaction => {
     // The IIFE syntax is only used for cleaner catch 
     // TODO: consider using Result<ReturnType, Error> inside command handler
     if (interaction.isChatInputCommand()) {
-        await interaction.deferReply({ ephemeral: true });
         await (async () => {
             // there's the 3 second rule, we have to catch it asap
-            if (builtinCommandHandler.commandMethodMap.has(interaction.commandName)) {
+            if (builtinCommandHandler.canHandle(interaction)) {
                 await builtinCommandHandler.process(interaction);
             } else {
                 const externalCommandHandler = interactionExtensions
@@ -143,17 +142,16 @@ client.on('interactionCreate', async interaction => {
         })().catch(logEditFailure);
     }
     if (interaction.isButton()) {
-        await interaction.deferReply({ ephemeral: true });
         await (async () => {
-            const buttonName = interaction.customId.split(' ')[0] ?? '';
-            if (builtinButtonHandler.buttonMethodMap.has(buttonName)) {
+            if (builtinButtonHandler.canHandle(interaction)) {
                 builtinButtonHandler.serverMap = serversV2;
                 await builtinButtonHandler.process(interaction);
             } else {
                 const externalButtonHandler = interactionExtensions
                     .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.buttonMethodMap.has(buttonName));
+                    ?.find(ext => ext.canHandleButton(interaction));
                 if (!externalButtonHandler) {
+                    await interaction.reply('Unknown interaction');
                     return;
                 }
                 await externalButtonHandler.processButton(interaction);
