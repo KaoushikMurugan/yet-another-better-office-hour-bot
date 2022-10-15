@@ -52,7 +52,7 @@ import environment from '../../environment/environment-manager';
 import { attendingServers } from '../../global-states';
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
-    protected constructor(private readonly allGuilds: Guild[]) {
+    protected constructor() {
         super();
     }
 
@@ -78,7 +78,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 await CalendarExtensionState.create(guild.id, guild.name)
             );
         }
-        const instance = new CalendarInteractionExtension(allGuilds);
+        const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
