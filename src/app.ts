@@ -27,11 +27,6 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
 const builtinCommandHandler = new CentralCommandDispatcher();
 const builtinButtonHandler = new ButtonCommandDispatcher();
 
-client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
-    console.error('Login Unsuccessful. Check YABOBs credentials.');
-    throw err;
-});
-
 client.on('error', console.error);
 
 /**
@@ -41,10 +36,7 @@ client.on('ready', async () => {
     if (client.user === null) {
         throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
     }
-    console.log(`Env: ${BgCyan}${environment.env}${ResetColor}`);
-    printTitleString();
-    console.log(`Logged in as ${client.user.tag}!`);
-    console.log('Scanning servers I am a part of...');
+    printTitleString(client.user.username);
     // allGuilds is all the servers this YABOB instance has joined
     const allGuilds = await Promise.all(
         (await client.guilds.fetch()).map(guild => guild.fetch())
@@ -234,8 +226,11 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     return server;
 }
 
-function printTitleString(): void {
+function printTitleString(username: string): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.1';
+    console.log(`Env: ${BgCyan}${environment.env}${ResetColor}`);
+    console.log(`Logged in as ${username}!`);
+    console.log('Scanning servers I am a part of...');
     console.log(
         `\n${FgBlack}${BgMagenta}${' '.repeat(
             (process.stdout.columns - titleString.length) / 2

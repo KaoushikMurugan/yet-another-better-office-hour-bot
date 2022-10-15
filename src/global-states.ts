@@ -26,7 +26,11 @@ const client = new Client({
         GatewayIntentBits.DirectMessages
     ]
 });
-
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
+
+client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
+    console.error('Login Unsuccessful. Check YABOBs credentials.');
+    throw err;
+});
 
 export { attendingServers, client };
