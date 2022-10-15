@@ -7,6 +7,10 @@ import {
     ApplicationCommandOptionType
 } from 'discord.js';
 import { QueueError, ServerError, UserViewableError } from '../utils/error-types';
+import { client } from '../global-states';
+
+const YABOB_PFP_URL =
+    client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;
 
 export enum EmbedColor {
     Success = 0xa9dc76, // Green
@@ -35,7 +39,7 @@ export function SimpleEmbed(
                     description: description,
                     author: {
                         name: 'YABOB',
-                        icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                        icon_url: YABOB_PFP_URL
                     }
                 }
             ]
@@ -50,7 +54,7 @@ export function SimpleEmbed(
                     timestamp: new Date().toISOString(),
                     author: {
                         name: 'YABOB',
-                        icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                        icon_url: YABOB_PFP_URL
                     }
                 }
             ]
@@ -91,7 +95,7 @@ export function ErrorEmbed(err: UserViewableError): Pick<BaseMessageOptions, 'em
                 fields: embedFields,
                 author: {
                     name: 'YABOB',
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: YABOB_PFP_URL
                 }
             }
         ]
@@ -142,8 +146,8 @@ export function ErrorLogEmbed(
                 timestamp: new Date().toISOString(),
                 fields: embedFields,
                 footer: {
-                    text: `YABOB`,
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    text: 'YABOB',
+                    icon_url: YABOB_PFP_URL
                 }
             }
         ]
@@ -156,12 +160,12 @@ export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embed
         return {
             embeds: [
                 {
-                    color: EmbedColor.Pink,
+                    color: EmbedColor.NoColor,
                     title: message + timeStampString,
                     timestamp: new Date().toISOString(),
                     footer: {
-                        text: `YABOB`,
-                        icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                        text: 'YABOB',
+                        icon_url: YABOB_PFP_URL
                     }
                 }
             ]
@@ -171,12 +175,12 @@ export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embed
         return {
             embeds: [
                 {
-                    color: EmbedColor.Pink,
+                    color: EmbedColor.NoColor,
                     description: message + timeStampString,
                     timestamp: new Date().toISOString(),
                     footer: {
-                        text: `YABOB`,
-                        icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                        text: 'YABOB',
+                        icon_url: YABOB_PFP_URL
                     }
                 }
             ]
@@ -192,7 +196,7 @@ export function ButtonLogEmbed(
     return {
         embeds: [
             {
-                color: EmbedColor.Pink,
+                color: EmbedColor.NoColor,
                 title: `Button Pressed at <t:${new Date()
                     .getTime()
                     .toString()
@@ -216,8 +220,8 @@ export function ButtonLogEmbed(
                     }
                 ],
                 footer: {
-                    text: `YABOB`,
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    text: 'YABOB',
+                    icon_url: YABOB_PFP_URL
                 }
             }
         ]
@@ -275,7 +279,7 @@ export function SlashCommandLogEmbed(
     return {
         embeds: [
             {
-                color: EmbedColor.Pink,
+                color: EmbedColor.NoColor,
                 title: `Slash Command Used at <t:${new Date()
                     .getTime()
                     .toString()
@@ -283,8 +287,8 @@ export function SlashCommandLogEmbed(
                 timestamp: new Date().toISOString(),
                 fields: embedFields,
                 footer: {
-                    text: `YABOB`,
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    text: 'YABOB',
+                    icon_url: YABOB_PFP_URL
                 }
             }
         ]

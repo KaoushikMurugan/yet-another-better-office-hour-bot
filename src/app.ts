@@ -1,4 +1,4 @@
-import { Client, Guild, GatewayIntentBits, Collection, VoiceState } from 'discord.js';
+import { Guild, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
@@ -6,7 +6,6 @@ import {
     BgMagenta,
     FgBlack,
     FgCyan,
-    BgYellow,
     FgGreen,
     FgMagenta,
     FgRed,
@@ -20,31 +19,8 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { logEditFailure } from './command-handling/common-validations';
-import { attendingServers } from './global-states';
+import { client, attendingServers } from './global-states';
 import environment from './environment/environment-manager';
-
-if (
-    environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
-    environment.discordBotCredentials.YABOB_APP_ID.length === 0
-) {
-    throw new Error('Missing token or bot ID. Aborting setup.');
-}
-
-if (environment.disableExtensions) {
-    console.log(`${BgYellow}${FgBlack}Running without extensions.${ResetColor}`);
-}
-
-const client = new Client({
-    intents: [
-        GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMembers,
-        GatewayIntentBits.GuildInvites,
-        GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildPresences,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.DirectMessages
-    ]
-});
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
