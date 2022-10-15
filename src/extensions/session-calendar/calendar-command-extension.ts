@@ -5,7 +5,6 @@ import {
     CategoryChannel,
     ChannelType,
     ChatInputCommandInteraction,
-    Collection,
     Guild,
     GuildMember,
     GuildMemberRoleManager,
@@ -45,24 +44,21 @@ import {
     ResetColor
 } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { getQueueRoles } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
 import { ButtonCallback, CommandCallback } from '../../utils/type-aliases';
 import environment from '../../environment/environment-manager';
+import { attendingServers } from '../../global-states';
 
 class CalendarInteractionExtension extends BaseInteractionExtension {
-    protected constructor(private readonly guild: Guild) {
+    protected constructor(private readonly allGuilds: Guild[]) {
         super();
     }
 
     private static helpEmbedsSent = false;
 
-    static async load(
-        guild: Guild,
-        serverMap: Collection<string, AttendingServerV2>
-    ): Promise<CalendarInteractionExtension> {
+    static async load(allGuilds: Guild[]): Promise<CalendarInteractionExtension> {
         if (
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
             environment.sessionCalendar.YABOB_GOOGLE_API_KEY.length === 0
@@ -76,17 +72,18 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ).catch(() => {
             throw new CalendarConnectionError(`The default calendar id is not valid.`);
         });
-        serverIdCalendarStateMap.set(
-            guild.id,
-            await CalendarExtensionState.create(guild.id, guild.name)
-        );
-        const instance = new CalendarInteractionExtension(guild);
-        instance.serverMap = serverMap;
+        for (const guild of allGuilds) {
+            serverIdCalendarStateMap.set(
+                guild.id,
+                await CalendarExtensionState.create(guild.id, guild.name)
+            );
+        }
+        const instance = new CalendarInteractionExtension(allGuilds);
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
             `[${FgBlue}Session Calendar${ResetColor}] ` +
-                `successfully loaded for '${guild.name}'!\n` +
+                `successfully loaded for ${allGuilds.map(guild => guild.name)}!\n` +
                 ` - Using ${calendarName} as the default calendar`
         );
         return instance;
@@ -102,7 +99,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
     // Undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    override commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
+    private commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
         string,
         CommandCallback
     >([
@@ -120,7 +117,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         ['set_public_embd_url', interaction => this.setPublicEmbedUrl(interaction)]
     ]);
 
-    override buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
+    private buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
         string,
         ButtonCallback
     >([
@@ -144,13 +141,13 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         //Send logs before* processing the command
         const [serverId] = await Promise.all([this.isServerInteraction(interaction)]);
         if (serverId !== undefined) {
-            await this.serverMap
+            await attendingServers
                 .get(serverId)
                 ?.sendLogMessage(SlashCommandLogEmbed(interaction));
         }
         await interaction.reply({
             ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
-            ephemeral:true
+            ephemeral: true
         });
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (commandMethod === undefined) {
@@ -193,7 +190,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         await interaction.reply({
             ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
-            ephemeral:true
+            ephemeral: true
         });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
@@ -247,15 +244,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        const [newCalendarName] = await Promise.all([
+        const [serverId, newCalendarName] = await Promise.all([
+            this.isServerInteraction(interaction),
             checkCalendarConnection(newCalendarId).catch(() => {
                 throw new CalendarConnectionError('This new calendar ID is not valid.');
             }),
             isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
         ]);
-        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
-        await this.serverMap
-            .get(this.guild.id)
+        await serverIdCalendarStateMap.get(serverId)?.setCalendarId(newCalendarId);
+        await attendingServers
+            .get(serverId)
             ?.sendLogMessage(
                 SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
             );
@@ -282,10 +280,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
             serverIdCalendarStateMap
-                .get(this.guild.id)
+                .get(interaction.guild?.id ?? '')
                 ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
-            this.serverMap
-                .get(this.guild.id)
+            attendingServers
+                .get(interaction.guild?.id ?? '')
                 ?.sendLogMessage(
                     SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
                 )
@@ -305,7 +303,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     ): Promise<undefined> {
         const channel = await hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
-            this.guild.id,
+            interaction.guild?.id ?? '',
             channel.queueName
         );
         const embed = SimpleEmbed(
@@ -377,14 +375,18 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             validQueues = await getQueueRoles(
                 // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.serverMap.get(serverId)!,
+                attendingServers.get(serverId)!,
                 memberToUpdate as GuildMember
             );
         } else {
             const commandArgs = [
-                ...this.guild.channels.cache.filter(
-                    channel => channel.type === ChannelType.GuildCategory
-                )
+                // already checked in isServerInteraction
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                ...attendingServers
+                    .get(serverId)!
+                    .guild.channels.cache.filter(
+                        channel => channel.type === ChannelType.GuildCategory
+                    )
             ]
                 .map((_, idx) =>
                     interaction.options.getChannel(`queue_name_${idx + 1}`, idx === 0)
@@ -416,10 +418,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             );
         }
         await serverIdCalendarStateMap
-            .get(this.guild.id)
+            .get(serverId)
             ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.id);
-        await this.serverMap
-            .get(this.guild.id)
+        await attendingServers
+            .get(serverId)
             ?.sendLogMessage(
                 SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`)
             );
@@ -435,6 +437,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
+        const serverId = await this.isServerInteraction(interaction);
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
         await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
@@ -446,10 +449,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 throw new CommandParseError('Please provide a valid and complete URL.');
             }
             // now rawUrl is valid
-            await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
+            await serverIdCalendarStateMap.get(serverId)?.setPublicEmbedUrl(rawUrl);
             return `Successfully changed the public embed url. The links in the titles of calendar queue embed will refresh soon.`;
         } else {
-            const state = serverIdCalendarStateMap.get(this.guild.id);
+            const state = serverIdCalendarStateMap.get(serverId);
             await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
             return `Successfully changed to default embed url. The links in the titles of calendar queue embed will refresh soon.`;
         }
@@ -459,11 +462,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
+        const serverId = await this.isServerInteraction(interaction);
         const queueChannel = serverIdCalendarStateMap
-            .get(this.guild.id)
+            .get(serverId)
             ?.listeners.get(queueName);
-        await this.serverMap
-            .get(this.guild.id)
+        await attendingServers
+            .get(serverId)
             ?.sendLogMessage(
                 ButtonLogEmbed(
                     interaction.user,
@@ -476,10 +480,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     }
 
     private async isServerInteraction(
-        interaction: ChatInputCommandInteraction
+        interaction: ChatInputCommandInteraction | ButtonInteraction
     ): Promise<string> {
         const serverId = interaction.guild?.id;
-        if (!serverId || !this.serverMap.has(serverId)) {
+        if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(
                 'I can only accept server based interactions. ' +
                     `Are you sure ${interaction.guild?.name} has a initialized YABOB?`

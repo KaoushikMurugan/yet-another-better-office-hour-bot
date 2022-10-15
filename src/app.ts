@@ -1,4 +1,4 @@
-import { Client, Guild, GatewayIntentBits, Collection, VoiceState } from 'discord.js';
+import { Client, Guild, GatewayIntentBits, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
@@ -18,7 +18,7 @@ import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
-import { GuildId, WithRequired } from './utils/type-aliases';
+import { WithRequired } from './utils/type-aliases';
 import { logEditFailure } from './command-handling/common-validations';
 import { attendingServers } from './global-states';
 import environment from './environment/environment-manager';
@@ -46,8 +46,7 @@ const client = new Client({
     ]
 });
 
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
+const interactionExtensions: IInteractionExtension[] = [];
 const builtinCommandHandler = new CentralCommandDispatcher();
 const builtinButtonHandler = new ButtonCommandDispatcher();
 
@@ -73,6 +72,7 @@ client.on('ready', async () => {
     const allGuilds = await Promise.all(
         (await client.guilds.fetch()).map(guild => guild.fetch())
     );
+    interactionExtensions.push(...[await CalendarInteractionExtension.load(allGuilds)]);
     // Launch all startup sequences in parallel
     const setupResult = await Promise.allSettled(
         allGuilds.map(guild => joinGuild(guild))
@@ -130,9 +130,9 @@ client.on('interactionCreate', async interaction => {
             if (builtinCommandHandler.canHandle(interaction)) {
                 await builtinCommandHandler.process(interaction);
             } else {
-                const externalCommandHandler = interactionExtensions
-                    .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.commandMethodMap.has(interaction.commandName));
+                const externalCommandHandler = interactionExtensions.find(ext =>
+                    ext.canHandleCommand(interaction)
+                );
                 if (!externalCommandHandler) {
                     return;
                 }
@@ -145,9 +145,9 @@ client.on('interactionCreate', async interaction => {
             if (builtinButtonHandler.canHandle(interaction)) {
                 await builtinButtonHandler.process(interaction);
             } else {
-                const externalButtonHandler = interactionExtensions
-                    .get(interaction.guild?.id ?? '')
-                    ?.find(ext => ext.canHandleButton(interaction));
+                const externalButtonHandler = interactionExtensions.find(ext =>
+                    ext.canHandleButton(interaction)
+                );
                 if (!externalButtonHandler) {
                     await interaction.reply({
                         content: 'Unknown interaction',
@@ -237,23 +237,12 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         throw Error('Please wait until YABOB has logged in ' + 'to manage the server');
     }
     console.log(`Joining guild: ${FgYellow}${guild.name}${ResetColor}`);
-    if (!environment.disableExtensions) {
-        interactionExtensions.set(
-            guild.id,
-            await Promise.all([
-                CalendarInteractionExtension.load(guild, attendingServers)
-            ])
-        );
-    }
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(client.user, guild);
     attendingServers.set(guild.id, server);
-    [...interactionExtensions.values()]
-        .flat()
-        .forEach(extension => (extension.serverMap = attendingServers));
     await postSlashCommands(
         guild,
-        interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
+        interactionExtensions.flatMap(ext => ext.slashCommandData)
     );
     return server;
 }
