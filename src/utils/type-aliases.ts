@@ -26,17 +26,22 @@ type HelpMessage = {
  */
 type CommandCallback = (
     interaction: ChatInputCommandInteraction
-) => Promise<string | undefined>;
+) => Promise<Optional<string>>;
 type ButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction
-) => Promise<string | undefined>;
+) => Promise<Optional<string>>;
 
 /**
  * Marks 1 property in T as required.
  * https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
  */
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
+/**
+ * Utility alias for T|undefined, more readable
+*/
+type Optional<T> = T | undefined;
+
 
 export {
     GuildId,
@@ -47,5 +52,6 @@ export {
     HelpMessage,
     CommandCallback,
     ButtonCallback,
-    WithRequired
+    WithRequired,
+    Optional
 };

@@ -7,7 +7,7 @@ import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { PeriodicUpdateError, QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
-import { GuildMemberId } from '../utils/type-aliases';
+import { GuildMemberId, Optional } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
 
 type QueueViewModel = {
@@ -87,7 +87,7 @@ class HelpQueueV2 {
     get parentCategoryId(): string {
         return this.queueChannel.parentCategoryId;
     }
-    get first(): Helpee | undefined {
+    get first(): Optional<Helpee> {
         // first student; undefined if no one is here
         return this._students[0];
     }

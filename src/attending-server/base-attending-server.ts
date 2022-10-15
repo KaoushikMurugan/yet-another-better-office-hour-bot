@@ -36,6 +36,7 @@ import {
     CategoryChannelId,
     GuildMemberId,
     HelpMessage,
+    Optional,
     WithRequired
 } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
@@ -480,7 +481,7 @@ class AttendingServerV2 {
         if (helperVoiceChannel === null) {
             throw new ServerError(`You need to be in a voice channel first.`);
         }
-        let student: Readonly<Helpee> | undefined;
+        let student: Optional<Readonly<Helpee>>;
         if (specificQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
             if (

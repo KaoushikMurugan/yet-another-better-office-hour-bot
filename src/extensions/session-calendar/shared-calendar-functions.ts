@@ -2,6 +2,7 @@ import { calendar_v3 } from 'googleapis';
 import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
+import { Optional } from '../../utils/type-aliases';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -150,7 +151,7 @@ function composeViewModel(
     start: Date,
     end: Date,
     location?: string
-): UpComingSessionViewModel | undefined {
+): Optional<UpComingSessionViewModel> {
     // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
     // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
     const words = parsingString.split('-');

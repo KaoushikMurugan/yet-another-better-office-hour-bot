@@ -19,18 +19,18 @@ import { QueueDisplayV2 } from '../help-queue/queue-display';
 import { Helpee, Helper } from '../models/member-states';
 import { ServerBackup } from '../models/backups';
 import { CommandData } from '../command-handling/slash-commands';
-import { ButtonCallback, CommandCallback } from '../utils/type-aliases';
+import { ButtonCallback, CommandCallback, Optional } from '../utils/type-aliases';
 
 // Command level extensions
 interface IInteractionExtension {
     serverMap: Collection<string, AttendingServerV2>;
     commandMethodMap: ReadonlyMap<
         string,
-        (interaction: ChatInputCommandInteraction) => Promise<string | undefined>
+        (interaction: ChatInputCommandInteraction) => Promise<Optional<string>>
     >;
     buttonMethodMap: ReadonlyMap<
         string,
-        (queueName: string, interaction: ButtonInteraction) => Promise<string | undefined>
+        (queueName: string, interaction: ButtonInteraction) => Promise<Optional<string>>
     >;
     slashCommandData: CommandData;
     processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
@@ -70,7 +70,7 @@ interface IServerExtension {
         studentMember: GuildMember
     ) => Promise<void>;
     onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
-    loadExternalServerData: (serverId: string) => Promise<ServerBackup | undefined>;
+    loadExternalServerData: (serverId: string) => Promise<Optional<ServerBackup>>;
     onServerRequestBackup: (server: Readonly<AttendingServerV2>) => Promise<void>;
 }
 
@@ -179,7 +179,7 @@ class BaseServerExtension implements IServerExtension {
     onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
-    loadExternalServerData(serverId: string): Promise<ServerBackup | undefined> {
+    loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {
         return Promise.resolve(undefined);
     }
     onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {

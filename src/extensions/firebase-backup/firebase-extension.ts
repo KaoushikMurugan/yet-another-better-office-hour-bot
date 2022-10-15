@@ -9,6 +9,7 @@ import { SimpleLogEmbed } from '../../utils/embed-helper';
 import Result, { ok } from 'true-myth/dist/public/result';
 import firebaseAppAdmin from 'firebase-admin';
 import environment from '../../environment/environment-manager';
+import { Optional } from '../../utils/type-aliases';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -47,7 +48,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
      */
     override async loadExternalServerData(
         serverId: string
-    ): Promise<ServerBackup | undefined> {
+    ): Promise<Optional<ServerBackup>> {
         const backupData = await this.firebase_db
             .collection('serverBackups')
             .doc(serverId)
