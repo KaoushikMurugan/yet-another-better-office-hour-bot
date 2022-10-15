@@ -6,7 +6,6 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
-import Result, { ok } from 'true-myth/dist/public/result';
 import firebaseAppAdmin from 'firebase-admin';
 import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
@@ -70,7 +69,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
      */
     private async backupServerToFirebase(
         server: Readonly<AttendingServerV2>
-    ): Promise<Result<undefined, Error>> {
+    ): Promise<void> {
         const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
@@ -113,7 +112,6 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         await server.sendLogMessage(
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
-        return ok(undefined);
     }
 }
 
