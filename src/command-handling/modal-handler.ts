@@ -16,10 +16,10 @@ class ModalDispatcher {
         ModalSubmitCallback
     >([
         [
-            'set_after_session_message_modal',
+            'after_session_message_modal',
             interaction => this.setAfterSessionMessage(interaction)
         ],
-        ['set_queue_auto_clear_modal', interaction => this.setQueueAutoClear(interaction)]
+        ['queue_auto_clear_modal', interaction => this.setQueueAutoClear(interaction)]
     ]);
 
     canHandle(interaction: ModalSubmitInteraction): boolean {
@@ -29,8 +29,7 @@ class ModalDispatcher {
     async processModal(interaction: ModalSubmitInteraction): Promise<void> {
         const modalMethod = this.modalMethodMap.get(interaction.customId);
         // Everything is reply here because showModal is guaranteed to be the 1st response
-        // modal shown => message not replied bc modal has to be 1st response
-        // so we always reply
+        // modal shown => message not replied, so we always reply
         if (modalMethod === undefined) {
             await interaction.reply({
                 ...ErrorEmbed(
@@ -91,16 +90,22 @@ class ModalDispatcher {
     private async setQueueAutoClear(
         interaction: ModalSubmitInteraction
     ): Promise<string> {
-        // You have to check the values again, since the internal values don't get updated until after the modal is closed
-        // for some reason this gets called before the modal is closed
-        const hoursInput = interaction.fields.getTextInputValue(
-            'set_queue_auto_clear_modal_hours'
-        );
-        const minutesInput = interaction.fields.getTextInputValue(
-            'set_queue_auto_clear_modal_minutes'
-        );
+        const serverId = await this.isServerInteraction(interaction);
+        const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
+        const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
+        const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
+        const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
 
-        return `hours ${hoursInput}, minutes ${minutesInput}`;
+        if (hours === 0 && minutes === 0) {
+            await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, false);
+            return `Successfully disabled queue auto clear.`;
+        }
+        await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, true);
+        return (
+            `Successfully enabled queue auto clear. ` +
+            `Queues will be automatically cleared in ` +
+            `${hours} hours and ${minutes} minutes after they are closed.`
+        );
     }
 
     /**

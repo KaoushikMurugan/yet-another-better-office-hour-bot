@@ -81,7 +81,7 @@ class CentralCommandDispatcher {
             'set_after_session_msg',
             interaction => this.showAfterSessionMessageModal(interaction)
         ],
-        ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
+        ['set_queue_auto_clear', interaction => this.showQueueAutoClearModal(interaction)]
     ]);
 
     /**
@@ -428,7 +428,7 @@ class CentralCommandDispatcher {
         ]);
         const afterSessionMessageModal = new ModalBuilder()
             .setTitle('Set After Session Message')
-            .setCustomId('set_after_session_message_modal')
+            .setCustomId('after_session_message_modal')
             .setComponents(
                 new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                     new TextInputBuilder()
@@ -484,38 +484,38 @@ class CentralCommandDispatcher {
         return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
     }
 
-    private async setQueueAutoClear(
+    private async showQueueAutoClearModal(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const [serverId] = await Promise.all([
+        await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', ['Bot Admin'])
         ]);
         const queueAutoClearModal = new ModalBuilder()
-        .setTitle('Set Queue Auto Clear')
-        .setCustomId('set_queue_auto_clear_modal')
-        .setComponents(
-            new ActionRowBuilder<ModalActionRowComponentBuilder>()
-                .addComponents(
+            .setTitle('Set Queue Auto Clear')
+            .setCustomId('queue_auto_clear_modal')
+            .setComponents(
+                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('set_queue_auto_clear_modal_hours')
+                        .setCustomId('auto_clear_hours')
                         .setLabel('Hours')
-                        .setPlaceholder('Enter hours')
-                        .setMinLength(0)
+                        .setPlaceholder('Enter hours (0~24)')
                         .setMaxLength(2)
                         .setStyle(TextInputStyle.Short)
-                        .setRequired(false)),
-            new ActionRowBuilder<ModalActionRowComponentBuilder>()
-                .addComponents(
+                        .setRequired(true)
+                        .setValue('0')
+                ),
+                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                     new TextInputBuilder()
-                        .setCustomId('set_queue_auto_clear_modal_minutes')
+                        .setCustomId('auto_clear_minutes')
                         .setLabel('Minutes')
-                        .setPlaceholder('Enter minutes')
-                        .setMinLength(0)
+                        .setPlaceholder('Enter minutes (0~59)')
                         .setMaxLength(2)
                         .setStyle(TextInputStyle.Short)
-                        .setRequired(false)
-                ));
+                        .setRequired(true)
+                        .setValue('0')
+                )
+            );
         await interaction.showModal(queueAutoClearModal);
         return undefined;
     }
