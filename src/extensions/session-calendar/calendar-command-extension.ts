@@ -20,7 +20,6 @@ import {
     SlashCommandLogEmbed
 } from '../../utils/embed-helper';
 import {
-    CommandNotImplementedError,
     CommandParseError,
     ExtensionSetupError,
     UserViewableError
@@ -35,9 +34,13 @@ import {
     getUpComingTutoringEvents,
     restorePublicEmbedURL
 } from './shared-calendar-functions';
-import { blue, cyan, magenta, yellow } from '../../utils/command-line-colors';
+import { blue } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
-import { getQueueRoles } from '../../utils/util-functions';
+import {
+    getQueueRoles,
+    logButtonPress,
+    logSlashCommand
+} from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import { CalendarConnectionError } from './shared-calendar-functions';
 import { ButtonCallback, CommandCallback } from '../../utils/type-aliases';
@@ -128,39 +131,19 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         interaction: ChatInputCommandInteraction
     ): Promise<void> {
         //Send logs before* processing the command
-        const [serverId] = await Promise.all([this.isServerInteraction(interaction)]);
-        if (serverId !== undefined) {
-            await attendingServers
+        const serverId = this.isServerInteraction(interaction);
+        await Promise.all([
+            interaction.reply({
+                ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
+                ephemeral: true
+            }),
+            attendingServers
                 .get(serverId)
-                ?.sendLogMessage(SlashCommandLogEmbed(interaction));
-        }
-        await interaction.reply({
-            ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
-            ephemeral: true
-        });
+                ?.sendLogMessage(SlashCommandLogEmbed(interaction))
+        ]);
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
-        if (commandMethod === undefined) {
-            await interaction.editReply(
-                ErrorEmbed(
-                    new CommandNotImplementedError(
-                        'This external command does not exist.'
-                    )
-                )
-            );
-            return;
-        }
-        console.log(
-            `[${cyan(
-                new Date().toLocaleString('en-US', {
-                    timeZone: 'PST8PDT'
-                })
-            )} ` +
-                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
-                ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-                ` - Server Id: ${interaction.guildId}\n` +
-                ` - Command Used: ${magenta(interaction.toString())}`
-        );
-        await commandMethod(interaction)
+        logSlashCommand(interaction);
+        await commandMethod?.(interaction)
             // if the method didn't directly reply, the center handler replies
             .then(
                 async successMsg =>
@@ -185,29 +168,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
-        if (buttonMethod === undefined) {
-            await interaction.editReply(
-                ErrorEmbed(
-                    new CommandNotImplementedError(
-                        'This external command does not exist.'
-                    )
-                )
-            );
-            return;
-        }
-        console.log(
-            `[${cyan(
-                new Date().toLocaleString('en-US', {
-                    timeZone: 'PST8PDT'
-                })
-            )} ` +
-                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
-                ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-                ` - Server Id: ${interaction.guildId}\n` +
-                ` - Button Pressed: ${magenta(buttonName)}\n` +
-                ` - In Queue: ${queueName}`
-        );
-        await buttonMethod(queueName, interaction)
+        logButtonPress(interaction, buttonName, queueName);
+        await buttonMethod?.(queueName, interaction)
             // if the method didn't directly reply, the center handler replies
             .then(async successMsg => {
                 if (successMsg) {
@@ -465,9 +427,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         return `Successfully refreshed upcoming hours for ${queueName}`;
     }
 
-    private async isServerInteraction(
-        interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    private isServerInteraction(interaction: ChatInputCommandInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(

@@ -850,7 +850,9 @@ class AttendingServerV2 {
     }
 
     async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
-        this.loggingChannel && (await this.loggingChannel.send(message));
+        if (this.loggingChannel) {
+            await this.loggingChannel.send(message);
+        }
     }
 
     /**

@@ -7,10 +7,7 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import {
-    CommandParseError,
-    UserViewableError
-} from '../utils/error-types';
+import { CommandParseError, UserViewableError } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 import { attendingServers } from '../global-states';
@@ -64,11 +61,13 @@ class ButtonCommandDispatcher {
             })
             .catch(async (err: UserViewableError) => {
                 // Central error handling, reply to user with the error
-                await interaction.editReply(ErrorEmbed(err));
-                const serverId = (await this.isServerInteraction(interaction)) ?? '';
-                attendingServers
-                    .get(serverId)
-                    ?.sendLogMessage(ErrorLogEmbed(err, interaction));
+                const serverId = this.isServerInteraction(interaction);
+                await Promise.all([
+                    interaction.editReply(ErrorEmbed(err)),
+                    attendingServers
+                        .get(serverId)
+                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                ]);
             });
     }
 
@@ -155,7 +154,7 @@ class ButtonCommandDispatcher {
      * Checks if the button came from a server with correctly initialized YABOB
      * @returns string: the server id
      */
-    private async isServerInteraction(interaction: ButtonInteraction): Promise<string> {
+    private isServerInteraction(interaction: ButtonInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(

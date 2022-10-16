@@ -1,9 +1,6 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import {
-    CommandParseError,
-    UserViewableError
-} from '../utils/error-types';
+import { CommandParseError, UserViewableError } from '../utils/error-types';
 import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
@@ -58,7 +55,7 @@ class ModalDispatcher {
         interaction: ModalSubmitInteraction
     ): Promise<string> {
         // let this throw so it will be caught and sent back to the user
-        const serverId = await this.isServerInteraction(interaction);
+        const serverId = this.isServerInteraction(interaction);
         const newAfterSessionMessage =
             interaction.fields.getTextInputValue('after_session_msg');
         await attendingServers
@@ -71,12 +68,11 @@ class ModalDispatcher {
     private async setQueueAutoClear(
         interaction: ModalSubmitInteraction
     ): Promise<string> {
-        const serverId = await this.isServerInteraction(interaction);
+        const serverId = this.isServerInteraction(interaction);
         const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
         const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
         const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
         const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
-
         if (hours === 0 && minutes === 0) {
             await attendingServers
                 .get(serverId)
@@ -97,16 +93,12 @@ class ModalDispatcher {
      * ----
      * @returns string: the server id
      */
-    private async isServerInteraction(
-        interaction: ModalSubmitInteraction
-    ): Promise<string> {
+    private isServerInteraction(interaction: ModalSubmitInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
-            return Promise.reject(
-                new CommandParseError(
-                    'I can only accept server based interactions. ' +
-                        `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-                )
+            throw new CommandParseError(
+                'I can only accept server based interactions. ' +
+                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
             );
         } else {
             return serverId;
