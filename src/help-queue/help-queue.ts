@@ -7,7 +7,7 @@ import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { PeriodicUpdateError, QueueError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
-import { GuildMemberId } from '../utils/type-aliases';
+import { GuildMemberId, Optional } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
 
 type QueueViewModel = {
@@ -87,7 +87,7 @@ class HelpQueueV2 {
     get parentCategoryId(): string {
         return this.queueChannel.parentCategoryId;
     }
-    get first(): Helpee | undefined {
+    get first(): Optional<Helpee> {
         // first student; undefined if no one is here
         return this._students[0];
     }
@@ -200,16 +200,13 @@ class HelpQueueV2 {
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
         if (this._activeHelperIds.has(helperMember.id)) {
-            return Promise.reject(
-                new QueueError('Queue is already open', this.queueName)
-            );
-        } // won't actually be seen, will be caught
+            throw new QueueError('Queue is already open', this.queueName);
+        }
         this._activeHelperIds.add(helperMember.id);
         await Promise.all<unknown>([
-            // shorthand syntax, the RHS of && will be invoked if LHS is true
             ...this.notifGroup.map(
                 notifMember =>
-                    notify &&
+                    notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
@@ -226,14 +223,10 @@ class HelpQueueV2 {
     async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
         if (!this.isOpen) {
-            return Promise.reject(
-                new QueueError('Queue is already closed', this.queueName)
-            );
+            throw new QueueError('Queue is already closed', this.queueName);
         }
         if (!this._activeHelperIds.has(helperMember.id)) {
-            return Promise.reject(
-                new QueueError('You are not one of the helpers', this.queueName)
-            );
+            throw new QueueError('You are not one of the helpers', this.queueName);
         }
         this._activeHelperIds.delete(helperMember.id);
         if (!this.isOpen) {
@@ -252,19 +245,15 @@ class HelpQueueV2 {
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (!this.isOpen) {
-            return Promise.reject(new QueueError(`Queue is not open.`, this.queueName));
+            throw new QueueError(`Queue is not open.`, this.queueName);
         }
         if (this._students.find(s => s.member.id === studentMember.id) !== undefined) {
-            return Promise.reject(
-                new QueueError(`You are already in the queue.`, this.queueName)
-            );
+            throw new QueueError(`You are already in the queue.`, this.queueName);
         }
         if (this._activeHelperIds.has(studentMember.id)) {
-            return Promise.reject(
-                new QueueError(
-                    `You can't enqueue yourself while helping.`,
-                    this.queueName
-                )
+            throw new QueueError(
+                `You can't enqueue yourself while helping.`,
+                this.queueName
             );
         }
         const student: Helpee = {
@@ -310,24 +299,18 @@ class HelpQueueV2 {
         targetStudentMember?: GuildMember
     ): Promise<Readonly<Helpee>> {
         if (!this.isOpen) {
-            return Promise.reject(
-                new QueueError(
-                    'This queue is not open. Did you mean to use `/start`?',
-                    this.queueName
-                )
+            throw new QueueError(
+                'This queue is not open. Did you mean to use `/start`?',
+                this.queueName
             );
         }
         if (this._students.length === 0) {
-            return Promise.reject(
-                new QueueError("There's no one in the queue", this.queueName)
-            );
+            throw new QueueError("There's no one in the queue", this.queueName);
         }
         if (!this._activeHelperIds.has(helperMember.id)) {
-            return Promise.reject(
-                new QueueError(
-                    "You don't have permission to help this queue",
-                    this.queueName
-                )
+            throw new QueueError(
+                "You don't have permission to help this queue",
+                this.queueName
             );
         }
         if (targetStudentMember !== undefined) {
@@ -335,12 +318,10 @@ class HelpQueueV2 {
                 student => student.member.id === targetStudentMember.id
             );
             if (studentIndex === -1) {
-                return Promise.reject(
-                    new QueueError(
-                        `The specified student ${targetStudentMember.displayName} ` +
-                            `is not in the queue`,
-                        this.queueChannel.queueName
-                    )
+                throw new QueueError(
+                    `The specified student ${targetStudentMember.displayName} ` +
+                        `is not in the queue`,
+                    this.queueChannel.queueName
                 );
             }
             // already checked for idx === -1
@@ -377,11 +358,9 @@ class HelpQueueV2 {
             student => student.member.id === targetStudent.id
         );
         if (idx === -1) {
-            return Promise.reject(
-                new QueueError(
-                    `${targetStudent.displayName} is not in the queue`,
-                    this.queueName
-                )
+            throw new QueueError(
+                `${targetStudent.displayName} is not in the queue`,
+                this.queueName
             );
         }
         // we checked for idx === -1, so it will not be null
@@ -419,11 +398,9 @@ class HelpQueueV2 {
      */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (this.notifGroup.has(targetStudent.id)) {
-            return Promise.reject(
-                new QueueError(
-                    'You are already in the notification squad.',
-                    this.queueName
-                )
+            throw new QueueError(
+                'You are already in the notification squad.',
+                this.queueName
             );
         }
         this.notifGroup.set(targetStudent.id, targetStudent);
@@ -435,8 +412,9 @@ class HelpQueueV2 {
      */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
-            return Promise.reject(
-                new QueueError('You are not in the notification squad.', this.queueName)
+            throw new QueueError(
+                'You are not in the notification squad.',
+                this.queueName
             );
         }
         this.notifGroup.delete(targetStudent.id);

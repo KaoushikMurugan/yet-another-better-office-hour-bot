@@ -157,11 +157,9 @@ class CentralCommandDispatcher {
                     (interaction.channel as GuildChannel).parent?.id ===
                     targetQueue.parentCategoryId
                 ) {
-                    return Promise.reject(
-                        new CommandParseError(
-                            `Please use the remove command in another channel.` +
-                                ` Otherwise Discord API will reject.`
-                        )
+                    throw new CommandParseError(
+                        `Please use the remove command in another channel.` +
+                            ` Otherwise Discord API will reject.`
                     );
                 }
                 await this.serverMap
@@ -170,9 +168,7 @@ class CentralCommandDispatcher {
                 return `Successfully deleted \`${targetQueue.queueName}\`.`;
             }
             default: {
-                return Promise.reject(
-                    new CommandParseError(`Invalid /queue subcommand ${subcommand}.`)
-                );
+                throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
             }
         }
     }
@@ -264,11 +260,9 @@ class CentralCommandDispatcher {
                 role => role.name === queue.queueName || role.name === 'Bot Admin'
             )
         ) {
-            return Promise.reject(
-                new CommandParseError(
-                    `You don't have permission to clear '${queue.queueName}'. ` +
-                        `You can only clear the queues that you have a role of.`
-                )
+            throw new CommandParseError(
+                `You don't have permission to clear '${queue.queueName}'. ` +
+                    `You can only clear the queues that you have a role of.`
             );
         }
         await this.serverMap.get(serverId)?.clearQueue(queue);
@@ -283,11 +277,9 @@ class CentralCommandDispatcher {
         const server = this.serverMap.get(serverId);
         const allQueues = await server?.getQueueChannels();
         if (allQueues === undefined || allQueues.length === 0) {
-            return Promise.reject(
-                new CommandParseError(
-                    `This server doesn't seem to have any queues. ` +
-                        `You can use \`/queue add <name>\` to create one`
-                )
+            throw new CommandParseError(
+                `This server doesn't seem to have any queues. ` +
+                    `You can use \`/queue add <name>\` to create one`
             );
         }
         await server?.clearAllQueues();
@@ -368,9 +360,7 @@ class CentralCommandDispatcher {
             isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
         ]);
         if ((interaction.channel as GuildChannel)?.name === 'queue') {
-            return Promise.reject(
-                new CommandParseError('Please use this command outside the queue.')
-            );
+            throw new CommandParseError('Please use this command outside the queue.');
         }
         await this.serverMap.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
@@ -438,7 +428,7 @@ class CentralCommandDispatcher {
         if (helpMessage !== undefined) {
             await interaction.editReply(helpMessage?.message);
         } else {
-            return Promise.reject(new CommandParseError('Command not found.'));
+            throw new CommandParseError('Command not found.');
         }
         return undefined;
     }
@@ -455,9 +445,7 @@ class CentralCommandDispatcher {
             true
         ) as TextChannel;
         if (loggingChannel.type !== ChannelType.GuildText) {
-            return Promise.reject(
-                new CommandParseError(`${loggingChannel.name} is not a text channel.`)
-            );
+            throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
         }
         await this.serverMap.get(serverId)?.setLoggingChannel(loggingChannel);
         return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
@@ -473,18 +461,14 @@ class CentralCommandDispatcher {
         const hours = interaction.options.getNumber('hours', true);
         const enable = interaction.options.getBoolean('enable', true);
         if (hours <= 0 && enable) {
-            return Promise.reject(
-                new CommandParseError(
-                    'The number of hours must be greater than 0 to enable queue auto clear.'
-                )
+            throw new CommandParseError(
+                'The number of hours must be greater than 0 to enable queue auto clear.'
             );
         }
         this.serverMap.get(serverId)?.setQueueAutoClear(hours, enable);
-        return Promise.resolve(
-            enable
-                ? `Successfully changed the auto clear timeout to be ${hours} hours.`
-                : 'Successfully disabled queue auto clear.'
-        );
+        return enable
+            ? `Successfully changed the auto clear timeout to be ${hours} hours.`
+            : 'Successfully disabled queue auto clear.';
     }
 
     private async stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -506,11 +490,9 @@ class CentralCommandDispatcher {
     ): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {
-            return Promise.reject(
-                new CommandParseError(
-                    'I can only accept server based interactions. ' +
-                        `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-                )
+            throw new CommandParseError(
+                'I can only accept server based interactions. ' +
+                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
             );
         } else {
             return serverId;

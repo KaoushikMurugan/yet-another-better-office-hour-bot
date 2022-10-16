@@ -163,11 +163,9 @@ class ButtonCommandDispatcher {
     private async isServerInteraction(interaction: ButtonInteraction): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {
-            return Promise.reject(
-                new CommandParseError(
-                    'I can only accept server based interactions. ' +
-                        `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-                )
+            throw new CommandParseError(
+                'I can only accept server based interactions. ' +
+                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
             );
         } else {
             return serverId;

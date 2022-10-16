@@ -2,6 +2,7 @@ import { calendar_v3 } from 'googleapis';
 import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
+import { Optional } from '../../utils/type-aliases';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -47,23 +48,19 @@ async function getUpComingTutoringEvents(
         url: calendarUrl,
         timeout: 5000,
         method: 'GET'
-    }).catch(() =>
-        Promise.reject(
-            new CalendarConnectionError(
-                'This calendar refresh timed out. Please try again later.'
-            )
-        )
-    );
+    }).catch(() => {
+        throw new CalendarConnectionError(
+            'This calendar refresh timed out. Please try again later.'
+        );
+    });
     if (response.status !== 200) {
-        return Promise.reject(
-            new CalendarConnectionError(
-                'Failed to connect to Google Calendar. ' +
-                    'The calendar might be deleted or set to private.'
-            )
+        throw new CalendarConnectionError(
+            'Failed to connect to Google Calendar. ' +
+                'The calendar might be deleted or set to private.'
         );
     }
     const responseJSON = await response.data;
-    const events = (responseJSON as calendar_v3.Schema$Events).items;
+    const events = (responseJSON as calendar_v3.Schema$Events)?.items;
     if (!events || events.length === 0) {
         return [];
     }
@@ -107,6 +104,7 @@ async function getUpComingTutoringEvents(
             return viewModel;
         })
         .filter(viewModel => viewModel !== undefined);
+    // already filtered
     return definedViewModels as UpComingSessionViewModel[];
 }
 
@@ -124,15 +122,13 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         url: calendarUrl,
         timeout: 5000,
         method: 'GET'
-    }).catch(() =>
-        Promise.reject(
-            new CalendarConnectionError(
-                'This calendar refresh timed out. Please try again later.'
-            )
-        )
-    );
+    }).catch(() => {
+        throw new CalendarConnectionError(
+            'This calendar refresh timed out. Please try again later.'
+        );
+    });
     if (response.status !== 200) {
-        return Promise.reject(new CalendarConnectionError('Calendar request failed.'));
+        throw new CalendarConnectionError('Calendar request failed.');
     }
     const responseJSON = await response.data;
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
@@ -155,7 +151,7 @@ function composeViewModel(
     start: Date,
     end: Date,
     location?: string
-): UpComingSessionViewModel | undefined {
+): Optional<UpComingSessionViewModel> {
     // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
     // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
     const words = parsingString.split('-');

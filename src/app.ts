@@ -123,6 +123,8 @@ client.on('guildDelete', async guild => {
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
+    // The IIFE syntax is only used for cleaner catch 
+    // TODO: consider using Result<ReturnType, Error> inside command handler
     if (interaction.isChatInputCommand()) {
         await interaction.deferReply({ ephemeral: true });
         await (async () => {

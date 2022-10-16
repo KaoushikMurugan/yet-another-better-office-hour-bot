@@ -67,19 +67,15 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
             environment.sessionCalendar.YABOB_GOOGLE_API_KEY.length === 0
         ) {
-            return Promise.reject(
-                new ExtensionSetupError(
-                    `${FgRed}Make sure you have Calendar ID and API key${ResetColor}`
-                )
+            throw new ExtensionSetupError(
+                `${FgRed}Make sure you have Calendar ID and API key${ResetColor}`
             );
         }
         const calendarName = await checkCalendarConnection(
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
-        ).catch(() =>
-            Promise.reject(
-                new CalendarConnectionError(`The default calendar id is not valid.`)
-            )
-        );
+        ).catch(() => {
+            throw new CalendarConnectionError(`The default calendar id is not valid.`);
+        });
         serverIdCalendarStateMap.set(
             guild.id,
             await CalendarExtensionState.create(guild.id, guild.name)
@@ -238,11 +234,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     ): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const [newCalendarName] = await Promise.all([
-            checkCalendarConnection(newCalendarId).catch(() =>
-                Promise.reject(
-                    new CalendarConnectionError('This new calendar ID is not valid.')
-                )
-            ),
+            checkCalendarConnection(newCalendarId).catch(() => {
+                throw new CalendarConnectionError('This new calendar ID is not valid.');
+            }),
             isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
         ]);
         await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
@@ -251,16 +245,16 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ?.sendLogMessage(
                 SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
             );
-        return Promise.resolve(
+        return (
             `Successfully changed to new calendar` +
-                ` ${
-                    newCalendarName.length > 0
-                        ? ` '${newCalendarName}'. `
-                        : ", but it doesn't have a name. "
-                }` +
-                `The calendar embeds will refresh soon. ` +
-                `Don't forget sure to use \`/set_public_embed_url\` if you are using a 3rd party calendar public embed. ` +
-                `This ID has also been backed up to firebase.`
+            ` ${
+                newCalendarName.length > 0
+                    ? ` '${newCalendarName}'. `
+                    : ", but it doesn't have a name. "
+            }` +
+            `The calendar embeds will refresh soon. ` +
+            `Don't forget sure to use \`/set_public_embed_url\` if you are using a 3rd party calendar public embed. ` +
+            `This ID has also been backed up to firebase.`
         );
     }
 
@@ -279,10 +273,10 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ?.sendLogMessage(
                 SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
             );
-        return Promise.resolve(
+        return (
             `Successfully unset the calendar. ` +
-                `The calendar embeds will refresh soon. ` +
-                `Or you can manually refresh it using the refresh button.`
+            `The calendar embeds will refresh soon. ` +
+            `Or you can manually refresh it using the refresh button.`
         );
     }
 
@@ -353,10 +347,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 !memberRoles.cache.some(role => role.name === 'Bot Admin') &&
                 user.id !== interaction.user.id
             ) {
-                return Promise.reject(
-                    new CommandParseError(
-                        `Only Bot Admins have permission to update calendar string for users that are not yourself. `
-                    )
+                throw new CommandParseError(
+                    `Only Bot Admins have permission to update calendar string for users that are not yourself. `
                 );
             } else {
                 // already checked in isServerInteraction
@@ -387,10 +379,8 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                         category?.type !== ChannelType.GuildCategory ||
                         category === null
                     ) {
-                        return Promise.reject(
-                            new CommandParseError(
-                                `\`${category?.name}\` is not a valid queue category.`
-                            )
+                        throw new CommandParseError(
+                            `\`${category?.name}\` is not a valid queue category.`
                         );
                     }
                     const queueTextChannel = (
@@ -400,13 +390,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                             child.name === 'queue' && child.type === ChannelType.GuildText
                     );
                     if (queueTextChannel === undefined) {
-                        return Promise.reject(
-                            new CommandParseError(
-                                `'${category.name}' does not have a \`#queue\` text channel.`
-                            )
+                        throw new CommandParseError(
+                            `'${category.name}' does not have a \`#queue\` text channel.`
                         );
                     }
-                    return Promise.resolve(category as CategoryChannel);
+                    return category as CategoryChannel;
                 })
             );
         }
@@ -418,12 +406,12 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
             ?.sendLogMessage(
                 SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`)
             );
-        return Promise.resolve(
+        return (
             `Copy and paste the following into the calendar **description**:\n\n` +
-                `YABOB_START ` +
-                `${calendarDisplayName} - ` +
-                `${validQueues.map(queue => queue.name).join(', ')} ` +
-                `YABOB_END\n`
+            `YABOB_START ` +
+            `${calendarDisplayName} - ` +
+            `${validQueues.map(queue => queue.name).join(', ')} ` +
+            `YABOB_END\n`
         );
     }
 
@@ -438,9 +426,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                 // call this constructor to check if URL is valid
                 new URL(rawUrl);
             } catch {
-                return Promise.reject(
-                    new CommandParseError('Please provide a valid and complete URL.')
-                );
+                throw new CommandParseError('Please provide a valid and complete URL.');
             }
             // now rawUrl is valid
             await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
@@ -477,11 +463,9 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
     ): Promise<string> {
         const serverId = interaction.guild?.id;
         if (!serverId || !this.serverMap.has(serverId)) {
-            return Promise.reject(
-                new CommandParseError(
-                    'I can only accept server based interactions. ' +
-                        `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-                )
+            throw new CommandParseError(
+                'I can only accept server based interactions. ' +
+                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
             );
         } else {
             return serverId;

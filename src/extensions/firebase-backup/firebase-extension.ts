@@ -2,12 +2,13 @@ import { BaseServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import firebaseAppAdmin from 'firebase-admin';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
+import firebaseAppAdmin from 'firebase-admin';
 import environment from '../../environment/environment-manager';
+import { Optional } from '../../utils/type-aliases';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -46,7 +47,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
      */
     override async loadExternalServerData(
         serverId: string
-    ): Promise<ServerBackup | undefined> {
+    ): Promise<Optional<ServerBackup>> {
         const backupData = await this.firebase_db
             .collection('serverBackups')
             .doc(serverId)
@@ -64,6 +65,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
     /**
      * Builds the backup data and sends it to firebase
      * @param server the server to backup
+     * @noexcept, error is logged to the console
      */
     private async backupServerToFirebase(
         server: Readonly<AttendingServerV2>
