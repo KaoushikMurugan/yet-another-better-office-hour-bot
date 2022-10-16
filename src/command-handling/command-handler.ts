@@ -18,10 +18,7 @@ import {
     SlashCommandLogEmbed,
     ErrorLogEmbed
 } from '../utils/embed-helper';
-import {
-    CommandParseError,
-    UserViewableError
-} from '../utils/error-types';
+import { CommandParseError, UserViewableError } from '../utils/error-types';
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,

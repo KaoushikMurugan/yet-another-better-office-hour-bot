@@ -57,9 +57,9 @@ async function getQueueRoles(
 
 /**
  * Default logger for button presses
- * @param interaction 
- * @param buttonName 
- * @param queueName 
+ * @param interaction
+ * @param buttonName
+ * @param queueName
  */
 function logButtonPress(
     interaction: ButtonInteraction,
@@ -82,7 +82,7 @@ function logButtonPress(
 
 /**
  * Default logger for modal submits
- * @param interaction 
+ * @param interaction
  */
 function logModalSubmit(interaction: ModalSubmitInteraction): void {
     console.log(
@@ -100,7 +100,7 @@ function logModalSubmit(interaction: ModalSubmitInteraction): void {
 
 /**
  * Default logger for slash commands
- * @param interaction 
+ * @param interaction
  */
 function logSlashCommand(interaction: ChatInputCommandInteraction): void {
     console.log(
