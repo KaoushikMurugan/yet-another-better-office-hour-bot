@@ -9,8 +9,8 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
-import environment from './environment/environment-manager';
 import { ModalDispatcher } from './command-handling/modal-handler';
+import environment from './environment/environment-manager';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
@@ -30,19 +30,18 @@ client.on('ready', async () => {
     const allGuilds = await Promise.all(
         (await client.guilds.fetch()).map(guild => guild.fetch())
     );
-    // Launch all startup sequences in parallel
-    const setupResult = await Promise.allSettled(
+    const setupResults = await Promise.allSettled(
         allGuilds.map(guild => joinGuild(guild))
     );
-    setupResult.forEach(
+    setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );
-    if (setupResult.filter(res => res.status === 'fulfilled').length === 0) {
+    if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
-    console.log(`${centeredText('-------- Begin Server Logs --------')}\n`);
+    console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     return;
 });
 
@@ -77,7 +76,7 @@ client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     // removed IIFE because the client.on error catches for us
-    // TODO: consider using Result<ReturnType, Error> inside command handler
+    // TODO: All 3 if blocks are basically the same, see if we can generalize them
     if (interaction.isChatInputCommand()) {
         if (builtinCommandHandler.canHandle(interaction)) {
             await builtinCommandHandler.process(interaction);
@@ -199,8 +198,8 @@ client.on('warn', warning => {
 });
 
 process.on('exit', () => {
-    console.log(centeredText('-------- End of Server Log --------'));
-    console.log(`${centeredText('-------- Begin Error Stack Trace --------')}\n`);
+    console.log(centered('-------- End of Server Log --------'));
+    console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
 });
 
 /**
@@ -247,7 +246,7 @@ function printTitleString(username: string): void {
     );
 }
 
-function centeredText(text: string): string {
+function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
         `${text}` +

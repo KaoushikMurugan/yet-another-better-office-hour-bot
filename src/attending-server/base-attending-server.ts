@@ -754,8 +754,12 @@ class AttendingServerV2 {
      * @param hours the number of hours to wait before clearing the queue
      * @param enable whether to disable auto clear, overrides 'hours'
      */
-    async setQueueAutoClear(hours: number, enable: boolean): Promise<void> {
-        this._queues.forEach(queue => queue.setAutoClear(hours, enable));
+    async setQueueAutoClear(
+        hours: number,
+        minutes: number,
+        enable: boolean
+    ): Promise<void> {
+        this._queues.forEach(queue => queue.setAutoClear(hours, minutes, enable));
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );

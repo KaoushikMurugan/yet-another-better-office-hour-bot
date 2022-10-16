@@ -90,7 +90,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
-                server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
         };
         this.firebase_db
             .collection('serverBackups')

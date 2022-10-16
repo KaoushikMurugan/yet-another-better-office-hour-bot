@@ -75,16 +75,24 @@ class CentralCommandDispatcher {
         ['start', interaction => this.start(interaction)],
         ['stop', interaction => this.stop(interaction)],
         ['help', interaction => this.help(interaction)],
-        [
-            'set_after_session_msg',
-            interaction => this.setAfterSessionMessage(interaction)
-        ],
         ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
         ['stop_logging', interaction => this.stopLogging(interaction)],
+        [
+            'set_after_session_msg',
+            interaction => this.showAfterSessionMessageModal(interaction)
+        ],
         ['set_queue_auto_clear', interaction => this.setQueueAutoClear(interaction)]
     ]);
 
-    private showModalOnlyCommands = new Set<string>(['set_after_session_msg']);
+    /**
+     * Commands in this set only shows a modal on ChatInputCommandInteraction
+     * Actual changes to attendingServers happens on modal submit
+     * - See modal-handler.ts
+     */
+    private showModalOnlyCommands = new Set<string>([
+        'set_after_session_msg',
+        'set_queue_auto_clear'
+    ]);
 
     canHandle(interaction: ChatInputCommandInteraction): boolean {
         return this.commandMethodMap.has(interaction.commandName);
@@ -409,7 +417,7 @@ class CentralCommandDispatcher {
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
-    private async setAfterSessionMessage(
+    private async showAfterSessionMessageModal(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const [serverId] = await Promise.all([
@@ -478,22 +486,38 @@ class CentralCommandDispatcher {
 
     private async setQueueAutoClear(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<undefined> {
         const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', ['Bot Admin'])
         ]);
-        const hours = interaction.options.getNumber('hours', true);
-        const enable = interaction.options.getBoolean('enable', true);
-        if (hours <= 0 && enable) {
-            throw new CommandParseError(
-                'The number of hours must be greater than 0 to enable queue auto clear.'
-            );
-        }
-        attendingServers.get(serverId)?.setQueueAutoClear(hours, enable);
-        return enable
-            ? `Successfully changed the auto clear timeout to be ${hours} hours.`
-            : 'Successfully disabled queue auto clear.';
+        const queueAutoClearModal = new ModalBuilder()
+        .setTitle('Set Queue Auto Clear')
+        .setCustomId('set_queue_auto_clear_modal')
+        .setComponents(
+            new ActionRowBuilder<ModalActionRowComponentBuilder>()
+                .addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('set_queue_auto_clear_modal_hours')
+                        .setLabel('Hours')
+                        .setPlaceholder('Enter hours')
+                        .setMinLength(0)
+                        .setMaxLength(2)
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(false)),
+            new ActionRowBuilder<ModalActionRowComponentBuilder>()
+                .addComponents(
+                    new TextInputBuilder()
+                        .setCustomId('set_queue_auto_clear_modal_minutes')
+                        .setLabel('Minutes')
+                        .setPlaceholder('Enter minutes')
+                        .setMinLength(0)
+                        .setMaxLength(2)
+                        .setStyle(TextInputStyle.Short)
+                        .setRequired(false)
+                ));
+        await interaction.showModal(queueAutoClearModal);
+        return undefined;
     }
 
     private async stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {

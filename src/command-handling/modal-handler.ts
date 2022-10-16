@@ -28,6 +28,9 @@ class ModalDispatcher {
 
     async processModal(interaction: ModalSubmitInteraction): Promise<void> {
         const modalMethod = this.modalMethodMap.get(interaction.customId);
+        // Everything is reply here because showModal is guaranteed to be the 1st response
+        // modal shown => message not replied bc modal has to be 1st response
+        // so we always reply
         if (modalMethod === undefined) {
             await interaction.reply({
                 ...ErrorEmbed(
@@ -82,7 +85,7 @@ class ModalDispatcher {
             .get(serverId)
             ?.setAfterSessionMessage(newAfterSessionMessage);
         const message = interaction.fields.getTextInputValue('after_session_msg');
-        return `After session message set to: ${message}`;
+        return `After session message set to:\n${message}`;
     }
 
     private async setQueueAutoClear(
@@ -96,43 +99,8 @@ class ModalDispatcher {
         const minutesInput = interaction.fields.getTextInputValue(
             'set_queue_auto_clear_modal_minutes'
         );
-        let newQueueAutoClearHours: AutoClearTimeout;
-        let newQueueAutoClearMinutes: AutoClearTimeout;
 
-        if (hoursInput === '' && minutesInput === '') {
-            newQueueAutoClearHours = 'AUTO_CLEAR_DISABLED';
-            newQueueAutoClearMinutes = 'AUTO_CLEAR_DISABLED';
-        } else {
-            if (
-                hoursInput === '' ||
-                isNaN(Number(hoursInput)) ||
-                Number(hoursInput) < 0
-            ) {
-                newQueueAutoClearHours = 0;
-            } else {
-                newQueueAutoClearHours = parseInt(hoursInput);
-            }
-            if (
-                minutesInput === '' ||
-                isNaN(Number(minutesInput)) ||
-                Number(minutesInput) < 0
-            ) {
-                newQueueAutoClearMinutes = 0;
-            } else {
-                newQueueAutoClearMinutes = parseInt(minutesInput);
-            }
-        }
-
-        if (newQueueAutoClearHours === 0 && newQueueAutoClearMinutes === 0) {
-            newQueueAutoClearHours = 'AUTO_CLEAR_DISABLED';
-            newQueueAutoClearMinutes = 'AUTO_CLEAR_DISABLED';
-        }
-
-        return Promise.resolve(
-            newQueueAutoClearHours !== 'AUTO_CLEAR_DISABLED'
-                ? `Successfully changed the auto clear timeout to be ${newQueueAutoClearHours} h and ${newQueueAutoClearMinutes} m.`
-                : 'Successfully disabled queue auto clear.'
-        );
+        return `hours ${hoursInput}, minutes ${minutesInput}`;
     }
 
     /**
