@@ -4,13 +4,14 @@ import { ButtonCommandDispatcher } from './command-handling/button-handler';
 import { CentralCommandDispatcher } from './command-handling/command-handler';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
 import { postSlashCommands } from './command-handling/slash-commands';
-import { EmbedColor, SimpleEmbed } from './utils/embed-helper';
+import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
 import { ModalDispatcher } from './command-handling/modal-handler';
 import environment from './environment/environment-manager';
+import { CommandNotImplementedError } from './utils/error-types';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
@@ -87,7 +88,11 @@ client.on('interactionCreate', async interaction => {
                 ?.find(ext => ext.canHandleCommand(interaction));
             if (!externalCommandHandler) {
                 await interaction.reply({
-                    content: 'Unknown Slash Command',
+                    ...ErrorEmbed(
+                        new CommandNotImplementedError(
+                            'YABOB cannot handle this slash command.'
+                        )
+                    ),
                     ephemeral: true
                 });
                 return;
@@ -104,7 +109,11 @@ client.on('interactionCreate', async interaction => {
                 ?.find(ext => ext.canHandleButton(interaction));
             if (!externalButtonHandler) {
                 await interaction.reply({
-                    content: 'Unknown Button',
+                    ...ErrorEmbed(
+                        new CommandNotImplementedError(
+                            'YABOB cannot handle this button press.'
+                        )
+                    ),
                     ephemeral: true
                 });
                 return;
@@ -114,14 +123,18 @@ client.on('interactionCreate', async interaction => {
     }
     if (interaction.isModalSubmit()) {
         if (builtinModalHandler.canHandle(interaction)) {
-            await builtinModalHandler.processModal(interaction);
+            await builtinModalHandler.process(interaction);
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             if (!externalModalHandler) {
                 await interaction.reply({
-                    content: 'Unknown Modal',
+                    ...ErrorEmbed(
+                        new CommandNotImplementedError(
+                            'YABOB cannot handle this modal submit.'
+                        )
+                    ),
                     ephemeral: true
                 });
                 return;

@@ -1,5 +1,13 @@
-import { GuildMember, GuildMemberRoleManager, Role } from 'discord.js';
+import {
+    ButtonInteraction,
+    ChatInputCommandInteraction,
+    GuildMember,
+    GuildMemberRoleManager,
+    ModalSubmitInteraction,
+    Role
+} from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { cyan, yellow, magenta } from './command-line-colors';
 
 /**
  * Converts the time delta in miliseconds into a readable format
@@ -47,4 +55,71 @@ async function getQueueRoles(
     ];
 }
 
-export { convertMsToTime, getQueueRoles };
+/**
+ * Default logger for button presses
+ * @param interaction 
+ * @param buttonName 
+ * @param queueName 
+ */
+function logButtonPress(
+    interaction: ButtonInteraction,
+    buttonName: string,
+    queueName: string
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Button Pressed: ${magenta(buttonName)}\n` +
+            ` - In Queue: ${queueName}`
+    );
+}
+
+/**
+ * Default logger for modal submits
+ * @param interaction 
+ */
+function logModalSubmit(interaction: ModalSubmitInteraction): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Modal Used: ${magenta(interaction.customId)}`
+    );
+}
+
+/**
+ * Default logger for slash commands
+ * @param interaction 
+ */
+function logSlashCommand(interaction: ChatInputCommandInteraction): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Command Used: ${magenta(interaction.toString())}`
+    );
+}
+
+export {
+    convertMsToTime,
+    getQueueRoles,
+    logButtonPress,
+    logModalSubmit,
+    logSlashCommand
+};

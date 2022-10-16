@@ -1,14 +1,12 @@
 import { ModalSubmitInteraction } from 'discord.js';
-import { AutoClearTimeout } from '../help-queue/help-queue';
-import { cyan, yellow, magenta } from '../utils/command-line-colors';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
 import {
-    CommandNotImplementedError,
     CommandParseError,
     UserViewableError
 } from '../utils/error-types';
 import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
+import { logModalSubmit } from '../utils/util-functions';
 
 class ModalDispatcher {
     modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
@@ -26,31 +24,14 @@ class ModalDispatcher {
         return this.modalMethodMap.has(interaction.customId);
     }
 
-    async processModal(interaction: ModalSubmitInteraction): Promise<void> {
+    async process(interaction: ModalSubmitInteraction): Promise<void> {
         const modalMethod = this.modalMethodMap.get(interaction.customId);
-        // Everything is reply here because showModal is guaranteed to be the 1st response
-        // modal shown => message not replied, so we always reply
-        if (modalMethod === undefined) {
-            await interaction.reply({
-                ...ErrorEmbed(
-                    new CommandNotImplementedError('This command does not exist.')
-                ),
-                ephemeral: true
-            });
-            return;
-        }
-        console.log(
-            `[${cyan(
-                new Date().toLocaleString('en-US', {
-                    timeZone: 'PST8PDT'
-                })
-            )} ` +
-                `${yellow(interaction.guild?.name)}]\n` +
-                ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-                ` - Server Id: ${interaction.guildId}\n` +
-                ` - Modal Used: ${magenta(interaction.customId)}`
-        );
-        await modalMethod(interaction)
+        logModalSubmit(interaction);
+        // if process is called then modalMethod is definitely not null
+        // this is checked in app.ts with `modalHandler.canHandle`
+        await modalMethod?.(interaction)
+            // Everything is reply here because showModal is guaranteed to be the 1st response
+            // modal shown => message not replied, so we always reply
             .then(async successMsg => {
                 if (typeof successMsg === 'string') {
                     await interaction.reply(SimpleEmbed(successMsg));
@@ -97,7 +78,9 @@ class ModalDispatcher {
         const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
 
         if (hours === 0 && minutes === 0) {
-            await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, false);
+            await attendingServers
+                .get(serverId)
+                ?.setQueueAutoClear(hours, minutes, false);
             return `Successfully disabled queue auto clear.`;
         }
         await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, true);

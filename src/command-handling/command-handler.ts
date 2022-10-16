@@ -11,7 +11,6 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { cyan, magenta, yellow } from '../utils/command-line-colors';
 import {
     EmbedColor,
     SimpleEmbed,
@@ -20,7 +19,6 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import {
-    CommandNotImplementedError,
     CommandParseError,
     UserViewableError
 } from '../utils/error-types';
@@ -29,7 +27,7 @@ import {
     hasValidQueueArgument,
     isFromGuildMember
 } from './common-validations';
-import { convertMsToTime } from '../utils/util-functions';
+import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { CommandCallback } from '../utils/type-aliases';
@@ -106,8 +104,7 @@ class CentralCommandDispatcher {
      * - If thrown but the command is implemented, make sure commandMethodMap has it
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = (await this.isServerInteraction(interaction)) ?? 'unknown';
-        // Check the hashmap to see if the command exists as a key
+        const serverId = this.isServerInteraction(interaction);
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
@@ -116,24 +113,8 @@ class CentralCommandDispatcher {
                 SimpleEmbed('Processing Command...', EmbedColor.Neutral)
             );
         }
-        if (commandMethod === undefined) {
-            await interaction.editReply(
-                ErrorEmbed(new CommandNotImplementedError('This command does not exist.'))
-            );
-            return;
-        }
-        console.log(
-            `[${cyan(
-                new Date().toLocaleString('en-US', {
-                    timeZone: 'PST8PDT'
-                })
-            )} ` +
-                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
-                ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-                ` - Server Id: ${interaction.guildId}\n` +
-                ` - Command Used: ${magenta(interaction.toString())}`
-        );
-        await commandMethod(interaction)
+        logSlashCommand(interaction);
+        await commandMethod?.(interaction)
             // shorthand syntax, if successMsg is undefined, don't run the rhs
             .then(async successMsg => {
                 await Promise.all<unknown>([
@@ -534,9 +515,7 @@ class CentralCommandDispatcher {
      * Each handler will have their own isServerInteraction method
      * @returns string: the server id
      */
-    private async isServerInteraction(
-        interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    private isServerInteraction(interaction: ChatInputCommandInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
             throw new CommandParseError(

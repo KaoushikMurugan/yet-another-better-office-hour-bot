@@ -1,5 +1,4 @@
 import { ButtonInteraction } from 'discord.js';
-import { cyan, magenta, yellow } from '../utils/command-line-colors';
 import {
     EmbedColor,
     ErrorEmbed,
@@ -7,9 +6,9 @@ import {
     SimpleEmbed,
     ErrorLogEmbed
 } from '../utils/embed-helper';
+import { logButtonPress } from '../utils/util-functions';
 import {
     CommandParseError,
-    CommandNotImplementedError,
     UserViewableError
 } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
@@ -52,25 +51,10 @@ class ButtonCommandDispatcher {
         });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
-        if (buttonMethod === undefined) {
-            await interaction.editReply(
-                ErrorEmbed(new CommandNotImplementedError('This command does not exist.'))
-            );
-            return;
-        }
-        console.log(
-            `[${cyan(
-                new Date().toLocaleString('en-US', {
-                    timeZone: 'PST8PDT'
-                })
-            )} ` +
-                `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
-                ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-                ` - Server Id: ${interaction.guildId}\n` +
-                ` - Button Pressed: ${magenta(buttonName)}\n` +
-                ` - In Queue: ${queueName}`
-        );
-        await buttonMethod(queueName, interaction)
+        logButtonPress(interaction, buttonName, queueName);
+        // if process is called then buttonMethod is definitely not null
+        // this is checked in app.ts with `buttonHandler.canHandle`
+        await buttonMethod?.(queueName, interaction)
             .then(async successMsg => {
                 if (successMsg) {
                     await interaction.editReply(
