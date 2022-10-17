@@ -268,13 +268,14 @@ class AttendingServerV2 {
         this.queueChannelsCache = allChannels
             .filter(ch => ch !== null && ch.type === ChannelType.GuildCategory)
             // ch has type 'AnyChannel', have to cast, type already checked
+            .map(channel => channel as CategoryChannel)
             .map(category => [
-                (category as CategoryChannel).children.cache.find(
+                category.children.cache.find(
                     child =>
                         child.name === 'queue' && child.type === ChannelType.GuildText
                 ),
-                (category as CategoryChannel).name,
-                (category as CategoryChannel).id
+                category.name,
+                category.id
             ])
             .filter(([textChannel]) => textChannel !== undefined)
             .map(([ch, name, parentId]) => {
@@ -348,7 +349,7 @@ class AttendingServerV2 {
         await Promise.all(
             parentCategory?.children.cache
                 .map(child => child.delete())
-                .filter(promise => promise !== undefined) as Promise<TextChannel>[]
+                .filter(promise => promise !== undefined)
         ).catch((err: Error) => {
             throw new ServerError(`API Failure: ${err.name}\n${err.message}`);
         });
@@ -597,6 +598,7 @@ class AttendingServerV2 {
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
+                // the only missing property helpEnd is now completed, cast is safe
                 extension.onHelperStopHelping(this, helper as Required<Helper>)
             )
         );

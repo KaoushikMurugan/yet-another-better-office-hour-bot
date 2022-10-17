@@ -88,7 +88,6 @@ class PeriodicUpdateError extends Error {
     }
 }
 
-
 export {
     CommandParseError,
     ServerError,
