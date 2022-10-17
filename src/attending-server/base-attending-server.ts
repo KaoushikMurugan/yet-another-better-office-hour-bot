@@ -86,6 +86,9 @@ class AttendingServerV2 {
     get activeHelpers(): ReadonlyMap<string, Helper> {
         return this._activeHelpers;
     }
+    get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
+        return this._queues.first()?.timeUntilAutoClear;
+    }
 
     /**
      * Cleans up all the timers from setInterval

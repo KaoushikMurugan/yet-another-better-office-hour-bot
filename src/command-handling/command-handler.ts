@@ -4,7 +4,7 @@ import {
     GuildChannel,
     GuildMember,
     GuildMemberRoleManager,
-    TextChannel,
+    TextChannel
 } from 'discord.js';
 import {
     EmbedColor,
@@ -445,11 +445,11 @@ class BuiltInCommandHandler {
     private async showQueueAutoClearModal(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        await Promise.all([
+        const [serverId] = await Promise.all([
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', ['Bot Admin'])
         ]);
-        await interaction.showModal(queueAutoClearModal);
+        await interaction.showModal(queueAutoClearModal(serverId));
         return undefined;
     }
 

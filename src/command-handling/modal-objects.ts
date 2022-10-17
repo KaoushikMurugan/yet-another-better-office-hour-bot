@@ -7,31 +7,43 @@ import {
 } from 'discord.js';
 import { attendingServers } from '../global-states';
 
-const queueAutoClearModal = new ModalBuilder()
-    .setTitle('Set Queue Auto Clear')
-    .setCustomId('queue_auto_clear_modal')
-    .setComponents(
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-            new TextInputBuilder()
-                .setCustomId('auto_clear_hours')
-                .setLabel('Hours')
-                .setPlaceholder('Enter hours (0~24)')
-                .setMaxLength(2)
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setValue('0')
-        ),
-        new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-            new TextInputBuilder()
-                .setCustomId('auto_clear_minutes')
-                .setLabel('Minutes')
-                .setPlaceholder('Enter minutes (0~59)')
-                .setMaxLength(2)
-                .setStyle(TextInputStyle.Short)
-                .setRequired(true)
-                .setValue('0')
-        )
-    );
+function queueAutoClearModal(serverId: string): ModalBuilder {
+    const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
+    const modal = new ModalBuilder()
+        .setTitle('Set Queue Auto Clear (leave the inputs 0 to disable)')
+        .setCustomId('queue_auto_clear_modal')
+        .setComponents(
+            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('auto_clear_hours')
+                    .setLabel('Hours')
+                    .setPlaceholder('Enter hours (0~24)')
+                    .setMaxLength(2)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setValue(
+                        oldTimeout === undefined || oldTimeout === 'AUTO_CLEAR_DISABLED'
+                            ? '0'
+                            : oldTimeout.hours.toString()
+                    )
+            ),
+            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('auto_clear_minutes')
+                    .setLabel('Minutes')
+                    .setPlaceholder('Enter minutes (0~59)')
+                    .setMaxLength(2)
+                    .setStyle(TextInputStyle.Short)
+                    .setRequired(true)
+                    .setValue(
+                        oldTimeout === undefined || oldTimeout === 'AUTO_CLEAR_DISABLED'
+                            ? '0'
+                            : oldTimeout.minutes.toString()
+                    )
+            )
+        );
+    return modal;
+}
 
 function afterSessionMessageModal(serverId: string): ModalBuilder {
     const modal = new ModalBuilder()
