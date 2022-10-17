@@ -78,69 +78,54 @@ client.on('interactionCreate', async interaction => {
     // otherwise find an extension that can process it
     // removed IIFE because the client.on error catches for us
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
+    let handled = false;
     if (interaction.isChatInputCommand()) {
         if (builtinCommandHandler.canHandle(interaction)) {
+            handled = true;
             await builtinCommandHandler.process(interaction);
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleCommand(interaction));
-            if (!externalCommandHandler) {
-                await interaction.reply({
-                    ...ErrorEmbed(
-                        new CommandNotImplementedError(
-                            'YABOB cannot handle this slash command.'
-                        )
-                    ),
-                    ephemeral: true
-                });
-                return;
-            }
-            await externalCommandHandler.processCommand(interaction);
+            handled = externalCommandHandler !== undefined;
+            await externalCommandHandler?.processCommand(interaction);
         }
     }
     if (interaction.isButton()) {
         if (builtinButtonHandler.canHandle(interaction)) {
+            handled = true;
             await builtinButtonHandler.process(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleButton(interaction));
-            if (!externalButtonHandler) {
-                await interaction.reply({
-                    ...ErrorEmbed(
-                        new CommandNotImplementedError(
-                            'YABOB cannot handle this button press.'
-                        )
-                    ),
-                    ephemeral: true
-                });
-                return;
-            }
-            await externalButtonHandler.processButton(interaction);
+            handled = externalButtonHandler !== undefined;
+            await externalButtonHandler?.processButton(interaction);
         }
     }
     if (interaction.isModalSubmit()) {
         if (builtinModalHandler.canHandle(interaction)) {
+            handled = true;
             await builtinModalHandler.process(interaction);
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
-            if (!externalModalHandler) {
-                await interaction.reply({
-                    ...ErrorEmbed(
-                        new CommandNotImplementedError(
-                            'YABOB cannot handle this modal submit.'
-                        )
-                    ),
-                    ephemeral: true
-                });
-                return;
-            }
-            await externalModalHandler.processModalSubmit(interaction);
+            handled = externalModalHandler !== undefined;
+            await externalModalHandler?.processModalSubmit(interaction);
         }
+    }
+    // optional, remove it if you feel like this is too ugly
+    if (!handled && interaction.isRepliable()) {
+        await interaction.reply({
+            ...ErrorEmbed(
+                new CommandNotImplementedError(
+                    `YABOB cannot handle this ${interaction.type}.`
+                )
+            ),
+            ephemeral: true
+        });
     }
 });
 
