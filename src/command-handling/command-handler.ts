@@ -5,11 +5,6 @@ import {
     GuildMember,
     GuildMemberRoleManager,
     TextChannel,
-    ActionRowBuilder,
-    ModalActionRowComponentBuilder,
-    ModalBuilder,
-    TextInputBuilder,
-    TextInputStyle
 } from 'discord.js';
 import {
     EmbedColor,
@@ -31,6 +26,7 @@ import { CommandCallback } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
+import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
 import { attendingServers } from '../global-states';
 
 /**
@@ -404,23 +400,7 @@ class BuiltInCommandHandler {
                 'Bot Admin'
             ])
         ]);
-        const afterSessionMessageModal = new ModalBuilder()
-            .setTitle('Set After Session Message')
-            .setCustomId('after_session_message_modal')
-            .setComponents(
-                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('after_session_msg')
-                        .setLabel('Leave blank to disable') // There is a character limit for labels
-                        .setPlaceholder('Enter your message here')
-                        .setValue(
-                            attendingServers.get(serverId)?.afterSessionMessage ?? ''
-                        )
-                        .setStyle(TextInputStyle.Paragraph)
-                        .setRequired(false)
-                )
-            );
-        await interaction.showModal(afterSessionMessageModal);
+        await interaction.showModal(afterSessionMessageModal(serverId));
         return undefined;
     }
 
@@ -469,31 +449,6 @@ class BuiltInCommandHandler {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', ['Bot Admin'])
         ]);
-        const queueAutoClearModal = new ModalBuilder()
-            .setTitle('Set Queue Auto Clear')
-            .setCustomId('queue_auto_clear_modal')
-            .setComponents(
-                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('auto_clear_hours')
-                        .setLabel('Hours')
-                        .setPlaceholder('Enter hours (0~24)')
-                        .setMaxLength(2)
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true)
-                        .setValue('0')
-                ),
-                new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
-                    new TextInputBuilder()
-                        .setCustomId('auto_clear_minutes')
-                        .setLabel('Minutes')
-                        .setPlaceholder('Enter minutes (0~59)')
-                        .setMaxLength(2)
-                        .setStyle(TextInputStyle.Short)
-                        .setRequired(true)
-                        .setValue('0')
-                )
-            );
         await interaction.showModal(queueAutoClearModal);
         return undefined;
     }
