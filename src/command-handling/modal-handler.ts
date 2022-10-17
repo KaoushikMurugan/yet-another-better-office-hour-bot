@@ -39,9 +39,9 @@ class BuiltInModalHandler {
             .catch(async err => {
                 const serverId = this.isServerInteraction(interaction);
                 await Promise.all([
-                    interaction.reply({
-                        ...ErrorEmbed(err)
-                    }),
+                    interaction.replied
+                        ? interaction.editReply(ErrorEmbed(err))
+                        : interaction.reply(ErrorEmbed(err)),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

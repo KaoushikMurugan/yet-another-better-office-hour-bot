@@ -163,7 +163,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     );
                 }
             })
-            .catch(async err => await interaction.editReply(ErrorEmbed(err)));
+            .catch(async err =>
+                interaction.replied
+                    ? await interaction.editReply(ErrorEmbed(err))
+                    : await interaction.reply(ErrorEmbed(err))
+            );
     }
 
     /**
@@ -186,7 +190,11 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
                     );
                 }
             })
-            .catch(async err => await interaction.editReply(ErrorEmbed(err)));
+            .catch(async err =>
+                interaction.replied
+                    ? await interaction.editReply(ErrorEmbed(err))
+                    : await interaction.reply(ErrorEmbed(err))
+            );
     }
 
     private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {

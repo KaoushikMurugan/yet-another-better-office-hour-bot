@@ -63,7 +63,9 @@ class BuiltInButtonHandler {
                 // Central error handling, reply to user with the error
                 const serverId = this.isServerInteraction(interaction);
                 await Promise.all([
-                    interaction.editReply(ErrorEmbed(err)),
+                    interaction.replied
+                        ? interaction.editReply(ErrorEmbed(err))
+                        : interaction.reply(ErrorEmbed(err)),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

@@ -122,8 +122,12 @@ class BuiltInCommandHandler {
             })
             .catch(async err => {
                 // Central error handling, reply to user with the error
+                console.log(err.name, interaction.commandName);
                 await Promise.all([
-                    interaction.editReply(ErrorEmbed(err)),
+                    // if not replied (when using modals), reply
+                    interaction.replied
+                        ? interaction.editReply(ErrorEmbed(err))
+                        : interaction.reply(ErrorEmbed(err)),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

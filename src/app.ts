@@ -79,7 +79,6 @@ client.on('interactionCreate', async interaction => {
     // removed IIFE because the client.on error catches for us
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
-    console.log(interaction.type);
     if (interaction.isChatInputCommand()) {
         if (builtinCommandHandler.canHandle(interaction)) {
             handled = true;
@@ -122,7 +121,7 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply({
             ...ErrorEmbed(
                 new CommandNotImplementedError(
-                    `YABOB cannot handle this ${interaction.type}.`
+                    `YABOB cannot handle this ${interaction.toString()}.`
                 )
             ),
             ephemeral: true
