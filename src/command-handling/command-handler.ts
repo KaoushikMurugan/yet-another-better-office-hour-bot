@@ -46,7 +46,7 @@ import { attendingServers } from '../global-states';
  * - string: the success message
  * - undefined: if the function already replied
  */
-class CentralCommandDispatcher {
+class BuiltInCommandHandler {
     // The map of available commands
     // Key is what the user will see, value is the arrow function
     // - arrow function wrapper is required because of the closure of 'this'
@@ -222,7 +222,7 @@ class CentralCommandDispatcher {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'stop', ['Bot Admin', 'Staff'])
         ]);
-        const helpTime = await attendingServers
+        const helpTimeEntry = await attendingServers
             .get(serverId)
             ?.closeAllClosableQueues(member);
         return (
@@ -230,7 +230,7 @@ class CentralCommandDispatcher {
             convertMsToTime(
                 // error will be thrown closeAllClosableQueues if that goes wrong, so we can assert non-null
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                helpTime!.helpEnd.getTime() - helpTime!.helpStart.getTime()
+                helpTimeEntry!.helpEnd.getTime() - helpTimeEntry!.helpStart.getTime()
             ) +
             `. See you later!`
         );
@@ -525,4 +525,4 @@ class CentralCommandDispatcher {
     }
 }
 
-export { CentralCommandDispatcher };
+export { BuiltInCommandHandler };

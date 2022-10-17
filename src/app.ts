@@ -1,7 +1,7 @@
 import { Guild, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
-import { ButtonCommandDispatcher } from './command-handling/button-handler';
-import { CentralCommandDispatcher } from './command-handling/command-handler';
+import { BuiltInButtonHandler } from './command-handling/button-handler';
+import { BuiltInCommandHandler } from './command-handling/command-handler';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
 import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
@@ -9,15 +9,15 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
-import { ModalDispatcher } from './command-handling/modal-handler';
+import { BuiltInModalHandler } from './command-handling/modal-handler';
 import environment from './environment/environment-manager';
 import { CommandNotImplementedError } from './utils/error-types';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
-const builtinCommandHandler = new CentralCommandDispatcher();
-const builtinButtonHandler = new ButtonCommandDispatcher();
-const builtinModalHandler = new ModalDispatcher();
+const builtinCommandHandler = new BuiltInCommandHandler();
+const builtinButtonHandler = new BuiltInButtonHandler();
+const builtinModalHandler = new BuiltInModalHandler();
 
 /**
  * After login startup seqence
@@ -79,6 +79,7 @@ client.on('interactionCreate', async interaction => {
     // removed IIFE because the client.on error catches for us
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
+    console.log(interaction.type);
     if (interaction.isChatInputCommand()) {
         if (builtinCommandHandler.canHandle(interaction)) {
             handled = true;

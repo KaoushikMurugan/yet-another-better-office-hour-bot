@@ -5,7 +5,7 @@ import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 
-class ModalDispatcher {
+class BuiltInModalHandler {
     modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
         string,
         ModalSubmitCallback
@@ -104,4 +104,4 @@ class ModalDispatcher {
     }
 }
 
-export { ModalDispatcher };
+export { BuiltInModalHandler };
