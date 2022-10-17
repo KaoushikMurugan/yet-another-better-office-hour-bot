@@ -2,7 +2,6 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     GuildMember,
-    GuildMemberRoleManager,
     ModalSubmitInteraction,
     Role
 } from 'discord.js';
@@ -46,10 +45,9 @@ async function getQueueRoles(
     server: AttendingServerV2,
     member: GuildMember
 ): Promise<Role[]> {
-    const memberRoles = member.roles as GuildMemberRoleManager;
     const queueChannels = await server.getQueueChannels();
     return [
-        ...memberRoles.cache
+        ...member.roles.cache
             .filter(role => queueChannels.some(queue => queue.queueName === role.name))
             .values()
     ];
