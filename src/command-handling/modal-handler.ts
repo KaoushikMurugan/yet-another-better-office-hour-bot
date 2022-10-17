@@ -33,9 +33,7 @@ class ModalDispatcher {
                 if (typeof successMsg === 'string') {
                     await interaction.reply(SimpleEmbed(successMsg));
                 } else if (successMsg !== undefined) {
-                    await interaction.reply({
-                        ...successMsg
-                    });
+                    await interaction.reply(successMsg);
                 }
             })
             .catch(async err => {

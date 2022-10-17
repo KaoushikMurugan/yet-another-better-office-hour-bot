@@ -2,11 +2,10 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states';
 import { BaseServerExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
-import { blue, red } from '../../utils/command-line-colors';
+import { blue, red, yellow } from '../../utils/command-line-colors';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { Collection, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases';
-
 import environment from '../../environment/environment-manager';
 
 /**
@@ -82,7 +81,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
                 `successfully loaded for '${serverName}'!\n` +
-                ` - Using this google sheet: ${googleSheet.title}`
+                ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
         return new GoogleSheetLoggingExtension(serverName, googleSheet);
     }

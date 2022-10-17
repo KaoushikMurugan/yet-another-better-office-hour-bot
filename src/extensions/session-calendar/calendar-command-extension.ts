@@ -31,7 +31,7 @@ import {
     getUpComingTutoringEvents,
     restorePublicEmbedURL
 } from './shared-calendar-functions';
-import { blue } from '../../utils/command-line-colors';
+import { blue, yellow } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
 import {
     getQueueRoles,
@@ -77,7 +77,7 @@ class CalendarInteractionExtension extends BaseInteractionExtension {
         console.log(
             `[${blue('Session Calendar')}] ` +
                 `successfully loaded for '${guild.name}'!\n` +
-                ` - Using ${calendarName} as the default calendar`
+                ` - Using ${yellow(calendarName)} as the default calendar`
         );
         return instance;
     }

@@ -752,6 +752,7 @@ class AttendingServerV2 {
     /**
      * Sets up queue auto clear for this server
      * @param hours the number of hours to wait before clearing the queue
+     * @param minutes the number of minutes to wait before clearing the queue
      * @param enable whether to disable auto clear, overrides 'hours'
      */
     async setQueueAutoClear(
