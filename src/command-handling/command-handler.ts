@@ -18,7 +18,7 @@ import {
     SlashCommandLogEmbed,
     ErrorLogEmbed
 } from '../utils/embed-helper';
-import { CommandParseError, UserViewableError } from '../utils/error-types';
+import { CommandParseError } from '../utils/error-types';
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
@@ -124,7 +124,7 @@ class CentralCommandDispatcher {
                         ?.sendLogMessage(SlashCommandLogEmbed(interaction))
                 ]);
             })
-            .catch(async (err: UserViewableError) => {
+            .catch(async err => {
                 // Central error handling, reply to user with the error
                 await Promise.all([
                     interaction.editReply(ErrorEmbed(err)),

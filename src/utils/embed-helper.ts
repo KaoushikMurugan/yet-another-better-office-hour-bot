@@ -6,7 +6,7 @@ import {
     User,
     ApplicationCommandOptionType
 } from 'discord.js';
-import { QueueError, ServerError, UserViewableError } from '../utils/error-types';
+import { QueueError, ServerError } from '../utils/error-types';
 import { client } from '../global-states';
 
 export enum EmbedColor {
@@ -61,7 +61,7 @@ export function SimpleEmbed(
     }
 }
 
-export function ErrorEmbed(err: UserViewableError): Pick<BaseMessageOptions, 'embeds'> {
+export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
         client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;

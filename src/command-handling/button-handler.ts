@@ -7,7 +7,7 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { CommandParseError, UserViewableError } from '../utils/error-types';
+import { CommandParseError } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 import { attendingServers } from '../global-states';
@@ -59,7 +59,7 @@ class ButtonCommandDispatcher {
                     );
                 }
             })
-            .catch(async (err: UserViewableError) => {
+            .catch(async err => {
                 // Central error handling, reply to user with the error
                 const serverId = this.isServerInteraction(interaction);
                 await Promise.all([

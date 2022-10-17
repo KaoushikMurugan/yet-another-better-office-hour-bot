@@ -1,6 +1,6 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { CommandParseError, UserViewableError } from '../utils/error-types';
+import { CommandParseError } from '../utils/error-types';
 import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
@@ -38,8 +38,8 @@ class ModalDispatcher {
                     });
                 }
             })
-            .catch(async (err: UserViewableError) => {
-                const serverId = (await this.isServerInteraction(interaction)) ?? '';
+            .catch(async err => {
+                const serverId = this.isServerInteraction(interaction);
                 await Promise.all([
                     interaction.reply({
                         ...ErrorEmbed(err)
