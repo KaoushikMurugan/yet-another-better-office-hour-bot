@@ -1,14 +1,13 @@
 import { BaseServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
-import { cert, getApps } from 'firebase-admin/app';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
 import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
-import firebaseAppAdmin from 'firebase-admin';
-import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
+import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -24,7 +23,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         serverId: string
     ): Promise<FirebaseServerBackupExtension> {
         if (getApps().length === 0) {
-            firebaseAppAdmin.initializeApp({
+            initializeApp({
                 credential: cert(environment.firebaseCredentials)
             });
         }
