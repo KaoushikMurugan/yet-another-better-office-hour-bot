@@ -6,7 +6,7 @@ import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 
 class BuiltInModalHandler {
-    modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
+    private modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
         string,
         ModalSubmitCallback
     >([

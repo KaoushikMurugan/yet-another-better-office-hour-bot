@@ -20,7 +20,7 @@ import { attendingServers } from '../global-states';
  * The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
-    buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
+    private buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
         string,
         ButtonCallback
     >([

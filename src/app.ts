@@ -10,8 +10,8 @@ import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
 import { BuiltInModalHandler } from './command-handling/modal-handler';
-import environment from './environment/environment-manager';
 import { CommandNotImplementedError } from './utils/error-types';
+import environment from './environment/environment-manager';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
