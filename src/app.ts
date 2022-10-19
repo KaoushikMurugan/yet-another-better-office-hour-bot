@@ -27,12 +27,11 @@ client.on('ready', async () => {
         throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
     }
     printTitleString(client.user.username);
-    // allGuilds is all the servers this YABOB instance has joined
-    const allGuilds = await Promise.all(
-        (await client.guilds.fetch()).map(guild => guild.fetch())
-    );
+    // completeGuilds is all the servers this YABOB instance has joined
+    const clientGuilds = await client.guilds.fetch();
+    const completeGuilds = await Promise.all(clientGuilds.map(guild => guild.fetch()));
     const setupResults = await Promise.allSettled(
-        allGuilds.map(guild => joinGuild(guild))
+        completeGuilds.map(guild => joinGuild(guild))
     );
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
@@ -43,7 +42,6 @@ client.on('ready', async () => {
     }
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
-    return;
 });
 
 /**

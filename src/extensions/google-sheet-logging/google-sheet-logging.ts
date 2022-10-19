@@ -268,7 +268,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]).catch((err: Error) => console.error(err.name, err.message));
+        ]).catch((err: Error) =>
+            console.error(red('Error when updating attendance: '), err.name, err.message)
+        );
     }
 
     /**
@@ -329,7 +331,13 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 { raw: true, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
-        ]).catch((err: Error) => console.error(err.name, err.message));
+        ]).catch((err: Error) =>
+            console.error(
+                red('Error when updating help session: '),
+                err.name,
+                err.message
+            )
+        );
     }
 }
 
