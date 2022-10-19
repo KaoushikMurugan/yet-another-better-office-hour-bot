@@ -51,6 +51,7 @@ const enqueueCommand = new SlashCommandBuilder() // /enqueue [queue_name] (user)
             .setName('queue_name')
             .setDescription('The queue you want to wait on')
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const dequeueCommand = new SlashCommandBuilder() // /next (queue_name) (user)
