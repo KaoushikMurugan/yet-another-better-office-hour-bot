@@ -10,13 +10,13 @@ import { attendingServers } from '../global-states';
 function queueAutoClearModal(serverId: string): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = new ModalBuilder()
-        .setTitle('Set Queue Auto Clear (leave the inputs 0 to disable)')
+        .setTitle('Set Queue Auto Clear')
         .setCustomId('queue_auto_clear_modal')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_hours')
-                    .setLabel('Hours')
+                    .setLabel('Hours (0 to disable)')
                     .setPlaceholder('Enter hours (0~24)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
@@ -30,7 +30,7 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_minutes')
-                    .setLabel('Minutes')
+                    .setLabel('Minutes (0 to disable)')
                     .setPlaceholder('Enter minutes (0~59)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
