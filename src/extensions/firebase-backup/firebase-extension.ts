@@ -1,14 +1,13 @@
 import { BaseServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
-import { cert, getApps } from 'firebase-admin/app';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { QueueBackup, ServerBackup } from '../../models/backups';
-import { FgBlue, FgCyan, FgYellow, ResetColor } from '../../utils/command-line-colors';
+import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
-import firebaseAppAdmin from 'firebase-admin';
-import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
+import environment from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension extends BaseServerExtension {
     private constructor(
@@ -24,7 +23,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
         serverId: string
     ): Promise<FirebaseServerBackupExtension> {
         if (getApps().length === 0) {
-            firebaseAppAdmin.initializeApp({
+            initializeApp({
                 credential: cert(environment.firebaseCredentials)
             });
         }
@@ -34,8 +33,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             serverName
         );
         console.log(
-            `[${FgBlue}Firebase Backup${ResetColor}] ` +
-                `successfully loaded for '${serverName}'!`
+            `[${blue('Firebase Backup')}] ` + `successfully loaded for '${serverName}'!`
         );
         return instance;
     }
@@ -91,7 +89,7 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
-                server.queues[0]?.hoursUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
         };
         this.firebase_db
             .collection('serverBackups')
@@ -99,10 +97,12 @@ class FirebaseServerBackupExtension extends BaseServerExtension {
             .set(serverBackup)
             .then(() =>
                 console.log(
-                    `[${FgCyan}${new Date().toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    })}${ResetColor} ` +
-                        `${FgYellow}${this.serverName}${ResetColor}]\n` +
+                    `[${cyan(
+                        new Date().toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        })
+                    )} ` +
+                        `${yellow(this.serverName)}]\n` +
                         ` - Server & queue data backup successful`
                 )
             )

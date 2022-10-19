@@ -22,15 +22,7 @@ import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/
 import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
 import { CalendarServerEventListener } from '../extensions/session-calendar/calendar-states';
 import { QueueBackup } from '../models/backups';
-import {
-    FgBlue,
-    FgCyan,
-    FgGreen,
-    FgMagenta,
-    FgRed,
-    FgYellow,
-    ResetColor
-} from '../utils/command-line-colors';
+import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors';
 import { convertMsToTime } from '../utils/util-functions';
 import {
     CategoryChannelId,
@@ -93,6 +85,9 @@ class AttendingServerV2 {
     }
     get activeHelpers(): ReadonlyMap<string, Helper> {
         return this._activeHelpers;
+    }
+    get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
+        return this._queues.first()?.timeUntilAutoClear;
     }
 
     /**
@@ -157,10 +152,7 @@ class AttendingServerV2 {
               );
         const externalServerData = externalBackup?.find(backup => backup !== undefined);
         if (externalServerData !== undefined) {
-            console.log(
-                `${FgCyan}Found external backup for ${guild.name}.` +
-                    ` Restoring.${ResetColor}`
-            );
+            console.log(cyan(`Found external backup for ${guild.name}. Restoring.`));
         }
         const server = new AttendingServerV2(user, guild, serverExtensions);
         server.afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
@@ -181,9 +173,7 @@ class AttendingServerV2 {
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw new ServerError(
-                `❗ ${FgRed}Initilization for ${guild.name} failed.${ResetColor}`
-            );
+            throw new ServerError(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
         });
         // Now Emit all the events
         await Promise.all(
@@ -214,9 +204,7 @@ class AttendingServerV2 {
                 1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
             )
         );
-        console.log(
-            `⭐ ${FgGreen}Initilization for ${guild.name} is successful!${ResetColor}`
-        );
+        console.log(`⭐ ${green(`Initilization for ${guild.name} is successful!`)}`);
         return server;
     }
 
@@ -283,13 +271,14 @@ class AttendingServerV2 {
         this.queueChannelsCache = allChannels
             .filter(ch => ch !== null && ch.type === ChannelType.GuildCategory)
             // ch has type 'AnyChannel', have to cast, type already checked
+            .map(channel => channel as CategoryChannel)
             .map(category => [
-                (category as CategoryChannel).children.cache.find(
+                category.children.cache.find(
                     child =>
                         child.name === 'queue' && child.type === ChannelType.GuildText
                 ),
-                (category as CategoryChannel).name,
-                (category as CategoryChannel).id
+                category.name,
+                category.id
             ])
             .filter(([textChannel]) => textChannel !== undefined)
             .map(([ch, name, parentId]) => {
@@ -363,7 +352,7 @@ class AttendingServerV2 {
         await Promise.all(
             parentCategory?.children.cache
                 .map(child => child.delete())
-                .filter(promise => promise !== undefined) as Promise<TextChannel>[]
+                .filter(promise => promise !== undefined)
         ).catch((err: Error) => {
             throw new ServerError(`API Failure: ${err.name}\n${err.message}`);
         });
@@ -612,6 +601,7 @@ class AttendingServerV2 {
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
+                // the only missing property helpEnd is now completed, cast is safe
                 extension.onHelperStopHelping(this, helper as Required<Helper>)
             )
         );
@@ -767,10 +757,15 @@ class AttendingServerV2 {
     /**
      * Sets up queue auto clear for this server
      * @param hours the number of hours to wait before clearing the queue
+     * @param minutes the number of minutes to wait before clearing the queue
      * @param enable whether to disable auto clear, overrides 'hours'
      */
-    async setQueueAutoClear(hours: number, enable: boolean): Promise<void> {
-        this._queues.forEach(queue => queue.setAutoClear(hours, enable));
+    async setQueueAutoClear(
+        hours: number,
+        minutes: number,
+        enable: boolean
+    ): Promise<void> {
+        this._queues.forEach(queue => queue.setAutoClear(hours, minutes, enable));
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -793,8 +788,7 @@ class AttendingServerV2 {
         // If no help category is found, initialize
         if (existingHelpCategory.length === 0) {
             console.log(
-                `${FgCyan}Found no help channels in ${this.guild.name}. ` +
-                    `Creating new ones.${ResetColor}`
+                cyan(`Found no help channels in ${this.guild.name}. Creating new ones.`)
             );
             const helpCategory = await this.guild.channels.create({
                 name: 'Bot Commands Help',
@@ -830,14 +824,13 @@ class AttendingServerV2 {
             );
         } else {
             console.log(
-                `${FgYellow}Found existing help channels in ${this.guild.name}, ` +
-                    `updating command help files${ResetColor}.`
+                yellow(
+                    `Found existing help channels in ${this.guild.name}, updating command help files`
+                )
             );
         }
         await this.sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
-        console.log(
-            `${FgMagenta}✓ Updated help channels on ${this.guild.name} ✓${ResetColor}`
-        );
+        console.log(magenta(`✓ Updated help channels on ${this.guild.name} ✓`));
     }
 
     /**
@@ -863,7 +856,9 @@ class AttendingServerV2 {
     }
 
     async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
-        this.loggingChannel && (await this.loggingChannel.send(message));
+        if (this.loggingChannel) {
+            await this.loggingChannel.send(message);
+        }
     }
 
     /**
@@ -903,11 +898,7 @@ class AttendingServerV2 {
         );
         console.log(
             `All queues in '${this.guild.name}' successfully created` +
-                `${
-                    environment.disableExtensions
-                        ? ''
-                        : ` ${FgBlue}with their extensions${ResetColor}`
-                }!`
+                `${environment.disableExtensions ? '' : blue(' with their extensions')}!`
         );
         await Promise.all(
             this.serverExtensions.map(extension =>

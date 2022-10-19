@@ -1,4 +1,4 @@
-import { calendar_v3 } from 'googleapis';
+import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';

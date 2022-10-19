@@ -2,11 +2,10 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states';
 import { BaseServerExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
-import { FgBlue, FgRed, ResetColor } from '../../utils/command-line-colors';
+import { blue, red, yellow } from '../../utils/command-line-colors';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { Collection, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases';
-
 import environment from '../../environment/environment-manager';
 
 /**
@@ -64,7 +63,7 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
     static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             throw new ExtensionSetupError(
-                `${FgRed}No Google Sheet ID or Google Cloud credentials found.${ResetColor}\n`
+                'No Google Sheet ID or Google Cloud credentials found.'
             );
         }
         const googleSheet = new GoogleSpreadsheet(
@@ -73,14 +72,16 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
         await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
         await googleSheet.loadInfo().catch(() => {
             throw new ExtensionSetupError(
-                `${FgRed}Failed to load google sheet for ${serverName}. ` +
-                    `Google sheets rejected our connection.${ResetColor}`
+                red(
+                    `Failed to load google sheet for ${serverName}. ` +
+                        `Google sheets rejected our connection.`
+                )
             );
         });
         console.log(
-            `[${FgBlue}Google Sheet Logging${ResetColor}] ` +
+            `[${blue('Google Sheet Logging')}] ` +
                 `successfully loaded for '${serverName}'!\n` +
-                ` - Using this google sheet: ${googleSheet.title}`
+                ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
         return new GoogleSheetLoggingExtension(serverName, googleSheet);
     }
@@ -267,7 +268,9 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]).catch((err: Error) => console.error(err.name, err.message));
+        ]).catch((err: Error) =>
+            console.error(red('Error when updating attendance: '), err.name, err.message)
+        );
     }
 
     /**
@@ -328,7 +331,13 @@ class GoogleSheetLoggingExtension extends BaseServerExtension {
                 { raw: true, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
-        ]).catch((err: Error) => console.error(err.name, err.message));
+        ]).catch((err: Error) =>
+            console.error(
+                red('Error when updating help session: '),
+                err.name,
+                err.message
+            )
+        );
     }
 }
 

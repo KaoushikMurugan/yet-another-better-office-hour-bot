@@ -1,4 +1,5 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
+import { ChannelType } from 'discord.js';
 
 const setCalendar = new SlashCommandBuilder()
     .setName('set_calendar')
@@ -28,6 +29,7 @@ const whenNext = new SlashCommandBuilder()
                 'The course for which you want to view the next tutoring hours'
             )
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 function makeCalendarStringCommand(): Omit<
@@ -53,6 +55,7 @@ function makeCalendarStringCommand(): Omit<
                         .setName(`queue_name_${idx + 1}`)
                         .setDescription('The courses you tutor for')
                         .setRequired(idx === 0)
+                        .addChannelTypes(ChannelType.GuildCategory)
                 ) // make the first one required
         );
 

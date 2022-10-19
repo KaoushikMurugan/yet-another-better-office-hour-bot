@@ -88,20 +88,12 @@ class PeriodicUpdateError extends Error {
     }
 }
 
-// All 4 errors will be presented to the user
-type UserViewableError =
-    | CommandParseError
-    | ServerError
-    | QueueError
-    | CommandNotImplementedError;
-
 export {
     CommandParseError,
     ServerError,
     QueueError,
     QueueRenderError,
     CommandNotImplementedError,
-    UserViewableError,
     ExtensionSetupError,
     PeriodicUpdateError
 };

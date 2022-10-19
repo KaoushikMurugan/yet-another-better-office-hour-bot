@@ -9,8 +9,8 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
-import { Guild } from 'discord.js';
-import { FgMagenta, ResetColor } from '../utils/command-line-colors';
+import { ChannelType, Guild } from 'discord.js';
+import { magenta } from '../utils/command-line-colors';
 import environment from '../environment/environment-manager';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
@@ -39,6 +39,7 @@ const queueCommand = new SlashCommandBuilder() // /queue
                     .setName('queue_name')
                     .setDescription('The name of the queue to remove')
                     .setRequired(true)
+                    .addChannelTypes(ChannelType.GuildCategory)
             )
     );
 
@@ -50,6 +51,7 @@ const enqueueCommand = new SlashCommandBuilder() // /enqueue [queue_name] (user)
             .setName('queue_name')
             .setDescription('The queue you want to wait on')
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const dequeueCommand = new SlashCommandBuilder() // /next (queue_name) (user)
@@ -60,6 +62,7 @@ const dequeueCommand = new SlashCommandBuilder() // /next (queue_name) (user)
             .setName('queue_name')
             .setDescription('The queue to dequeue from')
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     )
     .addUserOption(option =>
         option.setName('user').setDescription('A user to dequeue').setRequired(false)
@@ -89,6 +92,7 @@ const leaveCommand = new SlashCommandBuilder() // /leave
             .setName('queue_name')
             .setDescription('The queue to leave from')
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
@@ -99,6 +103,7 @@ const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
             .setName('queue_name')
             .setDescription('The queue to clear')
             .setRequired(true)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const clearAllCommand = new SlashCommandBuilder()
@@ -121,6 +126,7 @@ const announceCommand = new SlashCommandBuilder() // /announce [message] (queue_
                 'The queue to announce in, or all queues if none is specified'
             )
             .setRequired(false)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
@@ -137,6 +143,7 @@ const cleanupQueue = new SlashCommandBuilder()
             .setName('queue_name')
             .setDescription('The queue to clean')
             .setRequired(true)
+            .addChannelTypes(ChannelType.GuildCategory)
     );
 
 const cleanupAllQueues = new SlashCommandBuilder()
@@ -151,15 +158,6 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
     .setName('set_after_session_msg')
     .setDescription(
         'Sets the message automatically sent to students after they leave the voice chat'
-    )
-    .addStringOption(option =>
-        option.setName('message').setDescription('The message to send').setRequired(true)
-    )
-    .addBooleanOption(option =>
-        option
-            .setName('enable')
-            .setDescription('If false, the content in `message` will be ignored')
-            .setRequired(true)
     );
 
 function generateHelpCommand(): Omit<
@@ -196,25 +194,12 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
             .setName('channel')
             .setDescription('The channel to log events to')
             .setRequired(true)
+            .addChannelTypes(ChannelType.GuildText)
     );
 
 const setQueueAutoClear = new SlashCommandBuilder()
     .setName('set_queue_auto_clear')
-    .setDescription('Sets the timeout before automatically clearing all the queues')
-    .addNumberOption(option =>
-        option
-            .setName('hours')
-            .setDescription('Number of hours before next queue auto clear')
-            .setRequired(true)
-    )
-    .addBooleanOption(option =>
-        option
-            .setName('enable')
-            .setDescription(
-                "Whether to enable auto clear, overrides the 'hours' parameter"
-            )
-            .setRequired(true)
-    );
+    .setDescription('Sets the timeout before automatically clearing all the queues');
 
 const stopLoggingCommand = new SlashCommandBuilder()
     .setName('stop_logging')
@@ -266,7 +251,7 @@ async function postSlashCommands(
             // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
         )
         .catch(e => console.error(e));
-    console.log(`${FgMagenta}✓ Updated slash commands on '${guild.name}' ✓${ResetColor}`);
+    console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
 }
 
 type CommandData = typeof commandData;

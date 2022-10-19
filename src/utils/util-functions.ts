@@ -1,5 +1,12 @@
-import { GuildMember, GuildMemberRoleManager, Role } from 'discord.js';
+import {
+    ButtonInteraction,
+    ChatInputCommandInteraction,
+    GuildMember,
+    ModalSubmitInteraction,
+    Role
+} from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server';
+import { cyan, yellow, magenta } from './command-line-colors';
 
 /**
  * Converts the time delta in miliseconds into a readable format
@@ -9,6 +16,7 @@ function convertMsToTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
+
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -37,13 +45,79 @@ async function getQueueRoles(
     server: AttendingServerV2,
     member: GuildMember
 ): Promise<Role[]> {
-    const memberRoles = member.roles as GuildMemberRoleManager;
     const queueChannels = await server.getQueueChannels();
     return [
-        ...memberRoles.cache
+        ...member.roles.cache
             .filter(role => queueChannels.some(queue => queue.queueName === role.name))
             .values()
     ];
 }
 
-export { convertMsToTime, getQueueRoles };
+/**
+ * Default logger for button presses
+ * @param interaction
+ * @param buttonName
+ * @param queueName
+ */
+function logButtonPress(
+    interaction: ButtonInteraction,
+    buttonName: string,
+    queueName: string
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Button Pressed: ${magenta(buttonName)}\n` +
+            ` - In Queue: ${queueName}`
+    );
+}
+
+/**
+ * Default logger for modal submits
+ * @param interaction
+ */
+function logModalSubmit(interaction: ModalSubmitInteraction): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Modal Used: ${magenta(interaction.customId)}`
+    );
+}
+
+/**
+ * Default logger for slash commands
+ * @param interaction
+ */
+function logSlashCommand(interaction: ChatInputCommandInteraction): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Command Used: ${magenta(interaction.toString())}`
+    );
+}
+
+export {
+    convertMsToTime,
+    getQueueRoles,
+    logButtonPress,
+    logModalSubmit,
+    logSlashCommand
+};
