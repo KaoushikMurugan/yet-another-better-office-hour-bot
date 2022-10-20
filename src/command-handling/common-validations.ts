@@ -18,7 +18,7 @@ import { CommandParseError } from '../utils/error-types';
  * Checks if the triggerer has the required roles
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
- * @returns GuildMember: object of the triggerer
+ * @returns GuildMember object of the triggerer
  */
 async function isTriggeredByUserWithRoles(
     interaction: ChatInputCommandInteraction | ButtonInteraction,
@@ -49,7 +49,7 @@ async function isTriggeredByUserWithRoles(
  * @param required
  * - If true, check if the COMMAND ARG is a valid queue category
  * - If false, check if the CURRENT channel's parent category is a valid queue category
- * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
+ * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  * */
 async function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
@@ -85,7 +85,7 @@ async function hasValidQueueArgument(
 /**
  * Checks if the user has the Valid Email role
  * @param commandName the command used
- * @returns GuildMember: object of the triggerer
+ * @returns GuildMember object of the triggerer
  */
 async function isTriggeredByUserWithValidEmail(
     interaction: ChatInputCommandInteraction | ButtonInteraction,
@@ -106,7 +106,7 @@ async function isTriggeredByUserWithValidEmail(
 
 /**
  * Checks if the queue channel has a parent folder
- * @returns QueueChannel: the complete QueueChannel that AttendingServerV2 accepts
+ * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  */
 async function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,
@@ -131,7 +131,7 @@ async function isFromQueueChannelWithParent(
 
 /**
  * Checks if the interaction came from a valid guild member
- * @returns GuildMember: object of the triggerer
+ * @returns GuildMember object of the triggerer
  */
 async function isFromGuildMember(
     interaction: ButtonInteraction | ChatInputCommandInteraction

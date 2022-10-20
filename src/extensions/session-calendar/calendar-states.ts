@@ -1,8 +1,4 @@
-/**
- * @packageDocumentation
- * @module SessionCalendar
- */
-
+/** @module SessionCalendar */
 import { Collection } from 'discord.js';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';

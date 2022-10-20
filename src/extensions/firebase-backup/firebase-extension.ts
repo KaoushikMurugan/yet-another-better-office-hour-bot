@@ -1,7 +1,4 @@
-/**
- * @packageDocumentation
- * @module FirebaseServerBackup
- */
+/** @module FirebaseServerBackup */
 import { BaseServerExtension, IServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';

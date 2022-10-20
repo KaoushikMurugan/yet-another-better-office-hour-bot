@@ -1,8 +1,4 @@
-/**
- * @packageDocumentation
- * @module SessionCalendar
- */
-
+/** @module SessionCalendar */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
