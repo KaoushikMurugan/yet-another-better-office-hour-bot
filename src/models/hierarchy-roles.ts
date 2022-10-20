@@ -1,6 +1,5 @@
 import { ColorResolvable } from 'discord.js';
 
-/** @internal */
 export const hierarchyRoleConfigs = [
     {
         name: 'Bot Admin',
