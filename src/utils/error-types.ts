@@ -1,3 +1,5 @@
+/** @module Utilities */
+
 /**
  * Describes errors that happen during the parsing stage
  * - This error should be triggered before any server related methods are called

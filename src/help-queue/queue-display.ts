@@ -1,3 +1,4 @@
+/** @module HelpQueueV2 */
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { QueueViewModel } from './help-queue';

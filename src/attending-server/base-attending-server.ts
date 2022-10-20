@@ -1,3 +1,4 @@
+/** @module AttendingServerV2 */
 import {
     CategoryChannel,
     Collection,
@@ -53,9 +54,8 @@ type ServerTimerType = 'SERVER_PERIODIC_UPDATE';
 /**
  * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
- * public functions can be accessed by the command handler
- * private functions are designed to not be triggered by commands
- * variables with an underscore has a public getter, but only mutable inside the class
+ * - Public functions can be accessed by the command handler
+ * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
     // Keeps track of all the setTimout/setIntervals we started

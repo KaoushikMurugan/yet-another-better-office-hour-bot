@@ -1,3 +1,4 @@
+/** @module BuiltInHandlers */
 import { ButtonInteraction } from 'discord.js';
 import {
     EmbedColor,
@@ -15,9 +16,9 @@ import { attendingServers } from '../global-states';
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
  * ----
- * The design is almost identical to CentralCommandDispatcher
- * - Check there for detailed comments
- * The difference here is that a button command is guaranteed to happen in a queue as of right now
+ * @category Handler Classes
+ * @see BuiltInCommandHander for detailed comments
+ * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
     private buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
