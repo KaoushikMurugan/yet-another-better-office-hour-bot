@@ -40,11 +40,14 @@ type ModalSubmitCallback = (
 
 /**
  * Marks 1 property in T as required.
- * https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
+ * @see https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
  */
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
 /**
- * Utility alias for T|undefined, more readable
+ * Utility alias for T | undefined, shorter and more readable
+ * @remark
+ * - Use this when the `T?` syntax is unavailable such as function return types
+ * - Otherwise prefer `T?`
  */
 type Optional<T> = T | undefined;
 

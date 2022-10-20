@@ -58,17 +58,17 @@ type ServerTimerType = 'SERVER_PERIODIC_UPDATE';
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
-    // Keeps track of all the setTimout/setIntervals we started
+    /** Keeps track of all the setTimout/setIntervals we started */
     timers: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
-    // message sent to students after they leave
+    /** message sent to students after they leave */
     afterSessionMessage = '';
-    // optional, channel where yabob will log message. if undefined, don't log on the server
+    /** optional, channel where yabob will log message. if undefined, don't log on the server */
     loggingChannel?: TextChannel;
-    // Key is CategoryChannel.id of the parent catgory of #queue
+    /** Key is CategoryChannel.id of the parent catgory of #queue */
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
-    // cached result of getQueueChannels
+    /** cached result of {@link getQueueChannels} */
     private queueChannelsCache: QueueChannel[] = [];
-    // unique active helpers, key is member.id
+    /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
     protected constructor(
@@ -90,9 +90,7 @@ class AttendingServerV2 {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
-    /**
-     * Cleans up all the timers from setInterval
-     */
+    /** Cleans up all the timers from setInterval */
     clearAllServerTimers(): void {
         this.timers.forEach(clearInterval);
         this.timers.clear();

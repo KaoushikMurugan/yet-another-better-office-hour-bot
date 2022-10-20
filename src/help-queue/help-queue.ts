@@ -28,15 +28,15 @@ type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
 type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLED';
 
 class HelpQueueV2 {
-    // Keeps track of all the setTimout/setIntervals we started
+    /** Keeps track of all the setTimout / setIntervals we started */
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
-    // set of active helpers' ids
+    /** Set of active helpers' ids */
     private _activeHelperIds: Set<string> = new Set();
-    // queue of students
+    /** The actual queue of students */
     private _students: Helpee[] = [];
-    // Key is Guildmember.id
+    /** The set of students to notify when queue opens, key is Guildmember.id */
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
-    // when to automatically remove everyone
+    /** When to automatically remove everyone */
     private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
 
     /**
@@ -74,36 +74,39 @@ class HelpQueueV2 {
         }
     }
 
+    /** number of students */
     get length(): number {
-        // number of students
         return this._students.length;
     }
+    /** is the queue open */
     get isOpen(): boolean {
-        // is the queue open
         return this.activeHelperIds.size > 0;
     }
+    /** name of corresponding queue */
     get queueName(): string {
-        // name of corresponding queue
         return this.queueChannel.queueName;
     }
+    /** #queue text channel object */
     get channelObj(): Readonly<TextChannel> {
-        // #queue text channel object
         return this.queueChannel.channelObj;
     }
+    /** ChannelId of the parent category */
     get parentCategoryId(): string {
         return this.queueChannel.parentCategoryId;
     }
+    /** First student; undefined if no one is here */
     get first(): Optional<Helpee> {
-        // first student; undefined if no one is here
         return this._students[0];
     }
+    /** All students */
     get students(): ReadonlyArray<Helpee> {
         return this._students;
     }
+    /** set of helper IDs. Enforce readonly */
     get activeHelperIds(): ReadonlySet<string> {
-        // set of helper IDs. enforce readonly
         return this._activeHelperIds;
     }
+    /** Time until auto clear happens */
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
     }
