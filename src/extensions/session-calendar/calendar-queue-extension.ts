@@ -1,4 +1,5 @@
-import { BaseQueueExtension } from '../extension-interface';
+/** @module SessionCalendar */
+import { BaseQueueExtension, IQueueExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
 import { QueueDisplayV2 } from '../../help-queue/queue-display';
@@ -19,7 +20,7 @@ import {
  * - All instances read from the calendar in serverIdStateMap.get(serverId)
  * - Each instance only looks for the class it's responsible for
  */
-class CalendarQueueExtension extends BaseQueueExtension {
+class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtension {
     private upcomingSessions: UpComingSessionViewModel[] = [];
     private display?: Readonly<QueueDisplayV2>;
 

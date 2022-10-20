@@ -1,3 +1,4 @@
+/** @module BuiltInHandlers */
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
 import { CommandParseError } from '../utils/error-types';
@@ -5,6 +6,10 @@ import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 
+/**
+ * Built in handler for modal submit
+ * @category Handler Class
+ */
 class BuiltInModalHandler {
     private modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
         string,
@@ -89,7 +94,7 @@ class BuiltInModalHandler {
      * Checks if the command came from a server with correctly initialized YABOB
      * Each handler will have their own isServerInteraction method
      * ----
-     * @returns string: the server id
+     * @returns the server id
      */
     private isServerInteraction(interaction: ModalSubmitInteraction): string {
         const serverId = interaction.guild?.id;

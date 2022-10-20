@@ -1,3 +1,5 @@
+/** @module SessionCalendar */
+
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChannelType } from 'discord.js';
 

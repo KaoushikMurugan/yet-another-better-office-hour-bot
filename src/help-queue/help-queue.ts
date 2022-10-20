@@ -1,3 +1,5 @@
+/** @module HelpQueueV2 */
+
 import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
@@ -17,8 +19,12 @@ type QueueViewModel = {
     isOpen: boolean;
 };
 
+/** @internal */
 type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
 
+/**
+ * Represents the time until the queue is automatically cleared
+ */
 type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLED';
 
 class HelpQueueV2 {
