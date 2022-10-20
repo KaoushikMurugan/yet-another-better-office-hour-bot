@@ -6,10 +6,11 @@
         "lint": "eslint src/",
         "build": "npx tsc",
         "test": "nyc mocha -r ts-node/register test/*.ts",
-        "format": "npx prettier -w .",
         "start": "node dist/src/app.js",
         "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
-        "prod": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production node dist/src/app.js"
+        "prod": "npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production node dist/src/app.js",
+        "dockerProd": "NODE_ENV=production node dist/src/app.js",
+        "dockerDev": "NODE_ENV=development node dist/src/app.js"
     },
     "devDependencies": {
         "@types/chai": "^4.2.21",
