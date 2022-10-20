@@ -109,7 +109,7 @@ interface IServerExtension {
     ) => Promise<void>;
     /**
      * Called every 15 minutes
-     * @param server the AttendingServerV2 object
+     * @param server the object
      * @param isFirstCall whether this is called inside server init
      */
     onServerPeriodicUpdate: (

@@ -4,7 +4,7 @@ import { Helpee } from './member-states';
 /** Represent the data of 1 HelpQueue */
 type QueueBackup = {
     /**
-     * Students in the queue. A list of {@link Helpee} objects without the back references
+     * Students in the queue. A list of Helpee objects without the back references
      */
     studentsInQueue: ReadonlyArray<
         Omit<Helpee, 'member' | 'queue'> & {

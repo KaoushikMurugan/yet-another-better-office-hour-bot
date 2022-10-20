@@ -10,6 +10,7 @@ import environment from '../../environment/environment-manager';
 
 /**
  * Attendance entry for each helper
+ * @remarks
  * - The Helper part is stored by reference
  * - when attending server mutates it, this will also change
  */
@@ -19,7 +20,7 @@ type AttendanceEntry = Helper & {
 };
 
 /**
- * Help Session for each student
+ * Individual help sessions
  */
 type HelpSessionEntry = {
     'Student Username': string;

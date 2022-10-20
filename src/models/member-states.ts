@@ -22,7 +22,7 @@ type Helpee = {
      */
     queue: HelpQueueV2;
     /**
-     * {@link GuildMember} object backref
+     * GuildMember object backref
      */
     readonly member: GuildMember;
 };

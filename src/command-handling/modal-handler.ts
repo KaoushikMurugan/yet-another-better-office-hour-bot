@@ -5,7 +5,12 @@ import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 
+/**
+ * Built in handler for modal submit
+ * @category Built in Handlers
+ */
 class BuiltInModalHandler {
+    
     private modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
         string,
         ModalSubmitCallback
