@@ -423,17 +423,22 @@ class AttendingServerV2 {
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
         ]);
-        await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            ViewChannel: true,
-            Connect: true
-        });
-        const invite = await helperVoiceChannel.createInvite({
-            maxAge: 15 * 60, // 15 minutes
-            maxUses: 1
-        });
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60, // 15 minutes
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
+        ]);
         await Promise.all<unknown>([
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
             ),
             student.member.send(
                 SimpleEmbed(
@@ -442,9 +447,6 @@ class AttendingServerV2 {
                 )
             )
         ]);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
         return student;
     }
 
@@ -509,18 +511,23 @@ class AttendingServerV2 {
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
         ]);
-        await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            ViewChannel: true,
-            Connect: true
-        });
-        const invite = await helperVoiceChannel.createInvite({
-            maxAge: 15 * 60, // 15 minutes
-            maxUses: 1
-        });
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60, // 15 minutes
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
+        ]);
         await Promise.all<unknown>([
             ...this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
                 extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
             ),
             student.member.send(
                 SimpleEmbed(
@@ -529,9 +536,6 @@ class AttendingServerV2 {
                 )
             )
         ]);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
         return student;
     }
 
