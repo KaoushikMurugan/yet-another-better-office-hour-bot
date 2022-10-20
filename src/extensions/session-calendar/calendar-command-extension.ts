@@ -1,4 +1,4 @@
-import { BaseInteractionExtension } from '../extension-interface';
+import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface';
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {
     ButtonInteraction,
@@ -48,7 +48,10 @@ import {
 import { attendingServers } from '../../global-states';
 import environment from '../../environment/environment-manager';
 
-class CalendarInteractionExtension extends BaseInteractionExtension {
+class CalendarInteractionExtension
+    extends BaseInteractionExtension
+    implements IInteractionExtension
+{
     protected constructor(private readonly guild: Guild) {
         super();
     }

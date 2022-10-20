@@ -1,6 +1,6 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states';
-import { BaseServerExtension } from '../extension-interface';
+import { BaseServerExtension, IServerExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { blue, red, yellow } from '../../utils/command-line-colors';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
@@ -45,7 +45,10 @@ class AttendanceError extends Error {
     }
 }
 
-class GoogleSheetLoggingExtension extends BaseServerExtension {
+class GoogleSheetLoggingExtension
+    extends BaseServerExtension
+    implements IServerExtension
+{
     // Credit of all the update logic goes to Kaoushik
     // key is student member.id, value is corresponding helpee object
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();

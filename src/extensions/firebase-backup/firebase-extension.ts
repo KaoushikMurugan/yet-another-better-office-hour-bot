@@ -1,4 +1,4 @@
-import { BaseServerExtension } from '../extension-interface';
+import { BaseServerExtension, IServerExtension } from '../extension-interface';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -9,7 +9,10 @@ import { SimpleLogEmbed } from '../../utils/embed-helper';
 import { Optional } from '../../utils/type-aliases';
 import environment from '../../environment/environment-manager';
 
-class FirebaseServerBackupExtension extends BaseServerExtension {
+class FirebaseServerBackupExtension
+    extends BaseServerExtension
+    implements IServerExtension
+{
     private constructor(
         private readonly firebase_db: Firestore,
         private readonly serverId: string,
