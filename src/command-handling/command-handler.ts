@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module BuiltInHandlers
+ */
 import {
     ChannelType,
     ChatInputCommandInteraction,
@@ -35,6 +39,7 @@ import { attendingServers } from '../global-states';
  * Each YABOB instance should only have 1 BuiltInCommandHandler
  * All the functions below follows this convention:
  * - private async <corresponding command name>(interaction): Promise<string>
+ * @category Handler Class
  * @param interaction the raw interaction
  * @throws CommandParseError: if command doesn't satify the checks in Promise.all
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects

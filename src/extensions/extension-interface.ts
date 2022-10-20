@@ -1,11 +1,12 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
 /**
  * !! Important !!
- * ----
  * All extensions will be called with Promise.all()
  * this means that extensions will be launched together
  * To avoid race conditions, do not let extensions modify shared data values
+ * @module ExtensionInterface
  */
+
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {
     ButtonInteraction,

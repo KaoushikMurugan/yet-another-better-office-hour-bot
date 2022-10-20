@@ -1,3 +1,5 @@
+/** @module Utilities */
+
 import { Optional } from './type-aliases';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */

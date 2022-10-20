@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module SessionCalendar
+ */
+
 import { Collection } from 'discord.js';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
@@ -11,6 +16,9 @@ import LRU from 'lru-cache';
 import environment from '../../environment/environment-manager';
 import { restorePublicEmbedURL } from './shared-calendar-functions';
 
+/**
+ * @module Backups
+ */
 type CalendarConfigBackup = {
     calendarId: string;
     publicCalendarEmbedUrl: string;

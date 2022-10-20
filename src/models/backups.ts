@@ -1,3 +1,5 @@
+/** @module  Backups */
+
 import { AutoClearTimeout } from '../help-queue/help-queue';
 import { Helpee } from './member-states';
 

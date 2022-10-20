@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module SessionCalendar
+ */
+
 import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface';
 import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
 import {

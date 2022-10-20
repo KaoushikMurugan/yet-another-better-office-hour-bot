@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module BuiltInHandlers
+ */
 import { ButtonInteraction } from 'discord.js';
 import {
     EmbedColor,
@@ -15,7 +19,7 @@ import { attendingServers } from '../global-states';
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
  * ----
- * @category Built in Handlers
+ * @category Handler Class
  * @see BuiltInCommandHander for detailed comments
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */

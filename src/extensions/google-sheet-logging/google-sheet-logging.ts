@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module GoogleSheetLogging
+ */
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states';
 import { BaseServerExtension, IServerExtension } from '../extension-interface';
@@ -345,4 +349,4 @@ class GoogleSheetLoggingExtension
     }
 }
 
-export { GoogleSheetLoggingExtension };
+export { GoogleSheetLoggingExtension, AttendanceEntry, HelpSessionEntry };

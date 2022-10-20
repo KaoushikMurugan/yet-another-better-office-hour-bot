@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module SessionCalendar
+ */
+
 import { EmbedColor } from '../../utils/embed-helper';
 import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';

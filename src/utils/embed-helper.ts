@@ -1,3 +1,5 @@
+/** @module Utilities */
+
 import {
     CommandInteraction,
     Interaction,

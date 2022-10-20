@@ -1,3 +1,4 @@
+/** @module BuiltInHandlers */
 import {
     ModalBuilder,
     ActionRowBuilder,

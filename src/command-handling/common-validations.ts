@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module InertactionValidationFunctions
+ */
 import {
     ChatInputCommandInteraction,
     GuildMember,

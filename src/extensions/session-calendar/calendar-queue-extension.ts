@@ -1,3 +1,8 @@
+/**
+ * @packageDocumentation
+ * @module SessionCalendar
+ */
+
 import { BaseQueueExtension, IQueueExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { HelpQueueV2 } from '../../help-queue/help-queue';
