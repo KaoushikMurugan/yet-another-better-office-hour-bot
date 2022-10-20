@@ -3,26 +3,53 @@ import { HelpQueueV2 } from '../help-queue/help-queue';
 
 /**
  * Represents a student in the queue.
- * - Created when a student uses /enqueue or the join button
- * - Removed when a students is dequeued
+ * @remarks
+ * - Created when a student uses `/enqueue` or `[JOIN]`
+ * - Removed when a students is dequeued from `/next`
  */
 type Helpee = {
+    /**
+     * When the student used `/enqueue` or [JOIN]
+     */
     waitStart: Date;
+    /**
+     * Whether the student is up next or not
+     * @deprecated currently unused, might be removed in future versions
+     */
     upNext: boolean;
-    queue: HelpQueueV2; // backref
-    readonly member: GuildMember; // backref
+    /**
+     * HelpQueueV2 object backref
+     */
+    queue: HelpQueueV2;
+    /**
+     * {@link GuildMember} object backref
+     */
+    readonly member: GuildMember;
 };
 
 /**
  * Represents a helper of a queue.
- * - Created when a staff member uses /start
- * - Removed when a staff member uses /close
+ * @remarks
+ * - Created when a staff member uses `/start`
+ * - Removed when a staff member uses `/close`
  */
 type Helper = {
-    helpStart: Date; // time when /start is used
-    helpEnd?: Date; // time when /stop is used
+    /**
+     * time when /start is used
+     */
+    helpStart: Date;
+    /**
+     * time when /stop is used
+     */
+    helpEnd?: Date;
+    /**
+     * The members dequeued from `/next`
+     */
     helpedMembers: Helpee[];
-    readonly member: GuildMember; // backref
+    /**
+     * Backref
+     */
+    readonly member: GuildMember;
 };
 
 export { Helpee, Helper };

@@ -66,12 +66,12 @@ interface IInteractionExtension {
 /** Server Level Extension */
 interface IServerExtension {
     /**
-     * When a {@link AttendingServerV2} is successfully created
+     * When a server instance is successfully created
      * @param server the newly created server
      */
     onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
     /**
-     * When all the {@link HelpQueueV2} are successfully created.
+     * When all the queues are successfully created.
      * Happens before {@link onServerInitSuccess}
      * @param server
      * @param allQueues
@@ -109,7 +109,7 @@ interface IServerExtension {
     ) => Promise<void>;
     /**
      * Called every 15 minutes
-     * @param server the {@link AttendingServerV2} object
+     * @param server the AttendingServerV2 object
      * @param isFirstCall whether this is called inside server init
      */
     onServerPeriodicUpdate: (
@@ -119,7 +119,7 @@ interface IServerExtension {
     /**
      * When a student that just dequeued joins the voice channel
      * @param server which server is this student from
-     * @param studentMember the student {@link GuildMember} object
+     * @param studentMember the student guild member object
      * @param voiceChannel non-null voice channel
      */
     onStudentJoinVC: (
@@ -130,7 +130,7 @@ interface IServerExtension {
     /**
      * When a student finishes receiving help and leaves the voice channel
      * @param server which server is this student from
-     * @param studentMember the student {@link GuildMember} object
+     * @param studentMember the student guild member object
      */
     onStudentLeaveVC: (
         server: Readonly<AttendingServerV2>,
@@ -143,7 +143,7 @@ interface IServerExtension {
      */
     onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
     /**
-     * When the server asks for external backup data. Called inside {@link AttendingServerV2.create}
+     * When the server asks for external backup data. Called inside AttendingServerV2.create
      * @param serverId the guild id
      * @returns Optional backup. If no extension provides backups, start fresh
      */
@@ -206,7 +206,7 @@ interface IQueueExtension {
     /**
      * When a queue re-render happens
      * @param queue queue that just requested a render
-     * @param display the {@link QueueDisplayV2} object that handles the rendering
+     * @param display the QueueDisplayV2 object that handles the rendering
      * @remark Extensions with custom embeds should override this method to get the display object
      */
     onQueueRender: (
@@ -216,7 +216,7 @@ interface IQueueExtension {
     /**
      * Called every hour
      * @param queue queue that triggered the call
-     * @param isFirstCall whether this is called inside {@link HelpQueueV2.create}
+     * @param isFirstCall whether this is called inside HelpQueueV2.create
      */
     onQueuePeriodicUpdate: (
         queue: Readonly<HelpQueueV2>,
