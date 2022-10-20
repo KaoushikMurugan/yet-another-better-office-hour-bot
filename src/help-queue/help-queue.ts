@@ -7,10 +7,11 @@ import { IQueueExtension } from '../extensions/extension-interface';
 import { QueueBackup } from '../models/backups';
 import { Helpee } from '../models/member-states';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { PeriodicUpdateError, QueueError } from '../utils/error-types';
+import { PeriodicUpdateError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 import { GuildMemberId, Optional } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
+import { ExpectedQueueErrors } from './expected-queue-errors';
 
 type QueueViewModel = {
     queueName: string;
@@ -212,7 +213,7 @@ class HelpQueueV2 {
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
         if (this._activeHelperIds.has(helperMember.id)) {
-            throw new QueueError('Queue is already open', this.queueName);
+            throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
         this._activeHelperIds.add(helperMember.id);
         await Promise.all<unknown>([
@@ -222,9 +223,12 @@ class HelpQueueV2 {
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
-            notify && this.notifGroup.clear(),
             this.triggerRender()
         ]);
+        if (notify) {
+            // clear AFTER the message is successfully sent to avoid race conditions
+            this.notifGroup.clear();
+        }
     }
 
     /**
@@ -235,10 +239,10 @@ class HelpQueueV2 {
     async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
         if (!this.isOpen) {
-            throw new QueueError('Queue is already closed', this.queueName);
+            throw ExpectedQueueErrors.alreadyClosed(this.queueName);
         }
         if (!this._activeHelperIds.has(helperMember.id)) {
-            throw new QueueError('You are not one of the helpers', this.queueName);
+            throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
         this._activeHelperIds.delete(helperMember.id);
         if (!this.isOpen) {
@@ -257,16 +261,13 @@ class HelpQueueV2 {
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (!this.isOpen) {
-            throw new QueueError(`Queue is not open.`, this.queueName);
+            throw ExpectedQueueErrors.notOpen(this.queueName);
         }
         if (this._students.find(s => s.member.id === studentMember.id) !== undefined) {
-            throw new QueueError(`You are already in the queue.`, this.queueName);
+            throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
         }
         if (this._activeHelperIds.has(studentMember.id)) {
-            throw new QueueError(
-                `You can't enqueue yourself while helping.`,
-                this.queueName
-            );
+            throw ExpectedQueueErrors.enqueueHelper(this.queueName);
         }
         const student: Helpee = {
             waitStart: new Date(),
@@ -311,29 +312,22 @@ class HelpQueueV2 {
         targetStudentMember?: GuildMember
     ): Promise<Readonly<Helpee>> {
         if (!this.isOpen) {
-            throw new QueueError(
-                'This queue is not open. Did you mean to use `/start`?',
-                this.queueName
-            );
+            throw ExpectedQueueErrors.dequeue.closed(this.queueName);
         }
         if (this._students.length === 0) {
-            throw new QueueError("There's no one in the queue", this.queueName);
+            throw ExpectedQueueErrors.dequeue.empty(this.queueName);
         }
         if (!this._activeHelperIds.has(helperMember.id)) {
-            throw new QueueError(
-                "You don't have permission to help this queue",
-                this.queueName
-            );
+            throw ExpectedQueueErrors.dequeue.noPermission(this.queueName);
         }
         if (targetStudentMember !== undefined) {
             const studentIndex = this._students.findIndex(
                 student => student.member.id === targetStudentMember.id
             );
             if (studentIndex === -1) {
-                throw new QueueError(
-                    `The specified student ${targetStudentMember.displayName} ` +
-                        `is not in the queue`,
-                    this.queueChannel.queueName
+                throw ExpectedQueueErrors.studentNotInQueue(
+                    targetStudentMember.displayName,
+                    this.queueName
                 );
             }
             // already checked for idx === -1
@@ -362,16 +356,16 @@ class HelpQueueV2 {
 
     /**
      * Remove a student from the queue. Used for /leave
-     * @param targetStudent the student to remove
+     * @param targetStudentMember the student to remove
      * @throws QueueError: the student is not in the queue
      */
-    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
+    async removeStudent(targetStudentMember: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
-            student => student.member.id === targetStudent.id
+            student => student.member.id === targetStudentMember.id
         );
         if (idx === -1) {
-            throw new QueueError(
-                `${targetStudent.displayName} is not in the queue`,
+            throw ExpectedQueueErrors.studentNotInQueue(
+                targetStudentMember.displayName,
                 this.queueName
             );
         }
@@ -410,10 +404,7 @@ class HelpQueueV2 {
      */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (this.notifGroup.has(targetStudent.id)) {
-            throw new QueueError(
-                'You are already in the notification squad.',
-                this.queueName
-            );
+            throw ExpectedQueueErrors.alreadyInNotifGroup(this.queueName);
         }
         this.notifGroup.set(targetStudent.id, targetStudent);
     }
@@ -424,10 +415,7 @@ class HelpQueueV2 {
      */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
-            throw new QueueError(
-                'You are not in the notification squad.',
-                this.queueName
-            );
+            throw ExpectedQueueErrors.notInNotifGroup(this.queueName);
         }
         this.notifGroup.delete(targetStudent.id);
     }

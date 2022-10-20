@@ -33,6 +33,7 @@ import {
     WithRequired
 } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
+import { ExpectedServerErrors } from './expected-server-errors';
 
 /**
  * Wrapper for TextChannel
@@ -171,7 +172,7 @@ class AttendingServerV2 {
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw new ServerError(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
+            throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
         });
         // Now Emit all the events
         await Promise.all(
@@ -310,7 +311,7 @@ class AttendingServerV2 {
             queue => queue.queueName === newQueueName
         );
         if (queueWithSameName !== undefined) {
-            throw new ServerError(`Queue ${newQueueName} already exists`);
+            throw ExpectedServerErrors.queueAlreadyExists(newQueueName);
         }
         const parentCategory = await this.guild.channels.create({
             name: newQueueName,
@@ -341,7 +342,7 @@ class AttendingServerV2 {
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this._queues.get(queueCategoryID);
         if (queue === undefined) {
-            throw new ServerError('This queue does not exist.');
+            throw ExpectedServerErrors.queueDoesNotExist;
         }
         const parentCategory = (await (await this.guild.channels.fetch())
             .find(ch => ch !== null && ch.id === queueCategoryID)
@@ -352,7 +353,8 @@ class AttendingServerV2 {
                 .map(child => child.delete())
                 .filter(promise => promise !== undefined)
         ).catch((err: Error) => {
-            throw new ServerError(`API Failure: ${err.name}\n${err.message}`);
+            //TODO: should we actually catch this?
+            throw ExpectedServerErrors.apiFail(err);
         });
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
@@ -393,20 +395,18 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            throw new ServerError(`You need to be in a voice channel first.`);
+            throw ExpectedServerErrors.notInVC;
         }
         const nonEmptyQueues = currentlyHelpingQueues.filter(
             queue => queue.isOpen && queue.length !== 0
         );
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
-            throw new ServerError(
-                `There's no one left to help. You should get some coffee!`
-            );
+            throw ExpectedServerErrors.noOneToHelp;
         }
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>((prev, curr) =>
             prev.first?.waitStart !== undefined &&
@@ -464,15 +464,16 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            throw new ServerError(`You need to be in a voice channel first.`);
+            throw ExpectedServerErrors.notInVC;
         }
         let student: Optional<Readonly<Helpee>>;
         if (specificQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
+            // TODO: Do we need to do this check? Or can we just let the queue handle it
             if (
                 !helperMember.roles.cache.some(
                     role => role.name === specificQueue.queueName
@@ -494,15 +495,15 @@ class AttendingServerV2 {
             );
             student = await queue?.removeStudent(targetStudentMember);
             if (student === undefined) {
-                throw new ServerError(
-                    `The student ${targetStudentMember.displayName} is not in any of the queues.`
+                throw ExpectedServerErrors.studentNotFound(
+                    targetStudentMember.displayName
                 );
             }
         }
         if (student === undefined) {
             // won't be seen, only the above error messages will be sent
             // this is just here for semantics
-            throw new ServerError('Dequeue with the given arguments failed.');
+            throw ExpectedServerErrors.genericDequeueFailure;
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
@@ -551,7 +552,7 @@ class AttendingServerV2 {
         notify: boolean
     ): Promise<void> {
         if (this._activeHelpers.has(helperMember.id)) {
-            throw new ServerError('You are already hosting.');
+            throw ExpectedServerErrors.alreadyHosting;
         }
         const helper: Helper = {
             helpStart: new Date(),
@@ -563,11 +564,7 @@ class AttendingServerV2 {
             helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            throw new ServerError(
-                `It seems like you don't have any class roles.\n` +
-                    `This might be a human error. ` +
-                    `In the meantime, you can help students through DMs.`
-            );
+            ExpectedServerErrors.noClassRole;
         }
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -587,7 +584,7 @@ class AttendingServerV2 {
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._activeHelpers.get(helperMember.id);
         if (helper === undefined) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
         helper.helpEnd = new Date();
         this._activeHelpers.delete(helperMember.id);
@@ -698,10 +695,7 @@ class AttendingServerV2 {
                         role.name === targetQueue.queueName || role.name === 'Bot Admin'
                 )
             ) {
-                throw new ServerError(
-                    `You don't have permission to announce in ${targetQueue.queueName}. ` +
-                        `You can only announce to queues that you have a role of.`
-                );
+                throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
             await Promise.all(
                 queueToAnnounce.students.map(student =>
