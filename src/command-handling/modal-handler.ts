@@ -11,7 +11,6 @@ import { logModalSubmit } from '../utils/util-functions';
  * @category Handler Class
  */
 class BuiltInModalHandler {
-    
     private modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
         string,
         ModalSubmitCallback
