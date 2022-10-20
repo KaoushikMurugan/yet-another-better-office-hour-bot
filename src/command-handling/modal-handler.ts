@@ -98,7 +98,7 @@ class BuiltInModalHandler {
      * Checks if the command came from a server with correctly initialized YABOB
      * Each handler will have their own isServerInteraction method
      * ----
-     * @returns string: the server id
+     * @returns the server id
      */
     private isServerInteraction(interaction: ModalSubmitInteraction): string {
         const serverId = interaction.guild?.id;

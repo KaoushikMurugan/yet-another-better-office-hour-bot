@@ -10,7 +10,7 @@
         "start": "node dist/src/app.js",
         "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
         "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production node dist/src/app.js",
-        "makeDoc": " npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal"
+        "makeDoc": "npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
     "devDependencies": {
         "@types/chai": "^4.2.21",
