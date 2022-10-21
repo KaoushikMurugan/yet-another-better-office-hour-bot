@@ -152,7 +152,6 @@ function isFromGuildMember(
     throw ExpectedParseErrors.notGuildInteraction;
 }
 
-
 export {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,

@@ -13,13 +13,13 @@ const ExpectedParseErrors = {
                 ' or '
             )}] to use \`/${commandName}\`.`
         ),
-    invalidQueueCategory: (categoryName: Optional<string>): CommandParseError =>
+    invalidQueueCategory: (categoryName: Optional<string>) =>
         categoryName === undefined
             ? new CommandParseError(
                   `This category has no name, and it's not a valid queue category.`
               )
             : new CommandParseError(`\`${categoryName}\` is not a valid queue category.`),
-    noQueueTextChannel: (categoryName: Optional<string>): CommandParseError =>
+    noQueueTextChannel: (categoryName: Optional<string>) =>
         new CommandParseError(
             `This category does not have a \`#queue\` text channel.\n` +
                 `If you are an admin, you can use \`/queue add ${categoryName}\` ` +
