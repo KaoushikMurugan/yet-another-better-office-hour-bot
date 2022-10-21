@@ -44,7 +44,7 @@ const ExpectedParseErrors = {
         `This server doesn't seem to have any queues. ` +
             `You can use \`/queue add <name>\` to create one`
     ),
-    nonServerInterction: (guildName: Optional<string>) =>
+    nonServerInterction: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(
                   'I can only accept server based interactions.' +

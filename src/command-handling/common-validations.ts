@@ -18,15 +18,45 @@ import { ExpectedParseErrors } from './expected-interaction-errors';
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember object of the triggerer
+ * @remark
+ * - Use this only on dangerous commands like `/clear_all` because it's slow
+ * - Otherwise prefer {@link isTriggeredByUserWithRolesSync}
  */
 async function isTriggeredByUserWithRoles(
     interaction: ChatInputCommandInteraction | ButtonInteraction,
     commandName: string,
     requiredRoles: string[]
 ): Promise<GuildMember> {
+    if (interaction.member === null) {
+        throw ExpectedParseErrors.nonServerInterction();
+    }
     const userRoles = (
         await (interaction.member as GuildMember)?.fetch()
     ).roles.cache.map(role => role.name);
+    if (!userRoles.some(role => requiredRoles.includes(role))) {
+        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+    }
+    return interaction.member as GuildMember;
+}
+
+/**
+ * Checks if the triggerer has the required roles.
+ * Synchronus version of {@link isTriggeredByUserWithRoles}
+ * @param commandName the command used
+ * @param requiredRoles the roles to check, roles have OR relationship
+ * @returns GuildMember object of the triggerer
+ */
+function isTriggeredByUserWithRolesSync(
+    interaction: ChatInputCommandInteraction | ButtonInteraction,
+    commandName: string,
+    requiredRoles: string[]
+): GuildMember {
+    if (interaction.member === null) {
+        throw ExpectedParseErrors.nonServerInterction();
+    }
+    const userRoles = (interaction.member as GuildMember).roles.cache.map(
+        role => role.name
+    );
     if (!userRoles.some(role => requiredRoles.includes(role))) {
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
@@ -133,5 +163,6 @@ export {
     isFromQueueChannelWithParent,
     isFromGuildMember,
     isTriggeredByUserWithValidEmail,
-    logEditFailure
+    logEditFailure,
+    isTriggeredByUserWithRolesSync
 };
