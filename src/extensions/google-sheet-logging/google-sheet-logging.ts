@@ -10,12 +10,9 @@ import { GuildMemberId } from '../../utils/type-aliases';
 import environment from '../../environment/environment-manager';
 
 /**
- * Attendance entry for each helper
- * @remarks
- * - The Helper part is stored by reference
- * - when attending server mutates it, this will also change
+ * Additional attendance info for each helper
  */
-type AttendanceEntry = Helper & {
+type AttendanceEntry = {
     latestStudentJoinTimeStamp?: Date;
     activeTimeMs: number;
 };
@@ -151,19 +148,19 @@ class GoogleSheetLoggingExtension
         if (helpSessionEntries === undefined) {
             return;
         }
-        helpSessionEntries.forEach(entry => (entry['Session End'] = new Date()));
+        this.helpSessionEntries.delete(studentMember.id);
         this.attendanceEntries.forEach(entry => {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         });
-        // entry is now complete, safe to cast
         // TODO: complete the .catch() here
-        await this.updateHelpSession(
-            helpSessionEntries as Array<Required<HelpSessionEntry>>
-        ).catch(console.error);
-        this.helpSessionEntries.delete(studentMember.id);
+        const completeHelpSessionEntries: Array<Required<HelpSessionEntry>> =
+            helpSessionEntries.map(entry => {
+                return { ...entry, 'Session End': new Date() };
+            });
+        await this.updateHelpSession(completeHelpSessionEntries).catch(console.error);
     }
 
     override async onHelperStartHelping(
@@ -184,7 +181,7 @@ class GoogleSheetLoggingExtension
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         const entry = this.attendanceEntries.get(helper.member.id);
-        const error = new AttendanceError(
+        const failedToUpdateError = new AttendanceError(
             `Failed to update attendace. ` +
                 `The attendance sheet might have missing headers.\n` +
                 `Don't worry, your time is still being logged, ` +
@@ -192,14 +189,14 @@ class GoogleSheetLoggingExtension
                 `Please contact @Bot Admin to manually update.`
         );
         if (entry === undefined) {
-            throw error;
+            throw failedToUpdateError;
         }
-        entry.helpEnd = helper.helpEnd;
+        this.attendanceEntries.delete(helper.member.id);
         helper.helpedMembers.map(student =>
             this.studentsJustDequeued.delete(student.member.id)
         );
-        await this.updateAttendance(entry as Required<AttendanceEntry>).catch(() => {
-            throw error;
+        await this.updateAttendance({ ...entry, ...helper }).catch(() => {
+            throw failedToUpdateError;
         });
         this.attendanceEntries.delete(helper.member.id);
     }
@@ -207,7 +204,9 @@ class GoogleSheetLoggingExtension
     /**
      * Updates the attendance for 1 helper
      */
-    private async updateAttendance(entry: Required<AttendanceEntry>): Promise<void> {
+    private async updateAttendance(
+        entry: Omit<Required<AttendanceEntry & Helper>, 'latestStudentJoinTimeStamp'>
+    ): Promise<void> {
         const requiredHeaders = [
             'Helper Username',
             'Time In',

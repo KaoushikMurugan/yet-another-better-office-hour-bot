@@ -98,9 +98,10 @@ class BuiltInCommandHandler {
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only
-            await interaction.reply(
-                SimpleEmbed('Processing Command...', EmbedColor.Neutral)
-            );
+            await interaction.reply({
+                ...SimpleEmbed('Processing Command...', EmbedColor.Neutral),
+                ephemeral: true
+            });
         }
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
@@ -122,7 +123,7 @@ class BuiltInCommandHandler {
                     // if not replied (when using modals), reply
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
-                        : interaction.reply(ErrorEmbed(err)),
+                        : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

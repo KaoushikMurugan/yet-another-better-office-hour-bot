@@ -586,12 +586,15 @@ class AttendingServerV2 {
         if (helper === undefined) {
             throw ExpectedServerErrors.notHosting;
         }
-        helper.helpEnd = new Date();
         this._activeHelpers.delete(helperMember.id);
+        const completeHelper: Required<Helper> = {
+            ...helper,
+            helpEnd: new Date()
+        };
         console.log(
             ` - Help time of ${helper.member.displayName} is ` +
                 `${convertMsToTime(
-                    helper.helpEnd.getTime() - helper.helpStart.getTime()
+                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
         const closableQueues = this._queues.filter(queue =>
@@ -601,10 +604,10 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension =>
                 // the only missing property helpEnd is now completed, cast is safe
-                extension.onHelperStopHelping(this, helper as Required<Helper>)
+                extension.onHelperStopHelping(this, completeHelper)
             )
         );
-        return helper as Required<Helper>;
+        return completeHelper;
     }
 
     /**
