@@ -149,7 +149,10 @@ class CalendarInteractionExtension
         const serverId = this.isServerInteraction(interaction);
         await Promise.all<unknown>([
             interaction.reply({
-                ...SimpleEmbed('Processing command...', EmbedColor.Neutral),
+                ...SimpleEmbed(
+                    `Processing command ${interaction.commandName}...`,
+                    EmbedColor.Neutral
+                ),
                 ephemeral: true
             }),
             attendingServers
@@ -178,12 +181,15 @@ class CalendarInteractionExtension
      * Button handler. Almost the same as the built in button-handler.ts
      */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply({
-            ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
-            ephemeral: true
-        });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
+        await interaction.reply({
+            ...SimpleEmbed(
+                `Processing button \`${buttonName}\` in \`${queueName}\`...`,
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
         logButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
             // if the method didn't directly reply, the center handler replies

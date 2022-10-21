@@ -43,12 +43,15 @@ class BuiltInButtonHandler {
     }
 
     async process(interaction: ButtonInteraction): Promise<void> {
-        await interaction.reply({
-            ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
-            ephemeral: true
-        });
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
+        await interaction.reply({
+            ...SimpleEmbed(
+                `Processing button \`${buttonName}\` in \`${queueName}\`...`,
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
         logButtonPress(interaction, buttonName, queueName);
         // if process is called then buttonMethod is definitely not null
         // this is checked in app.ts with `buttonHandler.canHandle`

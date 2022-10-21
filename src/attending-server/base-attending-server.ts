@@ -418,11 +418,11 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
-        await Promise.all([
+        await Promise.all(
             helperVoiceChannel.permissionOverwrites.cache.map(
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
-        ]);
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
@@ -507,11 +507,11 @@ class AttendingServerV2 {
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
-        await Promise.all([
+        await Promise.all(
             helperVoiceChannel.permissionOverwrites.cache.map(
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
-        ]);
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes

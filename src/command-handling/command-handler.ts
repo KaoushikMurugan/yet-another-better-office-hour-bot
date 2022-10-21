@@ -99,7 +99,10 @@ class BuiltInCommandHandler {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only
             await interaction.reply({
-                ...SimpleEmbed('Processing Command...', EmbedColor.Neutral),
+                ...SimpleEmbed(
+                    `Processing command ${interaction.commandName}...`,
+                    EmbedColor.Neutral
+                ),
                 ephemeral: true
             });
         }
