@@ -150,7 +150,7 @@ class CalendarInteractionExtension
         await Promise.all<unknown>([
             interaction.reply({
                 ...SimpleEmbed(
-                    `Processing command ${interaction.commandName}...`,
+                    `Processing command \`${interaction.commandName}\`...`,
                     EmbedColor.Neutral
                 ),
                 ephemeral: true

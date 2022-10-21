@@ -61,7 +61,6 @@ class BuiltInModalHandler {
     private async setAfterSessionMessage(
         interaction: ModalSubmitInteraction
     ): Promise<string> {
-        // let this throw so it will be caught and sent back to the user
         const serverId = this.isServerInteraction(interaction);
         const newAfterSessionMessage =
             interaction.fields.getTextInputValue('after_session_msg');
