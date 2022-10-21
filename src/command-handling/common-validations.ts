@@ -98,6 +98,7 @@ function hasValidQueueArgument(
 
 /**
  * Checks if the user has the Valid Email role
+ * @deprecated
  * @param commandName the command used
  * @returns GuildMember object of the triggerer
  */
@@ -151,11 +152,6 @@ function isFromGuildMember(
     throw ExpectedParseErrors.notGuildInteraction;
 }
 
-function logEditFailure(
-    interaction: ButtonInteraction | ChatInputCommandInteraction
-): void {
-    console.error(`Edit reply failed with ${interaction.toJSON()}`);
-}
 
 export {
     isTriggeredByUserWithRoles,
@@ -163,6 +159,5 @@ export {
     isFromQueueChannelWithParent,
     isFromGuildMember,
     isTriggeredByUserWithValidEmail,
-    logEditFailure,
     isTriggeredByUserWithRolesSync
 };
