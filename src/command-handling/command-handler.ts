@@ -286,14 +286,14 @@ class BuiltInCommandHandler {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
             return undefined;
         }
-        const table = new AsciiTable3();
         const allQueues =
             (await attendingServers.get(serverId)?.getQueueChannels()) ?? [];
-        table
-            .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed')
+        const table = new AsciiTable3()
+            .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed', 'Status')
             .setAlign(1, AlignmentEnum.CENTER)
             .setAlign(2, AlignmentEnum.CENTER)
             .setAlign(3, AlignmentEnum.CENTER)
+            .setAlign(4, AlignmentEnum.CENTER)
             .setStyle('unicode-mix')
             .addRowMatrix(
                 [...helpers.values()].map(helper => [
@@ -306,13 +306,25 @@ class BuiltInCommandHandler {
                         )
                         .map(role => role.name)
                         .toString(),
-                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf())
+                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf()),
+                    (() => {
+                        const voiceChannel = interaction.guild?.voiceStates.cache.get(
+                            helper.member.id
+                        )?.channel;
+                        if (!voiceChannel) {
+                            return 'Not in voice channel';
+                        }
+                        return voiceChannel.members.size > 1
+                            ? `Busy in [${voiceChannel.name}]`
+                            : `Idling in [${voiceChannel.name}]`;
+                    })() // IIFE to cram in more logic
                 ])
             )
-            .setWidths([15, 15, 15])
+            .setWidths([10, 10, 10, 10])
             .setWrapped(1)
             .setWrapped(2)
-            .setWrapped(3);
+            .setWrapped(3)
+            .setWrapped(4);
         await interaction
             .editReply(
                 SimpleEmbed(
