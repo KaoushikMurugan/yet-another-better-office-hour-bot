@@ -36,9 +36,12 @@ class BuiltInModalHandler {
             // modal shown => message not replied, so we always reply
             .then(async successMsg => {
                 if (typeof successMsg === 'string') {
-                    await interaction.reply(SimpleEmbed(successMsg));
+                    await interaction.reply({
+                        ...SimpleEmbed(successMsg),
+                        ephemeral: true
+                    });
                 } else if (successMsg !== undefined) {
-                    await interaction.reply(successMsg);
+                    await interaction.reply({ ...successMsg, ephemeral: true });
                 }
             })
             .catch(async err => {
@@ -46,7 +49,7 @@ class BuiltInModalHandler {
                 await Promise.all([
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
-                        : interaction.reply(ErrorEmbed(err)),
+                        : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

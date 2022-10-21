@@ -66,7 +66,7 @@ class BuiltInButtonHandler {
                 await Promise.all([
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
-                        : interaction.reply(ErrorEmbed(err)),
+                        : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
                     attendingServers
                         .get(serverId)
                         ?.sendLogMessage(ErrorLogEmbed(err, interaction))

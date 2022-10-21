@@ -170,7 +170,7 @@ class CalendarInteractionExtension
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
-                    : await interaction.reply(ErrorEmbed(err))
+                    : await interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
             );
     }
 
@@ -197,7 +197,7 @@ class CalendarInteractionExtension
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
-                    : await interaction.reply(ErrorEmbed(err))
+                    : await interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
             );
     }
 
