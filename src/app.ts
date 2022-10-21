@@ -74,7 +74,6 @@ client.on('guildDelete', async guild => {
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
-    // removed IIFE because the client.on error catches for us
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
     if (interaction.isChatInputCommand()) {

@@ -8,6 +8,7 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { Collection, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases';
 import environment from '../../environment/environment-manager';
+import { ExpectedSheetErrors } from './expected-sheet-errors';
 
 /**
  * Additional attendance info for each helper
@@ -33,16 +34,6 @@ type HelpSessionEntry = {
 };
 
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
-
-class AttendanceError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'AttendanceError';
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
 
 class GoogleSheetLoggingExtension
     extends BaseServerExtension
@@ -160,11 +151,7 @@ class GoogleSheetLoggingExtension
                 return { ...entry, 'Session End': new Date() };
             });
         await this.updateHelpSession(completeHelpSessionEntries).catch((err: Error) =>
-            console.error(
-                red('Error when updating help session: '),
-                err.name,
-                err.message
-            )
+            console.error(red('Cannot update help sessions'), err.name, err.message)
         );
     }
 
@@ -186,27 +173,15 @@ class GoogleSheetLoggingExtension
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         const entry = this.attendanceEntries.get(helper.member.id);
-        const failedToUpdateError = new AttendanceError(
-            `Failed to update attendace. ` +
-                `The attendance sheet might have missing headers.\n` +
-                `Don't worry, your time is still being logged, ` +
-                `just not viewable on Google Sheets. ` +
-                `Please contact @Bot Admin to manually update.`
-        );
         if (entry === undefined) {
-            throw failedToUpdateError;
+            throw ExpectedSheetErrors.unknownEntry;
         }
         this.attendanceEntries.delete(helper.member.id);
         helper.helpedMembers.map(student =>
             this.studentsJustDequeued.delete(student.member.id)
         );
-        await this.updateAttendance({ ...entry, ...helper }).catch((err: Error) => {
-            console.error(
-                red('Error when updating help session: '),
-                err.name,
-                err.message
-            );
-            throw failedToUpdateError;
+        await this.updateAttendance({ ...entry, ...helper }).catch(() => {
+            throw ExpectedSheetErrors.recordedButCannotUpdate;
         });
         this.attendanceEntries.delete(helper.member.id);
     }
@@ -282,7 +257,18 @@ class GoogleSheetLoggingExtension
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]);
+        ]).catch((err: Error) => {
+            /**
+             * Catch clause must be here
+             * catching in {@link onHelperStopHelping} cannot catch the error of this call
+             * because it's not awaited
+             */
+            console.error(
+                red(`Error when updating attendance for ${entry.member.user.username}: `),
+                err.name,
+                err.message
+            );
+        });
     }
 
     /**
@@ -343,7 +329,13 @@ class GoogleSheetLoggingExtension
                 { raw: true, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
-        ]);
+        ]).catch((err: Error) =>
+            console.error(
+                red('Error when updating help session: '),
+                err.name,
+                err.message
+            )
+        );
     }
 }
 
