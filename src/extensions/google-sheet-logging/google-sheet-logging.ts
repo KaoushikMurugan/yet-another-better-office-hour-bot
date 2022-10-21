@@ -13,10 +13,12 @@ import { ExpectedSheetErrors } from './expected-sheet-errors';
 /**
  * Additional attendance info for each helper
  */
-type AttendanceEntry = {
+type ActiveTime = {
     latestStudentJoinTimeStamp?: Date;
     activeTimeMs: number;
 };
+
+type AttendanceEntry = Omit<Required<ActiveTime & Helper>, 'latestStudentJoinTimeStamp'>;
 
 /**
  * Individual help sessions
@@ -43,8 +45,7 @@ class GoogleSheetLoggingExtension
     // key is student member.id, value is corresponding helpee object
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     // key is helper member.id, value is entry for this helper
-    private attendanceEntries: Collection<GuildMemberId, AttendanceEntry> =
-        new Collection();
+    private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
     // key is student member.id, value is an array of entries to handle multiple helpers
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
@@ -122,10 +123,10 @@ class GoogleSheetLoggingExtension
             this.helpSessionEntries.has(studentId)
                 ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
                 : this.helpSessionEntries.set(studentId, [helpSessionEntry]);
-            if (this.attendanceEntries.has(helper.member.id)) {
+            if (this.activeTimeEntries.has(helper.member.id)) {
                 // ts doesn't recognize map.has
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                this.attendanceEntries.get(helper.member.id)!.latestStudentJoinTimeStamp =
+                this.activeTimeEntries.get(helper.member.id)!.latestStudentJoinTimeStamp =
                     new Date();
             }
         }
@@ -140,7 +141,7 @@ class GoogleSheetLoggingExtension
             return;
         }
         this.helpSessionEntries.delete(studentMember.id);
-        this.attendanceEntries.forEach(entry => {
+        this.activeTimeEntries.forEach(entry => {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
@@ -161,37 +162,35 @@ class GoogleSheetLoggingExtension
     ): Promise<void> {
         // This is where entry is passed by reference
         // because we stored it with set()
-        const entry: AttendanceEntry = {
+        const entry: ActiveTime = {
             latestStudentJoinTimeStamp: undefined,
             activeTimeMs: 0
         };
-        this.attendanceEntries.set(helper.member.id, entry);
+        this.activeTimeEntries.set(helper.member.id, entry);
     }
 
     override async onHelperStopHelping(
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
-        const entry = this.attendanceEntries.get(helper.member.id);
+        const entry = this.activeTimeEntries.get(helper.member.id);
         if (entry === undefined) {
             throw ExpectedSheetErrors.unknownEntry;
         }
-        this.attendanceEntries.delete(helper.member.id);
+        this.activeTimeEntries.delete(helper.member.id);
         helper.helpedMembers.map(student =>
             this.studentsJustDequeued.delete(student.member.id)
         );
         await this.updateAttendance({ ...entry, ...helper }).catch(() => {
             throw ExpectedSheetErrors.recordedButCannotUpdate;
         });
-        this.attendanceEntries.delete(helper.member.id);
+        this.activeTimeEntries.delete(helper.member.id);
     }
 
     /**
      * Updates the attendance for 1 helper
      */
-    private async updateAttendance(
-        entry: Omit<Required<AttendanceEntry & Helper>, 'latestStudentJoinTimeStamp'>
-    ): Promise<void> {
+    private async updateAttendance(entry: AttendanceEntry): Promise<void> {
         const requiredHeaders = [
             'Helper Username',
             'Time In',
@@ -339,4 +338,4 @@ class GoogleSheetLoggingExtension
     }
 }
 
-export { GoogleSheetLoggingExtension, AttendanceEntry, HelpSessionEntry };
+export { GoogleSheetLoggingExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };

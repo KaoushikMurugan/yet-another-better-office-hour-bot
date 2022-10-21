@@ -297,7 +297,7 @@ class BuiltInCommandHandler {
             .setStyle('unicode-mix')
             .addRowMatrix(
                 [...helpers.values()].map(helper => [
-                    helper.member.displayName,
+                    helper.member.displayName, // Tutor Name
                     helper.member.roles.cache
                         .filter(
                             role =>
@@ -305,8 +305,8 @@ class BuiltInCommandHandler {
                                 undefined
                         )
                         .map(role => role.name)
-                        .toString(),
-                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf()),
+                        .toString(), // Available Queues
+                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf()), // Time Elapsed
                     (() => {
                         const voiceChannel = interaction.guild?.voiceStates.cache.get(
                             helper.member.id
@@ -317,7 +317,7 @@ class BuiltInCommandHandler {
                         return voiceChannel.members.size > 1
                             ? `Busy in [${voiceChannel.name}]`
                             : `Idling in [${voiceChannel.name}]`;
-                    })() // IIFE to cram in more logic
+                    })() // Status, IIFE to cram in more logic
                 ])
             )
             .setWidths([10, 10, 10, 10])
