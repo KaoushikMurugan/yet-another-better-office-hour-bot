@@ -19,7 +19,8 @@ import { CommandParseError } from '../utils/error-types';
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
-    isFromGuildMember
+    isFromGuildMember,
+    isTriggeredByUserWithRolesSync
 } from './common-validations';
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
@@ -182,7 +183,7 @@ class BuiltInCommandHandler {
     private async next(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, helperMember] = [
             this.isServerInteraction(interaction),
-            await isTriggeredByUserWithRoles(interaction, 'next', ['Bot Admin', 'Staff'])
+            isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
         ];
         const targetQueue =
             interaction.options.getChannel('queue_name', false) === null
@@ -206,7 +207,7 @@ class BuiltInCommandHandler {
     private async start(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member] = [
             this.isServerInteraction(interaction),
-            await isTriggeredByUserWithRoles(interaction, 'start', ['Bot Admin', 'Staff'])
+            isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
         ];
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await attendingServers.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
@@ -216,7 +217,7 @@ class BuiltInCommandHandler {
     private async stop(interaction: ChatInputCommandInteraction): Promise<string> {
         const [serverId, member] = [
             this.isServerInteraction(interaction),
-            await isTriggeredByUserWithRoles(interaction, 'stop', ['Bot Admin', 'Staff'])
+            isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
         ];
         const helpTimeEntry = await attendingServers
             .get(serverId)

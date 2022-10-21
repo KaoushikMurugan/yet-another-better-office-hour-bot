@@ -1,4 +1,5 @@
 /** @module BuiltInHandlers */
+
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
 import { CommandParseError } from '../utils/error-types';

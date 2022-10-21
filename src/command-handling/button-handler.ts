@@ -8,10 +8,10 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { CommandParseError } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 import { attendingServers } from '../global-states';
+import { ExpectedParseErrors } from './expected-interaction-errors';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -88,11 +88,11 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
+        const [serverId, member, queueChannel] = [
             this.isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
-        ]);
+        ];
         const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
@@ -105,11 +105,11 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
+        const [serverId, member, queueChannel] = [
             this.isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
-        ]);
+        ];
         const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
@@ -122,11 +122,11 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
+        const [serverId, member, queueChannel] = [
             this.isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
-        ]);
+        ];
         const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
@@ -139,11 +139,11 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
+        const [serverId, member, queueChannel] = [
             this.isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
-        ]);
+        ];
         const server = attendingServers.get(serverId);
         await server?.sendLogMessage(
             ButtonLogEmbed(
@@ -163,10 +163,7 @@ class BuiltInButtonHandler {
     private isServerInteraction(interaction: ButtonInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
+            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
         } else {
             return serverId;
         }
