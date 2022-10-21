@@ -298,7 +298,7 @@ class BuiltInCommandHandler {
             .addRowMatrix(
                 [...helpers.values()].map(helper => [
                     helper.member.displayName,
-                    (helper.member.roles as GuildMemberRoleManager).cache
+                    helper.member.roles.cache
                         .filter(
                             role =>
                                 allQueues.find(queue => queue.queueName === role.name) !==
@@ -325,15 +325,13 @@ class BuiltInCommandHandler {
             .setWrapped(2)
             .setWrapped(3)
             .setWrapped(4);
-        await interaction
-            .editReply(
-                SimpleEmbed(
-                    'Current Helpers',
-                    EmbedColor.Aqua,
-                    '```' + table.toString() + '```'
-                )
+        await interaction.editReply(
+            SimpleEmbed(
+                'Current Helpers',
+                EmbedColor.Aqua,
+                '```' + table.toString() + '```'
             )
-            .catch(() => console.error(`Edit reply failed with ${interaction.toJSON()}`));
+        );
         return undefined;
     }
 
