@@ -1,4 +1,5 @@
 /** @module BuiltInHandlers */
+
 import {
     ChannelType,
     ChatInputCommandInteraction,
@@ -29,6 +30,7 @@ import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCom
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
 import { attendingServers } from '../global-states';
+import { ExpectedParseErrors } from './expected-interaction-errors';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -151,15 +153,12 @@ class BuiltInCommandHandler {
                 return `Successfully created \`${queueName}\`.`;
             }
             case 'remove': {
-                const targetQueue = await hasValidQueueArgument(interaction, true);
+                const targetQueue = hasValidQueueArgument(interaction, true);
                 if (
                     (interaction.channel as GuildChannel).parent?.id ===
                     targetQueue.parentCategoryId
                 ) {
-                    throw new CommandParseError(
-                        `Please use the remove command in another channel.` +
-                            ` Otherwise Discord API will reject.`
-                    );
+                    throw ExpectedParseErrors.removeInsideQueue;
                 }
                 await attendingServers
                     .get(serverId)
@@ -259,10 +258,7 @@ class BuiltInCommandHandler {
                 role => role.name === queue.queueName || role.name === 'Bot Admin'
             )
         ) {
-            throw new CommandParseError(
-                `You don't have permission to clear '${queue.queueName}'. ` +
-                    `You can only clear the queues that you have a role of.`
-            );
+            throw ExpectedParseErrors.noPermission.clear(queue.queueName);
         }
         await attendingServers.get(serverId)?.clearQueue(queue);
         return `Everyone in  queue ${queue.queueName} was removed.`;
@@ -275,11 +271,8 @@ class BuiltInCommandHandler {
         ]);
         const server = attendingServers.get(serverId);
         const allQueues = await server?.getQueueChannels();
-        if (allQueues === undefined || allQueues.length === 0) {
-            throw new CommandParseError(
-                `This server doesn't seem to have any queues. ` +
-                    `You can use \`/queue add <name>\` to create one`
-            );
+        if (allQueues?.length === 0) {
+            throw ExpectedParseErrors.serverHasNoQueue;
         }
         await server?.clearAllQueues();
         return `All queues on ${server?.guild.name} was cleard.`;
@@ -288,7 +281,7 @@ class BuiltInCommandHandler {
     private async listHelpers(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const serverId = await this.isServerInteraction(interaction);
+        const serverId = this.isServerInteraction(interaction);
         const helpers = attendingServers.get(serverId)?.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
@@ -359,9 +352,6 @@ class BuiltInCommandHandler {
             hasValidQueueArgument(interaction, true),
             isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
         ]);
-        if ((interaction.channel as GuildChannel)?.name === 'queue') {
-            throw new CommandParseError('Please use this command outside the queue.');
-        }
         await attendingServers.get(serverId)?.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
     }
@@ -473,10 +463,7 @@ class BuiltInCommandHandler {
     private isServerInteraction(interaction: ChatInputCommandInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
+            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
         } else {
             return serverId;
         }

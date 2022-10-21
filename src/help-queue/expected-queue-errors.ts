@@ -1,6 +1,7 @@
+/** @module ExpectedErrors */
+
 import { QueueError } from '../utils/error-types';
 
-/** @module ExpectedErrors.QueueErrors */
 const ExpectedQueueErrors = {
     alreadyOpen: (queueName: string): QueueError =>
         new QueueError('Queue is already open', queueName),

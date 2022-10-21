@@ -1,7 +1,5 @@
-/**
- * @packageDocumentation
- * @module InertactionValidationFunctions
- */
+/** @module InertactionValidationFunctions */
+
 import {
     ChatInputCommandInteraction,
     GuildMember,
@@ -13,6 +11,7 @@ import {
 } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CommandParseError } from '../utils/error-types';
+import { ExpectedParseErrors } from './expected-interaction-errors';
 
 /**
  * Checks if the triggerer has the required roles
@@ -28,17 +27,8 @@ async function isTriggeredByUserWithRoles(
     const userRoles = (
         await (interaction.member as GuildMember)?.fetch()
     ).roles.cache.map(role => role.name);
-    if (
-        !(
-            interaction.member instanceof GuildMember &&
-            userRoles.some(role => requiredRoles.includes(role))
-        )
-    ) {
-        throw new CommandParseError(
-            `You need to have: [${requiredRoles.join(
-                ' or '
-            )}] to use \`/${commandName}\`.`
-        );
+    if (!userRoles.some(role => requiredRoles.includes(role))) {
+        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
     return interaction.member as GuildMember;
 }
@@ -51,28 +41,22 @@ async function isTriggeredByUserWithRoles(
  * - If false, check if the CURRENT channel's parent category is a valid queue category
  * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  * */
-async function hasValidQueueArgument(
+function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
     required = false
-): Promise<QueueChannel> {
+): QueueChannel {
     const parentCategory =
         interaction.options.getChannel('queue_name', required) ??
         (interaction.channel as GuildChannel).parent;
     // null check is done here by optional property access
     if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
-        throw new CommandParseError(
-            `\`${parentCategory?.name}\` is not a valid queue category.`
-        );
+        throw ExpectedParseErrors.invalidQueueCategory(parentCategory?.name);
     }
     const queueTextChannel = (parentCategory as CategoryChannel).children.cache.find(
         child => child.name === 'queue' && child.type === ChannelType.GuildText
     );
     if (queueTextChannel === undefined) {
-        throw new CommandParseError(
-            `This category does not have a \`#queue\` text channel.\n` +
-                `If you are an admin, you can use \`/queue add ${parentCategory.name}\` ` +
-                `to generate one.`
-        );
+        throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
     }
     const queueChannel: QueueChannel = {
         channelObj: queueTextChannel as TextChannel,
@@ -94,9 +78,7 @@ async function isTriggeredByUserWithValidEmail(
     const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(
         role => role.name
     );
-    if (
-        !(interaction.member instanceof GuildMember && roles.includes('Verified Email'))
-    ) {
+    if (roles.includes('Verified Email')) {
         throw new CommandParseError(
             `You need to have a verified email to use \`/${commandName}\`.`
         );
@@ -108,18 +90,15 @@ async function isTriggeredByUserWithValidEmail(
  * Checks if the queue channel has a parent folder
  * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  */
-async function isFromQueueChannelWithParent(
+function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,
     queueName: string
-): Promise<QueueChannel> {
+): QueueChannel {
     if (
         interaction.channel?.type !== ChannelType.GuildText ||
         interaction.channel.parent === null
     ) {
-        throw new CommandParseError(
-            'Invalid button press / Command. ' +
-                'Make sure this channel has a parent category.'
-        );
+        throw ExpectedParseErrors.queueHasNoParent;
     }
     const queueChannel: QueueChannel = {
         channelObj: interaction.channel as TextChannel,
@@ -133,13 +112,13 @@ async function isFromQueueChannelWithParent(
  * Checks if the interaction came from a valid guild member
  * @returns GuildMember object of the triggerer
  */
-async function isFromGuildMember(
+function isFromGuildMember(
     interaction: ButtonInteraction | ChatInputCommandInteraction
-): Promise<GuildMember> {
+): GuildMember {
     if (interaction.member) {
         return interaction.member as GuildMember;
     }
-    throw new CommandParseError('Sorry, I only accept server base interactions.');
+    throw ExpectedParseErrors.notGuildInteraction;
 }
 
 function logEditFailure(

@@ -1,6 +1,6 @@
+/** @module ExpectedErrors */
 import { ServerError } from '../utils/error-types';
 
-/** @module ExpectedErrors.ServerErrors */
 const ExpectedServerErrors = {
     queueDoesNotExist: new ServerError('This queue does not exist.'),
     noOneToHelp: new ServerError(
