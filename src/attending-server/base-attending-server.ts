@@ -71,6 +71,8 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
+    private seriousServer: boolean = false;
+
     protected constructor(
         readonly user: User,
         readonly guild: Guild,
@@ -88,6 +90,17 @@ class AttendingServerV2 {
     }
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
+    }
+
+    get isSeriousServer(): boolean {
+        return this.seriousServer;
+    }
+
+    async setSeriousServer(activate: boolean): Promise<void> {
+        this.seriousServer = activate;
+        await Promise.all(  
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
 
     /**

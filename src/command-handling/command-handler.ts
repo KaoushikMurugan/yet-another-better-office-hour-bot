@@ -72,7 +72,11 @@ class BuiltInCommandHandler {
             'set_after_session_msg',
             interaction => this.showAfterSessionMessageModal(interaction)
         ],
-        ['set_queue_auto_clear', interaction => this.showQueueAutoClearModal(interaction)]
+        [
+            'set_queue_auto_clear',
+            interaction => this.showQueueAutoClearModal(interaction)
+        ],
+        ['serious_mode', interaction => this.setSeriousMode(interaction)]
     ]);
 
     /**
@@ -463,6 +467,26 @@ class BuiltInCommandHandler {
         ]);
         await attendingServers.get(serverId)?.setLoggingChannel(undefined);
         return `Successfully stopped logging.`;
+    }
+
+    private async setSeriousMode(
+        interaction: ChatInputCommandInteraction
+    ): Promise<string> {
+        const [serverId] = await Promise.all([
+            this.isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', [
+                'Bot Admin'
+            ])
+        ]);
+
+        const enable = interaction.options.getBoolean('enable', true);
+
+        await attendingServers.get(serverId)?.setSeriousServer(enable);
+        if (enable) {
+            return `Successfully activated serious mode.`;
+        } else {
+            return `Successfully deactivated serious mode.`;
+        }
     }
 
     /**
