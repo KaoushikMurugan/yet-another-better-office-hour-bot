@@ -147,7 +147,7 @@ class GoogleSheetLoggingExtension
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         });
-        const completeHelpSessionEntries: Array<Required<HelpSessionEntry>> =
+        const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
             helpSessionEntries.map(entry => {
                 return { ...entry, 'Session End': new Date() };
             });
@@ -274,7 +274,7 @@ class GoogleSheetLoggingExtension
      * Updates the help session stats for 1 student
      */
     private async updateHelpSession(
-        entries: Array<Required<HelpSessionEntry>>
+        entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
         if (entries[0] === undefined) {
             return;

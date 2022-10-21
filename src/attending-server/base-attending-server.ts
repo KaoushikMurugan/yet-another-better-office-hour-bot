@@ -973,7 +973,7 @@ class AttendingServerV2 {
         helpCategories: CategoryChannel[],
         messageContents: Array<{
             channelName: string;
-            file: Array<HelpMessage>;
+            file: HelpMessage[];
             visibility: string[];
         }>
     ): Promise<void> {

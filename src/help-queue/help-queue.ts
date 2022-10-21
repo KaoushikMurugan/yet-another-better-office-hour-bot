@@ -15,8 +15,8 @@ import { ExpectedQueueErrors } from './expected-queue-errors';
 
 type QueueViewModel = {
     queueName: string;
-    helperIDs: Array<string>;
-    studentDisplayNames: Array<string>;
+    helperIDs: string[];
+    studentDisplayNames: string[];
     isOpen: boolean;
 };
 
