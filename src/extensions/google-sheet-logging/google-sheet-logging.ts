@@ -155,12 +155,17 @@ class GoogleSheetLoggingExtension
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         });
-        // TODO: complete the .catch() here
         const completeHelpSessionEntries: Array<Required<HelpSessionEntry>> =
             helpSessionEntries.map(entry => {
                 return { ...entry, 'Session End': new Date() };
             });
-        await this.updateHelpSession(completeHelpSessionEntries).catch(console.error);
+        await this.updateHelpSession(completeHelpSessionEntries).catch((err: Error) =>
+            console.error(
+                red('Error when updating help session: '),
+                err.name,
+                err.message
+            )
+        );
     }
 
     override async onHelperStartHelping(
@@ -170,7 +175,7 @@ class GoogleSheetLoggingExtension
         // This is where entry is passed by reference
         // because we stored it with set()
         const entry: AttendanceEntry = {
-            ...helper,
+            latestStudentJoinTimeStamp: undefined,
             activeTimeMs: 0
         };
         this.attendanceEntries.set(helper.member.id, entry);
@@ -195,7 +200,12 @@ class GoogleSheetLoggingExtension
         helper.helpedMembers.map(student =>
             this.studentsJustDequeued.delete(student.member.id)
         );
-        await this.updateAttendance({ ...entry, ...helper }).catch(() => {
+        await this.updateAttendance({ ...entry, ...helper }).catch((err: Error) => {
+            console.error(
+                red('Error when updating help session: '),
+                err.name,
+                err.message
+            );
             throw failedToUpdateError;
         });
         this.attendanceEntries.delete(helper.member.id);
@@ -272,9 +282,7 @@ class GoogleSheetLoggingExtension
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]).catch((err: Error) =>
-            console.error(red('Error when updating attendance: '), err.name, err.message)
-        );
+        ]);
     }
 
     /**
@@ -335,13 +343,7 @@ class GoogleSheetLoggingExtension
                 { raw: true, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
-        ]).catch((err: Error) =>
-            console.error(
-                red('Error when updating help session: '),
-                err.name,
-                err.message
-            )
-        );
+        ]);
     }
 }
 
