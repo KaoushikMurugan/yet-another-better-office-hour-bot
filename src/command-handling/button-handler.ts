@@ -47,7 +47,7 @@ class BuiltInButtonHandler {
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         await interaction.reply({
             ...SimpleEmbed(
-                `Processing button \`${buttonName}\` in \`${queueName}\`...`,
+                `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
                 EmbedColor.Neutral
             ),
             ephemeral: true
@@ -98,7 +98,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
         );
         await server?.enqueueStudent(member, queueChannel);
-        return `Successfully joined \`${queueName}\`.`;
+        return `Successfully joined the queue of \`${queueName}\`.`;
     }
 
     private async leave(
@@ -115,7 +115,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
         );
         await server?.removeStudentFromQueue(member, queueChannel);
-        return `Successfully left \`${queueName}\`.`;
+        return `Successfully left the queue of \`${queueName}\`.`;
     }
 
     private async joinNotifGroup(
@@ -132,7 +132,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
         );
         await server?.addStudentToNotifGroup(member, queueChannel);
-        return `Successfully joined notification group for \`${queueName}\``;
+        return `Successfully joined the notification group of \`${queueName}\`.`;
     }
 
     private async leaveNotifGroup(
@@ -153,7 +153,7 @@ class BuiltInButtonHandler {
             )
         );
         await server?.removeStudentFromNotifGroup(member, queueChannel);
-        return `Successfully left notification group for \`${queueName}\``;
+        return `Successfully left the notification group of \`${queueName}\`.`;
     }
 
     /**

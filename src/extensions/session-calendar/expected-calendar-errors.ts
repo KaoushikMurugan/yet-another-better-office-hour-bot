@@ -37,7 +37,8 @@ const ExpectedCalendarErrors = {
     failedRequest: new CalendarConnectionError('Calendar request failed.'),
     nonAdminMakingCalendarStrForOthers: new CommandParseError(
         `Only Bot Admins have the permission to update calendar string for users that are not yourself. `
-    )
+    ),
+    badPublicEmbedUrl: new CommandParseError('Please provide a valid and complete URL.')
 } as const;
 
 export { ExpectedCalendarErrors, CalendarConnectionError };

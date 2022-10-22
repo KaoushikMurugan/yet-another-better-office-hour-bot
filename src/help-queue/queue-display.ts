@@ -94,7 +94,7 @@ class QueueDisplayV2 {
             helperList
                 .setTitle(`Currently available helpers`)
                 .setDescription(queue.helperIDs.join('\n'))
-                .setColor(EmbedColor.NoColor);
+                .setColor(EmbedColor.Aqua);
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {

@@ -172,13 +172,21 @@ function composeViewModel(
     };
 }
 
+/**
+ * Builds the body message of the upcoming sessions embed
+ * @param viewModels models from {@link getUpComingTutoringEvents}
+ * @param queueChannel which queue channel to look for
+ * @param returnCount the MAXIMUM number of events to render
+ * @returns string that goes into the embed
+ */
 function composeUpcomingSessionsEmbedBody(
     viewModels: UpComingSessionViewModel[],
-    channel: QueueChannel
+    queueChannel: QueueChannel,
+    returnCount = 10
 ): string {
     return viewModels.length > 0
         ? viewModels
-              .slice(0, 10) // take the first 10
+              .slice(0, returnCount) // take the first 10
               .map(
                   viewModel =>
                       `**${
@@ -197,7 +205,7 @@ function composeUpcomingSessionsEmbedBody(
                       }`
               )
               .join(`\n${'-'.repeat(30)}\n`)
-        : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`;
+        : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`;
 }
 
 /**

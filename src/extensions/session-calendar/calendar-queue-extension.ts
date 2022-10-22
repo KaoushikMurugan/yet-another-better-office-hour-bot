@@ -94,14 +94,14 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
 
     /**
      * Composes the calendar embed and sends a render request to the display
-     * @param refresh whether to refresh the upcomingSessions cache
+     * @param refreshCache whether to refresh the upcomingSessions cache
      */
-    private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
+    private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
         ];
-        this.upcomingSessions = refresh
+        this.upcomingSessions = refreshCache
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
         const calendarId = serverIdCalendarStateMap.get(

@@ -103,7 +103,7 @@ class BuiltInCommandHandler {
             // non modal commands only
             await interaction.reply({
                 ...SimpleEmbed(
-                    `Processing command \`${interaction.commandName}\`...`,
+                    `Processing command \`${interaction.commandName}\` ...`,
                     EmbedColor.Neutral
                 ),
                 ephemeral: true

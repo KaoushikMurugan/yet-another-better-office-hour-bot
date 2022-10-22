@@ -19,7 +19,7 @@ import {
     SimpleLogEmbed,
     SlashCommandLogEmbed
 } from '../../utils/embed-helper';
-import { CommandParseError, ExtensionSetupError } from '../../utils/error-types';
+import { ExtensionSetupError } from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
@@ -46,9 +46,9 @@ import {
     ModalSubmitCallback
 } from '../../utils/type-aliases';
 import { attendingServers } from '../../global-states';
-import environment from '../../environment/environment-manager';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
+import environment from '../../environment/environment-manager';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -151,7 +151,7 @@ class CalendarInteractionExtension
         await Promise.all<unknown>([
             interaction.reply({
                 ...SimpleEmbed(
-                    `Processing command \`${interaction.commandName}\`...`,
+                    `Processing command \`${interaction.commandName}\` ...`,
                     EmbedColor.Neutral
                 ),
                 ephemeral: true
@@ -186,7 +186,7 @@ class CalendarInteractionExtension
         const buttonMethod = this.buttonMethodMap.get(buttonName);
         await interaction.reply({
             ...SimpleEmbed(
-                `Processing button \`${buttonName}\` in \`${queueName}\`...`,
+                `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
                 EmbedColor.Neutral
             ),
             ephemeral: true
@@ -364,26 +364,21 @@ class CalendarInteractionExtension
                     interaction.options.getChannel(`queue_name_${idx + 1}`, idx === 0)
                 )
                 .filter(queueArg => queueArg !== undefined && queueArg !== null);
-            validQueues = await Promise.all(
-                commandArgs.map(category => {
-                    if (
-                        category?.type !== ChannelType.GuildCategory ||
-                        category === null
-                    ) {
-                        throw ExpectedParseErrors.invalidQueueCategory(category?.name);
-                    }
-                    const queueTextChannel = (
-                        category as CategoryChannel
-                    ).children.cache.find(
-                        child =>
-                            child.name === 'queue' && child.type === ChannelType.GuildText
-                    );
-                    if (queueTextChannel === undefined) {
-                        throw ExpectedParseErrors.noQueueTextChannel(category.name);
-                    }
-                    return category as CategoryChannel;
-                })
-            );
+            validQueues = commandArgs.map(category => {
+                if (category?.type !== ChannelType.GuildCategory || category === null) {
+                    throw ExpectedParseErrors.invalidQueueCategory(category?.name);
+                }
+                const queueTextChannel = (
+                    category as CategoryChannel
+                ).children.cache.find(
+                    child =>
+                        child.name === 'queue' && child.type === ChannelType.GuildText
+                );
+                if (queueTextChannel === undefined) {
+                    throw ExpectedParseErrors.noQueueTextChannel(category.name);
+                }
+                return category as CategoryChannel;
+            });
         }
         await serverIdCalendarStateMap
             .get(this.guild.id)
@@ -410,10 +405,9 @@ class CalendarInteractionExtension
         await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
         if (enable) {
             try {
-                // call this constructor to check if URL is valid
-                new URL(rawUrl);
+                new URL(rawUrl); // call this constructor to check if URL is valid
             } catch {
-                throw new CommandParseError('Please provide a valid and complete URL.');
+                throw ExpectedCalendarErrors.badPublicEmbedUrl;
             }
             // now rawUrl is valid
             await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);

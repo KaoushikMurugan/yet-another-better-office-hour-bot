@@ -27,7 +27,7 @@ const ExpectedQueueErrors = {
     },
     studentNotInQueue: (studentName: string, queueName: string) =>
         new QueueError(
-            `The specified student ${studentName} ` + `is not in the queue`,
+            `${studentName} is not in the queue`,
             queueName
         ),
     alreadyInNotifGroup: (queueName: string) =>

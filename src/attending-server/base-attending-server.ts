@@ -603,7 +603,6 @@ class AttendingServerV2 {
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
-                // the only missing property helpEnd is now completed, cast is safe
                 extension.onHelperStopHelping(this, completeHelper)
             )
         );
@@ -641,7 +640,7 @@ class AttendingServerV2 {
 
     /**
      * Clear all queues of this server
-     * Separated from clear queue to avoid excessive backup calls
+     * @remark separated from clear queue to avoid excessive backup calls
      */
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
