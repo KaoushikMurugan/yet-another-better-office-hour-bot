@@ -23,6 +23,12 @@ const ExpectedServerErrors = {
         new ServerError(
             `You don't have permission to announce in ${queueName}. ` +
                 `You can only announce to queues that you have a role of.`
+        ),
+    noStudentToAnnounce: (announcement: string) =>
+        new ServerError(
+            'There are no students in the queue to send your announcement to. ' +
+                "Here's your announcement if you would like to save it for later: " +
+                `\`\`\`${announcement}\`\`\``
         )
 } as const;
 

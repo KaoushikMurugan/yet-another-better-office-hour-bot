@@ -597,9 +597,12 @@ class AttendingServerV2 {
                     completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
-        const closableQueues = this._queues.filter(queue =>
-            helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
-        );
+        const closableQueues = this._queues.filter(
+            queue =>
+                helperMember.roles.cache
+                    .map(role => role.name)
+                    .includes(queue.queueName) && queue.isOpen
+        ); // 2nd condition handles adding queue roles during a tutoring session
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
@@ -680,12 +683,12 @@ class AttendingServerV2 {
     /**
      * Send an announcement to all the students in the helper's approved queues
      * @param helperMember helper that used /announce
-     * @param message announcement body
+     * @param announcement announcement body
      * @param targetQueue optional, specifies which queue to announce to
      */
     async announceToStudentsInQueue(
         helperMember: GuildMember,
-        message: string,
+        announcement: string,
         targetQueue?: QueueChannel
     ): Promise<void> {
         if (targetQueue !== undefined) {
@@ -703,7 +706,7 @@ class AttendingServerV2 {
                 queueToAnnounce.students.map(student =>
                     student.member.send(
                         SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${message}`,
+                            `Staff member ${helperMember.displayName} announced:\n${announcement}`,
                             EmbedColor.Aqua,
                             `In queue: ${targetQueue.queueName}`
                         )
@@ -713,21 +716,24 @@ class AttendingServerV2 {
             return;
         }
         // from this.queues select queue where helper roles has queue name
+        const studentsToAnnounceTo = this.queues
+            .filter(queue =>
+                helperMember.roles.cache.some(role => role.name === queue.queueName)
+            )
+            .map(queueToAnnounce => queueToAnnounce.students)
+            .flat();
+        if (studentsToAnnounceTo.length === 0) {
+            throw ExpectedServerErrors.noStudentToAnnounce(announcement);
+        }
         await Promise.all(
-            this._queues
-                .filter(queue =>
-                    helperMember.roles.cache.some(role => role.name === queue.queueName)
-                )
-                .map(queueToAnnounce => queueToAnnounce.students)
-                .flat()
-                .map(student =>
-                    student.member.send(
-                        SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${message}`,
-                            EmbedColor.Aqua
-                        )
+            studentsToAnnounceTo.map(student =>
+                student.member.send(
+                    SimpleEmbed(
+                        `Staff member ${helperMember.displayName} announced:\n${announcement}`,
+                        EmbedColor.Aqua
                     )
                 )
+            )
         );
     }
 
