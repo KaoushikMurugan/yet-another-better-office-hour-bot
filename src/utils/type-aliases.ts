@@ -37,6 +37,9 @@ type ButtonCallback = (
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction
 ) => Promise<string | BaseMessageOptions | undefined>;
+type CommandMethodMap = ReadonlyMap<string, CommandCallback>;
+type ButtonMethodMap = ReadonlyMap<string, ButtonCallback>;
+type ModalMethodMap = ReadonlyMap<string, ModalSubmitCallback>;
 
 /**
  * Marks 1 property in T as required.
@@ -62,5 +65,8 @@ export {
     ButtonCallback,
     WithRequired,
     Optional,
-    ModalSubmitCallback
+    ModalSubmitCallback,
+    CommandMethodMap,
+    ButtonMethodMap,
+    ModalMethodMap
 };

@@ -25,7 +25,7 @@ import {
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback } from '../utils/type-aliases';
+import { CommandCallback, CommandMethodMap } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
@@ -51,10 +51,7 @@ class BuiltInCommandHandler {
     // - arrow function wrapper is required because of the closure of 'this'
     // undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    private commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
-        string,
-        CommandCallback
-    >([
+    private methodMap: CommandMethodMap = new Map<string, CommandCallback>([
         ['announce', interaction => this.announce(interaction)],
         ['cleanup_queue', interaction => this.cleanup(interaction)],
         ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
@@ -89,7 +86,7 @@ class BuiltInCommandHandler {
     ]);
 
     canHandle(interaction: ChatInputCommandInteraction): boolean {
-        return this.commandMethodMap.has(interaction.commandName);
+        return this.methodMap.has(interaction.commandName);
     }
 
     /**
@@ -98,7 +95,7 @@ class BuiltInCommandHandler {
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const serverId = this.isServerInteraction(interaction);
-        const commandMethod = this.commandMethodMap.get(interaction.commandName);
+        const commandMethod = this.methodMap.get(interaction.commandName);
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only

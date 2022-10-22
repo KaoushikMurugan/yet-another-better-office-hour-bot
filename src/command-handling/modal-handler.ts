@@ -2,7 +2,7 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { ModalSubmitCallback } from '../utils/type-aliases';
+import { ModalMethodMap } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 import { SuccessMessages } from './builtin-success-messages';
@@ -13,10 +13,7 @@ import { ExpectedParseErrors } from './expected-interaction-errors';
  * @category Handler Class
  */
 class BuiltInModalHandler {
-    private modalMethodMap: ReadonlyMap<string, ModalSubmitCallback> = new Map<
-        string,
-        ModalSubmitCallback
-    >([
+    private methodMap: ModalMethodMap = new Map([
         [
             'after_session_message_modal',
             interaction => this.setAfterSessionMessage(interaction)
@@ -25,11 +22,11 @@ class BuiltInModalHandler {
     ]);
 
     canHandle(interaction: ModalSubmitInteraction): boolean {
-        return this.modalMethodMap.has(interaction.customId);
+        return this.methodMap.has(interaction.customId);
     }
 
     async process(interaction: ModalSubmitInteraction): Promise<void> {
-        const modalMethod = this.modalMethodMap.get(interaction.customId);
+        const modalMethod = this.methodMap.get(interaction.customId);
         logModalSubmit(interaction);
         // if process is called then modalMethod is definitely not null
         // this is checked in app.ts with `modalHandler.canHandle`

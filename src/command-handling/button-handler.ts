@@ -8,7 +8,7 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { ButtonCallback } from '../utils/type-aliases';
+import { ButtonMethodMap } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 import { attendingServers } from '../global-states';
 import { ExpectedParseErrors } from './expected-interaction-errors';
@@ -22,10 +22,7 @@ import { SuccessMessages } from './builtin-success-messages';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
-    private buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
-        string,
-        ButtonCallback
-    >([
+    private methodMap: ButtonMethodMap = new Map([
         ['join', (queueName, interaction) => this.join(queueName, interaction)],
         ['leave', (queueName, interaction) => this.leave(queueName, interaction)],
         [
@@ -40,12 +37,12 @@ class BuiltInButtonHandler {
 
     canHandle(interaction: ButtonInteraction): boolean {
         const [buttonName] = this.splitButtonQueueName(interaction);
-        return this.buttonMethodMap.has(buttonName);
+        return this.methodMap.has(buttonName);
     }
 
     async process(interaction: ButtonInteraction): Promise<void> {
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
-        const buttonMethod = this.buttonMethodMap.get(buttonName);
+        const buttonMethod = this.methodMap.get(buttonName);
         await interaction.reply({
             ...SimpleEmbed(
                 `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
