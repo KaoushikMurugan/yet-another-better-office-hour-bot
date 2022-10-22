@@ -69,6 +69,7 @@ class ExtensionSetupError extends Error {
 
 /**
  * Error thrown during display.renderQueue()
+ * @deprecated will be removed in the future
  */
 class QueueRenderError extends Error {
     constructor(message: string, public queueName: string) {

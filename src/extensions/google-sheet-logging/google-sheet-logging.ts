@@ -42,11 +42,11 @@ class GoogleSheetLoggingExtension
     implements IServerExtension
 {
     // Credit of all the update logic goes to Kaoushik
-    // key is student member.id, value is corresponding helpee object
+    /** key is student member.id, value is corresponding helpee object */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
-    // key is helper member.id, value is entry for this helper
+    /** key is helper member.id, value is entry for this helper */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
-    // key is student member.id, value is an array of entries to handle multiple helpers
+    /** key is student member.id, value is an array of entries to handle multiple helpers */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
 
@@ -87,6 +87,12 @@ class GoogleSheetLoggingExtension
         this.studentsJustDequeued.set(dequeuedStudent.member.id, dequeuedStudent);
     }
 
+    /**
+     * Start logging the {@link HelpSessionEntry} as sson as the student joins VC
+     * @param server
+     * @param studentMember
+     * @param voiceChannel
+     */
     override async onStudentJoinVC(
         server: Readonly<AttendingServerV2>,
         studentMember: GuildMember,
@@ -132,6 +138,11 @@ class GoogleSheetLoggingExtension
         }
     }
 
+    /**
+     * Sends the help session data to google sheets after student leave VC
+     * @param studentMember
+     * @noexcept error is logged to the console
+     */
     override async onStudentLeaveVC(
         _server: Readonly<AttendingServerV2>,
         studentMember: GuildMember
@@ -160,8 +171,6 @@ class GoogleSheetLoggingExtension
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
-        // This is where entry is passed by reference
-        // because we stored it with set()
         const entry: ActiveTime = {
             latestStudentJoinTimeStamp: undefined,
             activeTimeMs: 0
@@ -169,6 +178,11 @@ class GoogleSheetLoggingExtension
         this.activeTimeEntries.set(helper.member.id, entry);
     }
 
+    /**
+     * Sends the {@link AttendanceEntry} to google sheets after student leave VC
+     * @param _server
+     * @param helper
+     */
     override async onHelperStopHelping(
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
@@ -189,6 +203,7 @@ class GoogleSheetLoggingExtension
 
     /**
      * Updates the attendance for 1 helper
+     * @param entry
      */
     private async updateAttendance(entry: AttendanceEntry): Promise<void> {
         const requiredHeaders = [
@@ -271,7 +286,8 @@ class GoogleSheetLoggingExtension
     }
 
     /**
-     * Updates the help session stats for 1 student
+     * Updates the help session entries for 1 student
+     * @param entries
      */
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
