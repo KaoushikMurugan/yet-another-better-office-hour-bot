@@ -151,7 +151,7 @@ class CalendarServerEventListener extends BaseServerExtension {
     }
 }
 
-// static, key is guild id, value is 1 calendar extension state
+/** static, key is guild id, value is 1 calendar extension state */
 const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
 
 export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };
