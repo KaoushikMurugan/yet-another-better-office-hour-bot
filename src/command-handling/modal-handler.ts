@@ -3,10 +3,9 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
 import { ModalMethodMap } from '../utils/type-aliases';
-import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
 import { SuccessMessages } from './builtin-success-messages';
-import { ExpectedParseErrors } from './expected-interaction-errors';
+import { isServerInteraction } from './common-validations';
 
 /**
  * Built in handler for modal submit
@@ -44,14 +43,12 @@ class BuiltInModalHandler {
                 }
             })
             .catch(async err => {
-                const serverId = this.isServerInteraction(interaction);
+                const server = isServerInteraction(interaction);
                 await Promise.all([
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
                         : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
-                    attendingServers
-                        .get(serverId)
-                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                    server?.sendLogMessage(ErrorLogEmbed(err, interaction))
                 ]);
             });
     }
@@ -59,12 +56,10 @@ class BuiltInModalHandler {
     private async setAfterSessionMessage(
         interaction: ModalSubmitInteraction
     ): Promise<string> {
-        const serverId = this.isServerInteraction(interaction);
+        const server = isServerInteraction(interaction);
         const newAfterSessionMessage =
             interaction.fields.getTextInputValue('after_session_msg');
-        await attendingServers
-            .get(serverId)
-            ?.setAfterSessionMessage(newAfterSessionMessage);
+        server?.setAfterSessionMessage(newAfterSessionMessage);
         const message = interaction.fields.getTextInputValue('after_session_msg');
         return SuccessMessages.updatedAfterSessionMessage(message);
     }
@@ -72,34 +67,17 @@ class BuiltInModalHandler {
     private async setQueueAutoClear(
         interaction: ModalSubmitInteraction
     ): Promise<string> {
-        const serverId = this.isServerInteraction(interaction);
+        const server = isServerInteraction(interaction);
         const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
         const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
         const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
         const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
         if (hours === 0 && minutes === 0) {
-            await attendingServers
-                .get(serverId)
-                ?.setQueueAutoClear(hours, minutes, false);
+            await server.setQueueAutoClear(hours, minutes, false);
             return SuccessMessages.queueAutoClear.disabled;
         }
-        await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, true);
+        await server.setQueueAutoClear(hours, minutes, true);
         return SuccessMessages.queueAutoClear.enabled(hours, minutes);
-    }
-
-    /**
-     * Checks if the command came from a server with correctly initialized YABOB
-     * Each handler will have their own isServerInteraction method
-     * ----
-     * @returns the server id
-     */
-    private isServerInteraction(interaction: ModalSubmitInteraction): string {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
-        } else {
-            return serverId;
-        }
     }
 }
 

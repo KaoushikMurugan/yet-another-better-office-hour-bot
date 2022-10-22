@@ -10,9 +10,30 @@ import {
     CategoryChannel,
     ModalSubmitInteraction
 } from 'discord.js';
-import { QueueChannel } from '../attending-server/base-attending-server';
+import {
+    AttendingServerV2,
+    QueueChannel
+} from '../attending-server/base-attending-server';
+import { attendingServers } from '../global-states';
 import { CommandParseError } from '../utils/error-types';
 import { ExpectedParseErrors } from './expected-interaction-errors';
+
+/**
+ * Checks if the command came from a server with correctly initialized YABOB
+ * - Extensions that wish to do additional checks can use this as a base
+ * @returns string: the server id
+ */
+function isServerInteraction(
+    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
+): AttendingServerV2 {
+    const server = attendingServers.get(
+        interaction.guild?.id ?? 'Non Server Interaction'
+    );
+    if (!server) {
+        throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
+    }
+    return server;
+}
 
 /**
  * Checks if the triggerer has the required roles
@@ -160,5 +181,6 @@ export {
     isFromQueueChannelWithParent,
     isFromGuildMember,
     isTriggeredByUserWithValidEmail,
-    isTriggeredByUserWithRolesSync
+    isTriggeredByUserWithRolesSync,
+    isServerInteraction
 };

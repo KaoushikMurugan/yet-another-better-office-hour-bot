@@ -18,7 +18,8 @@ import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromGuildMember,
-    isTriggeredByUserWithRolesSync
+    isTriggeredByUserWithRolesSync,
+    isServerInteraction
 } from './common-validations';
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
@@ -28,10 +29,8 @@ import { adminCommandHelpMessages } from '../../help-channel-messages/AdminComma
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
-import { attendingServers } from '../global-states';
 import { ExpectedParseErrors } from './expected-interaction-errors';
 import { SuccessMessages } from './builtin-success-messages';
-import { AttendingServerV2 } from '../attending-server/base-attending-server';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -95,7 +94,7 @@ class BuiltInCommandHandler {
      * @param interaction the raw interaction from discord js
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
-        const server = this.isServerInteraction2(interaction);
+        const server = isServerInteraction(interaction);
         const commandMethod = this.methodMap.get(interaction.commandName);
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
@@ -133,12 +132,14 @@ class BuiltInCommandHandler {
     }
 
     private async queue(interaction: ChatInputCommandInteraction): Promise<string> {
-        const server = this.isServerInteraction2(interaction);
-        await isTriggeredByUserWithRoles(
-            interaction,
-            `queue ${interaction.options.getSubcommand()}`,
-            ['Bot Admin']
-        );
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(
+                interaction,
+                `queue ${interaction.options.getSubcommand()}`,
+                ['Bot Admin']
+            )
+        ];
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
             case 'add': {
@@ -165,7 +166,7 @@ class BuiltInCommandHandler {
 
     private async enqueue(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, queueChannel, member] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction),
             isFromGuildMember(interaction)
         ];
@@ -175,7 +176,7 @@ class BuiltInCommandHandler {
 
     private async next(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, helperMember] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
         ];
         const targetQueue =
@@ -195,7 +196,7 @@ class BuiltInCommandHandler {
 
     private async start(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, member] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
         ];
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
@@ -205,7 +206,7 @@ class BuiltInCommandHandler {
 
     private async stop(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, member] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
         ];
         // already checked in isServerInteraction
@@ -216,7 +217,7 @@ class BuiltInCommandHandler {
 
     private async leave(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, member, queue] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             hasValidQueueArgument(interaction)
         ];
@@ -226,7 +227,7 @@ class BuiltInCommandHandler {
 
     private async clear(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, queue, member] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
             await isTriggeredByUserWithRoles(interaction, 'clear', ['Bot Admin', 'Staff'])
         ];
@@ -244,7 +245,7 @@ class BuiltInCommandHandler {
 
     private async clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'clear_all', ['Bot Admin'])
         ];
         const allQueues = await server.getQueueChannels();
@@ -258,7 +259,7 @@ class BuiltInCommandHandler {
     private async listHelpers(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const server = this.isServerInteraction2(interaction);
+        const server = isServerInteraction(interaction);
         const helpers = server.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
@@ -314,7 +315,7 @@ class BuiltInCommandHandler {
 
     private async announce(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, member] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'announce', [
                 'Bot Admin',
                 'Staff'
@@ -333,7 +334,7 @@ class BuiltInCommandHandler {
 
     private async cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server, queue] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
             await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
         ];
@@ -345,7 +346,7 @@ class BuiltInCommandHandler {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
         ];
         const allQueues = await server.getQueueChannels();
@@ -359,7 +360,7 @@ class BuiltInCommandHandler {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'cleanup_help_channel', [
                 'Bot Admin'
             ])
@@ -372,7 +373,7 @@ class BuiltInCommandHandler {
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'set_after_session_msg', [
                 'Bot Admin'
             ])
@@ -405,7 +406,7 @@ class BuiltInCommandHandler {
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'set_logging_channel', [
                 'Bot Admin'
             ])
@@ -425,7 +426,7 @@ class BuiltInCommandHandler {
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', [
                 'Bot Admin'
             ])
@@ -436,43 +437,11 @@ class BuiltInCommandHandler {
 
     private async stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
         const [server] = [
-            this.isServerInteraction2(interaction),
+            isServerInteraction(interaction),
             await isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
         ];
         await server.setLoggingChannel(undefined);
         return SuccessMessages.stoppedLogging;
-    }
-
-    /**
-     * Checks if the command came from a server with correctly initialized YABOB
-     * Each handler will have their own isServerInteraction method
-     * @returns the server id
-     * @deprecated
-     */
-    private isServerInteraction(interaction: ChatInputCommandInteraction): string {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
-        } else {
-            return serverId;
-        }
-    }
-
-    /**
-     * Checks if the command came from a server with correctly initialized YABOB
-     * Each handler will have their own isServerInteraction method
-     * @returns string: the server id
-     */
-    private isServerInteraction2(
-        interaction: ChatInputCommandInteraction
-    ): AttendingServerV2 {
-        const server = attendingServers.get(
-            interaction.guild?.id ?? 'Non Server Interaction'
-        );
-        if (!server) {
-            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
-        }
-        return server;
     }
 }
 

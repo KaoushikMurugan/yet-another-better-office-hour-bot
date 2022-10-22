@@ -37,6 +37,11 @@ client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Erro
     throw err;
 });
 
+/**
+ * All the servers that YABOB is managing
+ * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+ * without passing through a interaction handler first
+ */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
 export { attendingServers, client };

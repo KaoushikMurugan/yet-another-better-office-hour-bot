@@ -9,9 +9,11 @@ import {
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
 import { ButtonMethodMap } from '../utils/type-aliases';
-import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
-import { attendingServers } from '../global-states';
-import { ExpectedParseErrors } from './expected-interaction-errors';
+import {
+    isFromQueueChannelWithParent,
+    isFromGuildMember,
+    isServerInteraction
+} from './common-validations';
 import { SuccessMessages } from './builtin-success-messages';
 
 /**
@@ -63,14 +65,12 @@ class BuiltInButtonHandler {
             })
             .catch(async err => {
                 // Central error handling, reply to user with the error
-                const serverId = this.isServerInteraction(interaction);
+                const server = isServerInteraction(interaction);
                 await Promise.all([
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
                         : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
-                    attendingServers
-                        .get(serverId)
-                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                    server.sendLogMessage(ErrorLogEmbed(err, interaction))
                 ]);
             });
     }
@@ -86,16 +86,17 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = [
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ];
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
-        );
-        await server?.enqueueStudent(member, queueChannel);
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
+            ),
+            server.enqueueStudent(member, queueChannel)
+        ]);
         return SuccessMessages.joinedQueue(queueName);
     }
 
@@ -103,16 +104,17 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = [
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ];
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        );
-        await server?.removeStudentFromQueue(member, queueChannel);
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+            ),
+            server.removeStudentFromQueue(member, queueChannel)
+        ]);
         return SuccessMessages.leftQueue(queueName);
     }
 
@@ -120,16 +122,17 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = [
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ];
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
-        );
-        await server?.addStudentToNotifGroup(member, queueChannel);
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+            ),
+            server.addStudentToNotifGroup(member, queueChannel)
+        ]);
         return SuccessMessages.joinedNotif(queueName);
     }
 
@@ -137,34 +140,22 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = [
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
         ];
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                'Remove Notifications',
-                queueChannel.channelObj
-            )
-        );
-        await server?.removeStudentFromNotifGroup(member, queueChannel);
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(
+                    interaction.user,
+                    'Remove Notifications',
+                    queueChannel.channelObj
+                )
+            ),
+            server.removeStudentFromNotifGroup(member, queueChannel)
+        ]);
         return SuccessMessages.removedNotif(queueName);
-    }
-
-    /**
-     * Checks if the button came from a server with correctly initialized YABOB
-     * @returns string: the server id
-     */
-    private isServerInteraction(interaction: ButtonInteraction): string {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
-        } else {
-            return serverId;
-        }
     }
 }
 
