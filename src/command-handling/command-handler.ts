@@ -3,7 +3,6 @@
 import {
     ChannelType,
     ChatInputCommandInteraction,
-    GuildChannel,
     GuildMember,
     GuildMemberRoleManager,
     TextChannel
@@ -25,7 +24,7 @@ import {
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, CommandMethodMap } from '../utils/type-aliases';
+import { CommandCallback, CommandMethodMap, Optional } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
@@ -46,11 +45,13 @@ import { SuccessMessages } from './builtin-success-messages';
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
  */
 class BuiltInCommandHandler {
-    // The map of available commands
-    // Key is what the user will see, value is the arrow function
-    // - arrow function wrapper is required because of the closure of 'this'
-    // undefined return values is when the method wants to reply to the interaction directly
-    // - If a call returns undefined, processCommand won't edit the reply
+    /**
+     * The map of available commands
+     * Key is what the user will see, value is the arrow function
+     * - arrow function wrapper is required because of the closure of 'this'
+     * - undefined return values is when the method wants to reply to the interaction directly
+     * - If a call returns undefined, processCommand won't edit the reply
+     */
     private methodMap: CommandMethodMap = new Map<string, CommandCallback>([
         ['announce', interaction => this.announce(interaction)],
         ['cleanup_queue', interaction => this.cleanup(interaction)],
@@ -147,20 +148,20 @@ class BuiltInCommandHandler {
             case 'add': {
                 const queueName = interaction.options.getString('queue_name', true);
                 await attendingServers.get(serverId)?.createQueue(queueName);
-                return `Successfully created \`${queueName}\`.`;
+                return SuccessMessages.createdQueue(queueName);
             }
             case 'remove': {
                 const targetQueue = hasValidQueueArgument(interaction, true);
-                if (
-                    (interaction.channel as GuildChannel).parent?.id ===
-                    targetQueue.parentCategoryId
-                ) {
+                if (!interaction.channel || interaction.channel.isDMBased()) {
+                    throw ExpectedParseErrors.nonServerInterction();
+                }
+                if (interaction.channel.parentId === targetQueue.parentCategoryId) {
                     throw ExpectedParseErrors.removeInsideQueue;
                 }
                 await attendingServers
                     .get(serverId)
                     ?.deleteQueueById(targetQueue.parentCategoryId);
-                return `Successfully deleted \`${targetQueue.queueName}\`.`;
+                return SuccessMessages.deletedQueue(targetQueue.queueName);
             }
             default: {
                 throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
@@ -187,10 +188,10 @@ class BuiltInCommandHandler {
             interaction.options.getChannel('queue_name', false) === null
                 ? undefined
                 : hasValidQueueArgument(interaction, true);
-        const targetStudent =
-            interaction.options.getMember('user') === null
-                ? undefined
-                : (interaction.options.getMember('user') as GuildMember);
+        const targetStudent = (interaction.options.getMember('user') ??
+            undefined) as Optional<GuildMember>;
+        console.log(interaction.options.getUser('user', false));
+        console.log(interaction.options.getMember('user'));
         // if either target queue or target student is specified, use dequeueWithArgs
         // otherwise use dequeueGlobalFirst
         const dequeuedStudent =
