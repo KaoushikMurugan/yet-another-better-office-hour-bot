@@ -34,7 +34,10 @@ const ExpectedCalendarErrors = {
     refreshTimedout: new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'
     ),
-    failedRequest: new CalendarConnectionError('Calendar request failed.')
+    failedRequest: new CalendarConnectionError('Calendar request failed.'),
+    nonAdminMakingCalendarStrForOthers: new CommandParseError(
+        `Only Bot Admins have the permission to update calendar string for users that are not yourself. `
+    )
 } as const;
 
 export { ExpectedCalendarErrors, CalendarConnectionError };

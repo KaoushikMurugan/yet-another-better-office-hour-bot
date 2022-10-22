@@ -7,8 +7,6 @@ import {
     ChannelType,
     ChatInputCommandInteraction,
     Guild,
-    GuildMember,
-    GuildMemberRoleManager,
     ModalSubmitInteraction,
     Role,
     TextBasedChannel
@@ -29,6 +27,7 @@ import {
 } from '../../command-handling/common-validations';
 import {
     checkCalendarConnection,
+    composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL
 } from './shared-calendar-functions';
@@ -49,6 +48,7 @@ import {
 import { attendingServers } from '../../global-states';
 import environment from '../../environment/environment-manager';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
+import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -297,7 +297,7 @@ class CalendarInteractionExtension
     private async listUpComingHours(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const channel = await hasValidQueueArgument(interaction);
+        const channel = hasValidQueueArgument(interaction);
         const viewModels = await getUpComingTutoringEvents(
             this.guild.id,
             channel.queueName
@@ -305,26 +305,7 @@ class CalendarInteractionExtension
         const embed = SimpleEmbed(
             `Upcoming Hours for ${channel.queueName}`,
             EmbedColor.NoColor,
-            viewModels.length > 0
-                ? viewModels
-                      .map(
-                          viewModel =>
-                              `**${
-                                  viewModel.discordId !== undefined
-                                      ? `<@${viewModel.discordId}>`
-                                      : viewModel.displayName
-                              }**\t|\t` +
-                              `Start: <t:${viewModel.start
-                                  .getTime()
-                                  .toString()
-                                  .slice(0, -3)}:R>\t|\t` +
-                              `End: <t:${viewModel.end
-                                  .getTime()
-                                  .toString()
-                                  .slice(0, -3)}:R>`
-                      )
-                      .join('\n')
-                : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`
+            composeUpcomingSessionsEmbedBody(viewModels, channel)
         );
         await interaction
             .editReply(embed)
@@ -340,32 +321,26 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction,
         generateAll: boolean
     ): Promise<string> {
-        const [serverId] = await Promise.all([
+        const [serverId, member] = [
             this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'make_calendar_string', [
+            await isTriggeredByUserWithRoles(interaction, 'make_calendar_string', [
                 'Bot Admin',
                 'Staff'
             ])
-        ]);
-        if (interaction.member === null) {
-            throw new CommandParseError('Interaction triggered by a non-member.');
-        }
-
+        ];
         const calendarDisplayName = interaction.options.getString('calendar_name', true);
         const user = interaction.options.getUser('user', false);
         let validQueues: (CategoryChannel | Role)[] = [];
-        let memberToUpdate = interaction.member;
+        let memberToUpdate = member;
 
         if (user !== null) {
-            const memberRoles = memberToUpdate?.roles as GuildMemberRoleManager;
+            const memberRoles = memberToUpdate.roles;
             // if they are not admin or doesn't have the queue role, reject
             if (
                 !memberRoles.cache.some(role => role.name === 'Bot Admin') &&
                 user.id !== interaction.user.id
             ) {
-                throw new CommandParseError(
-                    `Only Bot Admins have the permission to update calendar string for users that are not yourself. `
-                );
+                throw ExpectedCalendarErrors.nonAdminMakingCalendarStrForOthers;
             } else {
                 // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -377,7 +352,7 @@ class CalendarInteractionExtension
                 // already checked in isServerInteraction
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
                 attendingServers.get(serverId)!,
-                memberToUpdate as GuildMember
+                memberToUpdate
             );
         } else {
             const commandArgs = [
@@ -395,9 +370,7 @@ class CalendarInteractionExtension
                         category?.type !== ChannelType.GuildCategory ||
                         category === null
                     ) {
-                        throw new CommandParseError(
-                            `\`${category?.name}\` is not a valid queue category.`
-                        );
+                        throw ExpectedParseErrors.invalidQueueCategory(category?.name);
                     }
                     const queueTextChannel = (
                         category as CategoryChannel
@@ -406,9 +379,7 @@ class CalendarInteractionExtension
                             child.name === 'queue' && child.type === ChannelType.GuildText
                     );
                     if (queueTextChannel === undefined) {
-                        throw new CommandParseError(
-                            `'${category.name}' does not have a \`#queue\` text channel.`
-                        );
+                        throw ExpectedParseErrors.noQueueTextChannel(category.name);
                     }
                     return category as CategoryChannel;
                 })

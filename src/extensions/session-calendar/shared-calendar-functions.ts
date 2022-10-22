@@ -5,6 +5,7 @@ import axios from 'axios';
 import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
+import { QueueChannel } from '../../attending-server/base-attending-server';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -171,6 +172,34 @@ function composeViewModel(
     };
 }
 
+function composeUpcomingSessionsEmbedBody(
+    viewModels: UpComingSessionViewModel[],
+    channel: QueueChannel
+): string {
+    return viewModels.length > 0
+        ? viewModels
+              .slice(0, 10) // take the first 10
+              .map(
+                  viewModel =>
+                      `**${
+                          viewModel.discordId !== undefined
+                              ? `<@${viewModel.discordId}>`
+                              : viewModel.displayName
+                      }**\t|\t` +
+                      `**${viewModel.eventSummary}**\n` +
+                      `Start: <t:${viewModel.start
+                          .getTime()
+                          .toString()
+                          .slice(0, -3)}:R>\t|\t` +
+                      `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+                      `${
+                          viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``
+                      }`
+              )
+              .join(`\n${'-'.repeat(30)}\n`)
+        : `There are no upcoming sessions for ${channel.queueName} in the next 7 days.`;
+}
+
 /**
  * Builds the calendar URL
  * @param args.calendar_id id to the PUBLIC calendar
@@ -212,5 +241,6 @@ export {
     buildCalendarURL,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    composeUpcomingSessionsEmbedBody
 };
