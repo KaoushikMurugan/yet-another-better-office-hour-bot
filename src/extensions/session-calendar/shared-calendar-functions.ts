@@ -4,6 +4,7 @@ import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
+import { ExpectedCalendarErrors } from './expected-calendar-errors';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -15,16 +16,6 @@ type UpComingSessionViewModel = {
     discordId?: string;
     location?: string;
 };
-
-class CalendarConnectionError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'CalendarConnectionError';
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
 
 /**
  * Fetches the calendar and build the embed view model
@@ -50,15 +41,10 @@ async function getUpComingTutoringEvents(
         timeout: 5000,
         method: 'GET'
     }).catch(() => {
-        throw new CalendarConnectionError(
-            'This calendar refresh timed out. Please try again later.'
-        );
+        throw ExpectedCalendarErrors.refreshTimedout;
     });
     if (response.status !== 200) {
-        throw new CalendarConnectionError(
-            'Failed to connect to Google Calendar. ' +
-                'The calendar might be deleted or set to private.'
-        );
+        throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
     const responseJSON = await response.data;
     const events = (responseJSON as calendar_v3.Schema$Events)?.items;
@@ -124,12 +110,10 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         timeout: 5000,
         method: 'GET'
     }).catch(() => {
-        throw new CalendarConnectionError(
-            'This calendar refresh timed out. Please try again later.'
-        );
+        throw ExpectedCalendarErrors.refreshTimedout;
     });
     if (response.status !== 200) {
-        throw new CalendarConnectionError('Calendar request failed.');
+        throw ExpectedCalendarErrors.failedRequest;
     }
     const responseJSON = await response.data;
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
@@ -216,7 +200,10 @@ function buildCalendarURL(args: {
  * Creates a url from calendar id that takes the user to the public embed
  */
 function restorePublicEmbedURL(calendarId: string): string {
-    return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
+    return (
+        `https://calendar.google.com/calendar/embed?src=${calendarId}` +
+        `&ctz=America%2FLos_Angeles&mode=WEEK`
+    );
 }
 
 export {
@@ -225,6 +212,5 @@ export {
     buildCalendarURL,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    CalendarConnectionError,
     restorePublicEmbedURL
 };

@@ -40,7 +40,7 @@ import {
     logSlashCommand
 } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
-import { CalendarConnectionError } from './shared-calendar-functions';
+
 import {
     ButtonCallback,
     CommandCallback,
@@ -48,6 +48,7 @@ import {
 } from '../../utils/type-aliases';
 import { attendingServers } from '../../global-states';
 import environment from '../../environment/environment-manager';
+import { ExpectedCalendarErrors } from './expected-calendar-errors';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -69,7 +70,7 @@ class CalendarInteractionExtension
         const calendarName = await checkCalendarConnection(
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
         ).catch(() => {
-            throw new CalendarConnectionError(`The default calendar id is not valid.`);
+            throw ExpectedCalendarErrors.badId.defaultId;
         });
         serverIdCalendarStateMap.set(
             guild.id,
@@ -221,11 +222,12 @@ class CalendarInteractionExtension
             | ModalSubmitInteraction
     ): string {
         const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
+        if (
+            !serverId ||
+            !attendingServers.has(serverId) ||
+            !serverIdCalendarStateMap.has(serverId)
+        ) {
+            throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
         } else {
             return serverId;
         }
@@ -241,7 +243,7 @@ class CalendarInteractionExtension
         const newCalendarId = interaction.options.getString('calendar_id', true);
         const [newCalendarName] = await Promise.all([
             checkCalendarConnection(newCalendarId).catch(() => {
-                throw new CalendarConnectionError('This new calendar ID is not valid.');
+                throw ExpectedCalendarErrors.badId.newId;
             }),
             isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
         ]);
@@ -479,4 +481,4 @@ class CalendarInteractionExtension
     }
 }
 
-export { CalendarInteractionExtension, CalendarConnectionError };
+export { CalendarInteractionExtension };
