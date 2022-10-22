@@ -2,10 +2,11 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { CommandParseError } from '../utils/error-types';
 import { ModalSubmitCallback } from '../utils/type-aliases';
 import { attendingServers } from '../global-states';
 import { logModalSubmit } from '../utils/util-functions';
+import { SuccessMessages } from './builtin-success-messages';
+import { ExpectedParseErrors } from './expected-interaction-errors';
 
 /**
  * Built in handler for modal submit
@@ -68,7 +69,7 @@ class BuiltInModalHandler {
             .get(serverId)
             ?.setAfterSessionMessage(newAfterSessionMessage);
         const message = interaction.fields.getTextInputValue('after_session_msg');
-        return `After session message set to:\n${message}`;
+        return SuccessMessages.updatedAfterSessionMessage(message);
     }
 
     private async setQueueAutoClear(
@@ -83,14 +84,10 @@ class BuiltInModalHandler {
             await attendingServers
                 .get(serverId)
                 ?.setQueueAutoClear(hours, minutes, false);
-            return `Successfully disabled queue auto clear.`;
+            return SuccessMessages.queueAutoClear.disabled;
         }
         await attendingServers.get(serverId)?.setQueueAutoClear(hours, minutes, true);
-        return (
-            `Successfully enabled queue auto clear. ` +
-            `Queues will be automatically cleared in ` +
-            `${hours} hours and ${minutes} minutes after they are closed.`
-        );
+        return SuccessMessages.queueAutoClear.enabled(hours, minutes);
     }
 
     /**
@@ -102,10 +99,7 @@ class BuiltInModalHandler {
     private isServerInteraction(interaction: ModalSubmitInteraction): string {
         const serverId = interaction.guild?.id;
         if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
+            throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
         } else {
             return serverId;
         }

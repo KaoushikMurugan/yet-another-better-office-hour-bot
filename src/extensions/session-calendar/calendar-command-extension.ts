@@ -23,7 +23,8 @@ import { ExtensionSetupError } from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles
+    isTriggeredByUserWithRoles,
+    isTriggeredByUserWithRolesSync
 } from '../../command-handling/common-validations';
 import {
     checkCalendarConnection,
@@ -39,7 +40,6 @@ import {
     logSlashCommand
 } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
-
 import {
     ButtonCallback,
     CommandCallback,
@@ -49,6 +49,7 @@ import { attendingServers } from '../../global-states';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
 import environment from '../../environment/environment-manager';
+import { CalendarSuccessMessages } from './calendar-success-messages';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -242,21 +243,8 @@ class CalendarInteractionExtension
         await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
         await attendingServers
             .get(this.guild.id)
-            ?.sendLogMessage(
-                SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
-            );
-        return (
-            `Successfully changed to new calendar ` +
-            `${
-                newCalendarName.length > 0
-                    ? ` '${newCalendarName}'. `
-                    : ", but it doesn't have a name. "
-            }` +
-            `The calendar embeds will refresh soon. ` +
-            `Don't forget sure to use \`/set_public_embed_url\` ` +
-            `if you are using a 3rd party calendar public embed. ` +
-            `This ID has also been backed up to firebase.`
-        );
+            ?.sendLogMessage(SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase));
+        return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
     }
 
     /**
@@ -273,14 +261,10 @@ class CalendarInteractionExtension
             attendingServers
                 .get(this.guild.id)
                 ?.sendLogMessage(
-                    SimpleLogEmbed(`Updated calendar ID and stored in firebase`)
+                    SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
                 )
         ]);
-        return (
-            `Successfully unset the calendar. ` +
-            `The calendar embeds will refresh soon. ` +
-            `Or you can manually refresh it using the refresh button.`
-        );
+        return CalendarSuccessMessages.unsetCalendar;
     }
 
     /**
@@ -299,9 +283,7 @@ class CalendarInteractionExtension
             EmbedColor.NoColor,
             composeUpcomingSessionsEmbedBody(viewModels, channel)
         );
-        await interaction
-            .editReply(embed)
-            .catch(() => console.error(`Edit reply failed with ${interaction.toJSON()}`));
+        await interaction.editReply(embed);
         return undefined;
     }
 
@@ -315,7 +297,7 @@ class CalendarInteractionExtension
     ): Promise<string> {
         const [serverId, member] = [
             this.isServerInteraction(interaction),
-            await isTriggeredByUserWithRoles(interaction, 'make_calendar_string', [
+            isTriggeredByUserWithRolesSync(interaction, 'make_calendar_string', [
                 'Bot Admin',
                 'Staff'
             ])
@@ -372,7 +354,6 @@ class CalendarInteractionExtension
                 return category as CategoryChannel;
             });
         }
-        console.log('start id update');
         void serverIdCalendarStateMap
             .get(this.guild.id)
             ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
@@ -383,18 +364,12 @@ class CalendarInteractionExtension
                     )} triggered by ${memberToUpdate.displayName}`
                 )
             );
-        console.log('passed id update');
         await attendingServers
             .get(this.guild.id)
-            ?.sendLogMessage(
-                SimpleLogEmbed(`Updated calendar Name-ID Map and stored in firebase`)
-            );
-        return (
-            `Copy and paste the following into the calendar **description**:\n\n` +
-            `YABOB_START ` +
-            `${calendarDisplayName} - ` +
-            `${validQueues.map(queue => queue.name).join(', ')} ` +
-            `YABOB_END\n`
+            ?.sendLogMessage(SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase));
+        return CalendarSuccessMessages.completedCalendarString(
+            calendarDisplayName,
+            validQueues.map(queue => queue.name)
         );
     }
 
@@ -412,17 +387,11 @@ class CalendarInteractionExtension
             }
             // now rawUrl is valid
             await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
-            return (
-                `Successfully changed the public embed url. ` +
-                `The links in the titles of calendar queue embed will refresh soon.`
-            );
+            return CalendarSuccessMessages.publicEmbedUrl.updated;
         } else {
             const state = serverIdCalendarStateMap.get(this.guild.id);
             await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
-            return (
-                `Successfully changed to default embed url. ` +
-                `The links in the titles of calendar queue embed will refresh soon.`
-            );
+            return CalendarSuccessMessages.publicEmbedUrl.backToDefault;
         }
     }
 
@@ -443,7 +412,7 @@ class CalendarInteractionExtension
                 )
             );
         await queueChannel?.onCalendarExtensionStateChange();
-        return `Successfully refreshed upcoming hours for ${queueName}`;
+        return CalendarSuccessMessages.refreshSuccess(queueName);
     }
 }
 

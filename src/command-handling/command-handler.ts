@@ -32,6 +32,7 @@ import { studentCommandHelpMessages } from '../../help-channel-messages/StudentC
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
 import { attendingServers } from '../global-states';
 import { ExpectedParseErrors } from './expected-interaction-errors';
+import { SuccessMessages } from './builtin-success-messages';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -177,7 +178,7 @@ class BuiltInCommandHandler {
             isFromGuildMember(interaction)
         ];
         await attendingServers.get(serverId)?.enqueueStudent(member, queueChannel);
-        return `Successfully joined \`${queueChannel.queueName}\`.`;
+        return SuccessMessages.joinedQueue(queueChannel.queueName);
     }
 
     private async next(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -201,7 +202,7 @@ class BuiltInCommandHandler {
                       .get(serverId)
                       ?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
                 : await attendingServers.get(serverId)?.dequeueGlobalFirst(helperMember);
-        return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
+        return SuccessMessages.inviteSent(dequeuedStudent?.member.displayName);
     }
 
     private async start(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -211,7 +212,7 @@ class BuiltInCommandHandler {
         ];
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
         await attendingServers.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
-        return `You have started helping! Have fun!`;
+        return SuccessMessages.startedHelping;
     }
 
     private async stop(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -219,18 +220,12 @@ class BuiltInCommandHandler {
             this.isServerInteraction(interaction),
             isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
         ];
+        // already checked in isServerInteraction
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const helpTimeEntry = await attendingServers
-            .get(serverId)
-            ?.closeAllClosableQueues(member);
-        return (
-            `You helped for ` +
-            convertMsToTime(
-                // error will be thrown closeAllClosableQueues if that goes wrong, so we can assert non-null
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                helpTimeEntry!.helpEnd.getTime() - helpTimeEntry!.helpStart.getTime()
-            ) +
-            `. See you later!`
-        );
+            .get(serverId)!
+            .closeAllClosableQueues(member);
+        return SuccessMessages.finishedHelping(helpTimeEntry);
     }
 
     private async leave(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -240,7 +235,7 @@ class BuiltInCommandHandler {
             hasValidQueueArgument(interaction)
         ];
         await attendingServers.get(serverId)?.removeStudentFromQueue(member, queue);
-        return `You have successfully left from queue ${queue.queueName}.`;
+        return SuccessMessages.leftQueue(queue.queueName);
     }
 
     private async clear(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -260,7 +255,7 @@ class BuiltInCommandHandler {
             throw ExpectedParseErrors.noPermission.clear(queue.queueName);
         }
         await attendingServers.get(serverId)?.clearQueue(queue);
-        return `Everyone in  queue ${queue.queueName} was removed.`;
+        return SuccessMessages.clearedQueue(queue.queueName);
     }
 
     private async clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -274,7 +269,7 @@ class BuiltInCommandHandler {
             throw ExpectedParseErrors.serverHasNoQueue;
         }
         await server?.clearAllQueues();
-        return `All queues on ${server?.guild.name} was cleard.`;
+        return SuccessMessages.clearedAllQueues(server?.guild.name);
     }
 
     private async listHelpers(
@@ -355,7 +350,7 @@ class BuiltInCommandHandler {
                 .get(serverId)
                 ?.announceToStudentsInQueue(member, announcement);
         }
-        return `Your announcement: ${announcement} has been sent!`;
+        return SuccessMessages.announced(announcement);
     }
 
     private async cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
@@ -448,7 +443,7 @@ class BuiltInCommandHandler {
             throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
         }
         await attendingServers.get(serverId)?.setLoggingChannel(loggingChannel);
-        return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
+        return SuccessMessages.updatedLoggingChannel(loggingChannel.name);
     }
 
     private async showQueueAutoClearModal(
@@ -470,7 +465,7 @@ class BuiltInCommandHandler {
             await isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
         ];
         await attendingServers.get(serverId)?.setLoggingChannel(undefined);
-        return `Successfully stopped logging.`;
+        return SuccessMessages.stoppedLogging;
     }
 
     /**

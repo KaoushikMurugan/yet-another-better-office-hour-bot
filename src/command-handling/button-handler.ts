@@ -12,6 +12,7 @@ import { ButtonCallback } from '../utils/type-aliases';
 import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
 import { attendingServers } from '../global-states';
 import { ExpectedParseErrors } from './expected-interaction-errors';
+import { SuccessMessages } from './builtin-success-messages';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -98,7 +99,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
         );
         await server?.enqueueStudent(member, queueChannel);
-        return `Successfully joined the queue of \`${queueName}\`.`;
+        return SuccessMessages.joinedQueue(queueName);
     }
 
     private async leave(
@@ -115,7 +116,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
         );
         await server?.removeStudentFromQueue(member, queueChannel);
-        return `Successfully left the queue of \`${queueName}\`.`;
+        return SuccessMessages.leftQueue(queueName);
     }
 
     private async joinNotifGroup(
@@ -132,7 +133,7 @@ class BuiltInButtonHandler {
             ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
         );
         await server?.addStudentToNotifGroup(member, queueChannel);
-        return `Successfully joined the notification group of \`${queueName}\`.`;
+        return SuccessMessages.joinedNotif(queueName);
     }
 
     private async leaveNotifGroup(
@@ -153,7 +154,7 @@ class BuiltInButtonHandler {
             )
         );
         await server?.removeStudentFromNotifGroup(member, queueChannel);
-        return `Successfully left the notification group of \`${queueName}\`.`;
+        return SuccessMessages.removedNotif(queueName);
     }
 
     /**
