@@ -7,7 +7,8 @@ import {
     TextChannel,
     ButtonInteraction,
     ChannelType,
-    CategoryChannel
+    CategoryChannel,
+    ModalSubmitInteraction
 } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server';
 import { CommandParseError } from '../utils/error-types';
@@ -23,7 +24,7 @@ import { ExpectedParseErrors } from './expected-interaction-errors';
  * - Otherwise prefer {@link isTriggeredByUserWithRolesSync}
  */
 async function isTriggeredByUserWithRoles(
-    interaction: ChatInputCommandInteraction | ButtonInteraction,
+    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
     commandName: string,
     requiredRoles: string[]
 ): Promise<GuildMember> {
@@ -47,7 +48,7 @@ async function isTriggeredByUserWithRoles(
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByUserWithRolesSync(
-    interaction: ChatInputCommandInteraction | ButtonInteraction,
+    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
     commandName: string,
     requiredRoles: string[]
 ): GuildMember {
@@ -82,6 +83,7 @@ function hasValidQueueArgument(
     if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
         throw ExpectedParseErrors.invalidQueueCategory(parentCategory?.name);
     }
+    // already checked for type, safe to cast
     const queueTextChannel = (parentCategory as CategoryChannel).children.cache.find(
         child => child.name === 'queue' && child.type === ChannelType.GuildText
     );
