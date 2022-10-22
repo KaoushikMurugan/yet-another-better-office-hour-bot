@@ -190,8 +190,6 @@ class BuiltInCommandHandler {
                 : hasValidQueueArgument(interaction, true);
         const targetStudent = (interaction.options.getMember('user') ??
             undefined) as Optional<GuildMember>;
-        console.log(interaction.options.getUser('user', false));
-        console.log(interaction.options.getMember('user'));
         // if either target queue or target student is specified, use dequeueWithArgs
         // otherwise use dequeueGlobalFirst
         const dequeuedStudent =
