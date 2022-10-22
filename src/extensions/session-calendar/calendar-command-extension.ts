@@ -31,7 +31,7 @@ import {
     getUpComingTutoringEvents,
     restorePublicEmbedURL
 } from './shared-calendar-functions';
-import { blue, yellow } from '../../utils/command-line-colors';
+import { blue, red, yellow } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
 import {
     getQueueRoles,
@@ -140,9 +140,6 @@ class CalendarInteractionExtension
         return this.modalMethodMap.has(interaction.customId);
     }
 
-    /**
-     * Button handler. Almost the same as the built in command-handler.ts
-     */
     override async processCommand(
         interaction: ChatInputCommandInteraction
     ): Promise<void> {
@@ -163,7 +160,6 @@ class CalendarInteractionExtension
         const commandMethod = this.commandMethodMap.get(interaction.commandName);
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
-            // if the method didn't directly reply, the center handler replies
             .then(async successMsg => {
                 if (successMsg) {
                     await interaction.editReply(
@@ -178,9 +174,6 @@ class CalendarInteractionExtension
             );
     }
 
-    /**
-     * Button handler. Almost the same as the built in button-handler.ts
-     */
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
         const buttonMethod = this.buttonMethodMap.get(buttonName);
@@ -193,7 +186,6 @@ class CalendarInteractionExtension
         });
         logButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
-            // if the method didn't directly reply, the center handler replies
             .then(async successMsg => {
                 if (successMsg) {
                     await interaction.editReply(
@@ -380,9 +372,18 @@ class CalendarInteractionExtension
                 return category as CategoryChannel;
             });
         }
-        await serverIdCalendarStateMap
+        console.log('start id update');
+        void serverIdCalendarStateMap
             .get(this.guild.id)
-            ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id);
+            ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
+            .catch(() =>
+                console.error(
+                    `Calendar refresh timed out from ${red(
+                        'updateNameDiscordIdMap'
+                    )} triggered by ${memberToUpdate.displayName}`
+                )
+            );
+        console.log('passed id update');
         await attendingServers
             .get(this.guild.id)
             ?.sendLogMessage(
