@@ -60,7 +60,7 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('join ' + queue.queueName)
+                    .setCustomId(`join ${queue.queueName}`)
                     .setEmoji('✅')
                     .setDisabled(!queue.isOpen)
                     .setLabel('Join')
@@ -68,7 +68,7 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('leave ' + queue.queueName)
+                    .setCustomId(`leave ${queue.queueName}`)
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -76,14 +76,14 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('notif ' + queue.queueName)
+                    .setCustomId(`notif ${queue.queueName}`)
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('removeN ' + queue.queueName)
+                    .setCustomId(`removeN ${queue.queueName}`)
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
@@ -93,7 +93,22 @@ class QueueDisplayV2 {
             const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
-                .setDescription(queue.helperIDs.join('\n'))
+                .setDescription(
+                    queue.helperIDs
+                        .map(id => {
+                            const voiceChannel =
+                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                                    id
+                                )?.channel;
+                            const vcStatus = voiceChannel
+                                ? voiceChannel.members.size > 1
+                                    ? `Busy in [${voiceChannel.name}]`
+                                    : `Idling in [${voiceChannel.name}]`
+                                : 'Not in voice channel.';
+                            return `<@${id}>\t${vcStatus}`;
+                        })
+                        .join('\n')
+                )
                 .setColor(EmbedColor.Aqua);
             embedList.push(helperList);
         }

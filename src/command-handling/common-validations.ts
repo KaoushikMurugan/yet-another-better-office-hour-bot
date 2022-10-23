@@ -142,7 +142,7 @@ async function isTriggeredByUserWithValidEmail(
 
 /**
  * Checks if the queue channel has a parent folder
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  */
 function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,

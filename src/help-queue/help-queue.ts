@@ -437,7 +437,7 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            helperIDs: [...this._activeHelperIds].map(helperId => `<@${helperId}>`),
+            helperIDs: [...this._activeHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),

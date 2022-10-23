@@ -216,19 +216,27 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        if (!memberIsStudent || newVoiceState.channel === null) {
-            return;
+        const memberIsHelper = this._activeHelpers.has(member.id);
+        if (memberIsStudent) {
+            await Promise.all([
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentJoinVC(
+                        this,
+                        member,
+                        // already checked
+                        newVoiceState.channel as VoiceChannel
+                    )
+                ),
+                this.queues.map(queue => queue.triggerRender())
+            ]);
         }
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onStudentJoinVC(
-                    this,
-                    member,
-                    // already checked
-                    newVoiceState.channel as VoiceChannel
+        if (memberIsHelper) {
+            await Promise.all(
+                this.queues.map(
+                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
                 )
-            )
-        );
+            );
+        }
     }
 
     async onMemberLeaveVC(
@@ -240,19 +248,28 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        if (!memberIsStudent) {
-            return;
+        const memberIsHelper = this._activeHelpers.has(member.id);
+        if (memberIsStudent) {
+            await Promise.all<unknown>([
+                ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                    overwrite =>
+                        overwrite.type === OverwriteType.Member && overwrite.delete()
+                ),
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentLeaveVC(this, member)
+                ),
+                this.afterSessionMessage !== '' &&
+                    member.send(SimpleEmbed(this.afterSessionMessage)),
+                ...this.queues.map(queue => queue.triggerRender())
+            ]);
         }
-        await Promise.all<unknown>([
-            ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onStudentLeaveVC(this, member)
-            ),
-            this.afterSessionMessage !== '' &&
-                member.send(SimpleEmbed(this.afterSessionMessage))
-        ]);
+        if (memberIsHelper) {
+            await Promise.all(
+                this.queues.map(
+                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                )
+            );
+        }
     }
 
     /**
