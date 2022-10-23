@@ -1,3 +1,7 @@
+/**
+ * @packageDocumentation
+ * @module AttendingServerV2
+ */
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';

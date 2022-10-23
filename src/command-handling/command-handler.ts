@@ -1,3 +1,4 @@
+/** @module BuiltInHandlers */
 import {
     ChannelType,
     ChatInputCommandInteraction,
@@ -32,15 +33,13 @@ import { attendingServers } from '../global-states';
 /**
  * Responsible for preprocessing commands and dispatching them to servers
  * ----
- * - Each YABOB instance should only have 1 central command dispatcher
+ * Each YABOB instance should only have 1 BuiltInCommandHandler
  * All the functions below follows this convention:
- *      private async <corresponding command name>(interaction): Promise<string>
+ * - private async <corresponding command name>(interaction): Promise<string>
+ * @category Handler Classes
  * @param interaction the raw interaction
  * @throws CommandParseError: if command doesn't satify the checks in Promise.all
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
- * @returns
- * - string: the success message
- * - undefined: if the function already replied
  */
 class BuiltInCommandHandler {
     // The map of available commands
@@ -96,9 +95,6 @@ class BuiltInCommandHandler {
     /**
      * Main processor for command interactions
      * @param interaction the raw interaction from discord js
-     * @throws UserViewableError: when the command exists but failed
-     * @throws CommandNotImplementedError: if the command is not implemented
-     * - If thrown but the command is implemented, make sure commandMethodMap has it
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const serverId = this.isServerInteraction(interaction);

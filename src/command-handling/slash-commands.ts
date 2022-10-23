@@ -1,11 +1,12 @@
-/*************************************************************************
+/** @module BuiltInHandlers */
+/**
  * This file defines the structure of the slash commands
- * .setName is the name of the command as it appears on Discord
- * options are the arguments of the command
- * .setRequired defines where the argument is required or not
+ * - setName is the name of the command as it appears on Discord
+ * - options are the arguments of the command
+ * - setRequired defines where the argument is required or not
  * Adopted from original BOB v3 by Noah & Kaoushik
- *************************************************************************/
-
+ * @packageDocumentation
+ */
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
@@ -215,7 +216,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-// Get the raw data that can be sent to Discord
+/** @internal Get the raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
     enqueueCommand.toJSON(),
@@ -265,6 +266,7 @@ async function postSlashCommands(
     console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
 }
 
+/** Type alias for interaction extensions */
 type CommandData = typeof commandData;
 
 export { postSlashCommands, CommandData };
