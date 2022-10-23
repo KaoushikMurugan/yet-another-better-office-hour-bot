@@ -8,7 +8,7 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { ButtonMethodMap } from '../utils/type-aliases';
+import { ButtonCallback } from '../utils/type-aliases';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
@@ -24,27 +24,22 @@ import { SuccessMessages } from './builtin-success-messages';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
-    private methodMap: ButtonMethodMap = new Map([
-        ['join', (queueName, interaction) => this.join(queueName, interaction)],
-        ['leave', (queueName, interaction) => this.leave(queueName, interaction)],
-        [
-            'notif',
-            (queueName, interaction) => this.joinNotifGroup(queueName, interaction)
-        ],
-        [
-            'removeN',
-            (queueName, interaction) => this.leaveNotifGroup(queueName, interaction)
-        ]
-    ]);
+
+    private methodMap: { [buttonName: string]: ButtonCallback } = {
+        join: this.join,
+        leave: this.leave,
+        notif: this.joinNotifGroup,
+        removeN: this.leaveNotifGroup
+    } as const;
 
     canHandle(interaction: ButtonInteraction): boolean {
         const [buttonName] = this.splitButtonQueueName(interaction);
-        return this.methodMap.has(buttonName);
+        return buttonName in this.methodMap;
     }
 
     async process(interaction: ButtonInteraction): Promise<void> {
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
-        const buttonMethod = this.methodMap.get(buttonName);
+        const buttonMethod = this.methodMap[buttonName];
         await interaction.reply({
             ...SimpleEmbed(
                 `Processing button \`${buttonName}\` in \`${queueName}\` ...`,

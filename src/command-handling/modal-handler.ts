@@ -2,7 +2,7 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { ModalMethodMap } from '../utils/type-aliases';
+import { ModalSubmitCallback } from '../utils/type-aliases';
 import { logModalSubmit } from '../utils/util-functions';
 import { SuccessMessages } from './builtin-success-messages';
 import { isServerInteraction } from './common-validations';
@@ -12,20 +12,17 @@ import { isServerInteraction } from './common-validations';
  * @category Handler Class
  */
 class BuiltInModalHandler {
-    private methodMap: ModalMethodMap = new Map([
-        [
-            'after_session_message_modal',
-            interaction => this.setAfterSessionMessage(interaction)
-        ],
-        ['queue_auto_clear_modal', interaction => this.setQueueAutoClear(interaction)]
-    ]);
+    private methodMap: { [modalName: string]: ModalSubmitCallback } = {
+        after_session_message_modal: this.setAfterSessionMessage,
+        queue_auto_clear_modal: this.setQueueAutoClear
+    } as const;
 
     canHandle(interaction: ModalSubmitInteraction): boolean {
-        return this.methodMap.has(interaction.customId);
+        return interaction.customId in this.methodMap;
     }
 
     async process(interaction: ModalSubmitInteraction): Promise<void> {
-        const modalMethod = this.methodMap.get(interaction.customId);
+        const modalMethod = this.methodMap[interaction.customId];
         logModalSubmit(interaction);
         // if process is called then modalMethod is definitely not null
         // this is checked in app.ts with `modalHandler.canHandle`

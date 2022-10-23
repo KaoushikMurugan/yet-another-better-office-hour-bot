@@ -24,7 +24,7 @@ import {
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, CommandMethodMap, Optional } from '../utils/type-aliases';
+import { CommandCallback, Optional } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
@@ -51,29 +51,26 @@ class BuiltInCommandHandler {
      * - undefined return values is when the method wants to reply to the interaction directly
      * - If a call returns undefined, processCommand won't edit the reply
      */
-    private methodMap: CommandMethodMap = new Map<string, CommandCallback>([
-        ['announce', interaction => this.announce(interaction)],
-        ['cleanup_queue', interaction => this.cleanup(interaction)],
-        ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_channels', interaction => this.cleanupHelpChannel(interaction)],
-        ['clear', interaction => this.clear(interaction)],
-        ['clear_all', interaction => this.clearAll(interaction)],
-        ['enqueue', interaction => this.enqueue(interaction)],
-        ['leave', interaction => this.leave(interaction)],
-        ['list_helpers', interaction => this.listHelpers(interaction)],
-        ['next', interaction => this.next(interaction)],
-        ['queue', interaction => this.queue(interaction)],
-        ['start', interaction => this.start(interaction)],
-        ['stop', interaction => this.stop(interaction)],
-        ['help', interaction => this.help(interaction)],
-        ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
-        ['stop_logging', interaction => this.stopLogging(interaction)],
-        [
-            'set_after_session_msg',
-            interaction => this.showAfterSessionMessageModal(interaction)
-        ],
-        ['set_queue_auto_clear', interaction => this.showQueueAutoClearModal(interaction)]
-    ]);
+    private methodMap2: { [commandName: string]: CommandCallback } = {
+        announce: this.announce,
+        cleanup_queue: this.cleanup,
+        cleanup_all: this.cleanupAllQueues,
+        cleanup_help_channels: this.cleanupHelpChannel,
+        clear: this.clear,
+        clear_all: this.clearAll,
+        enqueue: this.enqueue,
+        leave: this.leave,
+        list_helpers: this.listHelpers,
+        next: this.next,
+        queue: this.queue,
+        start: this.start,
+        stop: this.stop,
+        help: this.help,
+        set_logging_channel: this.setLoggingChannel,
+        stop_logging: this.stopLogging,
+        set_after_session_msg: this.showAfterSessionMessageModal,
+        set_queue_auto_clear: this.showQueueAutoClearModal
+    } as const;
 
     /**
      * Commands in this set only shows a modal on ChatInputCommandInteraction
@@ -86,7 +83,7 @@ class BuiltInCommandHandler {
     ] as const);
 
     canHandle(interaction: ChatInputCommandInteraction): boolean {
-        return this.methodMap.has(interaction.commandName);
+        return interaction.commandName in this.methodMap2;
     }
 
     /**
@@ -95,7 +92,7 @@ class BuiltInCommandHandler {
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const server = isServerInteraction(interaction);
-        const commandMethod = this.methodMap.get(interaction.commandName);
+        const commandMethod = this.methodMap2[interaction.commandName];
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only
