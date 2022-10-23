@@ -218,6 +218,15 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._activeHelpers.has(member.id);
         if (memberIsStudent) {
+            const possibleHelpers = newVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            );
+            const queuesToRerender = this.queues.filter(queue =>
+                possibleHelpers.some(possibleHelper =>
+                    queue.activeHelperIds.has(possibleHelper.id)
+                )
+            );
+            console.log(`rendered ${queuesToRerender.length} queues`);
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
                     extension.onStudentJoinVC(
@@ -227,7 +236,7 @@ class AttendingServerV2 {
                         newVoiceState.channel as VoiceChannel
                     )
                 ),
-                this.queues.map(queue => queue.triggerRender())
+                queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
         if (memberIsHelper) {
@@ -250,6 +259,15 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._activeHelpers.has(member.id);
         if (memberIsStudent) {
+            const possibleHelpers = oldVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            );
+            const queuesToRerender = this.queues.filter(queue =>
+                possibleHelpers.some(possibleHelper =>
+                    queue.activeHelperIds.has(possibleHelper.id)
+                )
+            );
+            console.log(`rendered ${queuesToRerender.length} queues`);
             await Promise.all<unknown>([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
                     overwrite =>
@@ -260,7 +278,7 @@ class AttendingServerV2 {
                 ),
                 this.afterSessionMessage !== '' &&
                     member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...this.queues.map(queue => queue.triggerRender())
+                ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
         if (memberIsHelper) {
