@@ -51,7 +51,7 @@ class BuiltInCommandHandler {
      * - undefined return values is when the method wants to reply to the interaction directly
      * - If a call returns undefined, processCommand won't edit the reply
      */
-    private methodMap2: { [commandName: string]: CommandCallback } = {
+    private methodMap: { [commandName: string]: CommandCallback } = {
         announce: this.announce,
         cleanup_queue: this.cleanup,
         cleanup_all: this.cleanupAllQueues,
@@ -83,7 +83,7 @@ class BuiltInCommandHandler {
     ] as const);
 
     canHandle(interaction: ChatInputCommandInteraction): boolean {
-        return interaction.commandName in this.methodMap2;
+        return interaction.commandName in this.methodMap;
     }
 
     /**
@@ -92,7 +92,7 @@ class BuiltInCommandHandler {
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
         const server = isServerInteraction(interaction);
-        const commandMethod = this.methodMap2[interaction.commandName];
+        const commandMethod = this.methodMap[interaction.commandName];
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only

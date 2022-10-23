@@ -2,8 +2,8 @@ import { Helper } from '../models/member-states';
 import { convertMsToTime } from '../utils/util-functions';
 
 export const SuccessMessages = {
-    createdQueue: (queueName:string) => `Successfully created \`${queueName}\`.`,
-    deletedQueue: (queueName:string) => `Successfully deleted \`${queueName}\`.`,
+    createdQueue: (queueName: string) => `Successfully created \`${queueName}\`.`,
+    deletedQueue: (queueName: string) => `Successfully deleted \`${queueName}\`.`,
     joinedQueue: (queueName: string) =>
         `Successfully joined the queue of \`${queueName}\`.`,
     leftQueue: (queueName: string) => `Successfully left the queue of \`${queueName}\`.`,

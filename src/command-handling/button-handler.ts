@@ -24,7 +24,6 @@ import { SuccessMessages } from './builtin-success-messages';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
-
     private methodMap: { [buttonName: string]: ButtonCallback } = {
         join: this.join,
         leave: this.leave,

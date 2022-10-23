@@ -26,10 +26,7 @@ const ExpectedQueueErrors = {
             new QueueError("You don't have permission to help this queue", queueName)
     },
     studentNotInQueue: (studentName: string, queueName: string) =>
-        new QueueError(
-            `${studentName} is not in the queue`,
-            queueName
-        ),
+        new QueueError(`${studentName} is not in the queue`, queueName),
     alreadyInNotifGroup: (queueName: string) =>
         new QueueError('You are already in the notification squad.', queueName),
     notInNotifGroup: (queueName: string) =>
