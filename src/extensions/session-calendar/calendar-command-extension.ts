@@ -42,10 +42,9 @@ import {
 } from '../../utils/util-functions';
 import { appendCalendarHelpMessages } from './CalendarCommands';
 import {
-    ButtonMethodMap,
+    ButtonCallback,
     CommandCallback,
-    CommandMethodMap,
-    ModalMethodMap
+    ModalSubmitCallback
 } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
@@ -92,30 +91,22 @@ class CalendarInteractionExtension
 
     // Undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
-    private commandMethodMap: CommandMethodMap = new Map<string, CommandCallback>([
-        ['set_calendar', interaction => this.updateCalendarId(interaction)],
-        ['unset_calendar', interaction => this.unsetCalendarId(interaction)],
-        ['when_next', interaction => this.listUpComingHours(interaction)],
-        [
-            'make_calendar_string',
-            interaction => this.makeParsableCalendarTitle(interaction, false)
-        ],
-        [
-            'make_calendar_string_all',
-            interaction => this.makeParsableCalendarTitle(interaction, true)
-        ],
-        ['set_public_embd_url', interaction => this.setPublicEmbedUrl(interaction)]
-    ]);
+    private commandMethodMap: { [commandName: string]: CommandCallback } = {
+        set_calendar: this.updateCalendarId,
+        unset_calendar: this.unsetCalendarId,
+        when_next: this.listUpComingHours,
+        make_calendar_string: interaction =>
+            this.makeParsableCalendarTitle(interaction, false),
+        make_calendar_string_all: interaction =>
+            this.makeParsableCalendarTitle(interaction, true),
+        set_public_embd_url: this.setPublicEmbedUrl
+    } as const;
 
-    private buttonMethodMap: ButtonMethodMap = new Map([
-        [
-            'refresh',
-            (queueName, interaction) =>
-                this.requestCalendarRefresh(queueName, interaction)
-        ]
-    ]);
+    private buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
+        refresh: this.requestCalendarRefresh
+    } as const;
 
-    private modalMethodMap: ModalMethodMap = new Map([]);
+    private modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
 
     override get slashCommandData(): CommandData {
         return calendarCommands;
@@ -123,15 +114,15 @@ class CalendarInteractionExtension
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
         const [buttonName] = this.splitButtonQueueName(interaction);
-        return this.buttonMethodMap.has(buttonName);
+        return buttonName in this.buttonMethodMap;
     }
 
     override canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
-        return this.commandMethodMap.has(interaction.commandName);
+        return interaction.commandName in this.commandMethodMap;
     }
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        return this.modalMethodMap.has(interaction.customId);
+        return interaction.customId in this.modalMethodMap;
     }
 
     override async processCommand(
@@ -149,7 +140,7 @@ class CalendarInteractionExtension
             }),
             server.sendLogMessage(SlashCommandLogEmbed(interaction))
         ]);
-        const commandMethod = this.commandMethodMap.get(interaction.commandName);
+        const commandMethod = this.commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
             .then(async successMsg => {
@@ -168,7 +159,7 @@ class CalendarInteractionExtension
 
     override async processButton(interaction: ButtonInteraction): Promise<void> {
         const [buttonName, queueName] = this.splitButtonQueueName(interaction);
-        const buttonMethod = this.buttonMethodMap.get(buttonName);
+        const buttonMethod = this.buttonMethodMap[buttonName];
         await interaction.reply({
             ...SimpleEmbed(
                 `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
