@@ -226,7 +226,6 @@ class AttendingServerV2 {
                     queue.activeHelperIds.has(possibleHelper.id)
                 )
             );
-            console.log(`rendered ${queuesToRerender.length} queues`);
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
                     extension.onStudentJoinVC(
@@ -267,7 +266,6 @@ class AttendingServerV2 {
                     queue.activeHelperIds.has(possibleHelper.id)
                 )
             );
-            console.log(`rendered ${queuesToRerender.length} queues`);
             await Promise.all<unknown>([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
                     overwrite =>
