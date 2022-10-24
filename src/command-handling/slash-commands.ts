@@ -232,7 +232,7 @@ const commandData = [
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
     setQueueAutoClear.toJSON(),
-    activateSeriousModeCommand.toJSON(),
+    activateSeriousModeCommand.toJSON()
 ];
 
 async function postSlashCommands(

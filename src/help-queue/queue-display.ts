@@ -184,11 +184,11 @@ class QueueDisplayV2 {
                 .setStyle('unicode-mix')
                 .addRowMatrix([
                     ...queue.studentDisplayNames.map((name, idx) => [
-                        queue.seriousModeEnabled 
-                            ? idx + 1 
-                            : idx === 0 
-                                ? `(☞°∀°)☞ 1`
-                                : `${idx + 1}`,
+                        queue.seriousModeEnabled
+                            ? idx + 1
+                            : idx === 0
+                            ? `(☞°∀°)☞ 1`
+                            : `${idx + 1}`,
                         name
                     ])
                 ]);

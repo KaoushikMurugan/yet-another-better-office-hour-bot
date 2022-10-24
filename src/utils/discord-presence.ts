@@ -31,8 +31,7 @@ const presenceList: BotPresence[] = [
     { name: 'Midterm Review', type: ActivityType.Watching },
     { name: 'Finals Review', type: ActivityType.Watching },
     { name: 'Hello World Tutorial', type: ActivityType.Watching },
-    { name: 'Coding Tutorials', type: ActivityType.Watching },
-    
+    { name: 'Coding Tutorials', type: ActivityType.Watching }
 ];
 
 let previousPresence: BotPresence | undefined = undefined;
