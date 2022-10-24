@@ -71,7 +71,7 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
-    private seriousServer: boolean = false;
+    seriousServer: boolean = false;
 
     protected constructor(
         readonly user: User,
@@ -92,15 +92,21 @@ class AttendingServerV2 {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
-    get isSeriousServer(): boolean {
-        return this.seriousServer;
-    }
-
-    async setSeriousServer(activate: boolean): Promise<void> {
-        this.seriousServer = activate;
-        await Promise.all(  
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+    /**
+     * Sets the serious server flag, and updates the queues if changing from serious to not serious, or vice versa
+     * @param serious_question_mark new value for seriousServer
+     * @returns True if triggered renders for all queues
+     */
+    async setSeriousServer(serious_question_mark: boolean): Promise<boolean> {
+        if (serious_question_mark === this.seriousServer) {
+            return false;
+        }
+        this.seriousServer = serious_question_mark;
+        await Promise.all([
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this)),
+            this._queues.map(queue => queue.setSeriousMode(serious_question_mark))
+        ]);
+        return true;
     }
 
     /**
@@ -881,7 +887,8 @@ class AttendingServerV2 {
      */
     private async initAllQueues(
         queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED'
+        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        seriousQueue: boolean = false
     ): Promise<void> {
         if (this._queues.size !== 0) {
             console.warn('Overriding existing queues.');
@@ -895,7 +902,8 @@ class AttendingServerV2 {
                 const completeBackup = backup
                     ? {
                           ...backup,
-                          hoursUntilAutoClear: hoursUntilAutoClear
+                          hoursUntilAutoClear: hoursUntilAutoClear,
+                          seriousQueue: seriousQueue
                       }
                     : undefined;
                 this._queues.set(

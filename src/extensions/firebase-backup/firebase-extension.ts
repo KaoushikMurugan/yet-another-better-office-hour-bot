@@ -83,7 +83,8 @@ class FirebaseServerBackupExtension
                     };
                 }),
                 name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId
+                parentCategoryId: queue.parentCategoryId,
+                seriousQueue: queue.seriousQueue
             };
         });
         const serverBackup: ServerBackup = {
@@ -93,7 +94,8 @@ class FirebaseServerBackupExtension
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
-                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
+            seriousServer: server.seriousServer
         };
         this.firebase_db
             .collection('serverBackups')
