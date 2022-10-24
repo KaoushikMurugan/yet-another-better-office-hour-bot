@@ -50,6 +50,10 @@ type ServerBackup = {
      * Auto clear timeout from `/set_queue_auto_clear`
      */
     hoursUntilAutoClear: AutoClearTimeout;
+    /**
+     * seriousness of the server
+     */
+    seriousServer: boolean;
 };
 
 export { QueueBackup, ServerBackup };

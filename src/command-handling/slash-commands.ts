@@ -203,6 +203,16 @@ const stopLoggingCommand = new SlashCommandBuilder()
     .setName('stop_logging')
     .setDescription('Stops the bot from logging events');
 
+const activateSeriousModeCommand = new SlashCommandBuilder()
+    .setName('serious_mode')
+    .setDescription('Activates serious mode')
+    .addBooleanOption(option =>
+        option
+            .setName('enable')
+            .setDescription('Whether to enable serious mode')
+            .setRequired(true)
+    );
+
 /** @internal Get the raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -221,7 +231,8 @@ const commandData = [
     setAfterSessionMessageCommand.toJSON(),
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
-    setQueueAutoClear.toJSON()
+    setQueueAutoClear.toJSON(),
+    activateSeriousModeCommand.toJSON(),
 ];
 
 async function postSlashCommands(

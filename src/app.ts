@@ -12,6 +12,8 @@ import { client, attendingServers } from './global-states';
 import { BuiltInModalHandler } from './command-handling/modal-handler';
 import { CommandNotImplementedError } from './utils/error-types';
 import environment from './environment/environment-manager';
+import { updatePresence } from './utils/discord-presence';
+import { centered } from './utils/util-functions';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
@@ -42,6 +44,10 @@ client.on('ready', async () => {
     }
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
+    //set first presence
+    await updatePresence();
+    //update presence every 30 minutes
+    setInterval(updatePresence, 1000 * 60 * 30);
 });
 
 /**
@@ -238,13 +244,5 @@ function printTitleString(username: string): void {
                 'Bg'
             )
         )}\n`
-    );
-}
-
-function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
     );
 }

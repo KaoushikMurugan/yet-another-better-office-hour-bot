@@ -440,6 +440,26 @@ class BuiltInCommandHandler {
         await server.setLoggingChannel(undefined);
         return SuccessMessages.stoppedLogging;
     }
+
+    private async setSeriousMode(
+        interaction: ChatInputCommandInteraction
+    ): Promise<string> {
+        const [server] = await Promise.all([
+            isServerInteraction(interaction),
+            isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', [
+                'Bot Admin'
+            ])
+        ]);
+
+        const enable = interaction.options.getBoolean('enable', true);
+
+        await server.setSeriousServer(enable);
+        if (enable) {
+            return `Successfully activated serious mode.`;
+        } else {
+            return `Successfully deactivated serious mode.`;
+        }
+    }
 }
 
 export { BuiltInCommandHandler };
