@@ -71,7 +71,7 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
-    seriousServer = false;
+    isSeriousServer = false;
 
     protected constructor(
         readonly user: User,
@@ -94,17 +94,17 @@ class AttendingServerV2 {
 
     /**
      * Sets the serious server flag, and updates the queues if changing from serious to not serious, or vice versa
-     * @param serious_question_mark new value for seriousServer
+     * @param enableSeriousMode new value for seriousServer
      * @returns True if triggered renders for all queues
      */
-    async setSeriousServer(serious_question_mark: boolean): Promise<boolean> {
-        if (serious_question_mark === this.seriousServer) {
+    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
+        if (enableSeriousMode === this.isSeriousServer) {
             return false;
         }
-        this.seriousServer = serious_question_mark;
+        this.isSeriousServer = enableSeriousMode;
         await Promise.all([
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this)),
-            this._queues.map(queue => queue.setSeriousMode(serious_question_mark))
+            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
         ]);
         return true;
     }

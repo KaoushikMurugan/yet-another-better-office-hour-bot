@@ -32,7 +32,7 @@ class HelpQueueV2 {
     // Keeps track of all the setTimout/setIntervals we started
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
     // why so serious?
-    seriousModeEnabled = false;
+    private _seriousModeEnabled = false;
     // set of active helpers' ids
     private _activeHelperIds: Set<string> = new Set();
     // queue of students
@@ -64,7 +64,7 @@ class HelpQueueV2 {
             return;
         }
         this._timeUntilAutoClear = backupData.hoursUntilAutoClear;
-        this.seriousModeEnabled = backupData.seriousModeEnabled;
+        this._seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
             const correspondingMember = this.queueChannel.channelObj.members.get(
@@ -113,6 +113,9 @@ class HelpQueueV2 {
     }
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
+    }
+    get seriousModeEnabled(): boolean {
+        return this._seriousModeEnabled;
     }
 
     clearAllQueueTimers(): void {
@@ -449,7 +452,7 @@ class HelpQueueV2 {
     }
 
     async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
-        this.seriousModeEnabled = seriousModeEnabled;
+        this._seriousModeEnabled = seriousModeEnabled;
         await this.triggerRender();
     }
 
@@ -466,7 +469,7 @@ class HelpQueueV2 {
                 student => student.member.displayName
             ),
             isOpen: this.isOpen,
-            seriousModeEnabled: this.seriousModeEnabled
+            seriousModeEnabled: this._seriousModeEnabled
         };
         await Promise.all([
             this.display.requestQueueRender(viewModel),
@@ -477,7 +480,7 @@ class HelpQueueV2 {
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {
-        this.seriousModeEnabled = seriousMode;
+        this._seriousModeEnabled = seriousMode;
         await this.triggerRender();
     }
 
