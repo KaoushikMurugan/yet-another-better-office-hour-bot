@@ -25,7 +25,7 @@ const presenceList: BotPresence[] = [
     { name: 'Midterm Review', type: ActivityType.Watching },
     { name: 'Finals Review', type: ActivityType.Watching },
     { name: 'Hello World Tutorial', type: ActivityType.Watching },
-    { name: 'Coding Tutorials', type: ActivityType.Watching },
+    { name: 'Coding Tutorials', type: ActivityType.Watching }
 ];
 
 let previousPresence: BotPresence | undefined = undefined;
@@ -49,17 +49,15 @@ async function updatePresence(): Promise<void> {
         // TS doesn't like that, so we have to check for it
         return;
     }
-
     client.user?.setPresence({
         activities: [newPresence]
     });
-
     previousPresence = newPresence;
-
     console.log(
-        `Updated presence to ${presenceTypeMap.get(newPresence.type)}\
-: ${newPresence.name}`
+        `Updated presence to ${presenceTypeMap.get(newPresence.type)}: ${
+            newPresence.name
+        }`
     );
 }
 
-export default updatePresence;
+export { updatePresence };
