@@ -17,6 +17,7 @@ type QueueViewModel = {
     helperIDs: Array<string>;
     studentDisplayNames: Array<string>;
     isOpen: boolean;
+    seriousModeEnabled: boolean;
 };
 
 /** @internal */
@@ -30,6 +31,8 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
 class HelpQueueV2 {
     // Keeps track of all the setTimout/setIntervals we started
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
+    // why so serious?
+    private _seriousModeEnabled = false;
     // set of active helpers' ids
     private _activeHelperIds: Set<string> = new Set();
     // queue of students
@@ -50,7 +53,10 @@ class HelpQueueV2 {
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
         user: User,
-        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout }
+        backupData?: QueueBackup & {
+            hoursUntilAutoClear: AutoClearTimeout;
+            seriousModeEnabled: boolean;
+        }
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
         if (backupData === undefined) {
@@ -58,6 +64,7 @@ class HelpQueueV2 {
             return;
         }
         this._timeUntilAutoClear = backupData.hoursUntilAutoClear;
+        this._seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
             const correspondingMember = this.queueChannel.channelObj.members.get(
@@ -107,6 +114,9 @@ class HelpQueueV2 {
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
     }
+    get seriousModeEnabled(): boolean {
+        return this._seriousModeEnabled;
+    }
 
     clearAllQueueTimers(): void {
         this.timers.forEach(clearInterval);
@@ -144,7 +154,10 @@ class HelpQueueV2 {
         queueChannel: QueueChannel,
         user: User,
         everyoneRole: Role,
-        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout }
+        backupData?: QueueBackup & {
+            hoursUntilAutoClear: AutoClearTimeout;
+            seriousModeEnabled: boolean;
+        }
     ): Promise<HelpQueueV2> {
         const queueExtensions = environment.disableExtensions
             ? []
@@ -438,6 +451,11 @@ class HelpQueueV2 {
         );
     }
 
+    async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
+        this._seriousModeEnabled = seriousModeEnabled;
+        await this.triggerRender();
+    }
+
     /**
      * Re-renders the queue message.
      * Composes the queue view model, then sends it to QueueDisplay
@@ -450,7 +468,8 @@ class HelpQueueV2 {
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
-            isOpen: this.isOpen
+            isOpen: this.isOpen,
+            seriousModeEnabled: this._seriousModeEnabled
         };
         await Promise.all([
             this.display.requestQueueRender(viewModel),
@@ -458,6 +477,11 @@ class HelpQueueV2 {
                 extension.onQueueRender(this, this.display)
             )
         ]);
+    }
+
+    async setSeriousMode(seriousMode: boolean): Promise<void> {
+        this._seriousModeEnabled = seriousMode;
+        await this.triggerRender();
     }
 
     /**

@@ -71,6 +71,8 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
+    isSeriousServer = false;
+
     protected constructor(
         readonly user: User,
         readonly guild: Guild,
@@ -88,6 +90,23 @@ class AttendingServerV2 {
     }
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
+    }
+
+    /**
+     * Sets the serious server flag, and updates the queues if changing from serious to not serious, or vice versa
+     * @param enableSeriousMode new value for seriousServer
+     * @returns True if triggered renders for all queues
+     */
+    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
+        if (enableSeriousMode === this.isSeriousServer) {
+            return false;
+        }
+        this.isSeriousServer = enableSeriousMode;
+        await Promise.all([
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this)),
+            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
+        ]);
+        return true;
     }
 
     /**
@@ -868,7 +887,8 @@ class AttendingServerV2 {
      */
     private async initAllQueues(
         queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED'
+        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        seriousModeEnabled = false
     ): Promise<void> {
         if (this._queues.size !== 0) {
             console.warn('Overriding existing queues.');
@@ -882,7 +902,8 @@ class AttendingServerV2 {
                 const completeBackup = backup
                     ? {
                           ...backup,
-                          hoursUntilAutoClear: hoursUntilAutoClear
+                          hoursUntilAutoClear: hoursUntilAutoClear,
+                          seriousModeEnabled: seriousModeEnabled
                       }
                     : undefined;
                 this._queues.set(
