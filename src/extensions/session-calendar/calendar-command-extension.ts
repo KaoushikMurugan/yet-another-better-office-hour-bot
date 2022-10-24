@@ -92,18 +92,19 @@ class CalendarInteractionExtension
     // Undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
     private commandMethodMap: { [commandName: string]: CommandCallback } = {
-        set_calendar: this.updateCalendarId,
-        unset_calendar: this.unsetCalendarId,
-        when_next: this.listUpComingHours,
+        set_calendar: interaction => this.updateCalendarId(interaction),
+        unset_calendar: interaction => this.unsetCalendarId(interaction),
+        when_next: interaction => this.listUpComingHours(interaction),
         make_calendar_string: interaction =>
             this.makeParsableCalendarTitle(interaction, false),
         make_calendar_string_all: interaction =>
             this.makeParsableCalendarTitle(interaction, true),
-        set_public_embd_url: this.setPublicEmbedUrl
+        set_public_embd_url: interaction => this.setPublicEmbedUrl(interaction)
     } as const;
 
     private buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
-        refresh: this.requestCalendarRefresh
+        refresh: (queueName, interaction) =>
+            this.requestCalendarRefresh(queueName, interaction)
     } as const;
 
     private modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
