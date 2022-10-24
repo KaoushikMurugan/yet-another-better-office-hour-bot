@@ -84,7 +84,7 @@ class FirebaseServerBackupExtension
                 }),
                 name: queue.queueName,
                 parentCategoryId: queue.parentCategoryId,
-                seriousQueue: queue.seriousQueue
+                seriousModeEnabled: queue.seriousModeEnabled
             };
         });
         const serverBackup: ServerBackup = {

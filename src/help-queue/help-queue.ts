@@ -17,6 +17,7 @@ type QueueViewModel = {
     helperIDs: Array<string>;
     studentDisplayNames: Array<string>;
     isOpen: boolean;
+    seriousModeEnabled: boolean;
 };
 
 /** @internal */
@@ -31,7 +32,7 @@ class HelpQueueV2 {
     // Keeps track of all the setTimout/setIntervals we started
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
     // why so serious?
-    seriousQueue = false;
+    seriousModeEnabled = false;
     // set of active helpers' ids
     private _activeHelperIds: Set<string> = new Set();
     // queue of students
@@ -52,7 +53,10 @@ class HelpQueueV2 {
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
         user: User,
-        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout, seriousQueue: boolean }
+        backupData?: QueueBackup & {
+            hoursUntilAutoClear: AutoClearTimeout;
+            seriousModeEnabled: boolean;
+        }
     ) {
         this.display = new QueueDisplayV2(user, queueChannel);
         if (backupData === undefined) {
@@ -60,7 +64,7 @@ class HelpQueueV2 {
             return;
         }
         this._timeUntilAutoClear = backupData.hoursUntilAutoClear;
-        this.seriousQueue = backupData.seriousQueue;
+        this.seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
             const correspondingMember = this.queueChannel.channelObj.members.get(
@@ -147,7 +151,10 @@ class HelpQueueV2 {
         queueChannel: QueueChannel,
         user: User,
         everyoneRole: Role,
-        backupData?: QueueBackup & { hoursUntilAutoClear: AutoClearTimeout, seriousQueue: boolean }
+        backupData?: QueueBackup & {
+            hoursUntilAutoClear: AutoClearTimeout;
+            seriousModeEnabled: boolean;
+        }
     ): Promise<HelpQueueV2> {
         const queueExtensions = environment.disableExtensions
             ? []
@@ -441,8 +448,8 @@ class HelpQueueV2 {
         );
     }
 
-    async updateSeriousMode(seriousQueue: boolean): Promise<void> {
-        this.seriousQueue = seriousQueue;
+    async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
+        this.seriousModeEnabled = seriousModeEnabled;
         await this.triggerRender();
     }
 
@@ -458,10 +465,11 @@ class HelpQueueV2 {
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
-            isOpen: this.isOpen
+            isOpen: this.isOpen,
+            seriousModeEnabled: this.seriousModeEnabled
         };
         await Promise.all([
-            this.display.requestQueueRender(viewModel, this.seriousQueue),
+            this.display.requestQueueRender(viewModel),
             ...this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)
             )
@@ -469,7 +477,7 @@ class HelpQueueV2 {
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {
-        this.seriousQueue = seriousMode;
+        this.seriousModeEnabled = seriousMode;
         await this.triggerRender();
     }
 

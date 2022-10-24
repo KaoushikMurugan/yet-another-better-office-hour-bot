@@ -47,12 +47,12 @@ class QueueDisplayV2 {
         private readonly queueChannel: QueueChannel
     ) {}
 
-    async requestQueueRender(queue: QueueViewModel, seriousMode: boolean): Promise<void> {
+    async requestQueueRender(queue: QueueViewModel): Promise<void> {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
                 `Queue for〚${queue.queueName}〛is\t${
-                    seriousMode
+                    queue.seriousModeEnabled
                         ? queue.isOpen
                             ? '**OPEN**'
                             : '**CLOSED**'
@@ -61,7 +61,7 @@ class QueueDisplayV2 {
                         : '**CLOSED**\t◦<(¦3[___]'
                 }`
             )
-            .setDescription(this.composeQueueAsciiTable(queue, seriousMode))
+            .setDescription(this.composeQueueAsciiTable(queue))
             .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
@@ -174,7 +174,7 @@ class QueueDisplayV2 {
         this.isRendering = false;
     }
 
-    private composeQueueAsciiTable(queue: QueueViewModel, seriousMode: boolean): string {
+    private composeQueueAsciiTable(queue: QueueViewModel): string {
         const table = new AsciiTable3();
         if (queue.studentDisplayNames.length > 0) {
             table
@@ -184,7 +184,7 @@ class QueueDisplayV2 {
                 .setStyle('unicode-mix')
                 .addRowMatrix([
                     ...queue.studentDisplayNames.map((name, idx) => [
-                        seriousMode 
+                        queue.seriousModeEnabled 
                             ? idx + 1 
                             : idx === 0 
                                 ? `(☞°∀°)☞ 1`
@@ -198,7 +198,7 @@ class QueueDisplayV2 {
                 .addRow('This Queue is Empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
-            if (!seriousMode) {
+            if (!queue.seriousModeEnabled) {
                 if (rand <= 0.1) {
                     table.addRow(`=^ Φ ω Φ ^=`);
                 } else if (rand <= 0.3 && rand >= 0.11) {

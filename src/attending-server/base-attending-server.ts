@@ -888,7 +888,7 @@ class AttendingServerV2 {
     private async initAllQueues(
         queueBackups?: QueueBackup[],
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
-        seriousQueue = false
+        seriousModeEnabled = false
     ): Promise<void> {
         if (this._queues.size !== 0) {
             console.warn('Overriding existing queues.');
@@ -903,7 +903,7 @@ class AttendingServerV2 {
                     ? {
                           ...backup,
                           hoursUntilAutoClear: hoursUntilAutoClear,
-                          seriousQueue: seriousQueue
+                          seriousModeEnabled: seriousModeEnabled
                       }
                     : undefined;
                 this._queues.set(
