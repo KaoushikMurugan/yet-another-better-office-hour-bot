@@ -33,6 +33,7 @@ import {
     WithRequired
 } from '../utils/type-aliases';
 import environment from '../environment/environment-manager';
+import { ExpectedServerErrors } from './expected-server-errors';
 
 /**
  * Wrapper for TextChannel
@@ -58,17 +59,17 @@ type ServerTimerType = 'SERVER_PERIODIC_UPDATE';
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
-    // Keeps track of all the setTimout/setIntervals we started
+    /** Keeps track of all the setTimout/setIntervals we started */
     timers: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
-    // message sent to students after they leave
+    /** message sent to students after they leave */
     afterSessionMessage = '';
-    // optional, channel where yabob will log message. if undefined, don't log on the server
+    /** optional, channel where yabob will log message. if undefined, don't log on the server */
     loggingChannel?: TextChannel;
-    // Key is CategoryChannel.id of the parent catgory of #queue
+    /** Key is CategoryChannel.id of the parent catgory of #queue */
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
-    // cached result of getQueueChannels
+    /** cached result of {@link getQueueChannels} */
     private queueChannelsCache: QueueChannel[] = [];
-    // unique active helpers, key is member.id
+    /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
     isSeriousServer = false;
@@ -192,7 +193,7 @@ class AttendingServerV2 {
             server.updateCommandHelpChannels()
         ]).catch(err => {
             console.error(err);
-            throw new ServerError(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
+            throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
         });
         // Now Emit all the events
         await Promise.all(
@@ -331,7 +332,7 @@ class AttendingServerV2 {
             queue => queue.queueName === newQueueName
         );
         if (queueWithSameName !== undefined) {
-            throw new ServerError(`Queue ${newQueueName} already exists`);
+            throw ExpectedServerErrors.queueAlreadyExists(newQueueName);
         }
         const parentCategory = await this.guild.channels.create({
             name: newQueueName,
@@ -362,7 +363,7 @@ class AttendingServerV2 {
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this._queues.get(queueCategoryID);
         if (queue === undefined) {
-            throw new ServerError('This queue does not exist.');
+            throw ExpectedServerErrors.queueDoesNotExist;
         }
         const parentCategory = (await (await this.guild.channels.fetch())
             .find(ch => ch !== null && ch.id === queueCategoryID)
@@ -373,7 +374,8 @@ class AttendingServerV2 {
                 .map(child => child.delete())
                 .filter(promise => promise !== undefined)
         ).catch((err: Error) => {
-            throw new ServerError(`API Failure: ${err.name}\n${err.message}`);
+            //TODO: should we actually catch this?
+            throw ExpectedServerErrors.apiFail(err);
         });
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
@@ -414,20 +416,18 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            throw new ServerError(`You need to be in a voice channel first.`);
+            throw ExpectedServerErrors.notInVC;
         }
         const nonEmptyQueues = currentlyHelpingQueues.filter(
             queue => queue.isOpen && queue.length !== 0
         );
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
-            throw new ServerError(
-                `There's no one left to help. You should get some coffee!`
-            );
+            throw ExpectedServerErrors.noOneToHelp;
         }
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>((prev, curr) =>
             prev.first?.waitStart !== undefined &&
@@ -439,22 +439,27 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
-        await Promise.all([
+        await Promise.all(
             helperVoiceChannel.permissionOverwrites.cache.map(
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
+        );
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60, // 15 minutes
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
         ]);
-        await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            ViewChannel: true,
-            Connect: true
-        });
-        const invite = await helperVoiceChannel.createInvite({
-            maxAge: 15 * 60, // 15 minutes
-            maxUses: 1
-        });
         await Promise.all<unknown>([
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
             ),
             student.member.send(
                 SimpleEmbed(
@@ -463,9 +468,6 @@ class AttendingServerV2 {
                 )
             )
         ]);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
         return student;
     }
 
@@ -483,15 +485,16 @@ class AttendingServerV2 {
             queue.activeHelperIds.has(helperMember.id)
         );
         if (currentlyHelpingQueues.size === 0) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
-            throw new ServerError(`You need to be in a voice channel first.`);
+            throw ExpectedServerErrors.notInVC;
         }
         let student: Optional<Readonly<Helpee>>;
         if (specificQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
+            // TODO: Do we need to do this check? Or can we just let the queue handle it
             if (
                 !helperMember.roles.cache.some(
                     role => role.name === specificQueue.queueName
@@ -513,35 +516,40 @@ class AttendingServerV2 {
             );
             student = await queue?.removeStudent(targetStudentMember);
             if (student === undefined) {
-                throw new ServerError(
-                    `The student ${targetStudentMember.displayName} is not in any of the queues.`
+                throw ExpectedServerErrors.studentNotFound(
+                    targetStudentMember.displayName
                 );
             }
         }
         if (student === undefined) {
             // won't be seen, only the above error messages will be sent
             // this is just here for semantics
-            throw new ServerError('Dequeue with the given arguments failed.');
+            throw ExpectedServerErrors.genericDequeueFailure;
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
         // this api call is slow
-        await Promise.all([
+        await Promise.all(
             helperVoiceChannel.permissionOverwrites.cache.map(
                 overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
             )
+        );
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60, // 15 minutes
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
         ]);
-        await helperVoiceChannel.permissionOverwrites.create(student.member, {
-            ViewChannel: true,
-            Connect: true
-        });
-        const invite = await helperVoiceChannel.createInvite({
-            maxAge: 15 * 60, // 15 minutes
-            maxUses: 1
-        });
         await Promise.all<unknown>([
             ...this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
                 extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
             ),
             student.member.send(
                 SimpleEmbed(
@@ -550,9 +558,6 @@ class AttendingServerV2 {
                 )
             )
         ]);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
         return student;
     }
 
@@ -568,7 +573,7 @@ class AttendingServerV2 {
         notify: boolean
     ): Promise<void> {
         if (this._activeHelpers.has(helperMember.id)) {
-            throw new ServerError('You are already hosting.');
+            throw ExpectedServerErrors.alreadyHosting;
         }
         const helper: Helper = {
             helpStart: new Date(),
@@ -580,11 +585,7 @@ class AttendingServerV2 {
             helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            throw new ServerError(
-                `It seems like you don't have any class roles.\n` +
-                    `This might be a human error. ` +
-                    `In the meantime, you can help students through DMs.`
-            );
+            ExpectedServerErrors.noClassRole;
         }
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -604,27 +605,32 @@ class AttendingServerV2 {
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._activeHelpers.get(helperMember.id);
         if (helper === undefined) {
-            throw new ServerError('You are not currently hosting.');
+            throw ExpectedServerErrors.notHosting;
         }
-        helper.helpEnd = new Date();
         this._activeHelpers.delete(helperMember.id);
+        const completeHelper: Required<Helper> = {
+            ...helper,
+            helpEnd: new Date()
+        };
         console.log(
             ` - Help time of ${helper.member.displayName} is ` +
                 `${convertMsToTime(
-                    helper.helpEnd.getTime() - helper.helpStart.getTime()
+                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
-        const closableQueues = this._queues.filter(queue =>
-            helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
-        );
+        const closableQueues = this._queues.filter(
+            queue =>
+                helperMember.roles.cache
+                    .map(role => role.name)
+                    .includes(queue.queueName) && queue.isOpen
+        ); // 2nd condition handles adding queue roles during a tutoring session
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
-                // the only missing property helpEnd is now completed, cast is safe
-                extension.onHelperStopHelping(this, helper as Required<Helper>)
+                extension.onHelperStopHelping(this, completeHelper)
             )
         );
-        return helper as Required<Helper>;
+        return completeHelper;
     }
 
     /**
@@ -658,7 +664,7 @@ class AttendingServerV2 {
 
     /**
      * Clear all queues of this server
-     * Separated from clear queue to avoid excessive backup calls
+     * @remark separated from clear queue to avoid excessive backup calls
      */
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
@@ -698,12 +704,12 @@ class AttendingServerV2 {
     /**
      * Send an announcement to all the students in the helper's approved queues
      * @param helperMember helper that used /announce
-     * @param message announcement body
+     * @param announcement announcement body
      * @param targetQueue optional, specifies which queue to announce to
      */
     async announceToStudentsInQueue(
         helperMember: GuildMember,
-        message: string,
+        announcement: string,
         targetQueue?: QueueChannel
     ): Promise<void> {
         if (targetQueue !== undefined) {
@@ -715,16 +721,13 @@ class AttendingServerV2 {
                         role.name === targetQueue.queueName || role.name === 'Bot Admin'
                 )
             ) {
-                throw new ServerError(
-                    `You don't have permission to announce in ${targetQueue.queueName}. ` +
-                        `You can only announce to queues that you have a role of.`
-                );
+                throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
             await Promise.all(
                 queueToAnnounce.students.map(student =>
                     student.member.send(
                         SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${message}`,
+                            `Staff member ${helperMember.displayName} announced:\n${announcement}`,
                             EmbedColor.Aqua,
                             `In queue: ${targetQueue.queueName}`
                         )
@@ -734,21 +737,24 @@ class AttendingServerV2 {
             return;
         }
         // from this.queues select queue where helper roles has queue name
+        const studentsToAnnounceTo = this.queues
+            .filter(queue =>
+                helperMember.roles.cache.some(role => role.name === queue.queueName)
+            )
+            .map(queueToAnnounce => queueToAnnounce.students)
+            .flat();
+        if (studentsToAnnounceTo.length === 0) {
+            throw ExpectedServerErrors.noStudentToAnnounce(announcement);
+        }
         await Promise.all(
-            this._queues
-                .filter(queue =>
-                    helperMember.roles.cache.some(role => role.name === queue.queueName)
-                )
-                .map(queueToAnnounce => queueToAnnounce.students)
-                .flat()
-                .map(student =>
-                    student.member.send(
-                        SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${message}`,
-                            EmbedColor.Aqua
-                        )
+            studentsToAnnounceTo.map(student =>
+                student.member.send(
+                    SimpleEmbed(
+                        `Staff member ${helperMember.displayName} announced:\n${announcement}`,
+                        EmbedColor.Aqua
                     )
                 )
+            )
         );
     }
 
@@ -995,7 +1001,7 @@ class AttendingServerV2 {
         helpCategories: CategoryChannel[],
         messageContents: Array<{
             channelName: string;
-            file: Array<HelpMessage>;
+            file: HelpMessage[];
             visibility: string[];
         }>
     ): Promise<void> {

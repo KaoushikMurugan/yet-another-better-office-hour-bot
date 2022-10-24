@@ -78,15 +78,11 @@ class CalendarExtensionState {
 
     async updateNameDiscordIdMap(displayName: string, discordId: string): Promise<void> {
         this.displayNameDiscordIdMap.set(displayName, discordId);
-        await this.backupToFirebase();
         // fire and forget, calendar api is slow and should not block yabob's response
-        void Promise.all(
-            this.listeners.map(listener => listener.onCalendarExtensionStateChange())
-        ).catch(() =>
-            console.error(
-                `Calendar refresh timed out from updateNameDiscordIdMap triggered by ${displayName}`
-            )
-        );
+        await Promise.all([
+            this.backupToFirebase(),
+            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+        ]);
     }
 
     async restoreFromBackup(serverId: string): Promise<void> {
@@ -155,7 +151,7 @@ class CalendarServerEventListener extends BaseServerExtension {
     }
 }
 
-// static, key is guild id, value is 1 calendar extension state
+/** static, key is guild id, value is 1 calendar extension state */
 const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
 
 export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };

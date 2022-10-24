@@ -9,6 +9,7 @@ import { serverIdCalendarStateMap } from './calendar-states';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server';
 import {
+    composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     UpComingSessionViewModel
@@ -93,14 +94,14 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
 
     /**
      * Composes the calendar embed and sends a render request to the display
-     * @param refresh whether to refresh the upcomingSessions cache
+     * @param refreshCache whether to refresh the upcomingSessions cache
      */
-    private async renderCalendarEmbeds(refresh: boolean): Promise<void> {
+    private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
         ];
-        this.upcomingSessions = refresh
+        this.upcomingSessions = refreshCache
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
         const calendarId = serverIdCalendarStateMap.get(
@@ -117,33 +118,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                     : restorePublicEmbedURL(calendarId ?? '')
             )
             .setDescription(
-                this.upcomingSessions.length > 0
-                    ? this.upcomingSessions
-                          .slice(0, 10) // take first 10
-                          .map(
-                              viewModel =>
-                                  `**${
-                                      viewModel.discordId !== undefined
-                                          ? `<@${viewModel.discordId}>`
-                                          : viewModel.displayName
-                                  }**\t|\t` +
-                                  `**${viewModel.eventSummary}**\n` +
-                                  `Start: <t:${viewModel.start
-                                      .getTime()
-                                      .toString()
-                                      .slice(0, -3)}:R>\t|\t` +
-                                  `End: <t:${viewModel.end
-                                      .getTime()
-                                      .toString()
-                                      .slice(0, -3)}:R>` +
-                                  `${
-                                      viewModel.location
-                                          ? `\t|\tLocation: ${viewModel.location}`
-                                          : ``
-                                  }`
-                          )
-                          .join(`\n${'-'.repeat(20)}\n`)
-                    : `There are no upcoming sessions for ${queueName} in the next 7 days.`
+                composeUpcomingSessionsEmbedBody(this.upcomingSessions, this.queueChannel)
             )
             .setColor(EmbedColor.NoColor)
             .setFooter({

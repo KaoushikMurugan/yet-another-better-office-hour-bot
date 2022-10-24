@@ -11,7 +11,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { ChannelType, Guild } from 'discord.js';
-import { magenta } from '../utils/command-line-colors';
+import { magenta, red } from '../utils/command-line-colors';
 import environment from '../environment/environment-manager';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
@@ -161,10 +161,7 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
         'Sets the message automatically sent to students after they leave the voice chat'
     );
 
-function generateHelpCommand(): Omit<
-    SlashCommandBuilder,
-    'addSubcommand' | 'addSubcommandGroup'
-> {
+function generateHelpCommand() {
     return new SlashCommandBuilder()
         .setName('help')
         .setDescription('Get help with the bot')
@@ -258,11 +255,13 @@ async function postSlashCommands(
                 guild.id
             ),
             {
+                // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
                 body: commandData.concat(externalCommands, generateHelpCommand().toJSON())
             }
-            // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
         )
-        .catch(e => console.error(e));
+        .catch(e =>
+            console.error(red(`Failed to post slash command to ${guild.name}`), e)
+        );
     console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
 }
 

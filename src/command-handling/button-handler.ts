@@ -8,10 +8,13 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { CommandParseError } from '../utils/error-types';
 import { ButtonCallback } from '../utils/type-aliases';
-import { isFromQueueChannelWithParent, isFromGuildMember } from './common-validations';
-import { attendingServers } from '../global-states';
+import {
+    isFromQueueChannelWithParent,
+    isFromGuildMember,
+    isServerInteraction
+} from './common-validations';
+import { SuccessMessages } from './builtin-success-messages';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -21,34 +24,28 @@ import { attendingServers } from '../global-states';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 class BuiltInButtonHandler {
-    private buttonMethodMap: ReadonlyMap<string, ButtonCallback> = new Map<
-        string,
-        ButtonCallback
-    >([
-        ['join', (queueName, interaction) => this.join(queueName, interaction)],
-        ['leave', (queueName, interaction) => this.leave(queueName, interaction)],
-        [
-            'notif',
-            (queueName, interaction) => this.joinNotifGroup(queueName, interaction)
-        ],
-        [
-            'removeN',
-            (queueName, interaction) => this.leaveNotifGroup(queueName, interaction)
-        ]
-    ]);
+    private methodMap: { [buttonName: string]: ButtonCallback } = {
+        join: this.join,
+        leave: this.leave,
+        notif: this.joinNotifGroup,
+        removeN: this.leaveNotifGroup
+    } as const;
 
     canHandle(interaction: ButtonInteraction): boolean {
         const [buttonName] = this.splitButtonQueueName(interaction);
-        return this.buttonMethodMap.has(buttonName);
+        return buttonName in this.methodMap;
     }
 
     async process(interaction: ButtonInteraction): Promise<void> {
+        const [buttonName, queueName] = this.splitButtonQueueName(interaction);
+        const buttonMethod = this.methodMap[buttonName];
         await interaction.reply({
-            ...SimpleEmbed('Processing button...', EmbedColor.Neutral),
+            ...SimpleEmbed(
+                `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
+                EmbedColor.Neutral
+            ),
             ephemeral: true
         });
-        const [buttonName, queueName] = this.splitButtonQueueName(interaction);
-        const buttonMethod = this.buttonMethodMap.get(buttonName);
         logButtonPress(interaction, buttonName, queueName);
         // if process is called then buttonMethod is definitely not null
         // this is checked in app.ts with `buttonHandler.canHandle`
@@ -62,14 +59,12 @@ class BuiltInButtonHandler {
             })
             .catch(async err => {
                 // Central error handling, reply to user with the error
-                const serverId = this.isServerInteraction(interaction);
+                const server = isServerInteraction(interaction);
                 await Promise.all([
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
-                        : interaction.reply(ErrorEmbed(err)),
-                    attendingServers
-                        .get(serverId)
-                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                        : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
+                    server.sendLogMessage(ErrorLogEmbed(err, interaction))
                 ]);
             });
     }
@@ -85,88 +80,76 @@ class BuiltInButtonHandler {
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
+        ];
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
+            ),
+            server.enqueueStudent(member, queueChannel)
         ]);
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
-        );
-        await server?.enqueueStudent(member, queueChannel);
-        return `Successfully joined \`${queueName}\`.`;
+        return SuccessMessages.joinedQueue(queueName);
     }
 
     private async leave(
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
+        ];
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+            ),
+            server.removeStudentFromQueue(member, queueChannel)
         ]);
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        );
-        await server?.removeStudentFromQueue(member, queueChannel);
-        return `Successfully left \`${queueName}\`.`;
+        return SuccessMessages.leftQueue(queueName);
     }
 
     private async joinNotifGroup(
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
+        ];
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+            ),
+            server.addStudentToNotifGroup(member, queueChannel)
         ]);
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Notify When Open', queueChannel.channelObj)
-        );
-        await server?.addStudentToNotifGroup(member, queueChannel);
-        return `Successfully joined notification group for \`${queueName}\``;
+        return SuccessMessages.joinedNotif(queueName);
     }
 
     private async leaveNotifGroup(
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const [serverId, member, queueChannel] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, member, queueChannel] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             isFromQueueChannelWithParent(interaction, queueName)
+        ];
+        await Promise.all([
+            server.sendLogMessage(
+                ButtonLogEmbed(
+                    interaction.user,
+                    'Remove Notifications',
+                    queueChannel.channelObj
+                )
+            ),
+            server.removeStudentFromNotifGroup(member, queueChannel)
         ]);
-        const server = attendingServers.get(serverId);
-        await server?.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                'Remove Notifications',
-                queueChannel.channelObj
-            )
-        );
-        await server?.removeStudentFromNotifGroup(member, queueChannel);
-        return `Successfully left notification group for \`${queueName}\``;
-    }
-
-    /**
-     * Checks if the button came from a server with correctly initialized YABOB
-     * @returns string: the server id
-     */
-    private isServerInteraction(interaction: ButtonInteraction): string {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
-        } else {
-            return serverId;
-        }
+        return SuccessMessages.removedNotif(queueName);
     }
 }
 

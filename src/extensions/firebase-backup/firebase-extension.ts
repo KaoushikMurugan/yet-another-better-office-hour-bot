@@ -67,7 +67,7 @@ class FirebaseServerBackupExtension
     /**
      * Builds the backup data and sends it to firebase
      * @param server the server to backup
-     * @noexcept, error is logged to the console
+     * @noexcept error is logged to the console
      */
     private async backupServerToFirebase(
         server: Readonly<AttendingServerV2>

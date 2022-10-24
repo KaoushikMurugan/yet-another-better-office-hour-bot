@@ -112,6 +112,7 @@ interface IServerExtension {
      * Called every 15 minutes
      * @param server the object
      * @param isFirstCall whether this is called inside server init
+     * @deprecated will likely be removed in the future
      */
     onServerPeriodicUpdate: (
         server: Readonly<AttendingServerV2>,
@@ -218,6 +219,7 @@ interface IQueueExtension {
      * Called every hour
      * @param queue queue that triggered the call
      * @param isFirstCall whether this is called inside HelpQueueV2.create
+     * @deprecated will likely be removed in the future, extensions should manage their own timers
      */
     onQueuePeriodicUpdate: (
         queue: Readonly<HelpQueueV2>,

@@ -4,6 +4,8 @@ import { serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
 import environment from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
+import { ExpectedCalendarErrors } from './expected-calendar-errors';
+import { QueueChannel } from '../../attending-server/base-attending-server';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -15,16 +17,6 @@ type UpComingSessionViewModel = {
     discordId?: string;
     location?: string;
 };
-
-class CalendarConnectionError extends Error {
-    constructor(message: string) {
-        super(message);
-        this.name = 'CalendarConnectionError';
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
 
 /**
  * Fetches the calendar and build the embed view model
@@ -50,15 +42,10 @@ async function getUpComingTutoringEvents(
         timeout: 5000,
         method: 'GET'
     }).catch(() => {
-        throw new CalendarConnectionError(
-            'This calendar refresh timed out. Please try again later.'
-        );
+        throw ExpectedCalendarErrors.refreshTimedout;
     });
     if (response.status !== 200) {
-        throw new CalendarConnectionError(
-            'Failed to connect to Google Calendar. ' +
-                'The calendar might be deleted or set to private.'
-        );
+        throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
     const responseJSON = await response.data;
     const events = (responseJSON as calendar_v3.Schema$Events)?.items;
@@ -124,12 +111,10 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         timeout: 5000,
         method: 'GET'
     }).catch(() => {
-        throw new CalendarConnectionError(
-            'This calendar refresh timed out. Please try again later.'
-        );
+        throw ExpectedCalendarErrors.refreshTimedout;
     });
     if (response.status !== 200) {
-        throw new CalendarConnectionError('Calendar request failed.');
+        throw ExpectedCalendarErrors.failedRequest;
     }
     const responseJSON = await response.data;
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
@@ -188,6 +173,42 @@ function composeViewModel(
 }
 
 /**
+ * Builds the body message of the upcoming sessions embed
+ * @param viewModels models from {@link getUpComingTutoringEvents}
+ * @param queueChannel which queue channel to look for
+ * @param returnCount the MAXIMUM number of events to render
+ * @returns string that goes into the embed
+ */
+function composeUpcomingSessionsEmbedBody(
+    viewModels: UpComingSessionViewModel[],
+    queueChannel: QueueChannel,
+    returnCount = 10
+): string {
+    return viewModels.length > 0
+        ? viewModels
+              .slice(0, returnCount) // take the first 10
+              .map(
+                  viewModel =>
+                      `**${
+                          viewModel.discordId !== undefined
+                              ? `<@${viewModel.discordId}>`
+                              : viewModel.displayName
+                      }**\t|\t` +
+                      `**${viewModel.eventSummary}**\n` +
+                      `Start: <t:${viewModel.start
+                          .getTime()
+                          .toString()
+                          .slice(0, -3)}:R>\t|\t` +
+                      `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+                      `${
+                          viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``
+                      }`
+              )
+              .join(`\n${'-'.repeat(30)}\n`)
+        : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`;
+}
+
+/**
  * Builds the calendar URL
  * @param args.calendar_id id to the PUBLIC calendar
  * @param args.apiKey apiKey found in calendar-config.ts
@@ -216,7 +237,10 @@ function buildCalendarURL(args: {
  * Creates a url from calendar id that takes the user to the public embed
  */
 function restorePublicEmbedURL(calendarId: string): string {
-    return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
+    return (
+        `https://calendar.google.com/calendar/embed?src=${calendarId}` +
+        `&ctz=America%2FLos_Angeles&mode=WEEK`
+    );
 }
 
 export {
@@ -225,6 +249,6 @@ export {
     buildCalendarURL,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    CalendarConnectionError,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    composeUpcomingSessionsEmbedBody
 };

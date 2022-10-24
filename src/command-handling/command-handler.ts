@@ -1,10 +1,9 @@
 /** @module BuiltInHandlers */
+
 import {
     ChannelType,
     ChatInputCommandInteraction,
-    GuildChannel,
     GuildMember,
-    GuildMemberRoleManager,
     TextChannel
 } from 'discord.js';
 import {
@@ -18,17 +17,20 @@ import { CommandParseError } from '../utils/error-types';
 import {
     isTriggeredByUserWithRoles,
     hasValidQueueArgument,
-    isFromGuildMember
+    isFromGuildMember,
+    isTriggeredByUserWithRolesSync,
+    isServerInteraction
 } from './common-validations';
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback } from '../utils/type-aliases';
+import { CommandCallback, Optional } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
-import { attendingServers } from '../global-states';
+import { ExpectedParseErrors } from './expected-interaction-errors';
+import { SuccessMessages } from './builtin-success-messages';
 
 /**
  * Responsible for preprocessing commands and dispatching them to servers
@@ -42,41 +44,34 @@ import { attendingServers } from '../global-states';
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
  */
 class BuiltInCommandHandler {
-    // The map of available commands
-    // Key is what the user will see, value is the arrow function
-    // - arrow function wrapper is required because of the closure of 'this'
-    // undefined return values is when the method wants to reply to the interaction directly
-    // - If a call returns undefined, processCommand won't edit the reply
-    private commandMethodMap: ReadonlyMap<string, CommandCallback> = new Map<
-        string,
-        CommandCallback
-    >([
-        ['announce', interaction => this.announce(interaction)],
-        ['cleanup_queue', interaction => this.cleanup(interaction)],
-        ['cleanup_all', interaction => this.cleanupAllQueues(interaction)],
-        ['cleanup_help_channels', interaction => this.cleanupHelpChannel(interaction)],
-        ['clear', interaction => this.clear(interaction)],
-        ['clear_all', interaction => this.clearAll(interaction)],
-        ['enqueue', interaction => this.enqueue(interaction)],
-        ['leave', interaction => this.leave(interaction)],
-        ['list_helpers', interaction => this.listHelpers(interaction)],
-        ['next', interaction => this.next(interaction)],
-        ['queue', interaction => this.queue(interaction)],
-        ['start', interaction => this.start(interaction)],
-        ['stop', interaction => this.stop(interaction)],
-        ['help', interaction => this.help(interaction)],
-        ['set_logging_channel', interaction => this.setLoggingChannel(interaction)],
-        ['stop_logging', interaction => this.stopLogging(interaction)],
-        [
-            'set_after_session_msg',
-            interaction => this.showAfterSessionMessageModal(interaction)
-        ],
-        [
-            'set_queue_auto_clear',
-            interaction => this.showQueueAutoClearModal(interaction)
-        ],
-        ['serious_mode', interaction => this.setSeriousMode(interaction)]
-    ]);
+    /**
+     * The map of available commands
+     * Key is what the user will see, value is the arrow function
+     * - arrow function wrapper is required because of the closure of 'this'
+     * - undefined return values is when the method wants to reply to the interaction directly
+     * - If a call returns undefined, processCommand won't edit the reply
+     */
+    private methodMap: { [commandName: string]: CommandCallback } = {
+        announce: this.announce,
+        cleanup_queue: this.cleanup,
+        cleanup_all: this.cleanupAllQueues,
+        cleanup_help_channels: this.cleanupHelpChannel,
+        clear: this.clear,
+        clear_all: this.clearAll,
+        enqueue: this.enqueue,
+        leave: this.leave,
+        list_helpers: this.listHelpers,
+        next: this.next,
+        queue: this.queue,
+        start: this.start,
+        stop: this.stop,
+        help: this.help,
+        set_logging_channel: this.setLoggingChannel,
+        stop_logging: this.stopLogging,
+        set_after_session_msg: this.showAfterSessionMessageModal,
+        set_queue_auto_clear: this.showQueueAutoClearModal,
+        serious_mode: this.setSeriousMode
+    } as const;
 
     /**
      * Commands in this set only shows a modal on ChatInputCommandInteraction
@@ -86,10 +81,10 @@ class BuiltInCommandHandler {
     private showModalOnlyCommands = new Set<string>([
         'set_after_session_msg',
         'set_queue_auto_clear'
-    ]);
+    ] as const);
 
     canHandle(interaction: ChatInputCommandInteraction): boolean {
-        return this.commandMethodMap.has(interaction.commandName);
+        return interaction.commandName in this.methodMap;
     }
 
     /**
@@ -97,14 +92,18 @@ class BuiltInCommandHandler {
      * @param interaction the raw interaction from discord js
      */
     async process(interaction: ChatInputCommandInteraction): Promise<void> {
-        const serverId = this.isServerInteraction(interaction);
-        const commandMethod = this.commandMethodMap.get(interaction.commandName);
+        const server = isServerInteraction(interaction);
+        const commandMethod = this.methodMap[interaction.commandName];
         if (!this.showModalOnlyCommands.has(interaction.commandName)) {
             // Immediately reply to show that YABOB has received the interaction
             // non modal commands only
-            await interaction.reply(
-                SimpleEmbed('Processing Command...', EmbedColor.Neutral)
-            );
+            await interaction.reply({
+                ...SimpleEmbed(
+                    `Processing command \`${interaction.commandName}\` ...`,
+                    EmbedColor.Neutral
+                ),
+                ephemeral: true
+            });
         }
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
@@ -115,9 +114,7 @@ class BuiltInCommandHandler {
                         interaction.editReply(
                             SimpleEmbed(successMsg, EmbedColor.Success)
                         ),
-                    attendingServers
-                        .get(serverId)
-                        ?.sendLogMessage(SlashCommandLogEmbed(interaction))
+                    server.sendLogMessage(SlashCommandLogEmbed(interaction))
                 ]);
             })
             .catch(async err => {
@@ -126,45 +123,38 @@ class BuiltInCommandHandler {
                     // if not replied (when using modals), reply
                     interaction.replied
                         ? interaction.editReply(ErrorEmbed(err))
-                        : interaction.reply(ErrorEmbed(err)),
-                    attendingServers
-                        .get(serverId)
-                        ?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                        : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
+                    server.sendLogMessage(ErrorLogEmbed(err, interaction))
                 ]);
             });
     }
 
     private async queue(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(
                 interaction,
                 `queue ${interaction.options.getSubcommand()}`,
                 ['Bot Admin']
             )
-        ]);
+        ];
         const subcommand = interaction.options.getSubcommand();
         switch (subcommand) {
             case 'add': {
                 const queueName = interaction.options.getString('queue_name', true);
-                await attendingServers.get(serverId)?.createQueue(queueName);
-                return `Successfully created \`${queueName}\`.`;
+                await server.createQueue(queueName);
+                return SuccessMessages.createdQueue(queueName);
             }
             case 'remove': {
-                const targetQueue = await hasValidQueueArgument(interaction, true);
-                if (
-                    (interaction.channel as GuildChannel).parent?.id ===
-                    targetQueue.parentCategoryId
-                ) {
-                    throw new CommandParseError(
-                        `Please use the remove command in another channel.` +
-                            ` Otherwise Discord API will reject.`
-                    );
+                const targetQueue = hasValidQueueArgument(interaction, true);
+                if (!interaction.channel || interaction.channel.isDMBased()) {
+                    throw ExpectedParseErrors.nonServerInterction();
                 }
-                await attendingServers
-                    .get(serverId)
-                    ?.deleteQueueById(targetQueue.parentCategoryId);
-                return `Successfully deleted \`${targetQueue.queueName}\`.`;
+                if (interaction.channel.parentId === targetQueue.parentCategoryId) {
+                    throw ExpectedParseErrors.removeInsideQueue;
+                }
+                await server?.deleteQueueById(targetQueue.parentCategoryId);
+                return SuccessMessages.deletedQueue(targetQueue.queueName);
             }
             default: {
                 throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
@@ -173,212 +163,193 @@ class BuiltInCommandHandler {
     }
 
     private async enqueue(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, queueChannel, member] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, queueChannel, member] = [
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction),
             isFromGuildMember(interaction)
-        ]);
-        await attendingServers.get(serverId)?.enqueueStudent(member, queueChannel);
-        return `Successfully joined \`${queueChannel.queueName}\`.`;
+        ];
+        await server.enqueueStudent(member, queueChannel);
+        return SuccessMessages.joinedQueue(queueChannel.queueName);
     }
 
     private async next(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, helperMember] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'next', ['Bot Admin', 'Staff'])
-        ]);
+        const [server, helperMember] = [
+            isServerInteraction(interaction),
+            isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
+        ];
         const targetQueue =
             interaction.options.getChannel('queue_name', false) === null
                 ? undefined
-                : await hasValidQueueArgument(interaction, true);
-        const targetStudent =
-            interaction.options.getMember('user') === null
-                ? undefined
-                : (interaction.options.getMember('user') as GuildMember);
+                : hasValidQueueArgument(interaction, true);
+        const targetStudent = (interaction.options.getMember('user') ??
+            undefined) as Optional<GuildMember>;
         // if either target queue or target student is specified, use dequeueWithArgs
         // otherwise use dequeueGlobalFirst
         const dequeuedStudent =
             targetQueue || targetStudent
-                ? await attendingServers
-                      .get(serverId)
-                      ?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
-                : await attendingServers.get(serverId)?.dequeueGlobalFirst(helperMember);
-        return `An invite has been sent to ${dequeuedStudent?.member.displayName}.`;
+                ? await server?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
+                : await server.dequeueGlobalFirst(helperMember);
+        return SuccessMessages.inviteSent(dequeuedStudent?.member.displayName);
     }
 
     private async start(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, member] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'start', ['Bot Admin', 'Staff'])
-        ]);
+        const [server, member] = [
+            isServerInteraction(interaction),
+            isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
+        ];
         const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
-        await attendingServers.get(serverId)?.openAllOpenableQueues(member, !muteNotif);
-        return `You have started helping! Have fun!`;
+        await server.openAllOpenableQueues(member, !muteNotif);
+        return SuccessMessages.startedHelping;
     }
 
     private async stop(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, member] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'stop', ['Bot Admin', 'Staff'])
-        ]);
-        const helpTimeEntry = await attendingServers
-            .get(serverId)
-            ?.closeAllClosableQueues(member);
-        return (
-            `You helped for ` +
-            convertMsToTime(
-                // error will be thrown closeAllClosableQueues if that goes wrong, so we can assert non-null
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                helpTimeEntry!.helpEnd.getTime() - helpTimeEntry!.helpStart.getTime()
-            ) +
-            `. See you later!`
-        );
+        const [server, member] = [
+            isServerInteraction(interaction),
+            isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
+        ];
+        // already checked in isServerInteraction
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        const helpTimeEntry = await server.closeAllClosableQueues(member);
+        return SuccessMessages.finishedHelping(helpTimeEntry);
     }
 
     private async leave(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, member, queue] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, member, queue] = [
+            isServerInteraction(interaction),
             isFromGuildMember(interaction),
             hasValidQueueArgument(interaction)
-        ]);
-        await attendingServers.get(serverId)?.removeStudentFromQueue(member, queue);
-        return `You have successfully left from queue ${queue.queueName}.`;
+        ];
+        await server.removeStudentFromQueue(member, queue);
+        return SuccessMessages.leftQueue(queue.queueName);
     }
 
     private async clear(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, queue] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, queue, member] = [
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
-            isTriggeredByUserWithRoles(interaction, 'clear', ['Bot Admin', 'Staff'])
-        ]);
-        // casting is safe because we checked for isServerInteraction
-        const memberRoles = interaction.member?.roles as GuildMemberRoleManager;
+            await isTriggeredByUserWithRoles(interaction, 'clear', ['Bot Admin', 'Staff'])
+        ];
         // if they are not admin or doesn't have the queue role, reject
         if (
-            !memberRoles.cache.some(
+            !member.roles.cache.some(
                 role => role.name === queue.queueName || role.name === 'Bot Admin'
             )
         ) {
-            throw new CommandParseError(
-                `You don't have permission to clear '${queue.queueName}'. ` +
-                    `You can only clear the queues that you have a role of.`
-            );
+            throw ExpectedParseErrors.noPermission.clear(queue.queueName);
         }
-        await attendingServers.get(serverId)?.clearQueue(queue);
-        return `Everyone in  queue ${queue.queueName} was removed.`;
+        await server.clearQueue(queue);
+        return SuccessMessages.clearedQueue(queue.queueName);
     }
 
     private async clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'clear_all', ['Bot Admin'])
-        ]);
-        const server = attendingServers.get(serverId);
-        const allQueues = await server?.getQueueChannels();
-        if (allQueues === undefined || allQueues.length === 0) {
-            throw new CommandParseError(
-                `This server doesn't seem to have any queues. ` +
-                    `You can use \`/queue add <name>\` to create one`
-            );
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'clear_all', ['Bot Admin'])
+        ];
+        const allQueues = await server.getQueueChannels();
+        if (allQueues.length === 0) {
+            throw ExpectedParseErrors.serverHasNoQueue;
         }
-        await server?.clearAllQueues();
-        return `All queues on ${server?.guild.name} was cleard.`;
+        await server.clearAllQueues();
+        return SuccessMessages.clearedAllQueues(server.guild.name);
     }
 
     private async listHelpers(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const serverId = await this.isServerInteraction(interaction);
-        const helpers = attendingServers.get(serverId)?.activeHelpers;
+        const server = isServerInteraction(interaction);
+        const helpers = server.activeHelpers;
         if (helpers === undefined || helpers.size === 0) {
             await interaction.editReply(SimpleEmbed('No one is currently helping.'));
             return undefined;
         }
-        const table = new AsciiTable3();
-        const allQueues =
-            (await attendingServers.get(serverId)?.getQueueChannels()) ?? [];
-        table
-            .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed')
+        const allQueues = await server.getQueueChannels();
+        const table = new AsciiTable3()
+            .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed', 'Status')
             .setAlign(1, AlignmentEnum.CENTER)
             .setAlign(2, AlignmentEnum.CENTER)
             .setAlign(3, AlignmentEnum.CENTER)
+            .setAlign(4, AlignmentEnum.CENTER)
             .setStyle('unicode-mix')
             .addRowMatrix(
                 [...helpers.values()].map(helper => [
-                    helper.member.displayName,
-                    (helper.member.roles as GuildMemberRoleManager).cache
+                    helper.member.displayName, // Tutor Name
+                    helper.member.roles.cache
                         .filter(
                             role =>
                                 allQueues.find(queue => queue.queueName === role.name) !==
                                 undefined
                         )
                         .map(role => role.name)
-                        .toString(),
-                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf())
+                        .toString(), // Available Queues
+                    convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf()), // Time Elapsed
+                    (() => {
+                        const voiceChannel = interaction.guild?.voiceStates.cache.get(
+                            helper.member.id
+                        )?.channel;
+                        if (!voiceChannel) {
+                            return 'Not in voice channel';
+                        }
+                        return voiceChannel.members.size > 1
+                            ? `Busy in [${voiceChannel.name}]`
+                            : `Idling in [${voiceChannel.name}]`;
+                    })() // Status, IIFE to cram in more logic
                 ])
             )
-            .setWidths([15, 15, 15])
+            .setWidths([10, 10, 10, 10])
             .setWrapped(1)
             .setWrapped(2)
-            .setWrapped(3);
-        await interaction
-            .editReply(
-                SimpleEmbed(
-                    'Current Helpers',
-                    EmbedColor.Aqua,
-                    '```' + table.toString() + '```'
-                )
+            .setWrapped(3)
+            .setWrapped(4);
+        await interaction.editReply(
+            SimpleEmbed(
+                'Current Helpers',
+                EmbedColor.Aqua,
+                '```' + table.toString() + '```'
             )
-            .catch(() => console.error(`Edit reply failed with ${interaction.toJSON()}`));
+        );
         return undefined;
     }
 
     private async announce(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, member] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'announce', ['Bot Admin', 'Staff'])
-        ]);
+        const [server, member] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'announce', [
+                'Bot Admin',
+                'Staff'
+            ])
+        ];
         const announcement = interaction.options.getString('message', true);
         const optionalChannel = interaction.options.getChannel('queue_name', false);
         if (optionalChannel !== null) {
-            const queueChannel = await hasValidQueueArgument(interaction, true);
-            await attendingServers
-                .get(serverId)
-                ?.announceToStudentsInQueue(member, announcement, queueChannel);
+            const queueChannel = hasValidQueueArgument(interaction, true);
+            await server.announceToStudentsInQueue(member, announcement, queueChannel);
         } else {
-            await attendingServers
-                .get(serverId)
-                ?.announceToStudentsInQueue(member, announcement);
+            await server.announceToStudentsInQueue(member, announcement);
         }
-        return `Your announcement: ${announcement} has been sent!`;
+        return SuccessMessages.announced(announcement);
     }
 
     private async cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId, queue] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server, queue] = [
+            isServerInteraction(interaction),
             hasValidQueueArgument(interaction, true),
-            isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
-        ]);
-        if ((interaction.channel as GuildChannel)?.name === 'queue') {
-            throw new CommandParseError('Please use this command outside the queue.');
-        }
-        await attendingServers.get(serverId)?.cleanUpQueue(queue);
+            await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
+        ];
+        await server.cleanUpQueue(queue);
         return `Queue ${queue.queueName} has been cleaned up.`;
     }
 
     private async cleanupAllQueues(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
-        ]);
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
+        ];
+        const allQueues = await server.getQueueChannels();
         await Promise.all(
-            (
-                await attendingServers.get(serverId)?.getQueueChannels()
-            )?.map(queueChannel =>
-                attendingServers.get(serverId)?.cleanUpQueue(queueChannel)
-            ) as Promise<void>[]
+            allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)) ?? []
         );
         return `All queues have been cleaned up.`;
     }
@@ -386,24 +357,26 @@ class BuiltInCommandHandler {
     private async cleanupHelpChannel(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'cleanup_help_channel', ['Bot Admin'])
-        ]);
-        await attendingServers.get(serverId)?.updateCommandHelpChannels();
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'cleanup_help_channel', [
+                'Bot Admin'
+            ])
+        ];
+        await server.updateCommandHelpChannels();
         return `Successfully cleaned up everything under 'Bot Commands Help'.`;
     }
 
     private async showAfterSessionMessageModal(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'set_after_session_msg', [
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'set_after_session_msg', [
                 'Bot Admin'
             ])
-        ]);
-        await interaction.showModal(afterSessionMessageModal(serverId));
+        ];
+        await interaction.showModal(afterSessionMessageModal(server.guild.id));
         return undefined;
     }
 
@@ -430,10 +403,12 @@ class BuiltInCommandHandler {
     private async setLoggingChannel(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'set_logging_channel', ['Bot Admin'])
-        ]);
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'set_logging_channel', [
+                'Bot Admin'
+            ])
+        ];
         const loggingChannel = interaction.options.getChannel(
             'channel',
             true
@@ -441,35 +416,37 @@ class BuiltInCommandHandler {
         if (loggingChannel.type !== ChannelType.GuildText) {
             throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
         }
-        await attendingServers.get(serverId)?.setLoggingChannel(loggingChannel);
-        return `Successfully updated logging channel to \`#${loggingChannel.name}\`.`;
+        await server.setLoggingChannel(loggingChannel);
+        return SuccessMessages.updatedLoggingChannel(loggingChannel.name);
     }
 
     private async showQueueAutoClearModal(
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', ['Bot Admin'])
-        ]);
-        await interaction.showModal(queueAutoClearModal(serverId));
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', [
+                'Bot Admin'
+            ])
+        ];
+        await interaction.showModal(queueAutoClearModal(server.guild.id));
         return undefined;
     }
 
     private async stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
-        ]);
-        await attendingServers.get(serverId)?.setLoggingChannel(undefined);
-        return `Successfully stopped logging.`;
+        const [server] = [
+            isServerInteraction(interaction),
+            await isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
+        ];
+        await server.setLoggingChannel(undefined);
+        return SuccessMessages.stoppedLogging;
     }
 
     private async setSeriousMode(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const [serverId] = await Promise.all([
-            this.isServerInteraction(interaction),
+        const [server] = await Promise.all([
+            isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', [
                 'Bot Admin'
             ])
@@ -477,28 +454,11 @@ class BuiltInCommandHandler {
 
         const enable = interaction.options.getBoolean('enable', true);
 
-        await attendingServers.get(serverId)?.setSeriousServer(enable);
+        await server.setSeriousServer(enable);
         if (enable) {
             return `Successfully activated serious mode.`;
         } else {
             return `Successfully deactivated serious mode.`;
-        }
-    }
-
-    /**
-     * Checks if the command came from a server with correctly initialized YABOB
-     * Each handler will have their own isServerInteraction method
-     * @returns string: the server id
-     */
-    private isServerInteraction(interaction: ChatInputCommandInteraction): string {
-        const serverId = interaction.guild?.id;
-        if (!serverId || !attendingServers.has(serverId)) {
-            throw new CommandParseError(
-                'I can only accept server based interactions. ' +
-                    `Are you sure ${interaction.guild?.name} has a initialized YABOB?`
-            );
-        } else {
-            return serverId;
         }
     }
 }
