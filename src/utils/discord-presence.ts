@@ -20,10 +20,12 @@ const presenceList: BotPresence[] = [
     { name: 'Dragostea Din Tei', type: ActivityType.Listening },
     { name: `${client.guilds.cache.size} servers`, type: ActivityType.Watching },
     { name: 'your bugs disappear', type: ActivityType.Watching },
-    { name: 'you', type: ActivityType.Watching },
-    { name: 'you sleep', type: ActivityType.Watching },
     { name: 'you code', type: ActivityType.Watching },
-    { name: 'you eat', type: ActivityType.Watching }
+    { name: 'Lectures', type: ActivityType.Watching },
+    { name: 'Midterm Review', type: ActivityType.Watching },
+    { name: 'Finals Review', type: ActivityType.Watching },
+    { name: 'Hello World Tutorial', type: ActivityType.Watching },
+    { name: 'Coding Tutorials', type: ActivityType.Watching },
 ];
 
 let previousPresence: BotPresence | undefined = undefined;
