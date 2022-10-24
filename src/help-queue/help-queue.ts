@@ -31,7 +31,7 @@ class HelpQueueV2 {
     // Keeps track of all the setTimout/setIntervals we started
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
     // why so serious?
-    seriousQueue: boolean = false;
+    seriousQueue = false;
     // set of active helpers' ids
     private _activeHelperIds: Set<string> = new Set();
     // queue of students

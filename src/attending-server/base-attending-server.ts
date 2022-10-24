@@ -71,7 +71,7 @@ class AttendingServerV2 {
     // unique active helpers, key is member.id
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
-    seriousServer: boolean = false;
+    seriousServer = false;
 
     protected constructor(
         readonly user: User,
@@ -888,7 +888,7 @@ class AttendingServerV2 {
     private async initAllQueues(
         queueBackups?: QueueBackup[],
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
-        seriousQueue: boolean = false
+        seriousQueue = false
     ): Promise<void> {
         if (this._queues.size !== 0) {
             console.warn('Overriding existing queues.');
