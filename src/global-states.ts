@@ -1,6 +1,6 @@
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { GuildId } from './utils/type-aliases';
-import environment from './environment/environment-manager';
+import { environment } from './environment/environment-manager';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
 import { yellow, black } from './utils/command-line-colors';
 

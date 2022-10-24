@@ -8,7 +8,7 @@ import { QueueBackup, ServerBackup } from '../../models/backups';
 import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
 import { Optional } from '../../utils/type-aliases';
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension
     extends BaseServerExtension

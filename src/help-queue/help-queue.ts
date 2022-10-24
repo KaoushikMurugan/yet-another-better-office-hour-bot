@@ -10,7 +10,7 @@ import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { PeriodicUpdateError } from '../utils/error-types';
 import { QueueDisplayV2 } from './queue-display';
 import { GuildMemberId, Optional } from '../utils/type-aliases';
-import environment from '../environment/environment-manager';
+import { environment } from '../environment/environment-manager';
 import { ExpectedQueueErrors } from './expected-queue-errors';
 
 type QueueViewModel = {

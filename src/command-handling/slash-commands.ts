@@ -12,7 +12,7 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { ChannelType, Guild } from 'discord.js';
 import { magenta, red } from '../utils/command-line-colors';
-import environment from '../environment/environment-manager';
+import { environment } from '../environment/environment-manager';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';

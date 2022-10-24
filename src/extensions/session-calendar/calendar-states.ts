@@ -9,7 +9,7 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server'
 import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
 
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 import { restorePublicEmbedURL } from './shared-calendar-functions';
 
 /**

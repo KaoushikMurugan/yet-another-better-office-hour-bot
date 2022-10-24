@@ -48,7 +48,7 @@ import {
 } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 import { CalendarSuccessMessages } from './calendar-success-messages';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 

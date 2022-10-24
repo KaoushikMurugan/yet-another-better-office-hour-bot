@@ -6,7 +6,7 @@ const configuration = {
     production
 };
 const possibleEnvironments = ['development', 'production'];
-const env = process.env.NODE_ENV as ('development' | 'production');
+const env = process.env.NODE_ENV as 'development' | 'production';
 const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
 
 if (env === undefined) {
@@ -16,4 +16,6 @@ if (!possibleEnvironments.includes(env)) {
     throw new Error(`Unknwon environment ${env}`);
 }
 
-export default { ...configuration[env], env: env, disableExtensions };
+const environment = { ...configuration[env], env: env, disableExtensions };
+
+export { environment };

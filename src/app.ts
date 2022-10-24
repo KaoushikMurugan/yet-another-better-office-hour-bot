@@ -11,7 +11,7 @@ import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
 import { BuiltInModalHandler } from './command-handling/modal-handler';
 import { CommandNotImplementedError } from './utils/error-types';
-import environment from './environment/environment-manager';
+import { environment } from './environment/environment-manager';
 import { updatePresence } from './utils/discord-presence';
 import { centered } from './utils/util-functions';
 

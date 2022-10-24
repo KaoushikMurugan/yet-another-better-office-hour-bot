@@ -32,7 +32,7 @@ import {
     Optional,
     WithRequired
 } from '../utils/type-aliases';
-import environment from '../environment/environment-manager';
+import { environment } from '../environment/environment-manager';
 import { ExpectedServerErrors } from './expected-server-errors';
 
 /**

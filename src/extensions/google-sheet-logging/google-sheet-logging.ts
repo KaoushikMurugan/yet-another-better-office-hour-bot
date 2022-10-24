@@ -7,7 +7,7 @@ import { blue, red, yellow } from '../../utils/command-line-colors';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { Collection, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases';
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 import { ExpectedSheetErrors } from './expected-sheet-errors';
 
 /**
