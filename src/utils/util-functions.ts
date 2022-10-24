@@ -116,10 +116,19 @@ function logSlashCommand(interaction: ChatInputCommandInteraction): void {
     );
 }
 
+function centered(text: string): string {
+    return (
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
+        `${text}` +
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
+    );
+}
+
 export {
     convertMsToTime,
     getQueueRoles,
     logButtonPress,
     logModalSubmit,
-    logSlashCommand
+    logSlashCommand,
+    centered
 };
