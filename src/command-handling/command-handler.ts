@@ -69,7 +69,8 @@ class BuiltInCommandHandler {
         set_logging_channel: this.setLoggingChannel,
         stop_logging: this.stopLogging,
         set_after_session_msg: this.showAfterSessionMessageModal,
-        set_queue_auto_clear: this.showQueueAutoClearModal
+        set_queue_auto_clear: this.showQueueAutoClearModal,
+        serious_mode: this.setSeriousMode
     } as const;
 
     /**
