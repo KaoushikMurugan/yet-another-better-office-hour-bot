@@ -293,8 +293,7 @@ class AttendingServerV2 {
             );
             await Promise.all<unknown>([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                    overwrite =>
-                        overwrite.type === OverwriteType.Member && overwrite.delete()
+                    overwrite => overwrite.id === member.id && overwrite.delete()
                 ),
                 ...this.serverExtensions.map(extension =>
                     extension.onStudentLeaveVC(this, member)
@@ -305,11 +304,15 @@ class AttendingServerV2 {
             ]);
         }
         if (memberIsHelper) {
-            await Promise.all(
-                this.queues.map(
+            await Promise.all([
+                ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                    overwrite =>
+                        overwrite.type === OverwriteType.Member && overwrite.delete()
+                ),
+                ...this.queues.map(
                     queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
                 )
-            );
+            ]);
         }
     }
 
@@ -475,12 +478,6 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all(
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
@@ -564,12 +561,6 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.genericDequeueFailure;
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all(
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
