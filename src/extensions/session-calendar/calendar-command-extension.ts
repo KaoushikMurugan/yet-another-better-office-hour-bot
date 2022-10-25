@@ -56,7 +56,7 @@ class CalendarInteractionExtension
     extends BaseInteractionExtension
     implements IInteractionExtension
 {
-    protected constructor(private readonly guild: Guild) {
+    protected constructor() {
         super();
     }
 
@@ -78,7 +78,7 @@ class CalendarInteractionExtension
             guild.id,
             await CalendarExtensionState.create(guild.id, guild.name)
         );
-        const instance = new CalendarInteractionExtension(guild);
+        const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
         console.log(
@@ -219,7 +219,7 @@ class CalendarInteractionExtension
             isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
         ]);
-        await serverIdCalendarStateMap.get(this.guild.id)?.setCalendarId(newCalendarId);
+        await serverIdCalendarStateMap.get(server.guild.id)?.setCalendarId(newCalendarId);
         await server.sendLogMessage(
             SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
         );
@@ -236,7 +236,7 @@ class CalendarInteractionExtension
         await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
             serverIdCalendarStateMap
-                .get(this.guild.id)
+                .get(server.guild.id)
                 ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
             server.sendLogMessage(
                 SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
@@ -252,8 +252,9 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const channel = hasValidQueueArgument(interaction);
+        const server = this.isServerInteraction(interaction);
         const viewModels = await getUpComingTutoringEvents(
-            this.guild.id,
+            server.guild.id,
             channel.queueName
         );
         const embed = SimpleEmbed(
@@ -303,7 +304,7 @@ class CalendarInteractionExtension
             validQueues = await getQueueRoles(server, memberToUpdate);
         } else {
             const commandArgs = [
-                ...this.guild.channels.cache.filter(
+                ...server.guild.channels.cache.filter(
                     channel => channel.type === ChannelType.GuildCategory
                 )
             ]
@@ -328,7 +329,7 @@ class CalendarInteractionExtension
             });
         }
         void serverIdCalendarStateMap
-            .get(this.guild.id)
+            .get(server.guild.id)
             ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
             .catch(() =>
                 console.error(
@@ -349,6 +350,7 @@ class CalendarInteractionExtension
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
+        const server = this.isServerInteraction(interaction);
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
         await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
@@ -359,10 +361,12 @@ class CalendarInteractionExtension
                 throw ExpectedCalendarErrors.badPublicEmbedUrl;
             }
             // now rawUrl is valid
-            await serverIdCalendarStateMap.get(this.guild.id)?.setPublicEmbedUrl(rawUrl);
+            await serverIdCalendarStateMap
+                .get(server.guild.id)
+                ?.setPublicEmbedUrl(rawUrl);
             return CalendarSuccessMessages.publicEmbedUrl.updated;
         } else {
-            const state = serverIdCalendarStateMap.get(this.guild.id);
+            const state = serverIdCalendarStateMap.get(server.guild.id);
             await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
             return CalendarSuccessMessages.publicEmbedUrl.backToDefault;
         }
@@ -374,7 +378,7 @@ class CalendarInteractionExtension
     ): Promise<string> {
         const server = this.isServerInteraction(interaction);
         const queueLevelExtension = serverIdCalendarStateMap
-            .get(this.guild.id)
+            .get(server.guild.id)
             ?.listeners.get(queueName);
         await server.sendLogMessage(
             ButtonLogEmbed(
