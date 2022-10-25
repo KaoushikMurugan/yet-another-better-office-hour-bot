@@ -1,7 +1,13 @@
 import { Guild, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
-import { BuiltInButtonHandler } from './command-handling/button-handler';
-import { BuiltInCommandHandler } from './command-handling/command-handler';
+import {
+    builtInButtonHandlerCanHandle,
+    processBuiltInButton
+} from './command-handling/button-handler';
+import {
+    builtInCommandHandlerCanHandle,
+    processBuiltInCommand
+} from './command-handling/command-handler';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
 import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
@@ -17,8 +23,6 @@ import { centered } from './utils/util-functions';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
-const builtinCommandHandler = new BuiltInCommandHandler();
-const builtinButtonHandler = new BuiltInButtonHandler();
 const builtinModalHandler = new BuiltInModalHandler();
 
 /**
@@ -83,9 +87,9 @@ client.on('interactionCreate', async interaction => {
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
     if (interaction.isChatInputCommand()) {
-        if (builtinCommandHandler.canHandle(interaction)) {
+        if (builtInCommandHandlerCanHandle(interaction)) {
             handled = true;
-            await builtinCommandHandler.process(interaction);
+            await processBuiltInCommand(interaction);
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
@@ -96,9 +100,9 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.isButton()) {
-        if (builtinButtonHandler.canHandle(interaction)) {
+        if (builtInButtonHandlerCanHandle(interaction)) {
             handled = true;
-            await builtinButtonHandler.process(interaction);
+            await processBuiltInButton(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
