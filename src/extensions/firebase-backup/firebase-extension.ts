@@ -95,7 +95,7 @@ class FirebaseServerBackupExtension
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
                 server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
-            seriousServer: server.isSeriousServer
+            seriousServer: server.queues[0]?.seriousModeEnabled ?? false
         };
         this.firebase_db
             .collection('serverBackups')

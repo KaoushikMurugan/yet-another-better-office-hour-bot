@@ -51,14 +51,14 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚${queue.queueName}〛is\t${
+                `Queue for [${queue.queueName}] is ${
                     queue.seriousModeEnabled
                         ? queue.isOpen
-                            ? '**OPEN**'
-                            : '**CLOSED**'
+                            ? '**__OPEN__**'
+                            : '**__CLOSED__**'
                         : queue.isOpen
-                        ? '**OPEN**\t(ﾟ∀ﾟ )'
-                        : '**CLOSED**\t◦<(¦3[___]'
+                        ? '**__OPEN__**\t(ﾟ∀ﾟ )'
+                        : '**__CLOSED__**\t◦<(¦3[___]'
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(queue))
