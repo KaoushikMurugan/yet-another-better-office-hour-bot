@@ -24,7 +24,7 @@ import { SuccessMessages } from './builtin-success-messages';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 
-const methodMap: { [buttonName: string]: ButtonCallback } = {
+const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     join: join,
     leave: leave,
     notif: joinNotifGroup,
@@ -33,12 +33,12 @@ const methodMap: { [buttonName: string]: ButtonCallback } = {
 
 function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
-    return buttonName in methodMap;
+    return buttonName in buttonMethodMap;
 }
 
 async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);
-    const buttonMethod = methodMap[buttonName];
+    const buttonMethod = buttonMethodMap[buttonName];
     await interaction.reply({
         ...SimpleEmbed(
             `Processing button \`${buttonName}\` in \`${queueName}\` ...`,

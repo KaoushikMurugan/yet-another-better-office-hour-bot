@@ -11,19 +11,19 @@ import { isServerInteraction } from './common-validations';
  * Built in handler for modal submit
  * @category Handler Class
  */
-const methodMap: { [modalName: string]: ModalSubmitCallback } = {
+const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
     after_session_message_modal: setAfterSessionMessage,
     queue_auto_clear_modal: setQueueAutoClear
 } as const;
 
 function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): boolean {
-    return interaction.customId in methodMap;
+    return interaction.customId in modalMethodMap;
 }
 
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
-    const modalMethod = methodMap[interaction.customId];
+    const modalMethod = modalMethodMap[interaction.customId];
     logModalSubmit(interaction);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
@@ -53,8 +53,8 @@ async function processBuiltInModalSubmit(
 
 /**
  * Handles the modal submission from `/set_after_session_msg`
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction
@@ -69,8 +69,8 @@ async function setAfterSessionMessage(
 
 /**
  * Handles the modal submission from `/set_queue_auto_clear`
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 async function setQueueAutoClear(interaction: ModalSubmitInteraction): Promise<string> {
     const server = isServerInteraction(interaction);

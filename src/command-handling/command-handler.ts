@@ -50,7 +50,7 @@ import { SuccessMessages } from './builtin-success-messages';
  * - undefined return values is when the method wants to reply to the interaction directly
  * - If a call returns undefined, processCommand won't edit the reply
  */
-const methodMap: { [commandName: string]: CommandCallback } = {
+const commandMethodMap: { [commandName: string]: CommandCallback } = {
     announce: announce,
     cleanup_queue: cleanup,
     cleanup_all: cleanupAllQueues,
@@ -85,7 +85,7 @@ const showModalOnlyCommands = new Set<string>([
 function builtInCommandHandlerCanHandle(
     interaction: ChatInputCommandInteraction
 ): boolean {
-    return interaction.commandName in methodMap;
+    return interaction.commandName in commandMethodMap;
 }
 
 /**
@@ -96,7 +96,7 @@ async function processBuiltInCommand(
     interaction: ChatInputCommandInteraction
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    const commandMethod = methodMap[interaction.commandName];
+    const commandMethod = commandMethodMap[interaction.commandName];
     if (!showModalOnlyCommands.has(interaction.commandName)) {
         // Immediately reply to show that YABOB has received the interaction
         // non modal commands only
