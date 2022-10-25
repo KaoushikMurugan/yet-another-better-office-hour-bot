@@ -40,6 +40,7 @@ function isServerInteraction(
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember object of the triggerer
+ * @deprecated
  * @remark
  * - Use this only on dangerous commands like `/clear_all` because it's slow
  * - Otherwise prefer {@link isTriggeredByUserWithRolesSync}

@@ -66,19 +66,13 @@ async function getUpComingTutoringEvents(
     if (!events || events.length === 0) {
         return [];
     }
-    const definedViewModels = events
-        .filter(
-            event => event.start?.dateTime && event.end?.dateTime && event.description
-        )
-        .map(cleanEvent => {
-            // we already checked for all 4 values' existence
+    const definedViewModels = [];
+    for (const event of events) {
+        if (event.start?.dateTime && event.end?.dateTime && event.description) {
             const [start, end, description] = [
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.start!.dateTime!,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.end!.dateTime!,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.description!
+                event.start.dateTime,
+                event.end.dateTime,
+                event.description
             ];
             const parsableCalendarString = description
                 .substring(
@@ -90,11 +84,11 @@ async function getUpComingTutoringEvents(
             const viewModel = composeViewModel(
                 serverId,
                 queueName,
-                cleanEvent.summary ?? '',
+                event.summary ?? '',
                 parsableCalendarString ?? '',
                 new Date(start),
                 new Date(end),
-                cleanEvent.location ?? undefined
+                event.location ?? undefined
             );
             // trim to avoid overflow
             if (viewModel?.location !== undefined) {
@@ -103,11 +97,12 @@ async function getUpComingTutoringEvents(
                         ? viewModel.location?.substring(0, 25) + '...'
                         : viewModel.location;
             }
-            return viewModel;
-        })
-        .filter(viewModel => viewModel !== undefined);
-    // already filtered
-    return definedViewModels as UpComingSessionViewModel[];
+            if (viewModel !== undefined){
+                definedViewModels.push(viewModel);
+            }
+        }
+    }
+    return definedViewModels;
 }
 
 async function checkCalendarConnection(newCalendarId: string): Promise<string> {

@@ -15,7 +15,6 @@ import {
 } from '../utils/embed-helper';
 import { CommandParseError } from '../utils/error-types';
 import {
-    isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromGuildMember,
     isTriggeredByUserWithRolesSync,
@@ -139,7 +138,7 @@ async function processBuiltInCommand(
 async function queue(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(
+        isTriggeredByUserWithRolesSync(
             interaction,
             `queue ${interaction.options.getSubcommand()}`,
             ['Bot Admin']
@@ -262,7 +261,7 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<string> 
     const [server, queue, member] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
-        await isTriggeredByUserWithRoles(interaction, 'clear', ['Bot Admin', 'Staff'])
+        isTriggeredByUserWithRolesSync(interaction, 'clear', ['Bot Admin', 'Staff'])
     ];
     // if they are not admin or doesn't have the queue role, reject
     if (
@@ -284,7 +283,7 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<string> 
 async function clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'clear_all', ['Bot Admin'])
+        isTriggeredByUserWithRolesSync(interaction, 'clear_all', ['Bot Admin'])
     ];
     const allQueues = await server.getQueueChannels();
     if (allQueues.length === 0) {
@@ -358,7 +357,10 @@ async function listHelpers(interaction: ChatInputCommandInteraction): Promise<un
 async function announce(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, member] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'announce', ['Bot Admin', 'Staff'])
+        await isTriggeredByUserWithRolesSync(interaction, 'announce', [
+            'Bot Admin',
+            'Staff'
+        ])
     ];
     const announcement = interaction.options.getString('message', true);
     const optionalChannel = interaction.options.getChannel('queue_name', false);
@@ -380,7 +382,7 @@ async function cleanup(interaction: ChatInputCommandInteraction): Promise<string
     const [server, queue] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
-        await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
+        await isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     await server.cleanUpQueue(queue);
     return `Queue ${queue.queueName} has been cleaned up.`;
@@ -396,7 +398,7 @@ async function cleanupAllQueues(
 ): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'cleanup', ['Bot Admin'])
+        await isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     const allQueues = await server.getQueueChannels();
     await Promise.all(
@@ -415,7 +417,7 @@ async function cleanupHelpChannel(
 ): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'cleanup_help_channel', [
+        await isTriggeredByUserWithRolesSync(interaction, 'cleanup_help_channel', [
             'Bot Admin'
         ])
     ];
@@ -433,7 +435,7 @@ async function showAfterSessionMessageModal(
 ): Promise<undefined> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'set_after_session_msg', [
+        await isTriggeredByUserWithRolesSync(interaction, 'set_after_session_msg', [
             'Bot Admin'
         ])
     ];
@@ -476,7 +478,7 @@ async function setLoggingChannel(
 ): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'set_logging_channel', [
+        await isTriggeredByUserWithRolesSync(interaction, 'set_logging_channel', [
             'Bot Admin'
         ])
     ];
@@ -498,7 +500,7 @@ async function showQueueAutoClearModal(
 ): Promise<undefined> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'set_queue_auto_clear', [
+        await isTriggeredByUserWithRolesSync(interaction, 'set_queue_auto_clear', [
             'Bot Admin'
         ])
     ];
@@ -514,7 +516,7 @@ async function showQueueAutoClearModal(
 async function stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'stop_logging', ['Bot Admin'])
+        await isTriggeredByUserWithRolesSync(interaction, 'stop_logging', ['Bot Admin'])
     ];
     await server.setLoggingChannel(undefined);
     return SuccessMessages.stoppedLogging;
@@ -528,7 +530,7 @@ async function stopLogging(interaction: ChatInputCommandInteraction): Promise<st
 async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', [
+        isTriggeredByUserWithRolesSync(interaction, 'activate_serious_mode', [
             'Bot Admin'
         ])
     ];
