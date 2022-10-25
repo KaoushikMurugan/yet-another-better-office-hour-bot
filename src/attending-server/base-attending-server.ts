@@ -9,8 +9,7 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType,
-    OverwriteType
+    ChannelType
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
@@ -260,7 +259,7 @@ class AttendingServerV2 {
                         newVoiceState.channel as VoiceChannel
                     )
                 ),
-                queuesToRerender.map(queue => queue.triggerRender())
+                ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
         if (memberIsHelper) {
@@ -304,11 +303,19 @@ class AttendingServerV2 {
             ]);
         }
         if (memberIsHelper) {
+            // delete the overwrites of the students that this helper helped
+            const overwritesToDelete =
+                oldVoiceState.channel.permissionOverwrites.cache.filter(overwrite =>
+                    // checked in memberIsHelper condition
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.activeHelpers
+                        .get(member.id)!
+                        .helpedMembers.some(
+                            student => student.member.user.id === overwrite.id
+                        )
+                );
             await Promise.all([
-                ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                    overwrite =>
-                        overwrite.type === OverwriteType.Member && overwrite.delete()
-                ),
+                ...overwritesToDelete.map(overwrite => overwrite.delete()),
                 ...this.queues.map(
                     queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
                 )
