@@ -72,8 +72,6 @@ class AttendingServerV2 {
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
-    isSeriousServer = false;
-
     protected constructor(
         readonly user: User,
         readonly guild: Guild,
@@ -99,10 +97,10 @@ class AttendingServerV2 {
      * @returns True if triggered renders for all queues
      */
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        if (enableSeriousMode === this.isSeriousServer) {
+        const alreadySerious = this.queues[0]?.seriousModeEnabled ?? false;
+        if (alreadySerious === enableSeriousMode) {
             return false;
         }
-        this.isSeriousServer = enableSeriousMode;
         await Promise.all([
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this)),
             this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
