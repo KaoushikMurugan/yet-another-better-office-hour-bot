@@ -7,7 +7,7 @@ import { client } from '../global-states';
 
 type BotPresence = {
     name: string;
-    type: ActivityType.Playing | ActivityType.Listening | ActivityType.Watching;
+    type?: ActivityType.Playing | ActivityType.Listening | ActivityType.Watching;
 };
 
 const presenceList: BotPresence[] = [
@@ -21,6 +21,7 @@ const presenceList: BotPresence[] = [
     { name: 'All Star', type: ActivityType.Listening },
     { name: 'Dragostea Din Tei', type: ActivityType.Listening },
     { name: 'HEYYEYAAEYAAAEYAEYAA', type: ActivityType.Listening },
+    { name: 'Did you know that yabob is a real place?' },
     // Number of servers
     { name: `${client.guilds.cache.size} servers`, type: ActivityType.Watching },
     // CS real
@@ -42,7 +43,7 @@ const presenceTypeMap = new Map<ActivityType, string>([
     [ActivityType.Listening, 'Listening to']
 ]);
 
-async function updatePresence(): Promise<void> {
+function updatePresence(): void {
     const newPresence = presenceList.filter(
         botPresence => botPresence !== previousPresence
     )[Math.floor(Math.random() * presenceList.length)];

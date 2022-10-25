@@ -45,7 +45,7 @@ client.on('ready', async () => {
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     //set first presence
-    await updatePresence();
+    updatePresence();
     //update presence every 30 minutes
     setInterval(updatePresence, 1000 * 60 * 30);
 });
