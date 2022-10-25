@@ -1,6 +1,6 @@
 /** @module SessionCalendar */
 import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface';
-import { serverIdCalendarStateMap, CalendarExtensionState } from './calendar-states';
+import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
 import {
     ButtonInteraction,
     CategoryChannel,
@@ -22,7 +22,6 @@ import {
 import { ExtensionSetupError } from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
-    isServerInteraction,
     hasValidQueueArgument,
     isTriggeredByUserWithRoles,
     isTriggeredByUserWithRolesSync
@@ -31,7 +30,8 @@ import {
     checkCalendarConnection,
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    isServerCalendarInteraction
 } from './shared-calendar-functions';
 import { blue, red, yellow } from '../../utils/command-line-colors';
 import { calendarCommands } from './calendar-slash-commands';
@@ -50,7 +50,6 @@ import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
 import { environment } from '../../environment/environment-manager';
 import { CalendarSuccessMessages } from './calendar-success-messages';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -92,19 +91,18 @@ class CalendarInteractionExtension
     // Undefined return values is when the method wants to reply to the interaction directly
     // - If a call returns undefined, processCommand won't edit the reply
     private commandMethodMap: { [commandName: string]: CommandCallback } = {
-        set_calendar: interaction => this.updateCalendarId(interaction),
-        unset_calendar: interaction => this.unsetCalendarId(interaction),
-        when_next: interaction => this.listUpComingHours(interaction),
+        set_calendar: this.updateCalendarId,
+        unset_calendar: this.unsetCalendarId,
+        when_next: this.listUpComingHours,
         make_calendar_string: interaction =>
             this.makeParsableCalendarTitle(interaction, false),
         make_calendar_string_all: interaction =>
             this.makeParsableCalendarTitle(interaction, true),
-        set_public_embd_url: interaction => this.setPublicEmbedUrl(interaction)
+        set_public_embd_url: this.setPublicEmbedUrl
     } as const;
 
     private buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
-        refresh: (queueName, interaction) =>
-            this.requestCalendarRefresh(queueName, interaction)
+        refresh: this.requestCalendarRefresh
     } as const;
 
     private modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
@@ -130,7 +128,7 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction
     ): Promise<void> {
         //Send logs before* processing the command
-        const server = this.isServerInteraction(interaction);
+        const [server] = isServerCalendarInteraction(interaction);
         await Promise.all<unknown>([
             interaction.reply({
                 ...SimpleEmbed(
@@ -191,19 +189,6 @@ class CalendarInteractionExtension
         return [buttonName, queueName];
     }
 
-    private isServerInteraction(
-        interaction:
-            | ChatInputCommandInteraction
-            | ButtonInteraction
-            | ModalSubmitInteraction
-    ): AttendingServerV2 {
-        const server = isServerInteraction(interaction);
-        if (!serverIdCalendarStateMap.has(server.guild.id)) {
-            throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
-        }
-        return server;
-    }
-
     /**
      * Updates the calendar id in the shared calendar extension states
      * - Triggers the queue level extensions to update
@@ -212,17 +197,19 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        const [newCalendarName, server] = await Promise.all([
+        const [newCalendarName] = await Promise.all([
             checkCalendarConnection(newCalendarId).catch(() => {
                 throw ExpectedCalendarErrors.badId.newId;
             }),
-            isServerInteraction(interaction),
             isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
         ]);
-        await serverIdCalendarStateMap.get(server.guild.id)?.setCalendarId(newCalendarId);
-        await server.sendLogMessage(
-            SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-        );
+        const [server, state] = isServerCalendarInteraction(interaction);
+        await Promise.all([
+            state.setCalendarId(newCalendarId),
+            server.sendLogMessage(
+                SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
+            )
+        ]);
         return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
     }
 
@@ -232,12 +219,10 @@ class CalendarInteractionExtension
     private async unsetCalendarId(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const server = this.isServerInteraction(interaction);
+        const [server, state] = isServerCalendarInteraction(interaction);
         await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
-            serverIdCalendarStateMap
-                .get(server.guild.id)
-                ?.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
+            state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
             server.sendLogMessage(
                 SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
             )
@@ -252,7 +237,7 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction
     ): Promise<undefined> {
         const channel = hasValidQueueArgument(interaction);
-        const server = this.isServerInteraction(interaction);
+        const [server] = isServerCalendarInteraction(interaction);
         const viewModels = await getUpComingTutoringEvents(
             server.guild.id,
             channel.queueName
@@ -274,13 +259,12 @@ class CalendarInteractionExtension
         interaction: ChatInputCommandInteraction,
         generateAll: boolean
     ): Promise<string> {
-        const [server, member] = [
-            this.isServerInteraction(interaction),
-            isTriggeredByUserWithRolesSync(interaction, 'make_calendar_string', [
-                'Bot Admin',
-                'Staff'
-            ])
-        ];
+        const [server, state] = isServerCalendarInteraction(interaction);
+        const member = isTriggeredByUserWithRolesSync(
+            interaction,
+            'make_calendar_string',
+            ['Bot Admin', 'Staff']
+        );
         const calendarDisplayName = interaction.options.getString('calendar_name', true);
         const user = interaction.options.getUser('user', false);
         let validQueues: (CategoryChannel | Role)[] = [];
@@ -328,9 +312,8 @@ class CalendarInteractionExtension
                 return category as CategoryChannel;
             });
         }
-        void serverIdCalendarStateMap
-            .get(server.guild.id)
-            ?.updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
+        void state
+            .updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
             .catch(() =>
                 console.error(
                     `Calendar refresh timed out from ${red(
@@ -350,7 +333,7 @@ class CalendarInteractionExtension
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
-        const server = this.isServerInteraction(interaction);
+        const [, state] = isServerCalendarInteraction(interaction);
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
         await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
@@ -361,13 +344,10 @@ class CalendarInteractionExtension
                 throw ExpectedCalendarErrors.badPublicEmbedUrl;
             }
             // now rawUrl is valid
-            await serverIdCalendarStateMap
-                .get(server.guild.id)
-                ?.setPublicEmbedUrl(rawUrl);
+            await state.setPublicEmbedUrl(rawUrl);
             return CalendarSuccessMessages.publicEmbedUrl.updated;
         } else {
-            const state = serverIdCalendarStateMap.get(server.guild.id);
-            await state?.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+            await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
             return CalendarSuccessMessages.publicEmbedUrl.backToDefault;
         }
     }
@@ -376,18 +356,18 @@ class CalendarInteractionExtension
         queueName: string,
         interaction: ButtonInteraction
     ): Promise<string> {
-        const server = this.isServerInteraction(interaction);
-        const queueLevelExtension = serverIdCalendarStateMap
-            .get(server.guild.id)
-            ?.listeners.get(queueName);
-        await server.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                `Refresh Upcoming Sessions`,
-                interaction.channel as TextBasedChannel
-            )
-        );
-        await queueLevelExtension?.onCalendarExtensionStateChange();
+        const [server, state] = isServerCalendarInteraction(interaction);
+        const queueLevelExtension = state.listeners.get(queueName);
+        await Promise.all<unknown>([
+            server.sendLogMessage(
+                ButtonLogEmbed(
+                    interaction.user,
+                    `Refresh Upcoming Sessions`,
+                    interaction.channel as TextBasedChannel
+                )
+            ),
+            queueLevelExtension?.onCalendarExtensionStateChange()
+        ]);
         return CalendarSuccessMessages.refreshSuccess(queueName);
     }
 }
