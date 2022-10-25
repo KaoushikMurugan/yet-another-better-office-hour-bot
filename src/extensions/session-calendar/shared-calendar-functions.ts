@@ -66,7 +66,7 @@ async function getUpComingTutoringEvents(
     if (!events || events.length === 0) {
         return [];
     }
-    const definedViewModels = [];
+    const definedViewModels: UpComingSessionViewModel[] = [];
     for (const event of events) {
         if (event.start?.dateTime && event.end?.dateTime && event.description) {
             const [start, end, description] = [
@@ -97,7 +97,7 @@ async function getUpComingTutoringEvents(
                         ? viewModel.location?.substring(0, 25) + '...'
                         : viewModel.location;
             }
-            if (viewModel !== undefined){
+            if (viewModel !== undefined) {
                 definedViewModels.push(viewModel);
             }
         }
