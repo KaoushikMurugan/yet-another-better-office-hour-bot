@@ -11,7 +11,6 @@ import { isServerInteraction } from './common-validations';
  * Built in handler for modal submit
  * @category Handler Class
  */
-
 const methodMap: { [modalName: string]: ModalSubmitCallback } = {
     after_session_message_modal: setAfterSessionMessage,
     queue_auto_clear_modal: setQueueAutoClear
@@ -52,6 +51,11 @@ async function processBuiltInModalSubmit(
         });
 }
 
+/**
+ * Handles the modal submission from `/set_after_session_msg`
+ * @param interaction 
+ * @returns 
+ */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction
 ): Promise<string> {
@@ -63,6 +67,11 @@ async function setAfterSessionMessage(
     return SuccessMessages.updatedAfterSessionMessage(message);
 }
 
+/**
+ * Handles the modal submission from `/set_queue_auto_clear`
+ * @param interaction 
+ * @returns 
+ */
 async function setQueueAutoClear(interaction: ModalSubmitInteraction): Promise<string> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');

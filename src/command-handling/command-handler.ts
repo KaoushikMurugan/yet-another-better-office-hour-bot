@@ -131,6 +131,11 @@ async function processBuiltInCommand(
         });
 }
 
+/**
+ * The `/queue add` and `/queue remove` command
+ * @param interaction
+ * @returns success message
+ */
 async function queue(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
@@ -164,6 +169,11 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<string> 
     }
 }
 
+/**
+ * The `/enqueue command`
+ * @param interaction
+ * @returns
+ */
 async function enqueue(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, queueChannel, member] = [
         isServerInteraction(interaction),
@@ -174,6 +184,11 @@ async function enqueue(interaction: ChatInputCommandInteraction): Promise<string
     return SuccessMessages.joinedQueue(queueChannel.queueName);
 }
 
+/**
+ * The `/next` command, both with arguments or without arguments
+ * @param interaction
+ * @returns
+ */
 async function next(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, helperMember] = [
         isServerInteraction(interaction),
@@ -194,6 +209,11 @@ async function next(interaction: ChatInputCommandInteraction): Promise<string> {
     return SuccessMessages.inviteSent(dequeuedStudent?.member.displayName);
 }
 
+/**
+ * The `/start` command
+ * @param interaction
+ * @returns
+ */
 async function start(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, member] = [
         isServerInteraction(interaction),
@@ -204,17 +224,25 @@ async function start(interaction: ChatInputCommandInteraction): Promise<string> 
     return SuccessMessages.startedHelping;
 }
 
+/**
+ * The `/stop` command
+ * @param interaction
+ * @returns
+ */
 async function stop(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
     ];
-    // already checked in isServerInteraction
-    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
     const helpTimeEntry = await server.closeAllClosableQueues(member);
     return SuccessMessages.finishedHelping(helpTimeEntry);
 }
 
+/**
+ * The `/leave queue` command
+ * @param interaction
+ * @returns
+ */
 async function leave(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, member, queue] = [
         isServerInteraction(interaction),
@@ -225,6 +253,11 @@ async function leave(interaction: ChatInputCommandInteraction): Promise<string> 
     return SuccessMessages.leftQueue(queue.queueName);
 }
 
+/**
+ * The `/clear queueName` command
+ * @param interaction
+ * @returns
+ */
 async function clear(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, queue, member] = [
         isServerInteraction(interaction),
@@ -243,6 +276,11 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<string> 
     return SuccessMessages.clearedQueue(queue.queueName);
 }
 
+/**
+ * The `/clear_all` command
+ * @param interaction
+ * @returns
+ */
 async function clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
@@ -256,6 +294,11 @@ async function clearAll(interaction: ChatInputCommandInteraction): Promise<strin
     return SuccessMessages.clearedAllQueues(server.guild.name);
 }
 
+/**
+ * The `/list_helpers` command
+ * @param interaction
+ * @returns
+ */
 async function listHelpers(interaction: ChatInputCommandInteraction): Promise<undefined> {
     const server = isServerInteraction(interaction);
     const helpers = server.activeHelpers;
@@ -307,6 +350,11 @@ async function listHelpers(interaction: ChatInputCommandInteraction): Promise<un
     return undefined;
 }
 
+/**
+ * The `/announce` command
+ * @param interaction
+ * @returns
+ */
 async function announce(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, member] = [
         isServerInteraction(interaction),
@@ -323,6 +371,11 @@ async function announce(interaction: ChatInputCommandInteraction): Promise<strin
     return SuccessMessages.announced(announcement);
 }
 
+/**
+ * Then `/clean_up` command
+ * @param interaction
+ * @returns
+ */
 async function cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server, queue] = [
         isServerInteraction(interaction),
@@ -333,6 +386,11 @@ async function cleanup(interaction: ChatInputCommandInteraction): Promise<string
     return `Queue ${queue.queueName} has been cleaned up.`;
 }
 
+/**
+ * The `/cleanup_all` command
+ * @param interaction
+ * @returns
+ */
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction
 ): Promise<string> {
@@ -347,6 +405,11 @@ async function cleanupAllQueues(
     return `All queues have been cleaned up.`;
 }
 
+/**
+ * The `/cleanup_help_channel` command
+ * @param interaction
+ * @returns
+ */
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction
 ): Promise<string> {
@@ -360,6 +423,11 @@ async function cleanupHelpChannel(
     return `Successfully cleaned up everything under 'Bot Commands Help'.`;
 }
 
+/**
+ * The `/set_after_session_msg` command
+ * @param interaction
+ * @returns
+ */
 async function showAfterSessionMessageModal(
     interaction: ChatInputCommandInteraction
 ): Promise<undefined> {
@@ -373,6 +441,11 @@ async function showAfterSessionMessageModal(
     return undefined;
 }
 
+/**
+ * The `/help` command
+ * @param interaction
+ * @returns
+ */
 async function help(interaction: ChatInputCommandInteraction): Promise<undefined> {
     const commandName = interaction.options.getString('command', true);
     const helpMessage =
@@ -393,6 +466,11 @@ async function help(interaction: ChatInputCommandInteraction): Promise<undefined
     return undefined;
 }
 
+/**
+ * The `/set_logging_channel` command
+ * @param interaction
+ * @returns
+ */
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction
 ): Promise<string> {
@@ -410,6 +488,11 @@ async function setLoggingChannel(
     return SuccessMessages.updatedLoggingChannel(loggingChannel.name);
 }
 
+/**
+ * The `/set_queue_auto_clear` command
+ * @param interaction
+ * @returns
+ */
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction
 ): Promise<undefined> {
@@ -423,6 +506,11 @@ async function showQueueAutoClearModal(
     return undefined;
 }
 
+/**
+ * The `/stop_logging` command
+ * @param interaction
+ * @returns
+ */
 async function stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
     const [server] = [
         isServerInteraction(interaction),
@@ -432,14 +520,19 @@ async function stopLogging(interaction: ChatInputCommandInteraction): Promise<st
     return SuccessMessages.stoppedLogging;
 }
 
+/**
+ * The `/serious_mode` command
+ * @param interaction
+ * @returns
+ */
 async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise<string> {
-    const [server] = await Promise.all([
+    const [server] = [
         isServerInteraction(interaction),
-        isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', ['Bot Admin'])
-    ]);
-
+        await isTriggeredByUserWithRoles(interaction, 'activate_serious_mode', [
+            'Bot Admin'
+        ])
+    ];
     const enable = interaction.options.getBoolean('enable', true);
-
     await server.setSeriousServer(enable);
     if (enable) {
         return `Successfully activated serious mode.`;

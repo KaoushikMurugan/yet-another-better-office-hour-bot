@@ -67,6 +67,11 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
         });
 }
 
+/**
+ * Splits the customId into buttonName and queueName
+ * @param interaction
+ * @returns string tuple [buttonName, queueName]
+ */
 function splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
     const buttonName = interaction.customId.substring(0, delimiterPosition);
@@ -74,6 +79,12 @@ function splitButtonQueueName(interaction: ButtonInteraction): [string, string] 
     return [buttonName, queueName];
 }
 
+/**
+ * Join a queue through button press
+ * @param queueName queue to join
+ * @param interaction
+ * @returns success message
+ */
 async function join(queueName: string, interaction: ButtonInteraction): Promise<string> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
@@ -89,6 +100,12 @@ async function join(queueName: string, interaction: ButtonInteraction): Promise<
     return SuccessMessages.joinedQueue(queueName);
 }
 
+/**
+ * Leave a queue through button press
+ * @param queueName queue to leave
+ * @param interaction
+ * @returns success message
+ */
 async function leave(queueName: string, interaction: ButtonInteraction): Promise<string> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
@@ -104,6 +121,12 @@ async function leave(queueName: string, interaction: ButtonInteraction): Promise
     return SuccessMessages.leftQueue(queueName);
 }
 
+/**
+ * Join the notification group with button press
+ * @param queueName which queue's notif group to join
+ * @param interaction
+ * @returns success message
+ */
 async function joinNotifGroup(
     queueName: string,
     interaction: ButtonInteraction
@@ -122,6 +145,12 @@ async function joinNotifGroup(
     return SuccessMessages.joinedNotif(queueName);
 }
 
+/**
+ * Leave the notification group with button press
+ * @param queueName which queue's notif group to leave
+ * @param interaction
+ * @returns success message
+ */
 async function leaveNotifGroup(
     queueName: string,
     interaction: ButtonInteraction

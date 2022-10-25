@@ -21,7 +21,7 @@ import { ExpectedParseErrors } from './expected-interaction-errors';
 /**
  * Checks if the command came from a server with correctly initialized YABOB
  * - Extensions that wish to do additional checks can use this as a base
- * @returns string: the server id
+ * @returns the {@link AttendingServerV2} object
  */
 function isServerInteraction(
     interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
