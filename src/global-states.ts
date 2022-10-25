@@ -3,6 +3,7 @@ import { GuildId } from './utils/type-aliases';
 import { environment } from './environment/environment-manager';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
 import { yellow, black } from './utils/command-line-colors';
+import { IInteractionExtension } from './extensions/extension-interface';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -43,5 +44,10 @@ client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Erro
  * without passing through a interaction handler first
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
+/**
+ * Interaction extensions
+ */
+const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
+    new Collection();
 
-export { attendingServers, client };
+export { attendingServers, client, interactionExtensions };

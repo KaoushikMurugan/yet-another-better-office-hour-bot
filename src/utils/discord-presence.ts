@@ -42,7 +42,7 @@ const presenceTypeMap = new Map<ActivityType, string>([
     [ActivityType.Listening, 'Listening to']
 ]);
 
-async function updatePresence(): Promise<void> {
+function updatePresence(): void {
     const newPresence = presenceList.filter(
         botPresence => botPresence !== previousPresence
     )[Math.floor(Math.random() * presenceList.length)];
