@@ -8,8 +8,7 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType,
-    OverwriteType
+    ChannelType
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
@@ -256,8 +255,10 @@ class AttendingServerV2 {
             return;
         }
         await Promise.all<unknown>([
+            // using find here makes ts angry
+            // map has the same time complexity so it should be fine
             ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+                overwrite => overwrite.id === member.user.id && overwrite.delete()
             ),
             ...this.serverExtensions.map(extension =>
                 extension.onStudentLeaveVC(this, member)
@@ -437,12 +438,6 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all([
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        ]);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             ViewChannel: true,
             Connect: true
@@ -531,12 +526,6 @@ class AttendingServerV2 {
             );
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all([
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        ]);
         await helperVoiceChannel.permissionOverwrites.create(student.member, {
             ViewChannel: true,
             Connect: true
