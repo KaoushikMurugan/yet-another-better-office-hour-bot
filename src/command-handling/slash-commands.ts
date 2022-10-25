@@ -12,7 +12,7 @@ import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { ChannelType, Guild } from 'discord.js';
 import { magenta, red } from '../utils/command-line-colors';
-import environment from '../environment/environment-manager';
+import { environment } from '../environment/environment-manager';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
@@ -203,6 +203,16 @@ const stopLoggingCommand = new SlashCommandBuilder()
     .setName('stop_logging')
     .setDescription('Stops the bot from logging events');
 
+const activateSeriousModeCommand = new SlashCommandBuilder()
+    .setName('serious_mode')
+    .setDescription('Activates serious mode')
+    .addBooleanOption(option =>
+        option
+            .setName('enable')
+            .setDescription('Whether to enable serious mode')
+            .setRequired(true)
+    );
+
 /** @internal Get the raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -221,7 +231,8 @@ const commandData = [
     setAfterSessionMessageCommand.toJSON(),
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
-    setQueueAutoClear.toJSON()
+    setQueueAutoClear.toJSON(),
+    activateSeriousModeCommand.toJSON()
 ];
 
 async function postSlashCommands(

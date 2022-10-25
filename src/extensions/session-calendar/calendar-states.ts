@@ -1,5 +1,4 @@
 /** @module SessionCalendar */
-import { Collection } from 'discord.js';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { Firestore, getFirestore } from 'firebase-admin/firestore';
 import { CalendarQueueExtension } from './calendar-queue-extension';
@@ -8,9 +7,9 @@ import { BaseServerExtension } from '../extension-interface';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
-
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 import { restorePublicEmbedURL } from './shared-calendar-functions';
+import { Collection } from 'discord.js';
 
 /**
  * @module Backups

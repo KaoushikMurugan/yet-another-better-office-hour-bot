@@ -21,7 +21,7 @@ import { ExpectedParseErrors } from './expected-interaction-errors';
 /**
  * Checks if the command came from a server with correctly initialized YABOB
  * - Extensions that wish to do additional checks can use this as a base
- * @returns string: the server id
+ * @returns the {@link AttendingServerV2} object
  */
 function isServerInteraction(
     interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
@@ -40,6 +40,7 @@ function isServerInteraction(
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember object of the triggerer
+ * @deprecated
  * @remark
  * - Use this only on dangerous commands like `/clear_all` because it's slow
  * - Otherwise prefer {@link isTriggeredByUserWithRolesSync}

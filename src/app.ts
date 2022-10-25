@@ -1,7 +1,17 @@
 import { Guild, Collection, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
-import { BuiltInButtonHandler } from './command-handling/button-handler';
-import { BuiltInCommandHandler } from './command-handling/command-handler';
+import {
+    builtInButtonHandlerCanHandle,
+    processBuiltInButton
+} from './command-handling/button-handler';
+import {
+    builtInCommandHandlerCanHandle,
+    processBuiltInCommand
+} from './command-handling/command-handler';
+import {
+    builtInModalHandlercanHandle,
+    processBuiltInModalSubmit
+} from './command-handling/modal-handler';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
 import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
@@ -9,15 +19,13 @@ import { CalendarInteractionExtension } from './extensions/session-calendar/cale
 import { IInteractionExtension } from './extensions/extension-interface';
 import { GuildId, WithRequired } from './utils/type-aliases';
 import { client, attendingServers } from './global-states';
-import { BuiltInModalHandler } from './command-handling/modal-handler';
 import { CommandNotImplementedError } from './utils/error-types';
-import environment from './environment/environment-manager';
+import { environment } from './environment/environment-manager';
+import { updatePresence } from './utils/discord-presence';
+import { centered } from './utils/util-functions';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();
-const builtinCommandHandler = new BuiltInCommandHandler();
-const builtinButtonHandler = new BuiltInButtonHandler();
-const builtinModalHandler = new BuiltInModalHandler();
 
 /**
  * After login startup seqence
@@ -42,6 +50,10 @@ client.on('ready', async () => {
     }
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
+    //set first presence
+    await updatePresence();
+    //update presence every 30 minutes
+    setInterval(updatePresence, 1000 * 60 * 30);
 });
 
 /**
@@ -77,9 +89,9 @@ client.on('interactionCreate', async interaction => {
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
     if (interaction.isChatInputCommand()) {
-        if (builtinCommandHandler.canHandle(interaction)) {
+        if (builtInCommandHandlerCanHandle(interaction)) {
             handled = true;
-            await builtinCommandHandler.process(interaction);
+            await processBuiltInCommand(interaction);
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
@@ -90,9 +102,9 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.isButton()) {
-        if (builtinButtonHandler.canHandle(interaction)) {
+        if (builtInButtonHandlerCanHandle(interaction)) {
             handled = true;
-            await builtinButtonHandler.process(interaction);
+            await processBuiltInButton(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
@@ -102,9 +114,9 @@ client.on('interactionCreate', async interaction => {
         }
     }
     if (interaction.isModalSubmit()) {
-        if (builtinModalHandler.canHandle(interaction)) {
+        if (builtInModalHandlercanHandle(interaction)) {
             handled = true;
-            await builtinModalHandler.process(interaction);
+            await processBuiltInModalSubmit(interaction);
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
@@ -225,7 +237,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 }
 
 function printTitleString(username: string): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.1';
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);
     console.log(`Logged in as ${username}!`);
     console.log('Scanning servers I am a part of...');
@@ -238,13 +250,5 @@ function printTitleString(username: string): void {
                 'Bg'
             )
         )}\n`
-    );
-}
-
-function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
     );
 }

@@ -51,8 +51,14 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚${queue.queueName}〛is\t${
-                    queue.isOpen ? '**OPEN**\t(ﾟ∀ﾟ )' : '**CLOSED**\t◦<(¦3[___]'
+                `Queue for [${queue.queueName}] is ${
+                    queue.seriousModeEnabled
+                        ? queue.isOpen
+                            ? '**__OPEN__**'
+                            : '**__CLOSED__**'
+                        : queue.isOpen
+                        ? '**__OPEN__**\t(ﾟ∀ﾟ )'
+                        : '**__CLOSED__**\t◦<(¦3[___]'
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(queue))
@@ -193,7 +199,11 @@ class QueueDisplayV2 {
                 .setStyle('unicode-mix')
                 .addRowMatrix([
                     ...queue.studentDisplayNames.map((name, idx) => [
-                        idx === 0 ? `(☞°∀°)☞ 1` : `${idx + 1}`,
+                        queue.seriousModeEnabled
+                            ? idx + 1
+                            : idx === 0
+                            ? `(☞°∀°)☞ 1`
+                            : `${idx + 1}`,
                         name
                     ])
                 ]);
@@ -203,10 +213,12 @@ class QueueDisplayV2 {
                 .addRow('This Queue is Empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
-            if (rand <= 0.1) {
-                table.addRow(`=^ Φ ω Φ ^=`);
-            } else if (rand <= 0.3 && rand >= 0.11) {
-                table.addRow(`Did you find the cat?`);
+            if (!queue.seriousModeEnabled) {
+                if (rand <= 0.1) {
+                    table.addRow(`=^ Φ ω Φ ^=`);
+                } else if (rand <= 0.3 && rand >= 0.11) {
+                    table.addRow(`Did you find the cat?`);
+                }
             }
         }
         return '```' + table.toString() + '```';

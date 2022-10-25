@@ -8,7 +8,7 @@ import { QueueBackup, ServerBackup } from '../../models/backups';
 import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
 import { Optional } from '../../utils/type-aliases';
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 
 class FirebaseServerBackupExtension
     extends BaseServerExtension
@@ -83,7 +83,8 @@ class FirebaseServerBackupExtension
                     };
                 }),
                 name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId
+                parentCategoryId: queue.parentCategoryId,
+                seriousModeEnabled: queue.seriousModeEnabled
             };
         });
         const serverBackup: ServerBackup = {
@@ -93,7 +94,8 @@ class FirebaseServerBackupExtension
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
-                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
+            seriousServer: server.queues[0]?.seriousModeEnabled ?? false
         };
         this.firebase_db
             .collection('serverBackups')

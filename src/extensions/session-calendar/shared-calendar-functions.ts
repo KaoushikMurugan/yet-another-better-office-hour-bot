@@ -1,11 +1,25 @@
 /** @module SessionCalendar */
+/**
+ * @packageDocumentation
+ * This file contains the common validation / util functions
+ *  used by the calendar extension
+ */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { serverIdCalendarStateMap } from './calendar-states';
+import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
 import axios from 'axios';
-import environment from '../../environment/environment-manager';
+import { environment } from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
-import { QueueChannel } from '../../attending-server/base-attending-server';
+import {
+    AttendingServerV2,
+    QueueChannel
+} from '../../attending-server/base-attending-server';
+import {
+    ChatInputCommandInteraction,
+    ButtonInteraction,
+    ModalSubmitInteraction
+} from 'discord.js';
+import { isServerInteraction } from '../../command-handling/common-validations';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -52,19 +66,13 @@ async function getUpComingTutoringEvents(
     if (!events || events.length === 0) {
         return [];
     }
-    const definedViewModels = events
-        .filter(
-            event => event.start?.dateTime && event.end?.dateTime && event.description
-        )
-        .map(cleanEvent => {
-            // we already checked for all 4 values' existence
+    const definedViewModels: UpComingSessionViewModel[] = [];
+    for (const event of events) {
+        if (event.start?.dateTime && event.end?.dateTime && event.description) {
             const [start, end, description] = [
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.start!.dateTime!,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.end!.dateTime!,
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                cleanEvent.description!
+                event.start.dateTime,
+                event.end.dateTime,
+                event.description
             ];
             const parsableCalendarString = description
                 .substring(
@@ -76,11 +84,11 @@ async function getUpComingTutoringEvents(
             const viewModel = composeViewModel(
                 serverId,
                 queueName,
-                cleanEvent.summary ?? '',
+                event.summary ?? '',
                 parsableCalendarString ?? '',
                 new Date(start),
                 new Date(end),
-                cleanEvent.location ?? undefined
+                event.location ?? undefined
             );
             // trim to avoid overflow
             if (viewModel?.location !== undefined) {
@@ -89,11 +97,12 @@ async function getUpComingTutoringEvents(
                         ? viewModel.location?.substring(0, 25) + '...'
                         : viewModel.location;
             }
-            return viewModel;
-        })
-        .filter(viewModel => viewModel !== undefined);
-    // already filtered
-    return definedViewModels as UpComingSessionViewModel[];
+            if (viewModel !== undefined) {
+                definedViewModels.push(viewModel);
+            }
+        }
+    }
+    return definedViewModels;
 }
 
 async function checkCalendarConnection(newCalendarId: string): Promise<string> {
@@ -243,6 +252,22 @@ function restorePublicEmbedURL(calendarId: string): string {
     );
 }
 
+/**
+ * (almost) Pure function that checks if the calendar interactoin is safe to execute
+ * @param interaction
+ * @returns server and state object tuple
+ */
+function isServerCalendarInteraction(
+    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
+): [AttendingServerV2, CalendarExtensionState] {
+    const server = isServerInteraction(interaction);
+    const state = serverIdCalendarStateMap.get(server.guild.id);
+    if (!state) {
+        throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
+    }
+    return [server, state];
+}
+
 export {
     getUpComingTutoringEvents,
     composeViewModel,
@@ -250,5 +275,6 @@ export {
     UpComingSessionViewModel,
     checkCalendarConnection,
     restorePublicEmbedURL,
-    composeUpcomingSessionsEmbedBody
+    composeUpcomingSessionsEmbedBody,
+    isServerCalendarInteraction
 };
