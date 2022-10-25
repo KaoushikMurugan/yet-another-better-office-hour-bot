@@ -5,12 +5,12 @@ import { client } from '../global-states';
 // If you give the presence type of Streaming, it shows up on discord as "Playing" instead of "Streaming"
 // So we remove it from the list of types
 
-type BotPresence = {
+type StaticBotPresence = {
     name: string;
     type?: ActivityType.Playing | ActivityType.Listening | ActivityType.Watching;
 };
 
-const presenceList: BotPresence[] = [
+const staticPresenceList: StaticBotPresence[] = [
     // Bob The Builder
     { name: 'Bob The Builder', type: ActivityType.Watching },
     { name: 'Can We Fix It?', type: ActivityType.Listening },
@@ -22,8 +22,6 @@ const presenceList: BotPresence[] = [
     { name: 'Dragostea Din Tei', type: ActivityType.Listening },
     { name: 'HEYYEYAAEYAAAEYAEYAA', type: ActivityType.Listening },
     { name: 'Did you know that yabob is a real place?' },
-    // Number of servers
-    { name: `${client.guilds.cache.size} servers`, type: ActivityType.Watching },
     // CS real
     { name: 'your bugs disappear', type: ActivityType.Watching },
     { name: 'you squash your bugs', type: ActivityType.Watching },
@@ -35,7 +33,19 @@ const presenceList: BotPresence[] = [
     { name: 'Coding Tutorials', type: ActivityType.Watching }
 ];
 
-let previousPresence: BotPresence | undefined = undefined;
+/**
+ * These presences might depend on the client object
+ * so they need to be dynamically created
+ * @remark client object should not be referenced as the top level
+ */
+const dynamicPresenceList: Array<() => StaticBotPresence> = [
+    // Number of servers, numGuilds: number
+    () => {
+        return { name: `${client.guilds.cache.size} servers` };
+    }
+];
+
+let previousPresence: StaticBotPresence | undefined = undefined;
 
 const presenceTypeMap = new Map<ActivityType, string>([
     [ActivityType.Playing, 'Playing'],
@@ -44,9 +54,12 @@ const presenceTypeMap = new Map<ActivityType, string>([
 ]);
 
 function updatePresence(): void {
-    const newPresence = presenceList.filter(
-        botPresence => botPresence !== previousPresence
-    )[Math.floor(Math.random() * presenceList.length)];
+    const newPresence = [
+        ...dynamicPresenceList.map(presenceFunc => presenceFunc()),
+        ...staticPresenceList
+    ].filter(botPresence => botPresence !== previousPresence)[
+        Math.floor(Math.random() * staticPresenceList.length)
+    ];
     if (
         newPresence === undefined ||
         newPresence.name === undefined ||
