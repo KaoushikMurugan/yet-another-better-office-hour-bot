@@ -144,4 +144,7 @@ async function leaveNotifGroup(
     return SuccessMessages.removedNotif(queueName);
 }
 
+/**
+ * Only export the handler and the 'canHandle' check
+ */
 export { builtInButtonHandlerCanHandle, processBuiltInButton };

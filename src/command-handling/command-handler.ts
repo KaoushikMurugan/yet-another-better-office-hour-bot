@@ -448,4 +448,7 @@ async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise
     }
 }
 
+/**
+ * Only export the handler and the 'canHandle' check
+ */
 export { processBuiltInCommand, builtInCommandHandlerCanHandle };
