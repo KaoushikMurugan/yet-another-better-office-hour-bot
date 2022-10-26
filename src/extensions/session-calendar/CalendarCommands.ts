@@ -213,7 +213,7 @@ const whenNextHelp: HelpMessage = {
 const calendarAdminHelpMessages: HelpMessage[] = [
     setCalendarHelp,
     unsetCalendarHelp,
-    makeCalendarStringHelp
+    setPublicEmbedUrlHelp
 ];
 
 const calendarHelperHelpMessages: HelpMessage[] = [
