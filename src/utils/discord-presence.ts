@@ -50,13 +50,29 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: '1 + 1 = 11' },
     { type: ActivityType.Playing,   name: 'It\'s not a bug, it\'s a feature' },
     { type: ActivityType.Playing,   name: 'You probably need a <br>' },
+    { type: ActivityType.Playing,   name: `exec(s:='print("exec(s:=%r)"%s)')` }, // Quine
     // Hello World in different languages
-    { type: ActivityType.Playing,   name: 'printf("Hello World");' },
-    { type: ActivityType.Playing,   name: 'System.out.println("Hello World");' },
-    { type: ActivityType.Playing,   name: 'print("Hello World")' },
-    { type: ActivityType.Playing,   name: 'puts("Hello World")' },
-    { type: ActivityType.Playing,   name: 'cout << "Hello World";',  },
-    { type: ActivityType.Playing,   name: 'console.log("Hello World");' },
+    { type: ActivityType.Playing,   name: 'printf("Hello World");' }, // c
+    { type: ActivityType.Playing,   name: 'System.out.println("Hello World");' }, // java
+    { type: ActivityType.Playing,   name: 'print("Hello World")' }, // python
+    { type: ActivityType.Playing,   name: 'puts "Hello World"' }, // ruby
+    { type: ActivityType.Playing,   name: 'cout << "Hello World";',  }, // c++
+    { type: ActivityType.Playing,   name: 'console.log("Hello World");' }, // javascript
+    { type: ActivityType.Playing,   name: 'fmt.Println("Hello World");' }, // go
+    { type: ActivityType.Playing,   name: 'println!("Hello World"); // rust' }, // rust
+    { type: ActivityType.Playing,   name: 'System.Console.WriteLine("Hello World");' }, // C#
+    { type: ActivityType.Playing,   name: 'println("Hello World")' }, // swift
+    { type: ActivityType.Playing,   name: 'writeln (\'Hello, world.\');'}, // pascal
+    { type: ActivityType.Playing,   name: 'echo "Hello World";' }, // php
+    { type: ActivityType.Playing,   name: '(print "Hello World")' }, // lisp
+    { type: ActivityType.Playing,   name: 'print *, "Hello World"' }, // fortran
+    { type: ActivityType.Playing,   name: '10 PRINT "Hello World!"' }, // BASIC
+    { type: ActivityType.Playing,   name: 'DISPLAY "Hello World!"' }, // cobol
+    { type: ActivityType.Playing,   name: '++++++++++[>+++++++>++++++++++>+++<<<-]>++.>+.+++++++\
+..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.' }, // brainf**k
+    { type: ActivityType.Playing,   name: '(=<`#9]~6ZY327Uv4-QsqpMn&+Ij"\'E%e{Ab~w=_:]Kw%o44Uqp0/Q?xNvL:\
+`H%c#DD2^WV>gY;dts76qKJImZkj' }, // malbolge
+
 ]
 
 /**
@@ -67,7 +83,7 @@ const staticPresenceList: StaticBotPresence[] = [
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
     () => {
-        return { name: `${client.guilds.cache.size} servers` };
+        return { type: ActivityType.Watching, name: `${client.guilds.cache.size} servers` };
     }
 ];
 
