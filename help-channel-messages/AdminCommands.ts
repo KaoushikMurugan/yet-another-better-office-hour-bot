@@ -316,7 +316,7 @@ const setQueueAutoClearHelp: HelpMessage = {
                     {
                         name: 'Modal Input Fields',
                         value: '`hours: number - 2 digit max` \n`minutes: number - 2 digit max`\
-                        \nqueue will be cleared after hours:minutes',
+                        \nSubmitting the modal will set the auto clear time to hours:minutes',
                         inline: true
                     },
                     {

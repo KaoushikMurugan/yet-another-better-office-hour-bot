@@ -20,18 +20,19 @@ const setCalendarHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Changes the calendar that YABOB reads from.',
+                        value: 'Prompts a modal to set the calendar for the server.',
                         inline: false
                     },
                     {
-                        name: 'Options',
-                        value: "`calendar_id: string`\nGo to that particular calendar's Settings and Sharing tab.\
-                Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.",
+                        name: 'Modal Input Fields', 
+                        value: '`calendar_id: string - short`\nGo to that particular calendar\'s Settings and Sharing tab.\
+                Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.\
+                \nSubmitting the form will change the calendar that YABOB reads from to the one entered.',
                         inline: true
                     },
                     {
                         name: 'Example Usage',
-                        value: '`/set_calendar qwerty12345@calendar.google.com`',
+                        value: '`/set_calendar`',
                         inline: true
                     }
                 ]
@@ -116,7 +117,7 @@ const makeCalendarStringAllHelp: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string_all [calendar_name]`',
+                title: 'Command: `/make_calendar_string_all [calendar_name] (user)`',
                 fields: [
                     {
                         name: 'Description',
@@ -166,7 +167,7 @@ const setPublicEmbedUrlHelp: HelpMessage = {
                     },
                     {
                         name: 'Example Usage',
-                        value: '`/set_public_embed_url https://discord.com/`',
+                        value: '`/set_public_embed_url https://supercoolcalendar.com`',
                         inline: true
                     }
                 ]
