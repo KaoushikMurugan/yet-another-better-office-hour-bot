@@ -39,5 +39,7 @@ export const SuccessMessages = {
             `Queues will be automatically cleared in ` +
             `${hours} hours and ${minutes} minutes after they are closed.`,
         disabled: `Successfully disabled queue auto clear.`
-    }
+    },
+    turnedOnSeriousMode: `Serious mode has been turned on.`,
+    turnedOffSeriousMode: `Serious mode has been turned off.\n\nThere's no need to be so serious!`,
 } as const;

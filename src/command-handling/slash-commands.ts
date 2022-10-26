@@ -206,11 +206,15 @@ const stopLoggingCommand = new SlashCommandBuilder()
 const activateSeriousModeCommand = new SlashCommandBuilder()
     .setName('serious_mode')
     .setDescription('Activates serious mode')
-    .addBooleanOption(option =>
-        option
-            .setName('enable')
-            .setDescription('Whether to enable serious mode')
-            .setRequired(true)
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('on')
+            .setDescription('Turns on serious mode')
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('off')
+            .setDescription('Turns off serious mode')
     );
 
 /** @internal Get the raw data that can be sent to Discord */

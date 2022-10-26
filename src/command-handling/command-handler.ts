@@ -534,12 +534,13 @@ async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise
             'Bot Admin'
         ])
     ];
-    const enable = interaction.options.getBoolean('enable', true);
-    await server.setSeriousServer(enable);
-    if (enable) {
-        return `Successfully activated serious mode.`;
+    const onOrOff = interaction.options.getSubcommand();
+    if (onOrOff === 'on') {
+        await server.setSeriousServer(true);
+        return SuccessMessages.turnedOnSeriousMode;
     } else {
-        return `Successfully deactivated serious mode.`;
+        await server.setSeriousServer(false);
+        return SuccessMessages.turnedOffSeriousMode;
     }
 }
 
