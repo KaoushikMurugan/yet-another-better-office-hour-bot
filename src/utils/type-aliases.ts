@@ -19,21 +19,23 @@ type MessageId = string;
 
 type HelpMessage = {
     nameValuePair: APIApplicationCommandOptionChoice<string>;
-    useInHelpChannel: boolean;
-    useInHelpCommand: boolean; // whether it's displayed by /help
+    useInHelpChannel: boolean; // whether it should be displayed in the help channel
+    useInHelpCommand: boolean; // whether it can be shown in the help command
     message: BaseMessageOptions;
 };
 
 /**
- * Used in command handlers
+ * Used in interaction handlers
  */
 type CommandCallback = (
     interaction: ChatInputCommandInteraction
 ) => Promise<Optional<string>>;
+
 type ButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction
 ) => Promise<Optional<string>>;
+
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction
 ) => Promise<Optional<string | BaseMessageOptions>>;

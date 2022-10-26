@@ -42,6 +42,10 @@ const presenceTypeMap = new Map<ActivityType, string>([
     [ActivityType.Listening, 'Listening to']
 ]);
 
+/**
+ * Sets the bot's presence to a random one from the list
+ * @remark Consecutive calls to this function will not result in the same presence
+ */
 async function updatePresence(): Promise<void> {
     const newPresence = presenceList.filter(
         botPresence => botPresence !== previousPresence
