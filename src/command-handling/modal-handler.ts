@@ -16,10 +16,22 @@ const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
     queue_auto_clear_modal: setQueueAutoClear
 } as const;
 
+/**
+ * Check if the modal interaction can be handled by this (in-built) handler
+ * @param interaction 
+ * @returns 
+ */
 function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): boolean {
     return interaction.customId in modalMethodMap;
 }
 
+/**
+ * Handles all built in modal submit interactions
+ * - Calls the appropriate handler based on the modal name
+ * - Logs the interaction
+ * - Sends the appropriate response
+ * @param interaction 
+ */
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
