@@ -1,3 +1,4 @@
+import { client } from '../src/global-states';
 import { EmbedColor } from '../src/utils/embed-helper';
 import { HelpMessage } from '../src/utils/type-aliases';
 
@@ -16,7 +17,7 @@ const helperCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]
