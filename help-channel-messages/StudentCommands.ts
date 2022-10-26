@@ -44,7 +44,7 @@ const enqueueHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: 'None',
+                        value: '`queue_name: string`\nName of the queue to add the sender to',
                         inline: true
                     },
                     {
@@ -118,6 +118,41 @@ const listHelpersHelp: HelpMessage = {
                     {
                         name: 'Example Usage',
                         value: '`/list_helpers`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const helpHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'help',
+        value: 'help'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/help [command_name]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Displays the help message for the command `command_name`.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`command_name: string`\nName of the command to display the help message for.\
+                        \nNote: After typing /help, the command option will show the list of commands available to search through',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/help enqueue`',
                         inline: true
                     }
                 ]
