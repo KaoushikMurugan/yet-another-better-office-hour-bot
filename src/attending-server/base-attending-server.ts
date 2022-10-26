@@ -70,6 +70,8 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
+    /** For the experimental rerender */
+    private useExperimentalVCStatusRerender = true as const;
 
     protected constructor(
         readonly user: User,
@@ -245,7 +247,7 @@ class AttendingServerV2 {
             const possibleHelpers = newVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
             );
-            const queuesToRerender = this.queues.filter(queue =>
+            const queuesToRerender = this._queues.filter(queue =>
                 possibleHelpers.some(possibleHelper =>
                     queue.activeHelperIds.has(possibleHelper.id)
                 )
@@ -259,7 +261,8 @@ class AttendingServerV2 {
                         newVoiceState.channel as VoiceChannel
                     )
                 ),
-                ...queuesToRerender.map(queue => queue.triggerRender())
+                ...(this.useExperimentalVCStatusRerender &&
+                    queuesToRerender.map(queue => queue.triggerRender()))
             ]);
         }
         if (memberIsHelper) {
@@ -299,7 +302,8 @@ class AttendingServerV2 {
                 ),
                 this.afterSessionMessage !== '' &&
                     member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...queuesToRerender.map(queue => queue.triggerRender())
+                ...(this.useExperimentalVCStatusRerender &&
+                    queuesToRerender.map(queue => queue.triggerRender()))
             ]);
         }
         if (memberIsHelper) {

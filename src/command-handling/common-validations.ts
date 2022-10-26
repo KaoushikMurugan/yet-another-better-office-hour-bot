@@ -92,7 +92,7 @@ function isTriggeredByUserWithRolesSync(
  * @param required
  * - If true, check if the COMMAND ARG is a valid queue category
  * - If false, check if the CURRENT channel's parent category is a valid queue category
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
