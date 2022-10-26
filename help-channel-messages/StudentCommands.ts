@@ -165,7 +165,8 @@ const studentCommandHelpMessages: HelpMessage[] = [
     studentCommandsTileMessage,
     enqueueHelp,
     leaveHelp,
-    listHelpersHelp
+    listHelpersHelp,
+    helpHelp
 ];
 
 export { studentCommandHelpMessages };

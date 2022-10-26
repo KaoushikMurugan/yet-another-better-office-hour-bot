@@ -24,15 +24,15 @@ const setCalendarHelp: HelpMessage = {
                         inline: false
                     },
                     {
-                        name: 'Modal Input Fields', 
-                        value: '`calendar_id: string - short`\nGo to that particular calendar\'s Settings and Sharing tab.\
-                Scrolling down will take you do the Integrate Calendar Section. Copy the Calendar ID. It should end with calendar.google.com.\
-                \nSubmitting the form will change the calendar that YABOB reads from to the one entered.',
+                        name: 'Options',
+                        value: '`calendar_id: string`\nID of the calendar to set.\
+                        \nGo to that particular calendar\'s Settings and Sharing tab. Scrolling down will take you do the Integrate Calendar Section. \
+                        Copy the Calendar ID. It should end with calendar.google.com.',
                         inline: true
                     },
                     {
                         name: 'Example Usage',
-                        value: '`/set_calendar`',
+                        value: '`/set_calendar 3o2ih5bk35b154@calendar.google.com`',
                         inline: true
                     }
                 ]
@@ -81,18 +81,19 @@ const makeCalendarStringHelp: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string [calendar_name] (queue_1) (queue_2) ... (user)`',
+                title: 'Command: `/make_calendar_string [calendar_name] [queue_1] (queue_2) ... (user)`',
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar string to put in the event description that the bot will recognize for the queues you specify',
+                        value: 'Generates a calendar string to be put in the caller\'s calendar events. YABOB uses these strings to identify\
+                        who is tutoring for what queue. This command will generate a calendar string for the queues specified.',
                         inline: false
                     },
                     {
                         name: 'Options',
                         value: '`calendar_name: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                    \n`queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\
-                    \nThe user you want to change the calendar string for (Bot Admin only)',
+                    \n`queue_i: Channel`\nThe channel(s) you want to tutor for the event. At least 1 queue must be entered\
+                    \n`user: User` (Bot Admin only)\nThe user you want to change the calendar string for',
                         inline: true
                     },
                     {
@@ -121,13 +122,14 @@ const makeCalendarStringAllHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar string to put in the event description that the bot will recognize for all the queues you are approved for.',
+                        value: 'Generates a calendar string to be put in the caller\'s calendar events. YABOB uses these strings to identify\
+                        who is tutoring for what queue. This command will generate a string for all the queues you are currently tutoring for.',
                         inline: false
                     },
                     {
                         name: 'Options',
                         value: '`calendar_name: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
-                            \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)',
+                            \n`user: Member` (Bot Admin only)\nThe user you want to change the calendar string for',
                         inline: true
                     },
                     {

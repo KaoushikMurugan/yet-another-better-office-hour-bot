@@ -202,6 +202,8 @@ class CalendarInteractionExtension
     }
 
     /**
+     * The `/set_calendar [calendar_id]` command
+     * 
      * Updates the calendar id in the shared calendar extension states
      * - Triggers the queue level extensions to update
      */
@@ -226,6 +228,8 @@ class CalendarInteractionExtension
     }
 
     /**
+     * The `/unset_calendar` command
+     * 
      * Resets the calendar id to default
      */
     private async unsetCalendarId(
@@ -243,6 +247,8 @@ class CalendarInteractionExtension
     }
 
     /**
+     * The `/when_next` command
+     * 
      * Builds the embed for /when_next
      */
     private async listUpComingHours(
@@ -264,6 +270,8 @@ class CalendarInteractionExtension
     }
 
     /**
+     * The `/make_calendar_string` and `/make_calendar_string_all` commands
+     * 
      * Makes calendar titles for all approved queues
      * @param generateAll whether to generate string for all the queue roles
      */
@@ -342,6 +350,12 @@ class CalendarInteractionExtension
         );
     }
 
+    /**
+     * The `/set_public_embd_url` command
+     * 
+     * Sets the public embed url for the server's calendar
+     * @param interaction
+     */
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
     ): Promise<string> {
@@ -364,6 +378,12 @@ class CalendarInteractionExtension
         }
     }
 
+    /**
+     * Refreshes the calendar emebed for the specified queue
+     * @param queueName 
+     * @param interaction 
+     * @returns 
+     */
     private async requestCalendarRefresh(
         queueName: string,
         interaction: ButtonInteraction
