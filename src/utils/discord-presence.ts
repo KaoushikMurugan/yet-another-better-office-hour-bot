@@ -12,26 +12,52 @@ type StaticBotPresence = {
 
 const staticPresenceList: StaticBotPresence[] = [
     // Bob The Builder
-    { name: 'Bob The Builder', type: ActivityType.Watching },
-    { name: 'Can We Fix It?', type: ActivityType.Listening },
+    { type: ActivityType.Watching,  name: 'Bob The Builder' },
+    { type: ActivityType.Listening, name: 'Can We Fix It?' },
     // Memes
-    { name: 'Never Gonna Give You Up', type: ActivityType.Listening },
-    { name: 'Shrek', type: ActivityType.Watching },
-    { name: 'Crave Rave', type: ActivityType.Listening },
-    { name: 'All Star', type: ActivityType.Listening },
-    { name: 'Dragostea Din Tei', type: ActivityType.Listening },
-    { name: 'HEYYEYAAEYAAAEYAEYAA', type: ActivityType.Listening },
-    { name: 'Did you know that yabob is a real place?' },
+    { type: ActivityType.Listening, name: 'Never Gonna Give You Up' },
+    { type: ActivityType.Watching,  name: 'Shrek' },
+    { type: ActivityType.Listening, name: 'Crave Rave' },
+    { type: ActivityType.Listening, name: 'All Star' },
+    { type: ActivityType.Listening, name: 'Dragostea Din Tei' },
+    { type: ActivityType.Listening, name: 'HEYYEYAAEYAAAEYAEYAA' },
+    { type: ActivityType.Playing,   name: 'Did you know that yabob is a real place?' },
     // CS real
-    { name: 'your bugs disappear', type: ActivityType.Watching },
-    { name: 'you squash your bugs', type: ActivityType.Watching },
-    { name: 'you code', type: ActivityType.Watching },
-    { name: 'Lectures', type: ActivityType.Watching },
-    { name: 'Midterm Review', type: ActivityType.Watching },
-    { name: 'Finals Review', type: ActivityType.Watching },
-    { name: 'Hello World Tutorial', type: ActivityType.Watching },
-    { name: 'Coding Tutorials', type: ActivityType.Watching }
-];
+    { type: ActivityType.Watching,  name: 'you squash your bugs' },
+    { type: ActivityType.Watching,  name: 'you code' },
+    { type: ActivityType.Watching,  name: 'Lectures' },
+    { type: ActivityType.Watching,  name: 'Midterm Review' },
+    { type: ActivityType.Watching,  name: 'Finals Review' },
+    { type: ActivityType.Watching,  name: 'Hello World Tutorial',  },
+    { type: ActivityType.Watching,  name: 'Coding Tutorials' },
+    { type: ActivityType.Playing,   name: 'Manifesting an A' },
+    { type: ActivityType.Playing,   name: 'gbd' },
+    // CS Memes
+    { type: ActivityType.Playing,   name: 'Faster than Internet Explorer' },
+    { type: ActivityType.Playing,   name: 'Changing the TV input' },
+    { type: ActivityType.Playing,   name: 'Never sudo rm -rf /'  },
+    { type: ActivityType.Playing,   name: 'crtl + C, ctrl + V' },
+    { type: ActivityType.Playing,   name: 'cmd + C, cmd + V' },
+    { type: ActivityType.Watching,  name: 'vim or emacs?' },
+    { type: ActivityType.Playing,   name: 'git commit -m "fix"' },
+    { type: ActivityType.Playing,   name: 'leetcode' },
+    { type: ActivityType.Playing,   name: 'hackerrank' },
+    { type: ActivityType.Playing,   name: 'codeforces' },
+    { type: ActivityType.Playing,   name: '#define true (rand() > 10)' },
+    { type: ActivityType.Playing,   name: 'did you mean "XOR" or "OR"?' },
+    { type: ActivityType.Playing,   name: 'Don\'t use whitespace in C challenge' },
+    { type: ActivityType.Playing,   name: '5 ! = 120' },
+    { type: ActivityType.Playing,   name: '1 + 1 = 11' },
+    { type: ActivityType.Playing,   name: 'It\'s not a bug, it\'s a feature' },
+    { type: ActivityType.Playing,   name: 'You probably need a <br>' },
+    // Hello World in different languages
+    { type: ActivityType.Playing,   name: 'printf("Hello World");' },
+    { type: ActivityType.Playing,   name: 'System.out.println("Hello World");' },
+    { type: ActivityType.Playing,   name: 'print("Hello World")' },
+    { type: ActivityType.Playing,   name: 'puts("Hello World")' },
+    { type: ActivityType.Playing,   name: 'cout << "Hello World";',  },
+    { type: ActivityType.Playing,   name: 'console.log("Hello World");' },
+]
 
 /**
  * These presences might depend on the client object
