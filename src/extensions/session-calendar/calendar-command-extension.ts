@@ -61,6 +61,13 @@ class CalendarInteractionExtension
 
     private static helpEmbedsSent = false;
 
+    /**
+     * - Initializes the calendar extension using firebase backup if available
+     * - Adds calendar extension slash commands to the server
+     * - Adds calendar extension help messages to respective lists
+     * @param guild 
+     * @returns CalendarInteractionExtension
+     */
     static async load(guild: Guild): Promise<CalendarInteractionExtension> {
         if (
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
@@ -182,6 +189,11 @@ class CalendarInteractionExtension
             );
     }
 
+    /**
+     * Seperates the button name and queue name from the button interaction custom id
+     * @param interaction 
+     * @returns [buttonName, queueName]
+     */
     private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
         const delimiterPosition = interaction.customId.indexOf(' ');
         const buttonName = interaction.customId.substring(0, delimiterPosition);

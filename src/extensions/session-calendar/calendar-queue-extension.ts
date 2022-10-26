@@ -77,6 +77,10 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         await this.renderCalendarEmbeds(false);
     }
 
+    /**
+     * Removes `deletedQueue` from the listeners map
+     * @param deletedQueue 
+     */
     override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
         serverIdCalendarStateMap
             .get(this.queueChannel.channelObj.guild.id)

@@ -80,7 +80,7 @@ const makeCalendarStringHelp: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string [displayName] (queue_1) (queue_2) ... (user)`',
+                title: 'Command: `/make_calendar_string [calendar_name] (queue_1) (queue_2) ... (user)`',
                 fields: [
                     {
                         name: 'Description',
@@ -89,9 +89,9 @@ const makeCalendarStringHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: '`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\n\
-                    `queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\n\
-                    The user you want to change the calendar string for (Bot Admin only)',
+                        value: '`calendar_name: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
+                    \n`queue_i: Channel`\nThe channel(s) you want to tutor for the event\n`user: User`\
+                    \nThe user you want to change the calendar string for (Bot Admin only)',
                         inline: true
                     },
                     {
@@ -116,7 +116,7 @@ const makeCalendarStringAllHelp: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/make_calendar_string_all [displayName]`',
+                title: 'Command: `/make_calendar_string_all [calendar_name]`',
                 fields: [
                     {
                         name: 'Description',
@@ -125,13 +125,48 @@ const makeCalendarStringAllHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: '`displayName: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
+                        value: '`calendar_name: string`\nEnter the name you want to show on the calendar. YABOB will map this to your discord id.\
                             \n`user: Member`\nThe user you want to change the calendar string for (Bot Admin only)',
                         inline: true
                     },
                     {
                         name: 'Example Usage',
                         value: '`/make_calendar_string_all Real Name`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const setPublicEmbedUrlHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_public_embed_url',
+        value: 'set_public_embed_url'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_public_embed_url [url]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the URL that upcoming sessions embed calendar redirects you to.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`url: string`\nA public url to a website which shows the calendar for the server.\
+                        \nThis url will be used in the queue embeds to redirect users to the calendar.',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_public_embed_url https://discord.com/`',
                         inline: true
                     }
                 ]
@@ -160,8 +195,9 @@ const whenNextHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: '`queue_name: string`\n Specifies a queue to list upcoming help sessions for. If not specified, defauts to current queue if used in a valid queue.',
-                        inline: true
+                        value: '`queue_name: string`\n Specifies a queue to list upcoming help sessions for. \
+                        \nIf not specified, defauts to current queue if used in a valid queue.',
+                        inline: false
                     },
                     {
                         name: 'Example Usage',
@@ -174,7 +210,11 @@ const whenNextHelp: HelpMessage = {
     }
 };
 
-const calendarAdminHelpMessages: HelpMessage[] = [setCalendarHelp, unsetCalendarHelp];
+const calendarAdminHelpMessages: HelpMessage[] = [
+    setCalendarHelp,
+    unsetCalendarHelp,
+    makeCalendarStringHelp
+];
 
 const calendarHelperHelpMessages: HelpMessage[] = [
     makeCalendarStringHelp,
