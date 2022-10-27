@@ -9,11 +9,7 @@ import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states';
 
 /**
- * Returns a new FirebaseServerBackupExtension for the server with the given id and name
- * - Connects to the firsebase database
- * @param serverName
- * @param serverId
- *
+ * Built in backup extension
  */
 class FirebaseServerBackupExtension
     extends BaseServerExtension

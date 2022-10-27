@@ -1,6 +1,6 @@
 /** @module SessionCalendar */
 import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface';
-import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
+import { CalendarExtensionState, calendarStates } from './calendar-states';
 import {
     ButtonInteraction,
     CategoryChannel,
@@ -82,7 +82,7 @@ class CalendarInteractionExtension
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });
-        serverIdCalendarStateMap.set(
+        calendarStates.set(
             guild.id,
             await CalendarExtensionState.create(guild)
         );

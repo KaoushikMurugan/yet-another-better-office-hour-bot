@@ -159,12 +159,12 @@ class CalendarServerEventListener extends BaseServerExtension {
      * @returns
      */
     override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
-        serverIdCalendarStateMap.delete(server.guild.id);
+        calendarStates.delete(server.guild.id);
         return Promise.resolve();
     }
 }
 
 /** static, key is guild id, value is 1 calendar extension state */
-const serverIdCalendarStateMap = new Collection<GuildId, CalendarExtensionState>();
+const calendarStates = new Collection<GuildId, CalendarExtensionState>();
 
-export { CalendarExtensionState, serverIdCalendarStateMap, CalendarServerEventListener };
+export { CalendarExtensionState, calendarStates, CalendarServerEventListener };

@@ -5,7 +5,7 @@
  *  used by the calendar extension
  */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
+import { CalendarExtensionState, calendarStates } from './calendar-states';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager';
 import { Optional } from '../../utils/type-aliases';
@@ -45,7 +45,7 @@ async function getUpComingTutoringEvents(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
+        calendarId: calendarStates.get(serverId)?.calendarId ?? '',
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
@@ -182,7 +182,7 @@ function composeViewModel(
         eventQueue: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: serverIdCalendarStateMap
+        discordId: calendarStates
             .get(serverId)
             ?.displayNameDiscordIdMap.get(tutorName),
         location: location
@@ -269,7 +269,7 @@ function isServerCalendarInteraction(
     interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
 ): [AttendingServerV2, CalendarExtensionState] {
     const server = isServerInteraction(interaction);
-    const state = serverIdCalendarStateMap.get(server.guild.id);
+    const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
     }

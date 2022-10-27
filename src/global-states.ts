@@ -28,11 +28,16 @@ if (
 ) {
     throw new Error(red('Missing firebase credentials.'));
 }
+
+/** The following are global constant references */
+
+/** Datatbase object used for backups, shared across base yabob and extensions */
 const firebaseDB: Firestore = getFirestore();
 
 /**
- * Do not reference this object until client has logged in
- * - use it inside functions not at top level
+ * The discord user object.
+ * @remarks Do not reference this object until client has logged in
+ * - use it inside functions, **NOT** at the top level
  * - because we can't do top level await in modules to wait for the login call
  */
 const client = new Client({
