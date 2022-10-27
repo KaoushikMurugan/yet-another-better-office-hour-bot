@@ -93,46 +93,39 @@ client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
-    let handled = false;
     if (interaction.isChatInputCommand()) {
         if (builtInCommandHandlerCanHandle(interaction)) {
-            handled = true;
             await processBuiltInCommand(interaction);
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleCommand(interaction));
-            handled = externalCommandHandler !== undefined;
             await externalCommandHandler?.processCommand(interaction);
         }
     }
     if (interaction.isButton()) {
         if (builtInButtonHandlerCanHandle(interaction)) {
-            handled = true;
             await processBuiltInButton(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleButton(interaction));
-            handled = externalButtonHandler !== undefined;
             await externalButtonHandler?.processButton(interaction);
         }
     }
     if (interaction.isModalSubmit()) {
         if (builtInModalHandlercanHandle(interaction)) {
-            handled = true;
             await processBuiltInModalSubmit(interaction);
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
-            handled = externalModalHandler !== undefined;
             await externalModalHandler?.processModalSubmit(interaction);
         }
     }
     // optional, remove it if you feel like this is too ugly
-    if (!handled && interaction.isRepliable()) {
+    if (interaction.isRepliable() && !interaction.replied) {
         await interaction.reply({
             ...ErrorEmbed(
                 new CommandNotImplementedError(
