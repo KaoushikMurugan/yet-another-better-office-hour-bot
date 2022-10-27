@@ -20,7 +20,7 @@ import { PeriodicUpdateError, ServerError } from '../utils/error-types';
 import { Helpee, Helper } from '../models/member-states';
 import { IServerExtension } from '../extensions/extension-interface';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging';
-import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
+import { FirebaseServerBackupExtension } from './firebase-backup';
 import { CalendarServerEventListener } from '../extensions/session-calendar/calendar-states';
 import { QueueBackup } from '../models/backups';
 import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors';

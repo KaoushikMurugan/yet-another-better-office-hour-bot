@@ -1,12 +1,12 @@
 /** @module FirebaseServerBackup */
-import { BaseServerExtension, IServerExtension } from '../extension-interface';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server';
-import { QueueBackup, ServerBackup } from '../../models/backups';
-import { blue, cyan, yellow } from '../../utils/command-line-colors';
-import { SimpleLogEmbed } from '../../utils/embed-helper';
-import { Optional } from '../../utils/type-aliases';
+import { BaseServerExtension, IServerExtension } from '../extensions/extension-interface';
+import { AttendingServerV2 } from './base-attending-server';
+import { QueueBackup, ServerBackup } from '../models/backups';
+import { blue, cyan, yellow } from '../utils/command-line-colors';
+import { SimpleLogEmbed } from '../utils/embed-helper';
+import { Optional } from '../utils/type-aliases';
 import { Guild } from 'discord.js';
-import { firebaseDB } from '../../global-states';
+import { firebaseDB } from '../global-states';
 
 /**
  * Returns a new FirebaseServerBackupExtension for the server with the given id and name

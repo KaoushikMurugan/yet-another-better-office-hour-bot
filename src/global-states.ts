@@ -2,7 +2,7 @@ import { AttendingServerV2 } from './attending-server/base-attending-server';
 import { GuildId } from './utils/type-aliases';
 import { environment } from './environment/environment-manager';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
-import { yellow, black } from './utils/command-line-colors';
+import { yellow, black, red } from './utils/command-line-colors';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -11,7 +11,7 @@ if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
     environment.discordBotCredentials.YABOB_APP_ID.length === 0
 ) {
-    throw new Error('Missing token or bot ID. Aborting setup.');
+    throw new Error(red('Missing token or bot ID. Aborting setup.'));
 }
 if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
@@ -20,6 +20,13 @@ if (getApps().length === 0) {
     initializeApp({
         credential: cert(environment.firebaseCredentials)
     });
+}
+if (
+    environment.firebaseCredentials.clientEmail === '' ||
+    environment.firebaseCredentials.privateKey === '' ||
+    environment.firebaseCredentials.projectId === ''
+) {
+    throw new Error(red('Missing firebase credentials.'));
 }
 const firebaseDB: Firestore = getFirestore();
 

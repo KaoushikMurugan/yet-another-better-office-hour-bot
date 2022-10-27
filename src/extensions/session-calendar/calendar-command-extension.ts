@@ -84,7 +84,7 @@ class CalendarInteractionExtension
         });
         serverIdCalendarStateMap.set(
             guild.id,
-            await CalendarExtensionState.create(guild.id, guild.name)
+            await CalendarExtensionState.create(guild)
         );
         const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
