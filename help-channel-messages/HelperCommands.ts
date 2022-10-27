@@ -1,3 +1,4 @@
+import { client } from '../src/global-states';
 import { EmbedColor } from '../src/utils/embed-helper';
 import { HelpMessage } from '../src/utils/type-aliases';
 
@@ -16,7 +17,7 @@ const helperCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]
@@ -43,7 +44,7 @@ const startHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: "`mute_notif: boolean`\nDon't notify users that have enabled notifications for queues assigned to a Helper/Admin.",
+                        value: "`mute_notif: boolean`\nDon't notify users that have enabled notifications for queues assigned to the caller.",
                         inline: true
                     },
                     {
@@ -72,7 +73,8 @@ const stopHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Close the OH-queue and stop students from entering the queue.\n\nStudents that were in the queue before closing will still be regisitered for OH and be in the queue for the next OH.',
+                        value: 'Stops tracking hours for caller and marks them interally as not helping. Closes queues which no longer have an active helper\
+                        \n\nStudents that were in the queue before closing will still be regisitered for OH and be in the queue for the next OH.',
                         inline: false
                     },
                     {
@@ -140,7 +142,7 @@ const announceHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Sends a messeage to all of the queues that you are currently helping.',
+                        value: 'Sends a messeage to all helpees waiting in the queues that you are currently helping.',
                         inline: false
                     },
                     {
@@ -174,7 +176,7 @@ const clearHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Empties a queue of students. You can only clear a queue that you are a helper for, or if you are a Bot Admin.',
+                        value: 'Empties a queue of students. You can only clear a queue that you are a helper for. Bot Admins can clear any queue.',
                         inline: false
                     },
                     {

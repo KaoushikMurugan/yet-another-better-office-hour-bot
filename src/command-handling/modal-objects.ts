@@ -8,6 +8,14 @@ import {
 } from 'discord.js';
 import { attendingServers } from '../global-states';
 
+/**
+ * Creats a modal for the user to set the queue auto clear time.
+ * Has two number inputs:
+ * - Hours (2 characters max)
+ * - Minutes (2 characters max)
+ * @param serverId 
+ * @returns 
+ */
 function queueAutoClearModal(serverId: string): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = new ModalBuilder()
@@ -46,6 +54,13 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
     return modal;
 }
 
+/**
+ * Creats a modal for the user to set the after session message.
+ * Has one paragraph text input:
+ * - After session message
+ * @param serverId 
+ * @returns 
+ */
 function afterSessionMessageModal(serverId: string): ModalBuilder {
     const modal = new ModalBuilder()
         .setTitle('Set After Session Message')
