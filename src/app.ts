@@ -1,4 +1,4 @@
-import { Guild, Collection, VoiceState } from 'discord.js';
+import { Guild, VoiceState } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server';
 import {
     builtInButtonHandlerCanHandle,
@@ -16,16 +16,12 @@ import { magenta, black, cyan, green, red, yellow } from './utils/command-line-c
 import { postSlashCommands } from './command-handling/slash-commands';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
-import { IInteractionExtension } from './extensions/extension-interface';
-import { GuildId, WithRequired } from './utils/type-aliases';
-import { client, attendingServers } from './global-states';
+import { WithRequired } from './utils/type-aliases';
+import { client, attendingServers, interactionExtensions } from './global-states';
 import { CommandNotImplementedError } from './utils/error-types';
 import { environment } from './environment/environment-manager';
 import { updatePresence } from './utils/discord-presence';
 import { centered } from './utils/util-functions';
-
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
 
 /**
  * After login startup seqence
@@ -51,7 +47,7 @@ client.on('ready', async () => {
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     //set first presence
-    await updatePresence();
+    updatePresence();
     //update presence every 30 minutes
     setInterval(updatePresence, 1000 * 60 * 30);
 });
@@ -90,8 +86,6 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
-    // if it's a built-in command/button, process
-    // otherwise find an extension that can process it
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     let handled = false;
     if (interaction.isChatInputCommand()) {
