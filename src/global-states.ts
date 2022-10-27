@@ -3,6 +3,9 @@ import { GuildId } from './utils/type-aliases';
 import { environment } from './environment/environment-manager';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
 import { yellow, black } from './utils/command-line-colors';
+import { Firestore } from 'firebase-admin/firestore';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -13,6 +16,12 @@ if (
 if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
+if (getApps().length === 0) {
+    initializeApp({
+        credential: cert(environment.firebaseCredentials)
+    });
+}
+const firebaseDB: Firestore = getFirestore();
 
 /**
  * Do not reference this object until client has logged in
@@ -44,4 +53,4 @@ client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Erro
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
-export { attendingServers, client };
+export { attendingServers, client, firebaseDB };
