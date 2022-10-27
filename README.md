@@ -19,7 +19,8 @@ Based on original **BOB V2** and **BOB V3** created by [Kaoushik Murugan](https:
 <span size="+2">
       <a href=#purpose>Purpose</a> •
       <a href=#overview>Overview</a> •
-      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki & Documentation</a> •
+      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki</a> •
+      <a href=https://kaoushikmurugan.github.io/yet-another-better-office-hour-bot>Documentation</a> •
       <a href=#license>License</a>
 </span>
 </div>

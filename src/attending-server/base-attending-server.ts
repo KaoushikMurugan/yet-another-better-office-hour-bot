@@ -62,9 +62,9 @@ class AttendingServerV2 {
     /** Keeps track of all the setTimout/setIntervals we started */
     timers: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
     /** message sent to students after they leave */
-    afterSessionMessage = '';
+    private _afterSessionMessage = '';
     /** optional, channel where yabob will log message. if undefined, don't log on the server */
-    loggingChannel?: TextChannel;
+    private _loggingChannel?: TextChannel;
     /** Key is CategoryChannel.id of the parent catgory of #queue */
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     /** cached result of {@link getQueueChannels} */
@@ -89,6 +89,12 @@ class AttendingServerV2 {
     }
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
+    }
+    get afterSessionMessage(): string {
+        return this._afterSessionMessage;
+    }
+    get loggingChannel(): Optional<TextChannel> {
+        return this._loggingChannel;
     }
 
     /**
@@ -173,9 +179,9 @@ class AttendingServerV2 {
             console.log(cyan(`Found external backup for ${guild.name}. Restoring.`));
         }
         const server = new AttendingServerV2(user, guild, serverExtensions);
-        server.afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
+        server._afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
         if (externalServerData?.loggingChannelId !== undefined) {
-            server.loggingChannel = server.guild.channels.cache.get(
+            server._loggingChannel = server.guild.channels.cache.get(
                 externalServerData?.loggingChannelId
             ) as TextChannel;
         }
@@ -226,6 +232,13 @@ class AttendingServerV2 {
         return server;
     }
 
+    /**
+     * Called when a member joins a voice channel
+     * - triggers onStudentJoinVC for all extensions if the member is a
+     * student and was just removed from the queue
+     * @param member 
+     * @param newVoiceState 
+     */
     async onMemberJoinVC(
         member: GuildMember,
         newVoiceState: WithRequired<VoiceState, 'channel'>
@@ -250,6 +263,13 @@ class AttendingServerV2 {
         );
     }
 
+    /**
+     * Called when a member leaves a voice channel
+     * - triggers onStudentLeaveVC for all extensions if the member is a 
+     * student and was in a session
+     * @param member 
+     * @param oldVoiceState 
+     */
     async onMemberLeaveVC(
         member: GuildMember,
         oldVoiceState: WithRequired<VoiceState, 'channel'>
@@ -770,7 +790,7 @@ class AttendingServerV2 {
      * - Side Effect: Triggers a firebase backup
      */
     async setAfterSessionMessage(newMessage: string): Promise<void> {
-        this.afterSessionMessage = newMessage;
+        this._afterSessionMessage = newMessage;
         // trigger anything listening to internal updates
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
@@ -872,15 +892,15 @@ class AttendingServerV2 {
      * - If undefined, disables logging for this server
      */
     async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
-        this.loggingChannel = loggingChannel;
+        this._loggingChannel = loggingChannel;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
     }
 
     async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
-        if (this.loggingChannel) {
-            await this.loggingChannel.send(message);
+        if (this._loggingChannel) {
+            await this._loggingChannel.send(message);
         }
     }
 
