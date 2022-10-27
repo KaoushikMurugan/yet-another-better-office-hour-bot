@@ -86,7 +86,10 @@ const showModalOnlyCommands: {
 function builtInCommandHandlerCanHandle(
     interaction: ChatInputCommandInteraction
 ): boolean {
-    return interaction.commandName in commandMethodMap;
+    return (
+        interaction.commandName in commandMethodMap ||
+        interaction.commandName in showModalOnlyCommands
+    );
 }
 
 /**
