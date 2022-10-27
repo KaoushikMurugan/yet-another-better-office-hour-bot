@@ -51,7 +51,7 @@ client.on('ready', async () => {
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     //set first presence
-    await updatePresence();
+    updatePresence();
     //update presence every 30 minutes
     setInterval(updatePresence, 1000 * 60 * 30);
 });
@@ -124,7 +124,7 @@ client.on('interactionCreate', async interaction => {
             await externalModalHandler?.processModalSubmit(interaction);
         }
     }
-    // optional, remove it if you feel like this is too ugly
+    // check if the command has been handled, if not, report error
     if (interaction.isRepliable() && !interaction.replied) {
         await interaction.reply({
             ...ErrorEmbed(

@@ -16,7 +16,7 @@ import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 import { commandChConfigs } from './command-ch-constants';
 import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
-import { PeriodicUpdateError, ServerError } from '../utils/error-types';
+import { ServerError } from '../utils/error-types';
 import { Helpee, Helper } from '../models/member-states';
 import { IServerExtension } from '../extensions/extension-interface';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging';
@@ -46,21 +46,12 @@ type QueueChannel = {
 };
 
 /**
- * Used as map keys to keep track of the timers we spin up
- * prevents unused timers from staying in the js event queue
- * - Union with more string literals if needed
- */
-type ServerTimerType = 'SERVER_PERIODIC_UPDATE';
-
-/**
  * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
  * - Public functions can be accessed by the command handler
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
-    /** Keeps track of all the setTimout/setIntervals we started */
-    timers: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
     /** message sent to students after they leave */
     private _afterSessionMessage = '';
     /** optional, channel where yabob will log message. if undefined, don't log on the server */
@@ -118,8 +109,6 @@ class AttendingServerV2 {
      * Cleans up all the timers from setInterval
      */
     clearAllServerTimers(): void {
-        this.timers.forEach(clearInterval);
-        this.timers.clear();
         this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
@@ -201,32 +190,7 @@ class AttendingServerV2 {
         });
         // Now Emit all the events
         await Promise.all(
-            serverExtensions
-                .map(extension => [
-                    extension.onServerInitSuccess(server),
-                    extension.onServerPeriodicUpdate(server, true)
-                ])
-                .flat()
-        );
-        // Call onServerPeriodicUpdate every 15min +- 1min
-        server.timers.set(
-            'SERVER_PERIODIC_UPDATE',
-            setInterval(
-                async () =>
-                    await Promise.all(
-                        serverExtensions.map(extension =>
-                            extension.onServerPeriodicUpdate(server, false)
-                        )
-                    ).catch((err: Error) =>
-                        console.error(
-                            new PeriodicUpdateError(
-                                `${err.name}: ${err.message}`,
-                                'Server'
-                            )
-                        )
-                    ),
-                1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
-            )
+            serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         console.log(`⭐ ${green(`Initilization for ${guild.name} is successful!`)}`);
         return server;
