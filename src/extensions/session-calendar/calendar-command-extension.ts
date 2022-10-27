@@ -16,7 +16,6 @@ import {
     EmbedColor,
     ErrorEmbed,
     SimpleEmbed,
-    SimpleLogEmbed,
     SlashCommandLogEmbed
 } from '../../utils/embed-helper';
 import { ExtensionSetupError } from '../../utils/error-types';
@@ -49,7 +48,10 @@ import {
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
 import { environment } from '../../environment/environment-manager';
-import { CalendarSuccessMessages } from './calendar-success-messages';
+import {
+    CalendarLogMessages,
+    CalendarSuccessMessages
+} from './calendar-success-messages';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -170,7 +172,9 @@ class CalendarInteractionExtension
             );
     }
 
-    private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+    private splitButtonQueueName(
+        interaction: ButtonInteraction
+    ): [buttonName: string, queueName: string] {
         const delimiterPosition = interaction.customId.indexOf(' ');
         const buttonName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
@@ -194,11 +198,9 @@ class CalendarInteractionExtension
         const [server, state] = isServerCalendarInteraction(interaction);
         await Promise.all([
             state.setCalendarId(newCalendarId),
-            server.sendLogMessage(
-                SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-            )
+            server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
         ]);
-        return SimpleEmbed(CalendarSuccessMessages.updatedCalendarId(newCalendarName));
+        return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
     }
 
     /**
@@ -211,11 +213,9 @@ class CalendarInteractionExtension
         isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
             state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
-            server.sendLogMessage(
-                SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-            )
+            server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
         ]);
-        return SimpleEmbed(CalendarSuccessMessages.unsetCalendar);
+        return CalendarSuccessMessages.unsetCalendar;
     }
 
     /**
@@ -265,9 +265,7 @@ class CalendarInteractionExtension
             ) {
                 throw ExpectedCalendarErrors.nonAdminMakingCalendarStrForOthers;
             } else {
-                // already checked in isServerInteraction
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                memberToUpdate = await interaction.guild!.members.fetch(user);
+                memberToUpdate = await server.guild.members.fetch(user);
             }
         }
         if (generateAll) {
@@ -307,14 +305,10 @@ class CalendarInteractionExtension
                     )} triggered by ${memberToUpdate.displayName}`
                 )
             );
-        await server.sendLogMessage(
-            SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-        );
-        return SimpleEmbed(
-            CalendarSuccessMessages.completedCalendarString(
-                calendarDisplayName,
-                validQueues.map(queue => queue.name)
-            )
+        await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+        return CalendarSuccessMessages.completedCalendarString(
+            calendarDisplayName,
+            validQueues.map(queue => queue.name)
         );
     }
 
@@ -333,10 +327,10 @@ class CalendarInteractionExtension
             }
             // now rawUrl is valid
             await state.setPublicEmbedUrl(rawUrl);
-            return SimpleEmbed(CalendarSuccessMessages.publicEmbedUrl.updated);
+            return CalendarSuccessMessages.publicEmbedUrl.updated;
         } else {
             await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
-            return SimpleEmbed(CalendarSuccessMessages.publicEmbedUrl.backToDefault);
+            return CalendarSuccessMessages.publicEmbedUrl.backToDefault;
         }
     }
 
@@ -356,7 +350,7 @@ class CalendarInteractionExtension
             ),
             queueLevelExtension?.onCalendarExtensionStateChange()
         ]);
-        return SimpleEmbed(CalendarSuccessMessages.refreshSuccess(queueName));
+        return CalendarSuccessMessages.refreshSuccess(queueName);
     }
 }
 

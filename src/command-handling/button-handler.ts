@@ -68,7 +68,9 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
  * @param interaction
  * @returns string tuple [buttonName, queueName]
  */
-function splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+function splitButtonQueueName(
+    interaction: ButtonInteraction
+): [buttonName: string, queueName: string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
     const buttonName = interaction.customId.substring(0, delimiterPosition);
     const queueName = interaction.customId.substring(delimiterPosition + 1);
