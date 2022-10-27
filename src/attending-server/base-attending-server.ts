@@ -162,7 +162,7 @@ class AttendingServerV2 {
             ? []
             : await Promise.all([
                   GoogleSheetLoggingExtension.load(guild.name),
-                  FirebaseServerBackupExtension.load(guild.name, guild.id),
+                  new FirebaseServerBackupExtension(guild),
                   new CalendarServerEventListener()
               ]);
         // Retrieve backup from all sources. Take the first one that's not undefined

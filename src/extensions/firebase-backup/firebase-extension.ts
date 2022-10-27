@@ -9,44 +9,32 @@ import { blue, cyan, yellow } from '../../utils/command-line-colors';
 import { SimpleLogEmbed } from '../../utils/embed-helper';
 import { Optional } from '../../utils/type-aliases';
 import { environment } from '../../environment/environment-manager';
+import { Guild } from 'discord.js';
 
+/**
+ * Returns a new FirebaseServerBackupExtension for the server with the given id and name
+ * - Connects to the firsebase database
+ * @param serverName
+ * @param serverId
+ *
+ */
 class FirebaseServerBackupExtension
     extends BaseServerExtension
     implements IServerExtension
 {
-    private constructor(
-        private readonly firebase_db: Firestore,
-        private readonly serverId: string,
-        private readonly serverName: string
-    ) {
-        super();
-    }
+    private readonly firebase_db: Firestore;
 
-    /**
-     * Returns a new FirebaseServerBackupExtension for the server with the given id and name
-     * - Connects to the firsebase database
-     * @param serverName
-     * @param serverId
-     *
-     */
-    static async load(
-        serverName: string,
-        serverId: string
-    ): Promise<FirebaseServerBackupExtension> {
+    constructor(private readonly guild: Guild) {
+        super();
         if (getApps().length === 0) {
             initializeApp({
                 credential: cert(environment.firebaseCredentials)
             });
         }
-        const instance = new FirebaseServerBackupExtension(
-            getFirestore(),
-            serverId,
-            serverName
-        );
+        this.firebase_db = getFirestore();
         console.log(
-            `[${blue('Firebase Backup')}] ` + `successfully loaded for '${serverName}'!`
+            `[${blue('Firebase Backup')}] ` + `successfully loaded for '${guild.name}'!`
         );
-        return instance;
     }
 
     /**
@@ -99,7 +87,7 @@ class FirebaseServerBackupExtension
             };
         });
         const serverBackup: ServerBackup = {
-            serverName: this.serverName,
+            serverName: this.guild.name,
             queues: queueBackups,
             timeStamp: new Date(),
             afterSessionMessage: server.afterSessionMessage,
@@ -110,7 +98,7 @@ class FirebaseServerBackupExtension
         };
         this.firebase_db
             .collection('serverBackups')
-            .doc(this.serverId)
+            .doc(this.guild.id)
             .set(serverBackup)
             .then(() =>
                 console.log(
@@ -119,7 +107,7 @@ class FirebaseServerBackupExtension
                             timeZone: 'PST8PDT'
                         })
                     )} ` +
-                        `${yellow(this.serverName)}]\n` +
+                        `${yellow(this.guild.name)}]\n` +
                         ` - Server & queue data backup successful`
                 )
             )
