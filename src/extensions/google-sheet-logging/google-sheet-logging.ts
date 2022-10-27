@@ -5,7 +5,7 @@ import { BaseServerExtension, IServerExtension } from '../extension-interface';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { blue, red, yellow } from '../../utils/command-line-colors';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
-import { Collection, GuildMember, VoiceChannel } from 'discord.js';
+import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases';
 import { environment } from '../../environment/environment-manager';
 import { ExpectedSheetErrors } from './expected-sheet-errors';
@@ -63,7 +63,7 @@ class GoogleSheetLoggingExtension
      * - the google sheet id is invalid
      * - the google sheet is not accessible
      */
-    static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
+    static async load(guild: Guild): Promise<GoogleSheetLoggingExtension> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             throw new ExtensionSetupError(
                 'No Google Sheet ID or Google Cloud credentials found.'
@@ -76,17 +76,17 @@ class GoogleSheetLoggingExtension
         await googleSheet.loadInfo().catch(() => {
             throw new ExtensionSetupError(
                 red(
-                    `Failed to load google sheet for ${serverName}. ` +
+                    `Failed to load google sheet for ${guild.name}. ` +
                         `Google sheets rejected our connection.`
                 )
             );
         });
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${serverName}'!\n` +
+                `successfully loaded for '${guild.name}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
-        return new GoogleSheetLoggingExtension(serverName, googleSheet);
+        return new GoogleSheetLoggingExtension(guild.name, googleSheet);
     }
 
     /**

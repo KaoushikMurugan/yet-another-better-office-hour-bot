@@ -84,7 +84,7 @@ class CalendarInteractionExtension
         });
         calendarStates.set(
             guild.id,
-            await CalendarExtensionState.create(guild)
+            await CalendarExtensionState.load(guild)
         );
         const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);

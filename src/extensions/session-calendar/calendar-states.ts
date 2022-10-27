@@ -1,7 +1,7 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension';
 import { cyan, yellow } from '../../utils/command-line-colors';
-import { BaseServerExtension } from '../extension-interface';
+import { BaseServerExtension, IServerExtension } from '../extension-interface';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases';
 import LRU from 'lru-cache';
@@ -19,7 +19,7 @@ type CalendarConfigBackup = {
     calendarNameDiscordIdMap: { [key: string]: string };
 };
 
-class CalendarExtensionState {
+class CalendarExtensionState extends BaseServerExtension implements IServerExtension {
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
     // save the data from /make_calendar_string, key is calendar display name, value is discord id
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
@@ -28,7 +28,9 @@ class CalendarExtensionState {
     // full url to the public calendar embed
     publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
-    constructor(private readonly guild: Guild) {}
+    constructor(private readonly guild: Guild) {
+        super();
+    }
 
     /**
      * Returns a new CalendarExtensionState for the server with the given id and name
@@ -38,7 +40,7 @@ class CalendarExtensionState {
      * @param serverName
      * @returns CalendarExtensionState
      */
-    static async create(guild: Guild): Promise<CalendarExtensionState> {
+    static async load(guild: Guild): Promise<CalendarExtensionState> {
         const firebaseCredentials = environment.firebaseCredentials;
         if (
             firebaseCredentials.clientEmail === '' &&
@@ -50,6 +52,16 @@ class CalendarExtensionState {
         const instance = new CalendarExtensionState(guild);
         await instance.restoreFromBackup(guild.id);
         return instance;
+    }
+
+    /**
+     * If a server gets deleted, remove it from the calendar server map
+     * @param server
+     * @returns
+     */
+    override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
+        calendarStates.delete(server.guild.id);
+        return Promise.resolve();
     }
 
     /**
@@ -152,19 +164,7 @@ class CalendarExtensionState {
     }
 }
 
-class CalendarServerEventListener extends BaseServerExtension {
-    /**
-     * If a server gets deleted, remove it from the calendar server map
-     * @param server
-     * @returns
-     */
-    override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
-        calendarStates.delete(server.guild.id);
-        return Promise.resolve();
-    }
-}
-
 /** static, key is guild id, value is 1 calendar extension state */
 const calendarStates = new Collection<GuildId, CalendarExtensionState>();
 
-export { CalendarExtensionState, calendarStates, CalendarServerEventListener };
+export { CalendarExtensionState, calendarStates };
