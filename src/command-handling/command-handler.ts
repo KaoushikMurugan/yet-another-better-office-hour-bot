@@ -1,6 +1,20 @@
 /** @module BuiltInHandlers */
 
+/**
+ * @packageDocumentation
+ * Responsible for preprocessing commands and dispatching them to servers
+ * ----
+ * Each YABOB instance should only have 1 BuiltInCommandHandler
+ * All the functions below follows this convention:
+ * - async function <corresponding command name>(interaction): Promise<YabobEmbed>
+ * @category Handler Classes
+ * @param interaction the raw interaction
+ * @throws CommandParseError: if command doesn't satify the checks in Promise.all
+ * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
+ */
+
 import {
+    BaseMessageOptions,
     ChannelType,
     ChatInputCommandInteraction,
     GuildMember,
@@ -23,26 +37,13 @@ import {
 import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, Optional } from '../utils/type-aliases';
+import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
 import { ExpectedParseErrors } from './expected-interaction-errors';
 import { SuccessMessages } from './builtin-success-messages';
-
-/**
- * @packageDocumentation
- * Responsible for preprocessing commands and dispatching them to servers
- * ----
- * Each YABOB instance should only have 1 BuiltInCommandHandler
- * All the functions below follows this convention:
- * - async function <corresponding command name>(interaction): Promise<string>
- * @category Handler Classes
- * @param interaction the raw interaction
- * @throws CommandParseError: if command doesn't satify the checks in Promise.all
- * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
- */
 
 /**
  * The map of available commands
@@ -67,25 +68,28 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     help: help,
     set_logging_channel: setLoggingChannel,
     stop_logging: stopLogging,
-    set_after_session_msg: showAfterSessionMessageModal,
-    set_queue_auto_clear: showQueueAutoClearModal,
     serious_mode: setSeriousMode
 } as const;
 
 /**
- * Commands in this set only shows a modal on ChatInputCommandInteraction
+ * Commands in this object only shows a modal on ChatInputCommandInteraction
  * Actual changes to attendingServers happens on modal submit
- * - See modal-handler.ts
+ * - @see modal-handler.ts
  */
-const showModalOnlyCommands = new Set<string>([
-    'set_after_session_msg',
-    'set_queue_auto_clear'
-]);
+const showModalOnlyCommands: {
+    [commandName: string]: (inter: ChatInputCommandInteraction) => Promise<void>;
+} = {
+    set_after_session_msg: showAfterSessionMessageModal,
+    set_queue_auto_clear: showQueueAutoClearModal
+} as const;
 
 function builtInCommandHandlerCanHandle(
     interaction: ChatInputCommandInteraction
 ): boolean {
-    return interaction.commandName in commandMethodMap;
+    return (
+        interaction.commandName in commandMethodMap ||
+        interaction.commandName in showModalOnlyCommands
+    );
 }
 
 /**
@@ -97,24 +101,25 @@ async function processBuiltInCommand(
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     const commandMethod = commandMethodMap[interaction.commandName];
-    if (!showModalOnlyCommands.has(interaction.commandName)) {
-        // Immediately reply to show that YABOB has received the interaction
-        // non modal commands only
-        await interaction.reply({
-            ...SimpleEmbed(
-                `Processing command \`${interaction.commandName}\` ...`,
-                EmbedColor.Neutral
-            ),
-            ephemeral: true
-        });
-    }
     logSlashCommand(interaction);
+    if (interaction.commandName in showModalOnlyCommands) {
+        await showModalOnlyCommands[interaction.commandName]?.(interaction);
+        return;
+    }
+    // Immediately reply to show that YABOB has received the interaction
+    // non modal commands only
+    await interaction.reply({
+        ...SimpleEmbed(
+            `Processing command \`${interaction.commandName}\` ...`,
+            EmbedColor.Neutral
+        ),
+        ephemeral: true
+    });
     await commandMethod?.(interaction)
         // shorthand syntax, if successMsg is undefined, don't run the rhs
         .then(async successMsg => {
-            await Promise.all<unknown>([
-                successMsg &&
-                    interaction.editReply(SimpleEmbed(successMsg, EmbedColor.Success)),
+            await Promise.all([
+                interaction.editReply(successMsg),
                 server.sendLogMessage(SlashCommandLogEmbed(interaction))
             ]);
         })
@@ -135,7 +140,7 @@ async function processBuiltInCommand(
  * @param interaction
  * @returns success message
  */
-async function queue(interaction: ChatInputCommandInteraction): Promise<string> {
+async function queue(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(
@@ -159,7 +164,7 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<string> 
             if (interaction.channel.parentId === targetQueue.parentCategoryId) {
                 throw ExpectedParseErrors.removeInsideQueue;
             }
-            await server?.deleteQueueById(targetQueue.parentCategoryId);
+            await server.deleteQueueById(targetQueue.parentCategoryId);
             return SuccessMessages.deletedQueue(targetQueue.queueName);
         }
         default: {
@@ -173,7 +178,7 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<string> 
  * @param interaction
  * @returns
  */
-async function enqueue(interaction: ChatInputCommandInteraction): Promise<string> {
+async function enqueue(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, queueChannel, member] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction),
@@ -188,7 +193,7 @@ async function enqueue(interaction: ChatInputCommandInteraction): Promise<string
  * @param interaction
  * @returns
  */
-async function next(interaction: ChatInputCommandInteraction): Promise<string> {
+async function next(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, helperMember] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
@@ -203,9 +208,9 @@ async function next(interaction: ChatInputCommandInteraction): Promise<string> {
     // otherwise use dequeueGlobalFirst
     const dequeuedStudent =
         targetQueue || targetStudent
-            ? await server?.dequeueWithArgs(helperMember, targetStudent, targetQueue)
+            ? await server.dequeueWithArgs(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
-    return SuccessMessages.inviteSent(dequeuedStudent?.member.displayName);
+    return SuccessMessages.inviteSent(dequeuedStudent.member.displayName);
 }
 
 /**
@@ -213,7 +218,7 @@ async function next(interaction: ChatInputCommandInteraction): Promise<string> {
  * @param interaction
  * @returns
  */
-async function start(interaction: ChatInputCommandInteraction): Promise<string> {
+async function start(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
@@ -228,7 +233,7 @@ async function start(interaction: ChatInputCommandInteraction): Promise<string> 
  * @param interaction
  * @returns
  */
-async function stop(interaction: ChatInputCommandInteraction): Promise<string> {
+async function stop(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
@@ -242,7 +247,7 @@ async function stop(interaction: ChatInputCommandInteraction): Promise<string> {
  * @param interaction
  * @returns
  */
-async function leave(interaction: ChatInputCommandInteraction): Promise<string> {
+async function leave(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, member, queue] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),
@@ -257,7 +262,7 @@ async function leave(interaction: ChatInputCommandInteraction): Promise<string> 
  * @param interaction
  * @returns
  */
-async function clear(interaction: ChatInputCommandInteraction): Promise<string> {
+async function clear(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, queue, member] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
@@ -280,7 +285,7 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<string> 
  * @param interaction
  * @returns
  */
-async function clearAll(interaction: ChatInputCommandInteraction): Promise<string> {
+async function clearAll(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'clear_all', ['Bot Admin'])
@@ -298,12 +303,13 @@ async function clearAll(interaction: ChatInputCommandInteraction): Promise<strin
  * @param interaction
  * @returns
  */
-async function listHelpers(interaction: ChatInputCommandInteraction): Promise<undefined> {
+async function listHelpers(
+    interaction: ChatInputCommandInteraction
+): Promise<BaseMessageOptions> {
     const server = isServerInteraction(interaction);
     const helpers = server.activeHelpers;
     if (helpers === undefined || helpers.size === 0) {
-        await interaction.editReply(SimpleEmbed('No one is currently helping.'));
-        return undefined;
+        return SimpleEmbed('No one is currently helping.');
     }
     const allQueues = await server.getQueueChannels();
     const table = new AsciiTable3()
@@ -343,10 +349,11 @@ async function listHelpers(interaction: ChatInputCommandInteraction): Promise<un
         .setWrapped(2)
         .setWrapped(3)
         .setWrapped(4);
-    await interaction.editReply(
-        SimpleEmbed('Current Helpers', EmbedColor.Aqua, '```' + table.toString() + '```')
+    return SimpleEmbed(
+        'Current Helpers',
+        EmbedColor.Aqua,
+        '```' + table.toString() + '```'
     );
-    return undefined;
 }
 
 /**
@@ -354,13 +361,10 @@ async function listHelpers(interaction: ChatInputCommandInteraction): Promise<un
  * @param interaction
  * @returns
  */
-async function announce(interaction: ChatInputCommandInteraction): Promise<string> {
+async function announce(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'announce', [
-            'Bot Admin',
-            'Staff'
-        ])
+        isTriggeredByUserWithRolesSync(interaction, 'announce', ['Bot Admin', 'Staff'])
     ];
     const announcement = interaction.options.getString('message', true);
     const optionalChannel = interaction.options.getChannel('queue_name', false);
@@ -378,14 +382,14 @@ async function announce(interaction: ChatInputCommandInteraction): Promise<strin
  * @param interaction
  * @returns
  */
-async function cleanup(interaction: ChatInputCommandInteraction): Promise<string> {
+async function cleanup(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
     const [server, queue] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
-        await isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
+        isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     await server.cleanUpQueue(queue);
-    return `Queue ${queue.queueName} has been cleaned up.`;
+    return SuccessMessages.cleanedup.queue(queue.queueName);
 }
 
 /**
@@ -395,16 +399,16 @@ async function cleanup(interaction: ChatInputCommandInteraction): Promise<string
  */
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
+        isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     const allQueues = await server.getQueueChannels();
     await Promise.all(
         allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)) ?? []
     );
-    return `All queues have been cleaned up.`;
+    return SuccessMessages.cleanedup.allQueues;
 }
 
 /**
@@ -414,15 +418,13 @@ async function cleanupAllQueues(
  */
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'cleanup_help_channel', [
-            'Bot Admin'
-        ])
+        isTriggeredByUserWithRolesSync(interaction, 'cleanup_help_channel', ['Bot Admin'])
     ];
     await server.updateCommandHelpChannels();
-    return `Successfully cleaned up everything under 'Bot Commands Help'.`;
+    return SuccessMessages.cleanedup.helpChannels;
 }
 
 /**
@@ -432,15 +434,14 @@ async function cleanupHelpChannel(
  */
 async function showAfterSessionMessageModal(
     interaction: ChatInputCommandInteraction
-): Promise<undefined> {
+): Promise<void> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'set_after_session_msg', [
+        isTriggeredByUserWithRolesSync(interaction, 'set_after_session_msg', [
             'Bot Admin'
         ])
     ];
     await interaction.showModal(afterSessionMessageModal(server.guild.id));
-    return undefined;
 }
 
 /**
@@ -448,7 +449,9 @@ async function showAfterSessionMessageModal(
  * @param interaction
  * @returns
  */
-async function help(interaction: ChatInputCommandInteraction): Promise<undefined> {
+async function help(
+    interaction: ChatInputCommandInteraction
+): Promise<BaseMessageOptions> {
     const commandName = interaction.options.getString('command', true);
     const helpMessage =
         adminCommandHelpMessages.find(
@@ -461,11 +464,10 @@ async function help(interaction: ChatInputCommandInteraction): Promise<undefined
             message => message.nameValuePair.name === commandName
         );
     if (helpMessage !== undefined) {
-        await interaction.editReply(helpMessage?.message);
+        return interaction.editReply(helpMessage.message);
     } else {
         throw new CommandParseError('Command not found.');
     }
-    return undefined;
 }
 
 /**
@@ -475,12 +477,10 @@ async function help(interaction: ChatInputCommandInteraction): Promise<undefined
  */
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'set_logging_channel', [
-            'Bot Admin'
-        ])
+        isTriggeredByUserWithRolesSync(interaction, 'set_logging_channel', ['Bot Admin'])
     ];
     const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
     if (loggingChannel.type !== ChannelType.GuildText) {
@@ -497,15 +497,12 @@ async function setLoggingChannel(
  */
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction
-): Promise<undefined> {
+): Promise<void> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'set_queue_auto_clear', [
-            'Bot Admin'
-        ])
+        isTriggeredByUserWithRolesSync(interaction, 'set_queue_auto_clear', ['Bot Admin'])
     ];
     await interaction.showModal(queueAutoClearModal(server.guild.id));
-    return undefined;
 }
 
 /**
@@ -513,10 +510,12 @@ async function showQueueAutoClearModal(
  * @param interaction
  * @returns
  */
-async function stopLogging(interaction: ChatInputCommandInteraction): Promise<string> {
+async function stopLogging(
+    interaction: ChatInputCommandInteraction
+): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
-        await isTriggeredByUserWithRolesSync(interaction, 'stop_logging', ['Bot Admin'])
+        isTriggeredByUserWithRolesSync(interaction, 'stop_logging', ['Bot Admin'])
     ];
     await server.setLoggingChannel(undefined);
     return SuccessMessages.stoppedLogging;
@@ -527,7 +526,9 @@ async function stopLogging(interaction: ChatInputCommandInteraction): Promise<st
  * @param interaction
  * @returns
  */
-async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise<string> {
+async function setSeriousMode(
+    interaction: ChatInputCommandInteraction
+): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'activate_serious_mode', [
@@ -537,9 +538,9 @@ async function setSeriousMode(interaction: ChatInputCommandInteraction): Promise
     const enable = interaction.options.getBoolean('enable', true);
     await server.setSeriousServer(enable);
     if (enable) {
-        return `Successfully activated serious mode.`;
+        return SimpleEmbed(`Successfully activated serious mode.`);
     } else {
-        return `Successfully deactivated serious mode.`;
+        return SimpleEmbed(`Successfully deactivated serious mode.`);
     }
 }
 

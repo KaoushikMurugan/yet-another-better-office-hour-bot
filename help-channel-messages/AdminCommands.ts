@@ -1,3 +1,4 @@
+import { client } from '../src/global-states';
 import { EmbedColor } from '../src/utils/embed-helper';
 import { HelpMessage } from '../src/utils/type-aliases';
 
@@ -16,7 +17,9 @@ const adminCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url:
+                        client.user?.avatarURL() ??
+                        'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]
@@ -91,7 +94,7 @@ const queueRemoveHelp: HelpMessage = {
     }
 };
 
-const cleanupHelp: HelpMessage = {
+const cleanupQueueHelp: HelpMessage = {
     nameValuePair: {
         name: 'cleanup_queue',
         value: 'cleanup_queue'
@@ -192,13 +195,191 @@ const clearAllHelp: HelpMessage = {
     }
 };
 
+const setAfterSessionsMsgHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_after_session_msg',
+        value: 'set_after_session_msg'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_after_session_msg [message]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Prompts a modal (aka form) where you can enter a message \
+                        that is to be sent to the helpees after a session is over.',
+                        inline: false
+                    },
+                    {
+                        name: 'Modal Input Fields',
+                        value: '`message: text - paragraph`\nThe message to send to the queue when a session ends.',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_after_session_msg`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const setLoggingChannelCommandHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_logging_channel',
+        value: 'set_logging_channel'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_logging_channel [channel]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the channel where the bot will log all of its actions.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`channel: Channel`\nThe channel where you want YABOB to log to.',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_logging_channel #logging`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const stopLoggingCommandHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'stop_logging',
+        value: 'stop_logging'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/stop_logging`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Stops the bot from logging to the channel set by `/set_logging_channel`.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/stop_logging`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const setQueueAutoClearHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_queue_auto_clear',
+        value: 'set_queue_auto_clear'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_queue_auto_clear`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the time after which the queue will be cleared automatically.',
+                        inline: false
+                    },
+                    {
+                        name: 'Modal Input Fields',
+                        value: '`hours: number - 2 digit max` \n`minutes: number - 2 digit max`\
+                        \nSubmitting the modal will set the auto clear time to hours:minutes',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_queue_auto_clear`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const seriousModeCommandHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'serious_mode',
+        value: 'serious_mode'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/serious_mode`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Toggles serious mode. When serious mode is on, the bot will not use \
+                        emotes or emoticons in messages and embeds.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/serious_mode`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTileMessage,
     queueAddHelp,
     queueRemoveHelp,
-    cleanupHelp,
+    cleanupQueueHelp,
     cleanupHelpChannelHelp,
-    clearAllHelp
+    clearAllHelp,
+    setAfterSessionsMsgHelp,
+    setLoggingChannelCommandHelp,
+    stopLoggingCommandHelp,
+    setQueueAutoClearHelp,
+    seriousModeCommandHelp
 ];
 
 export { adminCommandHelpMessages };

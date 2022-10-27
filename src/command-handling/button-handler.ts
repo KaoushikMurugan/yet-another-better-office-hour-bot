@@ -16,7 +16,7 @@ import {
     ErrorLogEmbed
 } from '../utils/embed-helper';
 import { logButtonPress } from '../utils/util-functions';
-import { ButtonCallback } from '../utils/type-aliases';
+import { ButtonCallback, YabobEmbed } from '../utils/type-aliases';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
@@ -35,11 +35,23 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     removeN: leaveNotifGroup
 } as const;
 
+/**
+ * Check if the button interatoin can be handled by this (in-built) handler
+ * @param interaction
+ * @returns
+ */
 function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
     return buttonName in buttonMethodMap;
 }
 
+/**
+ * Handles button presses
+ * - Checks if the button press is valid
+ * - If so, calls the appropriate function to handle the button press
+ * - Returns the appropriate message to send to the user
+ * @param interaction
+ */
 async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];
@@ -54,11 +66,7 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
     await buttonMethod?.(queueName, interaction)
-        .then(async successMsg => {
-            if (successMsg) {
-                await interaction.editReply(SimpleEmbed(successMsg, EmbedColor.Success));
-            }
-        })
+        .then(successMsg => interaction.editReply(successMsg))
         .catch(async err => {
             // Central error handling, reply to user with the error
             const server = isServerInteraction(interaction);
@@ -76,7 +84,9 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
  * @param interaction
  * @returns string tuple [buttonName, queueName]
  */
-function splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+function splitButtonQueueName(
+    interaction: ButtonInteraction
+): [buttonName: string, queueName: string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
     const buttonName = interaction.customId.substring(0, delimiterPosition);
     const queueName = interaction.customId.substring(delimiterPosition + 1);
@@ -89,7 +99,10 @@ function splitButtonQueueName(interaction: ButtonInteraction): [string, string] 
  * @param interaction
  * @returns success message
  */
-async function join(queueName: string, interaction: ButtonInteraction): Promise<string> {
+async function join(
+    queueName: string,
+    interaction: ButtonInteraction
+): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),
@@ -110,7 +123,10 @@ async function join(queueName: string, interaction: ButtonInteraction): Promise<
  * @param interaction
  * @returns success message
  */
-async function leave(queueName: string, interaction: ButtonInteraction): Promise<string> {
+async function leave(
+    queueName: string,
+    interaction: ButtonInteraction
+): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),
@@ -134,7 +150,7 @@ async function leave(queueName: string, interaction: ButtonInteraction): Promise
 async function joinNotifGroup(
     queueName: string,
     interaction: ButtonInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),
@@ -158,7 +174,7 @@ async function joinNotifGroup(
 async function leaveNotifGroup(
     queueName: string,
     interaction: ButtonInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),

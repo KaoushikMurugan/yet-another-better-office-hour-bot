@@ -29,6 +29,9 @@ type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
  */
 type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLED';
 
+/**
+ * Class that manages the queue for a specific category
+ */
 class HelpQueueV2 {
     /** Keeps track of all the setTimout / setIntervals we started */
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
@@ -118,6 +121,8 @@ class HelpQueueV2 {
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
     }
+
+    /** The seriousness of the queue */
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }

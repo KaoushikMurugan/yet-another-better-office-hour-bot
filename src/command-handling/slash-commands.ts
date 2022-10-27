@@ -17,7 +17,8 @@ import { adminCommandHelpMessages } from '../../help-channel-messages/AdminComma
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
 
-const queueCommand = new SlashCommandBuilder() // /queue
+// /queue
+const queueCommand = new SlashCommandBuilder()
     .setName('queue')
     .setDescription('Add or remove queue channels to the server (admin only)')
     .addSubcommand(subcommand =>
@@ -44,7 +45,8 @@ const queueCommand = new SlashCommandBuilder() // /queue
             )
     );
 
-const enqueueCommand = new SlashCommandBuilder() // /enqueue [queue_name] (user)
+// /enqueue [queue_name] (user)
+const enqueueCommand = new SlashCommandBuilder()
     .setName('enqueue')
     .setDescription('Enter a help queue')
     .addChannelOption(option =>
@@ -55,7 +57,8 @@ const enqueueCommand = new SlashCommandBuilder() // /enqueue [queue_name] (user)
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
-const dequeueCommand = new SlashCommandBuilder() // /next (queue_name) (user)
+// /next (queue_name) (user)
+const dequeueCommand = new SlashCommandBuilder()
     .setName('next')
     .setDescription('Bring in the next student to help from any of your queues (FIFO)')
     .addChannelOption(option =>
@@ -69,7 +72,8 @@ const dequeueCommand = new SlashCommandBuilder() // /next (queue_name) (user)
         option.setName('user').setDescription('A user to dequeue').setRequired(false)
     );
 
-const startCommand = new SlashCommandBuilder() // /start (mute_notif)
+// /start (mute_notif)
+const startCommand = new SlashCommandBuilder()
     .setName('start')
     .setDescription('Start helping students')
     .addBooleanOption(option =>
@@ -81,11 +85,13 @@ const startCommand = new SlashCommandBuilder() // /start (mute_notif)
             .setRequired(false)
     );
 
-const stopCommand = new SlashCommandBuilder() // /stop
+// /stop
+const stopCommand = new SlashCommandBuilder()
     .setName('stop')
     .setDescription('Stop helping students');
 
-const leaveCommand = new SlashCommandBuilder() // /leave
+// /leave
+const leaveCommand = new SlashCommandBuilder()
     .setName('leave')
     .setDescription('Leave your current queue')
     .addChannelOption(option =>
@@ -96,7 +102,8 @@ const leaveCommand = new SlashCommandBuilder() // /leave
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
-const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
+// /clear (queue_name) (all)
+const clearCommand = new SlashCommandBuilder()
     .setName('clear')
     .setDescription('Clear all of the waiting students from a queue.')
     .addChannelOption(option =>
@@ -107,11 +114,13 @@ const clearCommand = new SlashCommandBuilder() // /clear (queue_name) (all)
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
+// /clear_all
 const clearAllCommand = new SlashCommandBuilder()
     .setName('clear_all')
     .setDescription('Admin only. Clears all the queues on this server');
 
-const announceCommand = new SlashCommandBuilder() // /announce [message] (queue_name)
+// /announce [message] (queue_name)
+const announceCommand = new SlashCommandBuilder()
     .setName('announce')
     .setDescription('Announce a message to all of the waiting students in a queue.')
     .addStringOption(option =>
@@ -130,10 +139,12 @@ const announceCommand = new SlashCommandBuilder() // /announce [message] (queue_
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
-const listHelpersCommand = new SlashCommandBuilder() // /list_helpers
+// /list_helpers
+const listHelpersCommand = new SlashCommandBuilder()
     .setName('list_helpers')
     .setDescription('See who is online and helping.');
 
+// /cleanup_queue [queue_name]
 const cleanupQueue = new SlashCommandBuilder()
     .setName('cleanup_queue')
     .setDescription(
@@ -147,20 +158,61 @@ const cleanupQueue = new SlashCommandBuilder()
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
+// /cleanup_all
 const cleanupAllQueues = new SlashCommandBuilder()
     .setName('cleanup_all')
     .setDescription('Debug feature: Forces updates of embed in all #queue channels');
 
+// /cleanup_help_channel
 const cleanupHelpChannelCommand = new SlashCommandBuilder()
     .setName('cleanup_help_channels')
     .setDescription('Debug feature: Force updates the command help channels');
 
+// /set_after_session_message
 const setAfterSessionMessageCommand = new SlashCommandBuilder()
     .setName('set_after_session_msg')
     .setDescription(
         'Sets the message automatically sent to students after they leave the voice chat'
     );
 
+// /set_queue_auto_clear
+const setQueueAutoClear = new SlashCommandBuilder()
+    .setName('set_queue_auto_clear')
+    .setDescription('Sets the timeout before automatically clearing all the queues');
+
+// /set_logging_channel [channel]
+const setLoggingChannelCommand = new SlashCommandBuilder()
+    .setName('set_logging_channel')
+    .setDescription('Sets the channel where the bot will log events')
+    .addChannelOption(option =>
+        option
+            .setName('channel')
+            .setDescription('The channel to log events to')
+            .setRequired(true)
+            .addChannelTypes(ChannelType.GuildText)
+    );
+
+// /stop_logging
+const stopLoggingCommand = new SlashCommandBuilder()
+    .setName('stop_logging')
+    .setDescription('Stops the bot from logging events');
+
+// /serious_mode [enable]
+const activateSeriousModeCommand = new SlashCommandBuilder()
+    .setName('serious_mode')
+    .setDescription('Activates serious mode')
+    .addBooleanOption(option =>
+        option
+            .setName('enable')
+            .setDescription('Whether to enable serious mode')
+            .setRequired(true)
+    );
+
+// /help
+/**
+ * Generates the help command based on adminCommandHelpMessages,
+ * helperCommandHelpMessages,and studentCommandHelpMessages
+ */
 function generateHelpCommand() {
     return new SlashCommandBuilder()
         .setName('help')
@@ -183,35 +235,6 @@ function generateHelpCommand() {
                 )
         );
 }
-
-const setLoggingChannelCommand = new SlashCommandBuilder()
-    .setName('set_logging_channel')
-    .setDescription('Sets the channel where the bot will log events')
-    .addChannelOption(option =>
-        option
-            .setName('channel')
-            .setDescription('The channel to log events to')
-            .setRequired(true)
-            .addChannelTypes(ChannelType.GuildText)
-    );
-
-const setQueueAutoClear = new SlashCommandBuilder()
-    .setName('set_queue_auto_clear')
-    .setDescription('Sets the timeout before automatically clearing all the queues');
-
-const stopLoggingCommand = new SlashCommandBuilder()
-    .setName('stop_logging')
-    .setDescription('Stops the bot from logging events');
-
-const activateSeriousModeCommand = new SlashCommandBuilder()
-    .setName('serious_mode')
-    .setDescription('Activates serious mode')
-    .addBooleanOption(option =>
-        option
-            .setName('enable')
-            .setDescription('Whether to enable serious mode')
-            .setRequired(true)
-    );
 
 /** @internal Get the raw data that can be sent to Discord */
 const commandData = [

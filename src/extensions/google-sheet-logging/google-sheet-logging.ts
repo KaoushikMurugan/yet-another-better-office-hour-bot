@@ -54,6 +54,15 @@ class GoogleSheetLoggingExtension
         super();
     }
 
+    /**
+     * Returns a new GoogleSheetLoggingExtension for the server with the given name
+     * - Uses the google sheet id from the environment
+     * @param serverName
+     * @throws ExtensionSetupError if
+     * - the google sheet id is not set in the environment
+     * - the google sheet id is invalid
+     * - the google sheet is not accessible
+     */
     static async load(serverName: string): Promise<GoogleSheetLoggingExtension> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             throw new ExtensionSetupError(
@@ -80,6 +89,11 @@ class GoogleSheetLoggingExtension
         return new GoogleSheetLoggingExtension(serverName, googleSheet);
     }
 
+    /**
+     * When a student gets dequeued, add them to the studentsJustDequeued collection
+     * @param _server
+     * @param dequeuedStudent
+     */
     override async onDequeueFirst(
         _server: Readonly<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
@@ -167,6 +181,11 @@ class GoogleSheetLoggingExtension
         );
     }
 
+    /**
+     * Start logging the session time as soon as the helper joins VC
+     * @param _server
+     * @param helper
+     */
     override async onHelperStartHelping(
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>

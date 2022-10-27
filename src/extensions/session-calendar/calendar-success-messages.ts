@@ -1,36 +1,56 @@
+import { EmbedColor, SimpleEmbed, SimpleLogEmbed } from '../../utils/embed-helper';
+
 const CalendarSuccessMessages = {
     updatedCalendarId: (newCalendarName: string) =>
-        'Successfully changed to new calendar ' +
-        `${
-            newCalendarName.length > 0
-                ? ` '${newCalendarName}'. `
-                : ", but it doesn't have a name. "
-        }` +
-        'The calendar embeds will refresh soon. ' +
-        "Don't forget sure to use '/set_public_embed_url' " +
-        'if you are using a 3rd party calendar public embed. ' +
-        'This ID has also been backed up to firebase.',
-    backedupToFirebase: 'Updated calendar ID and stored in firebase',
-    unsetCalendar:
+        SimpleEmbed(
+            'Successfully changed to new calendar ' +
+                `${
+                    newCalendarName.length > 0
+                        ? ` '${newCalendarName}'. `
+                        : ", but it doesn't have a name. "
+                }` +
+                'The calendar embeds will refresh soon. ' +
+                "Don't forget sure to use '/set_public_embed_url' " +
+                'if you are using a 3rd party calendar public embed. ' +
+                'This ID has also been backed up to firebase.',
+            EmbedColor.Success
+        ),
+    unsetCalendar: SimpleEmbed(
         'Successfully unset the calendar. ' +
-        'The calendar embeds will refresh soon. ' +
-        'Or you can manually refresh it using the refresh button.',
+            'The calendar embeds will refresh soon. ' +
+            'Or you can manually refresh it using the refresh button.',
+        EmbedColor.Success
+    ),
     completedCalendarString: (calendarDisplayName: string, validQueueNames: string[]) =>
-        `Copy and paste the following into the calendar **description**:\n\n` +
-        `YABOB_START ` +
-        `${calendarDisplayName} - ` +
-        `${validQueueNames.join(', ')} ` +
-        `YABOB_END\n`,
+        SimpleEmbed(
+            `Copy and paste the following into the calendar **description**:\n\n` +
+                `YABOB_START ` +
+                `${calendarDisplayName} - ` +
+                `${validQueueNames.join(', ')} ` +
+                `YABOB_END\n`,
+            EmbedColor.Success
+        ),
     publicEmbedUrl: {
-        updated:
+        updated: SimpleEmbed(
             `Successfully changed the public embed url. ` +
-            `The links in the titles of calendar queue embed will refresh soon.`,
-        backToDefault:
+                `The links in the titles of calendar queue embed will refresh soon.`,
+            EmbedColor.Success
+        ),
+        backToDefault: SimpleEmbed(
             `Successfully changed to **default** embed url. ` +
-            `The links in the titles of calendar queue embed will refresh soon.`
+                `The links in the titles of calendar queue embed will refresh soon.`,
+            EmbedColor.Success
+        )
     },
     refreshSuccess: (queueName: string) =>
-        `Successfully refreshed upcoming hours for ${queueName}`
+        SimpleEmbed(
+            `Successfully refreshed upcoming hours for ${queueName}`,
+            EmbedColor.Success
+        )
 } as const;
 
-export { CalendarSuccessMessages };
+const CalendarLogMessages = {
+    backedUpToFirebase: SimpleLogEmbed('Updated calendar ID and stored in firebase')
+} as const;
+
+export { CalendarSuccessMessages, CalendarLogMessages };

@@ -105,6 +105,14 @@ async function getUpComingTutoringEvents(
     return definedViewModels;
 }
 
+/**
+ * Attempts to connect to the google calendar
+ * @param newCalendarId
+ * @returns data from the google calendar
+ * @throws ExpectedCalendarErrors if
+ * - API request fails
+ * - API request times out
+ */
 async function checkCalendarConnection(newCalendarId: string): Promise<string> {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);

@@ -35,6 +35,14 @@ class CalendarExtensionState {
         private readonly firebaseDB?: Firestore
     ) {}
 
+    /**
+     * Returns a new CalendarExtensionState for the server with the given id and name
+     *
+     * Uses firebase backup to intialize the Calendar config if the server has a backup
+     * @param serverId
+     * @param serverName
+     * @returns CalendarExtensionState
+     */
     static async create(
         serverId: string,
         serverName: string
@@ -57,6 +65,10 @@ class CalendarExtensionState {
         return instance;
     }
 
+    /**
+     * Sets the calendar id for the server to `validNewId` and updates the public embed url
+     * @param validNewId
+     */
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
         // fall back to default embed in case the user forgets to set up a new public embed
@@ -67,6 +79,10 @@ class CalendarExtensionState {
         ]);
     }
 
+    /**
+     * Sets the public embed url for the server to `validUrl`
+     * @param validUrl
+     */
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;
         await Promise.all([
@@ -75,8 +91,13 @@ class CalendarExtensionState {
         ]);
     }
 
-    async updateNameDiscordIdMap(displayName: string, discordId: string): Promise<void> {
-        this.displayNameDiscordIdMap.set(displayName, discordId);
+    /**
+     * Adds a new calendar_name -> discord_id mapping to displayNameDiscordIdMap
+     * @param calendarName
+     * @param discordId
+     */
+    async updateNameDiscordIdMap(calendarName: string, discordId: string): Promise<void> {
+        this.displayNameDiscordIdMap.set(calendarName, discordId);
         // fire and forget, calendar api is slow and should not block yabob's response
         await Promise.all([
             this.backupToFirebase(),
@@ -84,6 +105,10 @@ class CalendarExtensionState {
         ]);
     }
 
+    /**
+     * Restores the calendar config from firebase
+     * @param serverId
+     */
     async restoreFromBackup(serverId: string): Promise<void> {
         if (this.firebaseDB === undefined) {
             return;
@@ -109,6 +134,9 @@ class CalendarExtensionState {
         );
     }
 
+    /**
+     * Backs up the calendar config to firebase
+     */
     private async backupToFirebase(): Promise<void> {
         if (this.firebaseDB === undefined) {
             return;
@@ -144,6 +172,11 @@ class CalendarExtensionState {
 }
 
 class CalendarServerEventListener extends BaseServerExtension {
+    /**
+     * If a server gets deleted, remove it from the calendar server map
+     * @param server
+     * @returns
+     */
     override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
         serverIdCalendarStateMap.delete(server.guild.id);
         return Promise.resolve();
