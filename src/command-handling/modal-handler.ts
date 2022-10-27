@@ -18,8 +18,8 @@ const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
 
 /**
  * Check if the modal interaction can be handled by this (in-built) handler
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): boolean {
     return interaction.customId in modalMethodMap;
@@ -30,7 +30,7 @@ function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): bool
  * - Calls the appropriate handler based on the modal name
  * - Logs the interaction
  * - Sends the appropriate response
- * @param interaction 
+ * @param interaction
  */
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction

@@ -79,7 +79,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
 
     /**
      * Removes `deletedQueue` from the listeners map
-     * @param deletedQueue 
+     * @param deletedQueue
      */
     override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
         serverIdCalendarStateMap

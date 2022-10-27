@@ -45,7 +45,7 @@ const queueCommand = new SlashCommandBuilder()
             )
     );
 
-// /enqueue [queue_name] (user)    
+// /enqueue [queue_name] (user)
 const enqueueCommand = new SlashCommandBuilder()
     .setName('enqueue')
     .setDescription('Enter a help queue')
@@ -213,7 +213,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
  * Generates the help command based on adminCommandHelpMessages,
  * helperCommandHelpMessages,and studentCommandHelpMessages
  */
- function generateHelpCommand() {
+function generateHelpCommand() {
     return new SlashCommandBuilder()
         .setName('help')
         .setDescription('Get help with the bot')

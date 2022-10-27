@@ -17,7 +17,9 @@ const adminCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url:
+                        client.user?.avatarURL() ??
+                        'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]
@@ -330,8 +332,6 @@ const setQueueAutoClearHelp: HelpMessage = {
         ]
     }
 };
-
-
 
 const seriousModeCommandHelp: HelpMessage = {
     nameValuePair: {

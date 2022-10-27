@@ -25,9 +25,9 @@ const setCalendarHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: '`calendar_id: string`\nID of the calendar to set.\
-                        \nGo to that particular calendar\'s Settings and Sharing tab. Scrolling down will take you do the Integrate Calendar Section. \
-                        Copy the Calendar ID. It should end with calendar.google.com.',
+                        value: "`calendar_id: string`\nID of the calendar to set.\
+                        \nGo to that particular calendar's Settings and Sharing tab. Scrolling down will take you do the Integrate Calendar Section. \
+                        Copy the Calendar ID. It should end with calendar.google.com.",
                         inline: true
                     },
                     {
@@ -85,8 +85,8 @@ const makeCalendarStringHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar string to be put in the caller\'s calendar events. YABOB uses these strings to identify\
-                        who is tutoring for what queue. This command will generate a calendar string for the queues specified.',
+                        value: "Generates a calendar string to be put in the caller's calendar events. YABOB uses these strings to identify\
+                        who is tutoring for what queue. This command will generate a calendar string for the queues specified.",
                         inline: false
                     },
                     {
@@ -122,8 +122,8 @@ const makeCalendarStringAllHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Generates a calendar string to be put in the caller\'s calendar events. YABOB uses these strings to identify\
-                        who is tutoring for what queue. This command will generate a string for all the queues you are currently tutoring for.',
+                        value: "Generates a calendar string to be put in the caller's calendar events. YABOB uses these strings to identify\
+                        who is tutoring for what queue. This command will generate a string for all the queues you are currently tutoring for.",
                         inline: false
                     },
                     {

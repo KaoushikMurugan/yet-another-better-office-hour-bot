@@ -259,7 +259,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
 /**
  * Prints the title message for the console upon startup
- * @param username 
+ * @param username
  */
 function printTitleString(username: string): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';

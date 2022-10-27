@@ -236,8 +236,8 @@ class AttendingServerV2 {
      * Called when a member joins a voice channel
      * - triggers onStudentJoinVC for all extensions if the member is a
      * student and was just removed from the queue
-     * @param member 
-     * @param newVoiceState 
+     * @param member
+     * @param newVoiceState
      */
     async onMemberJoinVC(
         member: GuildMember,
@@ -265,10 +265,10 @@ class AttendingServerV2 {
 
     /**
      * Called when a member leaves a voice channel
-     * - triggers onStudentLeaveVC for all extensions if the member is a 
+     * - triggers onStudentLeaveVC for all extensions if the member is a
      * student and was in a session
-     * @param member 
-     * @param oldVoiceState 
+     * @param member
+     * @param oldVoiceState
      */
     async onMemberLeaveVC(
         member: GuildMember,

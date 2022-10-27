@@ -33,8 +33,8 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
 
 /**
  * Check if the button interatoin can be handled by this (in-built) handler
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
@@ -46,7 +46,7 @@ function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean 
  * - Checks if the button press is valid
  * - If so, calls the appropriate function to handle the button press
  * - Returns the appropriate message to send to the user
- * @param interaction 
+ * @param interaction
  */
 async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);

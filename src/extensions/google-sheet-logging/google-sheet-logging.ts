@@ -57,7 +57,7 @@ class GoogleSheetLoggingExtension
     /**
      * Returns a new GoogleSheetLoggingExtension for the server with the given name
      * - Uses the google sheet id from the environment
-     * @param serverName 
+     * @param serverName
      * @throws ExtensionSetupError if
      * - the google sheet id is not set in the environment
      * - the google sheet id is invalid
@@ -91,8 +91,8 @@ class GoogleSheetLoggingExtension
 
     /**
      * When a student gets dequeued, add them to the studentsJustDequeued collection
-     * @param _server 
-     * @param dequeuedStudent 
+     * @param _server
+     * @param dequeuedStudent
      */
     override async onDequeueFirst(
         _server: Readonly<AttendingServerV2>,
@@ -183,8 +183,8 @@ class GoogleSheetLoggingExtension
 
     /**
      * Start logging the session time as soon as the helper joins VC
-     * @param _server 
-     * @param helper 
+     * @param _server
+     * @param helper
      */
     override async onHelperStartHelping(
         _server: Readonly<AttendingServerV2>,

@@ -107,7 +107,7 @@ async function getUpComingTutoringEvents(
 
 /**
  * Attempts to connect to the google calendar
- * @param newCalendarId 
+ * @param newCalendarId
  * @returns data from the google calendar
  * @throws ExpectedCalendarErrors if
  * - API request fails
