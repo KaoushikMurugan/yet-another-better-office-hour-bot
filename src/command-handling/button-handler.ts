@@ -96,7 +96,7 @@ async function join(
         ),
         server.enqueueStudent(member, queueChannel)
     ]);
-    return SimpleEmbed(SuccessMessages.joinedQueue(queueName));
+    return SuccessMessages.joinedQueue(queueName);
 }
 
 /**
@@ -120,7 +120,7 @@ async function leave(
         ),
         server.removeStudentFromQueue(member, queueChannel)
     ]);
-    return SimpleEmbed(SuccessMessages.leftQueue(queueName));
+    return SuccessMessages.leftQueue(queueName);
 }
 
 /**
@@ -144,7 +144,7 @@ async function joinNotifGroup(
         ),
         server.addStudentToNotifGroup(member, queueChannel)
     ]);
-    return SimpleEmbed(SuccessMessages.joinedNotif(queueName));
+    return SuccessMessages.joinedNotif(queueName);
 }
 
 /**
@@ -172,7 +172,7 @@ async function leaveNotifGroup(
         ),
         server.removeStudentFromNotifGroup(member, queueChannel)
     ]);
-    return SimpleEmbed(SuccessMessages.removedNotif(queueName));
+    return SuccessMessages.removedNotif(queueName);
 }
 
 /**

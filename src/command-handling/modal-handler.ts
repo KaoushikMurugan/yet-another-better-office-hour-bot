@@ -64,7 +64,7 @@ async function setAfterSessionMessage(
         interaction.fields.getTextInputValue('after_session_msg');
     server?.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
-    return SimpleEmbed(SuccessMessages.updatedAfterSessionMessage(message));
+    return SuccessMessages.updatedAfterSessionMessage(message);
 }
 
 /**
@@ -82,10 +82,10 @@ async function setQueueAutoClear(
     const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
     if (hours === 0 && minutes === 0) {
         await server.setQueueAutoClear(hours, minutes, false);
-        return SimpleEmbed(SuccessMessages.queueAutoClear.disabled);
+        return SuccessMessages.queueAutoClear.disabled;
     }
     await server.setQueueAutoClear(hours, minutes, true);
-    return SimpleEmbed(SuccessMessages.queueAutoClear.enabled(hours, minutes));
+    return SuccessMessages.queueAutoClear.enabled(hours, minutes);
 }
 
 /**

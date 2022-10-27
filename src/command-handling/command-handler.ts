@@ -151,7 +151,7 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<YabobEmb
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
             await server.createQueue(queueName);
-            return SimpleEmbed(SuccessMessages.createdQueue(queueName));
+            return SuccessMessages.createdQueue(queueName);
         }
         case 'remove': {
             const targetQueue = hasValidQueueArgument(interaction, true);
@@ -162,7 +162,7 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<YabobEmb
                 throw ExpectedParseErrors.removeInsideQueue;
             }
             await server.deleteQueueById(targetQueue.parentCategoryId);
-            return SimpleEmbed(SuccessMessages.deletedQueue(targetQueue.queueName));
+            return SuccessMessages.deletedQueue(targetQueue.queueName);
         }
         default: {
             throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
@@ -182,7 +182,7 @@ async function enqueue(interaction: ChatInputCommandInteraction): Promise<YabobE
         isFromGuildMember(interaction)
     ];
     await server.enqueueStudent(member, queueChannel);
-    return SimpleEmbed(SuccessMessages.joinedQueue(queueChannel.queueName));
+    return SuccessMessages.joinedQueue(queueChannel.queueName);
 }
 
 /**
@@ -207,7 +207,7 @@ async function next(interaction: ChatInputCommandInteraction): Promise<YabobEmbe
         targetQueue || targetStudent
             ? await server.dequeueWithArgs(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
-    return SimpleEmbed(SuccessMessages.inviteSent(dequeuedStudent.member.displayName));
+    return SuccessMessages.inviteSent(dequeuedStudent.member.displayName);
 }
 
 /**
@@ -222,7 +222,7 @@ async function start(interaction: ChatInputCommandInteraction): Promise<YabobEmb
     ];
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
     await server.openAllOpenableQueues(member, !muteNotif);
-    return SimpleEmbed(SuccessMessages.startedHelping);
+    return SuccessMessages.startedHelping;
 }
 
 /**
@@ -236,7 +236,7 @@ async function stop(interaction: ChatInputCommandInteraction): Promise<YabobEmbe
         isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
     ];
     const helpTimeEntry = await server.closeAllClosableQueues(member);
-    return SimpleEmbed(SuccessMessages.finishedHelping(helpTimeEntry));
+    return SuccessMessages.finishedHelping(helpTimeEntry);
 }
 
 /**
@@ -251,7 +251,7 @@ async function leave(interaction: ChatInputCommandInteraction): Promise<YabobEmb
         hasValidQueueArgument(interaction)
     ];
     await server.removeStudentFromQueue(member, queue);
-    return SimpleEmbed(SuccessMessages.leftQueue(queue.queueName));
+    return SuccessMessages.leftQueue(queue.queueName);
 }
 
 /**
@@ -274,7 +274,7 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<YabobEmb
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
     }
     await server.clearQueue(queue);
-    return SimpleEmbed(SuccessMessages.clearedQueue(queue.queueName));
+    return SuccessMessages.clearedQueue(queue.queueName);
 }
 
 /**
@@ -292,7 +292,7 @@ async function clearAll(interaction: ChatInputCommandInteraction): Promise<Yabob
         throw ExpectedParseErrors.serverHasNoQueue;
     }
     await server.clearAllQueues();
-    return SimpleEmbed(SuccessMessages.clearedAllQueues(server.guild.name));
+    return SuccessMessages.clearedAllQueues(server.guild.name);
 }
 
 /**
@@ -371,7 +371,7 @@ async function announce(interaction: ChatInputCommandInteraction): Promise<Yabob
     } else {
         await server.announceToStudentsInQueue(member, announcement);
     }
-    return SimpleEmbed(SuccessMessages.announced(announcement));
+    return SuccessMessages.announced(announcement);
 }
 
 /**
@@ -386,7 +386,7 @@ async function cleanup(interaction: ChatInputCommandInteraction): Promise<YabobE
         isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     await server.cleanUpQueue(queue);
-    return SimpleEmbed(`Queue ${queue.queueName} has been cleaned up.`);
+    return SuccessMessages.cleanedup.queue(queue.queueName);
 }
 
 /**
@@ -405,7 +405,7 @@ async function cleanupAllQueues(
     await Promise.all(
         allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)) ?? []
     );
-    return SimpleEmbed('All queues have been cleaned up.');
+    return SuccessMessages.cleanedup.allQueues;
 }
 
 /**
@@ -421,7 +421,7 @@ async function cleanupHelpChannel(
         isTriggeredByUserWithRolesSync(interaction, 'cleanup_help_channel', ['Bot Admin'])
     ];
     await server.updateCommandHelpChannels();
-    return SimpleEmbed("Successfully cleaned up everything under 'Bot Commands Help'.");
+    return SuccessMessages.cleanedup.helpChannels;
 }
 
 /**
@@ -484,7 +484,7 @@ async function setLoggingChannel(
         throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
     }
     await server.setLoggingChannel(loggingChannel);
-    return SimpleEmbed(SuccessMessages.updatedLoggingChannel(loggingChannel.name));
+    return SuccessMessages.updatedLoggingChannel(loggingChannel.name);
 }
 
 /**
@@ -515,7 +515,7 @@ async function stopLogging(
         isTriggeredByUserWithRolesSync(interaction, 'stop_logging', ['Bot Admin'])
     ];
     await server.setLoggingChannel(undefined);
-    return SimpleEmbed(SuccessMessages.stoppedLogging);
+    return SuccessMessages.stoppedLogging;
 }
 
 /**
