@@ -83,6 +83,12 @@ client.on('guildDelete', async guild => {
     }
 });
 
+/**
+ * Handles all interactions
+ * - Slash commands
+ * - Button presses
+ * - Modal submissions
+ */
 client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
@@ -138,6 +144,9 @@ client.on('interactionCreate', async interaction => {
     }
 });
 
+/**
+ * Gives the Student role to new members
+ */
 client.on('guildMemberAdd', async member => {
     const server =
         attendingServers.get(member.guild.id) ?? (await joinGuild(member.guild));
@@ -174,6 +183,9 @@ client.on('roleUpdate', async role => {
     }
 });
 
+/**
+ * Track when members join or leave a voice channel
+ */
 client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     if (newVoiceState.member === null) {
         throw new Error('Received VC event in a server without initialized YABOB.');
@@ -196,14 +208,23 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     }
 });
 
+/**
+ * Discord.js error handing
+ */
 client.on('error', err => {
     console.error(red('Uncaught DiscordJS Error:'), `${err.message}\n`, err.stack);
 });
 
+/**
+ * Discord.js warning handling
+ */
 client.on('warn', warning => {
     console.warn(magenta('Uncaught DiscordJS Warning:'), warning);
 });
 
+/**
+ * Neatly separate server log and error stack trace
+ */
 process.on('exit', () => {
     console.log(centered('-------- End of Server Log --------'));
     console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
@@ -236,6 +257,10 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     return server;
 }
 
+/**
+ * Prints the title message for the console upon startup
+ * @param username 
+ */
 function printTitleString(username: string): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);

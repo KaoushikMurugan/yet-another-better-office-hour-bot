@@ -16,6 +16,10 @@ import { EmbedColor } from '../utils/embed-helper';
 import { RenderIndex, MessageId } from '../utils/type-aliases';
 
 // The only responsibility is to interface with the ascii table
+/**
+ * Class that handles the rendering of the queue, i.e. displaying and updating
+ * the queue embeds
+ */
 class QueueDisplayV2 {
     /**
      * keeps track of the actual embeds, key is render index
@@ -47,6 +51,10 @@ class QueueDisplayV2 {
         private readonly queueChannel: QueueChannel
     ) {}
 
+    /**
+     * Request a render of the main queue embed (queue list + active helper list)
+     * @param queue 
+     */
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
@@ -113,6 +121,11 @@ class QueueDisplayV2 {
         !this.isRendering && (await this.render());
     }
 
+    /**
+     * Request a render of a non-queue (not the main queue list) embed
+     * @param embedElements 
+     * @param renderIndex 
+     */
     async requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
         renderIndex: number
@@ -124,6 +137,9 @@ class QueueDisplayV2 {
         !this.isRendering && (await this.render());
     }
 
+    /**
+     * Render the embeds in the queueChannelEmbeds collection into the queue channel
+     */
     private async render(): Promise<void> {
         this.isRendering = true;
         if (
@@ -174,6 +190,11 @@ class QueueDisplayV2 {
         this.isRendering = false;
     }
 
+    /**
+     * Create an ascii table of the queue
+     * @param queue 
+     * @returns the ascii table as a `string` in a code block
+     */
     private composeQueueAsciiTable(queue: QueueViewModel): string {
         const table = new AsciiTable3();
         if (queue.studentDisplayNames.length > 0) {

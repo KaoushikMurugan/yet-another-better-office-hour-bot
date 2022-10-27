@@ -31,11 +31,23 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     removeN: leaveNotifGroup
 } as const;
 
+/**
+ * Check if the button interatoin can be handled by this (in-built) handler
+ * @param interaction 
+ * @returns 
+ */
 function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
     return buttonName in buttonMethodMap;
 }
 
+/**
+ * Handles button presses
+ * - Checks if the button press is valid
+ * - If so, calls the appropriate function to handle the button press
+ * - Returns the appropriate message to send to the user
+ * @param interaction 
+ */
 async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];

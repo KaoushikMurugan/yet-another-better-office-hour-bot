@@ -1,3 +1,4 @@
+import { client } from '../src/global-states';
 import { EmbedColor } from '../src/utils/embed-helper';
 import { HelpMessage } from '../src/utils/type-aliases';
 
@@ -16,7 +17,7 @@ const studentCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url: client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]
@@ -43,7 +44,7 @@ const enqueueHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: 'None',
+                        value: '`queue_name: string`\nName of the queue to add the sender to',
                         inline: true
                     },
                     {
@@ -125,11 +126,47 @@ const listHelpersHelp: HelpMessage = {
     }
 };
 
+const helpHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'help',
+        value: 'help'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/help [command_name]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Displays the help message for the command `command_name`.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`command_name: string`\nName of the command to display the help message for.\
+                        \nNote: After typing /help, the command option will show the list of commands available to search through',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/help enqueue`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const studentCommandHelpMessages: HelpMessage[] = [
     studentCommandsTileMessage,
     enqueueHelp,
     leaveHelp,
-    listHelpersHelp
+    listHelpersHelp,
+    helpHelp
 ];
 
 export { studentCommandHelpMessages };

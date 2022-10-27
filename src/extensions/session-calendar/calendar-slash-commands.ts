@@ -3,6 +3,7 @@
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChannelType } from 'discord.js';
 
+// /set_calendar [calendar_id]
 const setCalendar = new SlashCommandBuilder()
     .setName('set_calendar')
     .setDescription(
@@ -15,12 +16,14 @@ const setCalendar = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+// /unset_calendar
 const unsetCalendar = new SlashCommandBuilder()
     .setName('unset_calendar')
     .setDescription(
         'Desyncs the bot from the current calendar and sets it to the default calendar'
     );
 
+// /when_next [queue_name]
 const whenNext = new SlashCommandBuilder()
     .setName('when_next')
     .setDescription('View the upcoming tutoring hours')
@@ -34,6 +37,11 @@ const whenNext = new SlashCommandBuilder()
             .addChannelTypes(ChannelType.GuildCategory)
     );
 
+// /make_calendar_string [calendar_name] [queue_name_1] (queue_name_2) ... (queue_name_n) (user)
+/**
+ * Generate the make_calendar_string command depending on the number of queues in the server
+ * @returns 
+ */
 function makeCalendarStringCommand(): Omit<
     SlashCommandBuilder,
     'addSubcommand' | 'addSubcommandGroup'
@@ -70,6 +78,7 @@ function makeCalendarStringCommand(): Omit<
     return command;
 }
 
+// /make_calendar_string_all [calendar_name] (user)
 const makeCalendarStringAll = new SlashCommandBuilder()
     .setName('make_calendar_string_all')
     .setDescription('Generates a valid calendar string for all your approved queues')
@@ -86,6 +95,7 @@ const makeCalendarStringAll = new SlashCommandBuilder()
             .setRequired(false)
     );
 
+// /set_public_embd_url [url] (enable)
 const setPublicEmbedUrl = new SlashCommandBuilder()
     .setName('set_public_embd_url')
     .setDescription('Use another public calendar embed')

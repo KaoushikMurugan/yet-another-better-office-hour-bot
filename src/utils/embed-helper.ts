@@ -23,6 +23,16 @@ export enum EmbedColor {
     Pink = 0xffb7c5
 }
 
+/**
+ * Creates a simple embed that displays only displays text
+ *
+ * If the message is too long to fit into the title, it will be pushed to the
+ * start of the description
+ * @param message The message to display, will be in the title of the embed
+ * @param color The color of the sidebar of the embed
+ * @param description The description of the embed
+ * @returns A message object that only contain the embed
+ */
 export function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
@@ -63,6 +73,11 @@ export function SimpleEmbed(
     }
 }
 
+/**
+ * Creates an embed that displays an error message
+ * @param err The error to display in the embed
+ * @returns A message object that only contains the requested embed
+ */
 export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
         client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
@@ -105,6 +120,12 @@ export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
     };
 }
 
+/**
+ * Creates an error log embed
+ * @param err The error to display in the embed
+ * @param interaction The interaction that triggered the error
+ * @returns A message object that only contains the requested embed
+ */
 export function ErrorLogEmbed(
     err: Error,
     interaction: Interaction
@@ -159,6 +180,11 @@ export function ErrorLogEmbed(
     };
 }
 
+/**
+ * Creates a log embed that displays a message
+ * @param message The message to display in the embed
+ * @returns A message object that only contains the requested embed
+ */
 export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     const YABOB_PFP_URL =
@@ -195,6 +221,13 @@ export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embed
     }
 }
 
+/**
+ * Creates a log embed for a button interaction
+ * @param user The user who pressed the button
+ * @param interactionName The name of the button interaction
+ * @param channel The channel the button was pressed in
+ * @returns A message object that only contains the log embed
+ */
 export function ButtonLogEmbed(
     user: User,
     interactionName: string,
@@ -237,6 +270,11 @@ export function ButtonLogEmbed(
     };
 }
 
+/**
+ * Creates a log embed for a slash command interaction
+ * @param commandInteraction The interaction to create the log embed for
+ * @returns A message object that only contains the log embed
+ */
 export function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction
 ): Pick<BaseMessageOptions, 'embeds'> {
@@ -245,7 +283,7 @@ export function SlashCommandLogEmbed(
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;
     if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) {
-        // add condition for subcommand group later
+        // TODO: add condition for subcommand group later
         commandName += ` ${optionsData[0].name}`;
         optionsData = optionsData[0].options ?? [];
     }
