@@ -23,7 +23,6 @@ import { ExtensionSetupError } from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles,
     isTriggeredByUserWithRolesSync
 } from '../../command-handling/common-validations';
 import {
@@ -44,7 +43,8 @@ import { appendCalendarHelpMessages } from './CalendarCommands';
 import {
     ButtonCallback,
     CommandCallback,
-    ModalSubmitCallback
+    ModalSubmitCallback,
+    YabobEmbed
 } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
@@ -142,13 +142,7 @@ class CalendarInteractionExtension
         const commandMethod = this.commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
-            .then(async successMsg => {
-                if (successMsg) {
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    );
-                }
-            })
+            .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
@@ -168,13 +162,7 @@ class CalendarInteractionExtension
         });
         logButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
-            .then(async successMsg => {
-                if (successMsg) {
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    );
-                }
-            })
+            .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
@@ -195,14 +183,14 @@ class CalendarInteractionExtension
      */
     private async updateCalendarId(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        const [newCalendarName] = await Promise.all([
-            checkCalendarConnection(newCalendarId).catch(() => {
+        const [newCalendarName] = [
+            await checkCalendarConnection(newCalendarId).catch(() => {
                 throw ExpectedCalendarErrors.badId.newId;
             }),
-            isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
-        ]);
+            isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin'])
+        ];
         const [server, state] = isServerCalendarInteraction(interaction);
         await Promise.all([
             state.setCalendarId(newCalendarId),
@@ -210,7 +198,7 @@ class CalendarInteractionExtension
                 SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
             )
         ]);
-        return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
+        return SimpleEmbed(CalendarSuccessMessages.updatedCalendarId(newCalendarName));
     }
 
     /**
@@ -218,16 +206,16 @@ class CalendarInteractionExtension
      */
     private async unsetCalendarId(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
-        await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
+        isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
             state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
             server.sendLogMessage(
                 SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
             )
         ]);
-        return CalendarSuccessMessages.unsetCalendar;
+        return SimpleEmbed(CalendarSuccessMessages.unsetCalendar);
     }
 
     /**
@@ -235,20 +223,18 @@ class CalendarInteractionExtension
      */
     private async listUpComingHours(
         interaction: ChatInputCommandInteraction
-    ): Promise<undefined> {
+    ): Promise<YabobEmbed> {
         const channel = hasValidQueueArgument(interaction);
         const [server] = isServerCalendarInteraction(interaction);
         const viewModels = await getUpComingTutoringEvents(
             server.guild.id,
             channel.queueName
         );
-        const embed = SimpleEmbed(
+        return SimpleEmbed(
             `Upcoming Hours for ${channel.queueName}`,
             EmbedColor.NoColor,
             composeUpcomingSessionsEmbedBody(viewModels, channel)
         );
-        await interaction.editReply(embed);
-        return undefined;
     }
 
     /**
@@ -258,7 +244,7 @@ class CalendarInteractionExtension
     private async makeParsableCalendarTitle(
         interaction: ChatInputCommandInteraction,
         generateAll: boolean
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
         const member = isTriggeredByUserWithRolesSync(
             interaction,
@@ -324,19 +310,21 @@ class CalendarInteractionExtension
         await server.sendLogMessage(
             SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
         );
-        return CalendarSuccessMessages.completedCalendarString(
-            calendarDisplayName,
-            validQueues.map(queue => queue.name)
+        return SimpleEmbed(
+            CalendarSuccessMessages.completedCalendarString(
+                calendarDisplayName,
+                validQueues.map(queue => queue.name)
+            )
         );
     }
 
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [, state] = isServerCalendarInteraction(interaction);
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
-        await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
+        isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin']);
         if (enable) {
             try {
                 new URL(rawUrl); // call this constructor to check if URL is valid
@@ -345,17 +333,17 @@ class CalendarInteractionExtension
             }
             // now rawUrl is valid
             await state.setPublicEmbedUrl(rawUrl);
-            return CalendarSuccessMessages.publicEmbedUrl.updated;
+            return SimpleEmbed(CalendarSuccessMessages.publicEmbedUrl.updated);
         } else {
             await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
-            return CalendarSuccessMessages.publicEmbedUrl.backToDefault;
+            return SimpleEmbed(CalendarSuccessMessages.publicEmbedUrl.backToDefault);
         }
     }
 
     private async requestCalendarRefresh(
         queueName: string,
         interaction: ButtonInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
         const queueLevelExtension = state.listeners.get(queueName);
         await Promise.all<unknown>([
@@ -368,7 +356,7 @@ class CalendarInteractionExtension
             ),
             queueLevelExtension?.onCalendarExtensionStateChange()
         ]);
-        return CalendarSuccessMessages.refreshSuccess(queueName);
+        return SimpleEmbed(CalendarSuccessMessages.refreshSuccess(queueName));
     }
 }
 

@@ -2,7 +2,7 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { ModalSubmitCallback } from '../utils/type-aliases';
+import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases';
 import { logModalSubmit } from '../utils/util-functions';
 import { SuccessMessages } from './builtin-success-messages';
 import { isServerInteraction } from './common-validations';
@@ -58,13 +58,13 @@ async function processBuiltInModalSubmit(
  */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const newAfterSessionMessage =
         interaction.fields.getTextInputValue('after_session_msg');
     server?.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
-    return SuccessMessages.updatedAfterSessionMessage(message);
+    return SimpleEmbed(SuccessMessages.updatedAfterSessionMessage(message));
 }
 
 /**
@@ -72,7 +72,9 @@ async function setAfterSessionMessage(
  * @param interaction
  * @returns
  */
-async function setQueueAutoClear(interaction: ModalSubmitInteraction): Promise<string> {
+async function setQueueAutoClear(
+    interaction: ModalSubmitInteraction
+): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
@@ -80,10 +82,10 @@ async function setQueueAutoClear(interaction: ModalSubmitInteraction): Promise<s
     const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
     if (hours === 0 && minutes === 0) {
         await server.setQueueAutoClear(hours, minutes, false);
-        return SuccessMessages.queueAutoClear.disabled;
+        return SimpleEmbed(SuccessMessages.queueAutoClear.disabled);
     }
     await server.setQueueAutoClear(hours, minutes, true);
-    return SuccessMessages.queueAutoClear.enabled(hours, minutes);
+    return SimpleEmbed(SuccessMessages.queueAutoClear.enabled(hours, minutes));
 }
 
 /**
