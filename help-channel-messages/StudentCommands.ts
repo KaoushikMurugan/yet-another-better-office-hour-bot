@@ -17,7 +17,9 @@ const studentCommandsTileMessage: HelpMessage = {
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
-                    icon_url: client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+                    icon_url:
+                        client.user?.avatarURL() ??
+                        'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
                 }
             }
         ]

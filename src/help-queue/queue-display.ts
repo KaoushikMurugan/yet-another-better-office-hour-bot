@@ -53,7 +53,7 @@ class QueueDisplayV2 {
 
     /**
      * Request a render of the main queue embed (queue list + active helper list)
-     * @param queue 
+     * @param queue
      */
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
         const embedTableMsg = new EmbedBuilder();
@@ -123,8 +123,8 @@ class QueueDisplayV2 {
 
     /**
      * Request a render of a non-queue (not the main queue list) embed
-     * @param embedElements 
-     * @param renderIndex 
+     * @param embedElements
+     * @param renderIndex
      */
     async requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
@@ -192,7 +192,7 @@ class QueueDisplayV2 {
 
     /**
      * Create an ascii table of the queue
-     * @param queue 
+     * @param queue
      * @returns the ascii table as a `string` in a code block
      */
     private composeQueueAsciiTable(queue: QueueViewModel): string {

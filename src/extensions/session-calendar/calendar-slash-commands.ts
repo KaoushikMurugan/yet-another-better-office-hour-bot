@@ -40,7 +40,7 @@ const whenNext = new SlashCommandBuilder()
 // /make_calendar_string [calendar_name] [queue_name_1] (queue_name_2) ... (queue_name_n) (user)
 /**
  * Generate the make_calendar_string command depending on the number of queues in the server
- * @returns 
+ * @returns
  */
 function makeCalendarStringCommand(): Omit<
     SlashCommandBuilder,

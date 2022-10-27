@@ -1,43 +1,83 @@
 import { Helper } from '../models/member-states';
 import { convertMsToTime } from '../utils/util-functions';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
 
 export const SuccessMessages = {
-    createdQueue: (queueName: string) => `Successfully created \`${queueName}\`.`,
-    deletedQueue: (queueName: string) => `Successfully deleted \`${queueName}\`.`,
+    createdQueue: (queueName: string) =>
+        SimpleEmbed(`Successfully created \`${queueName}\`.`, EmbedColor.Success),
+    deletedQueue: (queueName: string) =>
+        SimpleEmbed(`Successfully deleted \`${queueName}\`.`, EmbedColor.Success),
     joinedQueue: (queueName: string) =>
-        `Successfully joined the queue of \`${queueName}\`.`,
-    leftQueue: (queueName: string) => `Successfully left the queue of \`${queueName}\`.`,
+        SimpleEmbed(
+            `Successfully joined the queue of \`${queueName}\`.`,
+            EmbedColor.Success
+        ),
+    leftQueue: (queueName: string) =>
+        SimpleEmbed(
+            `Successfully left the queue of \`${queueName}\`.`,
+            EmbedColor.Success
+        ),
     joinedNotif: (queueName: string) =>
-        `Successfully joined the notification group of \`${queueName}\`.`,
+        SimpleEmbed(
+            `Successfully joined the notification group of \`${queueName}\`.`,
+            EmbedColor.Success
+        ),
     removedNotif: (queueName: string) =>
-        `Successfully left the notification group of \`${queueName}\`.`,
+        SimpleEmbed(
+            `Successfully left the notification group of \`${queueName}\`.`,
+            EmbedColor.Success
+        ),
     inviteSent: (studentName = 'unkown student') =>
-        `An invite has been sent to ${studentName}.`,
-    startedHelping: 'You have started helping! Have fun!',
+        SimpleEmbed(`An invite has been sent to ${studentName}.`, EmbedColor.Success),
+    startedHelping: SimpleEmbed(
+        'You have started helping! Have fun!',
+        EmbedColor.Success
+    ),
     finishedHelping: (helpTimeEntry: Required<Helper>) =>
-        `You helped for ` +
-        convertMsToTime(
-            helpTimeEntry.helpEnd.getTime() - helpTimeEntry.helpStart.getTime()
-        ) +
-        `. See you later!`,
-    clearedQueue: (queueName: string) => `Everyone in  queue ${queueName} was removed.`,
+        SimpleEmbed(
+            `You helped for ` +
+                convertMsToTime(
+                    helpTimeEntry.helpEnd.getTime() - helpTimeEntry.helpStart.getTime()
+                ) +
+                `. See you later!`,
+            EmbedColor.Success
+        ),
+    clearedQueue: (queueName: string) =>
+        SimpleEmbed(`Everyone in  queue ${queueName} was removed.`, EmbedColor.Success),
     clearedAllQueues: (serverName = 'unknown server') =>
-        `All queues on ${serverName} was cleard.`,
+        SimpleEmbed(`All queues on ${serverName} was cleard.`, EmbedColor.Success),
     announced: (announcement: string) =>
-        `Your announcement: ${announcement} has been sent!`,
-    cleanedUpQueue: (queueName: string) => `Queue ${queueName} has been cleaned up.`,
-    allQueuesCleanedUp: `All queues have been cleaned up.`,
-    cleanedUpHelpChannel: `Successfully cleaned up everything under 'Bot Commands Help'.`,
+        SimpleEmbed(
+            `Your announcement: ${announcement} has been sent!`,
+            EmbedColor.Success
+        ),
     updatedLoggingChannel: (loggingChannelName: string) =>
-        `Successfully updated logging channel to \`#${loggingChannelName}\`.`,
-    stoppedLogging: 'Successfully stopped logging.',
+        SimpleEmbed(
+            `Successfully updated logging channel to \`#${loggingChannelName}\`.`,
+            EmbedColor.Success
+        ),
+    stoppedLogging: SimpleEmbed('Successfully stopped logging.', EmbedColor.Success),
     updatedAfterSessionMessage: (message: string) =>
-        `After session message set to:\n${message}.`,
+        SimpleEmbed(`After session message set to:\n${message}.`, EmbedColor.Success),
     queueAutoClear: {
         enabled: (hours: number, minutes: number) =>
-            `Successfully enabled queue auto clear. ` +
-            `Queues will be automatically cleared in ` +
-            `${hours} hours and ${minutes} minutes after they are closed.`,
-        disabled: `Successfully disabled queue auto clear.`
+            SimpleEmbed(
+                `Successfully enabled queue auto clear. ` +
+                    `Queues will be automatically cleared in ` +
+                    `${hours} hours and ${minutes} minutes after they are closed.`,
+                EmbedColor.Success
+            ),
+        disabled: SimpleEmbed(
+            `Successfully disabled queue auto clear.`,
+            EmbedColor.Success
+        )
+    },
+    cleanedup: {
+        queue: (queueName: string) =>
+            SimpleEmbed(`Queue ${queueName} has been cleaned up.`, EmbedColor.Success),
+        allQueues: SimpleEmbed('All queues have been cleaned up.'),
+        helpChannels: SimpleEmbed(
+            "Successfully cleaned up everything under 'Bot Commands Help'."
+        )
     }
 } as const;
