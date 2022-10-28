@@ -107,7 +107,22 @@ class QueueDisplayV2 {
             const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
-                .setDescription(queue.helperIDs.join('\n'))
+                .setDescription(
+                    queue.helperIDs
+                        .map(id => {
+                            const voiceChannel =
+                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                                    id
+                                )?.channel;
+                            const vcStatus = voiceChannel
+                                ? voiceChannel.members.size > 1
+                                    ? `Busy in [${voiceChannel.name}]`
+                                    : `Idling in [${voiceChannel.name}]`
+                                : 'Not in voice channel.';
+                            return `<@${id}>\t|\t**${vcStatus}**`;
+                        })
+                        .join('\n')
+                )
                 .setColor(EmbedColor.Aqua);
             embedList.push(helperList);
         }

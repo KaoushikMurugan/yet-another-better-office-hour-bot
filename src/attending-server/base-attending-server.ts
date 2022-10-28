@@ -62,6 +62,8 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
+    /** enables helper vc status in queue embeds */
+    private useExperimentalVCStatusRerender = true as const;
 
     protected constructor(
         readonly user: User,
@@ -212,19 +214,36 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        if (!memberIsStudent || newVoiceState.channel === null) {
-            return;
-        }
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onStudentJoinVC(
-                    this,
-                    member,
-                    // already checked
-                    newVoiceState.channel as VoiceChannel
+        const memberIsHelper = this._activeHelpers.has(member.id);
+        if (memberIsStudent) {
+            const possibleHelpers = newVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            );
+            const queuesToRerender = this._queues.filter(queue =>
+                possibleHelpers.some(possibleHelper =>
+                    queue.activeHelperIds.has(possibleHelper.id)
                 )
-            )
-        );
+            );
+            await Promise.all([
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentJoinVC(
+                        this,
+                        member,
+                        // already checked
+                        newVoiceState.channel as VoiceChannel
+                    )
+                ),
+                ...(this.useExperimentalVCStatusRerender &&
+                    queuesToRerender.map(queue => queue.triggerRender()))
+            ]);
+        }
+        if (memberIsHelper) {
+            await Promise.all(
+                this.queues.map(
+                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                )
+            );
+        }
     }
 
     /**
@@ -243,21 +262,49 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        if (!memberIsStudent) {
-            return;
+        const memberIsHelper = this._activeHelpers.has(member.id);
+        if (memberIsStudent) {
+            const possibleHelpers = oldVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            );
+            const queuesToRerender = this.queues.filter(queue =>
+                possibleHelpers.some(possibleHelper =>
+                    queue.activeHelperIds.has(possibleHelper.id)
+                )
+            );
+            await Promise.all<unknown>([
+                ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                    overwrite => overwrite.id === member.id && overwrite.delete()
+                ),
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentLeaveVC(this, member)
+                ),
+                this.afterSessionMessage !== '' &&
+                    member.send(SimpleEmbed(this.afterSessionMessage)),
+                ...(this.useExperimentalVCStatusRerender &&
+                    queuesToRerender.map(queue => queue.triggerRender()))
+            ]);
         }
-        await Promise.all<unknown>([
-            ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onStudentLeaveVC(this, member)
-            ),
-            this.afterSessionMessage !== '' &&
-                member.send(SimpleEmbed(this.afterSessionMessage))
-        ]);
+        if (memberIsHelper) {
+            // delete the overwrites of the students that this helper helped
+            const overwritesToDelete =
+                oldVoiceState.channel.permissionOverwrites.cache.filter(overwrite =>
+                    // checked in memberIsHelper condition
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    this.activeHelpers
+                        .get(member.id)!
+                        .helpedMembers.some(
+                            student => student.member.user.id === overwrite.id
+                        )
+                );
+            await Promise.all([
+                ...overwritesToDelete.map(overwrite => overwrite.delete()),
+                ...this.queues.map(
+                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                )
+            ]);
+        }
     }
-
     /**
      * Gets all the queue channels on the server. SLOW
      * if nothing is found, returns empty array
