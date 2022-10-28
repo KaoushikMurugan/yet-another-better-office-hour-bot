@@ -31,9 +31,6 @@ const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
  * After login startup seqence
  */
 client.on('ready', async () => {
-    if (client.user === null) {
-        throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
-    }
     printTitleString();
     // completeGuilds is all the servers this YABOB instance has joined
     const clientGuilds = await client.guilds.fetch();

@@ -13,6 +13,13 @@ if (
 ) {
     throw new Error(red('Missing token or bot ID. Aborting setup.'));
 }
+if (
+    environment.firebaseCredentials.clientEmail === '' ||
+    environment.firebaseCredentials.privateKey === '' ||
+    environment.firebaseCredentials.projectId === ''
+) {
+    throw new Error(red('Missing firebase credentials.'));
+}
 if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
@@ -20,13 +27,6 @@ if (getApps().length === 0) {
     initializeApp({
         credential: cert(environment.firebaseCredentials)
     });
-}
-if (
-    environment.firebaseCredentials.clientEmail === '' ||
-    environment.firebaseCredentials.privateKey === '' ||
-    environment.firebaseCredentials.projectId === ''
-) {
-    throw new Error(red('Missing firebase credentials.'));
 }
 
 /** The following are global constant references */
@@ -36,11 +36,13 @@ const firebaseDB: Firestore = getFirestore();
 
 /**
  * The discord user object.
- * @remarks Do not reference this object until client has logged in
- * - use it inside functions, **NOT** at the top level
- * - because we can't do top level await in modules to wait for the login call
+ * @remarks Top level await finally works with esmodules,
+ * this can now be safely referenced at the top leve;
+ * - The `true` type parameter asserts that the client has successfully initialized
+ * - Asserted because this file handles discord login.
+ * - If this object is successfullt exported, then it's guaranteed to be logged in.
  */
-const client = new Client({
+const client: Client<true> = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
@@ -52,20 +54,22 @@ const client = new Client({
     ]
 });
 
-// This is basically unhandled promise and relies on the `client.on` callbacks
-await client
-    .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
-    .then(() => console.log(`\nLogged in as ${yellow(client.user?.username)}!`))
-    .catch((err: Error) => {
-        console.error('Login Unsuccessful. Check YABOBs credentials.');
-        throw err;
-    });
-
 /**
  * All the servers that YABOB is managing
  * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
  * without passing through a interaction handler first
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
+
+/**
+ * Login before export
+ */
+await client
+    .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
+    .then(() => console.log(`\nLogged in as ${yellow(client.user.username)}!`))
+    .catch((err: Error) => {
+        console.error('Login Unsuccessful. Check YABOBs credentials.');
+        throw err;
+    });
 
 export { attendingServers, client, firebaseDB };
