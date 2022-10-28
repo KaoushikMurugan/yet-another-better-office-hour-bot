@@ -199,7 +199,7 @@ function composeViewModel(
 function composeUpcomingSessionsEmbedBody(
     viewModels: UpComingSessionViewModel[],
     queueChannel: QueueChannel,
-    returnCount = 10
+    returnCount = 5
 ): string {
     return viewModels.length > 0
         ? viewModels
