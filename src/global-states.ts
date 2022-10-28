@@ -40,7 +40,8 @@ const firebaseDB: Firestore = getFirestore();
  * this can now be safely referenced at the top leve;
  * - The `true` type parameter asserts that the client has successfully initialized
  * - Asserted because this file handles discord login.
- * - If this object is successfullt exported, then it's guaranteed to be logged in.
+ *  If this object is exported,
+ *  then the client is guaranteed have successfully logged in.
  */
 const client: Client<true> = new Client({
     intents: [
