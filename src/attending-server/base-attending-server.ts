@@ -446,6 +446,15 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
+        setTimeout(() => {
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite =>
+                    overwrite.id === student?.member.id &&
+                    overwrite
+                        .delete()
+                        .catch(() => console.error('failed to delete overwrite'))
+            );
+        }, 15 * 60 * 1000);
         await Promise.all<unknown>([
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
@@ -534,6 +543,15 @@ class AttendingServerV2 {
             maxAge: 15 * 60, // 15 minutes
             maxUses: 1
         });
+        setTimeout(() => {
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite =>
+                    overwrite.id === student?.member.id &&
+                    overwrite
+                        .delete()
+                        .catch(() => console.error('failed to delete overwrite'))
+            );
+        }, 15 * 60 * 1000);
         await Promise.all<unknown>([
             ...this.serverExtensions.map(
                 // ts doesn't recognize the undefined check for some reason
