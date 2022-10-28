@@ -16,12 +16,16 @@ import { magenta, black, cyan, green, red, yellow } from './utils/command-line-c
 import { postSlashCommands } from './command-handling/slash-commands.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
-import { client, attendingServers, interactionExtensions } from './global-states.js';
-import { WithRequired } from './utils/type-aliases.js';
+import { IInteractionExtension } from './extensions/extension-interface.js';
+import { GuildId, WithRequired } from './utils/type-aliases.js';
+import { client, attendingServers } from './global-states.js';
 import { CommandNotImplementedError } from './utils/error-types.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
+
+const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
+    new Collection();
 
 /**
  * After login startup seqence
@@ -83,6 +87,8 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
     if (interaction.isChatInputCommand()) {
         if (builtInCommandHandlerCanHandle(interaction)) {

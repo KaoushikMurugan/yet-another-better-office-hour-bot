@@ -6,7 +6,6 @@ import { yellow, black, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { IInteractionExtension } from './extensions/extension-interface.js';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -62,11 +61,6 @@ const client: Client<true> = new Client({
  * without passing through a interaction handler first
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
-/**
- * Interaction extensions
- */
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
 
 /**
  * Login before export
@@ -79,4 +73,4 @@ await client
         throw err;
     });
 
-export { attendingServers, client, firebaseDB, interactionExtensions };
+export { attendingServers, client, firebaseDB };

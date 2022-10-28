@@ -1,12 +1,4 @@
 /** @module BuiltInHandlers */
-/**
- * @packageDocumentation
- * Responsible for preprocessing button presses and dispatching them to servers
- * ----
- * @category Handler Classes
- * @see BuiltInCommandHander for detailed comments
- * - The difference here is that a button command is guaranteed to happen in a queue as of right now
- */
 import { ButtonInteraction } from 'discord.js';
 import {
     EmbedColor,
@@ -25,9 +17,13 @@ import {
 import { SuccessMessages } from './builtin-success-messages.js';
 
 /**
- * Object of available buttons
- * - key is 1st word in button customId, value is the correspondig function
+ * Responsible for preprocessing button presses and dispatching them to servers
+ * ----
+ * @category Handler Classes
+ * @see BuiltInCommandHander for detailed comments
+ * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
+
 const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     join: join,
     leave: leave,

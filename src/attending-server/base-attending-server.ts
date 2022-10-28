@@ -9,7 +9,8 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType
+    ChannelType,
+    OverwriteType
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
@@ -61,8 +62,6 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
-    /** For the experimental rerender */
-    private useExperimentalVCStatusRerender = true as const;
 
     protected constructor(
         readonly user: User,
@@ -213,36 +212,19 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = newVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
-            );
-            await Promise.all([
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(
-                        this,
-                        member,
-                        // already checked
-                        newVoiceState.channel as VoiceChannel
-                    )
-                ),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
-            ]);
+        if (!memberIsStudent || newVoiceState.channel === null) {
+            return;
         }
-        if (memberIsHelper) {
-            await Promise.all(
-                this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onStudentJoinVC(
+                    this,
+                    member,
+                    // already checked
+                    newVoiceState.channel as VoiceChannel
                 )
-            );
-        }
+            )
+        );
     }
 
     /**
@@ -261,48 +243,19 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = oldVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
-            );
-            await Promise.all<unknown>([
-                ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                    overwrite => overwrite.id === member.id && overwrite.delete()
-                ),
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentLeaveVC(this, member)
-                ),
-                this.afterSessionMessage !== '' &&
-                    member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
-            ]);
+        if (!memberIsStudent) {
+            return;
         }
-        if (memberIsHelper) {
-            // delete the overwrites of the students that this helper helped
-            const overwritesToDelete =
-                oldVoiceState.channel.permissionOverwrites.cache.filter(overwrite =>
-                    // checked in memberIsHelper condition
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.activeHelpers
-                        .get(member.id)!
-                        .helpedMembers.some(
-                            student => student.member.user.id === overwrite.id
-                        )
-                );
-            await Promise.all([
-                ...overwritesToDelete.map(overwrite => overwrite.delete()),
-                ...this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
-                )
-            ]);
-        }
+        await Promise.all<unknown>([
+            ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onStudentLeaveVC(this, member)
+            ),
+            this.afterSessionMessage !== '' &&
+                member.send(SimpleEmbed(this.afterSessionMessage))
+        ]);
     }
 
     /**
@@ -467,6 +420,12 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        // this api call is slow
+        await Promise.all(
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
@@ -550,6 +509,12 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.genericDequeueFailure;
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        // this api call is slow
+        await Promise.all(
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
