@@ -33,6 +33,7 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Watching,  name: 'Coding Tutorials' },
     { type: ActivityType.Playing,   name: 'Manifesting an A' },
     { type: ActivityType.Playing,   name: 'gdb' },
+    { type: ActivityType.Playing,   name: 'vscode' },
     { type: ActivityType.Playing,   name: 'leetcode' },
     { type: ActivityType.Playing,   name: 'hackerrank' },
     { type: ActivityType.Playing,   name: 'codeforces' },
@@ -51,6 +52,14 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: '1 + 1 = 11' },
     { type: ActivityType.Playing,   name: "It's not a bug, it's a feature" },
     { type: ActivityType.Playing,   name: 'You probably need a <br>' },
+    { type: ActivityType.Playing,   name: 'I can\'t fix code' },
+    { type: ActivityType.Playing,   name: 'How do I exit vim?' },
+    { type: ActivityType.Playing,   name: 'Requires 0.000025 years of experience to use' },
+    { type: ActivityType.Playing,   name: 'StackOverflow' },
+    { type: ActivityType.Playing,   name: 'If the compiler knows what\'s wrong, why won\'t it fix it for me?' },
+    { type: ActivityType.Playing,   name: 'Can\'t do RECAPTCHA' },
+    { type: ActivityType.Playing,   name: 'Watching Lectures at 1.5x' },
+    { type: ActivityType.Playing,   name: 'Watching Lectures at 2x' },
     { type: ActivityType.Playing,   name: `exec(s:='print("exec(s:=%r)"%s)')` }, // Quine
     // Hello World in different languages
     { type: ActivityType.Playing,   name: 'printf("Hello World");' }, // c
