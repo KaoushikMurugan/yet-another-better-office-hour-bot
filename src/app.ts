@@ -34,7 +34,7 @@ client.on('ready', async () => {
     if (client.user === null) {
         throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
     }
-    printTitleString(client.user.username);
+    printTitleString();
     // completeGuilds is all the servers this YABOB instance has joined
     const clientGuilds = await client.guilds.fetch();
     const completeGuilds = await Promise.all(clientGuilds.map(guild => guild.fetch()));
@@ -254,11 +254,9 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * Prints the title message for the console upon startup
  * @param username
  */
-function printTitleString(username: string): void {
+function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(`Logged in as ${username}!`);
-    console.log('Scanning servers I am a part of...');
     console.log(
         `\n${black(
             magenta(
@@ -269,4 +267,5 @@ function printTitleString(username: string): void {
             )
         )}\n`
     );
+    console.log('Scanning servers I am a part of...');
 }

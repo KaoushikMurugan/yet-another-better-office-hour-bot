@@ -53,10 +53,13 @@ const client = new Client({
 });
 
 // This is basically unhandled promise and relies on the `client.on` callbacks
-client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
-    console.error('Login Unsuccessful. Check YABOBs credentials.');
-    throw err;
-});
+await client
+    .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
+    .then(() => console.log(`\nLogged in as ${yellow(client.user?.username)}!`))
+    .catch((err: Error) => {
+        console.error('Login Unsuccessful. Check YABOBs credentials.');
+        throw err;
+    });
 
 /**
  * All the servers that YABOB is managing
