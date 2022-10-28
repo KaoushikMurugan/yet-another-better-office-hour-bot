@@ -37,10 +37,10 @@ class CalendarExtensionState {
 
     /**
      * Returns a new CalendarExtensionState for the server with the given id and name
-     * 
+     *
      * Uses firebase backup to intialize the Calendar config if the server has a backup
-     * @param serverId 
-     * @param serverName 
+     * @param serverId
+     * @param serverName
      * @returns CalendarExtensionState
      */
     static async create(
@@ -67,7 +67,7 @@ class CalendarExtensionState {
 
     /**
      * Sets the calendar id for the server to `validNewId` and updates the public embed url
-     * @param validNewId 
+     * @param validNewId
      */
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
@@ -81,7 +81,7 @@ class CalendarExtensionState {
 
     /**
      * Sets the public embed url for the server to `validUrl`
-     * @param validUrl 
+     * @param validUrl
      */
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;
@@ -93,8 +93,8 @@ class CalendarExtensionState {
 
     /**
      * Adds a new calendar_name -> discord_id mapping to displayNameDiscordIdMap
-     * @param calendarName 
-     * @param discordId 
+     * @param calendarName
+     * @param discordId
      */
     async updateNameDiscordIdMap(calendarName: string, discordId: string): Promise<void> {
         this.displayNameDiscordIdMap.set(calendarName, discordId);
@@ -107,7 +107,7 @@ class CalendarExtensionState {
 
     /**
      * Restores the calendar config from firebase
-     * @param serverId 
+     * @param serverId
      */
     async restoreFromBackup(serverId: string): Promise<void> {
         if (this.firebaseDB === undefined) {
@@ -174,8 +174,8 @@ class CalendarExtensionState {
 class CalendarServerEventListener extends BaseServerExtension {
     /**
      * If a server gets deleted, remove it from the calendar server map
-     * @param server 
-     * @returns 
+     * @param server
+     * @returns
      */
     override onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
         serverIdCalendarStateMap.delete(server.guild.id);

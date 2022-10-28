@@ -16,14 +16,12 @@ import {
     EmbedColor,
     ErrorEmbed,
     SimpleEmbed,
-    SimpleLogEmbed,
     SlashCommandLogEmbed
 } from '../../utils/embed-helper';
 import { ExtensionSetupError } from '../../utils/error-types';
 import { CommandData } from '../../command-handling/slash-commands';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRoles,
     isTriggeredByUserWithRolesSync
 } from '../../command-handling/common-validations';
 import {
@@ -44,12 +42,16 @@ import { appendCalendarHelpMessages } from './CalendarCommands';
 import {
     ButtonCallback,
     CommandCallback,
-    ModalSubmitCallback
+    ModalSubmitCallback,
+    YabobEmbed
 } from '../../utils/type-aliases';
 import { ExpectedCalendarErrors } from './expected-calendar-errors';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
 import { environment } from '../../environment/environment-manager';
-import { CalendarSuccessMessages } from './calendar-success-messages';
+import {
+    CalendarLogMessages,
+    CalendarSuccessMessages
+} from './calendar-success-messages';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -65,7 +67,7 @@ class CalendarInteractionExtension
      * - Initializes the calendar extension using firebase backup if available
      * - Adds calendar extension slash commands to the server
      * - Adds calendar extension help messages to respective lists
-     * @param guild 
+     * @param guild
      * @returns CalendarInteractionExtension
      */
     static async load(guild: Guild): Promise<CalendarInteractionExtension> {
@@ -149,13 +151,7 @@ class CalendarInteractionExtension
         const commandMethod = this.commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
-            .then(async successMsg => {
-                if (successMsg) {
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    );
-                }
-            })
+            .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
@@ -175,26 +171,21 @@ class CalendarInteractionExtension
         });
         logButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
-            .then(async successMsg => {
-                if (successMsg) {
-                    await interaction.editReply(
-                        SimpleEmbed(successMsg, EmbedColor.Success)
-                    );
-                }
-            })
+            .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err))
                     : await interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
             );
     }
-
     /**
      * Seperates the button name and queue name from the button interaction custom id
-     * @param interaction 
+     * @param interaction
      * @returns [buttonName, queueName]
      */
-    private splitButtonQueueName(interaction: ButtonInteraction): [string, string] {
+    private splitButtonQueueName(
+        interaction: ButtonInteraction
+    ): [buttonName: string, queueName: string] {
         const delimiterPosition = interaction.customId.indexOf(' ');
         const buttonName = interaction.customId.substring(0, delimiterPosition);
         const queueName = interaction.customId.substring(delimiterPosition + 1);
@@ -203,82 +194,76 @@ class CalendarInteractionExtension
 
     /**
      * The `/set_calendar [calendar_id]` command
-     * 
+     *
      * Updates the calendar id in the shared calendar extension states
      * - Triggers the queue level extensions to update
      */
     private async updateCalendarId(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const newCalendarId = interaction.options.getString('calendar_id', true);
-        const [newCalendarName] = await Promise.all([
-            checkCalendarConnection(newCalendarId).catch(() => {
+        const [newCalendarName] = [
+            await checkCalendarConnection(newCalendarId).catch(() => {
                 throw ExpectedCalendarErrors.badId.newId;
             }),
-            isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin'])
-        ]);
+            isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin'])
+        ];
         const [server, state] = isServerCalendarInteraction(interaction);
         await Promise.all([
             state.setCalendarId(newCalendarId),
-            server.sendLogMessage(
-                SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-            )
+            server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
         ]);
         return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
     }
 
     /**
      * The `/unset_calendar` command
-     * 
+     *
      * Resets the calendar id to default
      */
     private async unsetCalendarId(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
-        await isTriggeredByUserWithRoles(interaction, 'unset_calendar', ['Bot Admin']);
+        isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
         await Promise.all([
             state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
-            server.sendLogMessage(
-                SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-            )
+            server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
         ]);
         return CalendarSuccessMessages.unsetCalendar;
     }
 
     /**
      * The `/when_next` command
-     * 
+     *
      * Builds the embed for /when_next
      */
     private async listUpComingHours(
         interaction: ChatInputCommandInteraction
-    ): Promise<undefined> {
+    ): Promise<YabobEmbed> {
         const channel = hasValidQueueArgument(interaction);
         const [server] = isServerCalendarInteraction(interaction);
         const viewModels = await getUpComingTutoringEvents(
             server.guild.id,
             channel.queueName
         );
-        const embed = SimpleEmbed(
+        return SimpleEmbed(
             `Upcoming Hours for ${channel.queueName}`,
             EmbedColor.NoColor,
             composeUpcomingSessionsEmbedBody(viewModels, channel)
         );
-        await interaction.editReply(embed);
-        return undefined;
     }
 
     /**
      * The `/make_calendar_string` and `/make_calendar_string_all` commands
-     * 
+     *
      * Makes calendar titles for all approved queues
      * @param generateAll whether to generate string for all the queue roles
      */
     private async makeParsableCalendarTitle(
         interaction: ChatInputCommandInteraction,
         generateAll: boolean
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
         const member = isTriggeredByUserWithRolesSync(
             interaction,
@@ -299,9 +284,7 @@ class CalendarInteractionExtension
             ) {
                 throw ExpectedCalendarErrors.nonAdminMakingCalendarStrForOthers;
             } else {
-                // already checked in isServerInteraction
-                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                memberToUpdate = await interaction.guild!.members.fetch(user);
+                memberToUpdate = await server.guild.members.fetch(user);
             }
         }
         if (generateAll) {
@@ -341,9 +324,7 @@ class CalendarInteractionExtension
                     )} triggered by ${memberToUpdate.displayName}`
                 )
             );
-        await server.sendLogMessage(
-            SimpleLogEmbed(CalendarSuccessMessages.backedupToFirebase)
-        );
+        await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
         return CalendarSuccessMessages.completedCalendarString(
             calendarDisplayName,
             validQueues.map(queue => queue.name)
@@ -352,17 +333,17 @@ class CalendarInteractionExtension
 
     /**
      * The `/set_public_embd_url` command
-     * 
+     *
      * Sets the public embed url for the server's calendar
      * @param interaction
      */
     private async setPublicEmbedUrl(
         interaction: ChatInputCommandInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [, state] = isServerCalendarInteraction(interaction);
         const rawUrl = interaction.options.getString('url', true);
         const enable = interaction.options.getBoolean('enable', true);
-        await isTriggeredByUserWithRoles(interaction, 'set_calendar', ['Bot Admin']);
+        isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin']);
         if (enable) {
             try {
                 new URL(rawUrl); // call this constructor to check if URL is valid
@@ -380,14 +361,14 @@ class CalendarInteractionExtension
 
     /**
      * Refreshes the calendar emebed for the specified queue
-     * @param queueName 
-     * @param interaction 
-     * @returns 
+     * @param queueName
+     * @param interaction
+     * @returns
      */
     private async requestCalendarRefresh(
         queueName: string,
         interaction: ButtonInteraction
-    ): Promise<string> {
+    ): Promise<YabobEmbed> {
         const [server, state] = isServerCalendarInteraction(interaction);
         const queueLevelExtension = state.listeners.get(queueName);
         await Promise.all<unknown>([

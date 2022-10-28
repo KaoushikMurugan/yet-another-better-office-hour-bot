@@ -25,9 +25,9 @@ class FirebaseServerBackupExtension
     /**
      * Returns a new FirebaseServerBackupExtension for the server with the given id and name
      * - Connects to the firsebase database
-     * @param serverName 
-     * @param serverId 
-     * 
+     * @param serverName
+     * @param serverId
+     *
      */
     static async load(
         serverName: string,
@@ -67,7 +67,7 @@ class FirebaseServerBackupExtension
 
     /**
      * Saves a backup of the current server state to firebase
-     * @param server 
+     * @param server
      */
     override async onServerRequestBackup(
         server: Readonly<AttendingServerV2>

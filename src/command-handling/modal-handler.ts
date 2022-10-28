@@ -2,7 +2,7 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { ModalSubmitCallback } from '../utils/type-aliases';
+import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases';
 import { logModalSubmit } from '../utils/util-functions';
 import { SuccessMessages } from './builtin-success-messages';
 import { isServerInteraction } from './common-validations';
@@ -18,8 +18,8 @@ const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
 
 /**
  * Check if the modal interaction can be handled by this (in-built) handler
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): boolean {
     return interaction.customId in modalMethodMap;
@@ -30,7 +30,7 @@ function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): bool
  * - Calls the appropriate handler based on the modal name
  * - Logs the interaction
  * - Sends the appropriate response
- * @param interaction 
+ * @param interaction
  */
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction
@@ -70,7 +70,7 @@ async function processBuiltInModalSubmit(
  */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction
-): Promise<string> {
+): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const newAfterSessionMessage =
         interaction.fields.getTextInputValue('after_session_msg');
@@ -84,7 +84,9 @@ async function setAfterSessionMessage(
  * @param interaction
  * @returns
  */
-async function setQueueAutoClear(interaction: ModalSubmitInteraction): Promise<string> {
+async function setQueueAutoClear(
+    interaction: ModalSubmitInteraction
+): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');

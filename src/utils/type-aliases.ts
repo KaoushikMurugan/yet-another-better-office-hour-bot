@@ -8,6 +8,8 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 
+import { SimpleEmbed } from './embed-helper';
+
 /**
  * These are just aliases to make keys of collections easier to read
  */
@@ -29,16 +31,14 @@ type HelpMessage = {
  */
 type CommandCallback = (
     interaction: ChatInputCommandInteraction
-) => Promise<Optional<string>>;
-
+) => Promise<BaseMessageOptions>;
 type ButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction
-) => Promise<Optional<string>>;
-
+) => Promise<BaseMessageOptions>;
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction
-) => Promise<Optional<string | BaseMessageOptions>>;
+) => Promise<BaseMessageOptions>;
 
 /**
  * Marks 1 property in T as required.
@@ -53,6 +53,8 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T
  */
 type Optional<T> = T | undefined;
 
+type YabobEmbed = ReturnType<typeof SimpleEmbed>;
+
 export {
     GuildId,
     GuildMemberId,
@@ -64,5 +66,6 @@ export {
     ButtonCallback,
     WithRequired,
     Optional,
-    ModalSubmitCallback
+    ModalSubmitCallback,
+    YabobEmbed
 };

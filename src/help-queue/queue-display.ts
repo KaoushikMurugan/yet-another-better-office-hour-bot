@@ -53,7 +53,7 @@ class QueueDisplayV2 {
 
     /**
      * Request a render of the main queue embed (queue list + active helper list)
-     * @param queue 
+     * @param queue
      */
     async requestQueueRender(queue: QueueViewModel): Promise<void> {
         const embedTableMsg = new EmbedBuilder();
@@ -74,7 +74,7 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('join ' + queue.queueName)
+                    .setCustomId(`join ${queue.queueName}`)
                     .setEmoji('✅')
                     .setDisabled(!queue.isOpen)
                     .setLabel('Join')
@@ -82,7 +82,7 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('leave ' + queue.queueName)
+                    .setCustomId(`leave ${queue.queueName}`)
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -90,14 +90,14 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('notif ' + queue.queueName)
+                    .setCustomId(`notif ${queue.queueName}`)
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('removeN ' + queue.queueName)
+                    .setCustomId(`removeN ${queue.queueName}`)
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
@@ -107,7 +107,22 @@ class QueueDisplayV2 {
             const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
-                .setDescription(queue.helperIDs.join('\n'))
+                .setDescription(
+                    queue.helperIDs
+                        .map(id => {
+                            const voiceChannel =
+                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                                    id
+                                )?.channel;
+                            const vcStatus = voiceChannel
+                                ? voiceChannel.members.size > 1
+                                    ? `Busy in [${voiceChannel.name}]`
+                                    : `Idling in [${voiceChannel.name}]`
+                                : 'Not in voice channel.';
+                            return `<@${id}>\t|\t**${vcStatus}**`;
+                        })
+                        .join('\n')
+                )
                 .setColor(EmbedColor.Aqua);
             embedList.push(helperList);
         }
@@ -123,8 +138,8 @@ class QueueDisplayV2 {
 
     /**
      * Request a render of a non-queue (not the main queue list) embed
-     * @param embedElements 
-     * @param renderIndex 
+     * @param embedElements
+     * @param renderIndex
      */
     async requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
@@ -192,7 +207,7 @@ class QueueDisplayV2 {
 
     /**
      * Create an ascii table of the queue
-     * @param queue 
+     * @param queue
      * @returns the ascii table as a `string` in a code block
      */
     private composeQueueAsciiTable(queue: QueueViewModel): string {
