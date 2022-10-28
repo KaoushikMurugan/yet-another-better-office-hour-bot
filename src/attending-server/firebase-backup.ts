@@ -1,12 +1,12 @@
 /** @module FirebaseServerBackup */
-import { BaseServerExtension, IServerExtension } from '../extensions/extension-interface';
-import { AttendingServerV2 } from './base-attending-server';
-import { QueueBackup, ServerBackup } from '../models/backups';
-import { blue, cyan, yellow } from '../utils/command-line-colors';
-import { SimpleLogEmbed } from '../utils/embed-helper';
-import { Optional } from '../utils/type-aliases';
+import { BaseServerExtension, IServerExtension } from '../extensions/extension-interface.js';
+import { AttendingServerV2 } from './base-attending-server.js';
+import { QueueBackup, ServerBackup } from '../models/backups.js';
+import { blue, cyan, yellow } from '../utils/command-line-colors.js';
+import { SimpleLogEmbed } from '../utils/embed-helper.js';
+import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
-import { firebaseDB } from '../global-states';
+import { firebaseDB } from '../global-states.js';
 
 /**
  * Built in backup extension

@@ -13,10 +13,10 @@ import {
 import {
     AttendingServerV2,
     QueueChannel
-} from '../attending-server/base-attending-server';
-import { attendingServers } from '../global-states';
-import { CommandParseError } from '../utils/error-types';
-import { ExpectedParseErrors } from './expected-interaction-errors';
+} from '../attending-server/base-attending-server.js';
+import { attendingServers } from '../global-states.js';
+import { CommandParseError } from '../utils/error-types.js';
+import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
  * Checks if the command came from a server with correctly initialized YABOB

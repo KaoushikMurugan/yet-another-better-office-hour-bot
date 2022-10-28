@@ -1,5 +1,5 @@
-import development from './development.json';
-import production from './production.json';
+import development from './development.json' assert { type: 'json' };
+import production from './production.json' assert { type: 'json' };
 
 const configuration = {
     development,

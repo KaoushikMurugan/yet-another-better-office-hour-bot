@@ -1,11 +1,11 @@
 /** @module BuiltInHandlers */
 
 import { ModalSubmitInteraction } from 'discord.js';
-import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper';
-import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases';
-import { logModalSubmit } from '../utils/util-functions';
-import { SuccessMessages } from './builtin-success-messages';
-import { isServerInteraction } from './common-validations';
+import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper.js';
+import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases.js';
+import { logModalSubmit } from '../utils/util-functions.js';
+import { SuccessMessages } from './builtin-success-messages.js';
+import { isServerInteraction } from './common-validations.js';
 
 /**
  * Built in handler for modal submit

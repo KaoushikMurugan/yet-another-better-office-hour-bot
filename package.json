@@ -2,6 +2,7 @@
     "name": "yet-another-better-oh-bot",
     "version": "4.2",
     "description": "Yet another better discord bot for managing office hours",
+    "type": "module",
     "scripts": {
         "lint": "eslint src/",
         "build": "npx tsc",

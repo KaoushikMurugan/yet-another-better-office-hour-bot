@@ -1,9 +1,9 @@
 /** @module SessionCalendar */
-import { EmbedColor } from '../../utils/embed-helper';
-import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands';
-import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands';
-import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands';
-import { HelpMessage } from '../../utils/type-aliases';
+import { EmbedColor } from '../../utils/embed-helper.js';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
+import { HelpMessage } from '../../utils/type-aliases.js';
 
 const setCalendarHelp: HelpMessage = {
     nameValuePair: {

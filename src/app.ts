@@ -1,28 +1,28 @@
 import { Guild, Collection, VoiceState } from 'discord.js';
-import { AttendingServerV2 } from './attending-server/base-attending-server';
+import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
     processBuiltInButton
-} from './command-handling/button-handler';
+} from './command-handling/button-handler.js';
 import {
     builtInCommandHandlerCanHandle,
     processBuiltInCommand
-} from './command-handling/command-handler';
+} from './command-handling/command-handler.js';
 import {
     builtInModalHandlercanHandle,
     processBuiltInModalSubmit
-} from './command-handling/modal-handler';
-import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
-import { postSlashCommands } from './command-handling/slash-commands';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
-import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
-import { IInteractionExtension } from './extensions/extension-interface';
-import { GuildId, WithRequired } from './utils/type-aliases';
-import { client, attendingServers } from './global-states';
-import { CommandNotImplementedError } from './utils/error-types';
-import { environment } from './environment/environment-manager';
-import { updatePresence } from './utils/discord-presence';
-import { centered } from './utils/util-functions';
+} from './command-handling/modal-handler.js';
+import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
+import { postSlashCommands } from './command-handling/slash-commands.js';
+import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
+import { IInteractionExtension } from './extensions/extension-interface.js';
+import { GuildId, WithRequired } from './utils/type-aliases.js';
+import { client, attendingServers } from './global-states.js';
+import { CommandNotImplementedError } from './utils/error-types.js';
+import { environment } from './environment/environment-manager.js';
+import { updatePresence } from './utils/discord-presence.js';
+import { centered } from './utils/util-functions.js';
 
 const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
     new Collection();

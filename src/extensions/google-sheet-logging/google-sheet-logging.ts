@@ -1,14 +1,14 @@
 /** @module GoogleSheetLogging */
 import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { Helpee, Helper } from '../../models/member-states';
-import { BaseServerExtension, IServerExtension } from '../extension-interface';
-import { ExtensionSetupError } from '../../utils/error-types';
-import { blue, red, yellow } from '../../utils/command-line-colors';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server';
+import { Helpee, Helper } from '../../models/member-states.js';
+import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
+import { ExtensionSetupError } from '../../utils/error-types.js';
+import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildMemberId } from '../../utils/type-aliases';
-import { environment } from '../../environment/environment-manager';
-import { ExpectedSheetErrors } from './expected-sheet-errors';
+import { GuildMemberId } from '../../utils/type-aliases.js';
+import { environment } from '../../environment/environment-manager.js';
+import { ExpectedSheetErrors } from './expected-sheet-errors.js';
 
 /**
  * Additional attendance info for each helper

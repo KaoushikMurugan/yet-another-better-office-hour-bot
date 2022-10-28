@@ -5,21 +5,21 @@
  *  used by the calendar extension
  */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { CalendarExtensionState, calendarStates } from './calendar-states';
+import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import axios from 'axios';
-import { environment } from '../../environment/environment-manager';
-import { Optional } from '../../utils/type-aliases';
-import { ExpectedCalendarErrors } from './expected-calendar-errors';
+import { environment } from '../../environment/environment-manager.js';
+import { Optional } from '../../utils/type-aliases.js';
+import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
 import {
     AttendingServerV2,
     QueueChannel
-} from '../../attending-server/base-attending-server';
+} from '../../attending-server/base-attending-server.js';
 import {
     ChatInputCommandInteraction,
     ButtonInteraction,
     ModalSubmitInteraction
 } from 'discord.js';
-import { isServerInteraction } from '../../command-handling/common-validations';
+import { isServerInteraction } from '../../command-handling/common-validations.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -51,13 +51,14 @@ async function getUpComingTutoringEvents(
         timeMax: nextWeek,
         maxResults: 100
     });
-    const response = await axios({
-        url: calendarUrl,
-        timeout: 5000,
-        method: 'GET'
-    }).catch(() => {
-        throw ExpectedCalendarErrors.refreshTimedout;
-    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedout;
+        });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
@@ -123,13 +124,14 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         maxResults: 2
     });
-    const response = await axios({
-        url: calendarUrl,
-        timeout: 5000,
-        method: 'GET'
-    }).catch(() => {
-        throw ExpectedCalendarErrors.refreshTimedout;
-    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedout;
+        });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.failedRequest;
     }
@@ -182,9 +184,7 @@ function composeViewModel(
         eventQueue: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: calendarStates
-            .get(serverId)
-            ?.displayNameDiscordIdMap.get(tutorName),
+        discordId: calendarStates.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
         location: location
     };
 }

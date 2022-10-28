@@ -1,14 +1,14 @@
 /** @module SessionCalendar */
-import { CalendarQueueExtension } from './calendar-queue-extension';
-import { cyan, yellow } from '../../utils/command-line-colors';
-import { BaseServerExtension, IServerExtension } from '../extension-interface';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server';
-import { GuildId, GuildMemberId } from '../../utils/type-aliases';
+import { CalendarQueueExtension } from './calendar-queue-extension.js';
+import { cyan, yellow } from '../../utils/command-line-colors.js';
+import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
-import { environment } from '../../environment/environment-manager';
-import { restorePublicEmbedURL } from './shared-calendar-functions';
+import { environment } from '../../environment/environment-manager.js';
+import { restorePublicEmbedURL } from './shared-calendar-functions.js';
 import { Collection, Guild } from 'discord.js';
-import { firebaseDB } from '../../global-states';
+import { firebaseDB } from '../../global-states.js';
 
 /**
  * @module Backups

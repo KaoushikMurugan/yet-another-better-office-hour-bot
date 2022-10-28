@@ -12,28 +12,28 @@ import {
     ChannelType,
     OverwriteType
 } from 'discord.js';
-import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { commandChConfigs } from './command-ch-constants';
-import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
-import { ServerError } from '../utils/error-types';
-import { Helpee, Helper } from '../models/member-states';
-import { IServerExtension } from '../extensions/extension-interface';
-import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging';
-import { FirebaseServerBackupExtension } from './firebase-backup';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states';
-import { QueueBackup } from '../models/backups';
-import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors';
-import { convertMsToTime } from '../utils/util-functions';
+import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
+import { commandChConfigs } from './command-ch-constants.js';
+import { hierarchyRoleConfigs } from '../models/hierarchy-roles.js';
+import { ServerError } from '../utils/error-types.js';
+import { Helpee, Helper } from '../models/member-states.js';
+import { IServerExtension } from '../extensions/extension-interface.js';
+import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
+import { FirebaseServerBackupExtension } from './firebase-backup.js';
+import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
+import { QueueBackup } from '../models/backups.js';
+import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors.js';
+import { convertMsToTime } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
     GuildMemberId,
     HelpMessage,
     Optional,
     WithRequired
-} from '../utils/type-aliases';
-import { environment } from '../environment/environment-manager';
-import { ExpectedServerErrors } from './expected-server-errors';
+} from '../utils/type-aliases.js';
+import { environment } from '../environment/environment-manager.js';
+import { ExpectedServerErrors } from './expected-server-errors.js';
 
 /**
  * Wrapper for TextChannel

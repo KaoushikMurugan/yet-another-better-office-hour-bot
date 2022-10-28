@@ -2,9 +2,9 @@
  * @packageDocumentation
  * @module AttendingServerV2
  */
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
+import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
 
 export const commandChConfigs = [
     {

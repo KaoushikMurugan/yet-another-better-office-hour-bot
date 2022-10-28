@@ -1,8 +1,8 @@
-import { AttendingServerV2 } from './attending-server/base-attending-server';
-import { GuildId } from './utils/type-aliases';
-import { environment } from './environment/environment-manager';
+import { AttendingServerV2 } from './attending-server/base-attending-server.js';
+import { GuildId } from './utils/type-aliases.js';
+import { environment } from './environment/environment-manager.js';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
-import { yellow, black, red } from './utils/command-line-colors';
+import { yellow, black, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';

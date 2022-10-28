@@ -1,5 +1,5 @@
 /** @module ExpectedErrors */
-import { ServerError } from '../utils/error-types';
+import { ServerError } from '../utils/error-types.js';
 
 const ExpectedServerErrors = {
     queueDoesNotExist: new ServerError('This queue does not exist.'),

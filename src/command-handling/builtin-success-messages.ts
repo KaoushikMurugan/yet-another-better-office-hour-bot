@@ -1,6 +1,6 @@
-import { Helper } from '../models/member-states';
-import { convertMsToTime } from '../utils/util-functions';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
+import { Helper } from '../models/member-states.js';
+import { convertMsToTime } from '../utils/util-functions.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 
 export const SuccessMessages = {
     createdQueue: (queueName: string) =>

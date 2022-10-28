@@ -8,7 +8,7 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 
-import { SimpleEmbed } from './embed-helper';
+import { SimpleEmbed } from './embed-helper.js';
 
 /**
  * These are just aliases to make keys of collections easier to read

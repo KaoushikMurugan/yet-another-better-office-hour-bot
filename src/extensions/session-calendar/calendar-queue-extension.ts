@@ -1,19 +1,19 @@
 /** @module SessionCalendar */
-import { BaseQueueExtension, IQueueExtension } from '../extension-interface';
-import { ExtensionSetupError } from '../../utils/error-types';
-import { HelpQueueV2 } from '../../help-queue/help-queue';
-import { QueueDisplayV2 } from '../../help-queue/queue-display';
-import { EmbedColor } from '../../utils/embed-helper';
-import { red } from '../../utils/command-line-colors';
-import { calendarStates } from './calendar-states';
+import { BaseQueueExtension, IQueueExtension } from '../extension-interface.js';
+import { ExtensionSetupError } from '../../utils/error-types.js';
+import { HelpQueueV2 } from '../../help-queue/help-queue.js';
+import { QueueDisplayV2 } from '../../help-queue/queue-display.js';
+import { EmbedColor } from '../../utils/embed-helper.js';
+import { red } from '../../utils/command-line-colors.js';
+import { calendarStates } from './calendar-states.js';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { QueueChannel } from '../../attending-server/base-attending-server';
+import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     UpComingSessionViewModel
-} from './shared-calendar-functions';
+} from './shared-calendar-functions.js';
 
 /**
  * Calendar Extension for individual queues

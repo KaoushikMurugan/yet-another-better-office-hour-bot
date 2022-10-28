@@ -1,8 +1,8 @@
 /** @module HelpQueueV2 */
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { QueueViewModel } from './help-queue';
-import { QueueChannel } from '../attending-server/base-attending-server';
+import { QueueViewModel } from './help-queue.js';
+import { QueueChannel } from '../attending-server/base-attending-server.js';
 import {
     Collection,
     ActionRowBuilder,
@@ -12,8 +12,8 @@ import {
     User,
     ButtonStyle
 } from 'discord.js';
-import { EmbedColor } from '../utils/embed-helper';
-import { RenderIndex, MessageId } from '../utils/type-aliases';
+import { EmbedColor } from '../utils/embed-helper.js';
+import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 
 // The only responsibility is to interface with the ascii table
 /**

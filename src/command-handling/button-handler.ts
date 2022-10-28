@@ -6,15 +6,15 @@ import {
     ButtonLogEmbed,
     SimpleEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper';
-import { logButtonPress } from '../utils/util-functions';
-import { ButtonCallback, YabobEmbed } from '../utils/type-aliases';
+} from '../utils/embed-helper.js';
+import { logButtonPress } from '../utils/util-functions.js';
+import { ButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
     isServerInteraction
-} from './common-validations';
-import { SuccessMessages } from './builtin-success-messages';
+} from './common-validations.js';
+import { SuccessMessages } from './builtin-success-messages.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers

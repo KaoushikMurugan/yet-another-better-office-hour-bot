@@ -26,24 +26,24 @@ import {
     ErrorEmbed,
     SlashCommandLogEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper';
-import { CommandParseError } from '../utils/error-types';
+} from '../utils/embed-helper.js';
+import { CommandParseError } from '../utils/error-types.js';
 import {
     hasValidQueueArgument,
     isFromGuildMember,
     isTriggeredByUserWithRolesSync,
     isServerInteraction
-} from './common-validations';
-import { convertMsToTime, logSlashCommand } from '../utils/util-functions';
+} from './common-validations.js';
+import { convertMsToTime, logSlashCommand } from '../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands';
-import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects';
-import { ExpectedParseErrors } from './expected-interaction-errors';
-import { SuccessMessages } from './builtin-success-messages';
+import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
+import { ExpectedParseErrors } from './expected-interaction-errors.js';
+import { SuccessMessages } from './builtin-success-messages.js';
 
 /**
  * The map of available commands
