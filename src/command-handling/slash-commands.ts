@@ -177,9 +177,8 @@ const setAfterSessionMessageCommand = new SlashCommandBuilder()
 
 // /set_queue_auto_clear
 const setQueueAutoClear = new SlashCommandBuilder()
-.setName('set_queue_auto_clear')
-.setDescription('Sets the timeout before automatically clearing all the queues');
-
+    .setName('set_queue_auto_clear')
+    .setDescription('Sets the timeout before automatically clearing all the queues');
 
 // /set_logging_channel [channel]
 const setLoggingChannelCommand = new SlashCommandBuilder()
@@ -203,14 +202,10 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
     .setName('serious_mode')
     .setDescription('Activates serious mode')
     .addSubcommand(subcommand =>
-        subcommand
-            .setName('on')
-            .setDescription('Turns on serious mode')
+        subcommand.setName('on').setDescription('Turns on serious mode')
     )
     .addSubcommand(subcommand =>
-        subcommand
-            .setName('off')
-            .setDescription('Turns off serious mode')
+        subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
 // /help

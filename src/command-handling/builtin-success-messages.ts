@@ -81,5 +81,7 @@ export const SuccessMessages = {
         )
     },
     turnedOnSeriousMode: SimpleEmbed(`Serious mode has been turned on.`),
-    turnedOffSeriousMode: SimpleEmbed(`Serious mode has been turned off.\n\nThere's no need to be so serious!`),
+    turnedOffSeriousMode: SimpleEmbed(
+        `Serious mode has been turned off.\n\nThere's no need to be so serious!`
+    )
 } as const;

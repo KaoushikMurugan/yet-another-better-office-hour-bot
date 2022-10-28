@@ -108,14 +108,15 @@ Kw%o44Uqp0/Q?xNvL:`H%c#DD2^WV>gY;dts76qKJImZkj' } // malbolge
 /**
  * These presences might depend on the client object
  * so they need to be dynamically created
- * @remark client object should not be referenced as the top level
+ * @remark client object should not be referenced as the top level yet before branch 38
  */
-
-// prettier-ignore
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
     () => {
-        return { type: ActivityType.Watching,   name: `${client.guilds.cache.size} servers` };
+        return {
+            type: ActivityType.Watching,
+            name: `${client.guilds.cache.size} servers`
+        };
     }
 ];
 
@@ -132,7 +133,7 @@ const presenceTypeMap = new Map<ActivityType, string>([
  * @remark Consecutive calls to this function will not result in the same presence
  */
 function updatePresence(): void {
-    let selectedPresenceList: StaticBotPresence[] = [];
+    let selectedPresenceList: StaticBotPresence[];
     const rand = Math.random(); // gaurantueed to be between 0 and 1
     if (rand < 0.05) {
         // 5% chance of yabob related presence
@@ -153,7 +154,6 @@ function updatePresence(): void {
         // 5% chance of dynamic presence
         selectedPresenceList = dynamicPresenceList.map(presenceFunc => presenceFunc());
     }
-
     const newPresence = selectedPresenceList.filter(
         botPresence => botPresence !== previousPresence
     )[Math.floor(Math.random() * selectedPresenceList.length)];
@@ -166,7 +166,6 @@ function updatePresence(): void {
         // TS doesn't like that, so we have to check for it
         return;
     }
-
     client.user?.setPresence({
         activities: [newPresence]
     });
