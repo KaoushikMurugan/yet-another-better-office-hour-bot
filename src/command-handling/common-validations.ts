@@ -92,7 +92,7 @@ function isTriggeredByUserWithRolesSync(
  * @param required
  * - If true, check if the COMMAND ARG is a valid queue category
  * - If false, check if the CURRENT channel's parent category is a valid queue category
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
@@ -143,7 +143,7 @@ async function isTriggeredByUserWithValidEmail(
 
 /**
  * Checks if the queue channel has a parent folder
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  */
 function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,
