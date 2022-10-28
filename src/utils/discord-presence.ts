@@ -5,16 +5,25 @@ import { cyan, green } from './command-line-colors';
 // You can't set the presence of a bot to Custom Status, so we can't use the general type of ActivityType
 // If you give the presence type of Streaming, it shows up on discord as "Playing" instead of "Streaming"
 // So we remove it from the list of types
+// Not specifying a type will default to "Playing", so instead we enforce the type to be specified
 
 type StaticBotPresence = {
+    type: ActivityType.Playing | ActivityType.Listening | ActivityType.Watching;
     name: string;
-    type?: ActivityType.Playing | ActivityType.Listening | ActivityType.Watching;
 };
 
-const staticPresenceList: StaticBotPresence[] = [
+// prettier replaces the tab between the type and the name with a space
+// which isn't pretty at all
+
+// prettier-ignore
+const yabobRelatedPresenceList: StaticBotPresence[] = [
     // Bob The Builder
     { type: ActivityType.Watching,  name: 'Bob The Builder' },
     { type: ActivityType.Listening, name: 'Can We Fix It?' },
+];
+
+// prettier-ignore
+const memePresenceList: StaticBotPresence[] = [
     // Memes
     { type: ActivityType.Listening, name: 'Never Gonna Give You Up' },
     { type: ActivityType.Watching,  name: 'Shrek' },
@@ -23,6 +32,10 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Listening, name: 'Dragostea Din Tei' },
     { type: ActivityType.Listening, name: 'HEYYEYAAEYAAAEYAEYAA' },
     { type: ActivityType.Playing,   name: 'Did you know that yabob is a real place?' },
+];
+
+// prettier-ignore
+const csPresenceList: StaticBotPresence[] = [
     // CS real
     { type: ActivityType.Watching,  name: 'you squash your bugs' },
     { type: ActivityType.Watching,  name: 'you code' },
@@ -37,6 +50,10 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: 'leetcode' },
     { type: ActivityType.Playing,   name: 'hackerrank' },
     { type: ActivityType.Playing,   name: 'codeforces' },
+];
+
+// prettier-ignore
+const csMemesPresenceList: StaticBotPresence[] = [
     // CS Memes
     { type: ActivityType.Playing,   name: 'Faster than Internet Explorer' },
     { type: ActivityType.Playing,   name: 'Changing the TV input' },
@@ -48,8 +65,8 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: '#define true (rand() > 10)' },
     { type: ActivityType.Playing,   name: 'did you mean "XOR" or "OR"?' },
     { type: ActivityType.Playing,   name: "Don't use whitespace in C challenge" },
-    { type: ActivityType.Playing,   name: '5 ! = 120' },
-    { type: ActivityType.Playing,   name: '1 + 1 = 11' },
+    { type: ActivityType.Playing,   name: '5!=120' },
+    { type: ActivityType.Playing,   name: '1 + 1 = 10' },
     { type: ActivityType.Playing,   name: "It's not a bug, it's a feature" },
     { type: ActivityType.Playing,   name: 'You probably need a <br>' },
     { type: ActivityType.Playing,   name: 'I can\'t fix code' },
@@ -57,10 +74,14 @@ const staticPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: 'Requires 0.000025 years of experience to use' },
     { type: ActivityType.Playing,   name: 'StackOverflow' },
     { type: ActivityType.Playing,   name: 'If the compiler knows what\'s wrong, why won\'t it fix it for me?' },
-    { type: ActivityType.Playing,   name: 'Can\'t do RECAPTCHA' },
+    { type: ActivityType.Playing,   name: 'RECAPTCHA for 10 hours' },
     { type: ActivityType.Playing,   name: 'Watching Lectures at 1.5x' },
     { type: ActivityType.Playing,   name: 'Watching Lectures at 2x' },
     { type: ActivityType.Playing,   name: `exec(s:='print("exec(s:=%r)"%s)')` }, // Quine
+];
+
+// prettier-ignore
+const helloWorldPresenceList: StaticBotPresence[] = [
     // Hello World in different languages
     { type: ActivityType.Playing,   name: 'printf("Hello World");' }, // c
     { type: ActivityType.Playing,   name: 'System.out.println("Hello World");' }, // java
@@ -89,10 +110,12 @@ Kw%o44Uqp0/Q?xNvL:`H%c#DD2^WV>gY;dts76qKJImZkj' } // malbolge
  * so they need to be dynamically created
  * @remark client object should not be referenced as the top level
  */
+
+// prettier-ignore
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
     () => {
-        return { type: ActivityType.Watching, name: `${client.guilds.cache.size} servers` };
+        return { type: ActivityType.Watching,   name: `${client.guilds.cache.size} servers` };
     }
 ];
 
@@ -109,12 +132,31 @@ const presenceTypeMap = new Map<ActivityType, string>([
  * @remark Consecutive calls to this function will not result in the same presence
  */
 function updatePresence(): void {
-    const newPresence = [
-        ...dynamicPresenceList.map(presenceFunc => presenceFunc()),
-        ...staticPresenceList
-    ].filter(botPresence => botPresence !== previousPresence)[
-        Math.floor(Math.random() * staticPresenceList.length)
-    ];
+    let selectedPresenceList: StaticBotPresence[] = [];
+    const rand = Math.random(); // gaurantueed to be between 0 and 1
+    if (rand < 0.05) {
+        // 5% chance of yabob related presence
+        selectedPresenceList = yabobRelatedPresenceList;
+    } else if (rand < 0.2) {
+        // 15% chance of meme presence
+        selectedPresenceList = memePresenceList;
+    } else if (rand < 0.5) {
+        // 30% chance of cs presence
+        selectedPresenceList = csPresenceList;
+    } else if (rand < 0.75) {
+        // 25% chance of cs meme presence
+        selectedPresenceList = csMemesPresenceList;
+    } else if (rand < 0.95) {
+        // 20% chance of hello world example presence
+        selectedPresenceList = helloWorldPresenceList;
+    } else {
+        // 5% chance of dynamic presence
+        selectedPresenceList = dynamicPresenceList.map(presenceFunc => presenceFunc());
+    }
+
+    const newPresence = selectedPresenceList.filter(
+        botPresence => botPresence !== previousPresence
+    )[Math.floor(Math.random() * selectedPresenceList.length)];
     if (
         newPresence === undefined ||
         newPresence.name === undefined ||
@@ -124,6 +166,7 @@ function updatePresence(): void {
         // TS doesn't like that, so we have to check for it
         return;
     }
+
     client.user?.setPresence({
         activities: [newPresence]
     });
