@@ -1,6 +1,6 @@
-import { client } from '../src/global-states';
-import { EmbedColor } from '../src/utils/embed-helper';
-import { HelpMessage } from '../src/utils/type-aliases';
+import { client } from '../src/global-states.js';
+import { EmbedColor } from '../src/utils/embed-helper.js';
+import { HelpMessage } from '../src/utils/type-aliases.js';
 
 const studentCommandsTileMessage: HelpMessage = {
     nameValuePair: {

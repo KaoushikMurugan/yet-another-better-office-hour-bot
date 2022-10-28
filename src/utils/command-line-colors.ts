@@ -1,6 +1,6 @@
 /** @module Utilities */
 
-import { Optional } from './type-aliases';
+import { Optional } from './type-aliases.js';
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 export const ResetColor = '\x1b[0m';

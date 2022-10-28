@@ -1,7 +1,7 @@
 /** @module ExpectedErrors */
 
-import { CommandParseError } from '../utils/error-types';
-import { Optional } from '../utils/type-aliases';
+import { CommandParseError } from '../utils/error-types.js';
+import { Optional } from '../utils/type-aliases.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (

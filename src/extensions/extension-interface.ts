@@ -15,13 +15,13 @@ import {
     VoiceChannel,
     ModalSubmitInteraction
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server';
-import { HelpQueueV2 } from '../help-queue/help-queue';
-import { QueueDisplayV2 } from '../help-queue/queue-display';
-import { Helpee, Helper } from '../models/member-states';
-import { ServerBackup } from '../models/backups';
-import { CommandData } from '../command-handling/slash-commands';
-import { Optional } from '../utils/type-aliases';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { HelpQueueV2 } from '../help-queue/help-queue.js';
+import { QueueDisplayV2 } from '../help-queue/queue-display.js';
+import { Helpee, Helper } from '../models/member-states.js';
+import { ServerBackup } from '../models/backups.js';
+import { CommandData } from '../command-handling/slash-commands.js';
+import { Optional } from '../utils/type-aliases.js';
 
 /** Server Level Extension */
 interface IInteractionExtension {

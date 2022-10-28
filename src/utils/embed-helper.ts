@@ -8,8 +8,8 @@ import {
     User,
     ApplicationCommandOptionType
 } from 'discord.js';
-import { QueueError, ServerError } from '../utils/error-types';
-import { client } from '../global-states';
+import { QueueError, ServerError } from '../utils/error-types.js';
+import { client } from '../global-states.js';
 
 export enum EmbedColor {
     Success = 0xa9dc76, // Green

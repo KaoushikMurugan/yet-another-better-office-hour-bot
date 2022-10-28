@@ -1,19 +1,19 @@
 /** @module SessionCalendar */
-import { BaseQueueExtension, IQueueExtension } from '../extension-interface';
-import { ExtensionSetupError } from '../../utils/error-types';
-import { HelpQueueV2 } from '../../help-queue/help-queue';
-import { QueueDisplayV2 } from '../../help-queue/queue-display';
-import { EmbedColor } from '../../utils/embed-helper';
-import { red } from '../../utils/command-line-colors';
-import { serverIdCalendarStateMap } from './calendar-states';
+import { BaseQueueExtension, IQueueExtension } from '../extension-interface.js';
+import { ExtensionSetupError } from '../../utils/error-types.js';
+import { HelpQueueV2 } from '../../help-queue/help-queue.js';
+import { QueueDisplayV2 } from '../../help-queue/queue-display.js';
+import { EmbedColor } from '../../utils/embed-helper.js';
+import { red } from '../../utils/command-line-colors.js';
+import { calendarStates } from './calendar-states.js';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
-import { QueueChannel } from '../../attending-server/base-attending-server';
+import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     UpComingSessionViewModel
-} from './shared-calendar-functions';
+} from './shared-calendar-functions.js';
 
 /**
  * Calendar Extension for individual queues
@@ -41,13 +41,13 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         renderIndex: number,
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
-        if (!serverIdCalendarStateMap.has(queueChannel.channelObj.guild.id)) {
+        if (!calendarStates.has(queueChannel.channelObj.guild.id)) {
             throw new ExtensionSetupError(
                 red('The command level extension is required.')
             );
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
-        serverIdCalendarStateMap
+        calendarStates
             .get(queueChannel.channelObj.guild.id)
             ?.listeners.set(queueChannel.queueName, instance);
         return instance;
@@ -82,7 +82,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param deletedQueue
      */
     override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
-        serverIdCalendarStateMap
+        calendarStates
             .get(this.queueChannel.channelObj.guild.id)
             ?.listeners.delete(deletedQueue.queueName);
         // now garbage collector should clean up this instance
@@ -108,10 +108,10 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         this.upcomingSessions = refreshCache
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
-        const calendarId = serverIdCalendarStateMap.get(
+        const calendarId = calendarStates.get(
             this.queueChannel.channelObj.guild.id
         )?.calendarId;
-        const publicEmbedUrl = serverIdCalendarStateMap.get(
+        const publicEmbedUrl = calendarStates.get(
             this.queueChannel.channelObj.guild.id
         )?.publicCalendarEmbedUrl;
         const upcomingSessionsEmbed = new EmbedBuilder()

@@ -1,4 +1,4 @@
-import { EmbedColor, SimpleEmbed, SimpleLogEmbed } from '../../utils/embed-helper';
+import { EmbedColor, SimpleEmbed, SimpleLogEmbed } from '../../utils/embed-helper.js';
 
 const CalendarSuccessMessages = {
     updatedCalendarId: (newCalendarName: string) =>

@@ -7,8 +7,8 @@ import {
     ModalSubmitInteraction,
     Role
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server';
-import { cyan, yellow, magenta } from './command-line-colors';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { cyan, yellow, magenta } from './command-line-colors.js';
 
 /**
  * Converts the time delta in miliseconds into a readable format

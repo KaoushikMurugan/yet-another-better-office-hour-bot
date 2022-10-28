@@ -13,10 +13,10 @@ import {
 import {
     AttendingServerV2,
     QueueChannel
-} from '../attending-server/base-attending-server';
-import { attendingServers } from '../global-states';
-import { CommandParseError } from '../utils/error-types';
-import { ExpectedParseErrors } from './expected-interaction-errors';
+} from '../attending-server/base-attending-server.js';
+import { attendingServers } from '../global-states.js';
+import { CommandParseError } from '../utils/error-types.js';
+import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
  * Checks if the command came from a server with correctly initialized YABOB
@@ -92,7 +92,7 @@ function isTriggeredByUserWithRolesSync(
  * @param required
  * - If true, check if the COMMAND ARG is a valid queue category
  * - If false, check if the CURRENT channel's parent category is a valid queue category
- * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
+ * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
@@ -143,7 +143,7 @@ async function isTriggeredByUserWithValidEmail(
 
 /**
  * Checks if the queue channel has a parent folder
- * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
+ * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  */
 function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,

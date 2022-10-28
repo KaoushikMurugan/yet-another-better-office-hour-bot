@@ -1,8 +1,8 @@
 /** @module HelpQueueV2 */
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { QueueViewModel } from './help-queue';
-import { QueueChannel } from '../attending-server/base-attending-server';
+import { QueueViewModel } from './help-queue.js';
+import { QueueChannel } from '../attending-server/base-attending-server.js';
 import {
     Collection,
     ActionRowBuilder,
@@ -12,8 +12,8 @@ import {
     User,
     ButtonStyle
 } from 'discord.js';
-import { EmbedColor } from '../utils/embed-helper';
-import { RenderIndex, MessageId } from '../utils/type-aliases';
+import { EmbedColor } from '../utils/embed-helper.js';
+import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 
 // The only responsibility is to interface with the ascii table
 /**
@@ -74,7 +74,7 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`join ${queue.queueName}`)
+                    .setCustomId('join ' + queue.queueName)
                     .setEmoji('✅')
                     .setDisabled(!queue.isOpen)
                     .setLabel('Join')
@@ -82,7 +82,7 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`leave ${queue.queueName}`)
+                    .setCustomId('leave ' + queue.queueName)
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -90,14 +90,14 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`notif ${queue.queueName}`)
+                    .setCustomId('notif ' + queue.queueName)
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId(`removeN ${queue.queueName}`)
+                    .setCustomId('removeN ' + queue.queueName)
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
@@ -107,22 +107,7 @@ class QueueDisplayV2 {
             const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
-                .setDescription(
-                    queue.helperIDs
-                        .map(id => {
-                            const voiceChannel =
-                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
-                                    id
-                                )?.channel;
-                            const vcStatus = voiceChannel
-                                ? voiceChannel.members.size > 1
-                                    ? `Busy in [${voiceChannel.name}]`
-                                    : `Idling in [${voiceChannel.name}]`
-                                : 'Not in voice channel.';
-                            return `<@${id}>\t|\t**${vcStatus}**`;
-                        })
-                        .join('\n')
-                )
+                .setDescription(queue.helperIDs.join('\n'))
                 .setColor(EmbedColor.Aqua);
             embedList.push(helperList);
         }

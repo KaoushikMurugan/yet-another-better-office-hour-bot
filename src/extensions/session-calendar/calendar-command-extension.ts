@@ -1,6 +1,6 @@
 /** @module SessionCalendar */
-import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface';
-import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
+import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface.js';
+import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import {
     ButtonInteraction,
     CategoryChannel,
@@ -17,41 +17,41 @@ import {
     ErrorEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
-} from '../../utils/embed-helper';
-import { ExtensionSetupError } from '../../utils/error-types';
-import { CommandData } from '../../command-handling/slash-commands';
+} from '../../utils/embed-helper.js';
+import { ExtensionSetupError } from '../../utils/error-types.js';
+import { CommandData } from '../../command-handling/slash-commands.js';
 import {
     hasValidQueueArgument,
     isTriggeredByUserWithRolesSync
-} from '../../command-handling/common-validations';
+} from '../../command-handling/common-validations.js';
 import {
     checkCalendarConnection,
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     isServerCalendarInteraction
-} from './shared-calendar-functions';
-import { blue, red, yellow } from '../../utils/command-line-colors';
-import { calendarCommands } from './calendar-slash-commands';
+} from './shared-calendar-functions.js';
+import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { calendarCommands } from './calendar-slash-commands.js';
 import {
     getQueueRoles,
     logButtonPress,
     logSlashCommand
-} from '../../utils/util-functions';
-import { appendCalendarHelpMessages } from './CalendarCommands';
+} from '../../utils/util-functions.js';
+import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
     ButtonCallback,
     CommandCallback,
     ModalSubmitCallback,
     YabobEmbed
-} from '../../utils/type-aliases';
-import { ExpectedCalendarErrors } from './expected-calendar-errors';
-import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors';
-import { environment } from '../../environment/environment-manager';
+} from '../../utils/type-aliases.js';
+import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
+import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors.js';
+import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
-} from './calendar-success-messages';
+} from './calendar-success-messages.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -82,9 +82,9 @@ class CalendarInteractionExtension
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });
-        serverIdCalendarStateMap.set(
+        calendarStates.set(
             guild.id,
-            await CalendarExtensionState.create(guild.id, guild.name)
+            await CalendarExtensionState.load(guild)
         );
         const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);

@@ -1,6 +1,6 @@
 import { ActivityType } from 'discord.js';
-import { client } from '../global-states';
-import { cyan, green } from './command-line-colors';
+import { client } from '../global-states.js';
+import { cyan, green } from './command-line-colors.js';
 
 // You can't set the presence of a bot to Custom Status, so we can't use the general type of ActivityType
 // If you give the presence type of Streaming, it shows up on discord as "Playing" instead of "Streaming"

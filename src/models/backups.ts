@@ -1,7 +1,7 @@
 /** @module  Backups */
 
-import { AutoClearTimeout } from '../help-queue/help-queue';
-import { Helpee } from './member-states';
+import { AutoClearTimeout } from '../help-queue/help-queue.js';
+import { Helpee } from './member-states.js';
 
 /** Represent the data of 1 HelpQueue */
 type QueueBackup = {

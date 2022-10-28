@@ -9,30 +9,31 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType
+    ChannelType,
+    OverwriteType
 } from 'discord.js';
-import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { commandChConfigs } from './command-ch-constants';
-import { hierarchyRoleConfigs } from '../models/hierarchy-roles';
-import { PeriodicUpdateError, ServerError } from '../utils/error-types';
-import { Helpee, Helper } from '../models/member-states';
-import { IServerExtension } from '../extensions/extension-interface';
-import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging';
-import { FirebaseServerBackupExtension } from '../extensions/firebase-backup/firebase-extension';
-import { CalendarServerEventListener } from '../extensions/session-calendar/calendar-states';
-import { QueueBackup } from '../models/backups';
-import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors';
-import { convertMsToTime } from '../utils/util-functions';
+import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
+import { commandChConfigs } from './command-ch-constants.js';
+import { hierarchyRoleConfigs } from '../models/hierarchy-roles.js';
+import { ServerError } from '../utils/error-types.js';
+import { Helpee, Helper } from '../models/member-states.js';
+import { IServerExtension } from '../extensions/extension-interface.js';
+import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
+import { FirebaseServerBackupExtension } from './firebase-backup.js';
+import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
+import { QueueBackup } from '../models/backups.js';
+import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors.js';
+import { convertMsToTime } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
     GuildMemberId,
     HelpMessage,
     Optional,
     WithRequired
-} from '../utils/type-aliases';
-import { environment } from '../environment/environment-manager';
-import { ExpectedServerErrors } from './expected-server-errors';
+} from '../utils/type-aliases.js';
+import { environment } from '../environment/environment-manager.js';
+import { ExpectedServerErrors } from './expected-server-errors.js';
 
 /**
  * Wrapper for TextChannel
@@ -45,21 +46,12 @@ type QueueChannel = {
 };
 
 /**
- * Used as map keys to keep track of the timers we spin up
- * prevents unused timers from staying in the js event queue
- * - Union with more string literals if needed
- */
-type ServerTimerType = 'SERVER_PERIODIC_UPDATE';
-
-/**
  * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
  * ----
  * - Public functions can be accessed by the command handler
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
-    /** Keeps track of all the setTimout/setIntervals we started */
-    timers: Collection<ServerTimerType, NodeJS.Timeout | NodeJS.Timer> = new Collection();
     /** message sent to students after they leave */
     private _afterSessionMessage = '';
     /** optional, channel where yabob will log message. if undefined, don't log on the server */
@@ -70,8 +62,6 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
-    /** For the experimental rerender */
-    private useExperimentalVCStatusRerender = true as const;
 
     protected constructor(
         readonly user: User,
@@ -119,8 +109,6 @@ class AttendingServerV2 {
      * Cleans up all the timers from setInterval
      */
     clearAllServerTimers(): void {
-        this.timers.forEach(clearInterval);
-        this.timers.clear();
         this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
@@ -162,9 +150,9 @@ class AttendingServerV2 {
         const serverExtensions: IServerExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
-                  GoogleSheetLoggingExtension.load(guild.name),
-                  FirebaseServerBackupExtension.load(guild.name, guild.id),
-                  new CalendarServerEventListener()
+                  GoogleSheetLoggingExtension.load(guild),
+                  new FirebaseServerBackupExtension(guild),
+                  CalendarExtensionState.load(guild)
               ]);
         // Retrieve backup from all sources. Take the first one that's not undefined
         // TODO: Change behavior here depending on backup strategy
@@ -202,32 +190,7 @@ class AttendingServerV2 {
         });
         // Now Emit all the events
         await Promise.all(
-            serverExtensions
-                .map(extension => [
-                    extension.onServerInitSuccess(server),
-                    extension.onServerPeriodicUpdate(server, true)
-                ])
-                .flat()
-        );
-        // Call onServerPeriodicUpdate every 15min +- 1min
-        server.timers.set(
-            'SERVER_PERIODIC_UPDATE',
-            setInterval(
-                async () =>
-                    await Promise.all(
-                        serverExtensions.map(extension =>
-                            extension.onServerPeriodicUpdate(server, false)
-                        )
-                    ).catch((err: Error) =>
-                        console.error(
-                            new PeriodicUpdateError(
-                                `${err.name}: ${err.message}`,
-                                'Server'
-                            )
-                        )
-                    ),
-                1000 * 60 * 15 + Math.floor(Math.random() * 1000 * 60)
-            )
+            serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         console.log(`⭐ ${green(`Initilization for ${guild.name} is successful!`)}`);
         return server;
@@ -249,36 +212,19 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = newVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
-            );
-            await Promise.all([
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(
-                        this,
-                        member,
-                        // already checked
-                        newVoiceState.channel as VoiceChannel
-                    )
-                ),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
-            ]);
+        if (!memberIsStudent || newVoiceState.channel === null) {
+            return;
         }
-        if (memberIsHelper) {
-            await Promise.all(
-                this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onStudentJoinVC(
+                    this,
+                    member,
+                    // already checked
+                    newVoiceState.channel as VoiceChannel
                 )
-            );
-        }
+            )
+        );
     }
 
     /**
@@ -297,48 +243,19 @@ class AttendingServerV2 {
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = oldVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
-            );
-            await Promise.all<unknown>([
-                ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                    overwrite => overwrite.id === member.id && overwrite.delete()
-                ),
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentLeaveVC(this, member)
-                ),
-                this.afterSessionMessage !== '' &&
-                    member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
-            ]);
+        if (!memberIsStudent) {
+            return;
         }
-        if (memberIsHelper) {
-            // delete the overwrites of the students that this helper helped
-            const overwritesToDelete =
-                oldVoiceState.channel.permissionOverwrites.cache.filter(overwrite =>
-                    // checked in memberIsHelper condition
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.activeHelpers
-                        .get(member.id)!
-                        .helpedMembers.some(
-                            student => student.member.user.id === overwrite.id
-                        )
-                );
-            await Promise.all([
-                ...overwritesToDelete.map(overwrite => overwrite.delete()),
-                ...this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
-                )
-            ]);
-        }
+        await Promise.all<unknown>([
+            ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onStudentLeaveVC(this, member)
+            ),
+            this.afterSessionMessage !== '' &&
+                member.send(SimpleEmbed(this.afterSessionMessage))
+        ]);
     }
 
     /**
@@ -503,6 +420,12 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        // this api call is slow
+        await Promise.all(
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes
@@ -586,6 +509,12 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.genericDequeueFailure;
         }
         this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
+        // this api call is slow
+        await Promise.all(
+            helperVoiceChannel.permissionOverwrites.cache.map(
+                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
+            )
+        );
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60, // 15 minutes

@@ -6,7 +6,7 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { attendingServers } from '../global-states';
+import { attendingServers } from '../global-states.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.

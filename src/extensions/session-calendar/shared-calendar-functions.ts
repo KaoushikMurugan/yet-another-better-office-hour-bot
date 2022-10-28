@@ -5,21 +5,21 @@
  *  used by the calendar extension
  */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { CalendarExtensionState, serverIdCalendarStateMap } from './calendar-states';
+import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import axios from 'axios';
-import { environment } from '../../environment/environment-manager';
-import { Optional } from '../../utils/type-aliases';
-import { ExpectedCalendarErrors } from './expected-calendar-errors';
+import { environment } from '../../environment/environment-manager.js';
+import { Optional } from '../../utils/type-aliases.js';
+import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
 import {
     AttendingServerV2,
     QueueChannel
-} from '../../attending-server/base-attending-server';
+} from '../../attending-server/base-attending-server.js';
 import {
     ChatInputCommandInteraction,
     ButtonInteraction,
     ModalSubmitInteraction
 } from 'discord.js';
-import { isServerInteraction } from '../../command-handling/common-validations';
+import { isServerInteraction } from '../../command-handling/common-validations.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -45,19 +45,20 @@ async function getUpComingTutoringEvents(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: serverIdCalendarStateMap.get(serverId)?.calendarId ?? '',
+        calendarId: calendarStates.get(serverId)?.calendarId ?? '',
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
         maxResults: 100
     });
-    const response = await axios({
-        url: calendarUrl,
-        timeout: 5000,
-        method: 'GET'
-    }).catch(() => {
-        throw ExpectedCalendarErrors.refreshTimedout;
-    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedout;
+        });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
@@ -123,13 +124,14 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         maxResults: 2
     });
-    const response = await axios({
-        url: calendarUrl,
-        timeout: 5000,
-        method: 'GET'
-    }).catch(() => {
-        throw ExpectedCalendarErrors.refreshTimedout;
-    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedout;
+        });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.failedRequest;
     }
@@ -182,9 +184,7 @@ function composeViewModel(
         eventQueue: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: serverIdCalendarStateMap
-            .get(serverId)
-            ?.displayNameDiscordIdMap.get(tutorName),
+        discordId: calendarStates.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
         location: location
     };
 }
@@ -269,7 +269,7 @@ function isServerCalendarInteraction(
     interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
 ): [AttendingServerV2, CalendarExtensionState] {
     const server = isServerInteraction(interaction);
-    const state = serverIdCalendarStateMap.get(server.guild.id);
+    const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
     }

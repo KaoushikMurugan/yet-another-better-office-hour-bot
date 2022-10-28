@@ -1,17 +1,17 @@
 /** @module HelpQueueV2 */
 
 import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
-import { QueueChannel } from '../attending-server/base-attending-server';
-import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension';
-import { IQueueExtension } from '../extensions/extension-interface';
-import { QueueBackup } from '../models/backups';
-import { Helpee } from '../models/member-states';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper';
-import { PeriodicUpdateError } from '../utils/error-types';
-import { QueueDisplayV2 } from './queue-display';
-import { GuildMemberId, Optional } from '../utils/type-aliases';
-import { environment } from '../environment/environment-manager';
-import { ExpectedQueueErrors } from './expected-queue-errors';
+import { QueueChannel } from '../attending-server/base-attending-server.js';
+import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
+import { IQueueExtension } from '../extensions/extension-interface.js';
+import { QueueBackup } from '../models/backups.js';
+import { Helpee } from '../models/member-states.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
+import { PeriodicUpdateError } from '../utils/error-types.js';
+import { QueueDisplayV2 } from './queue-display.js';
+import { GuildMemberId, Optional } from '../utils/type-aliases.js';
+import { environment } from '../environment/environment-manager.js';
+import { ExpectedQueueErrors } from './expected-queue-errors.js';
 
 type QueueViewModel = {
     queueName: string;
@@ -460,7 +460,7 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            helperIDs: [...this._activeHelperIds],
+            helperIDs: [...this._activeHelperIds].map(helperId => `<@${helperId}>`),
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),

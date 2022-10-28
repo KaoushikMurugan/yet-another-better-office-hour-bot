@@ -1,36 +1,37 @@
-import { Guild, VoiceState } from 'discord.js';
-import { AttendingServerV2 } from './attending-server/base-attending-server';
+import { Guild, Collection, VoiceState } from 'discord.js';
+import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
     processBuiltInButton
-} from './command-handling/button-handler';
+} from './command-handling/button-handler.js';
 import {
     builtInCommandHandlerCanHandle,
     processBuiltInCommand
-} from './command-handling/command-handler';
+} from './command-handling/command-handler.js';
 import {
     builtInModalHandlercanHandle,
     processBuiltInModalSubmit
-} from './command-handling/modal-handler';
-import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors';
-import { postSlashCommands } from './command-handling/slash-commands';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper';
-import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension';
-import { WithRequired } from './utils/type-aliases';
-import { client, attendingServers, interactionExtensions } from './global-states';
-import { CommandNotImplementedError } from './utils/error-types';
-import { environment } from './environment/environment-manager';
-import { updatePresence } from './utils/discord-presence';
-import { centered } from './utils/util-functions';
+} from './command-handling/modal-handler.js';
+import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
+import { postSlashCommands } from './command-handling/slash-commands.js';
+import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
+import { IInteractionExtension } from './extensions/extension-interface.js';
+import { GuildId, WithRequired } from './utils/type-aliases.js';
+import { client, attendingServers } from './global-states.js';
+import { CommandNotImplementedError } from './utils/error-types.js';
+import { environment } from './environment/environment-manager.js';
+import { updatePresence } from './utils/discord-presence.js';
+import { centered } from './utils/util-functions.js';
+
+const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
+    new Collection();
 
 /**
  * After login startup seqence
  */
 client.on('ready', async () => {
-    if (client.user === null) {
-        throw new Error("Login Unsuccessful. Check YABOB's Discord Credentials");
-    }
-    printTitleString(client.user.username);
+    printTitleString();
     // completeGuilds is all the servers this YABOB instance has joined
     const clientGuilds = await client.guilds.fetch();
     const completeGuilds = await Promise.all(clientGuilds.map(guild => guild.fetch()));
@@ -86,47 +87,42 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
-    let handled = false;
     if (interaction.isChatInputCommand()) {
         if (builtInCommandHandlerCanHandle(interaction)) {
-            handled = true;
             await processBuiltInCommand(interaction);
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleCommand(interaction));
-            handled = externalCommandHandler !== undefined;
             await externalCommandHandler?.processCommand(interaction);
         }
     }
     if (interaction.isButton()) {
         if (builtInButtonHandlerCanHandle(interaction)) {
-            handled = true;
             await processBuiltInButton(interaction);
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleButton(interaction));
-            handled = externalButtonHandler !== undefined;
             await externalButtonHandler?.processButton(interaction);
         }
     }
     if (interaction.isModalSubmit()) {
         if (builtInModalHandlercanHandle(interaction)) {
-            handled = true;
             await processBuiltInModalSubmit(interaction);
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guild?.id ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
-            handled = externalModalHandler !== undefined;
             await externalModalHandler?.processModalSubmit(interaction);
         }
     }
-    // optional, remove it if you feel like this is too ugly
-    if (!handled && interaction.isRepliable()) {
+    // check if the command has been handled, if not, report error
+    if (interaction.isRepliable() && !interaction.replied) {
         await interaction.reply({
             ...ErrorEmbed(
                 new CommandNotImplementedError(
@@ -255,11 +251,9 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * Prints the title message for the console upon startup
  * @param username
  */
-function printTitleString(username: string): void {
+function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(`Logged in as ${username}!`);
-    console.log('Scanning servers I am a part of...');
     console.log(
         `\n${black(
             magenta(
@@ -270,4 +264,5 @@ function printTitleString(username: string): void {
             )
         )}\n`
     );
+    console.log('Scanning servers I am a part of...');
 }

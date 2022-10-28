@@ -1,12 +1,4 @@
 /** @module BuiltInHandlers */
-/**
- * @packageDocumentation
- * Responsible for preprocessing button presses and dispatching them to servers
- * ----
- * @category Handler Classes
- * @see BuiltInCommandHander for detailed comments
- * - The difference here is that a button command is guaranteed to happen in a queue as of right now
- */
 import { ButtonInteraction } from 'discord.js';
 import {
     EmbedColor,
@@ -14,20 +6,24 @@ import {
     ButtonLogEmbed,
     SimpleEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper';
-import { logButtonPress } from '../utils/util-functions';
-import { ButtonCallback, YabobEmbed } from '../utils/type-aliases';
+} from '../utils/embed-helper.js';
+import { logButtonPress } from '../utils/util-functions.js';
+import { ButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
     isFromGuildMember,
     isServerInteraction
-} from './common-validations';
-import { SuccessMessages } from './builtin-success-messages';
+} from './common-validations.js';
+import { SuccessMessages } from './builtin-success-messages.js';
 
 /**
- * Object of available buttons
- * - key is 1st word in button customId, value is the correspondig function
+ * Responsible for preprocessing button presses and dispatching them to servers
+ * ----
+ * @category Handler Classes
+ * @see BuiltInCommandHander for detailed comments
+ * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
+
 const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     join: join,
     leave: leave,

@@ -1,26 +1,49 @@
-import { AttendingServerV2 } from './attending-server/base-attending-server';
-import { GuildId } from './utils/type-aliases';
-import { environment } from './environment/environment-manager';
+import { AttendingServerV2 } from './attending-server/base-attending-server.js';
+import { GuildId } from './utils/type-aliases.js';
+import { environment } from './environment/environment-manager.js';
 import { Collection, Client, GatewayIntentBits } from 'discord.js';
-import { yellow, black } from './utils/command-line-colors';
-import { IInteractionExtension } from './extensions/extension-interface';
+import { yellow, black, red } from './utils/command-line-colors.js';
+import { Firestore } from 'firebase-admin/firestore';
+import { cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getFirestore } from 'firebase-admin/firestore';
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
     environment.discordBotCredentials.YABOB_APP_ID.length === 0
 ) {
-    throw new Error('Missing token or bot ID. Aborting setup.');
+    throw new Error(red('Missing token or bot ID. Aborting setup.'));
+}
+if (
+    environment.firebaseCredentials.clientEmail === '' ||
+    environment.firebaseCredentials.privateKey === '' ||
+    environment.firebaseCredentials.projectId === ''
+) {
+    throw new Error(red('Missing firebase credentials.'));
 }
 if (environment.disableExtensions) {
     console.log(yellow(black('Running without extensions.'), 'Bg'));
 }
+if (getApps().length === 0) {
+    initializeApp({
+        credential: cert(environment.firebaseCredentials)
+    });
+}
+
+/** The following are global constant references */
+
+/** Datatbase object used for backups, shared across base yabob and extensions */
+const firebaseDB: Firestore = getFirestore();
 
 /**
- * Do not reference this object until client has logged in
- * - use it inside functions not at top level
- * - because we can't do top level await in modules to wait for the login call
+ * The discord user object.
+ * @remarks Top level await finally works with esmodules,
+ * this can now be safely referenced at the top leve;
+ * - The `true` type parameter asserts that the client has successfully initialized
+ * - Asserted because this file handles discord login.
+ *  If this object is exported,
+ *  then the client is guaranteed have successfully logged in.
  */
-const client = new Client({
+const client: Client<true> = new Client({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,
@@ -32,22 +55,22 @@ const client = new Client({
     ]
 });
 
-// This is basically unhandled promise and relies on the `client.on` callbacks
-client.login(environment.discordBotCredentials.YABOB_BOT_TOKEN).catch((err: Error) => {
-    console.error('Login Unsuccessful. Check YABOBs credentials.');
-    throw err;
-});
-
 /**
  * All the servers that YABOB is managing
  * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
  * without passing through a interaction handler first
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
-/**
- * Interaction extensions
- */
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
 
-export { attendingServers, client, interactionExtensions };
+/**
+ * Login before export
+ */
+await client
+    .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
+    .then(() => console.log(`\nLogged in as ${yellow(client.user.username)}!`))
+    .catch((err: Error) => {
+        console.error('Login Unsuccessful. Check YABOBs credentials.');
+        throw err;
+    });
+
+export { attendingServers, client, firebaseDB };

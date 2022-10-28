@@ -1,6 +1,6 @@
 /** @module ExpectedErrors */
 
-import { QueueError } from '../utils/error-types';
+import { QueueError } from '../utils/error-types.js';
 
 const ExpectedQueueErrors = {
     alreadyOpen: (queueName: string) =>

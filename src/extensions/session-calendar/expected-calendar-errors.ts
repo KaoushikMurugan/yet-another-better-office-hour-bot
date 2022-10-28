@@ -1,6 +1,6 @@
 /** @module ExpectedErrors */
 
-import { CommandParseError } from '../../utils/error-types';
+import { CommandParseError } from '../../utils/error-types.js';
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
