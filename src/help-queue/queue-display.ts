@@ -15,6 +15,9 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 
+/**
+ * Wrapper for discord embeds to be sent to the queue
+ */
 type QueueChannelEmbed = {
     /** Actual embed content */
     contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
@@ -55,7 +58,7 @@ class QueueDisplayV2 {
     /**
      * Saved for queue delete. Stop the timer when a queue is deleted.
      */
-    renderLoopTimerId: NodeJS.Timeout;
+    readonly renderLoopTimerId: NodeJS.Timeout;
 
     constructor(
         private readonly user: User,
@@ -63,11 +66,12 @@ class QueueDisplayV2 {
     ) {
         /** starts the render loop */
         this.renderLoopTimerId = setInterval(async () => {
+            // every second, check if there are any fresh embeds
+            // actually render if and only if we have to
             if (
                 this.queueChannelEmbeds.filter(embed => !embed.stale).size !== 0 &&
                 !this.isRendering
             ) {
-                console.log('render triggered');
                 await this.render();
                 this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
             }
