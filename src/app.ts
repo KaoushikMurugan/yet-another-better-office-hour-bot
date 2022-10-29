@@ -183,13 +183,14 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     const serverId = oldVoiceState.guild.id;
     const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
     const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
+    const isSwitchVC = oldVoiceState.channel !== null && newVoiceState.channel !== null;
     if (isLeaveVC) {
         await attendingServers.get(serverId)?.onMemberLeaveVC(
             newVoiceState.member,
             // already checked in isLeaveVC condition
             oldVoiceState as WithRequired<VoiceState, 'channel'>
         );
-    } else if (isJoinVC) {
+    } else if (isJoinVC || isSwitchVC) {
         await attendingServers.get(serverId)?.onMemberJoinVC(
             newVoiceState.member,
             // already checked in isJoinVC condition
