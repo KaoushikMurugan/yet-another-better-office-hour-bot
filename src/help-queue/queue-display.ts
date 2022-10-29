@@ -86,14 +86,14 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for [${viewModel.queueName}] is ${
+                `Queue for 〚${viewModel.queueName}〛 is ${
                     viewModel.seriousModeEnabled
                         ? viewModel.isOpen
-                            ? '**__OPEN__**'
-                            : '**__CLOSED__**'
+                            ? '**OPEN**'
+                            : '**CLOSED**'
                         : viewModel.isOpen
-                        ? '**__OPEN__**\t(ﾟ∀ﾟ )'
-                        : '**__CLOSED__**\t◦<(¦3[___]'
+                        ? '**OPEN**\t(ﾟ∀ﾟ )'
+                        : '**CLOSED**\t◦<(¦3[___]'
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(viewModel))

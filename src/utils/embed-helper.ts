@@ -20,7 +20,8 @@ export enum EmbedColor {
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8, // Aqua
     Purple = 0xa6a5c4,
-    Pink = 0xffb7c5
+    Pink = 0xffb7c5,
+    Blue = 0x3498db
 }
 
 /**
