@@ -37,25 +37,37 @@ type HelpSessionEntry = {
 
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
+// Credit of all the update logic goes to Kaoushik
 class GoogleSheetLoggingExtension
     extends BaseServerExtension
     implements IServerExtension
 {
-    // Credit of all the update logic goes to Kaoushik
     /** key is student member.id, value is corresponding helpee object */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
-    /** key is helper member.id, value is entry for this helper */
+    /**
+     * Used to compose the final attendance entry.
+     * - Key is helper member.id, value is entry for this helper
+     */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
-    /** key is student member.id, value is an array of entries to handle multiple helpers */
+    /**
+     * key is student member.id, value is an array of entries to handle multiple helpers
+     */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
-    /** key is helper member.id, value is a complete attendance entry ready to be sent to google sheets */
-    private attendanceEntries: Collection<GuildMemberId, AttendanceEntry> =
-        new Collection();
+    /**
+     * These are the attendance entries that are complete but haven't been sent to google sheets yet
+     * @remark
+     * - Clear this map immediately after google sheet is successfully updated
+     */
+    private attendanceEntries: AttendanceEntry[] = [];
+    /**
+     * Whether an attendence update has been scheduled.
+     * - If true, writes to the attendanceEntries will not create another setTimeout
+     */
+    private attendanceUpdateIsScheduled = false;
 
-    constructor(private serverName: string, private googleSheet: GoogleSpreadsheet) {
+    constructor(private guild: Guild, private googleSheet: GoogleSpreadsheet) {
         super();
-        setTimeout(() => this.batchUpdateAttendance(), 60 * 1000);
     }
 
     /**
@@ -90,7 +102,7 @@ class GoogleSheetLoggingExtension
                 `successfully loaded for '${guild.name}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
-        return new GoogleSheetLoggingExtension(guild.name, googleSheet);
+        return new GoogleSheetLoggingExtension(guild, googleSheet);
     }
 
     /**
@@ -217,7 +229,17 @@ class GoogleSheetLoggingExtension
         for (const student of helper.helpedMembers) {
             this.studentsJustDequeued.delete(student.member.id);
         }
-        this.attendanceEntries.set(helper.member.id, { ...activeTimeEntry, ...helper });
+        this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
+        if (!this.attendanceUpdateIsScheduled) {
+            // if nothing is scheduled, start a timer
+            // otherwise the existing timer will update this entry
+            // so no need to schedule another one
+            this.attendanceUpdateIsScheduled = true;
+            setTimeout(async () => {
+                await this.batchUpdateAttendance();
+                this.attendanceUpdateIsScheduled = false;
+            }, 30 * 1000);
+        }
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -226,7 +248,7 @@ class GoogleSheetLoggingExtension
      * @param entry
      */
     private async batchUpdateAttendance(): Promise<void> {
-        if (this.attendanceEntries.size === 0) {
+        if (this.attendanceEntries.length === 0) {
             return;
         }
         const requiredHeaders = [
@@ -241,7 +263,7 @@ class GoogleSheetLoggingExtension
         ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
-        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Attendance`.replace(
+        const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Attendance`.replace(
             /\s{2,}/g,
             ' '
         );
@@ -300,10 +322,10 @@ class GoogleSheetLoggingExtension
             .then(() => {
                 console.log(
                     `[${new Date().toLocaleString()}] successfully updated attendance for ${
-                        this.serverName
+                        this.guild.name
                     }`
                 );
-                this.attendanceEntries.clear();
+                this.attendanceEntries = [];
             })
             .catch((err: Error) => {
                 console.error(
@@ -328,7 +350,7 @@ class GoogleSheetLoggingExtension
             return;
         }
         // trim off colon because google api bug, then trim off any excess spaces
-        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Help Sessions`.replace(
+        const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
             /\s{2,}/g,
             ' '
         );
@@ -352,7 +374,7 @@ class GoogleSheetLoggingExtension
                 'Session Time (ms)'
             ]);
         }
-        void Promise.all([
+        Promise.all([
             helpSessionSheet.addRows(
                 entries.map(entry =>
                     Object.fromEntries([
