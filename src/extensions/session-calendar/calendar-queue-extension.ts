@@ -24,6 +24,7 @@ import {
 class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtension {
     private upcomingSessions: UpComingSessionViewModel[] = [];
     private display?: Readonly<QueueDisplayV2>;
+    private lastUpdatedTimeStamp = new Date();
 
     private constructor(
         private readonly renderIndex: number,
@@ -101,6 +102,9 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
+        if (refreshCache) {
+            this.lastUpdatedTimeStamp = new Date();
+        }
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
@@ -122,7 +126,11 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                     : restorePublicEmbedURL(calendarId ?? '')
             )
             .setDescription(
-                composeUpcomingSessionsEmbedBody(this.upcomingSessions, this.queueChannel)
+                composeUpcomingSessionsEmbedBody(
+                    this.upcomingSessions,
+                    this.queueChannel,
+                    this.lastUpdatedTimeStamp
+                )
             )
             .setColor(EmbedColor.Blue)
             .setFooter({

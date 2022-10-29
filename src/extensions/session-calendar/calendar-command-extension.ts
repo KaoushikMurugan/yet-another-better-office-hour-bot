@@ -249,8 +249,8 @@ class CalendarInteractionExtension
         );
         return SimpleEmbed(
             `Upcoming Hours for ${channel.queueName}`,
-            EmbedColor.NoColor,
-            composeUpcomingSessionsEmbedBody(viewModels, channel)
+            EmbedColor.Blue,
+            composeUpcomingSessionsEmbedBody(viewModels, channel, new Date())
         );
     }
 
