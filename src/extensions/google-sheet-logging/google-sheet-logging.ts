@@ -49,9 +49,13 @@ class GoogleSheetLoggingExtension
     /** key is student member.id, value is an array of entries to handle multiple helpers */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
+    /** key is helper member.id, value is a complete attendance entry ready to be sent to google sheets */
+    private attendanceEntries: Collection<GuildMemberId, AttendanceEntry> =
+        new Collection();
 
     constructor(private serverName: string, private googleSheet: GoogleSpreadsheet) {
         super();
+        setTimeout(() => this.batchUpdateAttendance(), 60 * 1000);
     }
 
     /**
@@ -206,17 +210,14 @@ class GoogleSheetLoggingExtension
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
-        const entry = this.activeTimeEntries.get(helper.member.id);
-        if (entry === undefined) {
+        const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
+        if (activeTimeEntry === undefined) {
             throw ExpectedSheetErrors.unknownEntry;
         }
-        this.activeTimeEntries.delete(helper.member.id);
-        helper.helpedMembers.map(student =>
-            this.studentsJustDequeued.delete(student.member.id)
-        );
-        await this.updateAttendance({ ...entry, ...helper }).catch(() => {
-            throw ExpectedSheetErrors.recordedButCannotUpdate;
-        });
+        for (const student of helper.helpedMembers) {
+            this.studentsJustDequeued.delete(student.member.id);
+        }
+        this.attendanceEntries.set(helper.member.id, { ...activeTimeEntry, ...helper });
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -224,7 +225,10 @@ class GoogleSheetLoggingExtension
      * Updates the attendance for 1 helper
      * @param entry
      */
-    private async updateAttendance(entry: AttendanceEntry): Promise<void> {
+    private async batchUpdateAttendance(): Promise<void> {
+        if (this.attendanceEntries.size === 0) {
+            return;
+        }
         const requiredHeaders = [
             'Helper Username',
             'Time In',
@@ -258,50 +262,59 @@ class GoogleSheetLoggingExtension
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
         // Fire the promise then forget, if an exception comes back just log it to the console
-        void Promise.all([
-            attendanceSheet.addRow(
-                {
-                    'Helper Username': entry.member.user.username,
-                    'Time In': entry.helpStart.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Helped Students': JSON.stringify(
-                        entry.helpedMembers.map(
-                            student =>
-                                new Object({
-                                    displayName: student.member.displayName,
-                                    username: student.member.user.username,
-                                    id: student.member.id
-                                })
-                        )
-                    ),
-                    'Discord ID': entry.member.id,
-                    'Session Time (ms)':
-                        entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                    'Active Time (ms)': entry.activeTimeMs,
-                    'Number of Students Helped': entry.helpedMembers.length
-                },
+        Promise.all([
+            attendanceSheet.addRows(
+                this.attendanceEntries.map(entry => {
+                    return {
+                        'Helper Username': entry.member.user.username,
+                        'Time In': entry.helpStart.toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        }),
+                        'Time Out': entry.helpEnd.toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        }),
+                        'Helped Students': JSON.stringify(
+                            entry.helpedMembers.map(
+                                student =>
+                                    new Object({
+                                        displayName: student.member.displayName,
+                                        username: student.member.user.username,
+                                        id: student.member.id
+                                    })
+                            )
+                        ),
+                        'Discord ID': entry.member.id,
+                        'Session Time (ms)':
+                            entry.helpEnd.getTime() - entry.helpStart.getTime(),
+                        'Active Time (ms)': entry.activeTimeMs,
+                        'Number of Students Helped': entry.helpedMembers.length
+                    };
+                }),
                 {
                     raw: true,
                     insert: true
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]).catch((err: Error) => {
-            /**
-             * Catch clause must be here
-             * catching in {@link onHelperStopHelping} cannot catch the error of this call
-             * because it's not awaited
-             */
-            console.error(
-                red(`Error when updating attendance for ${entry.member.user.username}: `),
-                err.name,
-                err.message
-            );
-        });
+        ])
+            .then(() => {
+                console.log(
+                    `[${new Date().toLocaleString()}] successfully updated attendance for ${
+                        this.serverName
+                    }`
+                );
+                this.attendanceEntries.clear();
+            })
+            .catch((err: Error) => {
+                console.error(
+                    red(
+                        `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
+                    ),
+                    this.attendanceEntries,
+                    err.name,
+                    err.message
+                );
+            });
     }
 
     /**
