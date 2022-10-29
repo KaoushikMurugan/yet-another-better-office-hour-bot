@@ -468,12 +468,12 @@ class HelpQueueV2 {
             isOpen: this.isOpen,
             seriousModeEnabled: this._seriousModeEnabled
         };
-        await Promise.all([
-            this.display.requestQueueRender(viewModel),
-            ...this.queueExtensions.map(extension =>
+        this.display.requestQueueRender(viewModel);
+        await Promise.all(
+            this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)
             )
-        ]);
+        );
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {
