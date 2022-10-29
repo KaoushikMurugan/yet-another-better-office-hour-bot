@@ -15,7 +15,6 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 
-// The only responsibility is to interface with the ascii table
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
  * the queue embeds
@@ -30,32 +29,52 @@ class QueueDisplayV2 {
     private queueChannelEmbeds: Collection<
         RenderIndex,
         {
+            /** Actual embed content */
             contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
+            /** the order of the embed */
             renderIndex: RenderIndex;
+            /** whether it has already been rendered */
+            stale: boolean;
         }
     > = new Collection();
     // key is renderIndex, value is message id
     // - binds the render index with a specific message
     // - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
     private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
-
     /**
      * lock the render method during render
      * - avoids the message.delete method from being called on a deleted message
      * - queue and extensions can still request render and write to queueChannelEmbeds
+     * Saved for queue delete. Stop the timer when a queue is deleted.
      */
     private isRendering = false;
+    /**
+     * Saved for queue delete. Stop the timer when a queue is deleted.
+     */
+    renderLoopTimerId: NodeJS.Timeout;
 
     constructor(
         private readonly user: User,
         private readonly queueChannel: QueueChannel
-    ) {}
+    ) {
+        /** starts the render loop */
+        this.renderLoopTimerId = setInterval(async () => {
+            if (
+                this.queueChannelEmbeds.filter(embed => !embed.stale).size !== 0 &&
+                !this.isRendering
+            ) {
+                console.log('render triggered');
+                await this.render();
+                this.queueChannelEmbeds.map(embed => (embed.stale = true));
+            }
+        }, 1000);
+    }
 
     /**
      * Request a render of the main queue embed (queue list + active helper list)
      * @param queue
      */
-    async requestQueueRender(queue: QueueViewModel): Promise<void> {
+    requestQueueRender(queue: QueueViewModel): void {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
@@ -131,9 +150,9 @@ class QueueDisplayV2 {
                 embeds: embedList,
                 components: [joinLeaveButtons, notifButtons]
             },
-            renderIndex: 0
+            renderIndex: 0,
+            stale: false
         });
-        !this.isRendering && (await this.render());
     }
 
     /**
@@ -141,15 +160,15 @@ class QueueDisplayV2 {
      * @param embedElements
      * @param renderIndex
      */
-    async requestNonQueueEmbedRender(
+    requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
         renderIndex: number
-    ): Promise<void> {
+    ): void {
         this.queueChannelEmbeds.set(renderIndex, {
             contents: embedElements,
-            renderIndex: renderIndex
+            renderIndex: renderIndex,
+            stale: false
         });
-        !this.isRendering && (await this.render());
     }
 
     /**

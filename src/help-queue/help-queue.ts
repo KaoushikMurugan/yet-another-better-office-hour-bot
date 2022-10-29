@@ -445,6 +445,7 @@ class HelpQueueV2 {
         await Promise.all(
             this.queueExtensions.map(extension => extension.onQueueDelete(this))
         );
+        clearInterval(this.display.renderLoopTimerId);
     }
 
     async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
