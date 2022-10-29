@@ -9,7 +9,8 @@ import {
     User,
     VoiceChannel,
     VoiceState,
-    ChannelType
+    ChannelType,
+    VoiceBasedChannel
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
@@ -467,31 +468,7 @@ class AttendingServerV2 {
                     : curr //  both prev.first and curr.first will not be undefined
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
-        helperObject.helpedMembers.push(student);
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60, // 15 minutes
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await Promise.all([
-            ...this.serverExtensions.map(extension =>
-                extension.onDequeueFirst(this, student)
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            ),
-            student.member.send(
-                SimpleEmbed(
-                    `It's your turn! Join the call: ${invite.toString()}`,
-                    EmbedColor.Success
-                )
-            )
-        ]);
+        await this.sendInvite(helperObject, student, helperVoiceChannel);
         return student;
     }
 
@@ -543,32 +520,7 @@ class AttendingServerV2 {
         } else {
             throw ExpectedServerErrors.badDequeueArguments;
         }
-        helperObject.helpedMembers.push(student);
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60, // 15 minutes
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await Promise.all<unknown>([
-            ...this.serverExtensions.map(
-                // ts doesn't recognize the undefined check for some reason
-                extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            ),
-            student.member.send(
-                SimpleEmbed(
-                    `It's your turn! Join the call: ${invite.toString()}`,
-                    EmbedColor.Success
-                )
-            )
-        ]);
+        await this.sendInvite(helperObject, student, helperVoiceChannel);
         return student;
     }
 
@@ -895,6 +847,44 @@ class AttendingServerV2 {
         if (this._loggingChannel) {
             await this._loggingChannel.send(message);
         }
+    }
+    /**
+     * Sends the VC invite to the student after successful dequeue
+     * @param helperObject
+     * @param student
+     * @param helperVoiceChannel
+     * @returns
+     */
+    private async sendInvite(
+        helperObject: Helper,
+        student: Readonly<Helpee>,
+        helperVoiceChannel: VoiceBasedChannel
+    ) {
+        helperObject.helpedMembers.push(student);
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60,
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
+        ]);
+        await Promise.all([
+            ...this.serverExtensions.map(extension =>
+                extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            ),
+            student.member.send(
+                SimpleEmbed(
+                    `It's your turn! Join the call: ${invite.toString()}`,
+                    EmbedColor.Success
+                )
+            )
+        ]);
     }
 
     /**
