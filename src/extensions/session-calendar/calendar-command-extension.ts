@@ -282,7 +282,7 @@ class CalendarInteractionExtension
                 !memberRoles.cache.some(role => role.name === 'Bot Admin') &&
                 user.id !== interaction.user.id
             ) {
-                throw ExpectedCalendarErrors.nonAdminMakingCalendarStrForOthers;
+                throw ExpectedCalendarErrors.nonAdminMakingCalendarStringForOthers;
             } else {
                 memberToUpdate = await server.guild.members.fetch(user);
             }

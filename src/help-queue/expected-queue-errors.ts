@@ -9,7 +9,7 @@ const ExpectedQueueErrors = {
         new QueueError('Queue is already closed.', queueName),
     notOpen: (queueName: string) => new QueueError(`Queue is not open.`, queueName),
     notActiveHelper: (queueName: string) =>
-        new QueueError('You are not one of the helpers', queueName),
+        new QueueError(`You are not one of the helpers for ${queueName}`, queueName),
     alreadyInQueue: (queueName: string) =>
         new QueueError('You are already in the queue.', queueName),
     enqueueHelper: (queueName: string) =>
@@ -17,7 +17,7 @@ const ExpectedQueueErrors = {
     dequeue: {
         closed: (queueName: string) =>
             new QueueError(
-                `This queue is not open. Do you have the ${queueName} role?`,
+                `This queue is not open. Do you have the \`${queueName}\` role?`,
                 queueName
             ),
         empty: (queueName: string) =>
@@ -28,9 +28,15 @@ const ExpectedQueueErrors = {
     studentNotInQueue: (studentName: string, queueName: string) =>
         new QueueError(`${studentName} is not in the queue.`, queueName),
     alreadyInNotifGroup: (queueName: string) =>
-        new QueueError('You are already in the notification squad.', queueName),
+        new QueueError(
+            `You are already in the notification squad for ${queueName}.`,
+            queueName
+        ),
     notInNotifGroup: (queueName: string) =>
-        new QueueError('You are not in the notification squad.', queueName)
+        new QueueError(
+            `You are not in the notification squad for ${queueName}.`,
+            queueName
+        )
 } as const;
 
 export { ExpectedQueueErrors };

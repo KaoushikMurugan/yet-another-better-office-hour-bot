@@ -25,7 +25,7 @@ const ExpectedParseErrors = {
                 `If you are an admin, you can use \`/queue add ${categoryName}\` ` +
                 `to generate one.`
         ),
-    notGuildInteraction: new CommandParseError('Sorry, I only accept server'),
+    notGuildInteraction: new CommandParseError('Sorry, I can only accept server server interactions right now.'),
     queueHasNoParent: new CommandParseError(
         'Invalid Button or Command. Make sure this channel has a parent category.'
     ),
@@ -42,7 +42,7 @@ const ExpectedParseErrors = {
     },
     serverHasNoQueue: new CommandParseError(
         `This server doesn't seem to have any queues. ` +
-            `You can use \`/queue add <name>\` to create one`
+            `You can use \`/queue add <name>\` to create one.`
     ),
     nonServerInterction: (guildName?: string) =>
         guildName === undefined
@@ -51,7 +51,7 @@ const ExpectedParseErrors = {
                       ' Please use the interaction inside a server'
               )
             : new CommandParseError(
-                  'I can only accept interactions in corrected initialized servers. ' +
+                  'I can only accept interactions in correctly initialized servers. ' +
                       `Are you sure ${guildName} has a initialized YABOB?`
               )
 } as const;

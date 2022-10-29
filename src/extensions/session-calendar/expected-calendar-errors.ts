@@ -25,20 +25,20 @@ const ExpectedCalendarErrors = {
               )
             : new CommandParseError(
                   'I can only accept server based interactions. ' +
-                      `Are you sure ${guildName} has a initialized YABOB with the calendar xtension?`
+                      `Are you sure ${guildName} has a initialized YABOB with the calendar extension?`
               ),
     inaccessibleCalendar: new CalendarConnectionError(
         'Failed to connect to Google Calendar. ' +
-            'The calendar might be deleted or set to private.'
+            'The calendar might have been deleted or set to private.'
     ),
     refreshTimedout: new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'
     ),
     failedRequest: new CalendarConnectionError('Calendar request failed.'),
-    nonAdminMakingCalendarStrForOthers: new CommandParseError(
-        `Only Bot Admins have the permission to update calendar string for users that are not yourself. `
+    nonAdminMakingCalendarStringForOthers: new CommandParseError(
+        'Only Bot Admins have the permission to update calendar string for users that are not yourself.'
     ),
-    badPublicEmbedUrl: new CommandParseError('Please provide a valid and complete URL.')
+    badPublicEmbedUrl: new CommandParseError('Please provide a valid and complete URL. (it should start with https://...)')
 } as const;
 
 export { ExpectedCalendarErrors, CalendarConnectionError };
