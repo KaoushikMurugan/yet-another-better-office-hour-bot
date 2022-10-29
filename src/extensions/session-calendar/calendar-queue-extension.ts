@@ -24,6 +24,7 @@ import {
 class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtension {
     private upcomingSessions: UpComingSessionViewModel[] = [];
     private display?: Readonly<QueueDisplayV2>;
+    private lastUpdatedTimeStamp = new Date();
 
     private constructor(
         private readonly renderIndex: number,
@@ -101,6 +102,9 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
+        if (refreshCache) {
+            this.lastUpdatedTimeStamp = new Date();
+        }
         const [serverId, queueName] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName
@@ -122,18 +126,17 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                     : restorePublicEmbedURL(calendarId ?? '')
             )
             .setDescription(
-                composeUpcomingSessionsEmbedBody(this.upcomingSessions, this.queueChannel)
+                composeUpcomingSessionsEmbedBody(
+                    this.upcomingSessions,
+                    this.queueChannel,
+                    this.lastUpdatedTimeStamp
+                )
             )
             .setColor(EmbedColor.Blue)
             .setFooter({
                 text:
                     'This embed shows up to 5 most recent sessions and auto refreshes every hour. ' +
-                    `Click the title to see the full calendar. Last Updated at ${new Date().toLocaleTimeString(
-                        'en-US',
-                        {
-                            timeZone: 'PST8PDT'
-                        }
-                    )}`,
+                    'Click the title to see the full calendar.',
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -143,7 +146,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 .setLabel('Refresh Upcoming Sessions')
                 .setStyle(ButtonStyle.Primary)
         );
-        await this.display?.requestNonQueueEmbedRender(
+        this.display?.requestNonQueueEmbedRender(
             {
                 embeds: [upcomingSessionsEmbed],
                 components: [refreshButton]
