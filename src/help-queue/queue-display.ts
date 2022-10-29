@@ -15,37 +15,41 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 
+type QueueChannelEmbed = {
+    /** Actual embed content */
+    contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
+    /** the order of the embed. @example renderindex = 1 is the 2nd embed */
+    renderIndex: RenderIndex;
+    /** whether it has already been rendered */
+    stale: boolean;
+};
+
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
  * the queue embeds
  */
 class QueueDisplayV2 {
     /**
-     * keeps track of the actual embeds, key is render index
+     * The collection of actual embeds. key is render index
+     * @remarks
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
      * - acts like a graphics card memory
      */
-    private queueChannelEmbeds: Collection<
-        RenderIndex,
-        {
-            /** Actual embed content */
-            contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
-            /** the order of the embed */
-            renderIndex: RenderIndex;
-            /** whether it has already been rendered */
-            stale: boolean;
-        }
-    > = new Collection();
-    // key is renderIndex, value is message id
-    // - binds the render index with a specific message
-    // - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
+    private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
+        new Collection();
+    /**
+     * The collection of message ids that are safe to edit
+     * @remarks
+     * - binds the render index with a specific message
+     * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
+     */
     private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
     /**
-     * lock the render method during render
+     * The mutex that locks the render method during render
+     * @remarks
      * - avoids the message.delete method from being called on a deleted message
      * - queue and extensions can still request render and write to queueChannelEmbeds
-     * Saved for queue delete. Stop the timer when a queue is deleted.
      */
     private isRendering = false;
     /**
@@ -65,43 +69,43 @@ class QueueDisplayV2 {
             ) {
                 console.log('render triggered');
                 await this.render();
-                this.queueChannelEmbeds.map(embed => (embed.stale = true));
+                this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
             }
         }, 1000);
     }
 
     /**
      * Request a render of the main queue embed (queue list + active helper list)
-     * @param queue
+     * @param viewModel
      */
-    requestQueueRender(queue: QueueViewModel): void {
+    requestQueueEmbedRender(viewModel: QueueViewModel): void {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for [${queue.queueName}] is ${
-                    queue.seriousModeEnabled
-                        ? queue.isOpen
+                `Queue for [${viewModel.queueName}] is ${
+                    viewModel.seriousModeEnabled
+                        ? viewModel.isOpen
                             ? '**__OPEN__**'
                             : '**__CLOSED__**'
-                        : queue.isOpen
+                        : viewModel.isOpen
                         ? '**__OPEN__**\t(ﾟ∀ﾟ )'
                         : '**__CLOSED__**\t◦<(¦3[___]'
                 }`
             )
-            .setDescription(this.composeQueueAsciiTable(queue))
-            .setColor(queue.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
+            .setDescription(this.composeQueueAsciiTable(viewModel))
+            .setColor(viewModel.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('join ' + queue.queueName)
+                    .setCustomId('join ' + viewModel.queueName)
                     .setEmoji('✅')
-                    .setDisabled(!queue.isOpen)
+                    .setDisabled(!viewModel.isOpen)
                     .setLabel('Join')
                     .setStyle(ButtonStyle.Success)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('leave ' + queue.queueName)
+                    .setCustomId('leave ' + viewModel.queueName)
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -109,25 +113,25 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('notif ' + queue.queueName)
+                    .setCustomId('notif ' + viewModel.queueName)
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('removeN ' + queue.queueName)
+                    .setCustomId('removeN ' + viewModel.queueName)
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
             );
         const embedList = [embedTableMsg];
-        if (queue.helperIDs.length !== 0) {
+        if (viewModel.helperIDs.length !== 0) {
             const helperList = new EmbedBuilder();
             helperList
                 .setTitle(`Currently available helpers`)
                 .setDescription(
-                    queue.helperIDs
+                    viewModel.helperIDs
                         .map(id => {
                             const voiceChannel =
                                 this.queueChannel.channelObj.guild.voiceStates.cache.get(

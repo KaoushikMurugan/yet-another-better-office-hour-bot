@@ -35,9 +35,9 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
 class HelpQueueV2 {
     /** Keeps track of all the setTimout / setIntervals we started */
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
-    // why so serious?
+    /** Why so serious? */
     private _seriousModeEnabled = false;
-    // set of active helpers' ids
+    /** Set of active helpers' ids */
     private _activeHelperIds: Set<string> = new Set();
     /** The actual queue of students */
     private _students: Helpee[] = [];
@@ -468,7 +468,7 @@ class HelpQueueV2 {
             isOpen: this.isOpen,
             seriousModeEnabled: this._seriousModeEnabled
         };
-        this.display.requestQueueRender(viewModel);
+        this.display.requestQueueEmbedRender(viewModel);
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)
