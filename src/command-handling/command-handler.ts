@@ -405,9 +405,7 @@ async function cleanupAllQueues(
         isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
     ];
     const allQueues = await server.getQueueChannels();
-    await Promise.all(
-        allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)) ?? []
-    );
+    await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
     return SuccessMessages.cleanedup.allQueues;
 }
 

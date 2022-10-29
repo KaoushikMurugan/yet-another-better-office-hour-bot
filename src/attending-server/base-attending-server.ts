@@ -285,23 +285,13 @@ class AttendingServerV2 {
             ]);
         }
         if (memberIsHelper) {
-            // delete the overwrites of the students that this helper helped
-            const overwritesToDelete =
-                oldVoiceState.channel.permissionOverwrites.cache.filter(overwrite =>
-                    // checked in memberIsHelper condition
-                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-                    this.activeHelpers
-                        .get(member.id)!
-                        .helpedMembers.some(
-                            student => student.member.user.id === overwrite.id
-                        )
-                );
-            await Promise.all([
-                ...overwritesToDelete.map(overwrite => overwrite.delete()),
-                ...this.queues.map(
+            // the filter is removed because
+            // the overwrite will die in 15 minutes after the invite was sent
+            await Promise.all(
+                this.queues.map(
                     queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
                 )
-            ]);
+            );
         }
     }
     /**
@@ -726,7 +716,7 @@ class AttendingServerV2 {
      * @param targetQueue the queue to clean
      */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.triggerRender();
+        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
     }
 
     /**
@@ -853,7 +843,6 @@ class AttendingServerV2 {
      * @param helperObject
      * @param student
      * @param helperVoiceChannel
-     * @returns
      */
     private async sendInvite(
         helperObject: Helper,
@@ -885,6 +874,17 @@ class AttendingServerV2 {
                 )
             )
         ]);
+        // remove the overwrite when the link dies
+        setTimeout(() => {
+            helperVoiceChannel.permissionOverwrites.cache
+                .find(overwrite => overwrite.id === student.member.id)
+                ?.delete()
+                .catch(() =>
+                    console.error(
+                        `Failed to delete overwrite for ${student.member.displayName}`
+                    )
+                );
+        }, 15 * 60 * 1000);
     }
 
     /**

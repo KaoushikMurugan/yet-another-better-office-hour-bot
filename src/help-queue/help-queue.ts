@@ -35,9 +35,9 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
 class HelpQueueV2 {
     /** Keeps track of all the setTimout / setIntervals we started */
     timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
-    // why so serious?
+    /** Why so serious? */
     private _seriousModeEnabled = false;
-    // set of active helpers' ids
+    /** Set of active helpers' ids */
     private _activeHelperIds: Set<string> = new Set();
     /** The actual queue of students */
     private _students: Helpee[] = [];
@@ -234,10 +234,11 @@ class HelpQueueV2 {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
         this._activeHelperIds.add(helperMember.id);
-        await Promise.all<unknown>([
+        await Promise.all([
             ...this.notifGroup.map(
                 notifMember =>
                     notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
+                    !this.activeHelperIds.has(notifMember.id) && // don't notify helpers
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
@@ -445,6 +446,7 @@ class HelpQueueV2 {
         await Promise.all(
             this.queueExtensions.map(extension => extension.onQueueDelete(this))
         );
+        clearInterval(this.display.renderLoopTimerId);
     }
 
     async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
@@ -467,12 +469,16 @@ class HelpQueueV2 {
             isOpen: this.isOpen,
             seriousModeEnabled: this._seriousModeEnabled
         };
-        await Promise.all([
-            this.display.requestQueueRender(viewModel),
-            ...this.queueExtensions.map(extension =>
+        this.display.requestQueueEmbedRender(viewModel);
+        await Promise.all(
+            this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)
             )
-        ]);
+        );
+    }
+
+    async triggerForceRender(): Promise<void> {
+        await this.display.requestForceRener();
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {
