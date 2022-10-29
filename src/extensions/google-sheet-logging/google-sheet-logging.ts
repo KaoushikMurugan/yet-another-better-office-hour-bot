@@ -56,13 +56,12 @@ class GoogleSheetLoggingExtension
         new Collection();
     /**
      * These are the attendance entries that are complete but haven't been sent to google sheets yet
-     * @remark
-     * - Clear this map immediately after google sheet is successfully updated
+     * - Cleared immediately after google sheet has been successfully updated
      */
     private attendanceEntries: AttendanceEntry[] = [];
     /**
      * Whether an attendence update has been scheduled.
-     * - If true, writes to the attendanceEntries will not create another setTimeout
+     * - If true, writeing to the attendanceEntries will not create another setTimeout
      */
     private attendanceUpdateIsScheduled = false;
 
