@@ -133,7 +133,7 @@ class QueueDisplayV2 {
         if (viewModel.helperIDs.length !== 0) {
             const helperList = new EmbedBuilder();
             helperList
-                .setTitle(`Currently available helpers`)
+                .setTitle('Currently available helpers and voice channel status')
                 .setDescription(
                     viewModel.helperIDs
                         .map(id => {
@@ -146,7 +146,7 @@ class QueueDisplayV2 {
                                     ? `Busy in [${voiceChannel.name}]`
                                     : `Idling in [${voiceChannel.name}]`
                                 : 'Not in voice channel.';
-                            return `<@${id}>\t|\t**${vcStatus}**`;
+                            return `<@${id}>\t**|\t${vcStatus}**`;
                         })
                         .join('\n')
                 )
