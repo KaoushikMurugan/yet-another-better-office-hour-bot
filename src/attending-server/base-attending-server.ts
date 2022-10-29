@@ -853,7 +853,6 @@ class AttendingServerV2 {
      * @param helperObject
      * @param student
      * @param helperVoiceChannel
-     * @returns
      */
     private async sendInvite(
         helperObject: Helper,
@@ -885,6 +884,16 @@ class AttendingServerV2 {
                 )
             )
         ]);
+        setTimeout(() => {
+            helperVoiceChannel.permissionOverwrites.cache
+                .find(overwrite => overwrite.id === student.member.id)
+                ?.delete()
+                .catch(() =>
+                    console.error(
+                        `Failed to delete overwrite for ${student.member.displayName}`
+                    )
+                );
+        }, 15 * 60 * 1000);
     }
 
     /**
