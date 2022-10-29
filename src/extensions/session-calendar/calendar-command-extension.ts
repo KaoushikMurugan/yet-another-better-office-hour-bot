@@ -150,7 +150,7 @@ class CalendarInteractionExtension
         ]);
         const commandMethod = this.commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
-        await commandMethod?.(interaction)
+        commandMethod?.(interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
@@ -170,7 +170,7 @@ class CalendarInteractionExtension
             ephemeral: true
         });
         logButtonPress(interaction, buttonName, queueName);
-        await buttonMethod?.(queueName, interaction)
+        buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied

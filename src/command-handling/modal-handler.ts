@@ -39,7 +39,7 @@ async function processBuiltInModalSubmit(
     logModalSubmit(interaction);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
-    await modalMethod?.(interaction)
+    modalMethod?.(interaction)
         // Everything is reply here because showModal is guaranteed to be the 1st response
         // modal shown => message not replied, so we always reply
         .then(async successMsg => {
