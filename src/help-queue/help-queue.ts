@@ -332,11 +332,11 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             throw ExpectedQueueErrors.dequeue.closed(this.queueName);
         }
-        if (this._students.length === 0) {
-            throw ExpectedQueueErrors.dequeue.empty(this.queueName);
-        }
         if (!this._activeHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.dequeue.noPermission(this.queueName);
+        }
+        if (this._students.length === 0) {
+            throw ExpectedQueueErrors.dequeue.empty(this.queueName);
         }
         if (targetStudentMember !== undefined) {
             const studentIndex = this._students.findIndex(

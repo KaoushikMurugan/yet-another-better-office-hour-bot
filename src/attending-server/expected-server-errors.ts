@@ -18,7 +18,6 @@ const ExpectedServerErrors = {
     apiFail: (err: Error) => new ServerError(`API Failure: ${err.name}\n${err.message}`),
     studentNotFound: (studentName: string) =>
         new ServerError(`The student ${studentName} is not in any of the queues.`),
-    genericDequeueFailure: new ServerError('Dequeue with the given arguments failed.'),
     noAnnouncePerm: (queueName: string) =>
         new ServerError(
             `You don't have permission to announce in ${queueName}. ` +
@@ -29,7 +28,11 @@ const ExpectedServerErrors = {
             'There are no students in the queue to send your announcement to. ' +
                 "Here's your announcement if you would like to save it for later: " +
                 `\`\`\`${announcement}\`\`\``
-        )
+        ),
+    badDequeueArguments: new ServerError(
+        'Either student or the queue should be specified.' +
+            ' Did you mean to use `/next` without options?'
+    )
 } as const;
 
 export { ExpectedServerErrors };
