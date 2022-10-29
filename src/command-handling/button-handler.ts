@@ -53,7 +53,9 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
     const buttonMethod = buttonMethodMap[buttonName];
     await interaction.reply({
         ...SimpleEmbed(
-            `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
+            `Processing button \`${
+                interaction.component.label ?? buttonName
+            }\` in \`${queueName}\` ...`,
             EmbedColor.Neutral
         ),
         ephemeral: true
