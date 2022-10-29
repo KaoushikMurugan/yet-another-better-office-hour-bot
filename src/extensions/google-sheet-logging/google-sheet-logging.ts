@@ -235,8 +235,8 @@ class GoogleSheetLoggingExtension
             // so no need to schedule another one
             this.attendanceUpdateIsScheduled = true;
             setTimeout(async () => {
-                await this.batchUpdateAttendance();
                 this.attendanceUpdateIsScheduled = false;
+                await this.batchUpdateAttendance();
             }, 30 * 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
