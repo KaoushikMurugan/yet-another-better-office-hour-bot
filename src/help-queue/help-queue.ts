@@ -234,7 +234,7 @@ class HelpQueueV2 {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
         this._activeHelperIds.add(helperMember.id);
-        await Promise.all<unknown>([
+        await Promise.all([
             ...this.notifGroup.map(
                 notifMember =>
                     notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
@@ -475,6 +475,10 @@ class HelpQueueV2 {
                 extension.onQueueRender(this, this.display)
             )
         );
+    }
+
+    async triggerForceRender(): Promise<void> {
+        await this.display.requestForceRener();
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {

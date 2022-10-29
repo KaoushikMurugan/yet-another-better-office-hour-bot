@@ -726,7 +726,7 @@ class AttendingServerV2 {
      * @param targetQueue the queue to clean
      */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.triggerRender();
+        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
     }
 
     /**

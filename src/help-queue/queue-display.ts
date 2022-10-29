@@ -179,10 +179,15 @@ class QueueDisplayV2 {
         });
     }
 
+    async requestForceRener(): Promise<void> {
+        await this.render(true);
+    }
+
     /**
      * Render the embeds in the queueChannelEmbeds collection into the queue channel
+     * @param force whether to override current render strategy and do a fresh render
      */
-    private async render(): Promise<void> {
+    private async render(force = false): Promise<void> {
         this.isRendering = true;
         if (
             !this.queueChannel.channelObj.guild.channels.cache.has(
@@ -203,7 +208,7 @@ class QueueDisplayV2 {
         const safeToEdit =
             existingEmbeds.size === this.queueChannelEmbeds.size &&
             nonYABOBMessages.size === 0;
-        if (!safeToEdit) {
+        if (!safeToEdit || force) {
             await Promise.all(
                 (
                     await this.queueChannel.channelObj.messages.fetch(undefined)
