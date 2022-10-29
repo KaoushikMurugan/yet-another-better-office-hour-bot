@@ -238,7 +238,7 @@ class HelpQueueV2 {
             ...this.notifGroup.map(
                 notifMember =>
                     notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.notifGroup.has(notifMember.id) && // don't notify helpers
+                    !this.activeHelperIds.has(notifMember.id) && // don't notify helpers
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
