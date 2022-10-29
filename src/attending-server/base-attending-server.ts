@@ -10,13 +10,12 @@ import {
     VoiceChannel,
     VoiceState,
     ChannelType,
-    OverwriteType
+    VoiceBasedChannel
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { commandChConfigs } from './command-ch-constants.js';
 import { hierarchyRoleConfigs } from '../models/hierarchy-roles.js';
-import { ServerError } from '../utils/error-types.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
@@ -63,7 +62,7 @@ class AttendingServerV2 {
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
     /** enables helper vc status in queue embeds */
-    private useExperimentalVCStatusRerender = true as const;
+    private readonly useExperimentalVCStatusRerender = true;
 
     protected constructor(
         readonly user: User,
@@ -272,7 +271,7 @@ class AttendingServerV2 {
                     queue.activeHelperIds.has(possibleHelper.id)
                 )
             );
-            await Promise.all<unknown>([
+            await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
                     overwrite => overwrite.id === member.id && overwrite.delete()
                 ),
@@ -441,10 +440,12 @@ class AttendingServerV2 {
      * - QueueError: if the queue to dequeue from rejects
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
-        const currentlyHelpingQueues = this._queues.filter(queue =>
-            queue.activeHelperIds.has(helperMember.id)
-        );
-        if (currentlyHelpingQueues.size === 0) {
+        const [currentlyHelpingQueues, helperObject] = [
+            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
+            this._activeHelpers.get(helperMember.id)
+        ];
+        if (currentlyHelpingQueues.size === 0 || !helperObject) {
+            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
@@ -458,45 +459,16 @@ class AttendingServerV2 {
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
         }
-        const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>((prev, curr) =>
-            prev.first?.waitStart !== undefined &&
-            curr.first?.waitStart !== undefined &&
-            prev.first?.waitStart.getTime() < curr.first?.waitStart.getTime()
-                ? prev
-                : curr
+        const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>(
+            (prev, curr) =>
+                prev.first && // use truthyness/falsyness
+                curr.first && // both null & undefined evaluates to false
+                prev.first.waitStart.getTime() < curr.first.waitStart.getTime()
+                    ? prev // if the first 2 conditions passed,
+                    : curr //  both prev.first and curr.first will not be undefined
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
-        this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all(
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        );
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60, // 15 minutes
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await Promise.all<unknown>([
-            ...this.serverExtensions.map(extension =>
-                extension.onDequeueFirst(this, student)
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            ),
-            student.member.send(
-                SimpleEmbed(
-                    `It's your turn! Join the call: ${invite.toString()}`,
-                    EmbedColor.Success
-                )
-            )
-        ]);
+        await this.sendInvite(helperObject, student, helperVoiceChannel);
         return student;
     }
 
@@ -510,83 +482,45 @@ class AttendingServerV2 {
         targetStudentMember?: GuildMember,
         specificQueue?: QueueChannel
     ): Promise<Readonly<Helpee>> {
-        const currentlyHelpingQueues = this._queues.filter(queue =>
-            queue.activeHelperIds.has(helperMember.id)
-        );
-        if (currentlyHelpingQueues.size === 0) {
+        const [currentlyHelpingQueues, helperObject] = [
+            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
+            this._activeHelpers.get(helperMember.id)
+        ];
+        if (currentlyHelpingQueues.size === 0 || !helperObject) {
+            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
-        let student: Optional<Readonly<Helpee>>;
+        let student: Readonly<Helpee>;
         if (specificQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
-            // TODO: Do we need to do this check? Or can we just let the queue handle it
-            if (
-                !helperMember.roles.cache.some(
-                    role => role.name === specificQueue.queueName
-                )
-            ) {
-                throw new ServerError(
-                    `You don't have the permission to dequeue ` +
-                        `\`${specificQueue.queueName}\`.`
-                );
+            const queueToDequeue = this._queues.get(specificQueue.parentCategoryId);
+            if (queueToDequeue === undefined) {
+                throw ExpectedServerErrors.queueDoesNotExist;
             }
-            student = await this._queues
-                .get(specificQueue.parentCategoryId)
-                ?.dequeueWithHelper(helperMember, targetStudentMember);
+            student = await queueToDequeue.dequeueWithHelper(
+                helperMember,
+                targetStudentMember
+            );
         } else if (targetStudentMember !== undefined) {
-            const queue = this._queues.find(queue =>
+            const queueToDequeue = this._queues.find(queue =>
                 queue.students.some(
                     student => student.member.id === targetStudentMember.id
                 )
             );
-            student = await queue?.removeStudent(targetStudentMember);
-            if (student === undefined) {
+            if (queueToDequeue === undefined) {
                 throw ExpectedServerErrors.studentNotFound(
                     targetStudentMember.displayName
                 );
             }
+            student = await queueToDequeue.removeStudent(targetStudentMember);
+        } else {
+            throw ExpectedServerErrors.badDequeueArguments;
         }
-        if (student === undefined) {
-            // won't be seen, only the above error messages will be sent
-            // this is just here for semantics
-            throw ExpectedServerErrors.genericDequeueFailure;
-        }
-        this._activeHelpers.get(helperMember.id)?.helpedMembers.push(student);
-        // this api call is slow
-        await Promise.all(
-            helperVoiceChannel.permissionOverwrites.cache.map(
-                overwrite => overwrite.type === OverwriteType.Member && overwrite.delete()
-            )
-        );
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60, // 15 minutes
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await Promise.all<unknown>([
-            ...this.serverExtensions.map(
-                // ts doesn't recognize the undefined check for some reason
-                extension => extension.onDequeueFirst(this, student as Readonly<Helpee>)
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            ),
-            student.member.send(
-                SimpleEmbed(
-                    `It's your turn! Join the call: ${invite.toString()}`,
-                    EmbedColor.Success
-                )
-            )
-        ]);
+        await this.sendInvite(helperObject, student, helperVoiceChannel);
         return student;
     }
 
@@ -913,6 +847,44 @@ class AttendingServerV2 {
         if (this._loggingChannel) {
             await this._loggingChannel.send(message);
         }
+    }
+    /**
+     * Sends the VC invite to the student after successful dequeue
+     * @param helperObject
+     * @param student
+     * @param helperVoiceChannel
+     * @returns
+     */
+    private async sendInvite(
+        helperObject: Helper,
+        student: Readonly<Helpee>,
+        helperVoiceChannel: VoiceBasedChannel
+    ) {
+        helperObject.helpedMembers.push(student);
+        const [invite] = await Promise.all([
+            helperVoiceChannel.createInvite({
+                maxAge: 15 * 60,
+                maxUses: 1
+            }),
+            helperVoiceChannel.permissionOverwrites.create(student.member, {
+                ViewChannel: true,
+                Connect: true
+            })
+        ]);
+        await Promise.all([
+            ...this.serverExtensions.map(extension =>
+                extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            ),
+            student.member.send(
+                SimpleEmbed(
+                    `It's your turn! Join the call: ${invite.toString()}`,
+                    EmbedColor.Success
+                )
+            )
+        ]);
     }
 
     /**

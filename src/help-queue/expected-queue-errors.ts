@@ -4,9 +4,9 @@ import { QueueError } from '../utils/error-types.js';
 
 const ExpectedQueueErrors = {
     alreadyOpen: (queueName: string) =>
-        new QueueError('Queue is already open', queueName),
+        new QueueError('Queue is already open.', queueName),
     alreadyClosed: (queueName: string) =>
-        new QueueError('Queue is already closed', queueName),
+        new QueueError('Queue is already closed.', queueName),
     notOpen: (queueName: string) => new QueueError(`Queue is not open.`, queueName),
     notActiveHelper: (queueName: string) =>
         new QueueError('You are not one of the helpers', queueName),
@@ -17,16 +17,16 @@ const ExpectedQueueErrors = {
     dequeue: {
         closed: (queueName: string) =>
             new QueueError(
-                'This queue is not open. Did you mean to use `/start`?',
+                `This queue is not open. Do you have the ${queueName} role?`,
                 queueName
             ),
         empty: (queueName: string) =>
-            new QueueError("There's no one in the queue", queueName),
+            new QueueError("There's no one in the queue.", queueName),
         noPermission: (queueName: string) =>
-            new QueueError("You don't have permission to help this queue", queueName)
+            new QueueError("You don't have permission to help this queue.", queueName)
     },
     studentNotInQueue: (studentName: string, queueName: string) =>
-        new QueueError(`${studentName} is not in the queue`, queueName),
+        new QueueError(`${studentName} is not in the queue.`, queueName),
     alreadyInNotifGroup: (queueName: string) =>
         new QueueError('You are already in the notification squad.', queueName),
     notInNotifGroup: (queueName: string) =>
