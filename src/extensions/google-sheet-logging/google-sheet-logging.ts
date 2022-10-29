@@ -181,12 +181,12 @@ class GoogleSheetLoggingExtension
             return;
         }
         this.helpSessionEntries.delete(studentMember.id);
-        this.activeTimeEntries.forEach(entry => {
+        for (const entry of this.activeTimeEntries.values()) {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
-        });
+        }
         const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
             helpSessionEntries.map(entry => {
                 return { ...entry, 'Session End': new Date() };
@@ -273,7 +273,7 @@ class GoogleSheetLoggingExtension
                 headerValues: requiredHeaders
             }));
         if (
-            attendanceSheet.headerValues === undefined ||
+            !attendanceSheet.headerValues ||
             attendanceSheet.headerValues.length !== requiredHeaders.length ||
             !attendanceSheet.headerValues.every(header =>
                 requiredHeaders.includes(header)
@@ -282,7 +282,8 @@ class GoogleSheetLoggingExtension
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
-        // Fire the promise then forget, if an exception comes back just log it to the console
+        const updatedCountSnapshot = this.attendanceEntries.length;
+        // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => {
@@ -324,7 +325,10 @@ class GoogleSheetLoggingExtension
                         this.guild.name
                     }`
                 );
-                this.attendanceEntries = [];
+                // there might be new elements in the array during the update
+                // so we can only delete the ones that have been updated
+                // it's safe to splice on arrays with length < updatedCountSnapshot
+                this.attendanceEntries.splice(0, updatedCountSnapshot);
             })
             .catch((err: Error) => {
                 console.error(
