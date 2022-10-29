@@ -201,28 +201,38 @@ function composeUpcomingSessionsEmbedBody(
     queueChannel: QueueChannel,
     returnCount = 5
 ): string {
-    return viewModels.length > 0
-        ? viewModels
-              .slice(0, returnCount) // take the first 10
-              .map(
-                  viewModel =>
-                      `**${
-                          viewModel.discordId !== undefined
-                              ? `<@${viewModel.discordId}>`
-                              : viewModel.displayName
-                      }**\t|\t` +
-                      `**${viewModel.eventSummary}**\n` +
-                      `Start: <t:${viewModel.start
-                          .getTime()
-                          .toString()
-                          .slice(0, -3)}:R>\t|\t` +
-                      `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
-                      `${
-                          viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``
-                      }`
-              )
-              .join(`\n${'-'.repeat(30)}\n`)
-        : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`;
+    return (
+        (viewModels.length > 0
+            ? viewModels
+                  .slice(0, returnCount) // take the first 10
+                  .map(
+                      viewModel =>
+                          `**${
+                              viewModel.discordId !== undefined
+                                  ? `<@${viewModel.discordId}>`
+                                  : viewModel.displayName
+                          }**\t|\t` +
+                          `**${viewModel.eventSummary}**\n` +
+                          `Start: <t:${viewModel.start
+                              .getTime()
+                              .toString()
+                              .slice(0, -3)}:R>\t|\t` +
+                          `End: <t:${viewModel.end
+                              .getTime()
+                              .toString()
+                              .slice(0, -3)}:R>` +
+                          `${
+                              viewModel.location
+                                  ? `\t|\tLocation: ${viewModel.location}`
+                                  : ``
+                          }`
+                  )
+                  .join(`\n${'-'.repeat(30)}\n`)
+            : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`) +
+        `\n${'-'.repeat(30)}\nLast Updated at ${new Date().toLocaleTimeString('en-US', {
+            timeZone: 'PST8PDT'
+        })}`
+    );
 }
 
 /**

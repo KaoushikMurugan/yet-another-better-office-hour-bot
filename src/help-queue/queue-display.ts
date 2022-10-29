@@ -86,7 +86,7 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for 〚${viewModel.queueName}〛 is ${
+                `Queue for〚${viewModel.queueName}〛is ${
                     viewModel.seriousModeEnabled
                         ? viewModel.isOpen
                             ? '**OPEN**'
