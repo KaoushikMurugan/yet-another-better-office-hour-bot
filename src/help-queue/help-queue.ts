@@ -19,6 +19,7 @@ type QueueViewModel = {
     studentDisplayNames: string[];
     isOpen: boolean;
     seriousModeEnabled: boolean;
+    timeUntilAutoClear: AutoClearTimeout;
 };
 
 /** @internal */
@@ -58,7 +59,7 @@ class HelpQueueV2 {
         private readonly display: QueueDisplayV2,
         user: User,
         backupData?: QueueBackup & {
-            hoursUntilAutoClear: AutoClearTimeout;
+            timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ) {
@@ -67,7 +68,7 @@ class HelpQueueV2 {
             // if no backup then we are done initializing
             return;
         }
-        this._timeUntilAutoClear = backupData.hoursUntilAutoClear;
+        this._timeUntilAutoClear = backupData.timeUntilAutoClear;
         this._seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
@@ -133,26 +134,6 @@ class HelpQueueV2 {
     }
 
     /**
-     * Sets up auto clear parameters
-     * - The timer won't start until autoClearQueue is called
-     * @param hours clear queue after this many hours
-     * @param enable whether to enable auto clear, overrides 'hours'
-     */
-    setAutoClear(hours: number, minutes: number, enable: boolean): void {
-        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
-        if (!enable) {
-            existingTimerId && clearInterval(existingTimerId);
-            this.timers.delete('QUEUE_AUTO_CLEAR');
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            return;
-        }
-        this._timeUntilAutoClear = {
-            hours: hours,
-            minutes: minutes
-        };
-    }
-
-    /**
      * Asynchronously creates a clean queue
      * @param queueChannel the corresponding text channel and its name
      * @param user YABOB's client object. Used for queue rendering
@@ -164,7 +145,7 @@ class HelpQueueV2 {
         user: User,
         everyoneRole: Role,
         backupData?: QueueBackup & {
-            hoursUntilAutoClear: AutoClearTimeout;
+            timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ): Promise<HelpQueueV2> {
@@ -449,11 +430,6 @@ class HelpQueueV2 {
         clearInterval(this.display.renderLoopTimerId);
     }
 
-    async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
-        this._seriousModeEnabled = seriousModeEnabled;
-        await this.triggerRender();
-    }
-
     /**
      * Re-renders the queue message.
      * Composes the queue view model, then sends it to QueueDisplay
@@ -467,7 +443,8 @@ class HelpQueueV2 {
                 student => student.member.displayName
             ),
             isOpen: this.isOpen,
-            seriousModeEnabled: this._seriousModeEnabled
+            seriousModeEnabled: this._seriousModeEnabled,
+            timeUntilAutoClear: this.timeUntilAutoClear
         };
         this.display.requestQueueEmbedRender(viewModel);
         await Promise.all(
@@ -483,6 +460,27 @@ class HelpQueueV2 {
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {
         this._seriousModeEnabled = seriousMode;
+        await this.triggerRender();
+    }
+
+    /**
+     * Sets up auto clear parameters
+     * - The timer won't start until autoClearQueue is called
+     * @param hours clear queue after this many hours
+     * @param enable whether to enable auto clear, overrides 'hours'
+     */
+    async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
+        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
+        if (!enable) {
+            existingTimerId && clearInterval(existingTimerId);
+            this.timers.delete('QUEUE_AUTO_CLEAR');
+            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            return;
+        }
+        this._timeUntilAutoClear = {
+            hours: hours,
+            minutes: minutes
+        };
         await this.triggerRender();
     }
 

@@ -98,6 +98,15 @@ class QueueDisplayV2 {
             )
             .setDescription(this.composeQueueAsciiTable(viewModel))
             .setColor(viewModel.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
+        if (
+            viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
+            !viewModel.isOpen &&
+            viewModel.studentDisplayNames.length !== 0
+        ) {
+            embedTableMsg.setFooter({
+                text: `This queue will be cleared in ${viewModel.timeUntilAutoClear.hours} hour(s) and ${viewModel.timeUntilAutoClear.minutes} minute(s).`
+            });
+        }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()

@@ -324,7 +324,7 @@ class GoogleSheetLoggingExtension
                 console.log(
                     `[${cyan(new Date().toLocaleString())} ${yellow(
                         this.guild.name
-                    )}]\nSuccessfully updated ${
+                    )}]\n - Successfully updated ${
                         this.attendanceEntries.length
                     } attendance entries.`
                 );
