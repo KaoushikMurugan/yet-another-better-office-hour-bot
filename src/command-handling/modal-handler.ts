@@ -1,7 +1,7 @@
 /** @module BuiltInHandlers */
 
 import { ModalSubmitInteraction } from 'discord.js';
-import { ErrorEmbed, ErrorLogEmbed, SimpleEmbed } from '../utils/embed-helper.js';
+import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
 import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases.js';
 import { logModalSubmit } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
@@ -39,18 +39,14 @@ async function processBuiltInModalSubmit(
     logModalSubmit(interaction);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
-    await modalMethod?.(interaction)
+    modalMethod?.(interaction)
         // Everything is reply here because showModal is guaranteed to be the 1st response
         // modal shown => message not replied, so we always reply
         .then(async successMsg => {
-            if (typeof successMsg === 'string') {
-                await interaction.reply({
-                    ...SimpleEmbed(successMsg),
-                    ephemeral: true
-                });
-            } else if (successMsg !== undefined) {
-                await interaction.reply({ ...successMsg, ephemeral: true });
-            }
+            await interaction.reply({
+                ...successMsg,
+                ephemeral: true
+            });
         })
         .catch(async err => {
             const server = isServerInteraction(interaction);
@@ -74,7 +70,7 @@ async function setAfterSessionMessage(
     const server = isServerInteraction(interaction);
     const newAfterSessionMessage =
         interaction.fields.getTextInputValue('after_session_msg');
-    server?.setAfterSessionMessage(newAfterSessionMessage);
+    await server.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
     return SuccessMessages.updatedAfterSessionMessage(message);
 }

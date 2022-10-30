@@ -23,28 +23,28 @@ const CalendarSuccessMessages = {
     ),
     completedCalendarString: (calendarDisplayName: string, validQueueNames: string[]) =>
         SimpleEmbed(
-            `Copy and paste the following into the calendar **description**:\n\n` +
-                `YABOB_START ` +
+            'Copy and paste the following into the calendar **description**:\n\n' +
+                'YABOB_START ' +
                 `${calendarDisplayName} - ` +
                 `${validQueueNames.join(', ')} ` +
-                `YABOB_END\n`,
+                'YABOB_END\n',
             EmbedColor.Success
         ),
     publicEmbedUrl: {
         updated: SimpleEmbed(
-            `Successfully changed the public embed url. ` +
-                `The links in the titles of calendar queue embed will refresh soon.`,
+            'Successfully changed the public embed url. ' +
+                'The links in the titles of calendar queue embed will refresh soon.',
             EmbedColor.Success
         ),
         backToDefault: SimpleEmbed(
-            `Successfully changed to **default** embed url. ` +
-                `The links in the titles of calendar queue embed will refresh soon.`,
+            'Successfully changed to **default** embed url. ' +
+                'The links in the titles of calendar queue embed will refresh soon.',
             EmbedColor.Success
         )
     },
     refreshSuccess: (queueName: string) =>
         SimpleEmbed(
-            `Successfully refreshed upcoming hours for ${queueName}`,
+            `Successfully refreshed upcoming hours for ${queueName}. The embeds will update soon.`,
             EmbedColor.Success
         )
 } as const;

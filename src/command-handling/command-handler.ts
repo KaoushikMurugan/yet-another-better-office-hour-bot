@@ -115,7 +115,7 @@ async function processBuiltInCommand(
         ),
         ephemeral: true
     });
-    await commandMethod?.(interaction)
+    commandMethod?.(interaction)
         // shorthand syntax, if successMsg is undefined, don't run the rhs
         .then(async successMsg => {
             await Promise.all([

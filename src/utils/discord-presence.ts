@@ -157,11 +157,7 @@ function updatePresence(): void {
     const newPresence = selectedPresenceList.filter(
         botPresence => botPresence !== previousPresence
     )[Math.floor(Math.random() * selectedPresenceList.length)];
-    if (
-        newPresence === undefined ||
-        newPresence.name === undefined ||
-        newPresence.type === undefined
-    ) {
+    if (newPresence === undefined) {
         // This only happens if the presenceList is empty
         // TS doesn't like that, so we have to check for it
         return;

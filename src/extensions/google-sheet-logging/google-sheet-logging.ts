@@ -3,7 +3,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
@@ -37,20 +37,35 @@ type HelpSessionEntry = {
 
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
+// Credit of all the update logic goes to Kaoushik
 class GoogleSheetLoggingExtension
     extends BaseServerExtension
     implements IServerExtension
 {
-    // Credit of all the update logic goes to Kaoushik
     /** key is student member.id, value is corresponding helpee object */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
-    /** key is helper member.id, value is entry for this helper */
+    /**
+     * Used to compose the final attendance entry.
+     * - Key is helper member.id, value is entry for this helper
+     */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
-    /** key is student member.id, value is an array of entries to handle multiple helpers */
+    /**
+     * key is student member.id, value is an array of entries to handle multiple helpers
+     */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
+    /**
+     * These are the attendance entries that are complete but haven't been sent to google sheets yet
+     * - Cleared immediately after google sheet has been successfully updated
+     */
+    private attendanceEntries: AttendanceEntry[] = [];
+    /**
+     * Whether an attendence update has been scheduled.
+     * - If true, writeing to the attendanceEntries will not create another setTimeout
+     */
+    private attendanceUpdateIsScheduled = false;
 
-    constructor(private serverName: string, private googleSheet: GoogleSpreadsheet) {
+    constructor(private guild: Guild, private googleSheet: GoogleSpreadsheet) {
         super();
     }
 
@@ -86,7 +101,7 @@ class GoogleSheetLoggingExtension
                 `successfully loaded for '${guild.name}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
-        return new GoogleSheetLoggingExtension(guild.name, googleSheet);
+        return new GoogleSheetLoggingExtension(guild, googleSheet);
     }
 
     /**
@@ -165,20 +180,21 @@ class GoogleSheetLoggingExtension
         if (helpSessionEntries === undefined) {
             return;
         }
-        this.helpSessionEntries.delete(studentMember.id);
-        this.activeTimeEntries.forEach(entry => {
+        for (const entry of this.activeTimeEntries.values()) {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
-        });
+        }
         const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
             helpSessionEntries.map(entry => {
                 return { ...entry, 'Session End': new Date() };
             });
-        await this.updateHelpSession(completeHelpSessionEntries).catch((err: Error) =>
-            console.error(red('Cannot update help sessions'), err.name, err.message)
-        );
+        this.updateHelpSession(completeHelpSessionEntries)
+            .then(() => this.helpSessionEntries.delete(studentMember.id))
+            .catch((err: Error) =>
+                console.error(red('Cannot update help sessions'), err.name, err.message)
+            );
     }
 
     /**
@@ -206,17 +222,24 @@ class GoogleSheetLoggingExtension
         _server: Readonly<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
-        const entry = this.activeTimeEntries.get(helper.member.id);
-        if (entry === undefined) {
+        const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
+        if (activeTimeEntry === undefined) {
             throw ExpectedSheetErrors.unknownEntry;
         }
-        this.activeTimeEntries.delete(helper.member.id);
-        helper.helpedMembers.map(student =>
-            this.studentsJustDequeued.delete(student.member.id)
-        );
-        await this.updateAttendance({ ...entry, ...helper }).catch(() => {
-            throw ExpectedSheetErrors.recordedButCannotUpdate;
-        });
+        for (const student of helper.helpedMembers) {
+            this.studentsJustDequeued.delete(student.member.id);
+        }
+        this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
+        if (!this.attendanceUpdateIsScheduled) {
+            // if nothing is scheduled, start a timer
+            // otherwise the existing timer will update this entry
+            // so no need to schedule another one
+            this.attendanceUpdateIsScheduled = true;
+            setTimeout(async () => {
+                this.attendanceUpdateIsScheduled = false;
+                await this.batchUpdateAttendance();
+            }, 60 * 1000);
+        }
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -224,7 +247,10 @@ class GoogleSheetLoggingExtension
      * Updates the attendance for 1 helper
      * @param entry
      */
-    private async updateAttendance(entry: AttendanceEntry): Promise<void> {
+    private async batchUpdateAttendance(): Promise<void> {
+        if (this.attendanceEntries.length === 0) {
+            return;
+        }
         const requiredHeaders = [
             'Helper Username',
             'Time In',
@@ -237,7 +263,7 @@ class GoogleSheetLoggingExtension
         ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
-        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Attendance`.replace(
+        const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Attendance`.replace(
             /\s{2,}/g,
             ' '
         );
@@ -248,7 +274,7 @@ class GoogleSheetLoggingExtension
                 headerValues: requiredHeaders
             }));
         if (
-            attendanceSheet.headerValues === undefined ||
+            !attendanceSheet.headerValues ||
             attendanceSheet.headerValues.length !== requiredHeaders.length ||
             !attendanceSheet.headerValues.every(header =>
                 requiredHeaders.includes(header)
@@ -257,51 +283,66 @@ class GoogleSheetLoggingExtension
             // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(requiredHeaders);
         }
-        // Fire the promise then forget, if an exception comes back just log it to the console
-        void Promise.all([
-            attendanceSheet.addRow(
-                {
-                    'Helper Username': entry.member.user.username,
-                    'Time In': entry.helpStart.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Helped Students': JSON.stringify(
-                        entry.helpedMembers.map(
-                            student =>
-                                new Object({
-                                    displayName: student.member.displayName,
-                                    username: student.member.user.username,
-                                    id: student.member.id
-                                })
-                        )
-                    ),
-                    'Discord ID': entry.member.id,
-                    'Session Time (ms)':
-                        entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                    'Active Time (ms)': entry.activeTimeMs,
-                    'Number of Students Helped': entry.helpedMembers.length
-                },
+        const updatedCountSnapshot = this.attendanceEntries.length;
+        // Use callbacks to not block the parent function
+        Promise.all([
+            attendanceSheet.addRows(
+                this.attendanceEntries.map(entry => {
+                    return {
+                        'Helper Username': entry.member.user.username,
+                        'Time In': entry.helpStart.toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        }),
+                        'Time Out': entry.helpEnd.toLocaleString('en-US', {
+                            timeZone: 'PST8PDT'
+                        }),
+                        'Helped Students': JSON.stringify(
+                            entry.helpedMembers.map(
+                                student =>
+                                    new Object({
+                                        displayName: student.member.displayName,
+                                        username: student.member.user.username,
+                                        id: student.member.id
+                                    })
+                            )
+                        ),
+                        'Discord ID': entry.member.id,
+                        'Session Time (ms)':
+                            entry.helpEnd.getTime() - entry.helpStart.getTime(),
+                        'Active Time (ms)': entry.activeTimeMs,
+                        'Number of Students Helped': entry.helpedMembers.length
+                    };
+                }),
                 {
                     raw: true,
                     insert: true
                 }
             ),
             attendanceSheet.loadHeaderRow()
-        ]).catch((err: Error) => {
-            /**
-             * Catch clause must be here
-             * catching in {@link onHelperStopHelping} cannot catch the error of this call
-             * because it's not awaited
-             */
-            console.error(
-                red(`Error when updating attendance for ${entry.member.user.username}: `),
-                err.name,
-                err.message
-            );
-        });
+        ])
+            .then(() => {
+                console.log(
+                    `[${cyan(new Date().toLocaleString())} ${yellow(
+                        this.guild.name
+                    )}]\nSuccessfully updated ${
+                        this.attendanceEntries.length
+                    } attendance entries.`
+                );
+                // there might be new elements in the array during the update
+                // so we can only delete the ones that have been updated
+                // it's safe to splice on arrays with length < updatedCountSnapshot
+                this.attendanceEntries.splice(0, updatedCountSnapshot);
+            })
+            .catch((err: Error) => {
+                console.error(
+                    red(
+                        `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
+                    ),
+                    this.attendanceEntries,
+                    err.name,
+                    err.message
+                );
+            });
     }
 
     /**
@@ -315,7 +356,7 @@ class GoogleSheetLoggingExtension
             return;
         }
         // trim off colon because google api bug, then trim off any excess spaces
-        const sheetTitle = `${this.serverName.replace(/:/g, ' ')} Help Sessions`.replace(
+        const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
             /\s{2,}/g,
             ' '
         );
@@ -339,7 +380,7 @@ class GoogleSheetLoggingExtension
                 'Session Time (ms)'
             ]);
         }
-        void Promise.all([
+        Promise.all([
             helpSessionSheet.addRows(
                 entries.map(entry =>
                     Object.fromEntries([

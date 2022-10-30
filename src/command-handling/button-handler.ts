@@ -63,7 +63,7 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
     logButtonPress(interaction, buttonName, queueName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
-    await buttonMethod?.(queueName, interaction)
+    buttonMethod?.(queueName, interaction)
         .then(successMsg => interaction.editReply(successMsg))
         .catch(async err => {
             // Central error handling, reply to user with the error

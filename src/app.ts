@@ -90,39 +90,45 @@ client.on('interactionCreate', async interaction => {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     // TODO: All 3 if blocks are basically the same, see if we can generalize them
+    let handled = false;
     if (interaction.isChatInputCommand()) {
         if (builtInCommandHandlerCanHandle(interaction)) {
             await processBuiltInCommand(interaction);
+            handled = true;
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
-                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleCommand(interaction));
             await externalCommandHandler?.processCommand(interaction);
+            handled = externalCommandHandler !== undefined;
         }
     }
     if (interaction.isButton()) {
         if (builtInButtonHandlerCanHandle(interaction)) {
             await processBuiltInButton(interaction);
+            handled = true;
         } else {
             const externalButtonHandler = interactionExtensions
-                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleButton(interaction));
             await externalButtonHandler?.processButton(interaction);
+            handled = externalButtonHandler !== undefined;
         }
     }
     if (interaction.isModalSubmit()) {
         if (builtInModalHandlercanHandle(interaction)) {
             await processBuiltInModalSubmit(interaction);
+            handled = true;
         } else {
             const externalModalHandler = interactionExtensions
-                .get(interaction.guild?.id ?? 'Non-Guild Interaction')
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             await externalModalHandler?.processModalSubmit(interaction);
+            handled = externalModalHandler !== undefined;
         }
     }
-    // check if the command has been handled, if not, report error
-    if (interaction.isRepliable() && !interaction.replied) {
+    if (!handled && interaction.isRepliable()) {
         await interaction.reply({
             ...ErrorEmbed(
                 new CommandNotImplementedError(
