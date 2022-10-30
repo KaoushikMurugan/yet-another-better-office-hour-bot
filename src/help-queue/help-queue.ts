@@ -123,13 +123,16 @@ class HelpQueueV2 {
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
     }
-
     /** The seriousness of the queue */
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }
 
+    /**
+     * Used for queue delete and server delete. Remove all timers spawned by this queue.
+     */
     clearAllQueueTimers(): void {
+        clearInterval(this.display.renderLoopTimerId);
         this.timers.forEach(clearInterval);
         this.timers.clear();
     }
@@ -431,7 +434,7 @@ class HelpQueueV2 {
         await Promise.all(
             this.queueExtensions.map(extension => extension.onQueueDelete(this))
         );
-        clearInterval(this.display.renderLoopTimerId);
+        this.clearAllQueueTimers();
     }
 
     /**
@@ -487,25 +490,14 @@ class HelpQueueV2 {
         if (!enable) {
             this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
             this.timers.delete('QUEUE_AUTO_CLEAR');
+            await this.triggerRender();
         } else {
             this._timeUntilAutoClear = {
                 hours: hours,
                 minutes: minutes
             };
-            this.timers.set(
-                'QUEUE_AUTO_CLEAR',
-                setTimeout(async () => {
-                    if (
-                        !this.isOpen &&
-                        this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
-                    ) {
-                        await this.removeAllStudents();
-                        await this.triggerRender();
-                    }
-                }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
-            );
+            await this.startAutoClearTimer();
         }
-        await this.triggerRender();
     }
 
     /**
@@ -524,7 +516,6 @@ class HelpQueueV2 {
                 // if auto clear is disabled half way, do nothing
                 if (!this.isOpen && this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
                     await this.removeAllStudents();
-                    await this.triggerRender();
                 }
             }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
         );
