@@ -103,9 +103,14 @@ class QueueDisplayV2 {
             !viewModel.isOpen &&
             viewModel.studentDisplayNames.length !== 0
         ) {
-            embedTableMsg.setFooter({
-                text: `This queue will be cleared in ${viewModel.timeUntilAutoClear.hours} hour(s) and ${viewModel.timeUntilAutoClear.minutes} minute(s).`
-            });
+            embedTableMsg.setFields([
+                {
+                    name: 'Auto Clear',
+                    value: `This queue will be cleared in <t:${Math.floor(
+                        viewModel.timeUntilAutoClear.getTime() / 1000
+                    )}:R>`
+                }
+            ]);
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(

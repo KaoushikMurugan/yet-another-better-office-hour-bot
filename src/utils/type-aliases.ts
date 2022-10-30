@@ -52,7 +52,19 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T
  * - Otherwise prefer `T?`
  */
 type Optional<T> = T | undefined;
-
+/**
+ * Utility alias to remove all methods from a class
+ */
+type NoMethod<T> = Pick<
+    T,
+    // disabling this warning is safe because we are removing all functions
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
+>;
+type ConstNoMethod<T> = Readonly<NoMethod<T>>;
+/**
+ * SimpleEmbed return type
+ */
 type YabobEmbed = ReturnType<typeof SimpleEmbed>;
 
 export {
@@ -67,5 +79,7 @@ export {
     WithRequired,
     Optional,
     ModalSubmitCallback,
-    YabobEmbed
+    YabobEmbed,
+    NoMethod,
+    ConstNoMethod
 };
