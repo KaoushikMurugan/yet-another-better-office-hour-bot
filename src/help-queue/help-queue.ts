@@ -478,20 +478,33 @@ class HelpQueueV2 {
      * Sets up auto clear parameters
      * - The timer won't start until autoClearQueue is called
      * @param hours clear queue after this many hours
-     * @param enable whether to enable auto clear, overrides 'hours'
+     * @param minutes clear queue after this many minutes
+     * @param enable whether to enable auto clear, overrides @param hours and @param minutes
      */
     async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
         const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
+        existingTimerId && clearInterval(existingTimerId);
         if (!enable) {
-            existingTimerId && clearInterval(existingTimerId);
-            this.timers.delete('QUEUE_AUTO_CLEAR');
             this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            return;
+            this.timers.delete('QUEUE_AUTO_CLEAR');
+        } else {
+            this._timeUntilAutoClear = {
+                hours: hours,
+                minutes: minutes
+            };
+            this.timers.set(
+                'QUEUE_AUTO_CLEAR',
+                setTimeout(async () => {
+                    if (
+                        !this.isOpen &&
+                        this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
+                    ) {
+                        await this.removeAllStudents();
+                        await this.triggerRender();
+                    }
+                }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
+            );
         }
-        this._timeUntilAutoClear = {
-            hours: hours,
-            minutes: minutes
-        };
         await this.triggerRender();
     }
 

@@ -106,7 +106,7 @@ class QueueDisplayV2 {
             embedTableMsg.setFields([
                 {
                     name: 'Auto Clear',
-                    value: `This queue will be cleared in <t:${Math.floor(
+                    value: `This queue will be cleared <t:${Math.floor(
                         viewModel.timeUntilAutoClear.getTime() / 1000
                     )}:R>`
                 }
