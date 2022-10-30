@@ -58,7 +58,15 @@ export const SuccessMessages = {
         ),
     stoppedLogging: SimpleEmbed('Successfully stopped logging.', EmbedColor.Success),
     updatedAfterSessionMessage: (message: string) =>
-        SimpleEmbed(`After session message set to:\n${message}.`, EmbedColor.Success),
+        message.length === 0
+            ? SimpleEmbed(
+                  'Successfully disabled after session messages. YABOB will not send messges to students after they finish receiving help.'
+              )
+            : SimpleEmbed(
+                  'The following message will be sent to the student after they finish receiving help:',
+                  EmbedColor.Success,
+                  message
+              ),
     queueAutoClear: {
         enabled: (hours: number, minutes: number) =>
             SimpleEmbed(
