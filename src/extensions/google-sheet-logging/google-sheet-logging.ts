@@ -3,7 +3,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
@@ -180,7 +180,6 @@ class GoogleSheetLoggingExtension
         if (helpSessionEntries === undefined) {
             return;
         }
-        this.helpSessionEntries.delete(studentMember.id);
         for (const entry of this.activeTimeEntries.values()) {
             if (entry.latestStudentJoinTimeStamp !== undefined) {
                 entry.activeTimeMs +=
@@ -191,9 +190,11 @@ class GoogleSheetLoggingExtension
             helpSessionEntries.map(entry => {
                 return { ...entry, 'Session End': new Date() };
             });
-        await this.updateHelpSession(completeHelpSessionEntries).catch((err: Error) =>
-            console.error(red('Cannot update help sessions'), err.name, err.message)
-        );
+        this.updateHelpSession(completeHelpSessionEntries)
+            .then(() => this.helpSessionEntries.delete(studentMember.id))
+            .catch((err: Error) =>
+                console.error(red('Cannot update help sessions'), err.name, err.message)
+            );
     }
 
     /**
@@ -237,7 +238,7 @@ class GoogleSheetLoggingExtension
             setTimeout(async () => {
                 this.attendanceUpdateIsScheduled = false;
                 await this.batchUpdateAttendance();
-            }, 30 * 1000);
+            }, 60 * 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
     }
@@ -321,9 +322,11 @@ class GoogleSheetLoggingExtension
         ])
             .then(() => {
                 console.log(
-                    `[${new Date().toLocaleString()}] successfully updated attendance for ${
+                    `[${cyan(new Date().toLocaleString())} ${yellow(
                         this.guild.name
-                    }`
+                    )}]\nSuccessfully updated ${
+                        this.attendanceEntries.length
+                    } attendance entries.`
                 );
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated
