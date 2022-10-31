@@ -93,7 +93,7 @@ class QueueDisplayV2 {
                             : '**CLOSED**'
                         : viewModel.isOpen
                         ? '**OPEN**\t(ﾟ∀ﾟ )'
-                        : '**CLOSED**\t◦<(¦3[___]'
+                        : '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(viewModel))
@@ -277,7 +277,7 @@ class QueueDisplayV2 {
         } else {
             const rand = Math.random();
             table
-                .addRow('This Queue is Empty.')
+                .addRow('This queue is empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
             if (!queue.seriousModeEnabled) {

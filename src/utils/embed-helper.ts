@@ -40,7 +40,7 @@ export function SimpleEmbed(
     description = ''
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     if (message.length <= 256) {
         return {
             embeds: [
