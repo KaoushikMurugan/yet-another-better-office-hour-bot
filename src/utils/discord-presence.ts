@@ -100,9 +100,7 @@ const helloWorldPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: '10 PRINT "Hello World!"' }, // BASIC
     { type: ActivityType.Playing,   name: 'DISPLAY "Hello World!"' }, // cobol
     { type: ActivityType.Playing,   name: '++++++++++[>+++++++>++++++++++>+++<<<-]>++.>+.+++++++\
-..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.' }, // brainf**k
-    { type: ActivityType.Playing,   name: '(=<`#9]~6ZY327Uv4-QsqpMn&+Ij"\'E%e{Ab~w=_:]\
-Kw%o44Uqp0/Q?xNvL:`H%c#DD2^WV>gY;dts76qKJImZkj' } // malbolge
+..+++.>++.<<+++++++++++++++.>.+++.------.--------.>+.' } // brainf**k
 ];
 
 /**
