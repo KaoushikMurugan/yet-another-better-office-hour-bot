@@ -1,5 +1,8 @@
 /** @module FirebaseServerBackup */
-import { BaseServerExtension, IServerExtension } from '../extensions/extension-interface.js';
+import {
+    BaseServerExtension,
+    IServerExtension
+} from '../extensions/extension-interface.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, yellow } from '../utils/command-line-colors.js';
@@ -30,12 +33,27 @@ class FirebaseServerBackupExtension
     override async loadExternalServerData(
         serverId: string
     ): Promise<Optional<ServerBackup>> {
-        const backupData = await firebaseDB
+        const backupDocument = await firebaseDB
             .collection('serverBackups')
             .doc(serverId)
             .get();
+        const backupData = backupDocument.data() as ServerBackup;
+        backupData.queues.forEach(queue => {
+            queue.studentsInQueue.forEach(student => {
+                student.waitStart = new Date(
+                    // weird hack here becaue firebase stores dates as this object type
+                    (
+                        student.waitStart as unknown as {
+                            _nanoseconds: number;
+                            _seconds: number;
+                        }
+                    )._seconds * 1000
+                );
+            });
+        });
         // TODO: add a typeguard here to check if schema match
-        return backupData.data() as ServerBackup;
+        console.log(backupData);
+        return backupData;
     }
 
     /**
@@ -67,8 +85,7 @@ class FirebaseServerBackupExtension
                     };
                 }),
                 name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId,
-                seriousModeEnabled: queue.seriousModeEnabled
+                parentCategoryId: queue.parentCategoryId
             };
         });
         const serverBackup: ServerBackup = {
