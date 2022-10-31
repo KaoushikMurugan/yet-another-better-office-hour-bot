@@ -116,6 +116,11 @@ function logSlashCommand(interaction: ChatInputCommandInteraction): void {
     );
 }
 
+function addTimeOffset(date: Date, hours: number, minutes: number): Date {
+    // might have problems with daylight saving
+    return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
+}
+
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -130,5 +135,6 @@ export {
     logButtonPress,
     logModalSubmit,
     logSlashCommand,
-    centered
+    centered,
+    addTimeOffset
 };

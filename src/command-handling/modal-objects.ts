@@ -31,7 +31,7 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true)
                     .setValue(
-                        oldTimeout === undefined || oldTimeout === 'AUTO_CLEAR_DISABLED'
+                        !oldTimeout || oldTimeout === 'AUTO_CLEAR_DISABLED'
                             ? '0'
                             : oldTimeout.hours.toString()
                     )
@@ -45,7 +45,7 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
                     .setStyle(TextInputStyle.Short)
                     .setRequired(true)
                     .setValue(
-                        oldTimeout === undefined || oldTimeout === 'AUTO_CLEAR_DISABLED'
+                        !oldTimeout || oldTimeout === 'AUTO_CLEAR_DISABLED'
                             ? '0'
                             : oldTimeout.minutes.toString()
                     )

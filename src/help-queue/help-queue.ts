@@ -12,6 +12,7 @@ import { QueueDisplayV2 } from './queue-display.js';
 import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
+import { addTimeOffset } from '../utils/util-functions.js';
 
 type QueueViewModel = {
     queueName: string;
@@ -19,6 +20,7 @@ type QueueViewModel = {
     studentDisplayNames: string[];
     isOpen: boolean;
     seriousModeEnabled: boolean;
+    timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
 };
 
 /** @internal */
@@ -58,7 +60,7 @@ class HelpQueueV2 {
         private readonly display: QueueDisplayV2,
         user: User,
         backupData?: QueueBackup & {
-            hoursUntilAutoClear: AutoClearTimeout;
+            timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ) {
@@ -67,7 +69,7 @@ class HelpQueueV2 {
             // if no backup then we are done initializing
             return;
         }
-        this._timeUntilAutoClear = backupData.hoursUntilAutoClear;
+        this._timeUntilAutoClear = backupData.timeUntilAutoClear;
         this._seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
@@ -121,35 +123,18 @@ class HelpQueueV2 {
     get timeUntilAutoClear(): AutoClearTimeout {
         return this._timeUntilAutoClear;
     }
-
     /** The seriousness of the queue */
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }
 
+    /**
+     * Used for queue delete and server delete. Remove all timers spawned by this queue.
+     */
     clearAllQueueTimers(): void {
+        clearInterval(this.display.renderLoopTimerId);
         this.timers.forEach(clearInterval);
         this.timers.clear();
-    }
-
-    /**
-     * Sets up auto clear parameters
-     * - The timer won't start until autoClearQueue is called
-     * @param hours clear queue after this many hours
-     * @param enable whether to enable auto clear, overrides 'hours'
-     */
-    setAutoClear(hours: number, minutes: number, enable: boolean): void {
-        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
-        if (!enable) {
-            existingTimerId && clearInterval(existingTimerId);
-            this.timers.delete('QUEUE_AUTO_CLEAR');
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            return;
-        }
-        this._timeUntilAutoClear = {
-            hours: hours,
-            minutes: minutes
-        };
     }
 
     /**
@@ -164,7 +149,7 @@ class HelpQueueV2 {
         user: User,
         everyoneRole: Role,
         backupData?: QueueBackup & {
-            hoursUntilAutoClear: AutoClearTimeout;
+            timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ): Promise<HelpQueueV2> {
@@ -220,6 +205,9 @@ class HelpQueueV2 {
                 1000 * 60 * 60 + Math.floor(Math.random() * 1000 * 60 * 2)
             )
         );
+        if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
+            await queue.startAutoClearTimer();
+        }
         return queue;
     }
 
@@ -265,7 +253,7 @@ class HelpQueueV2 {
         }
         this._activeHelperIds.delete(helperMember.id);
         if (!this.isOpen) {
-            this.startAutoClearTimer();
+            await this.startAutoClearTimer();
         }
         await Promise.all([
             ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
@@ -446,12 +434,7 @@ class HelpQueueV2 {
         await Promise.all(
             this.queueExtensions.map(extension => extension.onQueueDelete(this))
         );
-        clearInterval(this.display.renderLoopTimerId);
-    }
-
-    async updateSeriousMode(seriousModeEnabled: boolean): Promise<void> {
-        this._seriousModeEnabled = seriousModeEnabled;
-        await this.triggerRender();
+        this.clearAllQueueTimers();
     }
 
     /**
@@ -467,7 +450,15 @@ class HelpQueueV2 {
                 student => student.member.displayName
             ),
             isOpen: this.isOpen,
-            seriousModeEnabled: this._seriousModeEnabled
+            seriousModeEnabled: this._seriousModeEnabled,
+            timeUntilAutoClear:
+                this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
+                    ? 'AUTO_CLEAR_DISABLED'
+                    : addTimeOffset(
+                          new Date(),
+                          this.timeUntilAutoClear.hours,
+                          this.timeUntilAutoClear.minutes
+                      )
         };
         this.display.requestQueueEmbedRender(viewModel);
         await Promise.all(
@@ -487,9 +478,32 @@ class HelpQueueV2 {
     }
 
     /**
+     * Sets up auto clear parameters
+     * - The timer won't start until autoClearQueue is called
+     * @param hours clear queue after this many hours
+     * @param minutes clear queue after this many minutes
+     * @param enable whether to enable auto clear, overrides @param hours and @param minutes
+     */
+    async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
+        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
+        existingTimerId && clearInterval(existingTimerId);
+        if (!enable) {
+            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this.timers.delete('QUEUE_AUTO_CLEAR');
+            await this.triggerRender();
+        } else {
+            this._timeUntilAutoClear = {
+                hours: hours,
+                minutes: minutes
+            };
+            await this.startAutoClearTimer();
+        }
+    }
+
+    /**
      * Starts the timer that will clear all the students after a certain number of hours
      */
-    private startAutoClearTimer(): void {
+    private async startAutoClearTimer(): Promise<void> {
         const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
         existingTimer && clearTimeout(existingTimer);
         if (this._timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
@@ -505,6 +519,7 @@ class HelpQueueV2 {
                 }
             }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
         );
+        await this.triggerRender();
     }
 }
 

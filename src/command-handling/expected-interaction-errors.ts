@@ -25,7 +25,9 @@ const ExpectedParseErrors = {
                 `If you are an admin, you can use \`/queue add ${categoryName}\` ` +
                 `to generate one.`
         ),
-    notGuildInteraction: new CommandParseError('Sorry, I can only accept server server interactions right now.'),
+    notGuildInteraction: new CommandParseError(
+        'Sorry, I can only accept server server interactions right now.'
+    ),
     queueHasNoParent: new CommandParseError(
         'Invalid Button or Command. Make sure this channel has a parent category.'
     ),
@@ -53,7 +55,10 @@ const ExpectedParseErrors = {
             : new CommandParseError(
                   'I can only accept interactions in correctly initialized servers. ' +
                       `Are you sure ${guildName} has a initialized YABOB?`
-              )
+              ),
+    badAutoClearValues: new CommandParseError(
+        'Please enter valid integers for both `hours` and `minutes`.'
+    )
 } as const;
 
 export { ExpectedParseErrors };

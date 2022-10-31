@@ -230,12 +230,9 @@ function composeUpcomingSessionsEmbedBody(
                   )
                   .join(`\n${'-'.repeat(30)}\n`)
             : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`) +
-        `\n${'-'.repeat(30)}\nLast Updated at ${lastUpdatedTimeStamp.toLocaleTimeString(
-            'en-US',
-            {
-                timeZone: 'PST8PDT'
-            }
-        )}`
+        `\n${'-'.repeat(30)}\nLast updated: <t:${Math.floor(
+            lastUpdatedTimeStamp.getTime() / 1000
+        )}:R>`
     );
 }
 

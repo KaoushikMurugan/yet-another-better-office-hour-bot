@@ -909,7 +909,7 @@ class AttendingServerV2 {
                 const completeBackup = backup
                     ? {
                           ...backup,
-                          hoursUntilAutoClear: hoursUntilAutoClear,
+                          timeUntilAutoClear: hoursUntilAutoClear,
                           seriousModeEnabled: seriousModeEnabled
                       }
                     : undefined;

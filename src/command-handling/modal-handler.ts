@@ -6,6 +6,7 @@ import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases.js';
 import { logModalSubmit } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { isServerInteraction } from './common-validations.js';
+import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
  * Built in handler for modal submit
@@ -88,6 +89,9 @@ async function setQueueAutoClear(
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
     const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
     const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
+    if (isNaN(hours) || isNaN(minutes)){
+        throw ExpectedParseErrors.badAutoClearValues;
+    }
     if (hours === 0 && minutes === 0) {
         await server.setQueueAutoClear(hours, minutes, false);
         return SuccessMessages.queueAutoClear.disabled;
