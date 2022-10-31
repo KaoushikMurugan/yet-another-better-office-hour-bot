@@ -14,18 +14,18 @@ import {
 } from './command-handling/modal-handler.js';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { postSlashCommands } from './command-handling/slash-commands.js';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
+import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
-import { GuildId, GuildMemberId, WithRequired } from './utils/type-aliases.js';
+import { GuildId, WithRequired } from './utils/type-aliases.js';
 import { client, attendingServers } from './global-states.js';
-import { CommandNotImplementedError } from './utils/error-types.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
+import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
-const failedInteractions = new Collection<GuildMemberId, Interaction>();
+const failedInteractions: { username: string; interaction: Interaction }[] = [];
 
 /**
  * After login startup seqence
@@ -87,35 +87,21 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
-    let interactionSucceeded = false;
-    dispatchInteractions(interaction)
-        .then(result => (interactionSucceeded = result))
-        .catch(async (err: Error) => {
-            if (interactionSucceeded) {
-                interaction.user
-                    .send(
-                        SimpleEmbed(
-                            "Sorry, YABOB finished your command but couldn't reply back to you."
-                        )
-                    )
-                    .catch(() => {
-                        failedInteractions.set(interaction.user.id, interaction);
-                    });
-            } else {
-                interaction.user
-                    .send(
-                        SimpleEmbed(
-                            'An unexpected error happened when processing your interaction.' +
-                                'Please show this message to @Bot Admin. ',
-                            EmbedColor.Error,
-                            `${err.name}, ${err.message}`
-                        )
-                    )
-                    .catch(() => {
-                        failedInteractions.set(interaction.user.id, interaction);
-                    });
-            }
-        });
+    dispatchInteractions(interaction).catch(async (err: Error) => {
+        interaction.user
+            .send(UnexpectedParseErrors.unexpectedError(interaction, err))
+            .catch(() => {
+                failedInteractions.push({
+                    username: interaction.user.username,
+                    interaction: interaction
+                });
+            });
+    });
+    if (failedInteractions.length >= 50) {
+        console.error('These 50 interactions failed: ');
+        console.error(failedInteractions);
+        failedInteractions.splice(0, failedInteractions.length);
+    }
 });
 
 /**
@@ -228,50 +214,50 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
 /**
  * Dispatches the interaction to different handlers.
+ * @param interaction from the client.on('interactionCreate') event
+ * @returns boolean, whether the command was handled
  */
-
 async function dispatchInteractions(interaction: Interaction): Promise<boolean> {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
-    let handled = false;
     if (interaction.isChatInputCommand()) {
         if (builtInCommandHandlerCanHandle(interaction)) {
             await processBuiltInCommand(interaction);
-            handled = true;
+            return true;
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
                 .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleCommand(interaction));
             await externalCommandHandler?.processCommand(interaction);
-            handled = externalCommandHandler !== undefined;
+            return externalCommandHandler !== undefined;
         }
     }
     if (interaction.isButton()) {
         if (builtInButtonHandlerCanHandle(interaction)) {
             await processBuiltInButton(interaction);
-            handled = true;
+            return true;
         } else {
             const externalButtonHandler = interactionExtensions
                 .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleButton(interaction));
             await externalButtonHandler?.processButton(interaction);
-            handled = externalButtonHandler !== undefined;
+            return externalButtonHandler !== undefined;
         }
     }
     if (interaction.isModalSubmit()) {
         if (builtInModalHandlercanHandle(interaction)) {
             await processBuiltInModalSubmit(interaction);
-            handled = true;
+            return true;
         } else {
             const externalModalHandler = interactionExtensions
                 .get(interaction.guildId ?? 'Non-Guild Interaction')
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             await externalModalHandler?.processModalSubmit(interaction);
-            handled = externalModalHandler !== undefined;
+            return externalModalHandler !== undefined;
         }
     }
-    return handled;
+    return false;
 }
 
 /**

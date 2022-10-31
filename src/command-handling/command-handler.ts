@@ -116,7 +116,6 @@ async function processBuiltInCommand(
         ephemeral: true
     });
     commandMethod?.(interaction)
-        // shorthand syntax, if successMsg is undefined, don't run the rhs
         .then(async successMsg => {
             await Promise.all([
                 interaction.editReply(successMsg),

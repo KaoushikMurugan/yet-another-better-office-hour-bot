@@ -432,7 +432,6 @@ class AttendingServerV2 {
             this._activeHelpers.get(helperMember.id)
         ];
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
-            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
