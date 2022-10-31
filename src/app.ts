@@ -1,4 +1,4 @@
-import { Guild, Collection, VoiceState } from 'discord.js';
+import { Guild, Collection, VoiceState, Interaction } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
@@ -17,15 +17,15 @@ import { postSlashCommands } from './command-handling/slash-commands.js';
 import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
-import { GuildId, WithRequired } from './utils/type-aliases.js';
+import { GuildId, GuildMemberId, WithRequired } from './utils/type-aliases.js';
 import { client, attendingServers } from './global-states.js';
 import { CommandNotImplementedError } from './utils/error-types.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
 
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
+const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
+const failedInteractions = new Collection<GuildMemberId, Interaction>();
 
 /**
  * After login startup seqence
@@ -87,57 +87,35 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
-    // if it's a built-in command/button, process
-    // otherwise find an extension that can process it
-    // TODO: All 3 if blocks are basically the same, see if we can generalize them
-    let handled = false;
-    if (interaction.isChatInputCommand()) {
-        if (builtInCommandHandlerCanHandle(interaction)) {
-            await processBuiltInCommand(interaction);
-            handled = true;
-        } else {
-            const externalCommandHandler = interactionExtensions
-                // default value is for semantics only
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleCommand(interaction));
-            await externalCommandHandler?.processCommand(interaction);
-            handled = externalCommandHandler !== undefined;
-        }
-    }
-    if (interaction.isButton()) {
-        if (builtInButtonHandlerCanHandle(interaction)) {
-            await processBuiltInButton(interaction);
-            handled = true;
-        } else {
-            const externalButtonHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleButton(interaction));
-            await externalButtonHandler?.processButton(interaction);
-            handled = externalButtonHandler !== undefined;
-        }
-    }
-    if (interaction.isModalSubmit()) {
-        if (builtInModalHandlercanHandle(interaction)) {
-            await processBuiltInModalSubmit(interaction);
-            handled = true;
-        } else {
-            const externalModalHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleModalSubmit(interaction));
-            await externalModalHandler?.processModalSubmit(interaction);
-            handled = externalModalHandler !== undefined;
-        }
-    }
-    if (!handled && interaction.isRepliable()) {
-        await interaction.reply({
-            ...ErrorEmbed(
-                new CommandNotImplementedError(
-                    `YABOB cannot handle this ${interaction.toString()}.`
-                )
-            ),
-            ephemeral: true
+    let interactionSucceeded = false;
+    dispatchInteractions(interaction)
+        .then(result => (interactionSucceeded = result))
+        .catch(async (err: Error) => {
+            if (interactionSucceeded) {
+                interaction.user
+                    .send(
+                        SimpleEmbed(
+                            "Sorry, YABOB finished your command but couldn't reply back to you."
+                        )
+                    )
+                    .catch(() => {
+                        failedInteractions.set(interaction.user.id, interaction);
+                    });
+            } else {
+                interaction.user
+                    .send(
+                        SimpleEmbed(
+                            'An unexpected error happened when processing your interaction.' +
+                                'Please show this message to @Bot Admin. ',
+                            EmbedColor.Error,
+                            `${err.name}, ${err.message}`
+                        )
+                    )
+                    .catch(() => {
+                        failedInteractions.set(interaction.user.id, interaction);
+                    });
+            }
         });
-    }
 });
 
 /**
@@ -205,13 +183,6 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
 });
 
 /**
- * Discord.js error handing
- */
-client.on('error', err => {
-    console.error(red('Uncaught DiscordJS Error:'), `${err.message}\n`, err.stack);
-});
-
-/**
  * Discord.js warning handling
  */
 client.on('warn', warning => {
@@ -224,6 +195,8 @@ client.on('warn', warning => {
 process.on('exit', () => {
     console.log(centered('-------- End of Server Log --------'));
     console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
+    console.log('These interactions failed:');
+    console.log(failedInteractions.entries());
 });
 
 /**
@@ -251,6 +224,54 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
     );
     return server;
+}
+
+/**
+ * Dispatches the interaction to different handlers.
+ */
+
+async function dispatchInteractions(interaction: Interaction): Promise<boolean> {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
+    let handled = false;
+    if (interaction.isChatInputCommand()) {
+        if (builtInCommandHandlerCanHandle(interaction)) {
+            await processBuiltInCommand(interaction);
+            handled = true;
+        } else {
+            const externalCommandHandler = interactionExtensions
+                // default value is for semantics only
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleCommand(interaction));
+            await externalCommandHandler?.processCommand(interaction);
+            handled = externalCommandHandler !== undefined;
+        }
+    }
+    if (interaction.isButton()) {
+        if (builtInButtonHandlerCanHandle(interaction)) {
+            await processBuiltInButton(interaction);
+            handled = true;
+        } else {
+            const externalButtonHandler = interactionExtensions
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleButton(interaction));
+            await externalButtonHandler?.processButton(interaction);
+            handled = externalButtonHandler !== undefined;
+        }
+    }
+    if (interaction.isModalSubmit()) {
+        if (builtInModalHandlercanHandle(interaction)) {
+            await processBuiltInModalSubmit(interaction);
+            handled = true;
+        } else {
+            const externalModalHandler = interactionExtensions
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleModalSubmit(interaction));
+            await externalModalHandler?.processModalSubmit(interaction);
+            handled = externalModalHandler !== undefined;
+        }
+    }
+    return handled;
 }
 
 /**

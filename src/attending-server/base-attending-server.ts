@@ -391,10 +391,7 @@ class AttendingServerV2 {
             parentCategory?.children.cache
                 .map(child => child.delete())
                 .filter(promise => promise !== undefined)
-        ).catch((err: Error) => {
-            //TODO: should we actually catch this?
-            throw ExpectedServerErrors.apiFail(err);
-        });
+        );
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
             parentCategory?.delete(),
