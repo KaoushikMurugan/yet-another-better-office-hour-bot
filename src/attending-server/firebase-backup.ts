@@ -52,7 +52,6 @@ class FirebaseServerBackupExtension
             });
         });
         // TODO: add a typeguard here to check if schema match
-        console.log(backupData);
         return backupData;
     }
 
