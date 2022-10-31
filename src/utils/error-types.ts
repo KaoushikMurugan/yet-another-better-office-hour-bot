@@ -21,7 +21,7 @@ class CommandParseError extends Error {
 class ServerError extends Error {
     constructor(message: string) {
         super(message);
-        this.name = 'ServerError';
+        this.name = 'ExpectedServerError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -34,7 +34,7 @@ class ServerError extends Error {
 class QueueError extends Error {
     constructor(message: string, public queueName: string) {
         super(message);
-        this.name = 'QueueError';
+        this.name = 'ExpectedQueueError';
     }
     briefErrorString(): string {
         return `**${this.name}** at ${this.queueName}: ${this.message}`;
@@ -67,20 +67,6 @@ class ExtensionSetupError extends Error {
     }
 }
 
-/**
- * Error thrown during display.renderQueue()
- * @deprecated will be removed in the future
- */
-class QueueRenderError extends Error {
-    constructor(message: string, public queueName: string) {
-        super(message);
-        this.name = 'QueueError';
-    }
-    briefErrorString(): string {
-        return `**Queue Render Failed in ${this.queueName}**: ${this.message}`;
-    }
-}
-
 class PeriodicUpdateError extends Error {
     constructor(message: string, public level: 'Server' | 'Queue') {
         super(message);
@@ -95,7 +81,6 @@ export {
     CommandParseError,
     ServerError,
     QueueError,
-    QueueRenderError,
     CommandNotImplementedError,
     ExtensionSetupError,
     PeriodicUpdateError

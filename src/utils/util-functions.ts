@@ -4,6 +4,7 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     GuildMember,
+    Interaction,
     ModalSubmitInteraction,
     Role
 } from 'discord.js';
@@ -121,6 +122,19 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
 
+function getInteractionName(interaction: Interaction): string {
+    if (interaction.isCommand()) {
+        return interaction.commandName;
+    }
+    if (interaction.isButton()) {
+        return interaction.component.label ?? interaction.customId;
+    }
+    if (interaction.isModalSubmit()) {
+        return interaction.customId;
+    }
+    return 'Unsupported Interaction Type';
+}
+
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -136,5 +150,6 @@ export {
     logModalSubmit,
     logSlashCommand,
     centered,
-    addTimeOffset
+    addTimeOffset,
+    getInteractionName
 };

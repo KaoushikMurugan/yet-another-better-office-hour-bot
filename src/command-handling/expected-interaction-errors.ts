@@ -1,7 +1,10 @@
 /** @module ExpectedErrors */
 
+import { Interaction } from 'discord.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { Optional } from '../utils/type-aliases.js';
+import { getInteractionName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
@@ -58,7 +61,28 @@ const ExpectedParseErrors = {
               ),
     badAutoClearValues: new CommandParseError(
         'Please enter valid integers for both `hours` and `minutes`.'
+    ),
+    messageIsTooLong: new CommandParseError(
+        'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
     )
 } as const;
 
-export { ExpectedParseErrors };
+const UnexpectedParseErrors = {
+    unableToReply: (interaction: Interaction) =>
+        SimpleEmbed(
+            `Sorry, YABOB finished your interaction \`${getInteractionName(
+                interaction
+            )}\` but couldn't reply back to you.`,
+            EmbedColor.Error
+        ),
+    unexpectedError: (interaction: Interaction, err: Error) =>
+        SimpleEmbed(
+            `An unexpected error happened when processing your interaction \`${getInteractionName(
+                interaction
+            )}\`. ` + 'Please show this message to @Bot Admin. ',
+            EmbedColor.Error,
+            `${err.name}, ${err.message}`
+        )
+} as const;
+
+export { ExpectedParseErrors, UnexpectedParseErrors };

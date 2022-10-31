@@ -4,7 +4,10 @@ import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 
 export const SuccessMessages = {
     createdQueue: (queueName: string) =>
-        SimpleEmbed(`Successfully created \`${queueName}\`.`, EmbedColor.Success),
+        SimpleEmbed(
+            `Successfully created \`${queueName}\`. It should be at the end of your channels list.`,
+            EmbedColor.Success
+        ),
     deletedQueue: (queueName: string) =>
         SimpleEmbed(`Successfully deleted \`${queueName}\`.`, EmbedColor.Success),
     joinedQueue: (queueName: string) =>
@@ -47,10 +50,7 @@ export const SuccessMessages = {
     clearedAllQueues: (serverName = 'unknown server') =>
         SimpleEmbed(`All queues on ${serverName} was cleard.`, EmbedColor.Success),
     announced: (announcement: string) =>
-        SimpleEmbed(
-            `Your announcement: ${announcement} has been sent!`,
-            EmbedColor.Success
-        ),
+        SimpleEmbed(`Your announcement has been sent!`, EmbedColor.Success, announcement),
     updatedLoggingChannel: (loggingChannelName: string) =>
         SimpleEmbed(
             `Successfully updated logging channel to \`#${loggingChannelName}\`.`,
@@ -90,6 +90,6 @@ export const SuccessMessages = {
     },
     turnedOnSeriousMode: SimpleEmbed(`Serious mode has been turned on.`),
     turnedOffSeriousMode: SimpleEmbed(
-        `Serious mode has been turned off.\n\nThere's no need to be so serious!`
+        `Serious mode has been turned off.\nThere's no need to be so serious!`
     )
 } as const;

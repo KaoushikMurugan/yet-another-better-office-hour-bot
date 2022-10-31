@@ -40,7 +40,7 @@ async function processBuiltInModalSubmit(
     logModalSubmit(interaction);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
-    modalMethod?.(interaction)
+    await modalMethod?.(interaction)
         // Everything is reply here because showModal is guaranteed to be the 1st response
         // modal shown => message not replied, so we always reply
         .then(async successMsg => {
@@ -89,7 +89,7 @@ async function setQueueAutoClear(
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
     const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
     const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
-    if (isNaN(hours) || isNaN(minutes)){
+    if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
     if (hours === 0 && minutes === 0) {

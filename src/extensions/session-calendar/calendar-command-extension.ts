@@ -1,5 +1,8 @@
 /** @module SessionCalendar */
-import { BaseInteractionExtension, IInteractionExtension } from '../extension-interface.js';
+import {
+    BaseInteractionExtension,
+    IInteractionExtension
+} from '../extension-interface.js';
 import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import {
     ButtonInteraction,
@@ -82,10 +85,7 @@ class CalendarInteractionExtension
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });
-        calendarStates.set(
-            guild.id,
-            await CalendarExtensionState.load(guild)
-        );
+        calendarStates.set(guild.id, await CalendarExtensionState.load(guild));
         const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
         CalendarInteractionExtension.helpEmbedsSent = true;
@@ -150,7 +150,7 @@ class CalendarInteractionExtension
         ]);
         const commandMethod = this.commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
-        commandMethod?.(interaction)
+        await commandMethod?.(interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
@@ -170,7 +170,7 @@ class CalendarInteractionExtension
             ephemeral: true
         });
         logButtonPress(interaction, buttonName, queueName);
-        buttonMethod?.(queueName, interaction)
+        await buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
@@ -315,7 +315,7 @@ class CalendarInteractionExtension
                 return category as CategoryChannel;
             });
         }
-        void state
+        state
             .updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
             .catch(() =>
                 console.error(

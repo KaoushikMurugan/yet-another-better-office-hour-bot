@@ -391,10 +391,7 @@ class AttendingServerV2 {
             parentCategory?.children.cache
                 .map(child => child.delete())
                 .filter(promise => promise !== undefined)
-        ).catch((err: Error) => {
-            //TODO: should we actually catch this?
-            throw ExpectedServerErrors.apiFail(err);
-        });
+        );
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
             parentCategory?.delete(),
@@ -435,7 +432,6 @@ class AttendingServerV2 {
             this._activeHelpers.get(helperMember.id)
         ];
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
-            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
@@ -703,8 +699,9 @@ class AttendingServerV2 {
             studentsToAnnounceTo.map(student =>
                 student.member.send(
                     SimpleEmbed(
-                        `Staff member ${helperMember.displayName} announced:\n${announcement}`,
-                        EmbedColor.Aqua
+                        `Staff member ${helperMember.displayName} announced:`,
+                        EmbedColor.Aqua,
+                        announcement
                     )
                 )
             )

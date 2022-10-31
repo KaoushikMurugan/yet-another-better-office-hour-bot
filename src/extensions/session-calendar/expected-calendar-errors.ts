@@ -38,7 +38,9 @@ const ExpectedCalendarErrors = {
     nonAdminMakingCalendarStringForOthers: new CommandParseError(
         'Only Bot Admins have the permission to update calendar string for users that are not yourself.'
     ),
-    badPublicEmbedUrl: new CommandParseError('Please provide a valid and complete URL. (it should start with https://...)')
+    badPublicEmbedUrl: new CommandParseError(
+        'Please provide a valid and complete URL. (it should start with https://...)'
+    )
 } as const;
 
 export { ExpectedCalendarErrors, CalendarConnectionError };

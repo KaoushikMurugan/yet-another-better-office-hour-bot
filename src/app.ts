@@ -1,4 +1,4 @@
-import { Guild, Collection, VoiceState } from 'discord.js';
+import { Guild, Collection, VoiceState, Interaction } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
@@ -14,18 +14,18 @@ import {
 } from './command-handling/modal-handler.js';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { postSlashCommands } from './command-handling/slash-commands.js';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from './utils/embed-helper.js';
+import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
 import { GuildId, WithRequired } from './utils/type-aliases.js';
 import { client, attendingServers } from './global-states.js';
-import { CommandNotImplementedError } from './utils/error-types.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
+import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 
-const interactionExtensions: Collection<GuildId, IInteractionExtension[]> =
-    new Collection();
+const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
+const failedInteractions: { username: string; interaction: Interaction }[] = [];
 
 /**
  * After login startup seqence
@@ -87,56 +87,20 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async interaction => {
-    // if it's a built-in command/button, process
-    // otherwise find an extension that can process it
-    // TODO: All 3 if blocks are basically the same, see if we can generalize them
-    let handled = false;
-    if (interaction.isChatInputCommand()) {
-        if (builtInCommandHandlerCanHandle(interaction)) {
-            await processBuiltInCommand(interaction);
-            handled = true;
-        } else {
-            const externalCommandHandler = interactionExtensions
-                // default value is for semantics only
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleCommand(interaction));
-            await externalCommandHandler?.processCommand(interaction);
-            handled = externalCommandHandler !== undefined;
-        }
-    }
-    if (interaction.isButton()) {
-        if (builtInButtonHandlerCanHandle(interaction)) {
-            await processBuiltInButton(interaction);
-            handled = true;
-        } else {
-            const externalButtonHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleButton(interaction));
-            await externalButtonHandler?.processButton(interaction);
-            handled = externalButtonHandler !== undefined;
-        }
-    }
-    if (interaction.isModalSubmit()) {
-        if (builtInModalHandlercanHandle(interaction)) {
-            await processBuiltInModalSubmit(interaction);
-            handled = true;
-        } else {
-            const externalModalHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
-                ?.find(ext => ext.canHandleModalSubmit(interaction));
-            await externalModalHandler?.processModalSubmit(interaction);
-            handled = externalModalHandler !== undefined;
-        }
-    }
-    if (!handled && interaction.isRepliable()) {
-        await interaction.reply({
-            ...ErrorEmbed(
-                new CommandNotImplementedError(
-                    `YABOB cannot handle this ${interaction.toString()}.`
-                )
-            ),
-            ephemeral: true
-        });
+    dispatchInteractions(interaction).catch(async (err: Error) => {
+        interaction.user
+            .send(UnexpectedParseErrors.unexpectedError(interaction, err))
+            .catch(() => {
+                failedInteractions.push({
+                    username: interaction.user.username,
+                    interaction: interaction
+                });
+            });
+    });
+    if (failedInteractions.length >= 50) {
+        console.error('These 50 interactions failed: ');
+        console.error(failedInteractions);
+        failedInteractions.splice(0, failedInteractions.length);
     }
 });
 
@@ -205,13 +169,6 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
 });
 
 /**
- * Discord.js error handing
- */
-client.on('error', err => {
-    console.error(red('Uncaught DiscordJS Error:'), `${err.message}\n`, err.stack);
-});
-
-/**
  * Discord.js warning handling
  */
 client.on('warn', warning => {
@@ -224,6 +181,8 @@ client.on('warn', warning => {
 process.on('exit', () => {
     console.log(centered('-------- End of Server Log --------'));
     console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
+    console.log(`These ${failedInteractions.length} interactions failed:`);
+    console.log(failedInteractions);
 });
 
 /**
@@ -251,6 +210,54 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
     );
     return server;
+}
+
+/**
+ * Dispatches the interaction to different handlers.
+ * @param interaction from the client.on('interactionCreate') event
+ * @returns boolean, whether the command was handled
+ */
+async function dispatchInteractions(interaction: Interaction): Promise<boolean> {
+    // if it's a built-in command/button, process
+    // otherwise find an extension that can process it
+    if (interaction.isChatInputCommand()) {
+        if (builtInCommandHandlerCanHandle(interaction)) {
+            await processBuiltInCommand(interaction);
+            return true;
+        } else {
+            const externalCommandHandler = interactionExtensions
+                // default value is for semantics only
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleCommand(interaction));
+            await externalCommandHandler?.processCommand(interaction);
+            return externalCommandHandler !== undefined;
+        }
+    }
+    if (interaction.isButton()) {
+        if (builtInButtonHandlerCanHandle(interaction)) {
+            await processBuiltInButton(interaction);
+            return true;
+        } else {
+            const externalButtonHandler = interactionExtensions
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleButton(interaction));
+            await externalButtonHandler?.processButton(interaction);
+            return externalButtonHandler !== undefined;
+        }
+    }
+    if (interaction.isModalSubmit()) {
+        if (builtInModalHandlercanHandle(interaction)) {
+            await processBuiltInModalSubmit(interaction);
+            return true;
+        } else {
+            const externalModalHandler = interactionExtensions
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleModalSubmit(interaction));
+            await externalModalHandler?.processModalSubmit(interaction);
+            return externalModalHandler !== undefined;
+        }
+    }
+    return false;
 }
 
 /**
