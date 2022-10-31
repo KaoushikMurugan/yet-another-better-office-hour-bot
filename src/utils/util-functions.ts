@@ -126,10 +126,10 @@ function getInteractionName(interaction: Interaction): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
-    if (interaction.isButton()){
+    if (interaction.isButton()) {
         return interaction.component.label ?? interaction.customId;
     }
-    if (interaction.isModalSubmit()){
+    if (interaction.isModalSubmit()) {
         return interaction.customId;
     }
     return 'Unsupported Interaction Type';

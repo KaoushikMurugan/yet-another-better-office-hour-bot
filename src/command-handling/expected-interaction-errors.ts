@@ -77,11 +77,11 @@ const UnexpectedParseErrors = {
         ),
     unexpectedError: (interaction: Interaction, err: Error) =>
         SimpleEmbed(
-            `An unexpected error happened when processing your interaction.\`${getInteractionName(
+            `An unexpected error happened when processing your interaction \`${getInteractionName(
                 interaction
             )}\`. ` + 'Please show this message to @Bot Admin. ',
             EmbedColor.Error,
-            `${err.name}, ${err.message}, ${err.stack}`.slice(0, 4095)
+            `${err.name}, ${err.message}`
         )
 } as const;
 
