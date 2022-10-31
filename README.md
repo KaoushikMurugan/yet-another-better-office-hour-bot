@@ -1,7 +1,7 @@
 <div align="center">
       <div>
-      <img width="10%" alt="BOB_pfp" src="https://user-images.githubusercontent.com/60045212/193987558-2bd2c3e3-d542-444a-b6d3-a8fa770ad32a.png"/>&nbsp
-<img width="80%" src="https://user-images.githubusercontent.com/60045212/193987690-1b16efa2-996b-48eb-980a-8ba1344c5b11.svg"/>
+      
+<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/198949684-8d4d37d0-72c1-4a24-9304-2675eaa0aa28.svg"/>
       </div>
 </div>
 <br>
