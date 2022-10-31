@@ -153,7 +153,11 @@ async function isFromGuildMember(
 function logEditFailure(
     interaction: ButtonInteraction | ChatInputCommandInteraction
 ): void {
-    console.error(`Edit reply failed with ${interaction.toJSON()}`);
+    console.error(
+        `Edit reply failed with ${
+            interaction.isCommand() ? interaction.commandName : interaction.customId
+        } in server ${interaction.guild?.name}`
+    );
 }
 
 export {
