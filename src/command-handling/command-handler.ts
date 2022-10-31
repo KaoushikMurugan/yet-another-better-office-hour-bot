@@ -115,7 +115,10 @@ async function processBuiltInCommand(
         ),
         ephemeral: true
     });
-    commandMethod?.(interaction)
+    // this await keyword is necessary, do not remove even though we are also using callbacks
+    // this modifies the closure to
+    // alllow the failure inside catch block be caught at top level in app.ts
+    await commandMethod?.(interaction)
         .then(async successMsg => {
             await Promise.all([
                 interaction.editReply(successMsg),
@@ -366,6 +369,9 @@ async function announce(interaction: ChatInputCommandInteraction): Promise<Yabob
         isTriggeredByUserWithRolesSync(interaction, 'announce', ['Bot Admin', 'Staff'])
     ];
     const announcement = interaction.options.getString('message', true);
+    if (announcement.length >= 4096) {
+        throw ExpectedParseErrors.messageIsTooLong;
+    }
     const optionalChannel = interaction.options.getChannel('queue_name', false);
     if (optionalChannel !== null) {
         const queueChannel = hasValidQueueArgument(interaction, true);

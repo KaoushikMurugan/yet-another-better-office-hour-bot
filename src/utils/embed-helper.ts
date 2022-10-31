@@ -48,7 +48,7 @@ export function SimpleEmbed(
                     color: color,
                     title: message,
                     timestamp: new Date().toISOString(),
-                    description: description,
+                    description: description.slice(0, 4096),
                     author: {
                         name: 'YABOB',
                         icon_url: YABOB_PFP_URL
@@ -62,7 +62,7 @@ export function SimpleEmbed(
             embeds: [
                 {
                     color: color,
-                    description: message + '\n\n' + description,
+                    description: (message + '\n\n' + description).slice(0, 4096),
                     timestamp: new Date().toISOString(),
                     author: {
                         name: 'YABOB',
@@ -81,7 +81,7 @@ export function SimpleEmbed(
  */
 export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -105,12 +105,14 @@ export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
         embeds: [
             {
                 color: color,
-                title: err.message,
+                title: err.message.length <= 256 ? err.message : err.name,
                 timestamp: new Date().toISOString(),
-                description:
+                description: (
+                    (err.message.length > 256 ? err.message : '') +
                     `If you need help or think this is a mistake, ` +
                     `please post a screenshot of this message in the #help channel ` +
-                    `(or equivalent) and ping @Bot Admin.`,
+                    `(or equivalent) and ping @Bot Admin.`
+                ).slice(0, 1024),
                 fields: embedFields,
                 author: {
                     name: 'YABOB',
@@ -156,7 +158,7 @@ export function ErrorLogEmbed(
     }
     embedFields.push({
         name: 'Error Message',
-        value: err.message,
+        value: err.message.slice(0, 1024), // max 1024 characters
         inline: false
     });
     if (err instanceof ServerError) {
@@ -322,7 +324,8 @@ export function SlashCommandLogEmbed(
                             return `**${option.name}**: ${option.value}`;
                     }
                 })
-                .join('\n'),
+                .join('\n')
+                .slice(0, 1024), // max 1024 chars for 1 field
             inline: false
         });
     }

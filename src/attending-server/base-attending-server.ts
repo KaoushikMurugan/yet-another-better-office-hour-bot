@@ -699,8 +699,9 @@ class AttendingServerV2 {
             studentsToAnnounceTo.map(student =>
                 student.member.send(
                     SimpleEmbed(
-                        `Staff member ${helperMember.displayName} announced:\n${announcement}`,
-                        EmbedColor.Aqua
+                        `Staff member ${helperMember.displayName} announced:`,
+                        EmbedColor.Aqua,
+                        announcement
                     )
                 )
             )

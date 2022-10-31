@@ -61,6 +61,9 @@ const ExpectedParseErrors = {
               ),
     badAutoClearValues: new CommandParseError(
         'Please enter valid integers for both `hours` and `minutes`.'
+    ),
+    messageIsTooLong: new CommandParseError(
+        'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
     )
 } as const;
 

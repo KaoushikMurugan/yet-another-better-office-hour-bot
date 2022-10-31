@@ -47,10 +47,7 @@ export const SuccessMessages = {
     clearedAllQueues: (serverName = 'unknown server') =>
         SimpleEmbed(`All queues on ${serverName} was cleard.`, EmbedColor.Success),
     announced: (announcement: string) =>
-        SimpleEmbed(
-            `Your announcement: ${announcement} has been sent!`,
-            EmbedColor.Success
-        ),
+        SimpleEmbed(`Your announcement has been sent!`, EmbedColor.Success, announcement),
     updatedLoggingChannel: (loggingChannelName: string) =>
         SimpleEmbed(
             `Successfully updated logging channel to \`#${loggingChannelName}\`.`,

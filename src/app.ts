@@ -181,8 +181,8 @@ client.on('warn', warning => {
 process.on('exit', () => {
     console.log(centered('-------- End of Server Log --------'));
     console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
-    console.log('These interactions failed:');
-    console.log(failedInteractions.entries());
+    console.log(`These ${failedInteractions.length} interactions failed:`);
+    console.log(failedInteractions);
 });
 
 /**
