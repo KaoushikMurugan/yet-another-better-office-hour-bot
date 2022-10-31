@@ -4,7 +4,6 @@
 <img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/198949684-8d4d37d0-72c1-4a24-9304-2675eaa0aa28.svg"/>
       </div>
 </div>
-<br>
 
 <div align = "center">
 <a href='https://www.gnu.org/licenses/gpl-3.0.en.html' target="_blank"><img alt='' src='https://img.shields.io/badge/GPL_V3-100000?style=for-the-badge&logo=&logoColor=white&labelColor=007acc&color=FE6F6E'/></a> <a href='https://www.typescriptlang.org/' target="_blank"><img alt='Typescript' src='https://img.shields.io/badge/Typescript-100000?style=for-the-badge&logo=Typescript&logoColor=white&labelColor=007acc&color=007acc'/></a> <a href='https://nodejs.org/en/' target="_blank"><img alt='Node.js' src='https://img.shields.io/badge/Node.JS_>= 16.17-100000?style=for-the-badge&logo=Node.js&logoColor=white&labelColor=339933&color=339933'/></a> <a href='https://discord.gg/p7HS92mHsG' target="_blank"><img alt='Discord' src='https://img.shields.io/badge/Join_our discord-100000?style=for-the-badge&logo=Discord&logoColor=white&labelColor=5865F2&color=5865F2'/></a>
