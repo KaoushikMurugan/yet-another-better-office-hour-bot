@@ -159,6 +159,8 @@ class AttendingServerV2 {
                   new FirebaseServerBackupExtension(guild),
                   CalendarExtensionState.load(guild)
               ]);
+        // create instance with extensions
+        const server = new AttendingServerV2(user, guild, serverExtensions);
         // Retrieve backup from all sources. Take the first one that's not undefined
         // TODO: Change behavior here depending on backup strategy
         const externalBackup = environment.disableExtensions
@@ -168,16 +170,17 @@ class AttendingServerV2 {
                       extension.loadExternalServerData(guild.id)
                   )
               );
+        // now load the data from backup
         const externalServerData = externalBackup?.find(backup => backup !== undefined);
         if (externalServerData !== undefined) {
             console.log(cyan(`Found external backup for ${guild.name}. Restoring.`));
-        }
-        const server = new AttendingServerV2(user, guild, serverExtensions);
-        server._afterSessionMessage = externalServerData?.afterSessionMessage ?? '';
-        if (externalServerData?.loggingChannelId !== undefined) {
-            server._loggingChannel = server.guild.channels.cache.get(
-                externalServerData?.loggingChannelId
-            ) as TextChannel;
+            const loggingChannelFromBackup = server.guild.channels.cache.get(
+                externalServerData.loggingChannelId
+            );
+            if (isTextChannel(loggingChannelFromBackup)){
+                server._loggingChannel = loggingChannelFromBackup;
+            }
+            server._afterSessionMessage = externalServerData.afterSessionMessage;
         }
         // This call must block everything else for handling empty servers
         await server.createHierarchyRoles();
@@ -373,6 +376,7 @@ class AttendingServerV2 {
             this.createClassRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
+        await this.getQueueChannels(false);
     }
 
     /**
@@ -386,36 +390,43 @@ class AttendingServerV2 {
         if (queue === undefined) {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
-        const parentCategory = (await (await this.guild.channels.fetch())
-            .find(ch => ch !== null && ch.id === queueCategoryID)
-            ?.fetch()) as CategoryChannel;
-        // delete child channels first
-        await Promise.all(
-            parentCategory?.children.cache
-                .map(child => child.delete())
-                .filter(promise => promise !== undefined)
+        // delete queue data model no matter if the category was deleted by the user
+        // now only the queue variable holds the queue channel
+        this._queues.delete(queueCategoryID);
+        const allChannels = await this.guild.channels.fetch();
+        const parentCategory = allChannels.find(
+            (channel): channel is CategoryChannel =>
+                isCategoryChannel(channel) && channel.id === queueCategoryID
         );
+        if (!parentCategory) {
+            // this shouldn't happen bc input type restriction on the command
+            // but we need to pass ts check
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        // delete child channels first
+        await Promise.all(parentCategory.children.cache.map(child => child.delete()));
         // now delete category, role, and let queue call onQueueDelete
         await Promise.all([
-            parentCategory?.delete(),
-            (await this.guild.roles.fetch())
+            parentCategory.delete(),
+            this.guild.roles.cache
                 .find(role => role.name === parentCategory.name)
                 ?.delete(),
             queue.gracefulDelete()
         ]);
-        // finally delete queue data model and refresh cache
-        this._queues.delete(queueCategoryID);
         await this.getQueueChannels(false);
     }
 
     /**
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
-     * @param queue target queue
-     * @throws QueueError: if @param queue rejects
+     * @param queueChannel target queue
+     * @throws QueueError: if @param queueChannel rejects
      */
-    async enqueueStudent(studentMember: GuildMember, queue: QueueChannel): Promise<void> {
-        await this._queues.get(queue.parentCategoryId)?.enqueue(studentMember);
+    async enqueueStudent(
+        studentMember: GuildMember,
+        queueChannel: QueueChannel
+    ): Promise<void> {
+        await this._queues.get(queueChannel.parentCategoryId)?.enqueue(studentMember);
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -755,16 +766,14 @@ class AttendingServerV2 {
      */
     async updateCommandHelpChannels(): Promise<void> {
         const allChannels = await this.guild.channels.fetch();
-        const existingHelpCategory = allChannels
-            .filter(
-                channel =>
-                    channel !== null &&
-                    channel.type === ChannelType.GuildCategory &&
-                    channel.name === 'Bot Commands Help'
-            )
-            .map(channel => channel as CategoryChannel);
+        const existingHelpCategory = allChannels.find(
+            (channel): channel is CategoryChannel =>
+                channel !== null &&
+                channel.type === ChannelType.GuildCategory &&
+                channel.name === 'Bot Commands Help'
+        );
         // If no help category is found, initialize
-        if (existingHelpCategory.length === 0) {
+        if (!existingHelpCategory) {
             console.log(
                 cyan(`Found no help channels in ${this.guild.name}. Creating new ones.`)
             );
@@ -772,7 +781,6 @@ class AttendingServerV2 {
                 name: 'Bot Commands Help',
                 type: ChannelType.GuildCategory
             });
-            existingHelpCategory.push(helpCategory);
             // Change the config object and add more functions here if needed
             await Promise.all(
                 commandChConfigs.map(async roleConfig => {
@@ -800,14 +808,18 @@ class AttendingServerV2 {
                     );
                 })
             );
+            await this.sendCommandHelpChannelMessages(helpCategory, commandChConfigs);
         } else {
             console.log(
-                yellow(
-                    `Found existing help channels in ${this.guild.name}, updating command help files`
-                )
+                `Found existing help channels in ${yellow(
+                    this.guild.name
+                )}, updating command help files`
+            );
+            await this.sendCommandHelpChannelMessages(
+                existingHelpCategory,
+                commandChConfigs
             );
         }
-        await this.sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
         console.log(magenta(`✓ Updated help channels on ${this.guild.name} ✓`));
     }
 
@@ -999,19 +1011,14 @@ class AttendingServerV2 {
      * @param messageContents array of embeds to send to each help channel
      */
     private async sendCommandHelpChannelMessages(
-        helpCategories: CategoryChannel[],
+        helpCategory: CategoryChannel,
         messageContents: Array<{
             channelName: string;
             file: HelpMessage[];
             visibility: string[];
         }>
     ): Promise<void> {
-        const allHelpChannels = helpCategories.flatMap(
-            category =>
-                [...category.children.cache.values()].filter(
-                    ch => ch.type === ChannelType.GuildText
-                ) as TextChannel[]
-        );
+        const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
         await Promise.all(
             allHelpChannels.map(
                 async ch =>
@@ -1028,6 +1035,9 @@ class AttendingServerV2 {
                     ?.file?.filter(helpMessage => helpMessage.useInHelpChannel)
                     .map(helpMessage => channel.send(helpMessage.message))
             )
+        );
+        console.log(
+            `Successfully updated help messages in ${yellow(helpCategory.name)}!`
         );
     }
 }

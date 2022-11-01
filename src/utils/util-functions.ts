@@ -8,7 +8,7 @@ import {
     GuildMember,
     Interaction,
     ModalSubmitInteraction,
-    NonThreadGuildBasedChannel,
+    GuildBasedChannel,
     Role,
     TextChannel
 } from 'discord.js';
@@ -145,9 +145,10 @@ function getInteractionName(interaction: Interaction): string {
  * @returns type narrower
  */
 function isCategoryChannel(
-    channel: NonThreadGuildBasedChannel | null
+    channel: GuildBasedChannel | null | undefined
 ): channel is CategoryChannel {
-    return channel !== null && channel.type === ChannelType.GuildCategory;
+    // shorthand syntax, coerces the type into a boolean
+    return !!channel && channel.type === ChannelType.GuildCategory;
 }
 
 /**
@@ -156,9 +157,9 @@ function isCategoryChannel(
  * @returns type narrower
  */
 function isTextChannel(
-    channel: NonThreadGuildBasedChannel | null
+    channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
-    return channel !== null && channel.type === ChannelType.GuildText;
+    return !!channel && channel.type === ChannelType.GuildText;
 }
 
 function centered(text: string): string {
