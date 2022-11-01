@@ -103,8 +103,8 @@ class AttendingServerV2 {
             return false;
         }
         await Promise.all([
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this)),
-            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
+            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         ]);
         return true;
     }
