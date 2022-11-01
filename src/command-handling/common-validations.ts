@@ -25,13 +25,14 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
  * @returns the {@link AttendingServerV2} object
  */
 function isServerInteraction(
-    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
+    interaction:
+        | ChatInputCommandInteraction<'cached'>
+        | ButtonInteraction<'cached'>
+        | ModalSubmitInteraction<'cached'>
 ): AttendingServerV2 {
-    const server = attendingServers.get(
-        interaction.guild?.id ?? 'Non Server Interaction'
-    );
+    const server = attendingServers.get(interaction.guild.id);
     if (!server) {
-        throw ExpectedParseErrors.nonServerInterction(interaction.guild?.name);
+        throw ExpectedParseErrors.nonServerInterction(interaction.guild.name);
     }
     return server;
 }
@@ -67,7 +68,7 @@ function isTriggeredByUserWithRolesSync(
  * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
-    interaction: ChatInputCommandInteraction,
+    interaction: ChatInputCommandInteraction<'cached'>,
     required = false
 ): QueueChannel {
     if (!interaction.channel || !('parent' in interaction.channel)) {
@@ -120,7 +121,7 @@ async function isTriggeredByUserWithValidEmail(
  * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
  */
 function isFromQueueChannelWithParent(
-    interaction: ButtonInteraction | ChatInputCommandInteraction,
+    interaction: ButtonInteraction<'cached'> | ChatInputCommandInteraction<'cached'>,
     queueName: string
 ): QueueChannel {
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {

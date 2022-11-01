@@ -347,9 +347,9 @@ async function listHelpers(
                     )
                     .map(role => role.name)
                     .toString(), // Available Queues
-                convertMsToTime(new Date().valueOf() - helper.helpStart.valueOf()), // Time Elapsed
+                convertMsToTime(new Date().getTime() - helper.helpStart.getTime()), // Time Elapsed
                 (() => {
-                    const voiceChannel = interaction.guild?.voiceStates.cache.get(
+                    const voiceChannel = interaction.guild.voiceStates.cache.get(
                         helper.member.id
                     )?.channel;
                     if (!voiceChannel) {

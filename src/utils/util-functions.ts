@@ -11,7 +11,6 @@ import {
     GuildBasedChannel,
     Role,
     TextChannel,
-    APIInteractionDataResolvedChannel,
     VoiceChannel,
     TextBasedChannel
 } from 'discord.js';
@@ -70,7 +69,7 @@ async function getQueueRoles(
  * @param queueName
  */
 function logButtonPress(
-    interaction: ButtonInteraction,
+    interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName: string
 ): void {
@@ -80,7 +79,7 @@ function logButtonPress(
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
@@ -92,14 +91,14 @@ function logButtonPress(
  * Default logger for modal submits
  * @param interaction
  */
-function logModalSubmit(interaction: ModalSubmitInteraction): void {
+function logModalSubmit(interaction: ModalSubmitInteraction<'cached'>): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name)}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Modal Used: ${magenta(interaction.customId)}`
@@ -110,14 +109,14 @@ function logModalSubmit(interaction: ModalSubmitInteraction): void {
  * Default logger for slash commands
  * @param interaction
  */
-function logSlashCommand(interaction: ChatInputCommandInteraction): void {
+function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Command Used: ${magenta(interaction.toString())}`
@@ -129,7 +128,7 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
 
-function getInteractionName(interaction: Interaction): string {
+function getInteractionName(interaction: Interaction<'cached'>): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
@@ -148,7 +147,7 @@ function getInteractionName(interaction: Interaction): string {
  * @returns type narrower
  */
 function isCategoryChannel(
-    channel: GuildBasedChannel | null | undefined | APIInteractionDataResolvedChannel
+    channel: GuildBasedChannel | null | undefined
 ): channel is CategoryChannel {
     // shorthand syntax, coerces the type into a boolean
     return !!channel && 'type' in channel && channel.type === ChannelType.GuildCategory;
