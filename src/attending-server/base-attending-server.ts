@@ -26,6 +26,7 @@ import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-c
 import {
     convertMsToTime,
     isCategoryChannel,
+    isQueueTextChannel,
     isTextChannel
 } from '../utils/util-functions.js';
 import {
@@ -177,7 +178,7 @@ class AttendingServerV2 {
             const loggingChannelFromBackup = server.guild.channels.cache.get(
                 externalServerData.loggingChannelId
             );
-            if (isTextChannel(loggingChannelFromBackup)){
+            if (isTextChannel(loggingChannelFromBackup)) {
                 server._loggingChannel = loggingChannelFromBackup;
             }
             server._afterSessionMessage = externalServerData.afterSessionMessage;
@@ -319,10 +320,7 @@ class AttendingServerV2 {
                 continue;
             }
             const queueTextChannel: Optional<TextChannel> =
-                categoryChannel.children.cache.find(
-                    (child): child is TextChannel =>
-                        isTextChannel(child) && child.name === 'queue'
-                );
+                categoryChannel.children.cache.find(isQueueTextChannel);
             if (!queueTextChannel) {
                 continue;
             }
@@ -994,14 +992,13 @@ class AttendingServerV2 {
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
         const queueNames = (await this.getQueueChannels(false)).map(ch => ch.queueName);
         await Promise.all(
-            queueNames
-                .filter(queue => !existingRoles.has(queue))
-                .map(roleToCreate =>
+            queueNames.map(roleToCreate => {
+                !existingRoles.has(roleToCreate) &&
                     this.guild.roles.create({
                         name: roleToCreate,
                         position: 1
-                    })
-                )
+                    });
+            })
         );
     }
 

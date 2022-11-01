@@ -10,7 +10,8 @@ import {
     ModalSubmitInteraction,
     GuildBasedChannel,
     Role,
-    TextChannel
+    TextChannel,
+    APIInteractionDataResolvedChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -145,10 +146,10 @@ function getInteractionName(interaction: Interaction): string {
  * @returns type narrower
  */
 function isCategoryChannel(
-    channel: GuildBasedChannel | null | undefined
+    channel: GuildBasedChannel | null | undefined | APIInteractionDataResolvedChannel
 ): channel is CategoryChannel {
     // shorthand syntax, coerces the type into a boolean
-    return !!channel && channel.type === ChannelType.GuildCategory;
+    return !!channel && 'type' in channel && channel.type === ChannelType.GuildCategory;
 }
 
 /**
@@ -160,6 +161,19 @@ function isTextChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return !!channel && channel.type === ChannelType.GuildText;
+}
+
+/**
+ * Narrows the type down to text channel and checks if the name is `queue`
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isQueueTextChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is TextChannel {
+    return (
+        !!channel && channel.type === ChannelType.GuildText && channel.name === 'queue'
+    );
 }
 
 function centered(text: string): string {
@@ -180,5 +194,6 @@ export {
     addTimeOffset,
     getInteractionName,
     isCategoryChannel,
-    isTextChannel
+    isTextChannel,
+    isQueueTextChannel
 };

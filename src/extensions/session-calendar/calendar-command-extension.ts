@@ -7,7 +7,6 @@ import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import {
     ButtonInteraction,
     CategoryChannel,
-    ChannelType,
     ChatInputCommandInteraction,
     Guild,
     ModalSubmitInteraction,
@@ -38,6 +37,8 @@ import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { calendarCommands } from './calendar-slash-commands.js';
 import {
     getQueueRoles,
+    isCategoryChannel,
+    isQueueTextChannel,
     logButtonPress,
     logSlashCommand
 } from '../../utils/util-functions.js';
@@ -271,48 +272,43 @@ class CalendarInteractionExtension
             ['Bot Admin', 'Staff']
         );
         const calendarDisplayName = interaction.options.getString('calendar_name', true);
-        const user = interaction.options.getUser('user', false);
-        let validQueues: (CategoryChannel | Role)[] = [];
+        const userOption = interaction.options.getUser('user', false);
+        let validQueueOptions: (CategoryChannel | Role)[];
         let memberToUpdate = member;
-
-        if (user !== null) {
+        if (userOption) {
             const memberRoles = memberToUpdate.roles;
             // if they are not admin or doesn't have the queue role, reject
             if (
                 !memberRoles.cache.some(role => role.name === 'Bot Admin') &&
-                user.id !== interaction.user.id
+                userOption.id !== interaction.user.id
             ) {
                 throw ExpectedCalendarErrors.nonAdminMakingCalendarStringForOthers;
             } else {
-                memberToUpdate = await server.guild.members.fetch(user);
+                memberToUpdate = await server.guild.members.fetch(userOption);
             }
         }
         if (generateAll) {
-            validQueues = await getQueueRoles(server, memberToUpdate);
+            validQueueOptions = await getQueueRoles(server, memberToUpdate);
         } else {
-            const commandArgs = [
-                ...server.guild.channels.cache.filter(
-                    channel => channel.type === ChannelType.GuildCategory
+            // get all the non-null options
+            // 20 is the same length as the slash command object.
+            // The command cannot be updated after posting, so we have to hard code the size
+            const commandArgs = Array(20)
+                .fill(undefined)
+                .map((_, index) =>
+                    // 1st option is required
+                    interaction.options.getChannel(`queue_name_${index + 1}`, index === 0)
                 )
-            ]
-                .map((_, idx) =>
-                    interaction.options.getChannel(`queue_name_${idx + 1}`, idx === 0)
-                )
-                .filter(queueArg => queueArg !== undefined && queueArg !== null);
-            validQueues = commandArgs.map(category => {
-                if (category?.type !== ChannelType.GuildCategory || category === null) {
+                .filter(queueArg => queueArg !== null);
+            validQueueOptions = commandArgs.map(category => {
+                if (!isCategoryChannel(category)) {
                     throw ExpectedParseErrors.invalidQueueCategory(category?.name);
                 }
-                const queueTextChannel = (
-                    category as CategoryChannel
-                ).children.cache.find(
-                    child =>
-                        child.name === 'queue' && child.type === ChannelType.GuildText
-                );
+                const queueTextChannel = category.children.cache.find(isQueueTextChannel);
                 if (queueTextChannel === undefined) {
                     throw ExpectedParseErrors.noQueueTextChannel(category.name);
                 }
-                return category as CategoryChannel;
+                return category;
             });
         }
         state
@@ -327,7 +323,7 @@ class CalendarInteractionExtension
         await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
         return CalendarSuccessMessages.completedCalendarString(
             calendarDisplayName,
-            validQueues.map(queue => queue.name)
+            validQueueOptions.map(queue => queue.name)
         );
     }
 
@@ -363,7 +359,6 @@ class CalendarInteractionExtension
      * Refreshes the calendar emebed for the specified queue
      * @param queueName
      * @param interaction
-     * @returns
      */
     private async requestCalendarRefresh(
         queueName: string,
