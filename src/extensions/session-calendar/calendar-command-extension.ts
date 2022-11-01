@@ -240,7 +240,7 @@ async function unsetCalendarId(
  * Builds the embed for /when_next
  */
 async function listUpComingHours(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const channel = hasValidQueueArgument(interaction);
     const [server] = isServerCalendarInteraction(interaction);
@@ -361,7 +361,7 @@ async function setPublicEmbedUrl(
  */
 async function requestCalendarRefresh(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     const queueLevelExtension = state.listeners.get(queueName);

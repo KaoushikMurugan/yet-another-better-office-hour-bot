@@ -70,14 +70,14 @@ const ExpectedParseErrors = {
 } as const;
 
 const UnexpectedParseErrors = {
-    unableToReply: (interaction: Interaction) =>
+    unableToReply: (interaction: Interaction<'cached'>) =>
         SimpleEmbed(
             `Sorry, YABOB finished your interaction \`${getInteractionName(
                 interaction
             )}\` but couldn't reply back to you.`,
             EmbedColor.Error
         ),
-    unexpectedError: (interaction: Interaction, err: Error) =>
+    unexpectedError: (interaction: Interaction<'cached'>, err: Error) =>
         SimpleEmbed(
             `An unexpected error happened when processing your interaction \`${getInteractionName(
                 interaction
