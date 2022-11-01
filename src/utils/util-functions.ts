@@ -12,7 +12,8 @@ import {
     Role,
     TextChannel,
     APIInteractionDataResolvedChannel,
-    VoiceChannel
+    VoiceChannel,
+    TextBasedChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -159,7 +160,7 @@ function isCategoryChannel(
  * @returns type narrower
  */
 function isTextChannel(
-    channel: GuildBasedChannel | null | undefined
+    channel: TextBasedChannel | GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return !!channel && channel.type === ChannelType.GuildText;
 }
@@ -177,7 +178,9 @@ function isQueueTextChannel(
     );
 }
 
-function isVoiceChannel(channel: GuildBasedChannel | null | undefined): channel is VoiceChannel{
+function isVoiceChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is VoiceChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
 }
 

@@ -72,19 +72,19 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
 } as const;
 
 /**
- * Commands in this object only shows a modal on ChatInputCommandInteraction
+ * Commands in this object only shows a modal on ChatInputCommandInteraction<'cached'>
  * Actual changes to attendingServers happens on modal submit
  * - @see modal-handler.ts
  */
 const showModalOnlyCommands: {
-    [commandName: string]: (inter: ChatInputCommandInteraction) => Promise<void>;
+    [commandName: string]: (inter: ChatInputCommandInteraction<'cached'>) => Promise<void>;
 } = {
     set_after_session_msg: showAfterSessionMessageModal,
     set_queue_auto_clear: showQueueAutoClearModal
 } as const;
 
 function builtInCommandHandlerCanHandle(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): boolean {
     return (
         interaction.commandName in commandMethodMap ||
@@ -97,7 +97,7 @@ function builtInCommandHandlerCanHandle(
  * @param interaction the raw interaction from discord js
  */
 async function processBuiltInCommand(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     const commandMethod = commandMethodMap[interaction.commandName];
@@ -142,7 +142,7 @@ async function processBuiltInCommand(
  * @param interaction
  * @returns success message
  */
-async function queue(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(
@@ -180,7 +180,7 @@ async function queue(interaction: ChatInputCommandInteraction): Promise<YabobEmb
  * @param interaction
  * @returns
  */
-async function enqueue(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function enqueue(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, queueChannel, member] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction),
@@ -195,7 +195,7 @@ async function enqueue(interaction: ChatInputCommandInteraction): Promise<YabobE
  * @param interaction
  * @returns
  */
-async function next(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, helperMember] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
@@ -220,7 +220,7 @@ async function next(interaction: ChatInputCommandInteraction): Promise<YabobEmbe
  * @param interaction
  * @returns
  */
-async function start(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function start(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
@@ -235,7 +235,7 @@ async function start(interaction: ChatInputCommandInteraction): Promise<YabobEmb
  * @param interaction
  * @returns
  */
-async function stop(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
@@ -249,7 +249,7 @@ async function stop(interaction: ChatInputCommandInteraction): Promise<YabobEmbe
  * @param interaction
  * @returns
  */
-async function leave(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, member, queue] = [
         isServerInteraction(interaction),
         isFromGuildMember(interaction),
@@ -264,7 +264,7 @@ async function leave(interaction: ChatInputCommandInteraction): Promise<YabobEmb
  * @param interaction
  * @returns
  */
-async function clear(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, queue, member] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
@@ -287,7 +287,7 @@ async function clear(interaction: ChatInputCommandInteraction): Promise<YabobEmb
  * @param interaction
  * @returns
  */
-async function clearAll(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function clearAll(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'clear_all', ['Bot Admin'])
@@ -306,7 +306,7 @@ async function clearAll(interaction: ChatInputCommandInteraction): Promise<Yabob
  * @returns
  */
 async function listHelpers(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<BaseMessageOptions> {
     const server = isServerInteraction(interaction);
     const helpers = server.activeHelpers;
@@ -363,7 +363,7 @@ async function listHelpers(
  * @param interaction
  * @returns
  */
-async function announce(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function announce(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, member] = [
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'announce', ['Bot Admin', 'Staff'])
@@ -387,7 +387,7 @@ async function announce(interaction: ChatInputCommandInteraction): Promise<Yabob
  * @param interaction
  * @returns
  */
-async function cleanup(interaction: ChatInputCommandInteraction): Promise<YabobEmbed> {
+async function cleanup(interaction: ChatInputCommandInteraction<'cached'>): Promise<YabobEmbed> {
     const [server, queue] = [
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true),
@@ -403,7 +403,7 @@ async function cleanup(interaction: ChatInputCommandInteraction): Promise<YabobE
  * @returns
  */
 async function cleanupAllQueues(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
@@ -420,7 +420,7 @@ async function cleanupAllQueues(
  * @returns
  */
 async function cleanupHelpChannel(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
@@ -436,7 +436,7 @@ async function cleanupHelpChannel(
  * @returns
  */
 async function showAfterSessionMessageModal(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server] = [
         isServerInteraction(interaction),
@@ -453,7 +453,7 @@ async function showAfterSessionMessageModal(
  * @returns
  */
 async function help(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<BaseMessageOptions> {
     const commandName = interaction.options.getString('command', true);
     const helpMessage =
@@ -479,7 +479,7 @@ async function help(
  * @returns
  */
 async function setLoggingChannel(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
@@ -499,7 +499,7 @@ async function setLoggingChannel(
  * @returns
  */
 async function showQueueAutoClearModal(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server] = [
         isServerInteraction(interaction),
@@ -514,7 +514,7 @@ async function showQueueAutoClearModal(
  * @returns
  */
 async function stopLogging(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
@@ -530,7 +530,7 @@ async function stopLogging(
  * @returns
  */
 async function setSeriousMode(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),

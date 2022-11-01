@@ -116,7 +116,7 @@ class CalendarInteractionExtension
     }
 
     override async processCommand(
-        interaction: ChatInputCommandInteraction
+        interaction: ChatInputCommandInteraction<'cached'>
     ): Promise<void> {
         //Send logs before* processing the command
         const [server] = isServerCalendarInteraction(interaction);
@@ -141,7 +141,9 @@ class CalendarInteractionExtension
             );
     }
 
-    override async processButton(interaction: ButtonInteraction): Promise<void> {
+    override async processButton(
+        interaction: ButtonInteraction<'cached'>
+    ): Promise<void> {
         const [buttonName, queueName] = splitButtonQueueName(interaction);
         const buttonMethod = buttonMethodMap[buttonName];
         await interaction.reply({
@@ -166,10 +168,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_calendar: updateCalendarId,
     unset_calendar: unsetCalendarId,
     when_next: listUpComingHours,
-    make_calendar_string: interaction =>
-        makeParsableCalendarTitle(interaction, false),
-    make_calendar_string_all: interaction =>
-        makeParsableCalendarTitle(interaction, true),
+    make_calendar_string: interaction => makeParsableCalendarTitle(interaction, false),
+    make_calendar_string_all: interaction => makeParsableCalendarTitle(interaction, true),
     set_public_embd_url: setPublicEmbedUrl
 } as const;
 
@@ -200,7 +200,7 @@ function splitButtonQueueName(
  * - Triggers the queue level extensions to update
  */
 async function updateCalendarId(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const newCalendarId = interaction.options.getString('calendar_id', true);
     const [newCalendarName] = [
@@ -223,7 +223,7 @@ async function updateCalendarId(
  * Resets the calendar id to default
  */
 async function unsetCalendarId(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
@@ -262,7 +262,7 @@ async function listUpComingHours(
  * @param generateAll whether to generate string for all the queue roles
  */
 async function makeParsableCalendarTitle(
-    interaction: ChatInputCommandInteraction,
+    interaction: ChatInputCommandInteraction<'cached'>,
     generateAll: boolean
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
@@ -333,7 +333,7 @@ async function makeParsableCalendarTitle(
  * @param interaction
  */
 async function setPublicEmbedUrl(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [, state] = isServerCalendarInteraction(interaction);
     const rawUrl = interaction.options.getString('url', true);

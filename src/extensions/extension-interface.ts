@@ -33,35 +33,35 @@ interface IInteractionExtension {
      * Whether the extension can handle slash commands.
      * @param interaction the slash command to test
      */
-    canHandleCommand: (interaction: ChatInputCommandInteraction) => boolean;
+    canHandleCommand: (interaction: ChatInputCommandInteraction<'cached'>) => boolean;
     /**
      * Whether the extension can handle buttons
      * @param interaction the button to test
      */
-    canHandleButton: (interaction: ButtonInteraction) => boolean;
+    canHandleButton: (interaction: ButtonInteraction<'cached'>) => boolean;
     /**
      * Whether the extension can handle modal submit
      * @param interaction the modal to test
      */
-    canHandleModalSubmit: (interaction: ModalSubmitInteraction) => boolean;
+    canHandleModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => boolean;
     /**
      * Interface to the command processor. If the extension can handle this slash command,
      * it should reply inside this method
      * @param interaction the slash command that's guaranteed to be handled by this extension
      */
-    processCommand: (interaction: ChatInputCommandInteraction) => Promise<void>;
+    processCommand: (interaction: ChatInputCommandInteraction<'cached'>) => Promise<void>;
     /**
      * Interface to the button processor. If the extension can handle this button,
      * it should reply inside this method
      * @param interaction the button that's guaranteed to be handled by this extension
      */
-    processButton: (interaction: ButtonInteraction) => Promise<void>;
+    processButton: (interaction: ButtonInteraction<'cached'>) => Promise<void>;
     /**
      * Interface to the modal submit processor. If the extension can handle this button,
      * it should reply inside this method
      * @param interaction the modal that's guaranteed to be handled by this extension
      */
-    processModalSubmit: (interaction: ModalSubmitInteraction) => Promise<void>;
+    processModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => Promise<void>;
 }
 
 /** Server Level Extension */

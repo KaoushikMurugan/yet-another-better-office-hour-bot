@@ -36,7 +36,9 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
  * @param interaction
  * @returns
  */
-function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
+function builtInButtonHandlerCanHandle(
+    interaction: ButtonInteraction<'cached'>
+): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
     return buttonName in buttonMethodMap;
 }
@@ -48,7 +50,9 @@ function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean 
  * - Returns the appropriate message to send to the user
  * @param interaction
  */
-async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
+async function processBuiltInButton(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];
     await interaction.reply({
@@ -83,7 +87,7 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
  * @returns string tuple [buttonName, queueName]
  */
 function splitButtonQueueName(
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): [buttonName: string, queueName: string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
     const buttonName = interaction.customId.substring(0, delimiterPosition);
@@ -99,7 +103,7 @@ function splitButtonQueueName(
  */
 async function join(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
@@ -123,7 +127,7 @@ async function join(
  */
 async function leave(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
@@ -147,7 +151,7 @@ async function leave(
  */
 async function joinNotifGroup(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),
@@ -171,7 +175,7 @@ async function joinNotifGroup(
  */
 async function leaveNotifGroup(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, member, queueChannel] = [
         isServerInteraction(interaction),

@@ -3,11 +3,9 @@
 import {
     ChatInputCommandInteraction,
     GuildMember,
-    GuildChannel,
     TextChannel,
     ButtonInteraction,
     ChannelType,
-    CategoryChannel,
     ModalSubmitInteraction
 } from 'discord.js';
 import {
@@ -16,6 +14,11 @@ import {
 } from '../attending-server/base-attending-server.js';
 import { attendingServers } from '../global-states.js';
 import { CommandParseError } from '../utils/error-types.js';
+import {
+    isCategoryChannel,
+    isQueueTextChannel,
+    isTextChannel
+} from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
@@ -36,33 +39,6 @@ function isServerInteraction(
 }
 
 /**
- * Checks if the triggerer has the required roles
- * @param commandName the command used
- * @param requiredRoles the roles to check, roles have OR relationship
- * @returns GuildMember object of the triggerer
- * @deprecated
- * @remark
- * - Use this only on dangerous commands like `/clear_all` because it's slow
- * - Otherwise prefer {@link isTriggeredByUserWithRolesSync}
- */
-async function isTriggeredByUserWithRoles(
-    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
-    commandName: string,
-    requiredRoles: string[]
-): Promise<GuildMember> {
-    if (interaction.member === null) {
-        throw ExpectedParseErrors.nonServerInterction();
-    }
-    const userRoles = (
-        await (interaction.member as GuildMember)?.fetch()
-    ).roles.cache.map(role => role.name);
-    if (!userRoles.some(role => requiredRoles.includes(role))) {
-        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
-    }
-    return interaction.member as GuildMember;
-}
-
-/**
  * Checks if the triggerer has the required roles.
  * Synchronus version of {@link isTriggeredByUserWithRoles}
  * @param commandName the command used
@@ -70,20 +46,18 @@ async function isTriggeredByUserWithRoles(
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByUserWithRolesSync(
-    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction,
+    interaction:
+        | ChatInputCommandInteraction<'cached'>
+        | ButtonInteraction<'cached'>
+        | ModalSubmitInteraction<'cached'>,
     commandName: string,
     requiredRoles: string[]
 ): GuildMember {
-    if (interaction.member === null) {
-        throw ExpectedParseErrors.nonServerInterction();
-    }
-    const userRoles = (interaction.member as GuildMember).roles.cache.map(
-        role => role.name
-    );
+    const userRoles = interaction.member.roles.cache.map(role => role.name);
     if (!userRoles.some(role => requiredRoles.includes(role))) {
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
-    return interaction.member as GuildMember;
+    return interaction.member;
 }
 
 /**
@@ -98,22 +72,21 @@ function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
     required = false
 ): QueueChannel {
+    if (!interaction.channel || !('parent' in interaction.channel)) {
+        throw ExpectedParseErrors.invalidQueueCategory();
+    }
     const parentCategory =
         interaction.options.getChannel('queue_name', required) ??
-        (interaction.channel as GuildChannel).parent;
-    // null check is done here by optional property access
-    if (parentCategory?.type !== ChannelType.GuildCategory || parentCategory === null) {
+        interaction.channel.parent;
+    if (!isCategoryChannel(parentCategory)) {
         throw ExpectedParseErrors.invalidQueueCategory(parentCategory?.name);
     }
-    // already checked for type, safe to cast
-    const queueTextChannel = (parentCategory as CategoryChannel).children.cache.find(
-        child => child.name === 'queue' && child.type === ChannelType.GuildText
-    );
+    const queueTextChannel = parentCategory.children.cache.find(isQueueTextChannel);
     if (queueTextChannel === undefined) {
         throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
     }
     const queueChannel: QueueChannel = {
-        channelObj: queueTextChannel as TextChannel,
+        channelObj: queueTextChannel,
         queueName: parentCategory.name,
         parentCategoryId: parentCategory.id
     };
@@ -149,14 +122,11 @@ function isFromQueueChannelWithParent(
     interaction: ButtonInteraction | ChatInputCommandInteraction,
     queueName: string
 ): QueueChannel {
-    if (
-        interaction.channel?.type !== ChannelType.GuildText ||
-        interaction.channel.parent === null
-    ) {
+    if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
     const queueChannel: QueueChannel = {
-        channelObj: interaction.channel as TextChannel,
+        channelObj: interaction.channel,
         queueName: queueName,
         parentCategoryId: interaction.channel.parent.id
     };
@@ -177,7 +147,6 @@ function isFromGuildMember(
 }
 
 export {
-    isTriggeredByUserWithRoles,
     hasValidQueueArgument,
     isFromQueueChannelWithParent,
     isFromGuildMember,

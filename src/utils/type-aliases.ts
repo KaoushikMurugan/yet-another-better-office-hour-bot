@@ -30,14 +30,14 @@ type HelpMessage = {
  * Used in interaction handlers
  */
 type CommandCallback = (
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
 type ButtonCallback = (
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
 type ModalSubmitCallback = (
-    interaction: ModalSubmitInteraction
+    interaction: ModalSubmitInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
 
 /**

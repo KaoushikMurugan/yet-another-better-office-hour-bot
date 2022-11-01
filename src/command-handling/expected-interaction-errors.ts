@@ -16,12 +16,14 @@ const ExpectedParseErrors = {
                 ' or '
             )}] to use \`/${commandName}\`.`
         ),
-    invalidQueueCategory: (categoryName: Optional<string>) =>
+    invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
             ? new CommandParseError(
-                  `This category has no name, and it's not a valid queue category.`
+                  "This category has no name, and it's not a valid queue category.\nPlease use this interaction inside a category that has the #queue channel."
               )
-            : new CommandParseError(`\`${categoryName}\` is not a valid queue category.`),
+            : new CommandParseError(
+                  `\`${categoryName}\` is not a valid queue category.\nPlease use this interaction inside a category that has the #queue channel.`
+              ),
     noQueueTextChannel: (categoryName: Optional<string>) =>
         new CommandParseError(
             `This category does not have a \`#queue\` text channel.\n` +
@@ -32,10 +34,10 @@ const ExpectedParseErrors = {
         'Sorry, I can only accept server server interactions right now.'
     ),
     queueHasNoParent: new CommandParseError(
-        'Invalid Button or Command. Make sure this channel has a parent category.'
+        'Invalid Button or Command. Make sure this #queue channel has a parent category.'
     ),
     removeInsideQueue: new CommandParseError(
-        `Please use the remove command in another channel.` +
+        `Please use the remove command outside this category.` +
             ` Otherwise Discord API will reject.`
     ),
     noPermission: {
