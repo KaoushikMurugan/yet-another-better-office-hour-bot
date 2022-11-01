@@ -23,7 +23,11 @@ import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
 import { QueueBackup } from '../models/backups.js';
 import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors.js';
-import { convertMsToTime } from '../utils/util-functions.js';
+import {
+    convertMsToTime,
+    isCategoryChannel,
+    isTextChannel
+} from '../utils/util-functions.js';
 import {
     CategoryChannelId,
     GuildMemberId,
@@ -306,26 +310,25 @@ class AttendingServerV2 {
         }
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request
-        this.queueChannelsCache = allChannels
-            .filter(ch => ch !== null && ch.type === ChannelType.GuildCategory)
-            // ch has type 'AnyChannel', have to cast, type already checked
-            .map(channel => channel as CategoryChannel)
-            .map(category => [
-                category.children.cache.find(
-                    child =>
-                        child.name === 'queue' && child.type === ChannelType.GuildText
-                ),
-                category.name,
-                category.id
-            ])
-            .filter(([textChannel]) => textChannel !== undefined)
-            .map(([ch, name, parentId]) => {
-                return {
-                    channelObj: ch,
-                    queueName: name,
-                    parentCategoryId: parentId
-                } as QueueChannel;
+        this.queueChannelsCache = [];
+        for (const categoryChannel of allChannels.values()) {
+            if (!isCategoryChannel(categoryChannel)) {
+                continue;
+            }
+            const queueTextChannel: Optional<TextChannel> =
+                categoryChannel.children.cache.find(
+                    (child): child is TextChannel =>
+                        isTextChannel(child) && child.name === 'queue'
+                );
+            if (!queueTextChannel) {
+                continue;
+            }
+            this.queueChannelsCache.push({
+                channelObj: queueTextChannel,
+                queueName: categoryChannel.name,
+                parentCategoryId: categoryChannel.id
             });
+        }
         const duplicateQueues = this.queueChannelsCache
             .map(queue => queue.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);

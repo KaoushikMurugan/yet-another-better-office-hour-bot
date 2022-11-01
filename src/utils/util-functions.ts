@@ -2,11 +2,15 @@
 
 import {
     ButtonInteraction,
+    CategoryChannel,
+    ChannelType,
     ChatInputCommandInteraction,
     GuildMember,
     Interaction,
     ModalSubmitInteraction,
-    Role
+    NonThreadGuildBasedChannel,
+    Role,
+    TextChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -135,6 +139,28 @@ function getInteractionName(interaction: Interaction): string {
     return 'Unsupported Interaction Type';
 }
 
+/**
+ * Narrows the type down to category channel
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isCategoryChannel(
+    channel: NonThreadGuildBasedChannel | null
+): channel is CategoryChannel {
+    return channel !== null && channel.type === ChannelType.GuildCategory;
+}
+
+/**
+ * Narrows the type down to text channel
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isTextChannel(
+    channel: NonThreadGuildBasedChannel | null
+): channel is TextChannel {
+    return channel !== null && channel.type === ChannelType.GuildText;
+}
+
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -151,5 +177,7 @@ export {
     logSlashCommand,
     centered,
     addTimeOffset,
-    getInteractionName
+    getInteractionName,
+    isCategoryChannel,
+    isTextChannel
 };
