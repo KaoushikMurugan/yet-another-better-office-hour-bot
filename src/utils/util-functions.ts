@@ -11,7 +11,8 @@ import {
     GuildBasedChannel,
     Role,
     TextChannel,
-    APIInteractionDataResolvedChannel
+    APIInteractionDataResolvedChannel,
+    VoiceChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -176,6 +177,10 @@ function isQueueTextChannel(
     );
 }
 
+function isVoiceChannel(channel: GuildBasedChannel | null | undefined): channel is VoiceChannel{
+    return !!channel && channel.type === ChannelType.GuildVoice;
+}
+
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -195,5 +200,6 @@ export {
     getInteractionName,
     isCategoryChannel,
     isTextChannel,
-    isQueueTextChannel
+    isQueueTextChannel,
+    isVoiceChannel
 };

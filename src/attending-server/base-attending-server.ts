@@ -7,7 +7,6 @@ import {
     BaseMessageOptions,
     TextChannel,
     User,
-    VoiceChannel,
     VoiceState,
     ChannelType,
     VoiceBasedChannel
@@ -27,7 +26,8 @@ import {
     convertMsToTime,
     isCategoryChannel,
     isQueueTextChannel,
-    isTextChannel
+    isTextChannel,
+    isVoiceChannel
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
@@ -66,8 +66,6 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
-    /** enables helper vc status in queue embeds */
-    private readonly useExperimentalVCStatusRerender = true;
 
     protected constructor(
         readonly user: User,
@@ -216,6 +214,11 @@ class AttendingServerV2 {
         member: GuildMember,
         newVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
+        // temporary solution, stage channel is not currently supported
+        if (!isVoiceChannel(newVoiceState.channel)) {
+            return;
+        }
+        const vc = newVoiceState.channel;
         const memberIsStudent = this._activeHelpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -233,15 +236,9 @@ class AttendingServerV2 {
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(
-                        this,
-                        member,
-                        // already checked
-                        newVoiceState.channel as VoiceChannel
-                    )
+                    extension.onStudentJoinVC(this, member, vc)
                 ),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
+                ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
         if (memberIsHelper) {
@@ -288,8 +285,7 @@ class AttendingServerV2 {
                 ),
                 this.afterSessionMessage !== '' &&
                     member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...(this.useExperimentalVCStatusRerender &&
-                    queuesToRerender.map(queue => queue.triggerRender()))
+                ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
         if (memberIsHelper) {
