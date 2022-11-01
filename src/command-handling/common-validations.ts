@@ -3,9 +3,7 @@
 import {
     ChatInputCommandInteraction,
     GuildMember,
-    TextChannel,
     ButtonInteraction,
-    ChannelType,
     ModalSubmitInteraction
 } from 'discord.js';
 import {
@@ -66,7 +64,7 @@ function isTriggeredByUserWithRolesSync(
  * @param required
  * - If true, check if the COMMAND ARG is a valid queue category
  * - If false, check if the CURRENT channel's parent category is a valid queue category
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction,
@@ -100,7 +98,10 @@ function hasValidQueueArgument(
  * @returns GuildMember object of the triggerer
  */
 async function isTriggeredByUserWithValidEmail(
-    interaction: ChatInputCommandInteraction | ButtonInteraction,
+    interaction:
+        | ChatInputCommandInteraction<'cached'>
+        | ButtonInteraction<'cached'>
+        | ModalSubmitInteraction<'cached'>,
     commandName: string
 ): Promise<GuildMember> {
     const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(
@@ -133,23 +134,9 @@ function isFromQueueChannelWithParent(
     return queueChannel;
 }
 
-/**
- * Checks if the interaction came from a valid guild member
- * @returns GuildMember object of the triggerer
- */
-function isFromGuildMember(
-    interaction: ButtonInteraction | ChatInputCommandInteraction
-): GuildMember {
-    if (interaction.member) {
-        return interaction.member as GuildMember;
-    }
-    throw ExpectedParseErrors.notGuildInteraction;
-}
-
 export {
     hasValidQueueArgument,
     isFromQueueChannelWithParent,
-    isFromGuildMember,
     isTriggeredByUserWithValidEmail,
     isTriggeredByUserWithRolesSync,
     isServerInteraction
