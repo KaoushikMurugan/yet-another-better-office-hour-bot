@@ -68,7 +68,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     help: help,
     set_logging_channel: setLoggingChannel,
     stop_logging: stopLogging,
-    serious_mode: setSeriousMode
+    serious_mode: setSeriousMode,
+    create_offices: createOffices,
 } as const;
 
 /**
@@ -562,7 +563,7 @@ async function createOffices(
     ];
     const categoryName = interaction.options.getString('category_name', true);
     const officeName = interaction.options.getString('office_name', true);
-    const numOffices = interaction.options.getInteger('num_offices', true);
+    const numOffices = interaction.options.getInteger('number_of_offices', true);
     await server.createOffices(categoryName, officeName, numOffices);
     return SuccessMessages.createdOffices(numOffices);
 }

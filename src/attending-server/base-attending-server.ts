@@ -832,7 +832,7 @@ class AttendingServerV2 {
 
     /**
      * Sends `message` to the logging channel, if logging is enabled
-     * @param message 
+     * @param message
      */
     async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
         if (this._loggingChannel) {
@@ -840,8 +840,61 @@ class AttendingServerV2 {
         }
     }
 
-    async createOffices(categoryName: string, officeName: string, numberOfOffices: number): Promise<void> {
-        return;
+    async createOffices(
+        categoryName: string,
+        officeName: string,
+        numberOfOffices: number
+    ): Promise<void> {
+        const allChannels = await this.guild.channels.fetch();
+        // Find if a category with the same name exists
+        const existingOfficeCategory = allChannels
+            .filter(
+                channel =>
+                    channel !== null &&
+                    channel.type === ChannelType.GuildCategory &&
+                    channel.name === categoryName
+            )
+            .map(channel => channel as CategoryChannel);
+
+        // If no help category is found, initialize
+        if (existingOfficeCategory.length === 0) {
+            console.log(
+                cyan(`Found no office channels in ${this.guild.name}. Creating new ones.`)
+            );
+            const officeCategory = await this.guild.channels.create({
+                name: categoryName,
+                type: ChannelType.GuildCategory
+            });
+            // Change the config object and add more functions here if needed
+            await Promise.all(
+                // I have no clue why the next line works like a promise for loop
+                [...Array(numberOfOffices).keys()].map(async officeNumber => {
+                    const officeCh = await officeCategory.children.create({
+                        name: `${officeName} ${officeNumber + 1}`,
+                        type: ChannelType.GuildVoice
+                    });
+                    await officeCh.permissionOverwrites.create(
+                        this.guild.roles.everyone,
+                        {
+                            SendMessages: false,
+                            ViewChannel: false
+                        },
+                    );
+                    await Promise.all(
+                        this.guild.roles.cache
+                            .filter(role => role.name === 'Staff')
+                            .map(roleWithViewPermission =>
+                                officeCh.permissionOverwrites.create(
+                                    roleWithViewPermission,
+                                    {
+                                        ViewChannel: true
+                                    }
+                                )
+                            )
+                    );
+                })
+            );
+        }
     }
 
     /**
