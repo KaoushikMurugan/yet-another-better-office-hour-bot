@@ -208,6 +208,40 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
+const createOfficesCommand = new SlashCommandBuilder()
+    .setName('create_offices')
+    .setDescription('Creates the a set number of voice channels in a new category')
+    .addStringOption(option =>
+        option
+            .setName('category_name')
+            .setDescription('The name of the category to create the offices in')
+            .setRequired(true)
+            )
+    .addStringOption(option =>
+        option
+            .setName('office_name')
+            .setDescription('The name of the office')
+            .setRequired(true)
+            )
+    .addIntegerOption(option =>
+        option
+            .setName('number_of_offices')
+            .setDescription('The number of offices to create')
+            .setRequired(true)
+            .addChoices(
+                { name: '1', value: 1 },
+                { name: '2', value: 2 },
+                { name: '3', value: 3 },
+                { name: '4', value: 4 },
+                { name: '5', value: 5 },
+                { name: '6', value: 6 },
+                { name: '7', value: 7 },
+                { name: '8', value: 8 },
+                { name: '9', value: 9 },
+                { name: '10', value: 10 }
+            ));
+
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -255,7 +289,8 @@ const commandData = [
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
     setQueueAutoClear.toJSON(),
-    activateSeriousModeCommand.toJSON()
+    activateSeriousModeCommand.toJSON(),
+    createOfficesCommand.toJSON(),
 ];
 
 async function postSlashCommands(

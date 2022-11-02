@@ -549,6 +549,25 @@ async function setSeriousMode(
 }
 
 /**
+ * The `/create_offices` command
+ * @param interaction 
+ * @returns 
+ */
+async function createOffices(
+    interaction: ChatInputCommandInteraction
+): Promise<YabobEmbed> {
+    const [server] = [
+        isServerInteraction(interaction),
+        isTriggeredByUserWithRolesSync(interaction, 'create_offices', ['Bot Admin'])
+    ];
+    const categoryName = interaction.options.getString('category_name', true);
+    const officeName = interaction.options.getString('office_name', true);
+    const numOffices = interaction.options.getInteger('num_offices', true);
+    await server.createOffices(categoryName, officeName, numOffices);
+    return SuccessMessages.createdOffices(numOffices);
+}
+
+/**
  * Only export the handler and the 'canHandle' check
  */
 export { processBuiltInCommand, builtInCommandHandlerCanHandle };

@@ -91,5 +91,10 @@ export const SuccessMessages = {
     turnedOnSeriousMode: SimpleEmbed(`Serious mode has been turned on.`),
     turnedOffSeriousMode: SimpleEmbed(
         `Serious mode has been turned off.\nThere's no need to be so serious!`
-    )
+    ),
+    createdOffices: (numOffices: number) =>
+        SimpleEmbed(
+            `Successfully created ${numOffices} office${numOffices === 1 ? '' : 's'}.`,
+            EmbedColor.Success
+        ),
 } as const;
