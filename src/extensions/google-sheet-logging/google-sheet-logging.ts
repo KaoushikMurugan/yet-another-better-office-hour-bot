@@ -6,7 +6,7 @@ import { ExtensionSetupError } from '../../utils/error-types.js';
 import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildMemberId } from '../../utils/type-aliases.js';
+import { ConstNoMethod, GuildMemberId } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './expected-sheet-errors.js';
 
@@ -110,7 +110,7 @@ class GoogleSheetLoggingExtension
      * @param dequeuedStudent
      */
     override async onDequeueFirst(
-        _server: Readonly<AttendingServerV2>,
+        _server: ConstNoMethod<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
     ): Promise<void> {
         this.studentsJustDequeued.set(dequeuedStudent.member.id, dequeuedStudent);
@@ -123,7 +123,7 @@ class GoogleSheetLoggingExtension
      * @param voiceChannel
      */
     override async onStudentJoinVC(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember,
         voiceChannel: VoiceChannel
     ): Promise<void> {
@@ -173,7 +173,7 @@ class GoogleSheetLoggingExtension
      * @noexcept error is logged to the console
      */
     override async onStudentLeaveVC(
-        _server: Readonly<AttendingServerV2>,
+        _server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember
     ): Promise<void> {
         const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
@@ -203,7 +203,7 @@ class GoogleSheetLoggingExtension
      * @param helper
      */
     override async onHelperStartHelping(
-        _server: Readonly<AttendingServerV2>,
+        _server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
         const entry: ActiveTime = {
@@ -219,7 +219,7 @@ class GoogleSheetLoggingExtension
      * @param helper
      */
     override async onHelperStopHelping(
-        _server: Readonly<AttendingServerV2>,
+        _server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);

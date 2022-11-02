@@ -21,7 +21,7 @@ import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
 import { CommandData } from '../command-handling/slash-commands.js';
-import { Optional } from '../utils/type-aliases.js';
+import { ConstNoMethod, Optional } from '../utils/type-aliases.js';
 
 /** Server Level Extension */
 interface IInteractionExtension {
@@ -70,7 +70,7 @@ interface IServerExtension {
      * When a server instance is successfully created
      * @param server the newly created server
      */
-    onServerInitSuccess: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    onServerInitSuccess: (server: ConstNoMethod<AttendingServerV2>) => Promise<void>;
     /**
      * When all the queues are successfully created.
      * Happens before {@link onServerInitSuccess}
@@ -78,7 +78,7 @@ interface IServerExtension {
      * @param allQueues
      */
     onAllQueuesInit: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         allQueues: ReadonlyArray<HelpQueueV2>
     ) => Promise<void>;
     /**
@@ -87,7 +87,7 @@ interface IServerExtension {
      * @param dequeuedStudent the newly dequeued student
      */
     onDequeueFirst: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
     ) => Promise<void>;
     /**
@@ -96,7 +96,7 @@ interface IServerExtension {
      * @param helper the helper that used `start`
      */
     onHelperStartHelping: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ) => Promise<void>;
     /**
@@ -105,7 +105,7 @@ interface IServerExtension {
      * @param helper the helper that used `stop`
      */
     onHelperStopHelping: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ) => Promise<void>;
     /**
@@ -115,7 +115,7 @@ interface IServerExtension {
      * @deprecated will likely be removed in the future
      */
     onServerPeriodicUpdate: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         isFirstCall: boolean
     ) => Promise<void>;
     /**
@@ -125,7 +125,7 @@ interface IServerExtension {
      * @param voiceChannel non-null voice channel
      */
     onStudentJoinVC: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember,
         voiceChannel: VoiceChannel
     ) => Promise<void>;
@@ -135,7 +135,7 @@ interface IServerExtension {
      * @param studentMember the student guild member object
      */
     onStudentLeaveVC: (
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember
     ) => Promise<void>;
     /**
@@ -143,7 +143,7 @@ interface IServerExtension {
      * Extensions should override this method to do any necessary cleanup
      * @param server the server that just got deleted
      */
-    onServerDelete: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    onServerDelete: (server: ConstNoMethod<AttendingServerV2>) => Promise<void>;
     /**
      * When the server asks for external backup data. Called inside AttendingServerV2.create
      * @param serverId the guild id
@@ -155,7 +155,7 @@ interface IServerExtension {
      * Currently, only queue related changes will trigger this call
      * @param server the server to backup
      */
-    onServerRequestBackup: (server: Readonly<AttendingServerV2>) => Promise<void>;
+    onServerRequestBackup: (server: ConstNoMethod<AttendingServerV2>) => Promise<void>;
 }
 
 /** Extensions for individual queues */
@@ -271,59 +271,59 @@ class BaseInteractionExtension implements IInteractionExtension {
  * - Override the events that you want to trigger
  */
 class BaseServerExtension implements IServerExtension {
-    onServerInitSuccess(server: Readonly<AttendingServerV2>): Promise<void> {
+    onServerInitSuccess(server: ConstNoMethod<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
     onAllQueuesInit(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         allQueues: ReadonlyArray<HelpQueueV2>
     ): Promise<void> {
         return Promise.resolve();
     }
     onDequeueFirst(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         dequeuedStudent: Readonly<Helpee>
     ): Promise<void> {
         return Promise.resolve();
     }
     onHelperStartHelping(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
         return Promise.resolve();
     }
     onHelperStopHelping(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         return Promise.resolve();
     }
     onServerPeriodicUpdate(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         isFirstCall: boolean
     ): Promise<void> {
         return Promise.resolve();
     }
     onStudentJoinVC(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember,
         voiceChannel: VoiceChannel
     ): Promise<void> {
         return Promise.resolve();
     }
     onStudentLeaveVC(
-        server: Readonly<AttendingServerV2>,
+        server: ConstNoMethod<AttendingServerV2>,
         studentMember: GuildMember
     ): Promise<void> {
         return Promise.resolve();
     }
-    onServerDelete(server: Readonly<AttendingServerV2>): Promise<void> {
+    onServerDelete(server: ConstNoMethod<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
     loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {
         return Promise.resolve(undefined);
     }
-    onServerRequestBackup(server: Readonly<AttendingServerV2>): Promise<void> {
+    onServerRequestBackup(server: ConstNoMethod<AttendingServerV2>): Promise<void> {
         return Promise.resolve();
     }
 }

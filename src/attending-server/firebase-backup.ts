@@ -7,9 +7,10 @@ import { AttendingServerV2 } from './base-attending-server.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, yellow } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
-import { Optional } from '../utils/type-aliases.js';
+import { ConstNoMethod, Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
+import { sendLogs } from '../extensions/extension-utils.js';
 
 /**
  * Built in backup extension
@@ -60,7 +61,7 @@ class FirebaseServerBackupExtension
      * @param server
      */
     override async onServerRequestBackup(
-        server: Readonly<AttendingServerV2>
+        server: ConstNoMethod<AttendingServerV2>
     ): Promise<void> {
         await this.backupServerToFirebase(server);
     }
@@ -71,7 +72,7 @@ class FirebaseServerBackupExtension
      * @noexcept error is logged to the console
      */
     private async backupServerToFirebase(
-        server: Readonly<AttendingServerV2>
+        server: ConstNoMethod<AttendingServerV2>
     ): Promise<void> {
         const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
@@ -115,7 +116,8 @@ class FirebaseServerBackupExtension
             .catch((err: Error) =>
                 console.error('Firebase server backup failed.', err.message)
             );
-        await server.sendLogMessage(
+        await sendLogs(
+            server.guild.id,
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
     }
