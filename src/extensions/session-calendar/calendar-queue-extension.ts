@@ -1,8 +1,6 @@
 /** @module SessionCalendar */
 import { BaseQueueExtension, IQueueExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { HelpQueueV2 } from '../../help-queue/help-queue.js';
-import { QueueDisplayV2 } from '../../help-queue/queue-display.js';
 import { EmbedColor } from '../../utils/embed-helper.js';
 import { red } from '../../utils/command-line-colors.js';
 import { calendarStates } from './calendar-states.js';
@@ -14,6 +12,7 @@ import {
     restorePublicEmbedURL,
     UpComingSessionViewModel
 } from './shared-calendar-functions.js';
+import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 
 /**
  * Calendar Extension for individual queues
@@ -23,7 +22,7 @@ import {
  */
 class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtension {
     private upcomingSessions: UpComingSessionViewModel[] = [];
-    private display?: Readonly<QueueDisplayV2>;
+    private display?: FrozenDisplay;
     private lastUpdatedTimeStamp = new Date();
 
     private constructor(
@@ -60,7 +59,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      */
     override async onQueuePeriodicUpdate(
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _queue: Readonly<HelpQueueV2>,
+        _queue: FrozenQueue,
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         _isFirstCall: boolean
     ): Promise<void> {
@@ -71,8 +70,8 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * Embeds the upcoming hours into the queue channel
      */
     override async onQueueRender(
-        _queue: Readonly<HelpQueueV2>,
-        display: Readonly<QueueDisplayV2>
+        _queue: FrozenQueue,
+        display: FrozenDisplay
     ): Promise<void> {
         this.display = display;
         await this.renderCalendarEmbeds(false);
@@ -82,7 +81,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * Removes `deletedQueue` from the listeners map
      * @param deletedQueue
      */
-    override async onQueueDelete(deletedQueue: Readonly<HelpQueueV2>): Promise<void> {
+    override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
         calendarStates
             .get(this.queueChannel.channelObj.guild.id)
             ?.listeners.delete(deletedQueue.queueName);

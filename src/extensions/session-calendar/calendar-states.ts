@@ -2,13 +2,13 @@
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { cyan, yellow } from '../../utils/command-line-colors.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
-import { ConstNoMethod, GuildId, GuildMemberId } from '../../utils/type-aliases.js';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import { restorePublicEmbedURL } from './shared-calendar-functions.js';
 import { Collection, Guild } from 'discord.js';
 import { firebaseDB } from '../../global-states.js';
+import { FrozenServer } from '../extension-utils.js';
 
 /**
  * @module Backups
@@ -59,7 +59,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
      * @param server
      * @returns
      */
-    override onServerDelete(server: ConstNoMethod<AttendingServerV2>): Promise<void> {
+    override onServerDelete(server: FrozenServer): Promise<void> {
         calendarStates.delete(server.guild.id);
         return Promise.resolve();
     }

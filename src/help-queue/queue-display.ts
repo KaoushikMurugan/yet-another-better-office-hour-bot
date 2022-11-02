@@ -193,7 +193,7 @@ class QueueDisplayV2 {
         });
     }
 
-    async requestForceRener(): Promise<void> {
+    async requestForceRender(): Promise<void> {
         await this.render(true);
     }
 
