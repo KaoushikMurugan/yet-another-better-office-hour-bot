@@ -32,7 +32,14 @@ So, we created **YABOB**, the **Yet Another Better Office-hours Bot**, with the 
 
 # Overview
 
-YABOB is a server managment automation bot. This means that YABOB handles logistical tasks like queue management and queue notifications for students.
+YABOB is a Discord queue managment automation bot. This means that YABOB handles helpees joining/leaving a queue as well as helpers pulling a helpee out of the queue for a session.
+
+Apart from basic queue operations, some of YABOB's other useful features are:
+
+- Displaying upcoming office hours as listed on a linked google calendar
+- Logging of helper and helpee sessions (who, and how long)
+- Helpee can get notified for queue they're interested in
+- Automatically clear queue after a specified amount of inactive time
 
 YABOB is also a **_self-hosted_** bot meaning that you will need to host
 and maintain your own instance.
@@ -43,13 +50,24 @@ See the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide)
 
 Below is the standard Office Hours (OH) Session Protocol we follow:
 
-_Helpers refer to Instructors, TAs, and Tutors._
+_**Helper(s)** is the over-arching term we use for the person(s) who hosts office hour sessions (such as Instructors, TAs and Tutors.), for which the **Helpee(s)** queues up for (such as Students and Tutees)._
 
-1. Helpers open queues that correspond to a course/office hours slot they help for.
+Helper's Protocol:
+
+1. Helpers perform the `/start` command to open queues that correspond to courses/office hours they help for.
 2. Students enter the queue of their choice.
 3. Helpers issues a `/next` command, which invites a student to join their voice channel.
-4. Once their Office Hours session is over, Helpers close their queues.
-5. Multiple Helpers can help for the same queue. A queue will close if and only if there are no helpers for that queue.
+4. Once their Office Hours session is over, Helpers close their queues with the `/stop` command.
+
+Note: Multiple Helpers can help for the same queue. A queue will close if and only if there are no helpers for that queue.
+
+Helpee's Protocol for a course or office hour session:
+
+1. Wait for the queue 
+2. Join the queue by clicking on the `Join` button.
+3. Wait to be pulled out of the queue by the helper.
+4. Click the link that the bot sends in direct message to join the voice channel with the helper.
+5. Leave the voice channel at the end of the session.
 
 # Waiting Queue System
 
