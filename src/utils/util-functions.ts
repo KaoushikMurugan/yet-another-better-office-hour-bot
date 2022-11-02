@@ -12,7 +12,6 @@ import {
     Role,
     TextChannel,
     VoiceChannel,
-    TextBasedChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -159,7 +158,7 @@ function isCategoryChannel(
  * @returns type narrower
  */
 function isTextChannel(
-    channel: TextBasedChannel | GuildBasedChannel | null | undefined
+    channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return !!channel && channel.type === ChannelType.GuildText;
 }

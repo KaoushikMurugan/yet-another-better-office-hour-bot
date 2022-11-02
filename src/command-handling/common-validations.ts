@@ -39,9 +39,8 @@ function isServerInteraction(
 
 /**
  * Checks if the triggerer has the required roles.
- * Synchronus version of {@link isTriggeredByUserWithRoles}
+ * Synchronized version of {@link isTriggeredByUserWithRoles}
  * @param commandName the command used
- * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByUserWithRolesSync(
@@ -52,8 +51,7 @@ function isTriggeredByUserWithRolesSync(
     commandName: string,
     requiredRoles: string[]
 ): GuildMember {
-    const userRoles = interaction.member.roles.cache.map(role => role.name);
-    if (!userRoles.some(role => requiredRoles.includes(role))) {
+    if (!interaction.member.roles.cache.some(role => requiredRoles.includes(role.name))) {
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
     return interaction.member;
@@ -98,22 +96,19 @@ function hasValidQueueArgument(
  * @param commandName the command used
  * @returns GuildMember object of the triggerer
  */
-async function isTriggeredByUserWithValidEmail(
+function isTriggeredByUserWithValidEmail(
     interaction:
         | ChatInputCommandInteraction<'cached'>
         | ButtonInteraction<'cached'>
         | ModalSubmitInteraction<'cached'>,
     commandName: string
-): Promise<GuildMember> {
-    const roles = (await (interaction.member as GuildMember)?.fetch()).roles.cache.map(
-        role => role.name
-    );
-    if (roles.includes('Verified Email')) {
+): GuildMember {
+    if (!interaction.member.roles.cache.some(role => role.name === 'Verified Email')) {
         throw new CommandParseError(
             `You need to have a verified email to use \`/${commandName}\`.`
         );
     }
-    return interaction.member as GuildMember;
+    return interaction.member;
 }
 
 /**
