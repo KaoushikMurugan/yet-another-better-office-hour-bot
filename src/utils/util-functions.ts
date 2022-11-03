@@ -143,6 +143,23 @@ function centered(text: string): string {
     );
 }
 
+function isValidChannelName(channelName: string): boolean {
+    const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
+    return (
+        channelName.length <= 100 &&
+        channelName.length > 0 &&
+        !invalidCharacters.test(channelName)
+    );
+}
+
+function isValidCategoryName(categoryName: string): boolean {
+    return (
+        categoryName.length <= 100 &&
+        categoryName.length > 0 &&
+        categoryName.trim().length > 0
+    );
+}
+
 export {
     convertMsToTime,
     getQueueRoles,
@@ -151,5 +168,7 @@ export {
     logSlashCommand,
     centered,
     addTimeOffset,
-    getInteractionName
+    getInteractionName,
+    isValidChannelName,
+    isValidCategoryName
 };

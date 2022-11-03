@@ -64,6 +64,14 @@ const ExpectedParseErrors = {
     ),
     messageIsTooLong: new CommandParseError(
         'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
+    ),
+    invalidChannelName: new CommandParseError(
+        'Invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+only contains alphanumeric characters, hyphens, and underscores.'
+    ),
+    invalidCategoryName: new CommandParseError(
+        'Invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+includes atleast one non-whitespace character.'
     )
 } as const;
 

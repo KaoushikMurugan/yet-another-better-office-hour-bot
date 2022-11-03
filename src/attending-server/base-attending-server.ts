@@ -878,7 +878,7 @@ class AttendingServerV2 {
                         {
                             SendMessages: false,
                             ViewChannel: false
-                        },
+                        }
                     );
                     await Promise.all(
                         this.guild.roles.cache
@@ -894,6 +894,8 @@ class AttendingServerV2 {
                     );
                 })
             );
+        } else {
+            throw ExpectedServerErrors.categoryAlreadyExists(categoryName);
         }
     }
 

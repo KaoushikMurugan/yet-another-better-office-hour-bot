@@ -15,6 +15,8 @@ const ExpectedServerErrors = {
             `In the meantime, you can help students by directly messaging them.`
     ),
     queueAlreadyExists: (name: string) => new ServerError(`Queue ${name} already exists`),
+    categoryAlreadyExists: (name: string) =>
+        new ServerError(`Category '${name}' already exists`),
     apiFail: (err: Error) => new ServerError(`API Failure: ${err.name}\n${err.message}`),
     studentNotFound: (studentName: string) =>
         new ServerError(`The student ${studentName} is not in any of the queues.`),

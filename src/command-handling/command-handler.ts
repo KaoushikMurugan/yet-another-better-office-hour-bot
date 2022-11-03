@@ -34,7 +34,12 @@ import {
     isTriggeredByUserWithRolesSync,
     isServerInteraction
 } from './common-validations.js';
-import { convertMsToTime, logSlashCommand } from '../utils/util-functions.js';
+import {
+    convertMsToTime,
+    isValidCategoryName,
+    isValidChannelName,
+    logSlashCommand
+} from '../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases.js';
@@ -69,7 +74,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_logging_channel: setLoggingChannel,
     stop_logging: stopLogging,
     serious_mode: setSeriousMode,
-    create_offices: createOffices,
+    create_offices: createOffices
 } as const;
 
 /**
@@ -551,8 +556,8 @@ async function setSeriousMode(
 
 /**
  * The `/create_offices` command
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 async function createOffices(
     interaction: ChatInputCommandInteraction
@@ -564,6 +569,11 @@ async function createOffices(
     const categoryName = interaction.options.getString('category_name', true);
     const officeName = interaction.options.getString('office_name', true);
     const numOffices = interaction.options.getInteger('number_of_offices', true);
+    if (!isValidCategoryName(categoryName)) {
+        throw ExpectedParseErrors.invalidCategoryName;
+    } else if (!isValidChannelName(officeName)) {
+        throw ExpectedParseErrors.invalidChannelName;
+    }
     await server.createOffices(categoryName, officeName, numOffices);
     return SuccessMessages.createdOffices(numOffices);
 }
