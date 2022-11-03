@@ -11,7 +11,7 @@ import {
     GuildBasedChannel,
     Role,
     TextChannel,
-    VoiceChannel,
+    VoiceChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -42,7 +42,24 @@ function convertMsToTime(milliseconds: number): string {
         `${padTo2Digits(seconds)} second${seconds === 1 ? '' : 's'}`
     );
 }
+/**
+ * Converts the time delta in miliseconds into a readable format
+ * @param milliseconds the difference to convert
+ */
+function convertMsToShortTime(milliseconds: number): string {
+    function padTo2Digits(num: number): string {
+        return num.toString().padStart(2, '0');
+    }
 
+    let seconds = Math.floor(milliseconds / 1000);
+    let minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    seconds = seconds % 60;
+    minutes = minutes % 60;
+
+    return `${padTo2Digits(hours)}:${padTo2Digits(minutes)}:${padTo2Digits(seconds)}`;
+}
 /**
  * Gets all the queue roles of a member
  * @param server
@@ -192,6 +209,7 @@ function centered(text: string): string {
 
 export {
     convertMsToTime,
+    convertMsToShortTime,
     getQueueRoles,
     logButtonPress,
     logModalSubmit,

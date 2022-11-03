@@ -33,7 +33,7 @@ import {
     isTriggeredByUserWithRolesSync,
     isServerInteraction
 } from './common-validations.js';
-import { convertMsToTime, logSlashCommand } from '../utils/util-functions.js';
+import { convertMsToShortTime, logSlashCommand } from '../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases.js';
@@ -140,8 +140,6 @@ async function processBuiltInCommand(
 
 /**
  * The `/queue add` and `/queue remove` command
- * @param interaction
- * @returns success message
  */
 async function queue(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -181,7 +179,6 @@ async function queue(
 /**
  * The `/enqueue command`
  * @param interaction
- * @returns
  */
 async function enqueue(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -197,7 +194,6 @@ async function enqueue(
 /**
  * The `/next` command, both with arguments or without arguments
  * @param interaction
- * @returns
  */
 async function next(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -224,7 +220,6 @@ async function next(
 /**
  * The `/start` command
  * @param interaction
- * @returns
  */
 async function start(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -241,7 +236,6 @@ async function start(
 /**
  * The `/stop` command
  * @param interaction
- * @returns
  */
 async function stop(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -257,7 +251,6 @@ async function stop(
 /**
  * The `/leave queue` command
  * @param interaction
- * @returns
  */
 async function leave(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -273,7 +266,6 @@ async function leave(
 /**
  * The `/clear queueName` command
  * @param interaction
- * @returns
  */
 async function clear(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -298,7 +290,6 @@ async function clear(
 /**
  * The `/clear_all` command
  * @param interaction
- * @returns
  */
 async function clearAll(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -318,7 +309,6 @@ async function clearAll(
 /**
  * The `/list_helpers` command
  * @param interaction
- * @returns
  */
 async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -330,7 +320,12 @@ async function listHelpers(
     }
     const allQueues = await server.getQueueChannels();
     const table = new AsciiTable3()
-        .setHeading('Tutor name', 'Availbale Queues', 'Time Elapsed', 'Status')
+        .setHeading(
+            'Tutor name',
+            'Availbale Queues',
+            'Time Elapsed (hh:mm:ss)',
+            'VC Status'
+        )
         .setAlign(1, AlignmentEnum.CENTER)
         .setAlign(2, AlignmentEnum.CENTER)
         .setAlign(3, AlignmentEnum.CENTER)
@@ -347,7 +342,7 @@ async function listHelpers(
                     )
                     .map(role => role.name)
                     .toString(), // Available Queues
-                convertMsToTime(new Date().getTime() - helper.helpStart.getTime()), // Time Elapsed
+                convertMsToShortTime(new Date().getTime() - helper.helpStart.getTime()), // Time Elapsed
                 (() => {
                     const voiceChannel = interaction.guild.voiceStates.cache.get(
                         helper.member.id
@@ -376,7 +371,6 @@ async function listHelpers(
 /**
  * The `/announce` command
  * @param interaction
- * @returns
  */
 async function announce(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -402,7 +396,6 @@ async function announce(
 /**
  * Then `/clean_up` command
  * @param interaction
- * @returns
  */
 async function cleanup(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -419,7 +412,6 @@ async function cleanup(
 /**
  * The `/cleanup_all` command
  * @param interaction
- * @returns
  */
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -436,7 +428,6 @@ async function cleanupAllQueues(
 /**
  * The `/cleanup_help_channel` command
  * @param interaction
- * @returns
  */
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -452,7 +443,6 @@ async function cleanupHelpChannel(
 /**
  * The `/set_after_session_msg` command
  * @param interaction
- * @returns
  */
 async function showAfterSessionMessageModal(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -469,7 +459,6 @@ async function showAfterSessionMessageModal(
 /**
  * The `/help` command
  * @param interaction
- * @returns
  */
 async function help(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -495,7 +484,6 @@ async function help(
 /**
  * The `/set_logging_channel` command
  * @param interaction
- * @returns
  */
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -515,7 +503,6 @@ async function setLoggingChannel(
 /**
  * The `/set_queue_auto_clear` command
  * @param interaction
- * @returns
  */
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -530,7 +517,6 @@ async function showQueueAutoClearModal(
 /**
  * The `/stop_logging` command
  * @param interaction
- * @returns
  */
 async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -546,7 +532,6 @@ async function stopLogging(
 /**
  * The `/serious_mode` command
  * @param interaction
- * @returns
  */
 async function setSeriousMode(
     interaction: ChatInputCommandInteraction<'cached'>
