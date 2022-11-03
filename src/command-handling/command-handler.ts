@@ -13,13 +13,7 @@
  * @throws QueueError or ServerError: if the target HelpQueueV2 or AttendingServer rejects
  */
 
-import {
-    BaseMessageOptions,
-    ChannelType,
-    ChatInputCommandInteraction,
-    GuildMember,
-    TextChannel
-} from 'discord.js';
+import { BaseMessageOptions, ChatInputCommandInteraction } from 'discord.js';
 import {
     EmbedColor,
     SimpleEmbed,
@@ -33,10 +27,14 @@ import {
     isTriggeredByUserWithRolesSync,
     isServerInteraction
 } from './common-validations.js';
-import { convertMsToShortTime, logSlashCommand } from '../utils/util-functions.js';
+import {
+    convertMsToShortTime,
+    isTextChannel,
+    logSlashCommand
+} from '../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import { CommandCallback, YabobEmbed } from '../utils/type-aliases.js';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
@@ -206,8 +204,7 @@ async function next(
         interaction.options.getChannel('queue_name', false) === null
             ? undefined
             : hasValidQueueArgument(interaction, true);
-    const targetStudent = (interaction.options.getMember('user') ??
-        undefined) as Optional<GuildMember>;
+    const targetStudent = interaction.options.getMember('user') ?? undefined;
     // if either target queue or target student is specified, use dequeueWithArgs
     // otherwise use dequeueGlobalFirst
     const dequeuedStudent =
@@ -492,8 +489,8 @@ async function setLoggingChannel(
         isServerInteraction(interaction),
         isTriggeredByUserWithRolesSync(interaction, 'set_logging_channel', ['Bot Admin'])
     ];
-    const loggingChannel = interaction.options.getChannel('channel', true) as TextChannel;
-    if (loggingChannel.type !== ChannelType.GuildText) {
+    const loggingChannel = interaction.options.getChannel('channel', true);
+    if (!isTextChannel(loggingChannel)) {
         throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
     }
     await server.setLoggingChannel(loggingChannel);
