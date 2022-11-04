@@ -463,7 +463,8 @@ class AttendingServerV2 {
                     : curr //  both prev.first and curr.first will not be undefined
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
-        await this.sendInvite(helperObject, student, helperVoiceChannel);
+        helperObject.helpedMembers.push(student);
+        await this.sendInvite(student, helperVoiceChannel);
         return student;
     }
 
@@ -515,7 +516,8 @@ class AttendingServerV2 {
         } else {
             throw ExpectedServerErrors.badDequeueArguments;
         }
-        await this.sendInvite(helperObject, student, helperVoiceChannel);
+        helperObject.helpedMembers.push(student);
+        await this.sendInvite(student, helperVoiceChannel);
         return student;
     }
 
@@ -852,11 +854,9 @@ class AttendingServerV2 {
      * @param helperVoiceChannel
      */
     private async sendInvite(
-        helperObject: Helper,
         student: Readonly<Helpee>,
         helperVoiceChannel: VoiceBasedChannel
     ) {
-        helperObject.helpedMembers.push(student);
         const [invite] = await Promise.all([
             helperVoiceChannel.createInvite({
                 maxAge: 15 * 60,
