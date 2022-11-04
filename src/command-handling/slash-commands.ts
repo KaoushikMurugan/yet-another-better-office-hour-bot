@@ -208,6 +208,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
+// /create_officies [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
     .setName('create_offices')
     .setDescription('Creates the a set number of voice channels in a new category')
@@ -241,6 +242,27 @@ const createOfficesCommand = new SlashCommandBuilder()
                 { name: '10', value: 10 }
             ));
 
+// /set_roles [role_name] [@role]
+const setRolesCommand = new SlashCommandBuilder()
+    .setName('set_roles')
+    .setDescription('Sets the roles that the bot to use')
+    .addStringOption(option =>
+        option
+            .setName('role_name')
+            .setDescription('The name of the role')
+            .setRequired(true)
+            .addChoices(
+                { name: 'Helper', value: 'helper' },
+                { name: 'Bot Admin', value: 'bot_admin' },
+                { name: 'Student', value: 'student' },
+            )
+    )
+    .addRoleOption(option =>
+        option
+            .setName('role')
+            .setDescription('The role to set to the specified role name')
+            .setRequired(true)
+    );
 
 // /help
 /**
@@ -291,6 +313,7 @@ const commandData = [
     setQueueAutoClear.toJSON(),
     activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
+    setRolesCommand.toJSON(),
 ];
 
 async function postSlashCommands(

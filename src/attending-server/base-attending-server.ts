@@ -64,6 +64,13 @@ class AttendingServerV2 {
     /** enables helper vc status in queue embeds */
     private readonly useExperimentalVCStatusRerender = true;
 
+    /** role id of the bot admin role */
+    private _botAdminRoleID: Optional<string> = undefined;
+    /** role id of the helper role */
+    private _helperRoleID: Optional<string> = undefined;
+    /** role id of the student role */
+    private _studentRoleID: Optional<string> = undefined;
+
     protected constructor(
         readonly user: User,
         readonly guild: Guild,
@@ -87,6 +94,37 @@ class AttendingServerV2 {
     }
     get loggingChannel(): Optional<TextChannel> {
         return this._loggingChannel;
+    }
+    get botAdminRoleID(): Optional<string> {
+        return this._botAdminRoleID
+    }
+    get helperRoleID(): Optional<string> {
+        return this._helperRoleID
+    }
+    get studentRoleID(): Optional<string> {
+        return this._studentRoleID
+    }
+
+    /**
+     * Sets the Bot Admin Role ID to `roleID` for this server
+     * @param roleID 
+     */
+    async setBotAdminRoleID(roleID: string): Promise<void> {
+        this._botAdminRoleID = roleID;
+    }
+    /**
+     * Sets the Helper Role ID to `roleID` for this server
+     * @param roleID 
+     */
+    async setHelperRoleID(roleID: string): Promise<void> {
+        this._helperRoleID = roleID;
+    }
+    /**
+     * Sets the Student Role ID to `roleID` for this server
+     * @param roleID 
+     */
+    async setStudentRoleID(roleID: string): Promise<void> {
+        this._studentRoleID = roleID;
     }
 
     /**

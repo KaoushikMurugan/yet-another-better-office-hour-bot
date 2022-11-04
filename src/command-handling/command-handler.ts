@@ -74,7 +74,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_logging_channel: setLoggingChannel,
     stop_logging: stopLogging,
     serious_mode: setSeriousMode,
-    create_offices: createOffices
+    create_offices: createOffices,
+    set_roles: setRoles,
 } as const;
 
 /**
@@ -576,6 +577,34 @@ async function createOffices(
     }
     await server.createOffices(categoryName, officeName, numOffices);
     return SuccessMessages.createdOffices(numOffices);
+}
+
+/**
+ * The `/set_roles` command
+ * @param interaction 
+ * @returns 
+ */
+async function setRoles(
+    interaction: ChatInputCommandInteraction
+): Promise<YabobEmbed> {
+    const [server] = [
+        isServerInteraction(interaction),
+        isTriggeredByUserWithRolesSync(interaction, 'set_roles', ['Bot Admin'])
+    ];
+    const roleType = interaction.options.getString('role_name', true);
+    const role = interaction.options.getRole('role', true);
+    if (roleType === 'bot_admin') {
+        await server.setBotAdminRoleID(role.id);
+        return SuccessMessages.setBotAdminRole(role.id);
+    } else if (roleType === 'helper') {
+        await server.setHelperRoleID(role.id);
+        return SuccessMessages.setHelperRole(role.id);
+    } else if (roleType === 'student') {
+        await server.setStudentRoleID(role.id);
+        return SuccessMessages.setStudentRole(role.id);
+    } else {
+        throw new CommandParseError('Invalid role type.');
+    }
 }
 
 /**

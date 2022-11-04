@@ -97,4 +97,19 @@ export const SuccessMessages = {
             `Successfully created ${numOffices} office${numOffices === 1 ? '' : 's'}.`,
             EmbedColor.Success
         ),
+    setBotAdminRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the bot admin role to <@${roleID}>.`,
+            EmbedColor.Success
+        ),
+    setHelperRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the helper role to <@${roleID}>.`,
+            EmbedColor.Success
+        ),
+    setStudentRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the student role to <@${roleID}>.`,
+            EmbedColor.Success
+        )
 } as const;
