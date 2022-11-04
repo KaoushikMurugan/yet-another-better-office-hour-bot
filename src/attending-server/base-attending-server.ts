@@ -298,6 +298,7 @@ class AttendingServerV2 {
             );
         }
     }
+
     /**
      * Gets all the queue channels on the server. SLOW
      * if nothing is found, returns empty array
@@ -414,7 +415,7 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
-     * @throws QueueError: if @param queueChannel rejects
+     * @throws QueueError: if queue rejects
      */
     async enqueueStudent(
         studentMember: GuildMember,
@@ -1000,7 +1001,7 @@ class AttendingServerV2 {
 
     /**
      * Overwrites the existing command help channel and send new help messages
-     * @param helpCategories the category named 'Bot Commands Help'
+     * @param helpCategory the category named 'Bot Commands Help'
      * @param messageContents array of embeds to send to each help channel
      */
     private async sendCommandHelpChannelMessages(

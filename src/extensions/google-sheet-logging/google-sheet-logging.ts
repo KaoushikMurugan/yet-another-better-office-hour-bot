@@ -72,7 +72,7 @@ class GoogleSheetLoggingExtension
     /**
      * Returns a new GoogleSheetLoggingExtension for the server with the given name
      * - Uses the google sheet id from the environment
-     * @param serverName
+     * @param guild
      * @throws ExtensionSetupError if
      * - the google sheet id is not set in the environment
      * - the google sheet id is invalid
@@ -186,10 +186,9 @@ class GoogleSheetLoggingExtension
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-        const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
-            helpSessionEntries.map(entry => {
-                return { ...entry, 'Session End': new Date() };
-            });
+        const completeHelpSessionEntries = helpSessionEntries.map(entry => {
+            return { ...entry, 'Session End': new Date() };
+        });
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
@@ -199,7 +198,7 @@ class GoogleSheetLoggingExtension
 
     /**
      * Start logging the session time as soon as the helper joins VC
-     * @param _server
+     * @param _server unused
      * @param helper
      */
     override async onHelperStartHelping(
@@ -243,10 +242,7 @@ class GoogleSheetLoggingExtension
         this.activeTimeEntries.delete(helper.member.id);
     }
 
-    /**
-     * Updates the attendance for 1 helper
-     * @param entry
-     */
+    /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
         if (this.attendanceEntries.length === 0) {
             return;

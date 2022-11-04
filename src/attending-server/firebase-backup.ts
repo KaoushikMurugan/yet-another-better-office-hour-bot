@@ -60,7 +60,7 @@ class FirebaseServerBackupExtension
      * @param server
      */
     override async onServerRequestBackup(server: FrozenServer): Promise<void> {
-        await this.backupServerToFirebase(server);
+        this.backupServerToFirebase(server);
     }
 
     /**
@@ -68,7 +68,7 @@ class FirebaseServerBackupExtension
      * @param server the server to backup
      * @noexcept error is logged to the console
      */
-    private async backupServerToFirebase(server: FrozenServer): Promise<void> {
+    private backupServerToFirebase(server: FrozenServer): void {
         const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
@@ -111,7 +111,7 @@ class FirebaseServerBackupExtension
             .catch((err: Error) =>
                 console.error('Firebase server backup failed.', err.message)
             );
-        await sendLogs(
+        sendLogs(
             server.guild.id,
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
