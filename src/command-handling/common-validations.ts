@@ -14,8 +14,10 @@ import {
     AttendingServerV2,
     QueueChannel
 } from '../attending-server/base-attending-server.js';
+import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { attendingServers } from '../global-states.js';
 import { CommandParseError } from '../utils/error-types.js';
+import { Optional } from '../utils/type-aliases.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
@@ -84,6 +86,42 @@ function isTriggeredByUserWithRolesSync(
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
     return interaction.member as GuildMember;
+}
+
+/**
+ * Checks if the triggerer has the required roles.
+ * Synchronus version of {@link isTriggeredByUserWithRoles}
+ * @param server the server where the interaction was called
+ * @param commandName the command used
+ * @param requiredRoles the roles to check, roles have OR relationship
+ * @returns GuildMember object of the triggerer
+ */
+function isTriggeredByMemberWithRoles(
+    server: AttendingServerV2,
+    member: GuildMember | null,
+    commandName: string,
+    requiredRoles: string[]
+): GuildMember {
+    if (member === null) {
+        throw ExpectedParseErrors.nonServerInterction();
+    }
+    const userRoleIDs = (member as GuildMember).roles.cache.map(role => role.id);
+    let hasRequiredRole = false;
+    server.roles.forEach(role => {
+        if (requiredRoles.includes(role.name)) { 
+            if (role.id === 'Not Set' ) {
+                throw ExpectedServerErrors.roleNotSet(role.name);
+            }
+            else if (!userRoleIDs.includes(role.id)) {
+                throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+            }
+            hasRequiredRole = true;
+        }
+    });
+    if (!hasRequiredRole) {
+        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+    }
+    return member as GuildMember;
 }
 
 /**
@@ -183,5 +221,6 @@ export {
     isFromGuildMember,
     isTriggeredByUserWithValidEmail,
     isTriggeredByUserWithRolesSync,
+    isTriggeredByMemberWithRoles,
     isServerInteraction
 };

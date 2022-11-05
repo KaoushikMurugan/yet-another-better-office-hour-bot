@@ -96,32 +96,56 @@ class AttendingServerV2 {
         return this._loggingChannel;
     }
     get botAdminRoleID(): Optional<string> {
-        return this._botAdminRoleID
+        return this._botAdminRoleID;
     }
     get helperRoleID(): Optional<string> {
-        return this._helperRoleID
+        return this._helperRoleID;
     }
     get studentRoleID(): Optional<string> {
-        return this._studentRoleID
+        return this._studentRoleID;
+    }
+
+    /**
+     * Returns an array of the roles for this server in increasing order of hierarchy
+     * - The first element is the lowest hierarchy role
+     * - The last element is the highest hierarchy role
+     * - [Student, Helper, Bot Admin]
+     * @returns: { name: string, id: string }[] 
+     */
+    get roles(): { name: string; id: string }[] {
+        return [
+            {
+                name: 'Student',
+                id: this._studentRoleID ?? 'Not Set'
+            },
+            {
+                name: 'Helper',
+                id: this._helperRoleID ?? 'Not Set'
+            },
+            {
+                name: 'Bot Admin',
+                id: this._botAdminRoleID ?? 'Not Set'
+            }
+        ];
     }
 
     /**
      * Sets the Bot Admin Role ID to `roleID` for this server
-     * @param roleID 
+     * @param roleID
      */
     async setBotAdminRoleID(roleID: string): Promise<void> {
         this._botAdminRoleID = roleID;
     }
     /**
      * Sets the Helper Role ID to `roleID` for this server
-     * @param roleID 
+     * @param roleID
      */
     async setHelperRoleID(roleID: string): Promise<void> {
         this._helperRoleID = roleID;
     }
     /**
      * Sets the Student Role ID to `roleID` for this server
-     * @param roleID 
+     * @param roleID
      */
     async setStudentRoleID(roleID: string): Promise<void> {
         this._studentRoleID = roleID;

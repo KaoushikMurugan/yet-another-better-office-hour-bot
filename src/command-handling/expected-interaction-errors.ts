@@ -8,13 +8,13 @@ import { getInteractionName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
-        requiredRoles: string[],
+        requiredRoleIDs: string[],
         commandName: string
     ): CommandParseError =>
         new CommandParseError(
-            `You need to have: [${requiredRoles.join(
-                ' or '
-            )}] to use \`/${commandName}\`.`
+            `You need to have: [${requiredRoleIDs
+                .map(roleID => `<@${roleID}>`)
+                .join(' or ')}] to use \`/${commandName}\`.`
         ),
     invalidQueueCategory: (categoryName: Optional<string>) =>
         categoryName === undefined
