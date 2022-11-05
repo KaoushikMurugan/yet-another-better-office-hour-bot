@@ -4,11 +4,11 @@ import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './expected-sheet-errors.js';
+import { FrozenServer } from '../extension-utils.js';
 
 /**
  * Additional attendance info for each helper
@@ -72,7 +72,7 @@ class GoogleSheetLoggingExtension
     /**
      * Returns a new GoogleSheetLoggingExtension for the server with the given name
      * - Uses the google sheet id from the environment
-     * @param serverName
+     * @param guild
      * @throws ExtensionSetupError if
      * - the google sheet id is not set in the environment
      * - the google sheet id is invalid
@@ -110,7 +110,7 @@ class GoogleSheetLoggingExtension
      * @param dequeuedStudent
      */
     override async onDequeueFirst(
-        _server: Readonly<AttendingServerV2>,
+        _server: FrozenServer,
         dequeuedStudent: Readonly<Helpee>
     ): Promise<void> {
         this.studentsJustDequeued.set(dequeuedStudent.member.id, dequeuedStudent);
@@ -123,7 +123,7 @@ class GoogleSheetLoggingExtension
      * @param voiceChannel
      */
     override async onStudentJoinVC(
-        server: Readonly<AttendingServerV2>,
+        server: FrozenServer,
         studentMember: GuildMember,
         voiceChannel: VoiceChannel
     ): Promise<void> {
@@ -173,7 +173,7 @@ class GoogleSheetLoggingExtension
      * @noexcept error is logged to the console
      */
     override async onStudentLeaveVC(
-        _server: Readonly<AttendingServerV2>,
+        _server: FrozenServer,
         studentMember: GuildMember
     ): Promise<void> {
         const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
@@ -186,10 +186,9 @@ class GoogleSheetLoggingExtension
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-        const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
-            helpSessionEntries.map(entry => {
-                return { ...entry, 'Session End': new Date() };
-            });
+        const completeHelpSessionEntries = helpSessionEntries.map(entry => {
+            return { ...entry, 'Session End': new Date() };
+        });
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
@@ -199,11 +198,11 @@ class GoogleSheetLoggingExtension
 
     /**
      * Start logging the session time as soon as the helper joins VC
-     * @param _server
+     * @param _server unused
      * @param helper
      */
     override async onHelperStartHelping(
-        _server: Readonly<AttendingServerV2>,
+        _server: FrozenServer,
         helper: Readonly<Omit<Helper, 'helpEnd'>>
     ): Promise<void> {
         const entry: ActiveTime = {
@@ -219,7 +218,7 @@ class GoogleSheetLoggingExtension
      * @param helper
      */
     override async onHelperStopHelping(
-        _server: Readonly<AttendingServerV2>,
+        _server: FrozenServer,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
@@ -243,10 +242,7 @@ class GoogleSheetLoggingExtension
         this.activeTimeEntries.delete(helper.member.id);
     }
 
-    /**
-     * Updates the attendance for 1 helper
-     * @param entry
-     */
+    /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
         if (this.attendanceEntries.length === 0) {
             return;

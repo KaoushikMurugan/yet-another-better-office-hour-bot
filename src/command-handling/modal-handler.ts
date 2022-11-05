@@ -22,7 +22,9 @@ const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
  * @param interaction
  * @returns
  */
-function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): boolean {
+function builtInModalHandlercanHandle(
+    interaction: ModalSubmitInteraction<'cached'>
+): boolean {
     return interaction.customId in modalMethodMap;
 }
 
@@ -34,7 +36,7 @@ function builtInModalHandlercanHandle(interaction: ModalSubmitInteraction): bool
  * @param interaction
  */
 async function processBuiltInModalSubmit(
-    interaction: ModalSubmitInteraction
+    interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
     const modalMethod = modalMethodMap[interaction.customId];
     logModalSubmit(interaction);
@@ -66,7 +68,7 @@ async function processBuiltInModalSubmit(
  * @returns
  */
 async function setAfterSessionMessage(
-    interaction: ModalSubmitInteraction
+    interaction: ModalSubmitInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const newAfterSessionMessage =
@@ -82,7 +84,7 @@ async function setAfterSessionMessage(
  * @returns
  */
 async function setQueueAutoClear(
-    interaction: ModalSubmitInteraction
+    interaction: ModalSubmitInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');

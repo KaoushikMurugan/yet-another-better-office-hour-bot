@@ -39,13 +39,13 @@ const whenNext = new SlashCommandBuilder()
 
 // /make_calendar_string [calendar_name] [queue_name_1] (queue_name_2) ... (queue_name_n) (user)
 /**
- * Generate the make_calendar_string command depending on the number of queues in the server
+ * Generates the make_calendar_string command depending on the number of queues in the server
  * @returns
  */
-function makeCalendarStringCommand(): Omit<
+const makeCalendarStringCommand: Omit<
     SlashCommandBuilder,
     'addSubcommand' | 'addSubcommandGroup'
-> {
+> = (() => {
     const command = new SlashCommandBuilder()
         .setName('make_calendar_string')
         .setDescription('Generates a valid calendar string that can be parsed by YABOB')
@@ -55,7 +55,6 @@ function makeCalendarStringCommand(): Omit<
                 .setDescription('Your display name on the calendar')
                 .setRequired(true)
         );
-
     Array(20)
         .fill(undefined)
         .forEach(
@@ -68,7 +67,6 @@ function makeCalendarStringCommand(): Omit<
                         .addChannelTypes(ChannelType.GuildCategory)
                 ) // make the first one required
         );
-
     command.addUserOption(option =>
         option
             .setName('user')
@@ -76,7 +74,7 @@ function makeCalendarStringCommand(): Omit<
             .setRequired(false)
     );
     return command;
-}
+})(); // only called once, so IIFE is gives a cleaner syntax
 
 // /make_calendar_string_all [calendar_name] (user)
 const makeCalendarStringAll = new SlashCommandBuilder()
@@ -119,7 +117,7 @@ const calendarCommands = [
     setCalendar.toJSON(),
     unsetCalendar.toJSON(),
     whenNext.toJSON(),
-    makeCalendarStringCommand().toJSON(),
+    makeCalendarStringCommand.toJSON(),
     makeCalendarStringAll.toJSON(),
     setPublicEmbedUrl.toJSON()
 ];

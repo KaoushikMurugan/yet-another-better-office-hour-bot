@@ -11,7 +11,6 @@ import { logButtonPress } from '../utils/util-functions.js';
 import { ButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
-    isFromGuildMember,
     isServerInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
@@ -36,7 +35,9 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
  * @param interaction
  * @returns
  */
-function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
+function builtInButtonHandlerCanHandle(
+    interaction: ButtonInteraction<'cached'>
+): boolean {
     const [buttonName] = splitButtonQueueName(interaction);
     return buttonName in buttonMethodMap;
 }
@@ -48,7 +49,9 @@ function builtInButtonHandlerCanHandle(interaction: ButtonInteraction): boolean 
  * - Returns the appropriate message to send to the user
  * @param interaction
  */
-async function processBuiltInButton(interaction: ButtonInteraction): Promise<void> {
+async function processBuiltInButton(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];
     await interaction.reply({
@@ -83,7 +86,7 @@ async function processBuiltInButton(interaction: ButtonInteraction): Promise<voi
  * @returns string tuple [buttonName, queueName]
  */
 function splitButtonQueueName(
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): [buttonName: string, queueName: string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
     const buttonName = interaction.customId.substring(0, delimiterPosition);
@@ -99,18 +102,17 @@ function splitButtonQueueName(
  */
 async function join(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member, queueChannel] = [
+    const [server, queueChannel] = [
         isServerInteraction(interaction),
-        isFromGuildMember(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
     await Promise.all([
         server.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
         ),
-        server.enqueueStudent(member, queueChannel)
+        server.enqueueStudent(interaction.member, queueChannel)
     ]);
     return SuccessMessages.joinedQueue(queueName);
 }
@@ -123,18 +125,17 @@ async function join(
  */
 async function leave(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member, queueChannel] = [
+    const [server, queueChannel] = [
         isServerInteraction(interaction),
-        isFromGuildMember(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
     await Promise.all([
         server.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
         ),
-        server.removeStudentFromQueue(member, queueChannel)
+        server.removeStudentFromQueue(interaction.member, queueChannel)
     ]);
     return SuccessMessages.leftQueue(queueName);
 }
@@ -147,18 +148,17 @@ async function leave(
  */
 async function joinNotifGroup(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member, queueChannel] = [
+    const [server, queueChannel] = [
         isServerInteraction(interaction),
-        isFromGuildMember(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
     await Promise.all([
         server.sendLogMessage(
             ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
         ),
-        server.addStudentToNotifGroup(member, queueChannel)
+        server.addStudentToNotifGroup(interaction.member, queueChannel)
     ]);
     return SuccessMessages.joinedNotif(queueName);
 }
@@ -171,11 +171,10 @@ async function joinNotifGroup(
  */
 async function leaveNotifGroup(
     queueName: string,
-    interaction: ButtonInteraction
+    interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member, queueChannel] = [
+    const [server, queueChannel] = [
         isServerInteraction(interaction),
-        isFromGuildMember(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
     await Promise.all([
@@ -186,7 +185,7 @@ async function leaveNotifGroup(
                 queueChannel.channelObj
             )
         ),
-        server.removeStudentFromNotifGroup(member, queueChannel)
+        server.removeStudentFromNotifGroup(interaction.member, queueChannel)
     ]);
     return SuccessMessages.removedNotif(queueName);
 }
