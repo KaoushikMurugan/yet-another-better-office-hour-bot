@@ -29,7 +29,6 @@ import {
 } from './common-validations.js';
 import {
     convertMsToShortTime,
-    convertMsToTime,
     isTextChannel,
     isValidCategoryName,
     isValidChannelName,
@@ -559,7 +558,7 @@ async function createOffices(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'create_offices', ['Bot Admin'])
+    isTriggeredByMemberWithRoles(server, interaction.member, 'create_offices', ['Bot Admin']);
     const categoryName = interaction.options.getString('category_name', true);
     const officeName = interaction.options.getString('office_name', true);
     const numOffices = interaction.options.getInteger('number_of_offices', true);

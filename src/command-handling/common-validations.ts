@@ -74,7 +74,7 @@ function isTriggeredByMemberWithRoles(
     }
     const userRoleIDs = (member as GuildMember).roles.cache.map(role => role.id);
     let hasARequiredRole = false;
-    let missingRoles: string[] = [];
+    const missingRoles: string[] = [];
 
     server.roles.forEach(role => {
         if (requiredRoles.includes(role.name)) { 
@@ -87,6 +87,9 @@ function isTriggeredByMemberWithRoles(
         }
     });
     if (!hasARequiredRole) {
+        if(missingRoles.length > 0) {
+            throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
+        }
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
     return member as GuildMember;
