@@ -28,6 +28,7 @@ import {
     isServerInteraction
 } from './common-validations.js';
 import {
+    convertMsToShortTime,
     convertMsToTime,
     isTextChannel,
     isValidCategoryName,
@@ -559,7 +560,7 @@ async function setSeriousMode(
  * @returns
  */
 async function createOffices(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),
@@ -583,7 +584,7 @@ async function createOffices(
  * @returns 
  */
 async function setRoles(
-    interaction: ChatInputCommandInteraction
+    interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server] = [
         isServerInteraction(interaction),

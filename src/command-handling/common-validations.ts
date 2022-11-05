@@ -13,6 +13,7 @@ import {
 import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { attendingServers } from '../global-states.js';
 import { CommandParseError } from '../utils/error-types.js';
+import { isCategoryChannel, isQueueTextChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
