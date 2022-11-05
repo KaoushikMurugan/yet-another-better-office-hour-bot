@@ -138,6 +138,9 @@ class AttendingServerV2 {
      */
     async setBotAdminRoleID(roleID: string): Promise<void> {
         this._botAdminRoleID = roleID;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
     /**
      * Sets the Helper Role ID to `roleID` for this server
@@ -145,6 +148,9 @@ class AttendingServerV2 {
      */
     async setHelperRoleID(roleID: string): Promise<void> {
         this._helperRoleID = roleID;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
     /**
      * Sets the Student Role ID to `roleID` for this server
@@ -152,6 +158,9 @@ class AttendingServerV2 {
      */
     async setStudentRoleID(roleID: string): Promise<void> {
         this._studentRoleID = roleID;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
 
     /**
@@ -244,6 +253,11 @@ class AttendingServerV2 {
             server._afterSessionMessage = externalServerData.afterSessionMessage;
         }
         // This call must block everything else for handling empty servers
+
+        server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
+        server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
+        server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
+
         await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([

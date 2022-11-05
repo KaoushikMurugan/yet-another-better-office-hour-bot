@@ -51,9 +51,24 @@ type ServerBackup = {
      */
     hoursUntilAutoClear: AutoClearTimeout;
     /**
-     * seriousness of the server
+     * Seriousness of the server
      */
     seriousServer: boolean;
+    
+    /**
+     * The role id of the Bot Admin role
+     */
+    botAdminRoleId: string;
+
+    /**
+     * The role id of the Helper role
+     */
+    helperRoleId: string;
+
+    /**
+     * The role id of the Student role
+     */
+    studentRoleId: string;
 };
 
 export { QueueBackup, ServerBackup };
