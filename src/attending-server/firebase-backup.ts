@@ -3,13 +3,13 @@ import {
     BaseServerExtension,
     IServerExtension
 } from '../extensions/extension-interface.js';
-import { AttendingServerV2 } from './base-attending-server.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, yellow } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
+import { FrozenServer, sendLogs } from '../extensions/extension-utils.js';
 
 /**
  * Built in backup extension
@@ -59,10 +59,8 @@ class FirebaseServerBackupExtension
      * Saves a backup of the current server state to firebase
      * @param server
      */
-    override async onServerRequestBackup(
-        server: Readonly<AttendingServerV2>
-    ): Promise<void> {
-        await this.backupServerToFirebase(server);
+    override async onServerRequestBackup(server: FrozenServer): Promise<void> {
+        this.backupServerToFirebase(server);
     }
 
     /**
@@ -70,9 +68,7 @@ class FirebaseServerBackupExtension
      * @param server the server to backup
      * @noexcept error is logged to the console
      */
-    private async backupServerToFirebase(
-        server: Readonly<AttendingServerV2>
-    ): Promise<void> {
+    private backupServerToFirebase(server: FrozenServer): void {
         const queueBackups: QueueBackup[] = server.queues.map(queue => {
             return {
                 studentsInQueue: queue.students.map(student => {
@@ -115,7 +111,8 @@ class FirebaseServerBackupExtension
             .catch((err: Error) =>
                 console.error('Firebase server backup failed.', err.message)
             );
-        await server.sendLogMessage(
+        sendLogs(
+            server.guild.id,
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
     }

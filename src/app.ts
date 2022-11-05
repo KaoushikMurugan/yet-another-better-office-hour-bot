@@ -86,7 +86,15 @@ client.on('guildDelete', async guild => {
  * - Button presses
  * - Modal submissions
  */
-client.on('interactionCreate', async interaction => {
+client.on('interactionCreate', async (interaction: Interaction) => {
+    if (!interaction.inCachedGuild() || !interaction.inGuild()) {
+        // required check to make sure all the types are safe
+        interaction.isRepliable() &&
+            (await interaction.reply(
+                SimpleEmbed('I can only accept server based interactions.')
+            ));
+        return;
+    }
     dispatchInteractions(interaction).catch(async (err: Error) => {
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
@@ -125,7 +133,7 @@ client.on('roleUpdate', async role => {
         return;
     }
     if (
-        role.name === client.user?.username &&
+        role.name === client.user.username &&
         role.guild.roles.highest.name === client.user.username
     ) {
         console.log(cyan('Got the highest Role! Starting server initialization'));
@@ -172,7 +180,7 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
  * Discord.js warning handling
  */
 client.on('warn', warning => {
-    console.warn(magenta('Uncaught DiscordJS Warning:'), warning);
+    console.warn(magenta('Uncaught DiscordJS Warning: '), warning);
 });
 
 /**
@@ -217,7 +225,9 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * @param interaction from the client.on('interactionCreate') event
  * @returns boolean, whether the command was handled
  */
-async function dispatchInteractions(interaction: Interaction): Promise<boolean> {
+async function dispatchInteractions(
+    interaction: Interaction<'cached'>
+): Promise<boolean> {
     // if it's a built-in command/button, process
     // otherwise find an extension that can process it
     if (interaction.isChatInputCommand()) {

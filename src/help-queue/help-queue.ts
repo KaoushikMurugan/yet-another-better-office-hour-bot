@@ -469,7 +469,7 @@ class HelpQueueV2 {
     }
 
     async triggerForceRender(): Promise<void> {
-        await this.display.requestForceRener();
+        await this.display.requestForceRender();
     }
 
     async setSeriousMode(seriousMode: boolean): Promise<void> {

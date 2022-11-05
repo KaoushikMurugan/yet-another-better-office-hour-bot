@@ -2,11 +2,16 @@
 
 import {
     ButtonInteraction,
+    CategoryChannel,
+    ChannelType,
     ChatInputCommandInteraction,
     GuildMember,
     Interaction,
     ModalSubmitInteraction,
-    Role
+    GuildBasedChannel,
+    Role,
+    TextChannel,
+    VoiceChannel
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
@@ -37,7 +42,24 @@ function convertMsToTime(milliseconds: number): string {
         `${padTo2Digits(seconds)} second${seconds === 1 ? '' : 's'}`
     );
 }
+/**
+ * Converts the time delta in miliseconds into a readable format
+ * @param milliseconds the difference to convert
+ */
+function convertMsToShortTime(milliseconds: number): string {
+    function padTo2Digits(num: number): string {
+        return num.toString().padStart(2, '0');
+    }
 
+    let seconds = Math.floor(milliseconds / 1000);
+    let minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+
+    seconds = seconds % 60;
+    minutes = minutes % 60;
+
+    return `${padTo2Digits(hours)}:${padTo2Digits(minutes)}:${padTo2Digits(seconds)}`;
+}
 /**
  * Gets all the queue roles of a member
  * @param server
@@ -63,7 +85,7 @@ async function getQueueRoles(
  * @param queueName
  */
 function logButtonPress(
-    interaction: ButtonInteraction,
+    interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName: string
 ): void {
@@ -73,7 +95,7 @@ function logButtonPress(
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
@@ -85,14 +107,14 @@ function logButtonPress(
  * Default logger for modal submits
  * @param interaction
  */
-function logModalSubmit(interaction: ModalSubmitInteraction): void {
+function logModalSubmit(interaction: ModalSubmitInteraction<'cached'>): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name)}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Modal Used: ${magenta(interaction.customId)}`
@@ -103,14 +125,14 @@ function logModalSubmit(interaction: ModalSubmitInteraction): void {
  * Default logger for slash commands
  * @param interaction
  */
-function logSlashCommand(interaction: ChatInputCommandInteraction): void {
+function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild?.name ?? 'Unknown Guild')}]\n` +
+            `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Command Used: ${magenta(interaction.toString())}`
@@ -122,7 +144,7 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
 
-function getInteractionName(interaction: Interaction): string {
+function getInteractionName(interaction: Interaction<'cached'>): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
@@ -135,6 +157,48 @@ function getInteractionName(interaction: Interaction): string {
     return 'Unsupported Interaction Type';
 }
 
+/**
+ * Narrows the type down to category channel
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isCategoryChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is CategoryChannel {
+    // shorthand syntax, coerces the type into a boolean
+    return !!channel && 'type' in channel && channel.type === ChannelType.GuildCategory;
+}
+
+/**
+ * Narrows the type down to text channel
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isTextChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is TextChannel {
+    return !!channel && channel.type === ChannelType.GuildText;
+}
+
+/**
+ * Narrows the type down to text channel and checks if the name is `queue`
+ * @param channel any channel from a server
+ * @returns type narrower
+ */
+function isQueueTextChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is TextChannel {
+    return (
+        !!channel && channel.type === ChannelType.GuildText && channel.name === 'queue'
+    );
+}
+
+function isVoiceChannel(
+    channel: GuildBasedChannel | null | undefined
+): channel is VoiceChannel {
+    return !!channel && channel.type === ChannelType.GuildVoice;
+}
+
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -145,11 +209,16 @@ function centered(text: string): string {
 
 export {
     convertMsToTime,
+    convertMsToShortTime,
     getQueueRoles,
     logButtonPress,
     logModalSubmit,
     logSlashCommand,
     centered,
     addTimeOffset,
-    getInteractionName
+    getInteractionName,
+    isCategoryChannel,
+    isTextChannel,
+    isQueueTextChannel,
+    isVoiceChannel
 };

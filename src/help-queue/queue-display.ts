@@ -37,7 +37,6 @@ class QueueDisplayV2 {
      * @remarks
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
-     * - acts like a graphics card memory
      */
     private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
         new Collection();
@@ -193,7 +192,7 @@ class QueueDisplayV2 {
         });
     }
 
-    async requestForceRener(): Promise<void> {
+    async requestForceRender(): Promise<void> {
         await this.render(true);
     }
 
@@ -223,11 +222,8 @@ class QueueDisplayV2 {
             existingEmbeds.size === this.queueChannelEmbeds.size &&
             nonYABOBMessages.size === 0;
         if (!safeToEdit || force) {
-            await Promise.all(
-                (
-                    await this.queueChannel.channelObj.messages.fetch(undefined)
-                ).map(msg => msg.delete())
-            );
+            const allMessages = await this.queueChannel.channelObj.messages.fetch();
+            await Promise.all(allMessages.map(msg => msg.delete()));
             // sort by render index
             const sortedEmbeds = this.queueChannelEmbeds.sort(
                 (embed1, embed2) => embed1.renderIndex - embed2.renderIndex

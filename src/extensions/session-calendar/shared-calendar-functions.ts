@@ -20,6 +20,7 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 import { isServerInteraction } from '../../command-handling/common-validations.js';
+import { isTextChannel } from '../../utils/util-functions.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -277,12 +278,15 @@ function restorePublicEmbedURL(calendarId: string): string {
  * @returns server and state object tuple
  */
 function isServerCalendarInteraction(
-    interaction: ChatInputCommandInteraction | ButtonInteraction | ModalSubmitInteraction
+    interaction:
+        | ChatInputCommandInteraction<'cached'>
+        | ButtonInteraction<'cached'>
+        | ModalSubmitInteraction<'cached'>
 ): [AttendingServerV2, CalendarExtensionState] {
     const server = isServerInteraction(interaction);
     const state = calendarStates.get(server.guild.id);
-    if (!state) {
-        throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild?.name);
+    if (!state || !isTextChannel(interaction.channel)) {
+        throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
     }
     return [server, state];
 }
