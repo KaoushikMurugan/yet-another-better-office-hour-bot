@@ -113,7 +113,7 @@ class AttendingServerV2 {
      * - The first element is the lowest hierarchy role
      * - The last element is the highest hierarchy role
      * - [Student, Helper, Bot Admin]
-     * @returns: { name: string, id: string }[] 
+     * @returns: { name: string, id: string }[]
      */
     get roles(): { name: string; id: string }[] {
         return [

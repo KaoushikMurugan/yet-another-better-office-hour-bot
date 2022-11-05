@@ -38,7 +38,7 @@ const ExpectedServerErrors = {
     roleNotSet: (roleName: string) =>
         new ServerError(
             `The command can not be used without the role ${roleName} being set. ` +
-            `Please ask a server moderator to use \`/role set ${roleName} <roleID>\` to set it.`
+                `Please ask a server moderator to use \`/role set ${roleName} <roleID>\` to set it.`
         )
 } as const;
 

@@ -4,7 +4,8 @@ import {
     ChatInputCommandInteraction,
     GuildMember,
     ButtonInteraction,
-    ModalSubmitInteraction
+    ModalSubmitInteraction,
+    PermissionsBitField
 } from 'discord.js';
 import {
     AttendingServerV2,
@@ -13,7 +14,11 @@ import {
 import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { attendingServers } from '../global-states.js';
 import { CommandParseError } from '../utils/error-types.js';
-import { isCategoryChannel, isQueueTextChannel, isTextChannel } from '../utils/util-functions.js';
+import {
+    isCategoryChannel,
+    isQueueTextChannel,
+    isTextChannel
+} from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
 /**
@@ -36,7 +41,6 @@ function isServerInteraction(
 
 /**
  * Checks if the triggerer has the required roles.
- * Synchronized version of {@link isTriggeredByUserWithRoles}
  * @param commandName the command used
  * @returns GuildMember object of the triggerer
  */
@@ -72,22 +76,25 @@ function isTriggeredByMemberWithRoles(
     if (member === null) {
         throw ExpectedParseErrors.nonServerInterction();
     }
-    const userRoleIDs = (member as GuildMember).roles.cache.map(role => role.id);
+
+    // If member is a server admin, skip role check
+    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) return member;
+
+    const userRoleIDs = member.roles.cache.map(role => role.id);
     let hasARequiredRole = false;
     const missingRoles: string[] = [];
 
     server.roles.forEach(role => {
-        if (requiredRoles.includes(role.name)) { 
-            if (role.id === 'Not Set' ) {
+        if (requiredRoles.includes(role.name)) {
+            if (role.id === 'Not Set') {
                 missingRoles.push(role.name);
-            }
-            else if (userRoleIDs.includes(role.id)) {
+            } else if (userRoleIDs.includes(role.id)) {
                 hasARequiredRole = true;
             }
         }
     });
     if (!hasARequiredRole) {
-        if(missingRoles.length > 0) {
+        if (missingRoles.length > 0) {
             throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
         }
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);

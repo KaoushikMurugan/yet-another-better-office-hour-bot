@@ -217,13 +217,13 @@ const createOfficesCommand = new SlashCommandBuilder()
             .setName('category_name')
             .setDescription('The name of the category to create the offices in')
             .setRequired(true)
-            )
+    )
     .addStringOption(option =>
         option
             .setName('office_name')
             .setDescription('The name of the office')
             .setRequired(true)
-            )
+    )
     .addIntegerOption(option =>
         option
             .setName('number_of_offices')
@@ -240,7 +240,8 @@ const createOfficesCommand = new SlashCommandBuilder()
                 { name: '8', value: 8 },
                 { name: '9', value: 9 },
                 { name: '10', value: 10 }
-            ));
+            )
+    );
 
 // /set_roles [role_name] [@role]
 const setRolesCommand = new SlashCommandBuilder()
@@ -254,7 +255,7 @@ const setRolesCommand = new SlashCommandBuilder()
             .addChoices(
                 { name: 'Helper', value: 'helper' },
                 { name: 'Bot Admin', value: 'bot_admin' },
-                { name: 'Student', value: 'student' },
+                { name: 'Student', value: 'student' }
             )
     )
     .addRoleOption(option =>
@@ -313,7 +314,7 @@ const commandData = [
     setQueueAutoClear.toJSON(),
     activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
-    setRolesCommand.toJSON(),
+    setRolesCommand.toJSON()
 ];
 
 async function postSlashCommands(

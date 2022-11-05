@@ -344,7 +344,9 @@ async function setPublicEmbedUrl(
     const [server, state] = isServerCalendarInteraction(interaction);
     const rawUrl = interaction.options.getString('url', true);
     const enable = interaction.options.getBoolean('enable', true);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', ['Bot Admin']);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', [
+        'Bot Admin'
+    ]);
     if (enable) {
         try {
             new URL(rawUrl); // call this constructor to check if URL is valid
