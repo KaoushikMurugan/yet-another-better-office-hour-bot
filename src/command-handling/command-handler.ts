@@ -188,6 +188,7 @@ async function enqueue(
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction)
     ];
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', ['Student']);
     await server.enqueueStudent(interaction.member, queueChannel);
     return SuccessMessages.joinedQueue(queueChannel.queueName);
 }
@@ -264,6 +265,7 @@ async function leave(
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction)
     ];
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', ['Student']);
     await server.removeStudentFromQueue(interaction.member, queue);
     return SuccessMessages.leftQueue(queue.queueName);
 }
@@ -320,6 +322,7 @@ async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<BaseMessageOptions> {
     const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', ['Student']);
     const helpers = server.activeHelpers;
     if (helpers === undefined || helpers.size === 0) {
         return SimpleEmbed('No one is currently helping.');
