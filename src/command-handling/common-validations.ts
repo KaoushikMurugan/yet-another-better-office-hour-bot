@@ -56,8 +56,9 @@ function isTriggeredByUserWithRolesSync(
 
 /**
  * Checks if the triggerer has the required roles.
- * Synchronus version of {@link isTriggeredByUserWithRoles}
+ * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
+ * @param member the member who triggered the interaction
  * @param commandName the command used
  * @param requiredRoles the roles to check, roles have OR relationship
  * @returns GuildMember object of the triggerer
@@ -72,19 +73,20 @@ function isTriggeredByMemberWithRoles(
         throw ExpectedParseErrors.nonServerInterction();
     }
     const userRoleIDs = (member as GuildMember).roles.cache.map(role => role.id);
-    let hasRequiredRole = false;
+    let hasARequiredRole = false;
+    let missingRoles: string[] = [];
+
     server.roles.forEach(role => {
         if (requiredRoles.includes(role.name)) { 
             if (role.id === 'Not Set' ) {
-                throw ExpectedServerErrors.roleNotSet(role.name);
+                missingRoles.push(role.name);
             }
-            else if (!userRoleIDs.includes(role.id)) {
-                throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+            else if (userRoleIDs.includes(role.id)) {
+                hasARequiredRole = true;
             }
-            hasRequiredRole = true;
         }
     });
-    if (!hasRequiredRole) {
+    if (!hasARequiredRole) {
         throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
     }
     return member as GuildMember;

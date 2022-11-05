@@ -24,7 +24,7 @@ import { ExtensionSetupError } from '../../utils/error-types.js';
 import { CommandData } from '../../command-handling/slash-commands.js';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRolesSync
+    isTriggeredByMemberWithRoles
 } from '../../command-handling/common-validations.js';
 import {
     checkCalendarConnection,
@@ -206,10 +206,12 @@ async function updateCalendarId(
     const [newCalendarName] = [
         await checkCalendarConnection(newCalendarId).catch(() => {
             throw ExpectedCalendarErrors.badId.newId;
-        }),
-        isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin'])
+        })
     ];
     const [server, state] = isServerCalendarInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', [
+        'Bot Admin'
+    ]);
     await Promise.all([
         state.setCalendarId(newCalendarId),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
@@ -226,7 +228,9 @@ async function unsetCalendarId(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'unset_calendar', [
+        'Bot Admin'
+    ]);
     await Promise.all([
         state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
@@ -266,10 +270,12 @@ async function makeParsableCalendarTitle(
     generateAll: boolean
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    const member = isTriggeredByUserWithRolesSync(interaction, 'make_calendar_string', [
-        'Bot Admin',
-        'Staff'
-    ]);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'make_calendar_string',
+        ['Bot Admin', 'Staff']
+    );
     const calendarDisplayName = interaction.options.getString('calendar_name', true);
     const userOption = interaction.options.getUser('user', false);
     let validQueueOptions: (CategoryChannel | Role)[];
@@ -335,10 +341,10 @@ async function makeParsableCalendarTitle(
 async function setPublicEmbedUrl(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [, state] = isServerCalendarInteraction(interaction);
+    const [server, state] = isServerCalendarInteraction(interaction);
     const rawUrl = interaction.options.getString('url', true);
     const enable = interaction.options.getBoolean('enable', true);
-    isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin']);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', ['Bot Admin']);
     if (enable) {
         try {
             new URL(rawUrl); // call this constructor to check if URL is valid

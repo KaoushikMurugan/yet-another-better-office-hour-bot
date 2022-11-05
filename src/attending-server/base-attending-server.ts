@@ -122,7 +122,7 @@ class AttendingServerV2 {
                 id: this._studentRoleID ?? 'Not Set'
             },
             {
-                name: 'Helper',
+                name: 'Staff',
                 id: this._helperRoleID ?? 'Not Set'
             },
             {

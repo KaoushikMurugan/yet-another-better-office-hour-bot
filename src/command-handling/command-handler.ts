@@ -24,8 +24,8 @@ import {
 import { CommandParseError } from '../utils/error-types.js';
 import {
     hasValidQueueArgument,
-    isTriggeredByUserWithRolesSync,
-    isServerInteraction
+    isServerInteraction,
+    isTriggeredByMemberWithRoles
 } from './common-validations.js';
 import {
     convertMsToShortTime,
@@ -70,7 +70,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     stop_logging: stopLogging,
     serious_mode: setSeriousMode,
     create_offices: createOffices,
-    set_roles: setRoles,
+    set_roles: setRoles
 } as const;
 
 /**
@@ -147,14 +147,13 @@ async function processBuiltInCommand(
 async function queue(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(
-            interaction,
-            `queue ${interaction.options.getSubcommand()}`,
-            ['Bot Admin']
-        )
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        `queue ${interaction.options.getSubcommand()}`,
+        ['Bot Admin']
+    );
     const subcommand = interaction.options.getSubcommand();
     switch (subcommand) {
         case 'add': {
@@ -201,10 +200,13 @@ async function enqueue(
 async function next(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, helperMember] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'next', ['Bot Admin', 'Staff'])
-    ];
+    const server = isServerInteraction(interaction);
+    const helperMember = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'next',
+        ['Bot Admin', 'Staff']
+    );
     const targetQueue =
         interaction.options.getChannel('queue_name', false) === null
             ? undefined
@@ -226,10 +228,11 @@ async function next(
 async function start(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'start', ['Bot Admin', 'Staff'])
-    ];
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(server, interaction.member, 'start', [
+        'Bot Admin',
+        'Staff'
+    ]);
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
     await server.openAllOpenableQueues(member, !muteNotif);
     return SuccessMessages.startedHelping;
@@ -242,10 +245,11 @@ async function start(
 async function stop(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'stop', ['Bot Admin', 'Staff'])
-    ];
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(server, interaction.member, 'stop', [
+        'Bot Admin',
+        'Staff'
+    ]);
     const helpTimeEntry = await server.closeAllClosableQueues(member);
     return SuccessMessages.finishedHelping(helpTimeEntry);
 }
@@ -272,11 +276,14 @@ async function leave(
 async function clear(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, queue, member] = [
+    const [server, queue] = [
         isServerInteraction(interaction),
-        hasValidQueueArgument(interaction, true),
-        isTriggeredByUserWithRolesSync(interaction, 'clear', ['Bot Admin', 'Staff'])
+        hasValidQueueArgument(interaction, true)
     ];
+    const member = isTriggeredByMemberWithRoles(server, interaction.member, 'clear', [
+        'Bot Admin',
+        'Staff'
+    ]);
     // if they are not admin or doesn't have the queue role, reject
     if (
         !member.roles.cache.some(
@@ -296,10 +303,8 @@ async function clear(
 async function clearAll(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'clear_all', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'clear_all', ['Bot Admin']);
     const allQueues = await server.getQueueChannels();
     if (allQueues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
@@ -377,10 +382,11 @@ async function listHelpers(
 async function announce(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server, member] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'announce', ['Bot Admin', 'Staff'])
-    ];
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(server, interaction.member, 'announce', [
+        'Bot Admin',
+        'Staff'
+    ]);
     const announcement = interaction.options.getString('message', true);
     if (announcement.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
@@ -404,9 +410,9 @@ async function cleanup(
 ): Promise<YabobEmbed> {
     const [server, queue] = [
         isServerInteraction(interaction),
-        hasValidQueueArgument(interaction, true),
-        isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
+        hasValidQueueArgument(interaction, true)
     ];
+    isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', ['Bot Admin']);
     await server.cleanUpQueue(queue);
     return SuccessMessages.cleanedup.queue(queue.queueName);
 }
@@ -418,10 +424,8 @@ async function cleanup(
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'cleanup', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', ['Bot Admin']);
     const allQueues = await server.getQueueChannels();
     await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
     return SuccessMessages.cleanedup.allQueues;
@@ -434,10 +438,10 @@ async function cleanupAllQueues(
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'cleanup_help_channel', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup_help_channel', [
+        'Bot Admin'
+    ]);
     await server.updateCommandHelpChannels();
     return SuccessMessages.cleanedup.helpChannels;
 }
@@ -449,12 +453,10 @@ async function cleanupHelpChannel(
 async function showAfterSessionMessageModal(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'set_after_session_msg', [
-            'Bot Admin'
-        ])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_after_session_msg', [
+        'Bot Admin'
+    ]);
     await interaction.showModal(afterSessionMessageModal(server.guild.id));
 }
 
@@ -490,10 +492,10 @@ async function help(
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'set_logging_channel', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_logging_channel', [
+        'Bot Admin'
+    ]);
     const loggingChannel = interaction.options.getChannel('channel', true);
     if (!isTextChannel(loggingChannel)) {
         throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
@@ -509,10 +511,8 @@ async function setLoggingChannel(
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'set_queue_auto_clear', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_queue_auto_clear', ['Bot Admin']);
     await interaction.showModal(queueAutoClearModal(server.guild.id));
 }
 
@@ -523,10 +523,8 @@ async function showQueueAutoClearModal(
 async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'stop_logging', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'stop_logging', ['Bot Admin']);
     await server.setLoggingChannel(undefined);
     return SuccessMessages.stoppedLogging;
 }
@@ -538,12 +536,10 @@ async function stopLogging(
 async function setSeriousMode(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'activate_serious_mode', [
-            'Bot Admin'
-        ])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'activate_serious_mode', [
+        'Bot Admin'
+    ]);
     const onOrOff = interaction.options.getSubcommand();
     if (onOrOff === 'on') {
         await server.setSeriousServer(true);
@@ -562,10 +558,8 @@ async function setSeriousMode(
 async function createOffices(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'create_offices', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'create_offices', ['Bot Admin'])
     const categoryName = interaction.options.getString('category_name', true);
     const officeName = interaction.options.getString('office_name', true);
     const numOffices = interaction.options.getInteger('number_of_offices', true);
@@ -580,16 +574,14 @@ async function createOffices(
 
 /**
  * The `/set_roles` command
- * @param interaction 
- * @returns 
+ * @param interaction
+ * @returns
  */
 async function setRoles(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [
-        isServerInteraction(interaction),
-        isTriggeredByUserWithRolesSync(interaction, 'set_roles', ['Bot Admin'])
-    ];
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', ['Bot Admin']);
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
     if (roleType === 'bot_admin') {
