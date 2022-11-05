@@ -67,12 +67,14 @@ class AttendingServerV2 {
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
+    // Using 'Not Set' instead of undefined for easier firebase management
+
     /** role id of the bot admin role */
-    private _botAdminRoleID: Optional<string> = undefined;
+    private _botAdminRoleID: string = 'Not Set';
     /** role id of the helper role */
-    private _helperRoleID: Optional<string> = undefined;
+    private _helperRoleID: string = 'Not Set';
     /** role id of the student role */
-    private _studentRoleID: Optional<string> = undefined;
+    private _studentRoleID: string = 'Not Set';
 
     protected constructor(
         readonly user: User,
@@ -252,13 +254,25 @@ class AttendingServerV2 {
             }
             server._afterSessionMessage = externalServerData.afterSessionMessage;
         }
-        // This call must block everything else for handling empty servers
-
+        
         server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
         server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
         server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
-
-        await server.createHierarchyRoles();
+        const missingRoles = server.roles.filter(role => role.id === 'Not Set');
+        if(missingRoles.length > 0) {
+            const owner = await guild.fetchOwner();
+            await owner.send(
+                SimpleEmbed(
+                    `It seems like you haven't set up the roles for YABOB in **${server.guild.name}**. ` +
+                        `Please go to server settings -> Roles and set the roles for ` +
+                        missingRoles.map(role => role.name).join(', ') + '.\n',
+                    EmbedColor.Error
+                )
+            );
+        }
+        
+        // This call must block everything else for handling empty servers
+        // await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
             server.initAllQueues(
