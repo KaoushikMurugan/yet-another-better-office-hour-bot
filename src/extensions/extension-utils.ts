@@ -13,9 +13,9 @@ type FrozenDisplay = Omit<
     'renderLoopTimerId' | 'requestQueueEmbedRender' | 'requestForceRender'
 >;
 
-function sendLogs(serverId: string, conetent: BaseMessageOptions | string): void {
+function sendLogs(serverId: string, content: BaseMessageOptions | string): void {
     const server = attendingServers.get(serverId);
-    server?.sendLogMessage(conetent).catch(e => {
+    server?.sendLogMessage(content).catch(e => {
         console.error(red(`Failed to send logs to ${server.guild.name}.`));
         console.error(e);
     });
