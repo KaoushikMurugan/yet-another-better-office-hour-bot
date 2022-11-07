@@ -265,6 +265,11 @@ const setRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+// /setup_server_config
+const setupServerConfigCommand = new SlashCommandBuilder()
+    .setName('setup_server_config')
+    .setDescription('Sets up the server config for the bot');
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -314,7 +319,8 @@ const commandData = [
     setQueueAutoClear.toJSON(),
     activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
-    setRolesCommand.toJSON()
+    setRolesCommand.toJSON(),
+    setupServerConfigCommand.toJSON()
 ];
 
 async function postSlashCommands(

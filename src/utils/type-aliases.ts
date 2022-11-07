@@ -8,8 +8,6 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 
-import { SimpleEmbed } from './embed-helper.js';
-
 /**
  * These are just aliases to make keys of collections easier to read
  */
@@ -65,7 +63,7 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
 /**
  * SimpleEmbed return type
  */
-type YabobEmbed = ReturnType<typeof SimpleEmbed>;
+type YabobEmbed = BaseMessageOptions;
 
 export {
     GuildId,

@@ -70,11 +70,11 @@ class AttendingServerV2 {
     // Using 'Not Set' instead of undefined for easier firebase management
 
     /** role id of the bot admin role */
-    private _botAdminRoleID: string = 'Not Set';
+    private _botAdminRoleID = 'Not Set';
     /** role id of the helper role */
-    private _helperRoleID: string = 'Not Set';
+    private _helperRoleID = 'Not Set';
     /** role id of the student role */
-    private _studentRoleID: string = 'Not Set';
+    private _studentRoleID = 'Not Set';
 
     protected constructor(
         readonly user: User,
@@ -254,23 +254,24 @@ class AttendingServerV2 {
             }
             server._afterSessionMessage = externalServerData.afterSessionMessage;
         }
-        
+
         server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
         server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
         server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
         const missingRoles = server.roles.filter(role => role.id === 'Not Set');
-        if(missingRoles.length > 0) {
+        if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
             await owner.send(
                 SimpleEmbed(
                     `It seems like you haven't set up the roles for YABOB in **${server.guild.name}**. ` +
                         `Please go to server settings -> Roles and set the roles for ` +
-                        missingRoles.map(role => role.name).join(', ') + '.\n',
+                        missingRoles.map(role => role.name).join(', ') +
+                        '.\n',
                     EmbedColor.Error
                 )
             );
         }
-        
+
         // This call must block everything else for handling empty servers
         // await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready

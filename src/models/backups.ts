@@ -54,7 +54,7 @@ type ServerBackup = {
      * Seriousness of the server
      */
     seriousServer: boolean;
-    
+
     /**
      * The role id of the Bot Admin role
      */

@@ -52,13 +52,14 @@ function builtInButtonHandlerCanHandle(
 async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
+    //TODO: Add a check to see if the button press is from a queue channel
+    // For now, if queueName is absent, then it is not a queue button
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];
     await interaction.reply({
         ...SimpleEmbed(
-            `Processing button \`${
-                interaction.component.label ?? buttonName
-            }\` in \`${queueName}\` ...`,
+            `Processing button \`${interaction.component.label ?? buttonName}` +
+                (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
             EmbedColor.Neutral
         ),
         ephemeral: true
