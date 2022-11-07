@@ -961,9 +961,6 @@ class AttendingServerV2 {
 
         // If no help category is found, initialize
         if (existingOfficeCategory.length === 0) {
-            console.log(
-                cyan(`Found no office channels in ${this.guild.name}. Creating new ones.`)
-            );
             const officeCategory = await this.guild.channels.create({
                 name: categoryName,
                 type: ChannelType.GuildCategory
@@ -983,18 +980,9 @@ class AttendingServerV2 {
                             ViewChannel: false
                         }
                     );
-                    await Promise.all(
-                        this.guild.roles.cache
-                            .filter(role => role.name === 'Staff')
-                            .map(roleWithViewPermission =>
-                                officeCh.permissionOverwrites.create(
-                                    roleWithViewPermission,
-                                    {
-                                        ViewChannel: true
-                                    }
-                                )
-                            )
-                    );
+                    officeCh.permissionOverwrites.create(this._helperRoleID, {
+                        ViewChannel: true
+                    });
                 })
             );
         } else {
