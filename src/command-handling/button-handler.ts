@@ -1,5 +1,5 @@
 /** @module BuiltInHandlers */
-import { ButtonInteraction } from 'discord.js';
+import { ButtonInteraction, TextBasedChannel } from 'discord.js';
 import {
     EmbedColor,
     ErrorEmbed,
@@ -14,6 +14,7 @@ import {
     isServerInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
+import { serverConfig } from '../attending-server/server-config-messages.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -27,7 +28,13 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     join: join,
     leave: leave,
     notif: joinNotifGroup,
-    removeN: leaveNotifGroup
+    removeN: leaveNotifGroup,
+    setup_server_roles_config_1: (queueName, interaction) =>
+        createServerRoles(false, interaction),
+    // setup_server_roles_config_1a: setupServerRolesConfig1a,
+    setup_server_roles_config_2: (queueName, interaction) =>
+        createServerRoles(true, interaction)
+    // setup_server_roles_config_2a: setupServerRolesConfig2a,
 } as const;
 
 /**
@@ -56,14 +63,24 @@ async function processBuiltInButton(
     // For now, if queueName is absent, then it is not a queue button
     const [buttonName, queueName] = splitButtonQueueName(interaction);
     const buttonMethod = buttonMethodMap[buttonName];
-    await interaction.reply({
-        ...SimpleEmbed(
-            `Processing button \`${interaction.component.label ?? buttonName}` +
-                (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-            EmbedColor.Neutral
-        ),
-        ephemeral: true
-    });
+    if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+            ...SimpleEmbed(
+                `Processing button \`${interaction.component.label ?? buttonName}` +
+                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                EmbedColor.Neutral
+            )
+        });
+    } else {
+        await interaction.reply({
+            ...SimpleEmbed(
+                `Processing button \`${interaction.component.label ?? buttonName}` +
+                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
+    }
     logButtonPress(interaction, buttonName, queueName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
@@ -90,6 +107,9 @@ function splitButtonQueueName(
     interaction: ButtonInteraction<'cached'>
 ): [buttonName: string, queueName: string] {
     const delimiterPosition = interaction.customId.indexOf(' ');
+    if (delimiterPosition === -1) {
+        return [interaction.customId, ''];
+    }
     const buttonName = interaction.customId.substring(0, delimiterPosition);
     const queueName = interaction.customId.substring(delimiterPosition + 1);
     return [buttonName, queueName];
@@ -189,6 +209,28 @@ async function leaveNotifGroup(
         server.removeStudentFromNotifGroup(interaction.member, queueChannel)
     ]);
     return SuccessMessages.removedNotif(queueName);
+}
+
+/**
+ * Creates roles for the server
+ * @param forceCreate if true, will create new roles even if they already exist
+ * @param interaction
+ * @returns
+ */
+async function createServerRoles(
+    forceCreate: boolean,
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const [server] = [isServerInteraction(interaction)];
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            'Setup Roles',
+            interaction.channel as TextBasedChannel
+        )
+    );
+    await server.createHierarchyRoles(forceCreate);
+    return serverConfig.serverRolesConfigMenu(server);
 }
 
 /**

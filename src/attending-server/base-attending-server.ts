@@ -9,7 +9,8 @@ import {
     User,
     VoiceState,
     ChannelType,
-    VoiceBasedChannel
+    VoiceBasedChannel,
+    Role
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
@@ -943,6 +944,15 @@ class AttendingServerV2 {
         }
     }
 
+    /**
+     * Creates a new category with `categoryName` and creates `numOfChannels` voice channels with the name `channelName` within the category
+     * @param categoryName
+     * @param officeName
+     * @param numberOfOffices
+     *
+     * @remark createOfficeCategory('Office Hours', 'Office', 3)  will create a
+     * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
+     */
     async createOffices(
         categoryName: string,
         officeName: string,
@@ -980,7 +990,7 @@ class AttendingServerV2 {
                             ViewChannel: false
                         }
                     );
-                    officeCh.permissionOverwrites.create(this._helperRoleID, {
+                    await officeCh.permissionOverwrites.create(this._helperRoleID, {
                         ViewChannel: true
                     });
                 })
@@ -1088,14 +1098,37 @@ class AttendingServerV2 {
     /**
      * Creates all the command access hierarchy roles
      */
-    private async createHierarchyRoles(): Promise<void> {
+    async createHierarchyRoles(forceNewRoles: boolean): Promise<void> {
         const existingRoles = (await this.guild.roles.fetch())
             .filter(role => role.name !== this.user.username && role.name !== '@everyone')
             .map(role => role.name);
-        const createdRoles = await Promise.all(
-            hierarchyRoleConfigs
-                .filter(role => !existingRoles.includes(role.name))
-                .map(roleConfig => this.guild.roles.create(roleConfig))
+        let createdRoles: Role[] = [];
+        createdRoles = await Promise.all(
+            this.roles
+                .filter(
+                    role =>
+                        forceNewRoles ||
+                        (role.id === 'Not Set' && !existingRoles.includes(role.id))
+                )
+                .map(async role => {
+                    const roleConfig = hierarchyRoleConfigs.find(
+                        roleConfig => roleConfig.name === role.name
+                    );
+                    if (roleConfig !== undefined) {
+                        const newRole = await this.guild.roles.create(roleConfig);
+                        if (roleConfig.name === 'Bot Admin') {
+                            this._botAdminRoleID = newRole.id;
+                        } else if (roleConfig.name === 'Staff') {
+                            this._helperRoleID = newRole.id;
+                        } else if (roleConfig.name === 'Student') {
+                            this._studentRoleID = newRole.id;
+                        }
+                        return newRole;
+                    } else {
+                        return undefined;
+                    }
+                })
+                .filter((role): role is Promise<Role> => !!role)
         );
         if (createdRoles.length !== 0) {
             console.log('Created roles:');
@@ -1106,23 +1139,15 @@ class AttendingServerV2 {
                     })
                     .sort((a, b) => a.pos - b.pos)
             );
+            // Call server backup
+            await Promise.all(
+                this.serverExtensions.map(extension =>
+                    extension.onServerRequestBackup(this)
+                )
+            );
         } else {
             console.log(`All required roles exist in ${this.guild.name}!`);
         }
-        // Give everyone the student role
-        const studentRole = this.guild.roles.cache.find(role => role.name === 'Student');
-        await Promise.all(
-            this.guild.members.cache.map(async member => {
-                if (
-                    member.user.id !== this.user.id &&
-                    studentRole &&
-                    !member.roles.cache.has(studentRole.id) &&
-                    !member.user.bot
-                ) {
-                    await member.roles.add(studentRole);
-                }
-            })
-        );
     }
 
     /**
