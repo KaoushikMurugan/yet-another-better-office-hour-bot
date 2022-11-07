@@ -1,19 +1,19 @@
-import { ColorResolvable } from 'discord.js';
+import { Colors } from 'discord.js';
 
 export const hierarchyRoleConfigs = [
     {
         name: 'Bot Admin',
-        color: 'LUMINOUS_VIVID_PINK' as ColorResolvable,
+        color: Colors.LuminousVividPink,
         hoist: true
     },
     {
         name: 'Staff',
-        color: 'RED' as ColorResolvable,
+        color: Colors.Red,
         hoist: true
     },
     {
         name: 'Student',
-        color: 'GREEN' as ColorResolvable, // casting is safe here
+        color: Colors.Green,
         hoist: true
     }
 ];
