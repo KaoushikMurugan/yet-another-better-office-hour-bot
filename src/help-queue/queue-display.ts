@@ -14,6 +14,10 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
+import {
+    generateQueueYabobButtonId,
+    yabobButtonToString
+} from '../utils/util-functions.js';
 
 /**
  * Wrapper for discord embeds to be sent to the queue
@@ -114,7 +118,14 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('join ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId(
+                            'join',
+                            this.queueChannel.channelObj.guild.id,
+                            this.queueChannel.channelObj.id,
+                            viewModel.queueName
+                        )
+                    )
                     .setEmoji('✅')
                     .setDisabled(!viewModel.isOpen)
                     .setLabel('Join')
@@ -122,7 +133,14 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('leave ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId(
+                            'leave',
+                            this.queueChannel.channelObj.guild.id,
+                            this.queueChannel.channelObj.id,
+                            viewModel.queueName
+                        )
+                    )
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -130,14 +148,28 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('notif ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId(
+                            'notif',
+                            this.queueChannel.channelObj.guild.id,
+                            this.queueChannel.channelObj.id,
+                            viewModel.queueName
+                        )
+                    )
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('removeN ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId(
+                            'removeN',
+                            this.queueChannel.channelObj.guild.id,
+                            this.queueChannel.channelObj.id,
+                            viewModel.queueName
+                        )
+                    )
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
@@ -286,6 +318,21 @@ class QueueDisplayV2 {
         }
         return '```' + table.toString() + '```';
     }
+}
+
+function composeQueueButtonId(
+    buttonName: string,
+    serverId: string,
+    channelId: string,
+    queueName: string
+): string {
+    const yabobButtonId = generateQueueYabobButtonId(
+        buttonName,
+        serverId,
+        channelId,
+        queueName
+    );
+    return yabobButtonToString(yabobButtonId);
 }
 
 export { QueueDisplayV2 };

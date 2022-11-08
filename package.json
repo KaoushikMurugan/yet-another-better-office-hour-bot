@@ -44,6 +44,7 @@
         "google-spreadsheet": "^3.3.0",
         "googleapis": "^100.0.0",
         "lru-cache": "^7.14.0",
+        "simple-base-converter": "^1.0.17",
         "typedoc-plugin-merge-modules": "^4.0.1",
         "y18n": "^5.0.8"
     },

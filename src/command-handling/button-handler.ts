@@ -7,7 +7,7 @@ import {
     SimpleEmbed,
     ErrorLogEmbed
 } from '../utils/embed-helper.js';
-import { logButtonPress } from '../utils/util-functions.js';
+import { logButtonPress, parseYabobButtonId } from '../utils/util-functions.js';
 import { ButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
@@ -29,11 +29,9 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     leave: leave,
     notif: joinNotifGroup,
     removeN: leaveNotifGroup,
-    setup_server_roles_config_1: (queueName, interaction) =>
-        createServerRoles(false, interaction),
+    ssrc1: (queueName, interaction) => createServerRoles(false, interaction),
     // setup_server_roles_config_1a: setupServerRolesConfig1a,
-    setup_server_roles_config_2: (queueName, interaction) =>
-        createServerRoles(true, interaction)
+    ssrc2: (queueName, interaction) => createServerRoles(true, interaction)
     // setup_server_roles_config_2a: setupServerRolesConfig2a,
 } as const;
 
@@ -45,7 +43,8 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
-    const [buttonName] = splitButtonQueueName(interaction);
+    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const buttonName = yabobButtonId.n;
     return buttonName in buttonMethodMap;
 }
 
@@ -61,7 +60,9 @@ async function processBuiltInButton(
 ): Promise<void> {
     //TODO: Add a check to see if the button press is from a queue channel
     // For now, if queueName is absent, then it is not a queue button
-    const [buttonName, queueName] = splitButtonQueueName(interaction);
+    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const buttonName = yabobButtonId.n;
+    const queueName = yabobButtonId.q ?? '';
     const buttonMethod = buttonMethodMap[buttonName];
     if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
@@ -96,23 +97,6 @@ async function processBuiltInButton(
                 server.sendLogMessage(ErrorLogEmbed(err, interaction))
             ]);
         });
-}
-
-/**
- * Splits the customId into buttonName and queueName
- * @param interaction
- * @returns string tuple [buttonName, queueName]
- */
-function splitButtonQueueName(
-    interaction: ButtonInteraction<'cached'>
-): [buttonName: string, queueName: string] {
-    const delimiterPosition = interaction.customId.indexOf(' ');
-    if (delimiterPosition === -1) {
-        return [interaction.customId, ''];
-    }
-    const buttonName = interaction.customId.substring(0, delimiterPosition);
-    const queueName = interaction.customId.substring(delimiterPosition + 1);
-    return [buttonName, queueName];
 }
 
 /**
@@ -230,7 +214,12 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate);
-    return serverConfig.serverRolesConfigMenu(server);
+    return serverConfig.serverRolesConfigMenu(
+        server,
+        false,
+        interaction.channelId,
+        interaction.channel?.isDMBased() ?? false
+    );
 }
 
 /**

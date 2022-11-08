@@ -65,6 +65,19 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
  */
 type YabobEmbed = BaseMessageOptions;
 
+type YabobButton<ButtonType extends 'dm' | 'queue' | 'other'> = {
+    /** name of the button */
+    n: string;
+    /** type of button, either 'dm', 'queue', or 'other' */
+    t: ButtonType; // max length 5
+    /** server id. if in dm, to find which server it relates to */
+    s: string; // max length 20
+    /** channel id. if in dm, equivalent to userId */
+    c: string; // max length 20
+    /** queue name */
+    q: ButtonType extends 'queue' ? string : undefined; // max length 100
+};
+
 export {
     GuildId,
     GuildMemberId,
@@ -78,6 +91,7 @@ export {
     Optional,
     ModalSubmitCallback,
     YabobEmbed,
+    YabobButton,
     NoMethod,
     ConstNoMethod
 };

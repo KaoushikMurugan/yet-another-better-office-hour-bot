@@ -623,7 +623,12 @@ async function setupServerConfig(
         'Bot Admin'
     ]);
 
-    return serverConfig.serverRolesConfigMenu(server);
+    return serverConfig.serverRolesConfigMenu(
+        server,
+        false,
+        interaction.channelId,
+        false
+    );
 }
 
 /**

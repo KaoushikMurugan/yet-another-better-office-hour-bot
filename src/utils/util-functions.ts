@@ -15,7 +15,8 @@ import {
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
-
+import { YabobButton } from './type-aliases.js';
+import { convertBase } from 'simple-base-converter';
 /**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
@@ -224,6 +225,82 @@ function isValidCategoryName(categoryName: string): boolean {
     );
 }
 
+function convertSnowflakeToBase64(snowflake: string): string {
+    return convertBase(
+        snowflake,
+        '0123456789',
+        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+!@#$^'
+    );
+}
+
+function convertBase64ToSnowflake(base64: string): string {
+    return convertBase(
+        base64,
+        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+!@#$^',
+        '0123456789'
+    );
+}
+
+function generateDMYabobButtonId(
+    buttonName: string,
+    serverId: string,
+    channelId: string
+): YabobButton<'dm'> {
+    return {
+        n: buttonName,
+        t: 'dm',
+        s: serverId,
+        c: channelId,
+        q: undefined
+    };
+}
+
+function generateQueueYabobButtonId(
+    buttonName: string,
+    serverId: string,
+    channelId: string,
+    queueName: string
+): YabobButton<'queue'> {
+    return {
+        n: buttonName,
+        t: 'queue',
+        s: serverId,
+        c: channelId,
+        q: queueName
+    };
+}
+
+function generateOtherYabobButtonId(
+    buttonName: string,
+    serverId: string,
+    channelId: string
+): YabobButton<'other'> {
+    return {
+        n: buttonName,
+        t: 'other',
+        s: serverId,
+        c: channelId,
+        q: undefined
+    };
+}
+
+function yabobButtonToString(yabobButton: YabobButton<'dm' | 'other' | 'queue'>): string {
+    yabobButton.s = convertSnowflakeToBase64(yabobButton.s);
+    yabobButton.c = convertSnowflakeToBase64(yabobButton.c);
+    return JSON.stringify(yabobButton);
+}
+
+function parseYabobButtonId(
+    customButtonId: string
+): YabobButton<'dm' | 'other' | 'queue'> {
+    const yabobButtonId = JSON.parse(customButtonId) as YabobButton<
+        'dm' | 'other' | 'queue'
+    >;
+    yabobButtonId.s = convertBase64ToSnowflake(yabobButtonId.s);
+    yabobButtonId.c = convertBase64ToSnowflake(yabobButtonId.c);
+    return yabobButtonId;
+}
+
 export {
     convertMsToTime,
     convertMsToShortTime,
@@ -239,5 +316,10 @@ export {
     isCategoryChannel,
     isTextChannel,
     isQueueTextChannel,
-    isVoiceChannel
+    isVoiceChannel,
+    generateDMYabobButtonId,
+    generateQueueYabobButtonId,
+    generateOtherYabobButtonId,
+    parseYabobButtonId,
+    yabobButtonToString
 };

@@ -39,6 +39,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
+import { serverConfig } from './server-config-messages.js';
 
 /**
  * Wrapper for TextChannel
@@ -263,13 +264,7 @@ class AttendingServerV2 {
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
             await owner.send(
-                SimpleEmbed(
-                    `It seems like you haven't set up the roles for YABOB in **${server.guild.name}**. ` +
-                        `Please go to server settings -> Roles and set the roles for ` +
-                        missingRoles.map(role => role.name).join(', ') +
-                        '.\n',
-                    EmbedColor.Error
-                )
+                serverConfig.serverRolesConfigMenu(server, true, owner.id, true)
             );
         }
 
