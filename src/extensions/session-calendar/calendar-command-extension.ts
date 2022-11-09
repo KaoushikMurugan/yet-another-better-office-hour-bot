@@ -39,12 +39,12 @@ import {
     getQueueRoles,
     isCategoryChannel,
     isQueueTextChannel,
-    logButtonPress,
+    logQueueButtonPress,
     logSlashCommand
 } from '../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
-    ButtonCallback,
+    queueButtonCallback,
     CommandCallback,
     ModalSubmitCallback,
     YabobEmbed
@@ -153,7 +153,7 @@ class CalendarInteractionExtension
             ),
             ephemeral: true
         });
-        logButtonPress(interaction, buttonName, queueName);
+        logQueueButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
@@ -173,7 +173,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_public_embd_url: setPublicEmbedUrl
 } as const;
 
-const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
+const buttonMethodMap: { [buttonName: string]: queueButtonCallback } = {
     refresh: requestCalendarRefresh
 } as const;
 

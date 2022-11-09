@@ -17,7 +17,8 @@ import { CommandParseError } from '../utils/error-types.js';
 import {
     isCategoryChannel,
     isQueueTextChannel,
-    isTextChannel
+    isTextChannel,
+    parseYabobButtonId
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
@@ -35,6 +36,32 @@ function isServerInteraction(
     const server = attendingServers.get(interaction.guild.id);
     if (!server) {
         throw ExpectedParseErrors.nonServerInterction(interaction.guild.name);
+    }
+    return server;
+}
+
+/**
+ * Checks if the command came from a dm with correctly initialized YABOB
+ * - Extensions that wish to do additional checks can use this as a base
+ * @returns the {@link AttendingServerV2} object
+ */
+function isValidDMInteraction(
+    interaction:
+        | ButtonInteraction
+        | ModalSubmitInteraction
+): AttendingServerV2 {
+    console.log('is valid dm interaction');
+    if(!interaction.isChatInputCommand()){
+        
+    }
+    const yabobId = parseYabobButtonId(interaction.customId);
+    console.log('got id: ' + yabobId);
+    if (!yabobId || yabobId.t !== 'dm') {
+        throw ExpectedParseErrors.nonYabobInteraction;
+    }
+    const server = attendingServers.get(yabobId.s);
+    if (!server) {
+        throw ExpectedParseErrors.nonServerInterction(yabobId.s);
     }
     return server;
 }
@@ -181,5 +208,6 @@ export {
     isTriggeredByUserWithValidEmail,
     isTriggeredByUserWithRolesSync,
     isTriggeredByMemberWithRoles,
-    isServerInteraction
+    isServerInteraction,
+    isValidDMInteraction
 };

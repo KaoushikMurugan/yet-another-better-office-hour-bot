@@ -61,6 +61,9 @@ const ExpectedParseErrors = {
                   'I can only accept interactions in correctly initialized servers. ' +
                       `Are you sure ${guildName} has a initialized YABOB?`
               ),
+    nonYabobInteraction: new CommandParseError(
+        'This interaction is not a YABOB interaction.'
+    ),
     badAutoClearValues: new CommandParseError(
         'Please enter valid integers for both `hours` and `minutes`.'
     ),
@@ -85,7 +88,7 @@ const UnexpectedParseErrors = {
             )}\` but couldn't reply back to you.`,
             EmbedColor.Error
         ),
-    unexpectedError: (interaction: Interaction<'cached'>, err: Error) =>
+    unexpectedError: (interaction: Interaction, err: Error) =>
         SimpleEmbed(
             `An unexpected error happened when processing your interaction \`${getInteractionName(
                 interaction

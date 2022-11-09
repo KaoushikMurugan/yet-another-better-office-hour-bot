@@ -7,11 +7,16 @@ import {
     SimpleEmbed,
     ErrorLogEmbed
 } from '../utils/embed-helper.js';
-import { logButtonPress, parseYabobButtonId } from '../utils/util-functions.js';
-import { ButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
+import {
+    logDMButtonPress,
+    logQueueButtonPress,
+    parseYabobButtonId
+} from '../utils/util-functions.js';
+import { dmButtonCallback, queueButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
-    isServerInteraction
+    isServerInteraction,
+    isValidDMInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { serverConfig } from '../attending-server/server-config-messages.js';
@@ -24,7 +29,7 @@ import { serverConfig } from '../attending-server/server-config-messages.js';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 
-const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
+const queueButtonMethodMap: { [buttonName: string]: queueButtonCallback } = {
     join: join,
     leave: leave,
     notif: joinNotifGroup,
@@ -33,6 +38,11 @@ const buttonMethodMap: { [buttonName: string]: ButtonCallback } = {
     // setup_server_roles_config_1a: setupServerRolesConfig1a,
     ssrc2: (queueName, interaction) => createServerRoles(true, interaction)
     // setup_server_roles_config_2a: setupServerRolesConfig2a,
+} as const;
+
+const dmButtonMethodMap: { [buttonName: string]: dmButtonCallback } = {
+    ssrc1: (interaction) => createServerRoles_DM(false, interaction),
+    ssrc2: (interaction) => createServerRoles_DM(true, interaction)
 } as const;
 
 /**
@@ -45,7 +55,7 @@ function builtInButtonHandlerCanHandle(
 ): boolean {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
-    return buttonName in buttonMethodMap;
+    return buttonName in queueButtonMethodMap;
 }
 
 /**
@@ -63,7 +73,7 @@ async function processBuiltInButton(
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
     const queueName = yabobButtonId.q ?? '';
-    const buttonMethod = buttonMethodMap[buttonName];
+    const buttonMethod = queueButtonMethodMap[buttonName];
     if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
             ...SimpleEmbed(
@@ -82,7 +92,7 @@ async function processBuiltInButton(
             ephemeral: true
         });
     }
-    logButtonPress(interaction, buttonName, queueName);
+    logQueueButtonPress(interaction, buttonName, queueName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
     await buttonMethod?.(queueName, interaction)
@@ -95,6 +105,44 @@ async function processBuiltInButton(
                     ? interaction.editReply(ErrorEmbed(err))
                     : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
                 server.sendLogMessage(ErrorLogEmbed(err, interaction))
+            ]);
+        });
+}
+
+async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
+    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const buttonName = yabobButtonId.n;
+    const dmChannelId = yabobButtonId.c;
+    const buttonMethod = dmButtonMethodMap[buttonName];
+    if (interaction.deferred || interaction.replied) {
+        await interaction.editReply({
+            ...SimpleEmbed(
+                `Processing button \`${buttonName}\`` +
+                    `In DM ${dmChannelId} ...`,
+                EmbedColor.Neutral
+            )
+        });
+    } else {
+        await interaction.reply({
+            ...SimpleEmbed(
+                `Processing button \`${buttonName}\`` +
+                    `In DM ${dmChannelId} ...`,
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
+    }
+    logDMButtonPress(interaction, buttonName);
+    // if process is called then buttonMethod is definitely not null
+    // this is checked in app.ts with `buttonHandler.canHandle`
+    await buttonMethod?.(interaction)
+        .then(successMsg => interaction.editReply(successMsg))
+        .catch(async err => {
+            // Central error handling, reply to user with the error
+            await Promise.all([
+                interaction.replied
+                    ? interaction.editReply(ErrorEmbed(err))
+                    : interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
             ]);
         });
 }
@@ -205,7 +253,7 @@ async function createServerRoles(
     forceCreate: boolean,
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
-    const [server] = [isServerInteraction(interaction)];
+    const server = isServerInteraction(interaction);
     await server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
@@ -218,11 +266,35 @@ async function createServerRoles(
         server,
         false,
         interaction.channelId,
-        interaction.channel?.isDMBased() ?? false
+        false
+    );
+}
+
+/**
+ * Creates roles for the server
+ * Version for DM Button Interactions
+ * @param forceCreate if true, will create new roles even if they already exist
+ * @param interaction
+ * @returns
+ */
+async function createServerRoles_DM(
+    forceCreate: boolean,
+    interaction: ButtonInteraction
+): Promise<YabobEmbed> {
+    console.log('funciton called');
+    const server = isValidDMInteraction(interaction);
+    console.log('got server');
+    await server.createHierarchyRoles(forceCreate);
+    console.log('created roles');
+    return serverConfig.serverRolesConfigMenu(
+        server,
+        false,
+        interaction.channelId,
+        true
     );
 }
 
 /**
  * Only export the handler and the 'canHandle' check
  */
-export { builtInButtonHandlerCanHandle, processBuiltInButton };
+export { builtInButtonHandlerCanHandle, processBuiltInButton, processBuiltInDMButton };

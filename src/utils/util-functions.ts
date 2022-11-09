@@ -85,7 +85,7 @@ async function getQueueRoles(
  * @param buttonName
  * @param queueName
  */
-function logButtonPress(
+function logQueueButtonPress(
     interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName: string
@@ -101,6 +101,23 @@ function logButtonPress(
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
             ` - In Queue: ${queueName}`
+    );
+}
+
+function logDMButtonPress(
+    interaction: ButtonInteraction,
+    buttonName: string,
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.user.username)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Button Pressed: ${magenta(buttonName)}\n` +
+            ` - In DM`
     );
 }
 
@@ -145,7 +162,7 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
 
-function getInteractionName(interaction: Interaction<'cached'>): string {
+function getInteractionName(interaction: Interaction): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
@@ -296,7 +313,9 @@ function parseYabobButtonId(
     const yabobButtonId = JSON.parse(customButtonId) as YabobButton<
         'dm' | 'other' | 'queue'
     >;
+    console.log("asdf" + yabobButtonId);
     yabobButtonId.s = convertBase64ToSnowflake(yabobButtonId.s);
+    console.log("qwerty");
     yabobButtonId.c = convertBase64ToSnowflake(yabobButtonId.c);
     return yabobButtonId;
 }
@@ -305,7 +324,8 @@ export {
     convertMsToTime,
     convertMsToShortTime,
     getQueueRoles,
-    logButtonPress,
+    logQueueButtonPress,
+    logDMButtonPress,
     logModalSubmit,
     logSlashCommand,
     centered,

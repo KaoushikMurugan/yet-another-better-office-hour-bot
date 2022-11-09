@@ -2,7 +2,8 @@ import { Guild, Collection, VoiceState, Interaction } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
-    processBuiltInButton
+    processBuiltInButton,
+    processBuiltInDMButton
 } from './command-handling/button-handler.js';
 import {
     builtInCommandHandlerCanHandle,
@@ -87,6 +88,19 @@ client.on('guildDelete', async guild => {
  * - Modal submissions
  */
 client.on('interactionCreate', async (interaction: Interaction) => {
+    if (interaction.channel?.isDMBased()) {
+        await dispatchDMInteraction(interaction).catch(async (err: Error) => {
+            interaction.user
+                .send(UnexpectedParseErrors.unexpectedError(interaction, err))
+                .catch(() => {
+                    failedInteractions.push({
+                        username: interaction.user.username,
+                        interaction: interaction
+                    });
+                });
+            });
+        return;
+    }
     if (!interaction.inCachedGuild() || !interaction.inGuild()) {
         // required check to make sure all the types are safe
         interaction.isRepliable() &&
@@ -95,7 +109,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
             ));
         return;
     }
-    dispatchInteractions(interaction).catch(async (err: Error) => {
+    dispatchServerInteractions(interaction).catch(async (err: Error) => {
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(() => {
@@ -220,12 +234,24 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     return server;
 }
 
+async function dispatchDMInteraction(interaction: Interaction): Promise<void> {
+    if (interaction.isButton()) {
+        await processBuiltInDMButton(interaction);
+    } else {
+        interaction.isRepliable() &&
+            (await interaction.reply(
+                SimpleEmbed('I can not process this DM interaction.')
+            ));
+        return;
+    }
+}
+
 /**
  * Dispatches the interaction to different handlers.
  * @param interaction from the client.on('interactionCreate') event
  * @returns boolean, whether the command was handled
  */
-async function dispatchInteractions(
+async function dispatchServerInteractions(
     interaction: Interaction<'cached'>
 ): Promise<boolean> {
     // if it's a built-in command/button, process
