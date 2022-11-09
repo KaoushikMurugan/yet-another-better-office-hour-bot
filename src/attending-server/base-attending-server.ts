@@ -1094,33 +1094,40 @@ class AttendingServerV2 {
      * Creates all the command access hierarchy roles
      * @param forceNewRoles if true, creates new roles even it they already exist
      */
-    async createHierarchyRoles(forceNewRoles: boolean, defaultStudentIsEveryone = false): Promise<void> {
+    async createHierarchyRoles(
+        forceNewRoles: boolean,
+        defaultStudentIsEveryone: boolean
+    ): Promise<void> {
         const existingRoles = await this.guild.roles.fetch();
-        const foundRoles = await Promise.all(
-            this.roles
-                .map(async role => {
-                    const existingRole = existingRoles.find(r => r.name === role.name);
-                    if (existingRole !== undefined && !forceNewRoles) {
-                        if (role.name === 'Bot Admin') {
-                            this._botAdminRoleID = existingRole.id;
-                        } else if (role.name === 'Staff') {
-                            this._helperRoleID = existingRole.id;
-                        } else if (role.name === 'Student') {
-                            this._studentRoleID = existingRole.id;
+        let foundRoles: Role[] = [];
+        if (!forceNewRoles) {
+            foundRoles = await Promise.all(
+                this.roles
+                    .map(async role => {
+                        const existingRole = existingRoles.find(
+                            r => r.name === role.name
+                        );
+                        if (existingRole !== undefined) {
+                            if (role.name === 'Bot Admin') {
+                                this._botAdminRoleID = existingRole.id;
+                            } else if (role.name === 'Staff') {
+                                this._helperRoleID = existingRole.id;
+                            } else if (role.name === 'Student') {
+                                this._studentRoleID = defaultStudentIsEveryone
+                                    ? this.guild.roles.everyone.id
+                                    : existingRole.id;
+                            }
+                            return existingRole;
+                        } else {
+                            return undefined;
                         }
-                        return existingRole;
-                    } else {
-                        return undefined;
-                    }
-                })
-                .filter((role): role is Promise<Role> => !!role)
-        );
+                    })
+                    .filter((role): role is Promise<Role> => !!role)
+            );
+        }
         const createdRoles = await Promise.all(
             this.roles
-                .filter(
-                    role =>
-                        forceNewRoles || role.id === 'Not Set'
-                )
+                .filter(role => forceNewRoles || role.id === 'Not Set')
                 .map(async role => {
                     const roleConfig = hierarchyRoleConfigs.find(
                         roleConfig => roleConfig.name === role.name
@@ -1132,7 +1139,9 @@ class AttendingServerV2 {
                         } else if (roleConfig.name === 'Staff') {
                             this._helperRoleID = newRole.id;
                         } else if (roleConfig.name === 'Student') {
-                            this._studentRoleID = newRole.id;
+                            this._studentRoleID = defaultStudentIsEveryone
+                                ? this.guild.roles.everyone.id
+                                : newRole.id;
                         }
                         return newRole;
                     } else {
@@ -1141,7 +1150,7 @@ class AttendingServerV2 {
                 })
                 .filter((role): role is Promise<Role> => !!role)
         );
-        if(createdRoles.length !== 0 && foundRoles.length !== 0) {
+        if (createdRoles.length !== 0 || foundRoles.length !== 0) {
             // Call server backup
             await Promise.all(
                 this.serverExtensions.map(extension =>

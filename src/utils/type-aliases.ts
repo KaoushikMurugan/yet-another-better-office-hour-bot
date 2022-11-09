@@ -70,7 +70,7 @@ type YabobEmbed = BaseMessageOptions;
  * Button id format
  * Max length must be 100
  * Recommened length for
- * 
+ *
  * @example
  * {
  *  n: 'Join',

@@ -38,15 +38,17 @@ const queueButtonMethodMap: { [buttonName: string]: queueButtonCallback } = {
     leave: leave,
     notif: joinNotifGroup,
     removeN: leaveNotifGroup,
-    ssrc1: (queueName, interaction) => createServerRoles(false, interaction),
-    // setup_server_roles_config_1a: setupServerRolesConfig1a,
-    ssrc2: (queueName, interaction) => createServerRoles(true, interaction)
-    // setup_server_roles_config_2a: setupServerRolesConfig2a,
+    ssrc1: (queueName, interaction) => createServerRoles(false, false, interaction),
+    ssrc1a: (queueName, interaction) => createServerRoles(false, true, interaction),
+    ssrc2: (queueName, interaction) => createServerRoles(true, false, interaction),
+    ssrc2a: (queueName, interaction) => createServerRoles(true, true, interaction)
 } as const;
 
 const dmButtonMethodMap: { [buttonName: string]: dmButtonCallback } = {
-    ssrc1: interaction => createServerRoles_DM(false, interaction),
-    ssrc2: interaction => createServerRoles_DM(true, interaction)
+    ssrc1: interaction => createServerRoles_DM(false, false, interaction),
+    ssrc1a: interaction => createServerRoles_DM(false, true, interaction),
+    ssrc2: interaction => createServerRoles_DM(true, false, interaction),
+    ssrc2a: interaction => createServerRoles_DM(true, true, interaction)
 } as const;
 
 /**
@@ -253,6 +255,7 @@ async function leaveNotifGroup(
  */
 async function createServerRoles(
     forceCreate: boolean,
+    defaultStudentIsEveryone: boolean,
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
@@ -263,7 +266,7 @@ async function createServerRoles(
             interaction.channel as TextBasedChannel
         )
     );
-    await server.createHierarchyRoles(forceCreate);
+    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverConfig.serverRolesConfigMenu(
         server,
         false,
@@ -281,10 +284,11 @@ async function createServerRoles(
  */
 async function createServerRoles_DM(
     forceCreate: boolean,
+    defaultStudentIsEveryone: boolean,
     interaction: ButtonInteraction
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate);
+    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverConfig.serverRolesConfigMenu(server, false, interaction.channelId, true);
 }
 
