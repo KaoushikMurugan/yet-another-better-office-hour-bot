@@ -5,11 +5,7 @@ import {
     ButtonStyle
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import {
-    generateDMYabobButtonId,
-    generateOtherYabobButtonId,
-    yabobButtonToString
-} from '../utils/util-functions.js';
+import { generateYabobButtonId, yabobButtonToString } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
 const ServerConfig = {
@@ -59,20 +55,12 @@ const ServerConfig = {
         );
 
         function composeSSRCButtonId(optionNumber: string): string {
-            let newYabobButton;
-            if (isDm) {
-                newYabobButton = generateDMYabobButtonId(
-                    `ssrc${optionNumber}`,
-                    server.guild.id,
-                    channelId
-                );
-            } else {
-                newYabobButton = generateOtherYabobButtonId(
-                    `ssrc${optionNumber}`,
-                    server.guild.id,
-                    channelId
-                );
-            }
+            const newYabobButton = generateYabobButtonId(
+                isDm ? 'dm' : 'other',
+                `ssrc${optionNumber}`,
+                server.guild.id,
+                channelId
+            );
             return yabobButtonToString(newYabobButton);
         }
 

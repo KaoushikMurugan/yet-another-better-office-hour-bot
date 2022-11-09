@@ -16,7 +16,7 @@ import {
 import { convertBase } from 'simple-base-converter';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, magenta, yellow } from './command-line-colors.js';
-import { YabobButton } from './type-aliases.js';
+import { YabobButton, YabobButtonType } from './type-aliases.js';
 /**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
@@ -257,27 +257,25 @@ function isValidCategoryName(categoryName: string): boolean {
 }
 
 /**
- * Converts a snowflake (base 10) to a base182 string
+ * Just a string with all the characters in the custom base211 alphabet
+ */
+const base211charecters =
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙˚¬…æ≈ç√∫≤≥÷Œ„‰ˇÁ∏”’»ÅÍÎÏ˝ÓÔÒÚÆ¸˛Ç◊ı˜Â¯˘¿';
+
+/**
+ * Converts a snowflake (base 10) to a base211 string
  * @param snowflake
  */
-function convertSnowflakeToBase182(snowflake: string): string {
-    return convertBase(
-        snowflake,
-        '0123456789',
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ™£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙∆˚¬…æ≈ç√∫≤≥÷'
-    );
+function convertSnowflakeToBase211(snowflake: string): string {
+    return convertBase(snowflake, '0123456789', base211charecters);
 }
 
 /**
- * Converts a base182 string to a snowflake (base 10)
- * @param base182string
+ * Converts a base211 string to a snowflake (base 10)
+ * @param base211string
  */
-function convertBase182ToSnowflake(base182string: string): string {
-    return convertBase(
-        base182string,
-        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨ€άέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙∆˚¬…æ≈ç√∫≤≥÷',
-        '0123456789'
-    );
+function convertBase211ToSnowflake(base211string: string): string {
+    return convertBase(base211string, base211charecters, '0123456789');
 }
 
 /**
@@ -287,62 +285,32 @@ function convertBase182ToSnowflake(base182string: string): string {
  * @param channelId
  * @returns a {@link YabobButton}
  */
-function generateDMYabobButtonId(
-    buttonName: string,
-    serverId: string,
-    channelId: string
-): YabobButton<'dm'> {
-    return {
-        n: buttonName,
-        t: 'dm',
-        s: serverId,
-        c: channelId,
-        q: undefined
-    };
-}
-
-/**
- * Generates a yabob button id of type 'queue'
- * @param buttonName
- * @param serverId
- * @param channelId
- * @param queueName
- * @returns a {@link YabobButton}
- */
-function generateQueueYabobButtonId(
+function generateYabobButtonId<T extends YabobButtonType>(
+    type: T,
     buttonName: string,
     serverId: string,
     channelId: string,
-    queueName: string
-): YabobButton<'queue'> {
-    return {
-        n: buttonName,
-        t: 'queue',
-        s: serverId,
-        c: channelId,
-        q: queueName
-    };
-}
-
-/**
- * Generates a yabob button id of type 'other'
- * @param buttonName
- * @param serverId
- * @param channelId
- * @returns a {@link YabobButton}
- */
-function generateOtherYabobButtonId(
-    buttonName: string,
-    serverId: string,
-    channelId: string
-): YabobButton<'other'> {
-    return {
-        n: buttonName,
-        t: 'other',
-        s: serverId,
-        c: channelId,
-        q: undefined
-    };
+    queueName?: T extends 'queue' ? string : undefined
+): YabobButton<T> {
+    if (type === 'queue') {
+        if (!queueName) {
+            throw new Error('Queue name is required for queue buttons');
+        }
+        return {
+            n: buttonName,
+            t: type,
+            s: serverId,
+            c: channelId,
+            q: type === 'queue' ? queueName : undefined
+        } as YabobButton<T>;
+    } else {
+        return {
+            n: buttonName,
+            t: type,
+            s: serverId,
+            c: channelId
+        } as YabobButton<T>;
+    }
 }
 
 /**
@@ -356,8 +324,8 @@ function yabobButtonToString(
     noConvert = false
 ): string {
     if (!noConvert) {
-        yabobButton.s = convertSnowflakeToBase182(yabobButton.s);
-        yabobButton.c = convertSnowflakeToBase182(yabobButton.c);
+        yabobButton.s = convertSnowflakeToBase211(yabobButton.s);
+        yabobButton.c = convertSnowflakeToBase211(yabobButton.c);
     }
     return JSON.stringify(yabobButton);
 }
@@ -376,8 +344,8 @@ function parseYabobButtonId(
         'dm' | 'other' | 'queue'
     >;
     if (!noConvert) {
-        yabobButtonId.s = convertBase182ToSnowflake(yabobButtonId.s);
-        yabobButtonId.c = convertBase182ToSnowflake(yabobButtonId.c);
+        yabobButtonId.s = convertBase211ToSnowflake(yabobButtonId.s);
+        yabobButtonId.c = convertBase211ToSnowflake(yabobButtonId.c);
     }
     return yabobButtonId;
 }
@@ -399,11 +367,9 @@ export {
     isTextChannel,
     isQueueTextChannel,
     isVoiceChannel,
-    generateDMYabobButtonId,
-    generateQueueYabobButtonId,
-    generateOtherYabobButtonId,
+    generateYabobButtonId,
     parseYabobButtonId,
     yabobButtonToString,
-    convertSnowflakeToBase182,
-    convertBase182ToSnowflake
+    convertSnowflakeToBase211,
+    convertBase211ToSnowflake
 };

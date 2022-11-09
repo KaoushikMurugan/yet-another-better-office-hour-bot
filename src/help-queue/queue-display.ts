@@ -14,10 +14,7 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
-import {
-    generateQueueYabobButtonId,
-    yabobButtonToString
-} from '../utils/util-functions.js';
+import { generateYabobButtonId, yabobButtonToString } from '../utils/util-functions.js';
 
 /**
  * Wrapper for discord embeds to be sent to the queue
@@ -326,7 +323,8 @@ function composeQueueButtonId(
     channelId: string,
     queueName: string
 ): string {
-    const yabobButtonId = generateQueueYabobButtonId(
+    const yabobButtonId = generateYabobButtonId(
+        'queue',
         buttonName,
         serverId,
         channelId,
