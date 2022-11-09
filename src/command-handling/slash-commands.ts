@@ -265,9 +265,9 @@ const setRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-// /setup_server_config
+// /settings
 const setupServerConfigCommand = new SlashCommandBuilder()
-    .setName('setup_server_config')
+    .setName('settings')
     .setDescription('Sets up the server config for the bot');
 
 // /help

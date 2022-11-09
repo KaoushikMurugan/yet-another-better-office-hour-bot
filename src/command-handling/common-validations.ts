@@ -46,16 +46,12 @@ function isServerInteraction(
  * @returns the {@link AttendingServerV2} object
  */
 function isValidDMInteraction(
-    interaction:
-        | ButtonInteraction
-        | ModalSubmitInteraction
+    interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
-    console.log('is valid dm interaction');
-    if(!interaction.isChatInputCommand()){
-        
+    if (interaction.isChatInputCommand()) {
+        throw ExpectedParseErrors.nonYabobInteraction;
     }
     const yabobId = parseYabobButtonId(interaction.customId);
-    console.log('got id: ' + yabobId);
     if (!yabobId || yabobId.t !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }

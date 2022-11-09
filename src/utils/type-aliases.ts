@@ -34,9 +34,7 @@ type queueButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
-type dmButtonCallback = (
-    interaction: ButtonInteraction
-) => Promise<BaseMessageOptions>;
+type dmButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
@@ -68,6 +66,20 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
  */
 type YabobEmbed = BaseMessageOptions;
 
+/**
+ * Button id format
+ * Max length must be 100
+ * Recommened length for
+ * 
+ * @example
+ * {
+ *  n: 'Join',
+ *  t: 'queue',
+ *  s: '12345678901234567890',
+ *  c: '12345678901234567890',
+ *  q: 'queue name'
+ * }
+ */
 type YabobButton<ButtonType extends 'dm' | 'queue' | 'other'> = {
     /** name of the button */
     n: string;

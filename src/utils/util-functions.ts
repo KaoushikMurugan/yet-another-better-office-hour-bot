@@ -104,10 +104,7 @@ function logQueueButtonPress(
     );
 }
 
-function logDMButtonPress(
-    interaction: ButtonInteraction,
-    buttonName: string,
-): void {
+function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -313,9 +310,7 @@ function parseYabobButtonId(
     const yabobButtonId = JSON.parse(customButtonId) as YabobButton<
         'dm' | 'other' | 'queue'
     >;
-    console.log("asdf" + yabobButtonId);
     yabobButtonId.s = convertBase64ToSnowflake(yabobButtonId.s);
-    console.log("qwerty");
     yabobButtonId.c = convertBase64ToSnowflake(yabobButtonId.c);
     return yabobButtonId;
 }
@@ -341,5 +336,7 @@ export {
     generateQueueYabobButtonId,
     generateOtherYabobButtonId,
     parseYabobButtonId,
-    yabobButtonToString
+    yabobButtonToString,
+    convertSnowflakeToBase64,
+    convertBase64ToSnowflake
 };

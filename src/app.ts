@@ -98,7 +98,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
                         interaction: interaction
                     });
                 });
-            });
+        });
         return;
     }
     if (!interaction.inCachedGuild() || !interaction.inGuild()) {

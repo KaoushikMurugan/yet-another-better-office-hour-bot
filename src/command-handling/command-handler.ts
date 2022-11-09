@@ -71,7 +71,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     serious_mode: setSeriousMode,
     create_offices: createOffices,
     set_roles: setRoles,
-    setup_server_config: setupServerConfig
+    settings: setupServerConfig
 } as const;
 
 /**

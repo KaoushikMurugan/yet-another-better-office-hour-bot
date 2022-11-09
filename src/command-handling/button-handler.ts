@@ -12,7 +12,11 @@ import {
     logQueueButtonPress,
     parseYabobButtonId
 } from '../utils/util-functions.js';
-import { dmButtonCallback, queueButtonCallback, YabobEmbed } from '../utils/type-aliases.js';
+import {
+    dmButtonCallback,
+    queueButtonCallback,
+    YabobEmbed
+} from '../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
     isServerInteraction,
@@ -41,8 +45,8 @@ const queueButtonMethodMap: { [buttonName: string]: queueButtonCallback } = {
 } as const;
 
 const dmButtonMethodMap: { [buttonName: string]: dmButtonCallback } = {
-    ssrc1: (interaction) => createServerRoles_DM(false, interaction),
-    ssrc2: (interaction) => createServerRoles_DM(true, interaction)
+    ssrc1: interaction => createServerRoles_DM(false, interaction),
+    ssrc2: interaction => createServerRoles_DM(true, interaction)
 } as const;
 
 /**
@@ -117,16 +121,14 @@ async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<v
     if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
             ...SimpleEmbed(
-                `Processing button \`${buttonName}\`` +
-                    `In DM ${dmChannelId} ...`,
+                `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
                 EmbedColor.Neutral
             )
         });
     } else {
         await interaction.reply({
             ...SimpleEmbed(
-                `Processing button \`${buttonName}\`` +
-                    `In DM ${dmChannelId} ...`,
+                `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
                 EmbedColor.Neutral
             ),
             ephemeral: true
@@ -281,17 +283,9 @@ async function createServerRoles_DM(
     forceCreate: boolean,
     interaction: ButtonInteraction
 ): Promise<YabobEmbed> {
-    console.log('funciton called');
     const server = isValidDMInteraction(interaction);
-    console.log('got server');
     await server.createHierarchyRoles(forceCreate);
-    console.log('created roles');
-    return serverConfig.serverRolesConfigMenu(
-        server,
-        false,
-        interaction.channelId,
-        true
-    );
+    return serverConfig.serverRolesConfigMenu(server, false, interaction.channelId, true);
 }
 
 /**
