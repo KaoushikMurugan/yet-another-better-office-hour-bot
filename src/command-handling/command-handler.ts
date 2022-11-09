@@ -71,7 +71,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     serious_mode: setSeriousMode,
     create_offices: createOffices,
     set_roles: setRoles,
-    settings: setupServerConfig
+    settings: settingsMenu
 } as const;
 
 /**
@@ -609,13 +609,13 @@ async function setRoles(
 }
 
 /**
- * The `/setup_server_config` command
+ * The `/settings` command
  *
  * Only prompts the "menu". The button presses are handled by button-handlers.ts
  * @param interaction
  * @returns
  */
-async function setupServerConfig(
+async function settingsMenu(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);

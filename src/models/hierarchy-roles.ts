@@ -1,5 +1,8 @@
 import { Colors } from 'discord.js';
 
+/**
+ * Used to store the hierarchy role configurations
+ */
 export const hierarchyRoleConfigs = [
     {
         name: 'Bot Admin',

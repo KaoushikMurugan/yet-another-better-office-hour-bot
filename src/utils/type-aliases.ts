@@ -8,19 +8,41 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 
-/**
- * These are just aliases to make keys of collections easier to read
- */
+// These are just aliases to make keys of collections easier to read
+
+/** string */
 type GuildId = string;
+/** string */
 type GuildMemberId = string;
+/** string */
 type CategoryChannelId = string;
+/** number */
 type RenderIndex = number;
+/** string */
 type MessageId = string;
 
+/**
+ * Help message type
+ * @remark
+ * - This is used to store help messages in the help channel
+ * - It is also used to store help messages in the help command
+ * - The `nameValuePair` property is utlized by the help command to display the subcommands
+ * - The `useInHelpChannel` property is used to determine if the message should be displayed in the help channel
+ * - The `useInHelpCommand` property is used to determine if the message can be displayed in the help command
+ * - The `message` property is the actual message to be displayed
+ */
 type HelpMessage = {
+    /**
+     * Utlized by the help command to display the subcommands.
+     *
+     * Structure: {name: string, value: string}
+     */
     nameValuePair: APIApplicationCommandOptionChoice<string>;
-    useInHelpChannel: boolean; // whether it should be displayed in the help channel
-    useInHelpCommand: boolean; // whether it can be shown in the help command
+    /** Used to determine if the message should be displayed in the help channel */
+    useInHelpChannel: boolean;
+    /** Used to determine if the message can be displayed in the help command */
+    useInHelpCommand: boolean;
+    /** The actual message to be displayed */
     message: BaseMessageOptions;
 };
 
@@ -44,6 +66,7 @@ type ModalSubmitCallback = (
  * @see https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
  */
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
+
 /**
  * Utility alias for T | undefined, shorter and more readable
  * @remark
@@ -51,6 +74,7 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T
  * - Otherwise prefer `T?`
  */
 type Optional<T> = T | undefined;
+
 /**
  * Utility alias to remove all methods from a class
  */
@@ -60,7 +84,9 @@ type NoMethod<T> = Pick<
     // eslint-disable-next-line @typescript-eslint/ban-types
     { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 >;
+
 type ConstNoMethod<T> = Readonly<NoMethod<T>>;
+
 /**
  * SimpleEmbed return type
  */
@@ -69,15 +95,15 @@ type YabobEmbed = BaseMessageOptions;
 /**
  * Button id format
  * Max length must be 100
- * Recommened length for
+ * Recommened length for name is 6
  *
  * @example
  * {
- *  n: 'Join',
- *  t: 'queue',
- *  s: '12345678901234567890',
- *  c: '12345678901234567890',
- *  q: 'queue name'
+ *  n: 'Join', // name of the button
+ *  t: 'queue', // type of button, either 'dm', 'queue', or 'other'
+ *  s: '12345678901234567890', // server id. if in dm, to find which server it relates to
+ *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
+ *  q: 'queue name' // queue name
  * }
  */
 type YabobButton<ButtonType extends 'dm' | 'queue' | 'other'> = {
@@ -86,9 +112,9 @@ type YabobButton<ButtonType extends 'dm' | 'queue' | 'other'> = {
     /** type of button, either 'dm', 'queue', or 'other' */
     t: ButtonType; // max length 5
     /** server id. if in dm, to find which server it relates to */
-    s: string; // max length 20
+    s: GuildId; // max length 20
     /** channel id. if in dm, equivalent to userId */
-    c: string; // max length 20
+    c: CategoryChannelId; // max length 20
     /** queue name */
     q: ButtonType extends 'queue' ? string : undefined; // max length 100
 };

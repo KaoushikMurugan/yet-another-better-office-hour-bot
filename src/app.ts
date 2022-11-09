@@ -234,20 +234,30 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     return server;
 }
 
-async function dispatchDMInteraction(interaction: Interaction): Promise<void> {
+/**
+ * Dispatches the ineraction to different handlers.
+ * @remark This is for dm interactions only. See {@link dispatchServerInteractions}
+ * for the server interaction dispatcher
+ * @param interaction from the client.on('interactionCreate') event
+ * @returns boolean, whether the command was handled
+ */
+async function dispatchDMInteraction(interaction: Interaction): Promise<boolean> {
     if (interaction.isButton()) {
         await processBuiltInDMButton(interaction);
+        return true;
     } else {
         interaction.isRepliable() &&
             (await interaction.reply(
                 SimpleEmbed('I can not process this DM interaction.')
             ));
-        return;
+        return false;
     }
 }
 
 /**
  * Dispatches the interaction to different handlers.
+ * @remark This is for server interactions only. See {@link dispatchDMInteraction}
+ * for the dm interaction dispatcher
  * @param interaction from the client.on('interactionCreate') event
  * @returns boolean, whether the command was handled
  */

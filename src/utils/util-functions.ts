@@ -208,12 +208,21 @@ function isQueueTextChannel(
     );
 }
 
+/**
+ * Narrows the type down to text channel
+ * @param channel
+ * @returns
+ */
 function isVoiceChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is VoiceChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
 }
 
+/**
+ * Centers a string for the console/terminal by padding it with spaces
+ * @param text
+ */
 function centered(text: string): string {
     return (
         `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
@@ -222,6 +231,10 @@ function centered(text: string): string {
     );
 }
 
+/**
+ * Returns true if `channelName` can be used as a discord channel name
+ * @param channelName
+ */
 function isValidChannelName(channelName: string): boolean {
     const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
     return (
@@ -231,6 +244,10 @@ function isValidChannelName(channelName: string): boolean {
     );
 }
 
+/**
+ * Returns true if `categoryName` can be used as a discord category name
+ * @param categoryName
+ */
 function isValidCategoryName(categoryName: string): boolean {
     return (
         categoryName.length <= 100 &&
@@ -239,7 +256,11 @@ function isValidCategoryName(categoryName: string): boolean {
     );
 }
 
-function convertSnowflakeToBase64(snowflake: string): string {
+/**
+ * Converts a snowflake (base 10) to a base70 string
+ * @param snowflake
+ */
+function convertSnowflakeToBase70(snowflake: string): string {
     return convertBase(
         snowflake,
         '0123456789',
@@ -247,7 +268,11 @@ function convertSnowflakeToBase64(snowflake: string): string {
     );
 }
 
-function convertBase64ToSnowflake(base64: string): string {
+/**
+ * Converts a base70 string to a snowflake (base 10)
+ * @param base64
+ */
+function convertBase70ToSnowflake(base64: string): string {
     return convertBase(
         base64,
         '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+!@#$^',
@@ -255,6 +280,13 @@ function convertBase64ToSnowflake(base64: string): string {
     );
 }
 
+/**
+ * Converts a base to another base
+ * @param buttonName
+ * @param serverId
+ * @param channelId
+ * @returns a {@link YabobButton}
+ */
 function generateDMYabobButtonId(
     buttonName: string,
     serverId: string,
@@ -269,6 +301,14 @@ function generateDMYabobButtonId(
     };
 }
 
+/**
+ * Generates a yabob button id of type 'queue'
+ * @param buttonName
+ * @param serverId
+ * @param channelId
+ * @param queueName
+ * @returns a {@link YabobButton}
+ */
 function generateQueueYabobButtonId(
     buttonName: string,
     serverId: string,
@@ -284,6 +324,13 @@ function generateQueueYabobButtonId(
     };
 }
 
+/**
+ * Generates a yabob button id of type 'other'
+ * @param buttonName
+ * @param serverId
+ * @param channelId
+ * @returns a {@link YabobButton}
+ */
 function generateOtherYabobButtonId(
     buttonName: string,
     serverId: string,
@@ -298,20 +345,40 @@ function generateOtherYabobButtonId(
     };
 }
 
-function yabobButtonToString(yabobButton: YabobButton<'dm' | 'other' | 'queue'>): string {
-    yabobButton.s = convertSnowflakeToBase64(yabobButton.s);
-    yabobButton.c = convertSnowflakeToBase64(yabobButton.c);
+/**
+ * Converts a yabob button id to a string after converting the snowflakes to base 70
+ * @param yabobButton the yabob button
+ * @param noConvert turns off the conversion of the snowflakes
+ * @returns
+ */
+function yabobButtonToString(
+    yabobButton: YabobButton<'dm' | 'other' | 'queue'>,
+    noConvert = false
+): string {
+    if (!noConvert) {
+        yabobButton.s = convertSnowflakeToBase70(yabobButton.s);
+        yabobButton.c = convertSnowflakeToBase70(yabobButton.c);
+    }
     return JSON.stringify(yabobButton);
 }
 
+/**
+ * Parses a yabob button id and then converts the snowflakes back to base 10
+ * @param customButtonId the custom button id
+ * @param noConvert turns off the conversion of the snowflakes
+ * @returns
+ */
 function parseYabobButtonId(
-    customButtonId: string
+    customButtonId: string,
+    noConvert = false
 ): YabobButton<'dm' | 'other' | 'queue'> {
     const yabobButtonId = JSON.parse(customButtonId) as YabobButton<
         'dm' | 'other' | 'queue'
     >;
-    yabobButtonId.s = convertBase64ToSnowflake(yabobButtonId.s);
-    yabobButtonId.c = convertBase64ToSnowflake(yabobButtonId.c);
+    if (!noConvert) {
+        yabobButtonId.s = convertBase70ToSnowflake(yabobButtonId.s);
+        yabobButtonId.c = convertBase70ToSnowflake(yabobButtonId.c);
+    }
     return yabobButtonId;
 }
 
@@ -337,6 +404,6 @@ export {
     generateOtherYabobButtonId,
     parseYabobButtonId,
     yabobButtonToString,
-    convertSnowflakeToBase64,
-    convertBase64ToSnowflake
+    convertSnowflakeToBase70 as convertSnowflakeToBase64,
+    convertBase70ToSnowflake as convertBase64ToSnowflake
 };

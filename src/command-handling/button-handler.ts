@@ -69,6 +69,7 @@ function builtInButtonHandlerCanHandle(
  * - Checks if the button press is valid
  * - If so, calls the appropriate function to handle the button press
  * - Returns the appropriate message to send to the user
+ * @remark This function is for buttons inside servers. For the version that handles buttons in DMs, see {@link processBuiltInDMButton}
  * @param interaction
  */
 async function processBuiltInButton(
@@ -115,6 +116,14 @@ async function processBuiltInButton(
         });
 }
 
+/**
+ * Handles button presses
+ * - Checks if the button press is valid
+ * - If so, calls the appropriate function to handle the button press
+ * - Returns the appropriate message to send to the user
+ * @remark This function is for buttons in DMs. For the version that handles buttons in servers, see {@link processBuiltInButton}
+ * @param interaction
+ */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
