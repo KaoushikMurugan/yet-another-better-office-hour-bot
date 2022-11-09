@@ -5,18 +5,18 @@ import {
     CategoryChannel,
     ChannelType,
     ChatInputCommandInteraction,
+    GuildBasedChannel,
     GuildMember,
     Interaction,
     ModalSubmitInteraction,
-    GuildBasedChannel,
     Role,
     TextChannel,
     VoiceChannel
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
-import { cyan, yellow, magenta } from './command-line-colors.js';
-import { YabobButton } from './type-aliases.js';
 import { convertBase } from 'simple-base-converter';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { cyan, magenta, yellow } from './command-line-colors.js';
+import { YabobButton } from './type-aliases.js';
 /**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
@@ -257,25 +257,25 @@ function isValidCategoryName(categoryName: string): boolean {
 }
 
 /**
- * Converts a snowflake (base 10) to a base70 string
+ * Converts a snowflake (base 10) to a base182 string
  * @param snowflake
  */
-function convertSnowflakeToBase70(snowflake: string): string {
+function convertSnowflakeToBase182(snowflake: string): string {
     return convertBase(
         snowflake,
         '0123456789',
-        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+!@#$^'
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ™£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙∆˚¬…æ≈ç√∫≤≥÷'
     );
 }
 
 /**
- * Converts a base70 string to a snowflake (base 10)
- * @param base64
+ * Converts a base182 string to a snowflake (base 10)
+ * @param base182string
  */
-function convertBase70ToSnowflake(base64: string): string {
+function convertBase182ToSnowflake(base182string: string): string {
     return convertBase(
-        base64,
-        '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ_-+!@#$^',
+        base182string,
+        'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨ€άέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙∆˚¬…æ≈ç√∫≤≥÷',
         '0123456789'
     );
 }
@@ -356,8 +356,8 @@ function yabobButtonToString(
     noConvert = false
 ): string {
     if (!noConvert) {
-        yabobButton.s = convertSnowflakeToBase70(yabobButton.s);
-        yabobButton.c = convertSnowflakeToBase70(yabobButton.c);
+        yabobButton.s = convertSnowflakeToBase182(yabobButton.s);
+        yabobButton.c = convertSnowflakeToBase182(yabobButton.c);
     }
     return JSON.stringify(yabobButton);
 }
@@ -376,8 +376,8 @@ function parseYabobButtonId(
         'dm' | 'other' | 'queue'
     >;
     if (!noConvert) {
-        yabobButtonId.s = convertBase70ToSnowflake(yabobButtonId.s);
-        yabobButtonId.c = convertBase70ToSnowflake(yabobButtonId.c);
+        yabobButtonId.s = convertBase182ToSnowflake(yabobButtonId.s);
+        yabobButtonId.c = convertBase182ToSnowflake(yabobButtonId.c);
     }
     return yabobButtonId;
 }
@@ -404,6 +404,6 @@ export {
     generateOtherYabobButtonId,
     parseYabobButtonId,
     yabobButtonToString,
-    convertSnowflakeToBase70 as convertSnowflakeToBase64,
-    convertBase70ToSnowflake as convertBase64ToSnowflake
+    convertSnowflakeToBase182,
+    convertBase182ToSnowflake
 };
