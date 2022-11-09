@@ -1092,18 +1092,34 @@ class AttendingServerV2 {
 
     /**
      * Creates all the command access hierarchy roles
+     * @param forceNewRoles if true, creates new roles even it they already exist
      */
-    async createHierarchyRoles(forceNewRoles: boolean): Promise<void> {
-        const existingRoles = (await this.guild.roles.fetch())
-            .filter(role => role.name !== this.user.username && role.name !== '@everyone')
-            .map(role => role.name);
-        let createdRoles: Role[] = [];
-        createdRoles = await Promise.all(
+    async createHierarchyRoles(forceNewRoles: boolean, defaultStudentIsEveryone = false): Promise<void> {
+        const existingRoles = await this.guild.roles.fetch();
+        const foundRoles = await Promise.all(
+            this.roles
+                .map(async role => {
+                    const existingRole = existingRoles.find(r => r.name === role.name);
+                    if (existingRole !== undefined && !forceNewRoles) {
+                        if (role.name === 'Bot Admin') {
+                            this._botAdminRoleID = existingRole.id;
+                        } else if (role.name === 'Staff') {
+                            this._helperRoleID = existingRole.id;
+                        } else if (role.name === 'Student') {
+                            this._studentRoleID = existingRole.id;
+                        }
+                        return existingRole;
+                    } else {
+                        return undefined;
+                    }
+                })
+                .filter((role): role is Promise<Role> => !!role)
+        );
+        const createdRoles = await Promise.all(
             this.roles
                 .filter(
                     role =>
-                        forceNewRoles ||
-                        (role.id === 'Not Set' && !existingRoles.includes(role.id))
+                        forceNewRoles || role.id === 'Not Set'
                 )
                 .map(async role => {
                     const roleConfig = hierarchyRoleConfigs.find(
@@ -1125,6 +1141,14 @@ class AttendingServerV2 {
                 })
                 .filter((role): role is Promise<Role> => !!role)
         );
+        if(createdRoles.length !== 0 && foundRoles.length !== 0) {
+            // Call server backup
+            await Promise.all(
+                this.serverExtensions.map(extension =>
+                    extension.onServerRequestBackup(this)
+                )
+            );
+        }
         if (createdRoles.length !== 0) {
             console.log('Created roles:');
             console.log(
@@ -1134,11 +1158,14 @@ class AttendingServerV2 {
                     })
                     .sort((a, b) => a.pos - b.pos)
             );
-            // Call server backup
-            await Promise.all(
-                this.serverExtensions.map(extension =>
-                    extension.onServerRequestBackup(this)
-                )
+        } else if (foundRoles.length !== 0) {
+            console.log('Found roles:');
+            console.log(
+                foundRoles
+                    .map(r => {
+                        return { name: r.name, pos: r.position };
+                    })
+                    .sort((a, b) => a.pos - b.pos)
             );
         } else {
             console.log(`All required roles exist in ${this.guild.name}!`);
