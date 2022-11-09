@@ -40,7 +40,8 @@ import {
     isCategoryChannel,
     isQueueTextChannel,
     logQueueButtonPress,
-    logSlashCommand
+    logSlashCommand,
+    parseYabobButtonId
 } from '../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
@@ -103,8 +104,8 @@ class CalendarInteractionExtension
     }
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
-        const [buttonName] = splitButtonQueueName(interaction);
-        return buttonName in buttonMethodMap;
+        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        return yabobButtonId.n in buttonMethodMap;
     }
 
     override canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
@@ -144,7 +145,9 @@ class CalendarInteractionExtension
     override async processButton(
         interaction: ButtonInteraction<'cached'>
     ): Promise<void> {
-        const [buttonName, queueName] = splitButtonQueueName(interaction);
+        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        const buttonName = yabobButtonId.n;
+        const queueName = yabobButtonId.q ?? '';
         const buttonMethod = buttonMethodMap[buttonName];
         await interaction.reply({
             ...SimpleEmbed(
@@ -178,20 +181,6 @@ const buttonMethodMap: { [buttonName: string]: queueButtonCallback } = {
 } as const;
 
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
-
-/**
- * Seperates the button name and queue name from the button interaction custom id
- * @param interaction
- * @returns [buttonName, queueName]
- */
-function splitButtonQueueName(
-    interaction: ButtonInteraction
-): [buttonName: string, queueName: string] {
-    const delimiterPosition = interaction.customId.indexOf(' ');
-    const buttonName = interaction.customId.substring(0, delimiterPosition);
-    const queueName = interaction.customId.substring(delimiterPosition + 1);
-    return [buttonName, queueName];
-}
 
 /**
  * The `/set_calendar [calendar_id]` command

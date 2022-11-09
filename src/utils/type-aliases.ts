@@ -95,7 +95,7 @@ type YabobEmbed = BaseMessageOptions;
 /**
  * Button id format
  * Max length must be 100
- * Recommened length for name is 6
+ * Recommened total length for name and queue is 25
  *
  * @example
  * {
