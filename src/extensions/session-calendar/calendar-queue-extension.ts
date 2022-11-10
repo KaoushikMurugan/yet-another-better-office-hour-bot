@@ -101,28 +101,26 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
+        const [serverId, queueName, state] = [
+            this.queueChannel.channelObj.guild.id,
+            this.queueChannel.queueName,
+            calendarStates.get(this.queueChannel.channelObj.guild.id)
+        ];
+        if (!state) {
+            return;
+        }
         if (refreshCache) {
             this.lastUpdatedTimeStamp = new Date();
         }
-        const [serverId, queueName] = [
-            this.queueChannel.channelObj.guild.id,
-            this.queueChannel.queueName
-        ];
         this.upcomingSessions = refreshCache
             ? await getUpComingTutoringEvents(serverId, queueName)
             : this.upcomingSessions;
-        const calendarId = calendarStates.get(
-            this.queueChannel.channelObj.guild.id
-        )?.calendarId;
-        const publicEmbedUrl = calendarStates.get(
-            this.queueChannel.channelObj.guild.id
-        )?.publicCalendarEmbedUrl;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
             .setURL(
-                publicEmbedUrl && publicEmbedUrl?.length > 0
-                    ? publicEmbedUrl
-                    : restorePublicEmbedURL(calendarId ?? '')
+                state.publicCalendarEmbedUrl.length > 0
+                    ? state.publicCalendarEmbedUrl
+                    : restorePublicEmbedURL(state.calendarId ?? '')
             )
             .setDescription(
                 composeUpcomingSessionsEmbedBody(
