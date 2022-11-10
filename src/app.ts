@@ -190,6 +190,13 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
     }
 });
 
+client.on('roleDelete', async role => {
+    const server = attendingServers.get(role.guild.id);
+    if (server !== undefined) {
+        await server.onRoleDelete(role);
+    }
+});
+
 /**
  * Discord.js warning handling
  */

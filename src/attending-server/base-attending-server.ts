@@ -39,7 +39,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { serverConfig } from './server-config-messages.js';
+import { ServerConfig } from './server-config-messages.js';
 
 /**
  * Wrapper for TextChannel
@@ -69,7 +69,11 @@ class AttendingServerV2 {
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
-    // Using 'Not Set' instead of undefined for easier firebase management
+    // Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
+    // - https://discord.com/developers/docs/reference#snowflakes
+    // Special values for role IDs:
+    // - 'Not Set' means that the role is not set
+    // - 'Deleted' means that the role was deleted
 
     /** role id of the bot admin role */
     private _botAdminRoleID = 'Not Set';
@@ -265,13 +269,27 @@ class AttendingServerV2 {
         server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
         server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
         server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
-        const missingRoles = server.roles.filter(role => role.id === 'Not Set');
+        server.roles.forEach(role => {
+            if (guild.roles.cache.get(role.id) === undefined)
+                if (role.id === server._botAdminRoleID) {
+                    server._botAdminRoleID = 'Deleted';
+                } else if (role.id === server._helperRoleID) {
+                    server._helperRoleID = 'Deleted';
+                } else if (role.id === server._studentRoleID) {
+                    server._studentRoleID = 'Deleted';
+                }
+        });
+
+        const missingRoles = server.roles.filter(
+            role => role.id === 'Not Set' || role.id === 'Deleted'
+        );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
             await owner.send(
-                serverConfig.serverRolesConfigMenu(server, true, owner.id, true)
+                ServerConfig.serverRolesConfigMenu(server, true, owner.id, true)
             );
         }
+        //check if roles still exist
 
         // This call must block everything else for handling empty servers
         // await server.createHierarchyRoles();
@@ -1133,7 +1151,10 @@ class AttendingServerV2 {
         }
         const createdRoles = await Promise.all(
             this.roles
-                .filter(role => forceNewRoles || role.id === 'Not Set')
+                .filter(
+                    role =>
+                        forceNewRoles || role.id === 'Not Set' || role.id === 'Deleted'
+                )
                 .map(async role => {
                     const roleConfig = hierarchyRoleConfigs.find(
                         roleConfig => roleConfig.name === role.name
@@ -1185,6 +1206,25 @@ class AttendingServerV2 {
         } else {
             console.log(`All required roles exist in ${this.guild.name}!`);
         }
+    }
+
+    /**
+     * Checks the deleted `role` was a hierarchy role and if so, mark as deleted
+     * @param role the role that was deleted
+     */
+    async onRoleDelete(role: Role): Promise<void> {
+        if (role.id === this.botAdminRoleID) {
+            this._botAdminRoleID = 'Deleted';
+        }
+        if (role.id === this.helperRoleID) {
+            this._helperRoleID = 'Deleted';
+        }
+        if (role.id === this.studentRoleID) {
+            this._studentRoleID = 'Deleted';
+        }
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
 
     /**

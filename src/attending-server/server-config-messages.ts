@@ -28,23 +28,29 @@ const ServerConfig = {
                 `**Bot Admin Role:** ${
                     forServerInit
                         ? ` Role that can manage the bot and it's settings\n`
-                        : botAdminRole !== 'Not Set'
-                        ? `<@&${botAdminRole}>`
-                        : 'Not Set'
+                        : botAdminRole === 'Not Set'
+                        ? 'Not Set'
+                        : botAdminRole === 'Deleted'
+                        ? '@deleted-role'
+                        : `<@&${botAdminRole}>`
                 }\n` +
                 `**Helper Role:** ${
                     forServerInit
                         ? ` Role that allows users to host office hours\n`
-                        : helperRole !== 'Not Set'
-                        ? `<@&${helperRole}>`
-                        : 'Not Set'
+                        : helperRole === 'Not Set'
+                        ? 'Not Set'
+                        : helperRole === 'Deleted'
+                        ? '@deleted-role'
+                        : `<@&${helperRole}>`
                 }\n` +
                 `**Student Role:** ${
                     forServerInit
                         ? ` Role that allows users to join office hour queues\n`
-                        : studentRole !== 'Not Set'
-                        ? `<@&${studentRole}>`
-                        : 'Not Set'
+                        : studentRole === 'Not Set'
+                        ? 'Not Set'
+                        : studentRole === 'Deleted'
+                        ? '@deleted-role'
+                        : `<@&${studentRole}>`
                 }\n\n` +
                 `Select an option below to change the configuration.\n\n` +
                 `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
@@ -64,7 +70,7 @@ const ServerConfig = {
             return yabobButtonToString(newYabobButton);
         }
 
-        // ssrc = setup_server_roles_config_. shortened due to limited customId length
+        // ssrc = server_settings_roles_config_. shortened due to limited customId length
 
         const buttons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
@@ -96,4 +102,4 @@ const ServerConfig = {
     }
 };
 
-export { ServerConfig as serverConfig };
+export { ServerConfig };

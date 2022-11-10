@@ -43,7 +43,7 @@ import { studentCommandHelpMessages } from '../../help-channel-messages/StudentC
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverConfig } from '../attending-server/server-config-messages.js';
+import { ServerConfig } from '../attending-server/server-config-messages.js';
 
 /**
  * The map of available commands
@@ -652,7 +652,7 @@ async function settingsMenu(
         'Bot Admin'
     );
 
-    return serverConfig.serverRolesConfigMenu(
+    return ServerConfig.serverRolesConfigMenu(
         server,
         false,
         interaction.channelId,

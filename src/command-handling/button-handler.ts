@@ -23,7 +23,7 @@ import {
     isValidDMInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverConfig } from '../attending-server/server-config-messages.js';
+import { ServerConfig } from '../attending-server/server-config-messages.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -279,7 +279,7 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverConfig.serverRolesConfigMenu(
+    return ServerConfig.serverRolesConfigMenu(
         server,
         false,
         interaction.channelId,
@@ -301,7 +301,7 @@ async function createServerRoles_DM(
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverConfig.serverRolesConfigMenu(server, false, interaction.channelId, true);
+    return ServerConfig.serverRolesConfigMenu(server, false, interaction.channelId, true);
 }
 
 /**
