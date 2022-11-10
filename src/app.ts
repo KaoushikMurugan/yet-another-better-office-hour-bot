@@ -2,6 +2,7 @@ import { Guild, Collection, VoiceState, Interaction } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
+    builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
     processBuiltInDMButton
 } from './command-handling/button-handler.js';
@@ -10,7 +11,9 @@ import {
     processBuiltInCommand
 } from './command-handling/command-handler.js';
 import {
-    builtInModalHandlercanHandle,
+    builtInDMModalHandlerCanHandle,
+    builtInModalHandlerCanHandle,
+    processBuiltInDMModalSubmit,
     processBuiltInModalSubmit
 } from './command-handling/modal-handler.js';
 import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
@@ -250,8 +253,27 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  */
 async function dispatchDMInteraction(interaction: Interaction): Promise<boolean> {
     if (interaction.isButton()) {
-        await processBuiltInDMButton(interaction);
-        return true;
+        if (builtInDMButtonHandlerCanHandle(interaction)) {
+            await processBuiltInDMButton(interaction);
+            return true;
+        } else {
+            const externalDMButtonHandler = interactionExtensions
+                .get(interaction.customId)
+                ?.find(ext => ext.canHandleDMButton(interaction));
+            await externalDMButtonHandler?.processDMButton(interaction);
+            return externalDMButtonHandler !== undefined;
+        }
+    } else if (interaction.isModalSubmit()) {
+        if (builtInDMModalHandlerCanHandle(interaction)) {
+            await processBuiltInDMModalSubmit(interaction);
+            return true;
+        } else {
+            const externalDMModalHandler = interactionExtensions
+                .get(interaction.customId)
+                ?.find(ext => ext.canHandleDMModalSubmit(interaction));
+            await externalDMModalHandler?.processDMModalSubmit(interaction);
+            return externalDMModalHandler !== undefined;
+        }
     } else {
         interaction.isRepliable() &&
             (await interaction.reply(
@@ -299,7 +321,7 @@ async function dispatchServerInteractions(
         }
     }
     if (interaction.isModalSubmit()) {
-        if (builtInModalHandlercanHandle(interaction)) {
+        if (builtInModalHandlerCanHandle(interaction)) {
             await processBuiltInModalSubmit(interaction);
             return true;
         } else {

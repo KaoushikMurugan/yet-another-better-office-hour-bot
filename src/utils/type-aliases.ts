@@ -52,13 +52,16 @@ type HelpMessage = {
 type CommandCallback = (
     interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
-type queueButtonCallback = (
+type QueueButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
-type dmButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
+type DMButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction<'cached'>
+) => Promise<BaseMessageOptions>;
+type DMModalSubmitCallback = (
+    interaction: ModalSubmitInteraction
 ) => Promise<BaseMessageOptions>;
 
 /**
@@ -129,11 +132,12 @@ export {
     MessageId,
     HelpMessage,
     CommandCallback,
-    queueButtonCallback,
-    dmButtonCallback,
+    QueueButtonCallback,
+    DMButtonCallback,
     WithRequired,
     Optional,
     ModalSubmitCallback,
+    DMModalSubmitCallback,
     YabobEmbed,
     YabobButton,
     YabobButtonType,

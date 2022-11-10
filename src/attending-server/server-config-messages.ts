@@ -20,7 +20,7 @@ const ServerConfig = {
         const studentRole = server.studentRoleID;
 
         const embed = SimpleEmbed(
-            `Server Configuration for ${server.guild.name}`,
+            `🛠 Server Configuration for ${server.guild.name} 🛠`,
             EmbedColor.Aqua,
             (forServerInit
                 ? `Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: \n\n`
@@ -54,9 +54,9 @@ const ServerConfig = {
                 }\n\n` +
                 `Select an option below to change the configuration.\n\n` +
                 `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
-                `**⤷a** - Use the @everyone role for the Student role if missing\n` +
+                `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
                 `**2** - Create brand new roles for the missing roles\n` +
-                `**⤷a** - Use the @everyone role for the Student role if missing\n` +
+                `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
                 `If you want to set the roles manually, use the \`/set_roles\` command.`
         );
 

@@ -13,7 +13,8 @@ import {
     ChatInputCommandInteraction,
     GuildMember,
     VoiceChannel,
-    ModalSubmitInteraction
+    ModalSubmitInteraction,
+    CacheType
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
@@ -41,10 +42,20 @@ interface IInteractionExtension {
      */
     canHandleButton: (interaction: ButtonInteraction<'cached'>) => boolean;
     /**
+     * Whether the extension can handle DM buttons
+     * @param interaction
+     */
+    canHandleDMButton: (interaction: ButtonInteraction) => boolean;
+    /**
      * Whether the extension can handle modal submit
      * @param interaction the modal to test
      */
     canHandleModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => boolean;
+    /**
+     * Whether the extension can hendle DM modal submit
+     * @param interaction
+     */
+    canHandleDMModalSubmit: (interaction: ModalSubmitInteraction) => boolean;
     /**
      * Interface to the command processor. If the extension can handle this slash command,
      * it should reply inside this method
@@ -58,11 +69,23 @@ interface IInteractionExtension {
      */
     processButton: (interaction: ButtonInteraction<'cached'>) => Promise<void>;
     /**
+     * Interface to the DM button processor. If the extension can handle this button,
+     * it should reply inside this method
+     * @param interaction
+     */
+    processDMButton: (interaction: ButtonInteraction) => Promise<void>;
+    /**
      * Interface to the modal submit processor. If the extension can handle this button,
      * it should reply inside this method
      * @param interaction the modal that's guaranteed to be handled by this extension
      */
     processModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => Promise<void>;
+    /**
+     * Interface to the DM modal submit processor. If the extension can handle this button,
+     * it should reply inside this method
+     * @param interaction the modal that's guaranteed to be handled by this extension
+     */
+    processDMModalSubmit: (interaction: ModalSubmitInteraction) => Promise<void>;
 }
 
 /** Server Level Extension */
@@ -236,10 +259,16 @@ class BaseInteractionExtension implements IInteractionExtension {
     canHandleButton(interaction: ButtonInteraction): boolean {
         return false;
     }
+    canHandleDMButton(interactoin: ButtonInteraction): boolean {
+        return false;
+    }
     canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
         return false;
     }
     canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
+        return false;
+    }
+    canHandleDMModalSubmit(interaction: ModalSubmitInteraction): boolean {
         return false;
     }
     processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -248,7 +277,13 @@ class BaseInteractionExtension implements IInteractionExtension {
     processButton(interaction: ButtonInteraction): Promise<void> {
         return Promise.resolve();
     }
+    processDMButton(interaction: ButtonInteraction): Promise<void> {
+        return Promise.resolve();
+    }
     processModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+        return Promise.resolve();
+    }
+    processDMModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
         return Promise.resolve();
     }
 }

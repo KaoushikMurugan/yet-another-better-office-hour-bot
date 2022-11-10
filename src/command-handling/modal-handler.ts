@@ -2,7 +2,11 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
-import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases.js';
+import {
+    DMModalSubmitCallback,
+    ModalSubmitCallback,
+    YabobEmbed
+} from '../utils/type-aliases.js';
 import { logModalSubmit } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { isServerInteraction } from './common-validations.js';
@@ -12,20 +16,42 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
  * Built in handler for modal submit
  * @category Handler Class
  */
+
+/**
+ * Map of names of modal that could be sent in servers to their respective handlers
+ */
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
     after_session_message_modal: setAfterSessionMessage,
     queue_auto_clear_modal: setQueueAutoClear
 } as const;
 
 /**
+ * Map of names of modal that could be sent in dms to their respective handlers
+ */
+const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
+    // no modals in dms implemented yet
+};
+
+/**
  * Check if the modal interaction can be handled by this (in-built) handler
+ * @remark This is for modals that are prompted in servers
  * @param interaction
  * @returns
  */
-function builtInModalHandlercanHandle(
+function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
     return interaction.customId in modalMethodMap;
+}
+
+/**
+ * Check if the modal interaction can be handled by this (in-built) handler
+ * @remark This is for modals that are prompted in dms
+ * @param interaction
+ * @returns
+ */
+function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
+    return interaction.customId in dmModalMethodMap;
 }
 
 /**
@@ -61,6 +87,33 @@ async function processBuiltInModalSubmit(
                           ephemeral: true
                       }),
                 server?.sendLogMessage(ErrorLogEmbed(err, interaction))
+            ]);
+        });
+}
+
+async function processBuiltInDMModalSubmit(
+    interaction: ModalSubmitInteraction
+): Promise<void> {
+    const modalMethod = dmModalMethodMap[interaction.customId];
+    // if process is called then modalMethod is definitely not null
+    // this is checked in app.ts with `modalHandler.canHandle`
+    await modalMethod?.(interaction)
+        // Everything is reply here because showModal is guaranteed to be the 1st response
+        // modal shown => message not replied, so we always reply
+        .then(async successMsg => {
+            await interaction.reply({
+                ...successMsg,
+                ephemeral: true
+            });
+        })
+        .catch(async err => {
+            await Promise.all([
+                interaction.replied
+                    ? interaction.editReply(ErrorEmbed(err))
+                    : interaction.reply({
+                          ...ErrorEmbed(err),
+                          ephemeral: true
+                      })
             ]);
         });
 }
@@ -108,4 +161,9 @@ async function setQueueAutoClear(
 /**
  * Only export the handler and the 'canHandle' check
  */
-export { builtInModalHandlercanHandle, processBuiltInModalSubmit };
+export {
+    builtInModalHandlerCanHandle,
+    builtInDMModalHandlerCanHandle,
+    processBuiltInModalSubmit,
+    processBuiltInDMModalSubmit
+};

@@ -13,8 +13,8 @@ import {
     parseYabobButtonId
 } from '../utils/util-functions.js';
 import {
-    dmButtonCallback,
-    queueButtonCallback,
+    DMButtonCallback,
+    QueueButtonCallback,
     YabobEmbed
 } from '../utils/type-aliases.js';
 import {
@@ -33,7 +33,10 @@ import { ServerConfig } from '../attending-server/server-config-messages.js';
  * - The difference here is that a button command is guaranteed to happen in a queue as of right now
  */
 
-const queueButtonMethodMap: { [buttonName: string]: queueButtonCallback } = {
+/**
+ * Buttom method map for queue buttons
+ */
+const queueButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
     join: join,
     leave: leave,
     notif: joinNotifGroup,
@@ -44,7 +47,10 @@ const queueButtonMethodMap: { [buttonName: string]: queueButtonCallback } = {
     ssrc2a: (queueName, interaction) => createServerRoles(true, true, interaction)
 } as const;
 
-const dmButtonMethodMap: { [buttonName: string]: dmButtonCallback } = {
+/**
+ * Button method map for DM buttons
+ */
+const dmButtonMethodMap: { [buttonName: string]: DMButtonCallback } = {
     ssrc1: interaction => createServerRoles_DM(false, false, interaction),
     ssrc1a: interaction => createServerRoles_DM(false, true, interaction),
     ssrc2: interaction => createServerRoles_DM(true, false, interaction),
@@ -52,7 +58,7 @@ const dmButtonMethodMap: { [buttonName: string]: dmButtonCallback } = {
 } as const;
 
 /**
- * Check if the button interatoin can be handled by this (in-built) handler
+ * Check if the button interation can be handled by this (in-built) handler
  * @param interaction
  * @returns
  */
@@ -62,6 +68,17 @@ function builtInButtonHandlerCanHandle(
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
     return buttonName in queueButtonMethodMap;
+}
+
+/**
+ * Check if the button interation can be handled by this (in-built) handler
+ * @param interaction
+ * @returns
+ */
+function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
+    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const buttonName = yabobButtonId.n;
+    return buttonName in dmButtonMethodMap;
 }
 
 /**
@@ -307,4 +324,9 @@ async function createServerRoles_DM(
 /**
  * Only export the handler and the 'canHandle' check
  */
-export { builtInButtonHandlerCanHandle, processBuiltInButton, processBuiltInDMButton };
+export {
+    builtInButtonHandlerCanHandle,
+    builtInDMButtonHandlerCanHandle,
+    processBuiltInButton,
+    processBuiltInDMButton
+};
