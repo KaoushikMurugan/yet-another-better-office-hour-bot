@@ -102,13 +102,13 @@ class AttendingServerV2 {
     get loggingChannel(): Optional<TextChannel> {
         return this._loggingChannel;
     }
-    get botAdminRoleID(): Optional<string> {
+    get botAdminRoleID(): string {
         return this._botAdminRoleID;
     }
-    get helperRoleID(): Optional<string> {
+    get helperRoleID(): string {
         return this._helperRoleID;
     }
-    get studentRoleID(): Optional<string> {
+    get studentRoleID(): string {
         return this._studentRoleID;
     }
 
@@ -765,7 +765,8 @@ class AttendingServerV2 {
                 queueToAnnounce === undefined ||
                 !helperMember.roles.cache.some(
                     role =>
-                        role.name === targetQueue.queueName || role.name === 'Bot Admin'
+                        role.name === targetQueue.queueName ||
+                        role.id === this.botAdminRoleID
                 )
             ) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);

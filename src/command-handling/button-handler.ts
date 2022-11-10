@@ -109,8 +109,11 @@ async function processBuiltInButton(
             const server = isServerInteraction(interaction);
             await Promise.all([
                 interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err))
-                    : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
+                    ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                    : interaction.reply({
+                          ...ErrorEmbed(err, server.botAdminRoleID),
+                          ephemeral: true
+                      }),
                 server.sendLogMessage(ErrorLogEmbed(err, interaction))
             ]);
         });

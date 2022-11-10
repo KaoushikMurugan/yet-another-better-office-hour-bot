@@ -77,9 +77,13 @@ export function SimpleEmbed(
 /**
  * Creates an embed that displays an error message
  * @param err The error to display in the embed
+ * @param pingForHelp role id of the person to ping for help
  * @returns A message object that only contains the requested embed
  */
-export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
+export function ErrorEmbed(
+    err: Error,
+    pingForHelp?: string
+): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
         client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;
@@ -111,7 +115,10 @@ export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
                     (err.message.length > 256 ? err.message : '') +
                     `If you need help or think this is a mistake, ` +
                     `please post a screenshot of this message in the #help channel ` +
-                    `(or equivalent) and ping @Bot Admin.`
+                    `(or equivalent) and ping ` +
+                    (pingForHelp === undefined
+                        ? `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`
+                        : `<@&${pingForHelp}>.`)
                 ).slice(0, 1024),
                 fields: embedFields,
                 author: {

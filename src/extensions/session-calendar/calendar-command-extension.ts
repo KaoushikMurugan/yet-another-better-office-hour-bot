@@ -137,8 +137,11 @@ class CalendarInteractionExtension
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err =>
                 interaction.replied
-                    ? await interaction.editReply(ErrorEmbed(err))
-                    : await interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
+                    ? await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                    : await interaction.reply({
+                          ...ErrorEmbed(err, server.botAdminRoleID),
+                          ephemeral: true
+                      })
             );
     }
 
@@ -149,6 +152,7 @@ class CalendarInteractionExtension
         const buttonName = yabobButtonId.n;
         const queueName = yabobButtonId.q ?? '';
         const buttonMethod = buttonMethodMap[buttonName];
+
         await interaction.reply({
             ...SimpleEmbed(
                 `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
@@ -159,11 +163,15 @@ class CalendarInteractionExtension
         logQueueButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
-            .catch(async err =>
+            .catch(async err => {
+                const [server] = isServerCalendarInteraction(interaction);
                 interaction.replied
-                    ? await interaction.editReply(ErrorEmbed(err))
-                    : await interaction.reply({ ...ErrorEmbed(err), ephemeral: true })
-            );
+                    ? await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                    : await interaction.reply({
+                          ...ErrorEmbed(err, server.botAdminRoleID),
+                          ephemeral: true
+                      });
+            });
     }
 }
 
@@ -273,7 +281,7 @@ async function makeParsableCalendarTitle(
         const memberRoles = memberToUpdate.roles;
         // if they are not admin or doesn't have the queue role, reject
         if (
-            !memberRoles.cache.some(role => role.name === 'Bot Admin') &&
+            !memberRoles.cache.some(role => role.id === server.botAdminRoleID) &&
             userOption.id !== interaction.user.id
         ) {
             throw ExpectedCalendarErrors.nonAdminMakingCalendarStringForOthers;

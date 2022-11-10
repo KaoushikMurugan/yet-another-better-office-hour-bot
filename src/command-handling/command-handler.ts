@@ -135,8 +135,11 @@ async function processBuiltInCommand(
             await Promise.all([
                 // if not replied (when using modals), reply
                 interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err))
-                    : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
+                    ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                    : interaction.reply({
+                          ...ErrorEmbed(err, server.botAdminRoleID),
+                          ephemeral: true
+                      }),
                 server.sendLogMessage(ErrorLogEmbed(err, interaction))
             ]);
         });
@@ -290,7 +293,7 @@ async function clear(
     // if they are not admin or doesn't have the queue role, reject
     if (
         !member.roles.cache.some(
-            role => role.name === queue.queueName || role.name === 'Bot Admin'
+            role => role.name === queue.queueName || role.id === server.botAdminRoleID
         )
     ) {
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
