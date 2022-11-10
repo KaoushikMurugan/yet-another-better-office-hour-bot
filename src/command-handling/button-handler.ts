@@ -96,7 +96,13 @@ async function processBuiltInButton(
     // For now, if queueName is absent, then it is not a queue button
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
-    const queueName = yabobButtonId.q ?? '';
+    const server = isServerInteraction(interaction);
+    const queueName =
+        (await server.getQueueChannels()).find(
+            queueChannel => queueChannel.channelObj.id === yabobButtonId.c
+        )?.queueName ?? '';
+    // using queue channel get queue name
+
     const buttonMethod = queueButtonMethodMap[buttonName];
     if (interaction.deferred || interaction.replied) {
         await interaction.editReply({
@@ -123,7 +129,6 @@ async function processBuiltInButton(
         .then(successMsg => interaction.editReply(successMsg))
         .catch(async err => {
             // Central error handling, reply to user with the error
-            const server = isServerInteraction(interaction);
             await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))

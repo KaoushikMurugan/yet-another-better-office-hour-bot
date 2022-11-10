@@ -119,8 +119,7 @@ class QueueDisplayV2 {
                         composeQueueButtonId(
                             'join',
                             this.queueChannel.channelObj.guild.id,
-                            this.queueChannel.channelObj.id,
-                            viewModel.queueName
+                            this.queueChannel.channelObj.id
                         )
                     )
                     .setEmoji('✅')
@@ -134,8 +133,7 @@ class QueueDisplayV2 {
                         composeQueueButtonId(
                             'leave',
                             this.queueChannel.channelObj.guild.id,
-                            this.queueChannel.channelObj.id,
-                            viewModel.queueName
+                            this.queueChannel.channelObj.id
                         )
                     )
                     .setEmoji('❎')
@@ -149,8 +147,7 @@ class QueueDisplayV2 {
                         composeQueueButtonId(
                             'notif',
                             this.queueChannel.channelObj.guild.id,
-                            this.queueChannel.channelObj.id,
-                            viewModel.queueName
+                            this.queueChannel.channelObj.id
                         )
                     )
                     .setEmoji('🔔')
@@ -163,8 +160,7 @@ class QueueDisplayV2 {
                         composeQueueButtonId(
                             'removeN',
                             this.queueChannel.channelObj.guild.id,
-                            this.queueChannel.channelObj.id,
-                            viewModel.queueName
+                            this.queueChannel.channelObj.id
                         )
                     )
                     .setEmoji('🔕')
@@ -320,16 +316,9 @@ class QueueDisplayV2 {
 function composeQueueButtonId(
     buttonName: string,
     serverId: string,
-    channelId: string,
-    queueName: string
+    channelId: string
 ): string {
-    const yabobButtonId = generateYabobButtonId(
-        'queue',
-        buttonName,
-        serverId,
-        channelId,
-        queueName
-    );
+    const yabobButtonId = generateYabobButtonId('queue', buttonName, serverId, channelId);
     return yabobButtonToString(yabobButtonId);
 }
 

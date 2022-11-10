@@ -150,8 +150,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                             'queue',
                             'refresh',
                             this.queueChannel.channelObj.guild.id,
-                            this.queueChannel.channelObj.id,
-                            this.queueChannel.queueName
+                            this.queueChannel.channelObj.id
                         )
                     )
                 )

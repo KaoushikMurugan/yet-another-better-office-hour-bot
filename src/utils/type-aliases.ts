@@ -120,8 +120,6 @@ type YabobButton<YabobButtonType> = {
     s: GuildId; // max length 20
     /** channel id. if in dm, equivalent to userId */
     c: CategoryChannelId; // max length 20
-    /** queue name */
-    q: YabobButtonType extends 'queue' ? string : undefined; // max length 100
 };
 
 // prettier-ignore

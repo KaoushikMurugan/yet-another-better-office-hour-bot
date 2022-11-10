@@ -323,28 +323,14 @@ function generateYabobButtonId<T extends YabobButtonType>(
     type: T,
     buttonName: string,
     serverId: string,
-    channelId: string,
-    queueName?: T extends 'queue' ? string : undefined
+    channelId: string
 ): YabobButton<T> {
-    if (type === 'queue') {
-        if (!queueName) {
-            throw new Error('Queue name is required for queue buttons');
-        }
-        return {
-            n: buttonName,
-            t: type,
-            s: serverId,
-            c: channelId,
-            q: type === 'queue' ? queueName : undefined
-        } as YabobButton<T>;
-    } else {
-        return {
-            n: buttonName,
-            t: type,
-            s: serverId,
-            c: channelId
-        } as YabobButton<T>;
-    }
+    return {
+        n: buttonName,
+        t: type,
+        s: serverId,
+        c: channelId
+    } as YabobButton<T>;
 }
 
 /**

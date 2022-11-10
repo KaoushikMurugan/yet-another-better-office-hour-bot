@@ -45,7 +45,7 @@ import {
 } from '../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
-    queueButtonCallback,
+    QueueButtonCallback,
     CommandCallback,
     ModalSubmitCallback,
     YabobEmbed
@@ -150,7 +150,11 @@ class CalendarInteractionExtension
     ): Promise<void> {
         const yabobButtonId = parseYabobButtonId(interaction.customId);
         const buttonName = yabobButtonId.n;
-        const queueName = yabobButtonId.q ?? '';
+        const [server] = isServerCalendarInteraction(interaction);
+        const queueName =
+            (await server.getQueueChannels()).find(
+                queueChannel => queueChannel.channelObj.id === yabobButtonId.c
+            )?.queueName ?? '';
         const buttonMethod = buttonMethodMap[buttonName];
 
         await interaction.reply({
@@ -164,7 +168,6 @@ class CalendarInteractionExtension
         await buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err => {
-                const [server] = isServerCalendarInteraction(interaction);
                 interaction.replied
                     ? await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
                     : await interaction.reply({
@@ -184,7 +187,7 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_public_embd_url: setPublicEmbedUrl
 } as const;
 
-const buttonMethodMap: { [buttonName: string]: queueButtonCallback } = {
+const buttonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
     refresh: requestCalendarRefresh
 } as const;
 
