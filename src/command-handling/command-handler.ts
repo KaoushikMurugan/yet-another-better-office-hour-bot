@@ -162,6 +162,9 @@ async function queue(
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
+            if(!isValidChannelName(queueName)) {
+                throw ExpectedParseErrors.invalidChannelName;
+            }
             await server.createQueue(queueName);
             return SuccessMessages.createdQueue(queueName);
         }
@@ -600,9 +603,9 @@ async function createOffices(
     const officeName = interaction.options.getString('office_name', true);
     const numOffices = interaction.options.getInteger('number_of_offices', true);
     if (!isValidCategoryName(categoryName)) {
-        throw ExpectedParseErrors.invalidCategoryName;
+        throw ExpectedParseErrors.invalidCategoryName(categoryName);
     } else if (!isValidChannelName(officeName)) {
-        throw ExpectedParseErrors.invalidChannelName;
+        throw ExpectedParseErrors.invalidChannelName(officeName);
     }
     await server.createOffices(categoryName, officeName, numOffices);
     return SuccessMessages.createdOffices(numOffices);

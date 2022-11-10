@@ -4,7 +4,7 @@ import { Interaction } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { Optional } from '../utils/type-aliases.js';
-import { getInteractionName } from '../utils/util-functions.js';
+import { getInteractionName, isValidChannelName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
@@ -68,13 +68,13 @@ const ExpectedParseErrors = {
     messageIsTooLong: new CommandParseError(
         'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
     ),
-    invalidChannelName: new CommandParseError(
-        'Invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
-only contains alphanumeric characters, hyphens, and underscores.'
+    invalidChannelName: (channelName: string) => new CommandParseError(
+        `${channelName} is an invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+only contains alphanumeric characters, hyphens, and underscores.`
     ),
-    invalidCategoryName: new CommandParseError(
-        'Invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
-includes atleast one non-whitespace character.'
+    invalidCategoryName: (categoryName: string) => new CommandParseError(
+        `${categoryName} is an invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+includes atleast one non-whitespace character.`
     )
 } as const;
 
