@@ -6,59 +6,71 @@ import {
     SelectMenuBuilder
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { generateSelectMenuId, generateYabobButtonId, yabobButtonToString, yabobModalToString } from '../utils/util-functions.js';
+import {
+    generateSelectMenuId,
+    generateYabobButtonId,
+    yabobButtonToString,
+    yabobModalToString
+} from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
-function serverSettingsMainMenu(server: AttendingServerV2, channelId: string, isDm: boolean): BaseMessageOptions {
+function serverSettingsMainMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+): BaseMessageOptions {
     const embed = SimpleEmbed(
         `🛠 Server Configuration for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
         `**This is the main menu for server configuration.**\n\n` +
-        `Select an option from the drop-down menu below.`
+            `Select an option from the drop-down menu below.`
     );
-    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>()
-        .addComponents(
-            new SelectMenuBuilder()
-                .setCustomId(yabobModalToString(generateSelectMenuId(
-                    isDm ? 'dm' : 'other',
-                    'server-settings',
-                    server.guild.id,
-                    channelId
-                )))
-                .setPlaceholder('Select an option')
-                .addOptions([
-                    {
-                        emoji: '📝',
-                        label: 'Server Roles',
-                        description: 'Configure the server roles',
-                        value: 'server-roles'
-                    },
-                    {
-                        emoji: '📨',
-                        label: 'After Session Message',
-                        description: 'Configure the message sent after a session',
-                        value: 'after-session-message'
-                    },
-                    {
-                        emoji: '⏳',
-                        label: 'Queue Auto Clear',
-                        description: 'Configure the auto-clearing of queues',
-                        value: 'queue-auto-clear'
-                    },
-                    {
-                        emoji: '🪵',
-                        label: 'Logging Channel',
-                        description: 'Configure the logging channel',
-                        value: 'logging-channel'
-                    },
-                    {
-                        emoji: '🗓',
-                        label: 'Calendar Settings',
-                        description: 'Configure the calendar settings',
-                        value: 'calendar-settings'
-                    }
-                ])
-        );
+    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+        new SelectMenuBuilder()
+            .setCustomId(
+                yabobModalToString(
+                    generateSelectMenuId(
+                        isDm ? 'dm' : 'other',
+                        'server_settings',
+                        server.guild.id,
+                        channelId
+                    )
+                )
+            )
+            .setPlaceholder('Select an option')
+            .addOptions([
+                {
+                    emoji: '📝',
+                    label: 'Server Roles',
+                    description: 'Configure the server roles',
+                    value: 'server-roles'
+                },
+                {
+                    emoji: '📨',
+                    label: 'After Session Message',
+                    description: 'Configure the message sent after a session',
+                    value: 'after-session-message'
+                },
+                {
+                    emoji: '⏳',
+                    label: 'Queue Auto Clear',
+                    description: 'Configure the auto-clearing of queues',
+                    value: 'queue-auto-clear'
+                },
+                {
+                    emoji: '🪵',
+                    label: 'Logging Channel',
+                    description: 'Configure the logging channel',
+                    value: 'logging-channel'
+                },
+                {
+                    emoji: '🗓',
+                    label: 'Calendar Settings',
+                    description: 'Configure the calendar settings',
+                    value: 'calendar-settings'
+                }
+            ])
+    );
     return { embeds: embed.embeds, components: [selectMenu] };
 }
 

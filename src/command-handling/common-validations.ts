@@ -5,7 +5,8 @@ import {
     GuildMember,
     ButtonInteraction,
     ModalSubmitInteraction,
-    PermissionsBitField
+    PermissionsBitField,
+    SelectMenuInteraction
 } from 'discord.js';
 import {
     AttendingServerV2,
@@ -32,6 +33,7 @@ function isServerInteraction(
         | ChatInputCommandInteraction<'cached'>
         | ButtonInteraction<'cached'>
         | ModalSubmitInteraction<'cached'>
+        | SelectMenuInteraction<'cached'>
 ): AttendingServerV2 {
     const server = attendingServers.get(interaction.guild.id);
     if (!server) {

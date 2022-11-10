@@ -39,7 +39,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { serverRolesConfigMenu, serverSettingsMainMenu } from './server-config-messages.js';
+import { serverRolesConfigMenu } from './server-config-messages.js';
 
 /**
  * Wrapper for TextChannel
@@ -285,9 +285,7 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(
-                serverRolesConfigMenu(server, true, owner.id, true)
-            );
+            await owner.send(serverRolesConfigMenu(server, true, owner.id, true));
         }
         //check if roles still exist
 

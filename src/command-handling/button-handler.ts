@@ -23,7 +23,7 @@ import {
     isValidDMInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverRolesConfigMenu, serverSettingsMainMenu } from '../attending-server/server-config-messages.js';
+import { serverRolesConfigMenu } from '../attending-server/server-config-messages.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -92,7 +92,6 @@ function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolea
 async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    //TODO: Add a check to see if the button press is from a queue channel
     // For now, if queueName is absent, then it is not a queue button
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
@@ -301,12 +300,7 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(
-        server,
-        false,
-        interaction.channelId,
-        false
-    );
+    return serverRolesConfigMenu(server, false, interaction.channelId, false);
 }
 
 /**

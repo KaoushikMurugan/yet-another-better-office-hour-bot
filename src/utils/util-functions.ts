@@ -16,7 +16,14 @@ import {
 import { convertBase } from 'simple-base-converter';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, magenta, yellow } from './command-line-colors.js';
-import { YabobActionableComponentCategory, YabobActionableComponentInfo, YabobButton, YabobButtonType, YabobModalType, YabobSelectMenuType } from './type-aliases.js';
+import {
+    YabobActionableComponentCategory,
+    YabobActionableComponentInfo,
+    YabobButton,
+    YabobButtonType,
+    YabobModalType,
+    YabobSelectMenuType
+} from './type-aliases.js';
 
 /**
  * Centers a string for the console/terminal by padding it with spaces
@@ -408,12 +415,16 @@ function parseYabobActionableComponentId(
     customButtonId: string,
     noConvert = false
 ): YabobActionableComponentInfo<YabobActionableComponentCategory> {
-    const yabobActionableComponentId = JSON.parse(customButtonId) as YabobButton<
-    YabobActionableComponentCategory
-    >;
+    const yabobActionableComponentId = JSON.parse(
+        customButtonId
+    ) as YabobButton<YabobActionableComponentCategory>;
     if (!noConvert) {
-        yabobActionableComponentId.s = convertBase211ToSnowflake(yabobActionableComponentId.s);
-        yabobActionableComponentId.c = convertBase211ToSnowflake(yabobActionableComponentId.c);
+        yabobActionableComponentId.s = convertBase211ToSnowflake(
+            yabobActionableComponentId.s
+        );
+        yabobActionableComponentId.c = convertBase211ToSnowflake(
+            yabobActionableComponentId.c
+        );
     }
     return yabobActionableComponentId;
 }

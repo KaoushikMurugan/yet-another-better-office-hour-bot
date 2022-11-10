@@ -43,7 +43,7 @@ import { studentCommandHelpMessages } from '../../help-channel-messages/StudentC
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverRolesConfigMenu, serverSettingsMainMenu } from '../attending-server/server-config-messages.js';
+import { serverSettingsMainMenu } from '../attending-server/server-config-messages.js';
 
 /**
  * The map of available commands
@@ -162,7 +162,7 @@ async function queue(
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
-            if(!isValidChannelName(queueName)) {
+            if (!isValidChannelName(queueName)) {
                 throw ExpectedParseErrors.invalidChannelName;
             }
             await server.createQueue(queueName);
@@ -655,11 +655,7 @@ async function settingsMenu(
         'Bot Admin'
     );
 
-    return serverSettingsMainMenu(
-        server,
-        interaction.channelId,
-        false
-    );
+    return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**

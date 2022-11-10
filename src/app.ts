@@ -27,6 +27,10 @@ import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
+import {
+    builtInSelectMenuHandlerCanHandle,
+    processBuiltInSelectMenu
+} from './command-handling/select-menu-handler.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
 const failedInteractions: { username: string; interaction: Interaction }[] = [];
@@ -330,6 +334,14 @@ async function dispatchServerInteractions(
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             await externalModalHandler?.processModalSubmit(interaction);
             return externalModalHandler !== undefined;
+        }
+    }
+    if (interaction.isSelectMenu()) {
+        if (builtInSelectMenuHandlerCanHandle(interaction)) {
+            await processBuiltInSelectMenu(interaction);
+            return true;
+        } else {
+            return false;
         }
     }
     return false;

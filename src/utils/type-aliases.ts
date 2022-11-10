@@ -5,7 +5,8 @@ import {
     BaseMessageOptions,
     ButtonInteraction,
     ChatInputCommandInteraction,
-    ModalSubmitInteraction
+    ModalSubmitInteraction,
+    SelectMenuInteraction
 } from 'discord.js';
 
 /**
@@ -89,6 +90,12 @@ type ModalSubmitCallback = (
 type DMModalSubmitCallback = (
     interaction: ModalSubmitInteraction
 ) => Promise<BaseMessageOptions>;
+type SelectMenuCallback = (
+    interaction: SelectMenuInteraction<'cached'>
+) => Promise<BaseMessageOptions>;
+type DMSelectMenuCallback = (
+    interaction: SelectMenuInteraction
+) => Promise<BaseMessageOptions>;
 
 /**
  * SimpleEmbed return type
@@ -137,7 +144,8 @@ type YabobModal<YabobModalType> = YabobActionableComponentInfo<YabobModalType>;
 /** Location of the Yabob Select Menu */
 type YabobSelectMenuType = YabobActionableComponentCategory;
 /** Yabob Select Menu id format */
-type YabobSelectMenu<YabobSelectMenuType> = YabobActionableComponentInfo<YabobSelectMenuType>;
+type YabobSelectMenu<YabobSelectMenuType> =
+    YabobActionableComponentInfo<YabobSelectMenuType>;
 
 // prettier-ignore
 export {
@@ -160,6 +168,8 @@ export {
     DMButtonCallback,
     ModalSubmitCallback,
     DMModalSubmitCallback,
+    SelectMenuCallback,
+    DMSelectMenuCallback,
     
     YabobEmbed,
 
