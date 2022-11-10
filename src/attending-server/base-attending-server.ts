@@ -113,27 +113,32 @@ class AttendingServerV2 {
     }
 
     /**
-     * Returns an array of the roles for this server in increasing order of hierarchy
-     * - The first element is the lowest hierarchy role
-     * - The last element is the highest hierarchy role
+     * Returns an array of the roles for this server in decreasing order of hierarchy
+     * - The first element is the highest hierarchy role
+     * - The last element is the lowest hierarchy role
      * - [Student, Helper, Bot Admin]
      * @returns: { name: string, id: string }[]
      */
     get roles(): { name: string; id: string }[] {
         return [
             {
-                name: 'Student',
-                id: this._studentRoleID ?? 'Not Set'
+                name: 'Bot Admin',
+                id: this._botAdminRoleID
             },
             {
                 name: 'Staff',
-                id: this._helperRoleID ?? 'Not Set'
+                id: this._helperRoleID
             },
             {
-                name: 'Bot Admin',
-                id: this._botAdminRoleID ?? 'Not Set'
+                name: 'Student',
+                id: this._studentRoleID
             }
         ];
+        // {
+        //     ['Bot Admin']: this._botAdminRoleID,
+        //     ['Helper']: this._helperRoleID,
+        //     ['Student']: this._studentRoleID
+        // }
     }
 
     /**

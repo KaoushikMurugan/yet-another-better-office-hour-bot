@@ -8,13 +8,11 @@ import { getInteractionName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
-        requiredRoleIDs: string[],
+        lowestRequiredRoleID: string,
         commandName: string
     ): CommandParseError =>
         new CommandParseError(
-            `You need to have: [${requiredRoleIDs
-                .map(roleID => `<@${roleID}>`)
-                .join(' or ')}] to use \`/${commandName}\`.`
+            `You need to have the role <@&${lowestRequiredRoleID}> or higher to use the \`${commandName}\` command.`
         ),
     invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
@@ -93,7 +91,7 @@ const UnexpectedParseErrors = {
             `An unexpected error happened when processing your interaction \`${getInteractionName(
                 interaction
             )}\`. ` +
-                'Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent). ',
+                'Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).',
             EmbedColor.Error,
             `${err.name}, ${err.message}`
         )

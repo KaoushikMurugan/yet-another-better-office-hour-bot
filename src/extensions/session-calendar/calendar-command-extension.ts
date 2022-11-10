@@ -206,9 +206,7 @@ async function updateCalendarId(
         })
     ];
     const [server, state] = isServerCalendarInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', [
-        'Bot Admin'
-    ]);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', 'Bot Admin');
     await Promise.all([
         state.setCalendarId(newCalendarId),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
@@ -225,9 +223,12 @@ async function unsetCalendarId(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'unset_calendar', [
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'unset_calendar',
         'Bot Admin'
-    ]);
+    );
     await Promise.all([
         state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
@@ -271,7 +272,7 @@ async function makeParsableCalendarTitle(
         server,
         interaction.member,
         'make_calendar_string',
-        ['Bot Admin', 'Staff']
+        'Staff'
     );
     const calendarDisplayName = interaction.options.getString('calendar_name', true);
     const userOption = interaction.options.getUser('user', false);
@@ -341,9 +342,7 @@ async function setPublicEmbedUrl(
     const [server, state] = isServerCalendarInteraction(interaction);
     const rawUrl = interaction.options.getString('url', true);
     const enable = interaction.options.getBoolean('enable', true);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', [
-        'Bot Admin'
-    ]);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', 'Bot Admin');
     if (enable) {
         try {
             new URL(rawUrl); // call this constructor to check if URL is valid

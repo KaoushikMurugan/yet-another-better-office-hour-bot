@@ -64,6 +64,7 @@ function isValidDMInteraction(
 
 /**
  * Checks if the triggerer has the required roles.
+ * @deprecated
  * @param commandName the command used
  * @returns GuildMember object of the triggerer
  */
@@ -76,25 +77,28 @@ function isTriggeredByUserWithRolesSync(
     requiredRoles: string[]
 ): GuildMember {
     if (!interaction.member.roles.cache.some(role => requiredRoles.includes(role.name))) {
-        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+        throw ExpectedParseErrors.missingHierarchyRoles(
+            requiredRoles[0] ?? '',
+            commandName
+        );
     }
     return interaction.member;
 }
 
 /**
- * Checks if the triggerer has the required roles.
+ * Checks if the triggerer has the any role above or equal to the `lowestRequiredRole`.
  * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
  * @param member the member who triggered the interaction
  * @param commandName the command used
- * @param requiredRoles the roles to check, roles have OR relationship
+ * @param lowestRequiredRole the minimum role required to use the command
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByMemberWithRoles(
     server: AttendingServerV2,
     member: GuildMember | null,
     commandName: string,
-    requiredRoles: string[]
+    lowestRequiredRole: string
 ): GuildMember {
     if (member === null) {
         throw ExpectedParseErrors.nonServerInterction();
@@ -107,20 +111,17 @@ function isTriggeredByMemberWithRoles(
     let hasARequiredRole = false;
     const missingRoles: string[] = [];
 
-    server.roles.forEach(role => {
-        if (requiredRoles.includes(role.name)) {
-            if (role.id === 'Not Set') {
-                missingRoles.push(role.name);
-            } else if (userRoleIDs.includes(role.id)) {
-                hasARequiredRole = true;
-            }
-        }
-    });
+    for (const role of server.roles) {
+        hasARequiredRole = userRoleIDs.includes(role.id);
+        // If reached the lowest required role, stop checking
+        if (role.id === lowestRequiredRole || hasARequiredRole) break;
+    }
+
     if (!hasARequiredRole) {
         if (missingRoles.length > 0) {
             throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
         }
-        throw ExpectedParseErrors.missingHierarchyRoles(requiredRoles, commandName);
+        throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
     }
     return member as GuildMember;
 }
