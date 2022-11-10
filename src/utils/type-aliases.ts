@@ -95,32 +95,49 @@ type DMModalSubmitCallback = (
  */
 type YabobEmbed = BaseMessageOptions;
 
-type YabobButtonType = 'dm' | 'queue' | 'other';
+/**
+ * Location of the Actionable Component (i.e. button, modal, select menu)
+ */
+type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
 
 /**
- * Button id format
+ * Actionable Component id format
  * Max length must be 100
- * Recommened total length for name and queue is 51
+ * Recommened total length for name is 51
  *
  * @example
  * {
- *  n: 'Join', // name of the button
- *  t: 'queue', // type of button, either 'dm', 'queue', or 'other'
+ *  n: 'Join', // name of the actionable component
+ *  t: 'queue', // type of actionable component, either 'dm', 'queue', or 'other'
  *  s: '12345678901234567890', // server id. if in dm, to find which server it relates to
  *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
- *  q: 'queue name' // queue name
  * }
  */
-type YabobButton<YabobButtonType> = {
+type YabobActionableComponentInfo<YabobActionableComponentCategory> = {
     /** name of the button */
     n: string;
     /** type of button, either 'dm', 'queue', or 'other' */
-    t: YabobButtonType; // max length 5
+    t: YabobActionableComponentCategory; // max length 5
     /** server id. if in dm, to find which server it relates to */
-    s: GuildId; // max length 20
+    s: GuildId; // max length 20, 8-9 after compression
     /** channel id. if in dm, equivalent to userId */
-    c: CategoryChannelId; // max length 20
+    c: CategoryChannelId; // max length 20, 8-9 after compression
 };
+
+// type alias for better readability
+/** Location of the Yabob Button */
+type YabobButtonType = YabobActionableComponentCategory;
+/** Yabob Button id format */
+type YabobButton<YabobButtonType> = YabobActionableComponentInfo<YabobButtonType>;
+/** Location of the Yabob Modal */
+type YabobModalType = YabobActionableComponentCategory;
+/** Yabob Modal id format */
+type YabobModal<YabobModalType> = YabobActionableComponentInfo<YabobModalType>;
+
+/** Location of the Yabob Select Menu */
+type YabobSelectMenuType = YabobActionableComponentCategory;
+/** Yabob Select Menu id format */
+type YabobSelectMenu<YabobSelectMenuType> = YabobActionableComponentInfo<YabobSelectMenuType>;
 
 // prettier-ignore
 export {
@@ -145,6 +162,14 @@ export {
     DMModalSubmitCallback,
     
     YabobEmbed,
+
+    YabobActionableComponentCategory,
+    YabobActionableComponentInfo,
+
     YabobButtonType,
-    YabobButton
+    YabobButton,
+    YabobModalType,
+    YabobModal,
+    YabobSelectMenuType,
+    YabobSelectMenu,
 };

@@ -16,7 +16,7 @@ import {
 import { convertBase } from 'simple-base-converter';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, magenta, yellow } from './command-line-colors.js';
-import { YabobButton, YabobButtonType } from './type-aliases.js';
+import { YabobActionableComponentCategory, YabobActionableComponentInfo, YabobButton, YabobButtonType, YabobModalType, YabobSelectMenuType } from './type-aliases.js';
 
 /**
  * Centers a string for the console/terminal by padding it with spaces
@@ -319,7 +319,7 @@ function convertBase211ToSnowflake(base211string: string): string {
  * @param channelId
  * @returns a {@link YabobButton}
  */
-function generateYabobButtonId<T extends YabobButtonType>(
+function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
     type: T,
     buttonName: string,
     serverId: string,
@@ -333,14 +333,41 @@ function generateYabobButtonId<T extends YabobButtonType>(
     } as YabobButton<T>;
 }
 
+function generateYabobButtonId<T extends YabobButtonType>(
+    type: T,
+    buttonName: string,
+    serverId: string,
+    channelId: string
+): YabobButton<T> {
+    return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
+}
+
+function generateYabobModalId<T extends YabobModalType>(
+    type: T,
+    buttonName: string,
+    serverId: string,
+    channelId: string
+): YabobButton<T> {
+    return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
+}
+
+function generateSelectMenuId<T extends YabobSelectMenuType>(
+    type: T,
+    buttonName: string,
+    serverId: string,
+    channelId: string
+): YabobButton<T> {
+    return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
+}
+
 /**
  * Converts a yabob button id to a string after converting the snowflakes to base 70
  * @param yabobButton the yabob button
  * @param noConvert turns off the conversion of the snowflakes
  * @returns
  */
-function yabobButtonToString(
-    yabobButton: YabobButton<'dm' | 'other' | 'queue'>,
+function yabobActionableComponentToString(
+    yabobButton: YabobActionableComponentInfo<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     if (!noConvert) {
@@ -350,24 +377,66 @@ function yabobButtonToString(
     return JSON.stringify(yabobButton);
 }
 
+function yabobButtonToString(
+    yabobButton: YabobButton<'dm' | 'other' | 'queue'>,
+    noConvert = false
+): string {
+    return yabobActionableComponentToString(yabobButton, noConvert);
+}
+
+function yabobModalToString(
+    yabobModal: YabobButton<'dm' | 'other' | 'queue'>,
+    noConvert = false
+): string {
+    return yabobActionableComponentToString(yabobModal, noConvert);
+}
+
+function yabobSelectMenuToString(
+    yabobSelectMenu: YabobButton<'dm' | 'other' | 'queue'>,
+    noConvert = false
+): string {
+    return yabobActionableComponentToString(yabobSelectMenu, noConvert);
+}
+
 /**
  * Parses a yabob button id and then converts the snowflakes back to base 10
  * @param customButtonId the custom button id
  * @param noConvert turns off the conversion of the snowflakes
  * @returns
  */
+function parseYabobActionableComponentId(
+    customButtonId: string,
+    noConvert = false
+): YabobActionableComponentInfo<YabobActionableComponentCategory> {
+    const yabobActionableComponentId = JSON.parse(customButtonId) as YabobButton<
+    YabobActionableComponentCategory
+    >;
+    if (!noConvert) {
+        yabobActionableComponentId.s = convertBase211ToSnowflake(yabobActionableComponentId.s);
+        yabobActionableComponentId.c = convertBase211ToSnowflake(yabobActionableComponentId.c);
+    }
+    return yabobActionableComponentId;
+}
+
 function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
-): YabobButton<'dm' | 'other' | 'queue'> {
-    const yabobButtonId = JSON.parse(customButtonId) as YabobButton<
-        'dm' | 'other' | 'queue'
-    >;
-    if (!noConvert) {
-        yabobButtonId.s = convertBase211ToSnowflake(yabobButtonId.s);
-        yabobButtonId.c = convertBase211ToSnowflake(yabobButtonId.c);
-    }
-    return yabobButtonId;
+): YabobButton<YabobButtonType> {
+    return parseYabobActionableComponentId(customButtonId, noConvert);
+}
+
+function parseYabobModalId(
+    customButtonId: string,
+    noConvert = false
+): YabobButton<YabobModalType> {
+    return parseYabobActionableComponentId(customButtonId, noConvert);
+}
+
+function parseYabobSelectMenuId(
+    customButtonId: string,
+    noConvert = false
+): YabobButton<YabobSelectMenuType> {
+    return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 // prettier-ignore
@@ -396,8 +465,17 @@ export {
     
     convertSnowflakeToBase211,
     convertBase211ToSnowflake,
-    
+
     generateYabobButtonId,
+    generateYabobModalId,
+    generateSelectMenuId,
+    
     yabobButtonToString,
-    parseYabobButtonId
+    yabobModalToString,
+    yabobSelectMenuToString,
+
+    parseYabobButtonId,
+    parseYabobModalId,
+    parseYabobSelectMenuId
+
 };
