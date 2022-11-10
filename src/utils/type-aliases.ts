@@ -8,6 +8,32 @@ import {
     ModalSubmitInteraction
 } from 'discord.js';
 
+/**
+ * Marks 1 property in T as required.
+ * @see https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
+ */
+type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
+
+/**
+ * Utility alias for T | undefined, shorter and more readable
+ * @remark
+ * - Use this when the `T?` syntax is unavailable such as function return types
+ * - Otherwise prefer `T?`
+ */
+type Optional<T> = T | undefined;
+
+/**
+ * Utility alias to remove all methods from a class
+ */
+type NoMethod<T> = Pick<
+    T,
+    // disabling this warning is safe because we are removing all functions
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
+>;
+
+type ConstNoMethod<T> = Readonly<NoMethod<T>>;
+
 // These are just aliases to make keys of collections easier to read
 
 /** string */
@@ -16,10 +42,10 @@ type GuildId = string;
 type GuildMemberId = string;
 /** string */
 type CategoryChannelId = string;
-/** number */
-type RenderIndex = number;
 /** string */
 type MessageId = string;
+/** number */
+type RenderIndex = number;
 
 /**
  * Help message type
@@ -65,32 +91,6 @@ type DMModalSubmitCallback = (
 ) => Promise<BaseMessageOptions>;
 
 /**
- * Marks 1 property in T as required.
- * @see https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
- */
-type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
-
-/**
- * Utility alias for T | undefined, shorter and more readable
- * @remark
- * - Use this when the `T?` syntax is unavailable such as function return types
- * - Otherwise prefer `T?`
- */
-type Optional<T> = T | undefined;
-
-/**
- * Utility alias to remove all methods from a class
- */
-type NoMethod<T> = Pick<
-    T,
-    // disabling this warning is safe because we are removing all functions
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
->;
-
-type ConstNoMethod<T> = Readonly<NoMethod<T>>;
-
-/**
  * SimpleEmbed return type
  */
 type YabobEmbed = BaseMessageOptions;
@@ -124,23 +124,29 @@ type YabobButton<YabobButtonType> = {
     q: YabobButtonType extends 'queue' ? string : undefined; // max length 100
 };
 
+// prettier-ignore
 export {
+    WithRequired,
+    Optional,
+    
+    NoMethod,
+    ConstNoMethod,
+    
     GuildId,
     GuildMemberId,
     CategoryChannelId,
-    RenderIndex,
     MessageId,
+    RenderIndex,
+    
     HelpMessage,
+    
     CommandCallback,
     QueueButtonCallback,
     DMButtonCallback,
-    WithRequired,
-    Optional,
     ModalSubmitCallback,
     DMModalSubmitCallback,
+    
     YabobEmbed,
-    YabobButton,
     YabobButtonType,
-    NoMethod,
-    ConstNoMethod
+    YabobButton
 };

@@ -17,6 +17,19 @@ import { convertBase } from 'simple-base-converter';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, magenta, yellow } from './command-line-colors.js';
 import { YabobButton, YabobButtonType } from './type-aliases.js';
+
+/**
+ * Centers a string for the console/terminal by padding it with spaces
+ * @param text
+ */
+function centered(text: string): string {
+    return (
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
+        `${text}` +
+        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
+    );
+}
+
 /**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
@@ -43,6 +56,7 @@ function convertMsToTime(milliseconds: number): string {
         `${padTo2Digits(seconds)} second${seconds === 1 ? '' : 's'}`
     );
 }
+
 /**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
@@ -61,6 +75,19 @@ function convertMsToShortTime(milliseconds: number): string {
 
     return `${padTo2Digits(hours)}:${padTo2Digits(minutes)}:${padTo2Digits(seconds)}`;
 }
+
+/**
+ * Adds `hours` : `minutes` to `date`
+ * @param date
+ * @param hours
+ * @param minutes
+ * @returns
+ */
+function addTimeOffset(date: Date, hours: number, minutes: number): Date {
+    // might have problems with daylight saving
+    return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
+}
+
 /**
  * Gets all the queue roles of a member
  * @param server
@@ -77,6 +104,42 @@ async function getQueueRoles(
             .filter(role => queueChannels.some(queue => queue.queueName === role.name))
             .values()
     ];
+}
+
+/**
+ * Get the name of an interaction
+ * @param interaction
+ * @returns
+ */
+function getInteractionName(interaction: Interaction): string {
+    if (interaction.isCommand()) {
+        return interaction.commandName;
+    }
+    if (interaction.isButton()) {
+        return interaction.component.label ?? interaction.customId;
+    }
+    if (interaction.isModalSubmit()) {
+        return interaction.customId;
+    }
+    return 'Unsupported Interaction Type';
+}
+
+/**
+ * Default logger for slash commands
+ * @param interaction
+ */
+function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild.name)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Command Used: ${magenta(interaction.toString())}`
+    );
 }
 
 /**
@@ -104,6 +167,11 @@ function logQueueButtonPress(
     );
 }
 
+/**
+ * Default logger for dm button presses
+ * @param interaction
+ * @param buttonName
+ */
 function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
     console.log(
         `[${cyan(
@@ -136,40 +204,18 @@ function logModalSubmit(interaction: ModalSubmitInteraction<'cached'>): void {
     );
 }
 
-/**
- * Default logger for slash commands
- * @param interaction
- */
-function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
+function logDMModalSubmit(interaction: ModalSubmitInteraction): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
+            `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n` +
-            ` - Command Used: ${magenta(interaction.toString())}`
+            ` - Modal Used: ${magenta(interaction.customId)}` +
+            ` - In DM`
     );
-}
-
-function addTimeOffset(date: Date, hours: number, minutes: number): Date {
-    // might have problems with daylight saving
-    return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
-}
-
-function getInteractionName(interaction: Interaction): string {
-    if (interaction.isCommand()) {
-        return interaction.commandName;
-    }
-    if (interaction.isButton()) {
-        return interaction.component.label ?? interaction.customId;
-    }
-    if (interaction.isModalSubmit()) {
-        return interaction.customId;
-    }
-    return 'Unsupported Interaction Type';
 }
 
 /**
@@ -217,18 +263,6 @@ function isVoiceChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is VoiceChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
-}
-
-/**
- * Centers a string for the console/terminal by padding it with spaces
- * @param text
- */
-function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
-    );
 }
 
 /**
@@ -350,26 +384,34 @@ function parseYabobButtonId(
     return yabobButtonId;
 }
 
+// prettier-ignore
 export {
+    centered,
     convertMsToTime,
     convertMsToShortTime,
+    addTimeOffset,
+
     getQueueRoles,
+    getInteractionName,
+    
+    logSlashCommand,
     logQueueButtonPress,
     logDMButtonPress,
     logModalSubmit,
-    logSlashCommand,
-    centered,
-    addTimeOffset,
-    getInteractionName,
-    isValidChannelName,
-    isValidCategoryName,
+    logDMModalSubmit,
+    
     isCategoryChannel,
     isTextChannel,
     isQueueTextChannel,
     isVoiceChannel,
-    generateYabobButtonId,
-    parseYabobButtonId,
-    yabobButtonToString,
+    
+    isValidChannelName,
+    isValidCategoryName,
+    
     convertSnowflakeToBase211,
-    convertBase211ToSnowflake
+    convertBase211ToSnowflake,
+    
+    generateYabobButtonId,
+    yabobButtonToString,
+    parseYabobButtonId
 };
