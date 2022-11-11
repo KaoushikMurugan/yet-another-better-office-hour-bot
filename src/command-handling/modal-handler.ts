@@ -30,7 +30,7 @@ const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
  */
 const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
     // no modals in dms implemented yet
-};
+} as const;
 
 /**
  * Check if the modal interaction can be handled by this (in-built) handler

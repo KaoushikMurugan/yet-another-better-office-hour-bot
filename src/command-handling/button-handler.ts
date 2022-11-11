@@ -37,41 +37,37 @@ import { serverRolesConfigMenu } from '../attending-server/server-config-message
  * Buttom method map for queue buttons
  */
 const queueButtonMethodMap: {
-    [buttonName: string]: [
-        callback: QueueButtonCallback,
-        updateParentInteraction: boolean
-    ];
+    [buttonName: string]: QueueButtonCallback;
 } = {
-    join: [join, false],
-    leave: [leave, false],
-    notif: [joinNotifGroup, false],
-    removeN: [leaveNotifGroup, false],
-    ssrc1: [
-        (queueName, interaction) => createServerRoles(false, false, interaction),
-        true
-    ],
-    ssrc1a: [
-        (queueName, interaction) => createServerRoles(false, true, interaction),
-        true
-    ],
-    ssrc2: [
-        (queueName, interaction) => createServerRoles(true, false, interaction),
-        true
-    ],
-    ssrc2a: [(queueName, interaction) => createServerRoles(true, true, interaction), true]
-};
+    join: join,
+    leave: leave,
+    notif: joinNotifGroup,
+    removeN: leaveNotifGroup,
+    ssrc1: (queueName, interaction) => createServerRoles(false, false, interaction),
+
+    ssrc1a: (queueName, interaction) => createServerRoles(false, true, interaction),
+
+    ssrc2: (queueName, interaction) => createServerRoles(true, false, interaction),
+
+    ssrc2a: (queueName, interaction) => createServerRoles(true, true, interaction)
+} as const;
 
 /**
  * Button method map for DM buttons
  */
 const dmButtonMethodMap: {
-    [buttonName: string]: [callback: DMButtonCallback, updateParentInteraction: boolean];
+    [buttonName: string]: DMButtonCallback;
 } = {
-    ssrc1: [interaction => createServerRoles_DM(false, false, interaction), true],
-    ssrc1a: [interaction => createServerRoles_DM(false, true, interaction), true],
-    ssrc2: [interaction => createServerRoles_DM(true, false, interaction), true],
-    ssrc2a: [interaction => createServerRoles_DM(true, true, interaction), true]
-};
+    ssrc1: interaction => createServerRoles_DM(false, false, interaction),
+    ssrc1a: interaction => createServerRoles_DM(false, true, interaction),
+    ssrc2: interaction => createServerRoles_DM(true, false, interaction),
+    ssrc2a: interaction => createServerRoles_DM(true, true, interaction)
+} as const;
+
+/**
+ * List of buttons that update the parent interaction
+ */
+const updateParentInteractionButtons = ['ssrc1', 'ssrc1a', 'ssrc2', 'ssrc2a'];
 
 /**
  * Check if the button interation can be handled by this (in-built) handler
@@ -118,10 +114,8 @@ async function processBuiltInButton(
             queueChannel => queueChannel.channelObj.id === yabobButtonId.c
         )?.queueName ?? '';
 
-    const [buttonMethod, updateParentInteraction] = queueButtonMethodMap[buttonName] ?? [
-        undefined,
-        false
-    ];
+    const buttonMethod = queueButtonMethodMap[buttonName];
+    const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({
@@ -181,10 +175,8 @@ async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<v
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
     const dmChannelId = yabobButtonId.c;
-    const [buttonMethod, updateParentInteraction] = dmButtonMethodMap[buttonName] ?? [
-        undefined,
-        false
-    ];
+    const buttonMethod = dmButtonMethodMap[buttonName];
+    const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({

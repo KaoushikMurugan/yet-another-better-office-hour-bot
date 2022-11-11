@@ -13,20 +13,18 @@ import { parseYabobSelectMenuId } from '../utils/util-functions.js';
 import { isServerInteraction } from './common-validations.js';
 
 const selectMenuMap: {
-    [selectMenuName: string]: [
-        callback: SelectMenuCallback,
-        updateParentInteraction: boolean
-    ];
+    [selectMenuName: string]: SelectMenuCallback;
 } = {
-    server_settings: [serverSettingsSelectMenu, true]
-};
+    server_settings: serverSettingsSelectMenu
+} as const;
+
+const updateParentInteractionSelectMenus = ['server_settings'];
 
 /**
  * Check if the select menu interaction can be handled by this (in-built) handler.
  * @param interaction The interaction to check.
  * @returns True if the interaction can be handled by this handler.
  */
-
 function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
@@ -48,10 +46,9 @@ async function processBuiltInSelectMenu(
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.n;
     const server = isServerInteraction(interaction);
-    const [selectMenuMethod, updateParentInteraction] = selectMenuMap[selectMenuName] ?? [
-        undefined,
-        false
-    ];
+    const selectMenuMethod = selectMenuMap[selectMenuName];
+    const updateParentInteraction =
+        updateParentInteractionSelectMenus.includes(selectMenuName);
 
     if (!updateParentInteraction) {
         await interaction.reply(
