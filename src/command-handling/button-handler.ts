@@ -27,7 +27,8 @@ import {
     afterSessionMessageConfigMenu,
     loggingChannelConfigMenu,
     queueAutoClearConfigMenu,
-    serverRolesConfigMenu
+    serverRolesConfigMenu,
+    serverSettingsMainMenu
 } from '../attending-server/server-config-messages.js';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 
@@ -55,7 +56,8 @@ const queueButtonMethodMap: {
     ssrc2a: (queueName, interaction) => createServerRolesMV(interaction, true, true),
     asmc2: (queueName, interaction) => disableAfterSessionMessageMV(interaction),
     qacc2: (queueName, interaction) => disableQueueAutoClearMV(interaction),
-    lcc2: (queueName, interaction) => disableLoggingChannelMV(interaction)
+    lcc2: (queueName, interaction) => disableLoggingChannelMV(interaction),
+    rtmm: (queueName, interaction) => showSettingsMainMenu(interaction),
 } as const;
 
 /**
@@ -94,7 +96,8 @@ const updateParentInteractionButtons = [
     'asmc2',
     'qacc1',
     'qacc2',
-    'lcc2'
+    'lcc2',
+    'rtmm'
 ];
 
 /**
@@ -372,6 +375,18 @@ async function createServerRolesMV(
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverRolesConfigMenu(server, interaction.channelId, false, false);
+}
+
+/**
+ * Displays the Settings Main Menu
+ * @param interaction 
+ * @returns 
+ */
+async function showSettingsMainMenu(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**

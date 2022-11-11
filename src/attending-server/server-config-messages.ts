@@ -185,7 +185,14 @@ function serverRolesConfigMenu(
                 .setStyle(ButtonStyle.Secondary)
         );
 
-    return { embeds: embed.embeds, components: [buttons] };
+    if (!isDm) {
+        const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            composeReturnToMainMenuButton(server.guild.id, channelId)
+        );
+        return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+    } else {
+        return { embeds: embed.embeds, components: [buttons] };
+    }
 }
 
 function afterSessionMessageConfigMenu(
@@ -233,7 +240,10 @@ function afterSessionMessageConfigMenu(
                 .setStyle(ButtonStyle.Secondary)
         );
 
-    return { embeds: embed.embeds, components: [buttons] };
+    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        composeReturnToMainMenuButton(server.guild.id, channelId)
+    );
+    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
 function queueAutoClearConfigMenu(
@@ -282,7 +292,10 @@ function queueAutoClearConfigMenu(
                 .setStyle(ButtonStyle.Secondary)
         );
 
-    return { embeds: embed.embeds, components: [buttons] };
+    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        composeReturnToMainMenuButton(server.guild.id, channelId)
+    );
+    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
 function loggingChannelConfigMenu(
@@ -325,7 +338,24 @@ function loggingChannelConfigMenu(
             .setStyle(ButtonStyle.Secondary)
     );
 
-    return { embeds: embed.embeds, components: [buttons] };
+    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        composeReturnToMainMenuButton(server.guild.id, channelId)
+    );
+    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+}
+
+function composeReturnToMainMenuButton(
+    serverId: string,
+    channelId: string
+): ButtonBuilder {
+    return new ButtonBuilder()
+        .setCustomId(
+            yabobButtonToString(
+                generateYabobButtonId('other', 'rtmm', serverId, channelId)
+            )
+        )
+        .setLabel('Return to Main Menu')
+        .setStyle(ButtonStyle.Primary);
 }
 
 export {
