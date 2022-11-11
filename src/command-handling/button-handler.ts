@@ -23,7 +23,13 @@ import {
     isValidDMInteraction
 } from './common-validations.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverRolesConfigMenu } from '../attending-server/server-config-messages.js';
+import {
+    afterSessionMessageConfigMenu,
+    loggingChannelConfigMenu,
+    queueAutoClearConfigMenu,
+    serverRolesConfigMenu
+} from '../attending-server/server-config-messages.js';
+import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -43,13 +49,25 @@ const queueButtonMethodMap: {
     leave: leave,
     notif: joinNotifGroup,
     removeN: leaveNotifGroup,
-    ssrc1: (queueName, interaction) => createServerRoles(false, false, interaction),
+    ssrc1: (queueName, interaction) => createServerRolesMV(interaction, false, false),
+    ssrc1a: (queueName, interaction) => createServerRolesMV(interaction, false, true),
+    ssrc2: (queueName, interaction) => createServerRolesMV(interaction, true, false),
+    ssrc2a: (queueName, interaction) => createServerRolesMV(interaction, true, true),
+    asmc2: (queueName, interaction) => disableAfterSessionMessageMV(interaction),
+    qacc2: (queueName, interaction) => disableQueueAutoClearMV(interaction),
+    lcc2: (queueName, interaction) => disableLoggingChannelMV(interaction)
+} as const;
 
-    ssrc1a: (queueName, interaction) => createServerRoles(false, true, interaction),
-
-    ssrc2: (queueName, interaction) => createServerRoles(true, false, interaction),
-
-    ssrc2a: (queueName, interaction) => createServerRoles(true, true, interaction)
+/**
+ * Buttons in this object only shows a modal on ButtonInteraction<'cached'>
+ * Actual changes to attendingServers happens on modal submit
+ * - @see modal-handler.ts
+ */
+const showModalOnlyButtons: {
+    [commandName: string]: (inter: ButtonInteraction<'cached'>) => Promise<void>;
+} = {
+    asmc1: showAfterSessionMessageModalMV,
+    qacc1: showQueueAutoClearModalMV
 } as const;
 
 /**
@@ -58,16 +76,26 @@ const queueButtonMethodMap: {
 const dmButtonMethodMap: {
     [buttonName: string]: DMButtonCallback;
 } = {
-    ssrc1: interaction => createServerRoles_DM(false, false, interaction),
-    ssrc1a: interaction => createServerRoles_DM(false, true, interaction),
-    ssrc2: interaction => createServerRoles_DM(true, false, interaction),
-    ssrc2a: interaction => createServerRoles_DM(true, true, interaction)
+    ssrc1: interaction => createServerRolesDMMV(false, false, interaction),
+    ssrc1a: interaction => createServerRolesDMMV(false, true, interaction),
+    ssrc2: interaction => createServerRolesDMMV(true, false, interaction),
+    ssrc2a: interaction => createServerRolesDMMV(true, true, interaction)
 } as const;
 
 /**
  * List of buttons that update the parent interaction
  */
-const updateParentInteractionButtons = ['ssrc1', 'ssrc1a', 'ssrc2', 'ssrc2a'];
+const updateParentInteractionButtons = [
+    'ssrc1',
+    'ssrc1a',
+    'ssrc2',
+    'ssrc2a',
+    'asmc1',
+    'asmc2',
+    'qacc1',
+    'qacc2',
+    'lcc2'
+];
 
 /**
  * Check if the button interation can be handled by this (in-built) handler
@@ -81,7 +109,7 @@ function builtInButtonHandlerCanHandle(
 ): boolean {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
-    return buttonName in queueButtonMethodMap;
+    return buttonName in queueButtonMethodMap || buttonName in showModalOnlyButtons;
 }
 
 /**
@@ -121,6 +149,11 @@ async function processBuiltInButton(
 
     const buttonMethod = queueButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
+    logQueueButtonPress(interaction, buttonName, queueName);
+    if (buttonName in showModalOnlyButtons) {
+        await showModalOnlyButtons[buttonName]?.(interaction);
+        return;
+    }
     if (!updateParentInteraction) {
         if (interaction.deferred || interaction.replied) {
             await interaction.editReply({
@@ -141,7 +174,6 @@ async function processBuiltInButton(
             });
         }
     }
-    logQueueButtonPress(interaction, buttonName, queueName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
     await buttonMethod?.(queueName, interaction)
@@ -325,10 +357,10 @@ async function leaveNotifGroup(
  * @param interaction
  * @returns
  */
-async function createServerRoles(
+async function createServerRolesMV(
+    interaction: ButtonInteraction<'cached'>,
     forceCreate: boolean,
-    defaultStudentIsEveryone: boolean,
-    interaction: ButtonInteraction<'cached'>
+    defaultStudentIsEveryone: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.sendLogMessage(
@@ -349,7 +381,7 @@ async function createServerRoles(
  * @param interaction
  * @returns
  */
-async function createServerRoles_DM(
+async function createServerRolesDMMV(
     forceCreate: boolean,
     defaultStudentIsEveryone: boolean,
     interaction: ButtonInteraction
@@ -357,6 +389,61 @@ async function createServerRoles_DM(
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverRolesConfigMenu(server, interaction.channelId, true, false);
+}
+
+/**
+ * Show the modal for after session message
+ * @param interaction
+ */
+async function showAfterSessionMessageModalMV(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    await interaction.showModal(afterSessionMessageModal(server.guild.id));
+}
+
+/**
+ * Disable the after session message
+ * @param interaction
+ * @returns
+ */
+async function disableAfterSessionMessageMV(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    await server.setAfterSessionMessage('');
+    return afterSessionMessageConfigMenu(server, interaction.channelId, false);
+}
+
+/**
+ * Show the modal for queue auto clear
+ * @param interaction
+ */
+async function showQueueAutoClearModalMV(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    await interaction.showModal(queueAutoClearModal(server.guild.id));
+}
+
+/**
+ * Disable queue auto clear
+ * @param interaction
+ */
+async function disableQueueAutoClearMV(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    await server.setQueueAutoClear(0, 0, false);
+    return queueAutoClearConfigMenu(server, interaction.channelId, false);
+}
+
+async function disableLoggingChannelMV(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    await server.setLoggingChannel(undefined);
+    return loggingChannelConfigMenu(server, interaction.channelId, false);
 }
 
 /**

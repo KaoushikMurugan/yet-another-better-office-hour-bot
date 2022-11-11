@@ -300,7 +300,7 @@ function loggingChannelConfigMenu(
                     : server.loggingChannel.toString()
             }\n\n` +
             `Select an option below to change the configuration.\n\n` +
-            `**⚙️** - Set the logging channel\n` +
+            `**Use the \`/set_logging_channel\`** - Choose the channel you want YABOB to log to\n` +
             `**🔒** - Disable the logging channel\n`
     );
 
@@ -316,21 +316,23 @@ function loggingChannelConfigMenu(
         return yabobButtonToString(newYabobButton);
     }
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeLCCButtonId('1'))
-                .setEmoji('⚙️')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeLCCButtonId('2'))
-                .setEmoji('🔒')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    // TODO: Implement a direct way to change the logging channel
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeLCCButtonId('2'))
+            .setEmoji('🔒')
+            .setStyle(ButtonStyle.Secondary)
+    );
 
     return { embeds: embed.embeds, components: [buttons] };
 }
 
-export { serverSettingsMainMenu, serverSettingsMainMenuOptions, serverRolesConfigMenu };
+export {
+    serverSettingsMainMenu,
+    serverSettingsMainMenuOptions,
+    serverRolesConfigMenu,
+    afterSessionMessageConfigMenu,
+    queueAutoClearConfigMenu,
+    loggingChannelConfigMenu
+};
