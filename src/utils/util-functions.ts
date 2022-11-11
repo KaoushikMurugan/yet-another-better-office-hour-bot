@@ -321,19 +321,19 @@ function convertBase211ToSnowflake(base211string: string): string {
 
 /**
  * Converts a base to another base
- * @param buttonName
+ * @param componentName
  * @param serverId
  * @param channelId
  * @returns a {@link YabobButton}
  */
 function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
     type: T,
-    buttonName: string,
+    componentName: string,
     serverId: string,
     channelId: string
 ): YabobButton<T> {
     return {
-        n: buttonName,
+        n: componentName,
         t: type,
         s: serverId,
         c: channelId
@@ -351,20 +351,20 @@ function generateYabobButtonId<T extends YabobButtonType>(
 
 function generateYabobModalId<T extends YabobModalType>(
     type: T,
-    buttonName: string,
+    modalName: string,
     serverId: string,
     channelId: string
 ): YabobButton<T> {
-    return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
+    return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
 
 function generateSelectMenuId<T extends YabobSelectMenuType>(
     type: T,
-    buttonName: string,
+    selectMenuName: string,
     serverId: string,
     channelId: string
 ): YabobButton<T> {
-    return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
+    return generateYabobActionableComponentId(type, selectMenuName, serverId, channelId);
 }
 
 /**

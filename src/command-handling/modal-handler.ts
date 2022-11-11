@@ -1,13 +1,17 @@
 /** @module BuiltInHandlers */
 
 import { ModalSubmitInteraction } from 'discord.js';
+import {
+    afterSessionMessageConfigMenu,
+    queueAutoClearConfigMenu
+} from '../attending-server/server-config-messages.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
 import {
     DMModalSubmitCallback,
     ModalSubmitCallback,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { logModalSubmit } from '../utils/util-functions.js';
+import { logModalSubmit, parseYabobModalId } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { isServerInteraction } from './common-validations.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
@@ -21,8 +25,10 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
  * Map of names of modal that could be sent in servers to their respective handlers
  */
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    after_session_message_modal: setAfterSessionMessage,
-    queue_auto_clear_modal: setQueueAutoClear
+    asmm: interaction => setAfterSessionMessage(interaction, false),
+    asmmmv: interaction => setAfterSessionMessage(interaction, true),
+    qacm: interaction => setQueueAutoClear(interaction, true),
+    qacmmv: interaction => setQueueAutoClear(interaction, false)
 } as const;
 
 /**
@@ -41,7 +47,9 @@ const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
 function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
-    return interaction.customId in modalMethodMap;
+    const modalId = parseYabobModalId(interaction.customId);
+    const modalName = modalId.n;
+    return modalName in modalMethodMap;
 }
 
 /**
@@ -51,7 +59,9 @@ function builtInModalHandlerCanHandle(
  * @returns
  */
 function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
-    return interaction.customId in dmModalMethodMap;
+    const modalId = parseYabobModalId(interaction.customId);
+    const modalName = modalId.n;
+    return modalName in dmModalMethodMap;
 }
 
 /**
@@ -66,7 +76,9 @@ function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): bo
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalMethod = modalMethodMap[interaction.customId];
+    const modalId = parseYabobModalId(interaction.customId);
+    const modalName = modalId.n;
+    const modalMethod = modalMethodMap[modalName];
     logModalSubmit(interaction);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
@@ -104,7 +116,9 @@ async function processBuiltInModalSubmit(
 async function processBuiltInDMModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
-    const modalMethod = dmModalMethodMap[interaction.customId];
+    const modalId = parseYabobModalId(interaction.customId);
+    const modalName = modalId.n;
+    const modalMethod = dmModalMethodMap[modalName];
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
     await modalMethod?.(interaction)
@@ -134,14 +148,19 @@ async function processBuiltInDMModalSubmit(
  * @returns
  */
 async function setAfterSessionMessage(
-    interaction: ModalSubmitInteraction<'cached'>
+    interaction: ModalSubmitInteraction<'cached'>,
+    menuVersion: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const newAfterSessionMessage =
         interaction.fields.getTextInputValue('after_session_msg');
     await server.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
-    return SuccessMessages.updatedAfterSessionMessage(message);
+    if (!menuVersion) {
+        return SuccessMessages.updatedAfterSessionMessage(message);
+    } else {
+        return afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false);
+    }
 }
 
 /**
@@ -150,7 +169,8 @@ async function setAfterSessionMessage(
  * @returns
  */
 async function setQueueAutoClear(
-    interaction: ModalSubmitInteraction<'cached'>
+    interaction: ModalSubmitInteraction<'cached'>,
+    menuVersion: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
@@ -165,7 +185,11 @@ async function setQueueAutoClear(
         return SuccessMessages.queueAutoClear.disabled;
     }
     await server.setQueueAutoClear(hours, minutes, true);
-    return SuccessMessages.queueAutoClear.enabled(hours, minutes);
+    if (!menuVersion) {
+        return SuccessMessages.queueAutoClear.enabled(hours, minutes);
+    } else {
+        return queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false);
+    }
 }
 
 /**

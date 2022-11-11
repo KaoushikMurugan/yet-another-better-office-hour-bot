@@ -399,7 +399,7 @@ async function showAfterSessionMessageModalMV(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await interaction.showModal(afterSessionMessageModal(server.guild.id));
+    await interaction.showModal(afterSessionMessageModal(server.guild.id, true));
 }
 
 /**
@@ -423,7 +423,7 @@ async function showQueueAutoClearModalMV(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await interaction.showModal(queueAutoClearModal(server.guild.id));
+    await interaction.showModal(queueAutoClearModal(server.guild.id, true));
 }
 
 /**
@@ -438,6 +438,10 @@ async function disableQueueAutoClearMV(
     return queueAutoClearConfigMenu(server, interaction.channelId, false);
 }
 
+/**
+ * Disable logging channel
+ * @param interaction
+ */
 async function disableLoggingChannelMV(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {

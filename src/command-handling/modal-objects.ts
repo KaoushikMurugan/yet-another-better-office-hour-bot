@@ -7,6 +7,7 @@ import {
     TextInputStyle
 } from 'discord.js';
 import { attendingServers } from '../global-states.js';
+import { generateYabobModalId, yabobModalToString } from '../utils/util-functions.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -16,11 +17,20 @@ import { attendingServers } from '../global-states.js';
  * @param serverId
  * @returns
  */
-function queueAutoClearModal(serverId: string): ModalBuilder {
+function queueAutoClearModal(serverId: string, menuVersion = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = new ModalBuilder()
         .setTitle('Set Queue Auto Clear')
-        .setCustomId('queue_auto_clear_modal')
+        .setCustomId(
+            yabobModalToString(
+                generateYabobModalId(
+                    'other',
+                    'qacm' + (menuVersion ? 'mv' : ''),
+                    serverId,
+                    '0' // temp id for now, plan on making channelid optional
+                )
+            )
+        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -61,10 +71,19 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: string): ModalBuilder {
+function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
     const modal = new ModalBuilder()
         .setTitle('Set After Session Message')
-        .setCustomId('after_session_message_modal')
+        .setCustomId(
+            yabobModalToString(
+                generateYabobModalId(
+                    'other',
+                    'asmm' + (menuVersion ? 'mv' : ''),
+                    serverId,
+                    '0' // temp id for now, plan on making channelid optional
+                )
+            )
+        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
