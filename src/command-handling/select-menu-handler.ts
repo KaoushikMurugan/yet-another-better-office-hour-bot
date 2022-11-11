@@ -7,13 +7,18 @@
 
 import { SelectMenuInteraction } from 'discord.js';
 import { serverRolesConfigMenu } from '../attending-server/server-config-messages.js';
-import { EmbedColor, ErrorEmbed, SimpleEmbed } from '../utils/embed-helper.js';
+import { ErrorEmbed, SimpleEmbed } from '../utils/embed-helper.js';
 import { SelectMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import { parseYabobSelectMenuId } from '../utils/util-functions.js';
 import { isServerInteraction } from './common-validations.js';
 
-const selectMenuMap: { [key: string]: SelectMenuCallback } = {
-    server_settings: serverSettingsSelectMenu
+const selectMenuMap: {
+    [selectMenuName: string]: [
+        callback: SelectMenuCallback,
+        updateParentInteraction: boolean
+    ];
+} = {
+    server_settings: [serverSettingsSelectMenu, true]
 };
 
 /**
@@ -43,23 +48,30 @@ async function processBuiltInSelectMenu(
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.n;
     const server = isServerInteraction(interaction);
-    const selectMenuMethod = selectMenuMap[selectMenuName];
-    if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({
-            ...SimpleEmbed(`Processing your selection...`, EmbedColor.Neutral)
-        });
-    } else {
-        await interaction.reply({
-            ...SimpleEmbed(`Processing your selection...`, EmbedColor.Neutral),
-            ephemeral: true
-        });
+    const [selectMenuMethod, updateParentInteraction] = selectMenuMap[selectMenuName] ?? [
+        undefined,
+        false
+    ];
+
+    if (!updateParentInteraction) {
+        await interaction.reply(
+            SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
+        );
     }
 
     await selectMenuMethod?.(interaction)
-        .then(successMsg => interaction.editReply(successMsg))
-        .catch(err => {
+        .then(async successMsg => {
+            if (updateParentInteraction) {
+                await interaction.update(successMsg);
+            } else {
+                interaction.replied
+                    ? await interaction.reply({ ...successMsg, ephemeral: true })
+                    : await interaction.editReply(successMsg);
+            }
+        })
+        .catch(async err => {
             console.error(err);
-            Promise.all([
+            await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
                     : interaction.reply({

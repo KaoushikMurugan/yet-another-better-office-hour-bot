@@ -36,26 +36,42 @@ import { serverRolesConfigMenu } from '../attending-server/server-config-message
 /**
  * Buttom method map for queue buttons
  */
-const queueButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
-    join: join,
-    leave: leave,
-    notif: joinNotifGroup,
-    removeN: leaveNotifGroup,
-    ssrc1: (queueName, interaction) => createServerRoles(false, false, interaction),
-    ssrc1a: (queueName, interaction) => createServerRoles(false, true, interaction),
-    ssrc2: (queueName, interaction) => createServerRoles(true, false, interaction),
-    ssrc2a: (queueName, interaction) => createServerRoles(true, true, interaction)
-} as const;
+const queueButtonMethodMap: {
+    [buttonName: string]: [
+        callback: QueueButtonCallback,
+        updateParentInteraction: boolean
+    ];
+} = {
+    join: [join, false],
+    leave: [leave, false],
+    notif: [joinNotifGroup, false],
+    removeN: [leaveNotifGroup, false],
+    ssrc1: [
+        (queueName, interaction) => createServerRoles(false, false, interaction),
+        true
+    ],
+    ssrc1a: [
+        (queueName, interaction) => createServerRoles(false, true, interaction),
+        true
+    ],
+    ssrc2: [
+        (queueName, interaction) => createServerRoles(true, false, interaction),
+        true
+    ],
+    ssrc2a: [(queueName, interaction) => createServerRoles(true, true, interaction), true]
+};
 
 /**
  * Button method map for DM buttons
  */
-const dmButtonMethodMap: { [buttonName: string]: DMButtonCallback } = {
-    ssrc1: interaction => createServerRoles_DM(false, false, interaction),
-    ssrc1a: interaction => createServerRoles_DM(false, true, interaction),
-    ssrc2: interaction => createServerRoles_DM(true, false, interaction),
-    ssrc2a: interaction => createServerRoles_DM(true, true, interaction)
-} as const;
+const dmButtonMethodMap: {
+    [buttonName: string]: [callback: DMButtonCallback, updateParentInteraction: boolean];
+} = {
+    ssrc1: [interaction => createServerRoles_DM(false, false, interaction), true],
+    ssrc1a: [interaction => createServerRoles_DM(false, true, interaction), true],
+    ssrc2: [interaction => createServerRoles_DM(true, false, interaction), true],
+    ssrc2a: [interaction => createServerRoles_DM(true, true, interaction), true]
+};
 
 /**
  * Check if the button interation can be handled by this (in-built) handler
@@ -96,36 +112,49 @@ async function processBuiltInButton(
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
     const server = isServerInteraction(interaction);
+    // using queue channel get queue name
     const queueName =
         (await server.getQueueChannels()).find(
             queueChannel => queueChannel.channelObj.id === yabobButtonId.c
         )?.queueName ?? '';
-    // using queue channel get queue name
 
-    const buttonMethod = queueButtonMethodMap[buttonName];
-    if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({
-            ...SimpleEmbed(
-                `Processing button \`${interaction.component.label ?? buttonName}` +
-                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                EmbedColor.Neutral
-            )
-        });
-    } else {
-        await interaction.reply({
-            ...SimpleEmbed(
-                `Processing button \`${interaction.component.label ?? buttonName}` +
-                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                EmbedColor.Neutral
-            ),
-            ephemeral: true
-        });
+    const [buttonMethod, updateParentInteraction] = queueButtonMethodMap[buttonName] ?? [
+        undefined,
+        false
+    ];
+    if (!updateParentInteraction) {
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({
+                ...SimpleEmbed(
+                    `Processing button \`${interaction.component.label ?? buttonName}` +
+                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                    EmbedColor.Neutral
+                )
+            });
+        } else {
+            await interaction.reply({
+                ...SimpleEmbed(
+                    `Processing button \`${interaction.component.label ?? buttonName}` +
+                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                    EmbedColor.Neutral
+                ),
+                ephemeral: true
+            });
+        }
     }
     logQueueButtonPress(interaction, buttonName, queueName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
     await buttonMethod?.(queueName, interaction)
-        .then(successMsg => interaction.editReply(successMsg))
+        .then(async successMsg => {
+            if (updateParentInteraction) {
+                await interaction.update(successMsg);
+            } else {
+                interaction.replied
+                    ? await interaction.reply({ ...successMsg, ephemeral: true })
+                    : await interaction.editReply(successMsg);
+            }
+        })
         .catch(async err => {
             // Central error handling, reply to user with the error
             await Promise.all([
@@ -152,28 +181,41 @@ async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<v
     const yabobButtonId = parseYabobButtonId(interaction.customId);
     const buttonName = yabobButtonId.n;
     const dmChannelId = yabobButtonId.c;
-    const buttonMethod = dmButtonMethodMap[buttonName];
-    if (interaction.deferred || interaction.replied) {
-        await interaction.editReply({
-            ...SimpleEmbed(
-                `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                EmbedColor.Neutral
-            )
-        });
-    } else {
-        await interaction.reply({
-            ...SimpleEmbed(
-                `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                EmbedColor.Neutral
-            ),
-            ephemeral: true
-        });
+    const [buttonMethod, updateParentInteraction] = dmButtonMethodMap[buttonName] ?? [
+        undefined,
+        false
+    ];
+    if (!updateParentInteraction) {
+        if (interaction.deferred || interaction.replied) {
+            await interaction.editReply({
+                ...SimpleEmbed(
+                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
+                    EmbedColor.Neutral
+                )
+            });
+        } else {
+            await interaction.reply({
+                ...SimpleEmbed(
+                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
+                    EmbedColor.Neutral
+                ),
+                ephemeral: true
+            });
+        }
     }
     logDMButtonPress(interaction, buttonName);
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
     await buttonMethod?.(interaction)
-        .then(successMsg => interaction.editReply(successMsg))
+        .then(async successMsg => {
+            if (updateParentInteraction) {
+                await interaction.update(successMsg);
+            } else {
+                interaction.replied
+                    ? await interaction.reply({ ...successMsg, ephemeral: true })
+                    : await interaction.editReply(successMsg);
+            }
+        })
         .catch(async err => {
             // Central error handling, reply to user with the error
             await Promise.all([
