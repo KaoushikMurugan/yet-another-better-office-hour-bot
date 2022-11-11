@@ -339,7 +339,7 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(server, false, interaction.channelId, false);
+    return serverRolesConfigMenu(server, interaction.channelId, false, false);
 }
 
 /**
@@ -356,7 +356,7 @@ async function createServerRoles_DM(
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(server, false, interaction.channelId, true);
+    return serverRolesConfigMenu(server, interaction.channelId, true, false);
 }
 
 /**

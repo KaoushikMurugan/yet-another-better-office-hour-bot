@@ -3,9 +3,11 @@ import {
     BaseMessageOptions,
     ButtonBuilder,
     ButtonStyle,
-    SelectMenuBuilder
+    SelectMenuBuilder,
+    SelectMenuComponentOptionData
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
+import { SettingsMenuCallback } from '../utils/type-aliases.js';
 import {
     generateSelectMenuId,
     generateYabobButtonId,
@@ -13,6 +15,57 @@ import {
     yabobModalToString
 } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
+
+const serverSettingsMainMenuOptions: {
+    optionObj: SelectMenuComponentOptionData;
+    subMenu: SettingsMenuCallback;
+}[] = [
+    {
+        optionObj: {
+            emoji: '📝',
+            label: 'Server Roles',
+            description: 'Configure the server roles',
+            value: 'server-roles'
+        },
+        subMenu: serverRolesConfigMenu
+    },
+    {
+        optionObj: {
+            emoji: '📨',
+            label: 'After Session Message',
+            description: 'Configure the message sent after a session',
+            value: 'after-session-message'
+        },
+        subMenu: afterSessionMessageConfigMenu
+    },
+    {
+        optionObj: {
+            emoji: '⏳',
+            label: 'Queue Auto Clear',
+            description: 'Configure the auto-clearing of queues',
+            value: 'queue-auto-clear'
+        },
+        subMenu: queueAutoClearConfigMenu
+    },
+    {
+        optionObj: {
+            emoji: '🪵',
+            label: 'Logging Channel',
+            description: 'Configure the logging channel',
+            value: 'logging-channel'
+        },
+        subMenu: loggingChannelConfigMenu
+    }
+    // {
+    //     optionObj: {
+    //         emoji: '🗓',
+    //         label: 'Calendar Settings',
+    //         description: 'Configure the calendar settings',
+    //         value: 'calendar-settings'
+    //     },
+    //     subMenu: calendarSettingsConfigMenu
+    // }
+];
 
 function serverSettingsMainMenu(
     server: AttendingServerV2,
@@ -38,47 +91,16 @@ function serverSettingsMainMenu(
                 )
             )
             .setPlaceholder('Select an option')
-            .addOptions([
-                {
-                    emoji: '📝',
-                    label: 'Server Roles',
-                    description: 'Configure the server roles',
-                    value: 'server-roles'
-                },
-                {
-                    emoji: '📨',
-                    label: 'After Session Message',
-                    description: 'Configure the message sent after a session',
-                    value: 'after-session-message'
-                },
-                {
-                    emoji: '⏳',
-                    label: 'Queue Auto Clear',
-                    description: 'Configure the auto-clearing of queues',
-                    value: 'queue-auto-clear'
-                },
-                {
-                    emoji: '🪵',
-                    label: 'Logging Channel',
-                    description: 'Configure the logging channel',
-                    value: 'logging-channel'
-                },
-                {
-                    emoji: '🗓',
-                    label: 'Calendar Settings',
-                    description: 'Configure the calendar settings',
-                    value: 'calendar-settings'
-                }
-            ])
+            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
     );
     return { embeds: embed.embeds, components: [selectMenu] };
 }
 
 function serverRolesConfigMenu(
     server: AttendingServerV2,
-    forServerInit: boolean,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    forServerInit = false
 ): BaseMessageOptions {
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
@@ -166,4 +188,149 @@ function serverRolesConfigMenu(
     return { embeds: embed.embeds, components: [buttons] };
 }
 
-export { serverSettingsMainMenu, serverRolesConfigMenu };
+function afterSessionMessageConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+): BaseMessageOptions {
+    const embed = SimpleEmbed(
+        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        EmbedColor.Aqua,
+        `The after session message configuration is as follows:\n\n` +
+            `**After Session Message:**\n\n ${
+                server.afterSessionMessage === ''
+                    ? '`Not Set`'
+                    : server.afterSessionMessage
+            }\n\n` +
+            `Select an option below to change the configuration.\n\n` +
+            `**⚙️** - Set the after session message\n` +
+            `**🔒** - Disable the after session message\n`
+    );
+
+    // asmc = after_session_message_config_. shortened due to limited customId length
+
+    function composeASMCButtonId(optionNumber: string): string {
+        const newYabobButton = generateYabobButtonId(
+            isDm ? 'dm' : 'other',
+            `asmc${optionNumber}`,
+            server.guild.id,
+            channelId
+        );
+        return yabobButtonToString(newYabobButton);
+    }
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeASMCButtonId('1'))
+                .setEmoji('⚙️')
+                .setStyle(ButtonStyle.Secondary)
+        )
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeASMCButtonId('2'))
+                .setEmoji('🔒')
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+    return { embeds: embed.embeds, components: [buttons] };
+}
+
+function queueAutoClearConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+): BaseMessageOptions {
+    const embed = SimpleEmbed(
+        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        EmbedColor.Aqua,
+        `The queue auto clear configuration is as follows:\n\n` +
+            `**Queue Auto Clear:** ${
+                server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
+                server.queueAutoClearTimeout === undefined
+                    ? '`Not Set`'
+                    : `${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`
+            }\n\n` +
+            `Select an option below to change the configuration.\n\n` +
+            `**⚙️** - Set the queue auto clear\n` +
+            `**🔒** - Disable the queue auto clear\n`
+    );
+
+    // qacc = queue_auto_clear_config_. shortened due to limited customId length
+
+    function composeQACCButtonId(optionNumber: string): string {
+        const newYabobButton = generateYabobButtonId(
+            isDm ? 'dm' : 'other',
+            `qacc${optionNumber}`,
+            server.guild.id,
+            channelId
+        );
+        return yabobButtonToString(newYabobButton);
+    }
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeQACCButtonId('1'))
+                .setEmoji('⚙️')
+                .setStyle(ButtonStyle.Secondary)
+        )
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeQACCButtonId('2'))
+                .setEmoji('🔒')
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+    return { embeds: embed.embeds, components: [buttons] };
+}
+
+function loggingChannelConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+): BaseMessageOptions {
+    const embed = SimpleEmbed(
+        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        EmbedColor.Aqua,
+        `The logging channel configuration is as follows:\n\n` +
+            `**Logging Channel:** ${
+                server.loggingChannel === undefined
+                    ? '`Not Set`'
+                    : server.loggingChannel.toString()
+            }\n\n` +
+            `Select an option below to change the configuration.\n\n` +
+            `**⚙️** - Set the logging channel\n` +
+            `**🔒** - Disable the logging channel\n`
+    );
+
+    // lcc = logging_channel_config_. shortened due to limited customId length
+
+    function composeLCCButtonId(optionNumber: string): string {
+        const newYabobButton = generateYabobButtonId(
+            isDm ? 'dm' : 'other',
+            `lcc${optionNumber}`,
+            server.guild.id,
+            channelId
+        );
+        return yabobButtonToString(newYabobButton);
+    }
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeLCCButtonId('1'))
+                .setEmoji('⚙️')
+                .setStyle(ButtonStyle.Secondary)
+        )
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeLCCButtonId('2'))
+                .setEmoji('🔒')
+                .setStyle(ButtonStyle.Secondary)
+        );
+
+    return { embeds: embed.embeds, components: [buttons] };
+}
+
+export { serverSettingsMainMenu, serverSettingsMainMenuOptions, serverRolesConfigMenu };

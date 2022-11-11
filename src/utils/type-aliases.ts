@@ -8,6 +8,7 @@ import {
     ModalSubmitInteraction,
     SelectMenuInteraction
 } from 'discord.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 /**
  * Marks 1 property in T as required.
@@ -97,6 +98,12 @@ type DMSelectMenuCallback = (
     interaction: SelectMenuInteraction
 ) => Promise<BaseMessageOptions>;
 
+type SettingsMenuCallback = (
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+) => BaseMessageOptions;
+
 /**
  * SimpleEmbed return type
  */
@@ -170,6 +177,7 @@ export {
     DMModalSubmitCallback,
     SelectMenuCallback,
     DMSelectMenuCallback,
+    SettingsMenuCallback,
     
     YabobEmbed,
 

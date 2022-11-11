@@ -1,5 +1,7 @@
 import { SelectMenuInteraction } from 'discord.js';
-import { serverRolesConfigMenu } from '../attending-server/server-config-messages.js';
+import {
+    serverSettingsMainMenuOptions
+} from '../attending-server/server-config-messages.js';
 import { ErrorEmbed, SimpleEmbed } from '../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
@@ -165,7 +167,14 @@ async function serverSettingsSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    return serverRolesConfigMenu(server, false, interaction.channelId, false);
+    const selectedOption = interaction.values[0];
+    const callbackMenu = serverSettingsMainMenuOptions.find(
+        option => option.optionObj.value === selectedOption
+    );
+    if (!callbackMenu) {
+        throw new Error(`Invalid option selected: ${selectedOption}`);
+    }
+    return callbackMenu.subMenu(server, interaction.channelId, false);
 }
 
 export {
