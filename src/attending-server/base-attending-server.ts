@@ -842,11 +842,16 @@ class AttendingServerV2 {
         );
     }
 
+    /**
+     * Sends the log message to the logging channel if it's set up
+     * @param message
+     */
     async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
         if (this._loggingChannel) {
             await this._loggingChannel.send(message);
         }
     }
+
     /**
      * Sends the VC invite to the student after successful dequeue
      * @param helperObject

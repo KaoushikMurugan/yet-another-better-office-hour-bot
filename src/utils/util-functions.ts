@@ -200,11 +200,11 @@ function isVoiceChannel(
 }
 
 function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
-    );
+    const padding = (process.stdout.columns - text.length) / 2;
+    if (padding <= 0) {
+        return text;
+    }
+    return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
 }
 
 export {
