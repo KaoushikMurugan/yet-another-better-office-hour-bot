@@ -10,9 +10,7 @@ import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
-import {
-    QueueChannel
-} from '../../attending-server/base-attending-server.js';
+import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     ChatInputCommandInteraction,
     ButtonInteraction,

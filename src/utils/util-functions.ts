@@ -66,10 +66,7 @@ function convertMsToShortTime(milliseconds: number): string {
  * @param member
  * @returns list of queue roles
  */
-async function getQueueRoles(
-    server: FrozenServer,
-    member: GuildMember
-): Promise<Role[]> {
+async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache

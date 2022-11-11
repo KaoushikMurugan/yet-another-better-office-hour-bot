@@ -7,7 +7,8 @@ import { red } from '../utils/command-line-colors.js';
 import { ConstNoMethod } from '../utils/type-aliases.js';
 
 type FrozenQueue = Omit<ConstNoMethod<HelpQueueV2>, 'timers'>;
-type FrozenServer = ConstNoMethod<AttendingServerV2> & Pick<AttendingServerV2, 'getQueueChannels'>;
+type FrozenServer = ConstNoMethod<AttendingServerV2> &
+    Pick<AttendingServerV2, 'getQueueChannels'>;
 type FrozenDisplay = Omit<
     QueueDisplayV2,
     'renderLoopTimerId' | 'requestQueueEmbedRender' | 'requestForceRender'
