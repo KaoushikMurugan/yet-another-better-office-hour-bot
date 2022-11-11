@@ -3,7 +3,7 @@ import {
     BaseServerExtension,
     IServerExtension
 } from '../extensions/extension-interface.js';
-import { QueueBackup, ServerBackup } from '../models/backups.js';
+import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
 import { blue, cyan, yellow } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
@@ -38,6 +38,12 @@ class FirebaseServerBackupExtension
             .doc(serverId)
             .get();
         const backupData = backupDocument.data() as ServerBackup;
+        const unpack = serverBackupSchema.safeParse(backupDocument.data());
+        if (!unpack.success) {
+            console.warn(
+                `External backups were found for ${this.guild.name} but contains invalid data. Creating new instance.`
+            );
+        }
         backupData.queues.forEach(queue => {
             queue.studentsInQueue.forEach(student => {
                 student.waitStart = new Date(
@@ -74,7 +80,6 @@ class FirebaseServerBackupExtension
                 studentsInQueue: queue.students.map(student => {
                     return {
                         waitStart: student.waitStart,
-                        upNext: student.upNext,
                         displayName: student.member.displayName,
                         memberId: student.member.id
                     };

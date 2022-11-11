@@ -7,8 +7,8 @@ import {
     ChatInputCommandInteraction,
     ModalSubmitInteraction
 } from 'discord.js';
-
 import { SimpleEmbed } from './embed-helper.js';
+import { QueueError, ServerError } from './error-types.js';
 
 /**
  * These are just aliases to make keys of collections easier to read
@@ -45,6 +45,7 @@ type ModalSubmitCallback = (
  * @see https://stackoverflow.com/questions/69327990/how-can-i-make-one-property-non-optional-in-a-typescript-type
  */
 type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T[P]> };
+
 /**
  * Utility alias for T | undefined, shorter and more readable
  * @remark
@@ -52,6 +53,7 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T
  * - Otherwise prefer `T?`
  */
 type Optional<T> = T | undefined;
+
 /**
  * Utility alias to remove all methods from a class
  */
@@ -61,11 +63,23 @@ type NoMethod<T> = Pick<
     // eslint-disable-next-line @typescript-eslint/ban-types
     { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
 >;
+
+/**
+ * Alias for readonly no method
+ */
 type ConstNoMethod<T> = Readonly<NoMethod<T>>;
+
 /**
  * SimpleEmbed return type
  */
 type YabobEmbed = ReturnType<typeof SimpleEmbed>;
+
+/**
+ * Non exception based error types
+ */
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+type ServerResult<T> = Result<T, ServerError>;
+type QueueResult<T> = Result<T, QueueError>;
 
 export {
     GuildId,
@@ -81,5 +95,8 @@ export {
     ModalSubmitCallback,
     YabobEmbed,
     NoMethod,
-    ConstNoMethod
+    ConstNoMethod,
+    Result,
+    ServerResult,
+    QueueResult
 };

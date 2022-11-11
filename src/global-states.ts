@@ -37,7 +37,6 @@ const firebaseDB: Firestore = getFirestore();
 /**
  * The discord user object.
  * @remarks Top level await finally works with esmodules,
- * this can now be safely referenced at the top leve;
  * - The `true` type parameter asserts that the client has successfully initialized
  * - Asserted because this file handles discord login.
  *  If this object is exported,

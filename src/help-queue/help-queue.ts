@@ -79,7 +79,6 @@ class HelpQueueV2 {
             if (correspondingMember !== undefined) {
                 this._students.push({
                     waitStart: studentBackup.waitStart,
-                    upNext: studentBackup.upNext,
                     member: correspondingMember,
                     queue: this
                 });
@@ -278,7 +277,6 @@ class HelpQueueV2 {
         }
         const student: Helpee = {
             waitStart: new Date(),
-            upNext: this._students.length === 0,
             member: studentMember,
             queue: this
         };
