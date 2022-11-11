@@ -37,27 +37,30 @@ class FirebaseServerBackupExtension
             .collection('serverBackups')
             .doc(serverId)
             .get();
-        const backupData = backupDocument.data() as ServerBackup;
         const unpack = serverBackupSchema.safeParse(backupDocument.data());
         if (!unpack.success) {
             console.warn(
                 `External backups were found for ${this.guild.name} but contains invalid data. Creating new instance.`
             );
+            return undefined;
         }
-        backupData.queues.forEach(queue => {
-            queue.studentsInQueue.forEach(student => {
-                student.waitStart = new Date(
-                    // weird hack here becaue firebase stores dates as this object type
-                    (
-                        student.waitStart as unknown as {
-                            _nanoseconds: number;
-                            _seconds: number;
-                        }
-                    )._seconds * 1000
-                );
-            });
-        });
-        // TODO: add a typeguard here to check if schema match
+        const backupData: ServerBackup = {
+            ...unpack.data,
+            queues: unpack.data.queues.map(queue => {
+                return {
+                    ...queue,
+                    studentsInQueue: queue.studentsInQueue
+                        .map(student => {
+                            return {
+                                ...student,
+                                waitStart: new Date(student.waitStart._seconds * 1000)
+                            };
+                        })
+                        .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
+                };
+            }),
+            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000)
+        };
         return backupData;
     }
 
