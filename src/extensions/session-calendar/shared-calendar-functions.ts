@@ -21,6 +21,7 @@ import {
 } from 'discord.js';
 import { isServerInteraction } from '../../command-handling/common-validations.js';
 import { isTextChannel } from '../../utils/util-functions.js';
+import { z } from 'zod';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -32,6 +33,16 @@ type UpComingSessionViewModel = {
     discordId?: string;
     location?: string;
 };
+
+const calendarDataSchema = z.object({
+    start: z.object({
+        dateTime: z.string()
+    }),
+    end: z.object({
+        dateTime: z.string()
+    }),
+    description: z.string()
+});
 
 /**
  * Fetches the calendar and build the embed view model
@@ -69,39 +80,37 @@ async function getUpComingTutoringEvents(
         return [];
     }
     const definedViewModels: UpComingSessionViewModel[] = [];
-    for (const event of events) {
-        if (event.start?.dateTime && event.end?.dateTime && event.description) {
-            const [start, end, description] = [
-                event.start.dateTime,
-                event.end.dateTime,
-                event.description
-            ];
-            const parsableCalendarString = description
-                .substring(
-                    description.indexOf('YABOB_START') + 'YABOB_START'.length,
-                    description.indexOf('YABOB_END')
-                )
-                .trimStart()
-                .trimEnd();
-            const viewModel = composeViewModel(
-                serverId,
-                queueName,
-                event.summary ?? '',
-                parsableCalendarString ?? '',
-                new Date(start),
-                new Date(end),
-                event.location ?? undefined
-            );
-            // trim to avoid overflow
-            if (viewModel?.location !== undefined) {
-                viewModel.location =
-                    viewModel.location?.length > 25
-                        ? viewModel.location?.substring(0, 25) + '...'
-                        : viewModel.location;
-            }
-            if (viewModel !== undefined) {
-                definedViewModels.push(viewModel);
-            }
+    for (const rawEvent of events) {
+        const unpack = calendarDataSchema.safeParse(rawEvent);
+        if (!unpack.success) {
+            continue;
+        }
+        const parsedEvent = unpack.data;
+        const parsableCalendarString = parsedEvent.description
+            .substring(
+                parsedEvent.description.indexOf('YABOB_START') + 'YABOB_START'.length,
+                parsedEvent.description.indexOf('YABOB_END')
+            )
+            .trimStart()
+            .trimEnd();
+        const viewModel = composeViewModel(
+            serverId,
+            queueName,
+            rawEvent.summary ?? '',
+            parsableCalendarString ?? '',
+            new Date(parsedEvent.start.dateTime),
+            new Date(parsedEvent.end.dateTime),
+            rawEvent.location ?? undefined
+        );
+        // trim to avoid overflow
+        if (viewModel?.location !== undefined) {
+            viewModel.location =
+                viewModel.location?.length > 25
+                    ? viewModel.location?.substring(0, 25) + '...'
+                    : viewModel.location;
+        }
+        if (viewModel !== undefined) {
+            definedViewModels.push(viewModel);
         }
     }
     return definedViewModels;
