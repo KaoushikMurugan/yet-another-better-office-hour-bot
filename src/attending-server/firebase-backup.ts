@@ -9,7 +9,7 @@ import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
-import { FrozenServer, sendLogs } from '../extensions/extension-utils.js';
+import { FrozenServer } from '../extensions/extension-utils.js';
 
 /**
  * Built in backup extension
@@ -119,8 +119,7 @@ class FirebaseServerBackupExtension
             .catch((err: Error) =>
                 console.error('Firebase server backup failed.', err.message)
             );
-        sendLogs(
-            server.guild.id,
+        server.sendLogMessage(
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
     }

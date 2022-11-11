@@ -56,7 +56,6 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from './calendar-success-messages.js';
-import { sendLogs } from '../extension-utils.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -128,7 +127,7 @@ class CalendarInteractionExtension
             ),
             ephemeral: true
         });
-        sendLogs(server.guild.id, SlashCommandLogEmbed(interaction));
+        server.sendLogMessage(SlashCommandLogEmbed(interaction));
         const commandMethod = commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
@@ -209,10 +208,8 @@ async function updateCalendarId(
         isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin'])
     ];
     const [server, state] = isServerCalendarInteraction(interaction);
-    await Promise.all([
-        state.setCalendarId(newCalendarId),
-        sendLogs(server.guild.id, CalendarLogMessages.backedUpToFirebase)
-    ]);
+    await state.setCalendarId(newCalendarId);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
 }
 
@@ -226,10 +223,8 @@ async function unsetCalendarId(
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
-    await Promise.all([
-        state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
-        sendLogs(server.guild.id, CalendarLogMessages.backedUpToFirebase)
-    ]);
+    await state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.unsetCalendar;
 }
 
@@ -318,7 +313,7 @@ async function makeParsableCalendarTitle(
                 )} triggered by ${memberToUpdate.displayName}`
             )
         );
-    sendLogs(server.guild.id, CalendarLogMessages.backedUpToFirebase);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.completedCalendarString(
         calendarDisplayName,
         validQueueOptions.map(queue => queue.name)
@@ -364,15 +359,14 @@ async function requestCalendarRefresh(
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     const queueLevelExtension = state.listeners.get(queueName);
-    sendLogs(
-        server.guild.id,
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Refresh Upcoming Sessions`,
             interaction.channel as TextBasedChannel
         )
     );
-    await Promise.all<unknown>([queueLevelExtension?.onCalendarExtensionStateChange()]);
+    await queueLevelExtension?.onCalendarExtensionStateChange();
     return CalendarSuccessMessages.refreshSuccess(queueName);
 }
 
