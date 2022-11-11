@@ -14,7 +14,8 @@ import {
     GuildMember,
     VoiceChannel,
     ModalSubmitInteraction,
-    CacheType
+    CacheType,
+    SelectMenuInteraction
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
@@ -48,7 +49,7 @@ interface IInteractionExtension {
     canHandleDMButton: (interaction: ButtonInteraction) => boolean;
     /**
      * Whether the extension can handle modal submit
-     * @param interaction the modal to test
+     * @param interaction
      */
     canHandleModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => boolean;
     /**
@@ -56,6 +57,16 @@ interface IInteractionExtension {
      * @param interaction
      */
     canHandleDMModalSubmit: (interaction: ModalSubmitInteraction) => boolean;
+    /**
+     * Whether the extension can handle select menus
+     * @param interaction
+     */
+    canHandleSelectMenu: (interaction: SelectMenuInteraction<'cached'>) => boolean;
+    /**
+     * Whether the extension can handle DM select menus
+     * @param interaction
+     */
+    canHandleDMSelectMenu: (interaction: SelectMenuInteraction) => boolean;
     /**
      * Interface to the command processor. If the extension can handle this slash command,
      * it should reply inside this method
@@ -86,6 +97,16 @@ interface IInteractionExtension {
      * @param interaction the modal that's guaranteed to be handled by this extension
      */
     processDMModalSubmit: (interaction: ModalSubmitInteraction) => Promise<void>;
+    /**
+     * Interface to the select menu processor. If the extension can handle this button,
+     * @param interaction the select menu that's guaranteed to be handled by this extension
+     */
+    processSelectMenu: (interaction: SelectMenuInteraction<'cached'>) => Promise<void>;
+    /**
+     * Interface to the DM select menu processor. If the extension can handle this button,
+     * @param interaction the select menu that's guaranteed to be handled by this extension
+     */
+    processDMSelectMenu: (interaction: SelectMenuInteraction) => Promise<void>;
 }
 
 /** Server Level Extension */
@@ -271,6 +292,12 @@ class BaseInteractionExtension implements IInteractionExtension {
     canHandleDMModalSubmit(interaction: ModalSubmitInteraction): boolean {
         return false;
     }
+    canHandleSelectMenu(interaction: SelectMenuInteraction): boolean {
+        return false;
+    }
+    canHandleDMSelectMenu(interaction: SelectMenuInteraction): boolean {
+        return false;
+    }
     processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
         return Promise.resolve();
     }
@@ -284,6 +311,12 @@ class BaseInteractionExtension implements IInteractionExtension {
         return Promise.resolve();
     }
     processDMModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
+        return Promise.resolve();
+    }
+    processSelectMenu(interaction: SelectMenuInteraction): Promise<void> {
+        return Promise.resolve();
+    }
+    processDMSelectMenu(interaction: SelectMenuInteraction): Promise<void> {
         return Promise.resolve();
     }
 }

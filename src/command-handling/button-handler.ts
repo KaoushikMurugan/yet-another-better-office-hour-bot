@@ -71,8 +71,10 @@ const updateParentInteractionButtons = ['ssrc1', 'ssrc1a', 'ssrc2', 'ssrc2a'];
 
 /**
  * Check if the button interation can be handled by this (in-built) handler
+ * @remark This function is for buttons inside servers.
+ * See {@link builtInDMButtonHandlerCanHandle} for the dm version.
  * @param interaction
- * @returns
+ * @returns True if the interaction can be handled by this handler.
  */
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
@@ -84,8 +86,10 @@ function builtInButtonHandlerCanHandle(
 
 /**
  * Check if the button interation can be handled by this (in-built) handler
+ * @remark This function is for buttons in DMs.
+ * See {@link builtInButtonHandlerCanHandle} for the server version.
  * @param interaction
- * @returns
+ * @returns True if the interaction can be handled by this handler.
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
@@ -94,11 +98,12 @@ function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolea
 }
 
 /**
- * Handles button presses
+ * Handles server button presses
  * - Checks if the button press is valid
  * - If so, calls the appropriate function to handle the button press
  * - Returns the appropriate message to send to the user
- * @remark This function is for buttons inside servers. For the version that handles buttons in DMs, see {@link processBuiltInDMButton}
+ * @remark This function is for buttons inside servers. For the version
+ * that handlesbuttons in DMs, see {@link processBuiltInDMButton}
  * @param interaction
  */
 async function processBuiltInButton(
@@ -164,7 +169,7 @@ async function processBuiltInButton(
 }
 
 /**
- * Handles button presses
+ * Handles dm button presses
  * - Checks if the button press is valid
  * - If so, calls the appropriate function to handle the button press
  * - Returns the appropriate message to send to the user

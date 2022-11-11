@@ -59,6 +59,8 @@ function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): bo
  * - Calls the appropriate handler based on the modal name
  * - Logs the interaction
  * - Sends the appropriate response
+ * @remark This is for modals that are prompted in servers.
+ * For the version that handles modals in dms, see {@link processBuiltInDMModalSubmit}
  * @param interaction
  */
 async function processBuiltInModalSubmit(
@@ -91,6 +93,14 @@ async function processBuiltInModalSubmit(
         });
 }
 
+/**
+ * Handles all built in modal submit interactions
+ * - Calls the appropriate handler based on the modal name
+ * - Sends the appropriate response
+ * @remark This is for modals that are prompted in dms.
+ * For the version that handles modals in servers, see {@link processBuiltInModalSubmit}
+ * @param interaction
+ */
 async function processBuiltInDMModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {

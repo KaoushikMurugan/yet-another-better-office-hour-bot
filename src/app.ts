@@ -28,7 +28,9 @@ import { updatePresence } from './utils/discord-presence.js';
 import { centered } from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 import {
+    builtInDMSelectMenuHandlerCanHandle,
     builtInSelectMenuHandlerCanHandle,
+    processBuiltInDMSelectMenu,
     processBuiltInSelectMenu
 } from './command-handling/select-menu-handler.js';
 
@@ -278,6 +280,17 @@ async function dispatchDMInteraction(interaction: Interaction): Promise<boolean>
             await externalDMModalHandler?.processDMModalSubmit(interaction);
             return externalDMModalHandler !== undefined;
         }
+    } else if (interaction.isSelectMenu()) {
+        if (builtInDMSelectMenuHandlerCanHandle(interaction)) {
+            await processBuiltInDMSelectMenu(interaction);
+            return true;
+        } else {
+            const externalDMSelectMenuHandler = interactionExtensions
+                .get(interaction.customId)
+                ?.find(ext => ext.canHandleDMSelectMenu(interaction));
+            await externalDMSelectMenuHandler?.processDMSelectMenu(interaction);
+            return externalDMSelectMenuHandler !== undefined;
+        }
     } else {
         interaction.isRepliable() &&
             (await interaction.reply(
@@ -311,8 +324,7 @@ async function dispatchServerInteractions(
             await externalCommandHandler?.processCommand(interaction);
             return externalCommandHandler !== undefined;
         }
-    }
-    if (interaction.isButton()) {
+    } else if (interaction.isButton()) {
         if (builtInButtonHandlerCanHandle(interaction)) {
             await processBuiltInButton(interaction);
             return true;
@@ -323,8 +335,7 @@ async function dispatchServerInteractions(
             await externalButtonHandler?.processButton(interaction);
             return externalButtonHandler !== undefined;
         }
-    }
-    if (interaction.isModalSubmit()) {
+    } else if (interaction.isModalSubmit()) {
         if (builtInModalHandlerCanHandle(interaction)) {
             await processBuiltInModalSubmit(interaction);
             return true;
@@ -335,13 +346,16 @@ async function dispatchServerInteractions(
             await externalModalHandler?.processModalSubmit(interaction);
             return externalModalHandler !== undefined;
         }
-    }
-    if (interaction.isSelectMenu()) {
+    } else if (interaction.isSelectMenu()) {
         if (builtInSelectMenuHandlerCanHandle(interaction)) {
             await processBuiltInSelectMenu(interaction);
             return true;
         } else {
-            return false;
+            const externalSelectMenuHandler = interactionExtensions
+                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                ?.find(ext => ext.canHandleSelectMenu(interaction));
+            await externalSelectMenuHandler?.processSelectMenu(interaction);
+            return externalSelectMenuHandler !== undefined;
         }
     }
     return false;

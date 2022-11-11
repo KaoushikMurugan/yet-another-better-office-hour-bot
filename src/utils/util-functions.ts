@@ -433,21 +433,30 @@ function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
 ): YabobButton<YabobButtonType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
+    return parseYabobActionableComponentId(
+        customButtonId,
+        noConvert
+    ) as YabobButton<YabobButtonType>;
 }
 
 function parseYabobModalId(
     customButtonId: string,
     noConvert = false
 ): YabobButton<YabobModalType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
+    return parseYabobActionableComponentId(
+        customButtonId,
+        noConvert
+    ) as YabobButton<YabobModalType>;
 }
 
 function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
 ): YabobButton<YabobSelectMenuType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
+    return parseYabobActionableComponentId(
+        customButtonId,
+        noConvert
+    ) as YabobButton<YabobSelectMenuType>;
 }
 
 // prettier-ignore
