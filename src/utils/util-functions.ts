@@ -13,7 +13,7 @@ import {
     TextChannel,
     VoiceChannel
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { FrozenServer } from '../extensions/extension-utils.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
 
 /**
@@ -67,7 +67,7 @@ function convertMsToShortTime(milliseconds: number): string {
  * @returns list of queue roles
  */
 async function getQueueRoles(
-    server: AttendingServerV2,
+    server: FrozenServer,
     member: GuildMember
 ): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();

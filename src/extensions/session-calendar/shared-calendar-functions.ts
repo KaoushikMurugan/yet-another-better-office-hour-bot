@@ -11,7 +11,6 @@ import { environment } from '../../environment/environment-manager.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
 import {
-    AttendingServerV2,
     QueueChannel
 } from '../../attending-server/base-attending-server.js';
 import {
@@ -22,6 +21,7 @@ import {
 import { isServerInteraction } from '../../command-handling/common-validations.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
+import { FrozenServer } from '../extension-utils.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
@@ -291,7 +291,7 @@ function isServerCalendarInteraction(
         | ChatInputCommandInteraction<'cached'>
         | ButtonInteraction<'cached'>
         | ModalSubmitInteraction<'cached'>
-): [AttendingServerV2, CalendarExtensionState] {
+): [FrozenServer, CalendarExtensionState] {
     const server = isServerInteraction(interaction);
     const state = calendarStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
