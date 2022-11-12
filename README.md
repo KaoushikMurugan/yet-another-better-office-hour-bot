@@ -13,81 +13,76 @@
 <div align='center'>
 <a href='https://discord.com/api/oauth2/authorize?client_id=967586305959657482&permissions=8&scope=bot' target="_blank"><img alt='' src='https://img.shields.io/badge/invite_yabob to your server!-100000?style=for-the-badge&logo=&logoColor=white&labelColor=ff6188&color=ff6188'/></a>
 </div>
-<br>
+
+
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
 Based on original **OH-Bot, BOB V2, and BOB V3** created by [Kaoushik Murugan](https://github.com/KaoushikMurugan), [Noah Rose Ledesma](https://github.com/NoahRoseLedesma), [Grant Gilson](https://github.com/GMGilson), and [Stephen Ott](https://github.com/stott531).
 
 <div align="center">
-<span size="+2">
-      <a href=#purpose>Purpose</a> •
-      <a href=#overview>Overview</a> •
-      <a href=https://github.com/KaoushikMurugan/YABOB/wiki>Wiki</a> •
-      <a href=https://kaoushikmurugan.github.io/yet-another-better-office-hour-bot>Documentation</a> •
-      <a href=#license>License</a>
-</span>
+      <span size="+2">
+            <a href=#office-hour-protocol><b>Office Hour Protocol</b></a> •
+            <a href=https://github.com/KaoushikMurugan/YABOB/wiki><b>User Wiki</b></a> •
+            <a href=https://kaoushikmurugan.github.io/yet-another-better-office-hour-bot><b> Developer Documentation</b></a> •
+            <a href=#license><b>License</b></a>
+      </span>
 </div>
 
 # Purpose
 
 We wanted to implement a way to help instructors efficiently automate their office hours through Discord.
 
-So, we created **YABOB**, the **Yet Another Better Office-hours Bot**, with the goal of allowing students to effectively communicate with their instructors with the option to be able to ask their peers for help while they wait to ensure they receive the help they need.
+So we created **YABOB**, the **Yet Another Better Office-hours Bot**, with the goal of allowing students to effectively communicate with their instructors with the option to be able to ask their peers for help while they wait to ensure they receive the help they need.
 
 # Overview
 
-YABOB is a Discord queue managment automation bot. This means that YABOB handles helpees joining/leaving a queue as well as helpers pulling a helpee out of the queue for a session.
+YABOB is a Discord queue managment automation bot. This means that YABOB handles students joining/leaving a queue as well as staff members pulling a student out of the queue for a session.
+
+YABOB implements a simple first come first serve queue system, where
+student are allowed to enter and leave the queue whenever they like
+while the office hour session is being held.
 
 Apart from basic queue operations, some of YABOB's other useful features are:
 
 -   Displaying upcoming office hours as listed on a linked google calendar
--   Logging helper and helpee sessions (who, and how long)
--   Notifying helpees for the queues they're interested in
+-   Logging help sessions (who, and how long)
+-   Notifying students for the queues they're interested in
 -   Automatically clear queues after a specified amount of inactive time
 
-YABOB is also a **_self-hosted_** bot meaning that you will need to host and maintain your own instance.
+If you would like to host your own YABOB instance, see the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide) to get started with running the bot.
 
-See the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide) to get started with running the bot.
+# Server Roles
 
-# Office Hours (OH) Session Protocol
+There are three roles that **YABOB** will interact with on your server.
 
-Below is the standard Office Hours (OH) Session Protocol we follow:
+-   **Bot Admin**: The Bot Admin Role has total control of YABOB's functionalities and server interfaces.
+-   **Staff**: The Staff Role allows control over OH sessions and locked channels. This role is usually given to Instructors, TAs and Tutors.
+-   **Student**: The Student Role allows for the ability to interface with OH-Queue.
 
-_**Helper(s)** is the over-arching term we use for the person(s) who hosts office hour sessions (such as Instructors, TAs and Tutors.), for which the **Helpee(s)** queues up for (such as Students and Tutees)._
+# Office Hour Protocol
 
-## Helper's Protocol:
+Below is the standard office hour protocol we follow.
 
-1. Helpers perform the `/start` command to open queues that correspond to courses/office hours they help for.
-2. Students enter the queue of their choice.
-3. Helpers issue a `/next` command, which invites a student to join their voice channel.
-4. Once their office hours session is over, helpers close their queues with the `/stop` command.
+## Staff's Protocol
 
-Note: Multiple Helpers can help for the same queue. A queue will close **if and only if** there are no helpers for that queue.
+1. Use the `/start` command to open queues that correspond to the office hour queues they help for.
+2. Wait for students to enter the queues of their choice.
+3. Use the `/next` command to dequeue a student and send them an invite to join the voice channel.
+4. Use the `/stop` command once the office hour session is over.
 
-## Helpee's Protocol:
+Multiple staff members can help for the same queue. A queue will close **if and only if** there is no one helping for that queue.
+
+## Student's Protocol
 
 1. Wait for the queue to open
-2. Join the queue by clicking on the `Join` button or the `/enqueue` command.
-3. Wait to be pulled out of the queue by the helper.
-4. Once they are pulled out of the queue, they will received a direct message from YABOB with a voice channel link. Click the link to join the voice channel with the helper.
-5. Leave the voice channel at the end of the session.
+2. Join the queue by clicking on the `Join` button or using the `/enqueue` command.
+3. Wait to be pulled out of the queue by a staff member.
+4. Once they are pulled out of the queue, they will received a direct message from YABOB with a voice channel link. Click the link to join the voice channel with the staff member.
+6. Leave the voice channel at the end of the session.
 
 More commands can be found [here](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Built-in-Commands) in our [wiki](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki).
 
-# Waiting Queue System
-
-**YABOB** implements a simple first come first serve queue system where
-student are allowed to enter and leave the queue whenever they like
-while OH is being held.
-
-There are three roles that **YABOB** will interact with on your server
-
--   **Bot Admin**: The Bot Admin Role has total control of bot functionality and server interfaces.
--   **Staff**: The Staff\* Role allows control over OH sessions and locked channels.
--   **Student**: The Student Role allows for the ability to interface with OH-Queue.
-
-###### \*Staff is refered to as helper in the code for the bot.
 
 # License
 
