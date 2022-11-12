@@ -88,6 +88,7 @@ client.on('guildDelete', async guild => {
  */
 client.on('interactionCreate', async interaction => {
     dispatchInteractions(interaction).catch(async (err: Error) => {
+        console.log(red('This interaction failed. '), err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(() => {
@@ -97,8 +98,8 @@ client.on('interactionCreate', async interaction => {
                 });
             });
     });
-    if (failedInteractions.length >= 50) {
-        console.error('These 50 interactions failed: ');
+    if (failedInteractions.length >= 5) {
+        console.error(red('These 5 interactions failed:'));
         console.error(failedInteractions);
         failedInteractions.splice(0, failedInteractions.length);
     }
