@@ -33,28 +33,25 @@ const calendarSettingsMainMenuOptions: {
     }
 ];
 
-function calendarSettingsConfigMenu(
+async function calendarSettingsConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
 
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `🗓 Calendar Configuration for ${server.guild.name} 🗓`,
         EmbedColor.Aqua,
-        'Calendar Settings' +
-            '\n\n' +
-            'The calendar configuration for this server is as follows:\n\n' +
-            `**Office Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n` +
-            `This is the calendar that the server refers to for office hours events` +
+            `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
+            `*This is the calendar that the server refers to for office hours events*` +
             `\n\n` +
-            `**Office Hours Calendar Embed Url:** ${state.publicCalendarEmbedUrl}\n` +
-            `This is the url that will be linked in the upcoming hours embed.\n\n` +
-            `Select an option below to change the configuration.\n\n` +
+            `**Office Hours Calendar Embed Url:** ${state.publicCalendarEmbedUrl}\n\n` +
+            `*This is the url that will be linked in the upcoming hours embed.*\n\n` +
+            `***Select an option below to change the configuration:***\n\n` +
             `**Note:** If you change the calendar, the embed url will be reset to the default embed url for the new calendar.\n\n` +
             `**1** - Change the Office Hours Calendar\n` +
             `**2** - Change the Office Hours Calendar Embed Url\n`

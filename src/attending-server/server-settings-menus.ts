@@ -57,15 +57,15 @@ const serverSettingsMainMenuOptions: {
     }
 ];
 
-function serverSettingsMainMenu(
+async function serverSettingsMainMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `🛠 Server Settings for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
-        `**This is the main menu for server configuration.**\n\n` +
+        `**This is the main menu for server settings.**\n\n` +
             `Select an option from the drop-down menu below.`
     );
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
@@ -86,50 +86,49 @@ function serverSettingsMainMenu(
     return { embeds: embed.embeds, components: [selectMenu] };
 }
 
-function serverRolesConfigMenu(
+async function serverRolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
     forServerInit = false
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
     const studentRole = server.studentRoleID;
 
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `📝 Server Roles Configuration for ${server.guild.name} 📝`,
         EmbedColor.Aqua,
         (forServerInit
-            ? `Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: \n\n`
-            : `The server roles configuration is as follows:\n\n`) +
-            `**Bot Admin Role:** ${
+            ? `**Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: **\n` : '') +
+            `**\n🤖 Bot Admin Role:** ${
                 forServerInit
-                    ? ` Role that can manage the bot and it's settings\n`
+                    ? ` *Role that can manage the bot and it's settings*\n`
                     : botAdminRole === 'Not Set'
                     ? 'Not Set'
                     : botAdminRole === 'Deleted'
                     ? '@deleted-role'
                     : `<@&${botAdminRole}>`
-            }\n` +
-            `**Helper Role:** ${
+            }\n\n` +
+            `**📚 Helper Role:** ${
                 forServerInit
-                    ? ` Role that allows users to host office hours\n`
+                    ? ` *Role that allows users to host office hours*\n`
                     : helperRole === 'Not Set'
                     ? 'Not Set'
                     : helperRole === 'Deleted'
                     ? '@deleted-role'
                     : `<@&${helperRole}>`
-            }\n` +
-            `**Student Role:** ${
+            }\n\n` +
+            `**🎓 Student Role:** ${
                 forServerInit
-                    ? ` Role that allows users to join office hour queues\n`
+                    ? ` *Role that allows users to join office hour queues*\n`
                     : studentRole === 'Not Set'
                     ? 'Not Set'
                     : studentRole === 'Deleted'
                     ? '@deleted-role'
                     : `<@&${studentRole}>`
             }\n\n` +
-            `Select an option below to change the configuration.\n\n` +
+            `***Select an option below to change the configuration:***\n\n` +
             `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
             `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
             `**2** - Create brand new roles for the missing roles\n` +
@@ -185,23 +184,24 @@ function serverRolesConfigMenu(
     }
 }
 
-function afterSessionMessageConfigMenu(
+async function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `📨 After Session Message Configuration for ${server.guild.name} 📨`,
         EmbedColor.Aqua,
-        `The after session message configuration is as follows:\n\n` +
-            `**After Session Message:**\n\n ${
+            `\n*The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)*\n\n` +
+            `**The current After Session Message is: **\n\n` +
+            `${
                 server.afterSessionMessage === ''
                     ? '`Not Set`'
                     : server.afterSessionMessage
             }\n\n` +
-            `Select an option below to change the configuration.\n\n` +
+            `***Select an option below to change the configuration:***\n\n` +
             `**⚙️** - Set the after session message\n` +
-            `**🔒** - Disable the after session message\n`
+            `**🔒** - Disable the after session message. The bot will no longer sent the message to students after they finish their session\n`
     );
 
     // asmc = after_session_message_config_. shortened due to limited customId length
@@ -221,12 +221,14 @@ function afterSessionMessageConfigMenu(
             new ButtonBuilder()
                 .setCustomId(composeASMCButtonId('1'))
                 .setEmoji('⚙️')
+                .setLabel('Set Message')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeASMCButtonId('2'))
                 .setEmoji('🔒')
+                .setLabel('Disable')
                 .setStyle(ButtonStyle.Secondary)
         );
 
@@ -236,24 +238,23 @@ function afterSessionMessageConfigMenu(
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
-function queueAutoClearConfigMenu(
+async function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`,
         EmbedColor.Aqua,
-        `The queue auto clear configuration is as follows:\n\n` +
-            `**Queue Auto Clear:** ${
-                server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
-                server.queueAutoClearTimeout === undefined
-                    ? '`Not Set`'
-                    : `${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`
-            }\n\n` +
-            `Select an option below to change the configuration.\n\n` +
-            `**⚙️** - Set the queue auto clear\n` +
-            `**🔒** - Disable the queue auto clear\n`
+            (server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
+            server.queueAutoClearTimeout === undefined
+                ? '**\nThe queue auto clear feature is currently disabled. The queue will not be cleared automatically.**\n\n' :
+            `**\nQueues will automatically be cleared after __${
+                    `${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`
+            }__ since the last time they were closed**\n\n`) +
+            `***Select an option below to change the configuration:***\n\n` +
+            `**⚙️** - Set the queue auto clear time\n` +
+            `**🔒** - Disable the queue auto clear feature.\n`
     );
 
     // qacc = queue_auto_clear_config_. shortened due to limited customId length
@@ -273,12 +274,14 @@ function queueAutoClearConfigMenu(
             new ButtonBuilder()
                 .setCustomId(composeQACCButtonId('1'))
                 .setEmoji('⚙️')
+                .setLabel('Set Auto Clear Time')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeQACCButtonId('2'))
                 .setEmoji('🔒')
+                .setLabel('Disable')
                 .setStyle(ButtonStyle.Secondary)
         );
 
@@ -288,23 +291,22 @@ function queueAutoClearConfigMenu(
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
-function loggingChannelConfigMenu(
+async function loggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): YabobEmbed {
+): Promise<YabobEmbed> {
     const embed = SimpleEmbed(
-        `🛠 Server Configuration for ${server.guild.name} 🛠`,
+        `🪵 Logging Configuration for ${server.guild.name} 🪵`,
         EmbedColor.Aqua,
-        `The logging channel configuration is as follows:\n\n` +
-            `**Logging Channel:** ${
+            `**\nCurrent Logging Channel:** ${
                 server.loggingChannel === undefined
                     ? '`Not Set`'
                     : server.loggingChannel.toString()
             }\n\n` +
-            `Select an option below to change the configuration.\n\n` +
-            `**Use the \`/set_logging_channel\`** - Choose the channel you want YABOB to log to\n` +
-            `**🔒** - Disable the logging channel\n`
+            `***Select an option below to change the configuration:***\n\n` +
+            `**The \`/set_logging_channel\` command** - Enter the channel you want YABOB to log to\n` +
+            `**🔒** - Disable the logging feature\n`
     );
 
     // lcc = logging_channel_config_. shortened due to limited customId length
@@ -325,6 +327,7 @@ function loggingChannelConfigMenu(
         new ButtonBuilder()
             .setCustomId(composeLCCButtonId('2'))
             .setEmoji('🔒')
+            .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
 

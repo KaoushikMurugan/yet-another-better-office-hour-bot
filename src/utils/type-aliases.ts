@@ -105,7 +105,7 @@ type SettingsMenuCallback = (
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-) => BaseMessageOptions;
+) => Promise<BaseMessageOptions>;
 
 /**
  * SimpleEmbed return type

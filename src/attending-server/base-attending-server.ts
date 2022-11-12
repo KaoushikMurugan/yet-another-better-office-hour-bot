@@ -285,7 +285,7 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
+            await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
         }
         //check if roles still exist
 

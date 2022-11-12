@@ -125,7 +125,7 @@ function getInteractionName(interaction: Interaction): string {
         return interaction.commandName;
     }
     if (interaction.isButton()) {
-        return interaction.component.label ?? interaction.customId;
+        return interaction.component?.label ?? interaction.customId;
     }
     if (interaction.isModalSubmit()) {
         return interaction.customId;
