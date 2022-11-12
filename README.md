@@ -14,7 +14,7 @@
 <a href='https://discord.com/api/oauth2/authorize?client_id=967586305959657482&permissions=8&scope=bot' target="_blank"><img alt='' src='https://img.shields.io/badge/invite_yabob to your server!-100000?style=for-the-badge&logo=&logoColor=white&labelColor=ff6188&color=ff6188'/></a>
 </div>
 
-
+<br>
 
 Architecture redesigned by [Zhongning Li (Tommy)](https://github.com/tomli380576).
 
