@@ -1,18 +1,17 @@
 import {
     ActionRowBuilder,
-    BaseMessageOptions,
     ButtonBuilder,
     ButtonStyle,
     SelectMenuBuilder,
     SelectMenuComponentOptionData
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { SettingsMenuCallback } from '../utils/type-aliases.js';
+import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     generateSelectMenuId,
     generateYabobButtonId,
     yabobButtonToString,
-    yabobModalToString
+    yabobSelectMenuToString
 } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
@@ -56,22 +55,13 @@ const serverSettingsMainMenuOptions: {
         },
         subMenu: loggingChannelConfigMenu
     }
-    // {
-    //     optionObj: {
-    //         emoji: '🗓',
-    //         label: 'Calendar Settings',
-    //         description: 'Configure the calendar settings',
-    //         value: 'calendar-settings'
-    //     },
-    //     subMenu: calendarSettingsConfigMenu
-    // }
 ];
 
 function serverSettingsMainMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): BaseMessageOptions {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🛠 Server Configuration for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
@@ -81,7 +71,7 @@ function serverSettingsMainMenu(
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         new SelectMenuBuilder()
             .setCustomId(
-                yabobModalToString(
+                yabobSelectMenuToString(
                     generateSelectMenuId(
                         isDm ? 'dm' : 'other',
                         'server_settings',
@@ -101,7 +91,7 @@ function serverRolesConfigMenu(
     channelId: string,
     isDm: boolean,
     forServerInit = false
-): BaseMessageOptions {
+): YabobEmbed {
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
     const studentRole = server.studentRoleID;
@@ -199,7 +189,7 @@ function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): BaseMessageOptions {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🛠 Server Configuration for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
@@ -250,7 +240,7 @@ function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): BaseMessageOptions {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🛠 Server Configuration for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
@@ -302,7 +292,7 @@ function loggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): BaseMessageOptions {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🛠 Server Configuration for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
@@ -364,5 +354,6 @@ export {
     serverRolesConfigMenu,
     afterSessionMessageConfigMenu,
     queueAutoClearConfigMenu,
-    loggingChannelConfigMenu
+    loggingChannelConfigMenu,
+    composeReturnToMainMenuButton
 };

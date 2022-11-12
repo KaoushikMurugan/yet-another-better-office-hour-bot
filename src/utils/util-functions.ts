@@ -21,7 +21,9 @@ import {
     YabobActionableComponentInfo,
     YabobButton,
     YabobButtonType,
+    YabobModal,
     YabobModalType,
+    YabobSelectMenu,
     YabobSelectMenuType
 } from './type-aliases.js';
 
@@ -334,7 +336,7 @@ function generateYabobActionableComponentId<T extends YabobActionableComponentCa
     componentName: string,
     serverId: string,
     channelId: string
-): YabobButton<T> {
+): YabobActionableComponentInfo<T> {
     return {
         n: componentName,
         t: type,
@@ -357,7 +359,7 @@ function generateYabobModalId<T extends YabobModalType>(
     modalName: string,
     serverId: string,
     channelId: string
-): YabobButton<T> {
+): YabobModal<T> {
     return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
 
@@ -366,7 +368,7 @@ function generateSelectMenuId<T extends YabobSelectMenuType>(
     selectMenuName: string,
     serverId: string,
     channelId: string
-): YabobButton<T> {
+): YabobSelectMenu<T> {
     return generateYabobActionableComponentId(type, selectMenuName, serverId, channelId);
 }
 

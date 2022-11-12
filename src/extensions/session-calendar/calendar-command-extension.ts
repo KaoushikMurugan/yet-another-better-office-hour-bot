@@ -41,7 +41,8 @@ import {
     isQueueTextChannel,
     logQueueButtonPress,
     logSlashCommand,
-    parseYabobButtonId
+    parseYabobButtonId,
+    parseYabobModalId
 } from '../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
@@ -57,6 +58,7 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from './calendar-success-messages.js';
+import { appendSettingsMainMenuOptions } from './extension-config-messages.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -67,6 +69,7 @@ class CalendarInteractionExtension
     }
 
     private static helpEmbedsSent = false;
+    private static settingsMainMenuOptionSent = false;
 
     /**
      * - Initializes the calendar extension using firebase backup if available
@@ -90,7 +93,11 @@ class CalendarInteractionExtension
         calendarStates.set(guild.id, await CalendarExtensionState.load(guild));
         const instance = new CalendarInteractionExtension();
         appendCalendarHelpMessages(CalendarInteractionExtension.helpEmbedsSent);
+        appendSettingsMainMenuOptions(
+            CalendarInteractionExtension.settingsMainMenuOptionSent
+        );
         CalendarInteractionExtension.helpEmbedsSent = true;
+        CalendarInteractionExtension.settingsMainMenuOptionSent = true;
         console.log(
             `[${blue('Session Calendar')}] ` +
                 `successfully loaded for '${guild.name}'!\n` +
@@ -108,12 +115,18 @@ class CalendarInteractionExtension
         return yabobButtonId.n in buttonMethodMap;
     }
 
+    override canHandleDMButton(interaction: ButtonInteraction): boolean {
+        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        return yabobButtonId.n in dmButtonMethodMap;
+    }
+
     override canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
         return interaction.commandName in commandMethodMap;
     }
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        return interaction.customId in modalMethodMap;
+        const yabobModalId = parseYabobModalId(interaction.customId);
+        return yabobModalId.n in modalMethodMap;
     }
 
     override async processCommand(
@@ -189,6 +202,10 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
 
 const buttonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
     refresh: requestCalendarRefresh
+} as const;
+
+const dmButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
+    // nothing for now
 } as const;
 
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
