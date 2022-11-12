@@ -39,6 +39,11 @@ const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
 } as const;
 
 /**
+ * List of modal names that should update the parent interaction
+ */
+const updateParentInteractionModals = ['asmmmv', 'qacmmv'];
+
+/**
  * Check if the modal interaction can be handled by this (in-built) handler
  * @remark This is for modals that are prompted in servers
  * @param interaction
@@ -86,10 +91,17 @@ async function processBuiltInModalSubmit(
         // Everything is reply here because showModal is guaranteed to be the 1st response
         // modal shown => message not replied, so we always reply
         .then(async successMsg => {
-            await interaction.reply({
-                ...successMsg,
-                ephemeral: true
-            });
+            if (
+                updateParentInteractionModals.includes(modalName) &&
+                interaction.isFromMessage()
+            ) {
+                await interaction.update(successMsg);
+            } else {
+                await interaction.reply({
+                    ...successMsg,
+                    ephemeral: true
+                });
+            }
         })
         .catch(async err => {
             const server = isServerInteraction(interaction);
@@ -182,7 +194,11 @@ async function setQueueAutoClear(
     }
     if (hours === 0 && minutes === 0) {
         await server.setQueueAutoClear(hours, minutes, false);
-        return SuccessMessages.queueAutoClear.disabled;
+        if (!menuVersion) {
+            return SuccessMessages.queueAutoClear.disabled;
+        } else {
+            return queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false);
+        }
     }
     await server.setQueueAutoClear(hours, minutes, true);
     if (!menuVersion) {
