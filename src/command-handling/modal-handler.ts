@@ -4,7 +4,7 @@ import { ModalSubmitInteraction } from 'discord.js';
 import {
     afterSessionMessageConfigMenu,
     queueAutoClearConfigMenu
-} from '../attending-server/server-config-messages.js';
+} from '../attending-server/server-settings-menus.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
 import {
     DMModalSubmitCallback,

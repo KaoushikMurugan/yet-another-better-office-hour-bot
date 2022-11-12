@@ -15,7 +15,7 @@ import { calendarStates } from './calendar-states.js';
 import {
     composeReturnToMainMenuButton,
     serverSettingsMainMenuOptions
-} from '../../attending-server/server-config-messages.js';
+} from '../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from './shared-calendar-functions.js';
 
 const calendarSettingsMainMenuOptions: {

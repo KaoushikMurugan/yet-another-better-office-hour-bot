@@ -30,7 +30,7 @@ import {
     queueAutoClearConfigMenu,
     serverRolesConfigMenu,
     serverSettingsMainMenu
-} from '../attending-server/server-config-messages.js';
+} from '../attending-server/server-settings-menus.js';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 
 /**

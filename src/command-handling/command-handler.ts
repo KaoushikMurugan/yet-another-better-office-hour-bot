@@ -43,7 +43,7 @@ import { studentCommandHelpMessages } from '../../help-channel-messages/StudentC
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { SuccessMessages } from './builtin-success-messages.js';
-import { serverSettingsMainMenu } from '../attending-server/server-config-messages.js';
+import { serverSettingsMainMenu } from '../attending-server/server-settings-menus.js';
 
 /**
  * The map of available commands

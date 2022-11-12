@@ -58,7 +58,7 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from './calendar-success-messages.js';
-import { appendSettingsMainMenuOptions } from './extension-config-messages.js';
+import { appendSettingsMainMenuOptions } from './calendar-settings-menus.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension

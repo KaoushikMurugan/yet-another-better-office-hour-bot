@@ -137,10 +137,10 @@ function serverRolesConfigMenu(
             `If you want to set the roles manually, use the \`/set_roles\` command.`
     );
 
-    function composeSSRCButtonId(optionNumber: string): string {
+    function composeSSRCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `ssrc${optionNumber}`,
+            `ssrc${optionName}`,
             server.guild.id,
             channelId
         );
@@ -206,10 +206,10 @@ function afterSessionMessageConfigMenu(
 
     // asmc = after_session_message_config_. shortened due to limited customId length
 
-    function composeASMCButtonId(optionNumber: string): string {
+    function composeASMCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `asmc${optionNumber}`,
+            `asmc${optionName}`,
             server.guild.id,
             channelId
         );
@@ -258,10 +258,10 @@ function queueAutoClearConfigMenu(
 
     // qacc = queue_auto_clear_config_. shortened due to limited customId length
 
-    function composeQACCButtonId(optionNumber: string): string {
+    function composeQACCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `qacc${optionNumber}`,
+            `qacc${optionName}`,
             server.guild.id,
             channelId
         );
@@ -309,10 +309,10 @@ function loggingChannelConfigMenu(
 
     // lcc = logging_channel_config_. shortened due to limited customId length
 
-    function composeLCCButtonId(optionNumber: string): string {
+    function composeLCCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `lcc${optionNumber}`,
+            `lcc${optionName}`,
             server.guild.id,
             channelId
         );

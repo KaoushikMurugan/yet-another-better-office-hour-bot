@@ -39,7 +39,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { serverRolesConfigMenu } from './server-config-messages.js';
+import { serverRolesConfigMenu } from './server-settings-menus.js';
 
 /**
  * Wrapper for TextChannel

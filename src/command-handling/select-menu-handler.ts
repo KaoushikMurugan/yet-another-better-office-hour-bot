@@ -1,5 +1,5 @@
 import { SelectMenuInteraction } from 'discord.js';
-import { serverSettingsMainMenuOptions } from '../attending-server/server-config-messages.js';
+import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
 import { ErrorEmbed, SimpleEmbed } from '../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
