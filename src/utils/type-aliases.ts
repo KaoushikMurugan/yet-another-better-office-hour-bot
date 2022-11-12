@@ -80,6 +80,9 @@ type HelpMessage = {
 type CommandCallback = (
     interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+type DefaultButtonCallback = (
+    interaction: ButtonInteraction<'cached'>
+) => Promise<BaseMessageOptions>;
 type QueueButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction<'cached'>
@@ -171,6 +174,7 @@ export {
     HelpMessage,
     
     CommandCallback,
+    DefaultButtonCallback,
     QueueButtonCallback,
     DMButtonCallback,
     ModalSubmitCallback,

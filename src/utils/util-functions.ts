@@ -158,7 +158,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
 function logQueueButtonPress(
     interaction: ButtonInteraction<'cached'>,
     buttonName: string,
-    queueName: string
+    queueName?: string
 ): void {
     console.log(
         `[${cyan(
@@ -169,8 +169,8 @@ function logQueueButtonPress(
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Button Pressed: ${magenta(buttonName)}\n` +
-            ` - In Queue: ${queueName}`
+            ` - Button Pressed: ${magenta(buttonName)}` +
+            (queueName === undefined ? `\n - In Queue: ${queueName}` : '')
     );
 }
 
@@ -197,7 +197,10 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
  * Default logger for modal submits
  * @param interaction
  */
-function logModalSubmit(interaction: ModalSubmitInteraction<'cached'>): void {
+function logModalSubmit(
+    interaction: ModalSubmitInteraction<'cached'>,
+    modalName: string
+): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -207,11 +210,11 @@ function logModalSubmit(interaction: ModalSubmitInteraction<'cached'>): void {
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Modal Used: ${magenta(interaction.customId)}`
+            ` - Modal Used: ${magenta(modalName)}`
     );
 }
 
-function logDMModalSubmit(interaction: ModalSubmitInteraction): void {
+function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -220,7 +223,7 @@ function logDMModalSubmit(interaction: ModalSubmitInteraction): void {
         )} ` +
             `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Modal Used: ${magenta(interaction.customId)}` +
+            ` - Modal Used: ${magenta(modalName)}` +
             ` - In DM`
     );
 }

@@ -27,8 +27,8 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
     asmm: interaction => setAfterSessionMessage(interaction, false),
     asmmmv: interaction => setAfterSessionMessage(interaction, true),
-    qacm: interaction => setQueueAutoClear(interaction, true),
-    qacmmv: interaction => setQueueAutoClear(interaction, false)
+    qacm: interaction => setQueueAutoClear(interaction, false),
+    qacmmv: interaction => setQueueAutoClear(interaction, true)
 } as const;
 
 /**
@@ -79,7 +79,7 @@ async function processBuiltInModalSubmit(
     const modalId = parseYabobModalId(interaction.customId);
     const modalName = modalId.n;
     const modalMethod = modalMethodMap[modalName];
-    logModalSubmit(interaction);
+    logModalSubmit(interaction, modalName);
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
     await modalMethod?.(interaction)
