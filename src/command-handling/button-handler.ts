@@ -9,7 +9,7 @@ import {
 } from '../utils/embed-helper.js';
 import {
     logDMButtonPress,
-    logQueueButtonPress,
+    logButtonPress,
     parseYabobButtonId
 } from '../utils/util-functions.js';
 import {
@@ -165,7 +165,7 @@ async function processBuiltInButton(
 
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
 
-    logQueueButtonPress(interaction, buttonName, queueName);
+    logButtonPress(interaction, buttonName, queueName);
 
     if (buttonName in showModalOnlyButtons) {
         await showModalOnlyButtons[buttonName]?.(interaction);
@@ -371,6 +371,25 @@ async function leaveNotifGroup(
 }
 
 /**
+ * Displays the Settings Main Menu
+ * @param interaction
+ * @returns
+ */
+async function showSettingsMainMenu(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            interaction.component?.label ?? 'Return to Settings Main Menu',
+            interaction.channel as TextBasedChannel
+        )
+    );
+    return serverSettingsMainMenu(server, interaction.channelId, false);
+}
+
+/**
  * Creates roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
  * @param interaction
@@ -385,24 +404,12 @@ async function createServerRoles(
     await server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
-            'Setup Roles',
+            `Create Roles ${interaction.component?.label ?? ''}`,
             interaction.channel as TextBasedChannel
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverRolesConfigMenu(server, interaction.channelId, false, false);
-}
-
-/**
- * Displays the Settings Main Menu
- * @param interaction
- * @returns
- */
-async function showSettingsMainMenu(
-    interaction: ButtonInteraction<'cached'>
-): Promise<YabobEmbed> {
-    const server = isServerInteraction(interaction);
-    return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -419,6 +426,13 @@ async function createServerRolesDM(
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Create Roles ${interaction.component?.label ?? ''}`,
+            interaction.channel as TextBasedChannel
+        )
+    );
     return serverRolesConfigMenu(server, interaction.channelId, true, false);
 }
 
@@ -430,6 +444,13 @@ async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Set After Session Message`,
+            interaction.channel as TextBasedChannel
+        )
+    );
     await interaction.showModal(afterSessionMessageModal(server.guild.id, true));
 }
 
@@ -443,6 +464,13 @@ async function disableAfterSessionMessage(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setAfterSessionMessage('');
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Disable After Session Message`,
+            interaction.channel as TextBasedChannel
+        )
+    );
     return afterSessionMessageConfigMenu(server, interaction.channelId, false);
 }
 
@@ -454,6 +482,13 @@ async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Set Queue Auto Clear`,
+            interaction.channel as TextBasedChannel
+        )
+    );
     await interaction.showModal(queueAutoClearModal(server.guild.id, true));
 }
 
@@ -466,6 +501,13 @@ async function disableQueueAutoClear(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setQueueAutoClear(0, 0, false);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Disable Queue Auto Clear`,
+            interaction.channel as TextBasedChannel
+        )
+    );
     return queueAutoClearConfigMenu(server, interaction.channelId, false);
 }
 
@@ -478,6 +520,7 @@ async function disableLoggingChannel(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setLoggingChannel(undefined);
+    // No logging call here since we're disabling the logging channel
     return loggingChannelConfigMenu(server, interaction.channelId, false);
 }
 

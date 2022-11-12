@@ -10,6 +10,7 @@ import {
     Interaction,
     ModalSubmitInteraction,
     Role,
+    SelectMenuInteraction,
     TextChannel,
     VoiceChannel
 } from 'discord.js';
@@ -157,7 +158,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
  * @param buttonName
  * @param queueName
  */
-function logQueueButtonPress(
+function logButtonPress(
     interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName?: string
@@ -190,6 +191,7 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
         )} ` +
             `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Related Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
             ` - In DM`
     );
@@ -198,6 +200,7 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
 /**
  * Default logger for modal submits
  * @param interaction
+ * @param modalName
  */
 function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
@@ -216,6 +219,11 @@ function logModalSubmit(
     );
 }
 
+/**
+ * Default logger for dm modal submits
+ * @param interaction
+ * @param modalName
+ */
 function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
     console.log(
         `[${cyan(
@@ -225,7 +233,55 @@ function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string
         )} ` +
             `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Related Server Id: ${interaction.guildId}\n` +
             ` - Modal Used: ${magenta(modalName)}` +
+            ` - In DM`
+    );
+}
+
+/**
+ * Default logger for select menu selections
+ * @param interaction
+ * @param selectMenuName
+ */
+function logSelectMenuSelection(
+    interaction: SelectMenuInteraction<'cached'>,
+    selectMenuName: string
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.guild.name)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Server Id: ${interaction.guildId}\n` +
+            ` - Select Menu Used: ${magenta(selectMenuName)}` +
+            ` - Selected Options: ${magenta(interaction.values.join(', '))}`
+    );
+}
+
+/**
+ * Default logger for dm select menu selections
+ * @param interaction
+ * @param selectMenuName
+ */
+function logDMSelectMenuSelection(
+    interaction: SelectMenuInteraction,
+    selectMenuName: string
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.user.username)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Related Server Id: ${interaction.guildId}\n` +
+            ` - Select Menu Used: ${magenta(selectMenuName)}` +
+            ` - Selected Options: ${magenta(interaction.values.join(', '))}` +
             ` - In DM`
     );
 }
@@ -475,10 +531,12 @@ export {
     getInteractionName,
     
     logSlashCommand,
-    logQueueButtonPress,
+    logButtonPress,
     logDMButtonPress,
     logModalSubmit,
     logDMModalSubmit,
+    logSelectMenuSelection,
+    logDMSelectMenuSelection,
     
     isCategoryChannel,
     isTextChannel,
@@ -502,5 +560,4 @@ export {
     parseYabobButtonId,
     parseYabobModalId,
     parseYabobSelectMenuId
-
 };

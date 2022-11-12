@@ -39,7 +39,7 @@ import {
     getQueueRoles,
     isCategoryChannel,
     isQueueTextChannel,
-    logQueueButtonPress,
+    logButtonPress,
     logSlashCommand,
     parseYabobButtonId,
     parseYabobModalId
@@ -177,7 +177,7 @@ class CalendarInteractionExtension
             ),
             ephemeral: true
         });
-        logQueueButtonPress(interaction, buttonName, queueName);
+        logButtonPress(interaction, buttonName, queueName);
         await buttonMethod?.(queueName, interaction)
             .then(successMessage => interaction.editReply(successMessage))
             .catch(async err => {

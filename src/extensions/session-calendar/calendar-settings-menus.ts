@@ -46,7 +46,7 @@ async function calendarSettingsConfigMenu(
     const embed = SimpleEmbed(
         `🗓 Calendar Configuration for ${server.guild.name} 🗓`,
         EmbedColor.Aqua,
-            `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
+        `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
             `*This is the calendar that the server refers to for office hours events*` +
             `\n\n` +
             `**Office Hours Calendar Embed Url:** ${state.publicCalendarEmbedUrl}\n\n` +

@@ -1,12 +1,16 @@
-import { SelectMenuInteraction } from 'discord.js';
+import { SelectMenuInteraction, TextChannel } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
-import { ErrorEmbed, SimpleEmbed } from '../utils/embed-helper.js';
+import { ErrorEmbed, SelectMenuLogEmbed, SimpleEmbed } from '../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
     SelectMenuCallback,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { parseYabobSelectMenuId } from '../utils/util-functions.js';
+import {
+    logDMSelectMenuSelection,
+    logSelectMenuSelection,
+    parseYabobSelectMenuId
+} from '../utils/util-functions.js';
 import { isServerInteraction } from './common-validations.js';
 
 /**
@@ -83,6 +87,8 @@ async function processBuiltInSelectMenu(
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
 
+    logSelectMenuSelection(interaction, selectMenuName);
+
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
@@ -128,6 +134,8 @@ async function processBuiltInDMSelectMenu(
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
 
+    logDMSelectMenuSelection(interaction, selectMenuName);
+
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
@@ -169,6 +177,16 @@ async function serverSettingsSelectMenu(
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionObj.value === selectedOption
     );
+
+    await server.sendLogMessage(
+        SelectMenuLogEmbed(
+            interaction.user,
+            `Server Settings`,
+            interaction.values,
+            interaction.channel as TextChannel
+        )
+    );
+
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }

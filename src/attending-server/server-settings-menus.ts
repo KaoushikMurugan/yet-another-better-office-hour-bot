@@ -100,7 +100,8 @@ async function serverRolesConfigMenu(
         `📝 Server Roles Configuration for ${server.guild.name} 📝`,
         EmbedColor.Aqua,
         (forServerInit
-            ? `**Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: **\n` : '') +
+            ? `**Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: **\n`
+            : '') +
             `**\n🤖 Bot Admin Role:** ${
                 forServerInit
                     ? ` *Role that can manage the bot and it's settings*\n`
@@ -192,7 +193,7 @@ async function afterSessionMessageConfigMenu(
     const embed = SimpleEmbed(
         `📨 After Session Message Configuration for ${server.guild.name} 📨`,
         EmbedColor.Aqua,
-            `\n*The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)*\n\n` +
+        `\n*The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)*\n\n` +
             `**The current After Session Message is: **\n\n` +
             `${
                 server.afterSessionMessage === ''
@@ -246,12 +247,10 @@ async function queueAutoClearConfigMenu(
     const embed = SimpleEmbed(
         `⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`,
         EmbedColor.Aqua,
-            (server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
-            server.queueAutoClearTimeout === undefined
-                ? '**\nThe queue auto clear feature is currently disabled. The queue will not be cleared automatically.**\n\n' :
-            `**\nQueues will automatically be cleared after __${
-                    `${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`
-            }__ since the last time they were closed**\n\n`) +
+        (server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
+        server.queueAutoClearTimeout === undefined
+            ? '**\nThe queue auto clear feature is currently disabled. The queue will not be cleared automatically.**\n\n'
+            : `**\nQueues will automatically be cleared after __${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}__ since the last time they were closed**\n\n`) +
             `***Select an option below to change the configuration:***\n\n` +
             `**⚙️** - Set the queue auto clear time\n` +
             `**🔒** - Disable the queue auto clear feature.\n`
@@ -299,11 +298,11 @@ async function loggingChannelConfigMenu(
     const embed = SimpleEmbed(
         `🪵 Logging Configuration for ${server.guild.name} 🪵`,
         EmbedColor.Aqua,
-            `**\nCurrent Logging Channel:** ${
-                server.loggingChannel === undefined
-                    ? '`Not Set`'
-                    : server.loggingChannel.toString()
-            }\n\n` +
+        `**\nCurrent Logging Channel:** ${
+            server.loggingChannel === undefined
+                ? '`Not Set`'
+                : server.loggingChannel.toString()
+        }\n\n` +
             `***Select an option below to change the configuration:***\n\n` +
             `**The \`/set_logging_channel\` command** - Enter the channel you want YABOB to log to\n` +
             `**🔒** - Disable the logging feature\n`

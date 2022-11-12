@@ -234,13 +234,13 @@ export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embed
 /**
  * Creates a log embed for a button interaction
  * @param user The user who pressed the button
- * @param interactionName The name of the button interaction
+ * @param buttonName The name of the button interaction
  * @param channel The channel the button was pressed in
  * @returns A message object that only contains the log embed
  */
 export function ButtonLogEmbed(
     user: User,
-    interactionName: string,
+    buttonName: string,
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
@@ -262,13 +262,69 @@ export function ButtonLogEmbed(
                     },
                     {
                         name: 'Button Name',
-                        value: interactionName,
+                        value: buttonName,
                         inline: true
                     },
                     {
                         name: 'Channel',
                         value: channel.toString(),
                         inline: true
+                    }
+                ],
+                footer: {
+                    text: 'YABOB',
+                    icon_url: YABOB_PFP_URL
+                }
+            }
+        ]
+    };
+}
+
+/**
+ * Creates a log embed for a select menu interaction
+ * @param user The user who selected an option
+ * @param selectMenuName The name of the select menu interaction
+ * @param optionSelected The option the user selected
+ * @param channel The channel the select menu was used in
+ * @returns A message object that only contains the log embed
+ */
+export function SelectMenuLogEmbed(
+    user: User,
+    selectMenuName: string,
+    optionSelected: string[],
+    channel: TextBasedChannel
+): Pick<BaseMessageOptions, 'embeds'> {
+    const YABOB_PFP_URL =
+        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    return {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: `Select Menu option was selected at <t:${new Date()
+                    .getTime()
+                    .toString()
+                    .slice(0, -3)}:F>`,
+                timestamp: new Date().toISOString(),
+                fields: [
+                    {
+                        name: 'User',
+                        value: user.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Select Menu Name',
+                        value: selectMenuName,
+                        inline: true
+                    },
+                    {
+                        name: 'Option(s) Selected',
+                        value: optionSelected.join(', '),
+                        inline: true
+                    },
+                    {
+                        name: 'Channel',
+                        value: channel.toString(),
+                        inline: false
                     }
                 ],
                 footer: {
