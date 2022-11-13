@@ -105,7 +105,10 @@ const serverBackupSchema = z.object({
         z.literal('AUTO_CLEAR_DISABLED')
     ]),
     queues: z.array(queueBackupSchema),
-    seriousServer: z.boolean()
+    seriousServer: z.boolean(),
+    botAdminRoleId: z.string(),
+    helperRoleId: z.string(),
+    studentRoleId: z.string()
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };

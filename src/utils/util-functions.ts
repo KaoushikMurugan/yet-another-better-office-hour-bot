@@ -15,7 +15,6 @@ import {
     VoiceChannel
 } from 'discord.js';
 import { convertBase } from 'simple-base-converter';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { cyan, magenta, yellow } from './command-line-colors.js';
 import {
     YabobActionableComponentCategory,
@@ -34,7 +33,7 @@ import { FrozenServer } from '../extensions/extension-utils.js';
  * Centers a string for the console/terminal by padding it with spaces
  * @param text
  */
- function centered(text: string): string {
+function centered(text: string): string {
     const padding = (process.stdout.columns - text.length) / 2;
     if (padding <= 0) {
         return text;

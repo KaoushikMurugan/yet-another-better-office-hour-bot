@@ -10,13 +10,13 @@ import {
     generateYabobButtonId,
     yabobButtonToString
 } from '../../utils/util-functions.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import { calendarStates } from './calendar-states.js';
 import {
     composeReturnToMainMenuButton,
     serverSettingsMainMenuOptions
 } from '../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from './shared-calendar-functions.js';
+import { FrozenServer } from '../extension-utils.js';
 
 /**
  * Options for the server settings main menu
@@ -45,7 +45,7 @@ const calendarSettingsMainMenuOptions: {
  * @returns
  */
 async function calendarSettingsConfigMenu(
-    server: AttendingServerV2,
+    server: FrozenServer,
     channelId: string,
     isDm: boolean
 ): Promise<YabobEmbed> {

@@ -333,7 +333,12 @@ async function unsetCalendarId(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', 'Bot Admin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'unset_calendar',
+        'Bot Admin'
+    );
     await state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.unsetCalendar;

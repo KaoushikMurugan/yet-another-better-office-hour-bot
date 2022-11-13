@@ -13,6 +13,7 @@ import {
     QueueChannel
 } from '../attending-server/base-attending-server.js';
 import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
+import { FrozenServer } from '../extensions/extension-utils.js';
 import { attendingServers } from '../global-states.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
@@ -94,7 +95,7 @@ function isTriggeredByUserWithRolesSync(
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByMemberWithRoles(
-    server: AttendingServerV2,
+    server: FrozenServer,
     member: GuildMember | null,
     commandName: string,
     lowestRequiredRole: string
