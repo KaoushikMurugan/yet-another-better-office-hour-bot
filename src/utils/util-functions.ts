@@ -512,7 +512,7 @@ function parseYabobButtonId(
 function parseYabobModalId(
     customButtonId: string,
     noConvert = false
-): YabobButton<YabobModalType> {
+): YabobModal<YabobModalType> {
     return parseYabobActionableComponentId(
         customButtonId,
         noConvert
@@ -522,7 +522,7 @@ function parseYabobModalId(
 function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
-): YabobButton<YabobSelectMenuType> {
+): YabobSelectMenu<YabobSelectMenuType> {
     return parseYabobActionableComponentId(
         customButtonId,
         noConvert
