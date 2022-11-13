@@ -120,9 +120,9 @@ class CalendarInteractionExtension
     override canHandleButton(interaction: ButtonInteraction): boolean {
         const yabobButtonId = parseYabobButtonId(interaction.customId);
         return (
-            yabobButtonId.n in queueButtonMethodMap ||
-            yabobButtonId.n in defaultButtonMethodMap ||
-            yabobButtonId.n in showModalOnlyButtons
+            yabobButtonId.name in queueButtonMethodMap ||
+            yabobButtonId.name in defaultButtonMethodMap ||
+            yabobButtonId.name in showModalOnlyButtons
         );
     }
 
@@ -132,7 +132,7 @@ class CalendarInteractionExtension
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
         const yabobModalId = parseYabobModalId(interaction.customId);
-        return yabobModalId.n in modalMethodMap;
+        return yabobModalId.name in modalMethodMap;
     }
 
     override async processCommand(
@@ -168,12 +168,12 @@ class CalendarInteractionExtension
         interaction: ButtonInteraction<'cached'>
     ): Promise<void> {
         const yabobButtonId = parseYabobButtonId(interaction.customId);
-        const buttonName = yabobButtonId.n;
-        const buttonType = yabobButtonId.t;
+        const buttonName = yabobButtonId.name;
+        const buttonType = yabobButtonId.type;
         const [server] = isServerCalendarInteraction(interaction);
         const queueName =
             (await server.getQueueChannels()).find(
-                queueChannel => queueChannel.channelObj.id === yabobButtonId.c
+                queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
             )?.queueName ?? '';
 
         const updateParentInteraction =
@@ -236,7 +236,7 @@ class CalendarInteractionExtension
         interaction: ModalSubmitInteraction<'cached'>
     ): Promise<void> {
         const yabobModalId = parseYabobModalId(interaction.customId);
-        const modalName = yabobModalId.n;
+        const modalName = yabobModalId.name;
         const [server] = isServerCalendarInteraction(interaction);
         const modalMethod = modalMethodMap[modalName];
         logModalSubmit(interaction, modalName);

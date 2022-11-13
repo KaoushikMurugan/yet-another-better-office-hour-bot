@@ -120,7 +120,7 @@ function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
-    const buttonName = yabobButtonId.n;
+    const buttonName = yabobButtonId.name;
     return (
         buttonName in queueButtonMethodMap ||
         buttonName in defaultButtonMethodMap ||
@@ -137,7 +137,7 @@ function builtInButtonHandlerCanHandle(
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
-    const buttonName = yabobButtonId.n;
+    const buttonName = yabobButtonId.name;
     return buttonName in dmButtonMethodMap;
 }
 
@@ -155,13 +155,13 @@ async function processBuiltInButton(
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
     const yabobButtonId = parseYabobButtonId(interaction.customId);
-    const buttonName = yabobButtonId.n;
-    const buttonType = yabobButtonId.t;
+    const buttonName = yabobButtonId.name;
+    const buttonType = yabobButtonId.type;
     const server = isServerInteraction(interaction);
 
     const queueName =
         (await server.getQueueChannels()).find(
-            queueChannel => queueChannel.channelObj.id === yabobButtonId.c
+            queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
         )?.queueName ?? '';
 
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
@@ -230,8 +230,8 @@ async function processBuiltInButton(
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
     const yabobButtonId = parseYabobButtonId(interaction.customId);
-    const buttonName = yabobButtonId.n;
-    const dmChannelId = yabobButtonId.c;
+    const buttonName = yabobButtonId.name;
+    const dmChannelId = yabobButtonId.cid;
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {

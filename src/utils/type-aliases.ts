@@ -114,13 +114,16 @@ type YabobEmbed = BaseMessageOptions;
 
 /**
  * Location of the Actionable Component (i.e. button, modal, select menu)
+ * 'dm' - component is in a DM
+ * 'queue' - component is in a queue channel
+ * 'other' - component is in a non-queue guild channel
  */
 type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
 
 /**
  * Actionable Component id format
  * Max length must be 100
- * Recommened total length for name is 51
+ * Max length allowed for name is 58
  *
  * @example
  * {
@@ -132,13 +135,13 @@ type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
  */
 type YabobActionableComponentInfo<YabobActionableComponentCategory> = {
     /** name of the button */
-    n: string;
+    name: string;
     /** type of button, either 'dm', 'queue', or 'other' */
-    t: YabobActionableComponentCategory; // max length 5
+    type: YabobActionableComponentCategory; // max length 5
     /** server id. if in dm, to find which server it relates to */
-    s: YabobActionableComponentCategory extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
+    sid: YabobActionableComponentCategory extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
     /** channel id. if in dm, equivalent to userId */
-    c: YabobActionableComponentCategory extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
+    cid: YabobActionableComponentCategory extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
 };
 
 // type alias for better readability

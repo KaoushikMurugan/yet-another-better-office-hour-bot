@@ -395,10 +395,10 @@ function generateYabobActionableComponentId<T extends YabobActionableComponentCa
     channelId?: string
 ): YabobActionableComponentInfo<T> {
     return {
-        n: componentName,
-        t: type,
-        s: serverId,
-        c: channelId
+        name: componentName,
+        type: type,
+        sid: serverId,
+        cid: channelId
     } as YabobButton<T>;
 }
 
@@ -440,11 +440,11 @@ function yabobActionableComponentToString(
     noConvert = false
 ): string {
     if (!noConvert) {
-        if (yabobButton.s !== undefined) {
-            yabobButton.s = convertSnowflakeToBase211(yabobButton.s);
+        if (yabobButton.sid !== undefined) {
+            yabobButton.sid = convertSnowflakeToBase211(yabobButton.sid);
         }
-        if (yabobButton.c !== undefined) {
-            yabobButton.c = convertSnowflakeToBase211(yabobButton.c);
+        if (yabobButton.cid !== undefined) {
+            yabobButton.cid = convertSnowflakeToBase211(yabobButton.cid);
         }
     }
     return JSON.stringify(yabobButton);
@@ -485,14 +485,14 @@ function parseYabobActionableComponentId(
         customButtonId
     ) as YabobButton<YabobActionableComponentCategory>;
     if (!noConvert) {
-        if (yabobActionableComponentId.s) {
-            yabobActionableComponentId.s = convertBase211ToSnowflake(
-                yabobActionableComponentId.s
+        if (yabobActionableComponentId.sid) {
+            yabobActionableComponentId.sid = convertBase211ToSnowflake(
+                yabobActionableComponentId.sid
             );
         }
-        if (yabobActionableComponentId.c) {
-            yabobActionableComponentId.c = convertBase211ToSnowflake(
-                yabobActionableComponentId.c
+        if (yabobActionableComponentId.cid) {
+            yabobActionableComponentId.cid = convertBase211ToSnowflake(
+                yabobActionableComponentId.cid
             );
         }
     }

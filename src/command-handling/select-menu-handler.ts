@@ -53,7 +53,7 @@ function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId?.n;
+    const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in selectMenuMethodMap;
 }
 
@@ -69,7 +69,7 @@ function builtInDMSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction
 ): boolean {
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId?.n;
+    const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in dmSelectMenuMethodMap;
 }
 
@@ -84,7 +84,7 @@ async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.n;
+    const selectMenuName = yabobSelectMenuId.name;
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
@@ -131,7 +131,7 @@ async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
     const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.n;
+    const selectMenuName = yabobSelectMenuId.name;
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];
 
     const updateParentInteraction =

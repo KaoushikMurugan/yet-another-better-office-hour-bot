@@ -51,12 +51,12 @@ function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
     const yabobId = parseYabobButtonId(interaction.customId);
-    if (!yabobId || yabobId.t !== 'dm' || yabobId.s === undefined) {
+    if (!yabobId || yabobId.type !== 'dm' || yabobId.sid === undefined) {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
-    const server = attendingServers.get(yabobId.s);
+    const server = attendingServers.get(yabobId.sid);
     if (!server) {
-        throw ExpectedParseErrors.nonServerInterction(yabobId.s);
+        throw ExpectedParseErrors.nonServerInterction(yabobId.sid);
     }
     return server;
 }
