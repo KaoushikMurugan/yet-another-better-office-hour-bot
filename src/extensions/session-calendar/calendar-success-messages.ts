@@ -42,6 +42,15 @@ const CalendarSuccessMessages = {
             EmbedColor.Success
         )
     },
+    updatedCalendarSettings: (calendarId: string, publicEmbedUrl: string) =>
+        SimpleEmbed(
+            'Successfully updated the calendar settings as follows:' +
+                `\n\n**Calendar ID:** ${calendarId}` +
+                `\n**Public Embed Url:** ${publicEmbedUrl}\n\n` +
+                'The calendar embeds will refresh soon. ' +
+                'Or you can manually refresh it using the refresh button.',
+            EmbedColor.Success
+        ),
     refreshSuccess: (queueName: string) =>
         SimpleEmbed(
             `Successfully refreshed upcoming hours for ${queueName}. The embeds will update soon.`,

@@ -71,13 +71,13 @@ async function calendarSettingsConfigMenu(
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeCSCMButtonId('1'))
-                .setLabel('Change Calendar')
+                .setLabel('Change Calendar Settings')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeCSCMButtonId('2'))
-                .setLabel('Change Embed Url')
+                .setLabel('Set to Default Calendar Settings')
                 .setStyle(ButtonStyle.Secondary)
         );
 

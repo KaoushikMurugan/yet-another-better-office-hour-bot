@@ -72,7 +72,7 @@ const defaultButtonMethodMap: {
  * - @see modal-handler.ts
  */
 const showModalOnlyButtons: {
-    [commandName: string]: (inter: ButtonInteraction<'cached'>) => Promise<void>;
+    [buttonName: string]: (inter: ButtonInteraction<'cached'>) => Promise<void>;
 } = {
     asmc1: showAfterSessionMessageModal,
     qacc1: showQueueAutoClearModal
@@ -156,9 +156,7 @@ async function processBuiltInButton(
     const buttonType = yabobButtonId.t;
     const server = isServerInteraction(interaction);
 
-    let queueName = '';
-
-    queueName =
+    const queueName =
         (await server.getQueueChannels()).find(
             queueChannel => queueChannel.channelObj.id === yabobButtonId.c
         )?.queueName ?? '';

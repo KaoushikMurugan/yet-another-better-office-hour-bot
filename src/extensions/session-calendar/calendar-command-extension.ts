@@ -17,6 +17,7 @@ import {
     ButtonLogEmbed,
     EmbedColor,
     ErrorEmbed,
+    ErrorLogEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
 } from '../../utils/embed-helper.js';
@@ -40,6 +41,7 @@ import {
     isCategoryChannel,
     isQueueTextChannel,
     logButtonPress,
+    logModalSubmit,
     logSlashCommand,
     parseYabobButtonId,
     parseYabobModalId
@@ -49,7 +51,8 @@ import {
     QueueButtonCallback,
     CommandCallback,
     ModalSubmitCallback,
-    YabobEmbed
+    YabobEmbed,
+    DefaultButtonCallback
 } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
 import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors.js';
@@ -58,7 +61,11 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from './calendar-success-messages.js';
-import { appendSettingsMainMenuOptions } from './calendar-settings-menus.js';
+import {
+    appendSettingsMainMenuOptions,
+    calendarSettingsConfigMenu
+} from './calendar-settings-menus.js';
+import { calendarSettingsModal } from './calendar-modal-objects.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -112,12 +119,11 @@ class CalendarInteractionExtension
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
         const yabobButtonId = parseYabobButtonId(interaction.customId);
-        return yabobButtonId.n in buttonMethodMap;
-    }
-
-    override canHandleDMButton(interaction: ButtonInteraction): boolean {
-        const yabobButtonId = parseYabobButtonId(interaction.customId);
-        return yabobButtonId.n in dmButtonMethodMap;
+        return (
+            yabobButtonId.n in queueButtonMethodMap ||
+            yabobButtonId.n in defaultButtonMethodMap ||
+            yabobButtonId.n in showModalOnlyButtons
+        );
     }
 
     override canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
@@ -163,30 +169,103 @@ class CalendarInteractionExtension
     ): Promise<void> {
         const yabobButtonId = parseYabobButtonId(interaction.customId);
         const buttonName = yabobButtonId.n;
+        const buttonType = yabobButtonId.t;
         const [server] = isServerCalendarInteraction(interaction);
         const queueName =
             (await server.getQueueChannels()).find(
                 queueChannel => queueChannel.channelObj.id === yabobButtonId.c
             )?.queueName ?? '';
-        const buttonMethod = buttonMethodMap[buttonName];
 
-        await interaction.reply({
-            ...SimpleEmbed(
-                `Processing button \`${buttonName}\` in \`${queueName}\` ...`,
-                EmbedColor.Neutral
-            ),
-            ephemeral: true
-        });
+        const updateParentInteraction =
+            updateParentInteractionButtons.includes(buttonName);
+
+        if (buttonName in showModalOnlyButtons) {
+            await showModalOnlyButtons[buttonName]?.(interaction);
+            return;
+        }
+
+        if (!updateParentInteraction) {
+            if (interaction.deferred || interaction.replied) {
+                await interaction.editReply({
+                    ...SimpleEmbed(
+                        `Processing button \`${
+                            interaction.component.label ?? buttonName
+                        }` + (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                        EmbedColor.Neutral
+                    )
+                });
+            } else {
+                await interaction.reply({
+                    ...SimpleEmbed(
+                        `Processing button \`${
+                            interaction.component.label ?? buttonName
+                        }` + (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                        EmbedColor.Neutral
+                    ),
+                    ephemeral: true
+                });
+            }
+        }
         logButtonPress(interaction, buttonName, queueName);
-        await buttonMethod?.(queueName, interaction)
-            .then(successMessage => interaction.editReply(successMessage))
+        await (buttonType === 'queue'
+            ? queueButtonMethodMap[buttonName]?.(queueName, interaction)
+            : defaultButtonMethodMap[buttonName]?.(interaction)
+        )
+            ?.then(async successMsg => {
+                if (updateParentInteraction) {
+                    await interaction.update(successMsg);
+                } else {
+                    await interaction.editReply(successMsg);
+                }
+            })
             .catch(async err => {
-                interaction.replied
-                    ? await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
-                    : await interaction.reply({
-                          ...ErrorEmbed(err, server.botAdminRoleID),
-                          ephemeral: true
-                      });
+                // Central error handling, reply to user with the error
+                await Promise.all([
+                    interaction.replied
+                        ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                        : interaction.reply({
+                              ...ErrorEmbed(err, server.botAdminRoleID),
+                              ephemeral: true
+                          }),
+                    server.sendLogMessage(ErrorLogEmbed(err, interaction))
+                ]);
+            });
+    }
+
+    override async processModalSubmit(
+        interaction: ModalSubmitInteraction<'cached'>
+    ): Promise<void> {
+        const yabobModalId = parseYabobModalId(interaction.customId);
+        const modalName = yabobModalId.n;
+        const [server] = isServerCalendarInteraction(interaction);
+        const modalMethod = modalMethodMap[modalName];
+        logModalSubmit(interaction, modalName);
+        await modalMethod?.(interaction)
+            // Everything is reply here because showModal is guaranteed to be the 1st response
+            // modal shown => message not replied, so we always reply
+            .then(async successMsg => {
+                if (
+                    updateParentInteractionModals.includes(modalName) &&
+                    interaction.isFromMessage()
+                ) {
+                    await interaction.update(successMsg);
+                } else {
+                    await interaction.reply({
+                        ...successMsg,
+                        ephemeral: true
+                    });
+                }
+            })
+            .catch(async err => {
+                await Promise.all([
+                    interaction.replied
+                        ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                        : interaction.reply({
+                              ...ErrorEmbed(err, server.botAdminRoleID),
+                              ephemeral: true
+                          }),
+                    server?.sendLogMessage(ErrorLogEmbed(err, interaction))
+                ]);
             });
     }
 }
@@ -200,15 +279,28 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     set_public_embd_url: setPublicEmbedUrl
 } as const;
 
-const buttonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
+const queueButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
     refresh: requestCalendarRefresh
 } as const;
 
-const dmButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
-    // nothing for now
+const defaultButtonMethodMap: { [buttonName: string]: DefaultButtonCallback } = {
+    cscm2: resetCalendarSettings
 } as const;
 
-const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {} as const;
+const showModalOnlyButtons: {
+    [buttonName: string]: (interaction: ButtonInteraction<'cached'>) => Promise<void>;
+} = {
+    cscm1: showCalendarSettingsModal
+} as const;
+
+const updateParentInteractionButtons = ['cscm1', 'cscm2'];
+
+const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
+    csm: interaction => updateCalendarSettings(interaction, false),
+    csmmv: interaction => updateCalendarSettings(interaction, true)
+} as const;
+
+const updateParentInteractionModals = ['csmmv'];
 
 /**
  * The `/set_calendar [calendar_id]` command
@@ -400,6 +492,59 @@ async function requestCalendarRefresh(
         queueLevelExtension?.onCalendarExtensionStateChange()
     ]);
     return CalendarSuccessMessages.refreshSuccess(queueName);
+}
+
+async function showCalendarSettingsModal(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
+    const [server] = isServerCalendarInteraction(interaction);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Set Calendar URLs`,
+            interaction.channel as TextBasedChannel
+        )
+    );
+    await interaction.showModal(calendarSettingsModal(server.guild.id, true));
+}
+
+async function resetCalendarSettings(
+    interaction: ButtonInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const [server, state] = isServerCalendarInteraction(interaction);
+    await server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Reset Calendar URLs`,
+            interaction.channel as TextBasedChannel
+        )
+    );
+    await Promise.all([
+        state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
+        server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
+    ]);
+    return calendarSettingsConfigMenu(server, interaction.channelId, false);
+}
+
+async function updateCalendarSettings(
+    interaction: ModalSubmitInteraction<'cached'>,
+    menuVersion: boolean
+): Promise<YabobEmbed> {
+    const [server, state] = isServerCalendarInteraction(interaction);
+    const calendarId = interaction.fields.getTextInputValue('calendar_id');
+    const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
+    // searate awaits since publicEmbedUrl is depends on calendarId
+    await state.setCalendarId(calendarId),
+        await state.setPublicEmbedUrl(publicEmbedUrl),
+        await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+    if (!menuVersion) {
+        return CalendarSuccessMessages.updatedCalendarSettings(
+            calendarId,
+            publicEmbedUrl
+        );
+    } else {
+        return calendarSettingsConfigMenu(server, interaction.channelId ?? '0', false);
+    }
 }
 
 export { CalendarInteractionExtension };

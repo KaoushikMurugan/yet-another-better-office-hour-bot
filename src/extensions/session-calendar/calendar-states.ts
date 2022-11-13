@@ -83,7 +83,8 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
      * @param validUrl
      */
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
-        this.publicCalendarEmbedUrl = validUrl;
+        this.publicCalendarEmbedUrl =
+            validUrl === '' ? restorePublicEmbedURL(this.calendarId) : validUrl;
         await Promise.all([
             this.backupToFirebase(),
             ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
