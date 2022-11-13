@@ -116,10 +116,7 @@ class QueueDisplayV2 {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(
-                        composeQueueButtonId(
-                            'join',
-                            this.queueChannel.channelObj.id
-                        )
+                        composeQueueButtonId('join', this.queueChannel.channelObj.id)
                     )
                     .setEmoji('✅')
                     .setDisabled(!viewModel.isOpen)
@@ -129,10 +126,7 @@ class QueueDisplayV2 {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(
-                        composeQueueButtonId(
-                            'leave',
-                            this.queueChannel.channelObj.id
-                        )
+                        composeQueueButtonId('leave', this.queueChannel.channelObj.id)
                     )
                     .setEmoji('❎')
                     .setLabel('Leave')
@@ -142,10 +136,7 @@ class QueueDisplayV2 {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(
-                        composeQueueButtonId(
-                            'notif',
-                            this.queueChannel.channelObj.id
-                        )
+                        composeQueueButtonId('notif', this.queueChannel.channelObj.id)
                     )
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
@@ -154,10 +145,7 @@ class QueueDisplayV2 {
             .addComponents(
                 new ButtonBuilder()
                     .setCustomId(
-                        composeQueueButtonId(
-                            'removeN',
-                            this.queueChannel.channelObj.id
-                        )
+                        composeQueueButtonId('removeN', this.queueChannel.channelObj.id)
                     )
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
@@ -309,11 +297,13 @@ class QueueDisplayV2 {
     }
 }
 
-function composeQueueButtonId(
-    buttonName: string,
-    channelId: string
-): string {
-    const yabobButtonId = generateYabobButtonId('queue', buttonName, undefined, channelId);
+function composeQueueButtonId(buttonName: string, channelId: string): string {
+    const yabobButtonId = generateYabobButtonId(
+        'queue',
+        buttonName,
+        undefined,
+        channelId
+    );
     return yabobButtonToString(yabobButtonId);
 }
 

@@ -293,7 +293,10 @@ const showModalOnlyButtons: {
     calendar_settings_config_menui_1: showCalendarSettingsModal
 } as const;
 
-const updateParentInteractionButtons = ['calendar_settings_config_menui_1', 'calendar_settings_config_menui_2'];
+const updateParentInteractionButtons = [
+    'calendar_settings_config_menui_1',
+    'calendar_settings_config_menui_2'
+];
 
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
     calendar_settings_modal: interaction => updateCalendarSettings(interaction, false),

@@ -95,7 +95,7 @@ async function calendarSettingsConfigMenu(
         );
 
     const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton(server.guild.id, channelId)
+        composeReturnToMainMenuButton()
     );
 
     return {

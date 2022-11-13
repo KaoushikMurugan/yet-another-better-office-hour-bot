@@ -195,7 +195,7 @@ async function serverRolesConfigMenu(
 
     if (!isDm) {
         const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            composeReturnToMainMenuButton(server.guild.id, channelId)
+            composeReturnToMainMenuButton()
         );
         return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
     } else {
@@ -259,7 +259,7 @@ async function afterSessionMessageConfigMenu(
         );
 
     const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton(server.guild.id, channelId)
+        composeReturnToMainMenuButton()
     );
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
@@ -317,7 +317,7 @@ async function queueAutoClearConfigMenu(
         );
 
     const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton(server.guild.id, channelId)
+        composeReturnToMainMenuButton()
     );
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
@@ -370,7 +370,7 @@ async function loggingChannelConfigMenu(
     );
 
     const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton(server.guild.id, channelId)
+        composeReturnToMainMenuButton()
     );
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
@@ -381,15 +381,10 @@ async function loggingChannelConfigMenu(
  * @param channelId
  * @returns
  */
-function composeReturnToMainMenuButton(
-    serverId: string,
-    channelId: string
-): ButtonBuilder {
+function composeReturnToMainMenuButton(): ButtonBuilder {
     return new ButtonBuilder()
         .setCustomId(
-            yabobButtonToString(
-                generateYabobButtonId('other', 'return_to_main_menu')
-            )
+            yabobButtonToString(generateYabobButtonId('other', 'return_to_main_menu'))
         )
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')

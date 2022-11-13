@@ -79,10 +79,9 @@ Multiple staff members can help for the same queue. A queue will close **if and 
 2. Join the queue by clicking on the `Join` button or using the `/enqueue` command.
 3. Wait to be pulled out of the queue by a staff member.
 4. Once they are pulled out of the queue, they will received a direct message from YABOB with a voice channel link. Click the link to join the voice channel with the staff member.
-6. Leave the voice channel at the end of the session.
+5. Leave the voice channel at the end of the session.
 
 More commands can be found [here](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Built-in-Commands) in our [wiki](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki).
-
 
 # License
 
