@@ -15,6 +15,9 @@ import {
 } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
+/**
+ * Options for the main menu of server settings
+ */
 const serverSettingsMainMenuOptions: {
     optionObj: SelectMenuComponentOptionData;
     subMenu: SettingsMenuCallback;
@@ -57,6 +60,13 @@ const serverSettingsMainMenuOptions: {
     }
 ];
 
+/**
+ * Composes the server settings main menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @returns
+ */
 async function serverSettingsMainMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -86,6 +96,14 @@ async function serverSettingsMainMenu(
     return { embeds: embed.embeds, components: [selectMenu] };
 }
 
+/**
+ * Composes the server roles configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @param forServerInit
+ * @returns
+ */
 async function serverRolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -185,6 +203,13 @@ async function serverRolesConfigMenu(
     }
 }
 
+/**
+ * Composes the after session message configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @returns
+ */
 async function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -239,6 +264,13 @@ async function afterSessionMessageConfigMenu(
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
+/**
+ * Composes the queue auto clear configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @returns
+ */
 async function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -290,6 +322,13 @@ async function queueAutoClearConfigMenu(
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
+/**
+ * Composes the logging channel configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @returns
+ */
 async function loggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -336,6 +375,12 @@ async function loggingChannelConfigMenu(
     return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
 }
 
+/**
+ * Composes a return to main menu button
+ * @param serverId
+ * @param channelId
+ * @returns
+ */
 function composeReturnToMainMenuButton(
     serverId: string,
     channelId: string

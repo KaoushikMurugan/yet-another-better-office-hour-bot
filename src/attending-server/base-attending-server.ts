@@ -138,11 +138,6 @@ class AttendingServerV2 {
                 id: this._studentRoleID
             }
         ];
-        // {
-        //     ['Bot Admin']: this._botAdminRoleID,
-        //     ['Helper']: this._helperRoleID,
-        //     ['Student']: this._studentRoleID
-        // }
     }
 
     /**
@@ -1192,7 +1187,8 @@ class AttendingServerV2 {
                     })
                     .sort((a, b) => a.pos - b.pos)
             );
-        } else if (foundRoles.length !== 0) {
+        }
+        if (foundRoles.length !== 0) {
             console.log('Found roles:');
             console.log(
                 foundRoles

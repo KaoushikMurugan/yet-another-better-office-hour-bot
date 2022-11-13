@@ -42,7 +42,7 @@ import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.j
  */
 
 /**
- * Buttom method map for queue buttons
+ * Button method map for queue buttons
  */
 const queueButtonMethodMap: {
     [buttonName: string]: QueueButtonCallback;
@@ -53,6 +53,9 @@ const queueButtonMethodMap: {
     removeN: leaveNotifGroup
 } as const;
 
+/**
+ * Button method map for non-queue, server buttons
+ */
 const defaultButtonMethodMap: {
     [buttonName: string]: DefaultButtonCallback;
 } = {

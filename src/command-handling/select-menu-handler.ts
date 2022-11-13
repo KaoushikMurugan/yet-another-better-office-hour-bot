@@ -21,7 +21,7 @@ import { isServerInteraction } from './common-validations.js';
  */
 
 /**
- * Map of select menu names to their respective handlers
+ * Map of server select menu names to their respective handlers
  */
 const selectMenuMethodMap: {
     [selectMenuName: string]: SelectMenuCallback;
@@ -29,6 +29,9 @@ const selectMenuMethodMap: {
     server_settings: serverSettingsSelectMenu
 } as const;
 
+/**
+ * Map of dm select menu names to their respective handlers
+ */
 const dmSelectMenuMethodMap: {
     [selectMenuName: string]: DMSelectMenuCallback;
 } = {} as const;

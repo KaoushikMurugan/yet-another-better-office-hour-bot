@@ -383,10 +383,10 @@ function convertBase211ToSnowflake(base211string: string): string {
 /**
  * Generates a YABOB ID
  * @param type 'dm', 'queue' or 'server'
- * @param componentName 
- * @param serverId 
- * @param channelId 
- * @returns 
+ * @param componentName
+ * @param serverId
+ * @param channelId
+ * @returns
  */
 function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
     type: T,

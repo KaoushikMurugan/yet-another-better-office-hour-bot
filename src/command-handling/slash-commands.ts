@@ -266,7 +266,7 @@ const setRolesCommand = new SlashCommandBuilder()
     );
 
 // /settings
-const setupServerConfigCommand = new SlashCommandBuilder()
+const settingsCommand = new SlashCommandBuilder()
     .setName('settings')
     .setDescription('Sets up the server config for the bot');
 
@@ -320,7 +320,7 @@ const commandData = [
     activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
-    setupServerConfigCommand.toJSON()
+    settingsCommand.toJSON()
 ];
 
 async function postSlashCommands(

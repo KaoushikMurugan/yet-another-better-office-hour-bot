@@ -18,6 +18,10 @@ import {
 } from '../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from './shared-calendar-functions.js';
 
+/**
+ * Options for the server settings main menu
+ * @see {@link serverSettingsMainMenuOptions}
+ */
 const calendarSettingsMainMenuOptions: {
     optionObj: SelectMenuComponentOptionData;
     subMenu: SettingsMenuCallback;
@@ -33,6 +37,13 @@ const calendarSettingsMainMenuOptions: {
     }
 ];
 
+/**
+ * Compose the calendar settings settings menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @returns
+ */
 async function calendarSettingsConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -93,6 +104,10 @@ async function calendarSettingsConfigMenu(
     };
 }
 
+/**
+ * Adds the options in calendarSettingsMainMenuOptions to the server settings main menu options
+ * @param sent
+ */
 function appendSettingsMainMenuOptions(sent: boolean): void {
     if (!sent) {
         serverSettingsMainMenuOptions.push(...calendarSettingsMainMenuOptions);

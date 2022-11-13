@@ -494,6 +494,11 @@ async function requestCalendarRefresh(
     return CalendarSuccessMessages.refreshSuccess(queueName);
 }
 
+/**
+ * Prompts the calendar settings modal
+ * @remark follow up to a menu button
+ * @param interaction
+ */
 async function showCalendarSettingsModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
@@ -508,6 +513,11 @@ async function showCalendarSettingsModal(
     await interaction.showModal(calendarSettingsModal(server.guild.id, true));
 }
 
+/**
+ * Resets the calendar id and public embed url\
+ * @remark follow up to a menu button
+ * @param interaction
+ */
 async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
@@ -526,6 +536,12 @@ async function resetCalendarSettings(
     return calendarSettingsConfigMenu(server, interaction.channelId, false);
 }
 
+/**
+ * Sets the calendar id and public embed url
+ * @param interaction
+ * @param menuVersion if true, then returns the menu embed. else returns the success embed
+ * @returns
+ */
 async function updateCalendarSettings(
     interaction: ModalSubmitInteraction<'cached'>,
     menuVersion: boolean
@@ -533,10 +549,26 @@ async function updateCalendarSettings(
     const [server, state] = isServerCalendarInteraction(interaction);
     const calendarId = interaction.fields.getTextInputValue('calendar_id');
     const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
-    // searate awaits since publicEmbedUrl is depends on calendarId
-    await state.setCalendarId(calendarId),
-        await state.setPublicEmbedUrl(publicEmbedUrl),
-        await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+
+    await checkCalendarConnection(calendarId).catch(() => {
+        throw ExpectedCalendarErrors.badId.newId;
+    });
+
+    await state.setCalendarId(calendarId);
+
+    if (publicEmbedUrl !== '') {
+        try {
+            new URL(publicEmbedUrl); // call this constructor to check if URL is valid
+        } catch {
+            throw ExpectedCalendarErrors.badPublicEmbedUrl;
+        }
+        // now rawUrl is valid
+        await state.setPublicEmbedUrl(publicEmbedUrl);
+    } else {
+        await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+    }
+
+    await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     if (!menuVersion) {
         return CalendarSuccessMessages.updatedCalendarSettings(
             calendarId,

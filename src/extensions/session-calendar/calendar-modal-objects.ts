@@ -8,6 +8,12 @@ import {
 import { generateYabobModalId, yabobModalToString } from '../../utils/util-functions.js';
 import { calendarStates } from './calendar-states.js';
 
+/**
+ * Composes the calendar settings modal
+ * @param serverId
+ * @param menuVersion
+ * @returns
+ */
 function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuilder {
     const state = calendarStates.get(serverId);
     const modal = new ModalBuilder()
