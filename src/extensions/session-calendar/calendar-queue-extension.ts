@@ -149,7 +149,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                         generateYabobButtonId(
                             'queue',
                             'refresh',
-                            this.queueChannel.channelObj.guild.id,
+                            undefined,
                             this.queueChannel.channelObj.id
                         )
                     )

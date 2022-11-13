@@ -72,8 +72,8 @@ async function calendarSettingsConfigMenu(
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
             `cscm${optionNumber}`,
-            server.guild.id,
-            channelId
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
         );
         return yabobButtonToString(newYabobButton);
     }

@@ -118,7 +118,6 @@ class QueueDisplayV2 {
                     .setCustomId(
                         composeQueueButtonId(
                             'join',
-                            this.queueChannel.channelObj.guild.id,
                             this.queueChannel.channelObj.id
                         )
                     )
@@ -132,7 +131,6 @@ class QueueDisplayV2 {
                     .setCustomId(
                         composeQueueButtonId(
                             'leave',
-                            this.queueChannel.channelObj.guild.id,
                             this.queueChannel.channelObj.id
                         )
                     )
@@ -146,7 +144,6 @@ class QueueDisplayV2 {
                     .setCustomId(
                         composeQueueButtonId(
                             'notif',
-                            this.queueChannel.channelObj.guild.id,
                             this.queueChannel.channelObj.id
                         )
                     )
@@ -159,7 +156,6 @@ class QueueDisplayV2 {
                     .setCustomId(
                         composeQueueButtonId(
                             'removeN',
-                            this.queueChannel.channelObj.guild.id,
                             this.queueChannel.channelObj.id
                         )
                     )
@@ -315,10 +311,9 @@ class QueueDisplayV2 {
 
 function composeQueueButtonId(
     buttonName: string,
-    serverId: string,
     channelId: string
 ): string {
-    const yabobButtonId = generateYabobButtonId('queue', buttonName, serverId, channelId);
+    const yabobButtonId = generateYabobButtonId('queue', buttonName, undefined, channelId);
     return yabobButtonToString(yabobButtonId);
 }
 

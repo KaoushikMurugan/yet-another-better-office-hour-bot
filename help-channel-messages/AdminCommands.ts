@@ -415,7 +415,7 @@ const adminCommandHelpMessages: HelpMessage[] = [
     stopLoggingHelp,
     setQueueAutoClearHelp,
     seriousModeHelp,
-    settingsHelp
+    //settingsHelp - temporarily removed since it causes the /help command to fail generation as it get too many fields
 ];
 
 export { adminCommandHelpMessages };

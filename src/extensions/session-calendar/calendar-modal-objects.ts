@@ -22,9 +22,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
             yabobModalToString(
                 generateYabobModalId(
                     'other',
-                    'csm' + (menuVersion ? 'mv' : ''),
-                    serverId,
-                    '0' // temp id for now, plan on making channelid optional
+                    'csm' + (menuVersion ? 'mv' : '')
                 )
             )
         )

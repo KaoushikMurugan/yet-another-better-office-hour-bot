@@ -391,8 +391,8 @@ function convertBase211ToSnowflake(base211string: string): string {
 function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
     type: T,
     componentName: string,
-    serverId: string,
-    channelId: string
+    serverId?: string,
+    channelId?: string
 ): YabobActionableComponentInfo<T> {
     return {
         n: componentName,
@@ -405,8 +405,8 @@ function generateYabobActionableComponentId<T extends YabobActionableComponentCa
 function generateYabobButtonId<T extends YabobButtonType>(
     type: T,
     buttonName: string,
-    serverId: string,
-    channelId: string
+    serverId?: string,
+    channelId?: string
 ): YabobButton<T> {
     return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
 }
@@ -414,8 +414,8 @@ function generateYabobButtonId<T extends YabobButtonType>(
 function generateYabobModalId<T extends YabobModalType>(
     type: T,
     modalName: string,
-    serverId: string,
-    channelId: string
+    serverId?: string,
+    channelId?: string
 ): YabobModal<T> {
     return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
@@ -423,8 +423,8 @@ function generateYabobModalId<T extends YabobModalType>(
 function generateSelectMenuId<T extends YabobSelectMenuType>(
     type: T,
     selectMenuName: string,
-    serverId: string,
-    channelId: string
+    serverId?: string,
+    channelId?: string
 ): YabobSelectMenu<T> {
     return generateYabobActionableComponentId(type, selectMenuName, serverId, channelId);
 }
@@ -440,8 +440,12 @@ function yabobActionableComponentToString(
     noConvert = false
 ): string {
     if (!noConvert) {
-        yabobButton.s = convertSnowflakeToBase211(yabobButton.s);
-        yabobButton.c = convertSnowflakeToBase211(yabobButton.c);
+        if (yabobButton.s !== undefined) {
+            yabobButton.s = convertSnowflakeToBase211(yabobButton.s);
+        }
+        if (yabobButton.c !== undefined) {
+            yabobButton.c = convertSnowflakeToBase211(yabobButton.c);
+        }
     }
     return JSON.stringify(yabobButton);
 }
@@ -481,12 +485,16 @@ function parseYabobActionableComponentId(
         customButtonId
     ) as YabobButton<YabobActionableComponentCategory>;
     if (!noConvert) {
-        yabobActionableComponentId.s = convertBase211ToSnowflake(
-            yabobActionableComponentId.s
-        );
-        yabobActionableComponentId.c = convertBase211ToSnowflake(
-            yabobActionableComponentId.c
-        );
+        if (yabobActionableComponentId.s) {
+            yabobActionableComponentId.s = convertBase211ToSnowflake(
+                yabobActionableComponentId.s
+            );
+        }
+        if (yabobActionableComponentId.c) {
+            yabobActionableComponentId.c = convertBase211ToSnowflake(
+                yabobActionableComponentId.c
+            );
+        }
     }
     return yabobActionableComponentId;
 }

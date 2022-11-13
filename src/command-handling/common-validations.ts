@@ -51,7 +51,7 @@ function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
     const yabobId = parseYabobButtonId(interaction.customId);
-    if (!yabobId || yabobId.t !== 'dm') {
+    if (!yabobId || yabobId.t !== 'dm' || yabobId.s === undefined) {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
     const server = attendingServers.get(yabobId.s);

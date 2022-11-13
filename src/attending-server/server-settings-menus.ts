@@ -85,8 +85,8 @@ async function serverSettingsMainMenu(
                     generateSelectMenuId(
                         isDm ? 'dm' : 'other',
                         'server_settings',
-                        server.guild.id,
-                        channelId
+                        isDm ? server.guild.id : undefined,
+                        isDm ? channelId : undefined
                     )
                 )
             )
@@ -159,8 +159,8 @@ async function serverRolesConfigMenu(
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
             `ssrc${optionName}`,
-            server.guild.id,
-            channelId
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
         );
         return yabobButtonToString(newYabobButton);
     }
@@ -236,8 +236,8 @@ async function afterSessionMessageConfigMenu(
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
             `asmc${optionName}`,
-            server.guild.id,
-            channelId
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
         );
         return yabobButtonToString(newYabobButton);
     }
@@ -294,8 +294,8 @@ async function queueAutoClearConfigMenu(
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
             `qacc${optionName}`,
-            server.guild.id,
-            channelId
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
         );
         return yabobButtonToString(newYabobButton);
     }
@@ -353,8 +353,8 @@ async function loggingChannelConfigMenu(
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
             `lcc${optionName}`,
-            server.guild.id,
-            channelId
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
         );
         return yabobButtonToString(newYabobButton);
     }
@@ -388,7 +388,7 @@ function composeReturnToMainMenuButton(
     return new ButtonBuilder()
         .setCustomId(
             yabobButtonToString(
-                generateYabobButtonId('other', 'rtmm', serverId, channelId)
+                generateYabobButtonId('other', 'rtmm')
             )
         )
         .setEmoji('🏠')

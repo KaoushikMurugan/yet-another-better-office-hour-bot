@@ -136,9 +136,9 @@ type YabobActionableComponentInfo<YabobActionableComponentCategory> = {
     /** type of button, either 'dm', 'queue', or 'other' */
     t: YabobActionableComponentCategory; // max length 5
     /** server id. if in dm, to find which server it relates to */
-    s: GuildId; // max length 20, 8-9 after compression
+    s: YabobActionableComponentCategory extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
     /** channel id. if in dm, equivalent to userId */
-    c: CategoryChannelId; // max length 20, 8-9 after compression
+    c: YabobActionableComponentCategory extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
 };
 
 // type alias for better readability
