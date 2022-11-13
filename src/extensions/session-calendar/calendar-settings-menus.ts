@@ -49,12 +49,12 @@ async function calendarSettingsConfigMenu(
         `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
             `*This is the calendar that the server refers to for office hours events*` +
             `\n\n` +
-            `**Office Hours Calendar Embed Url:** ${state.publicCalendarEmbedUrl}\n\n` +
+            `**Office Hours Calendar Embed URL:** ${state.publicCalendarEmbedUrl}\n\n` +
             `*This is the url that will be linked in the upcoming hours embed.*\n\n` +
             `***Select an option below to change the configuration:***\n\n` +
             `**Note:** If you change the calendar, the embed url will be reset to the default embed url for the new calendar.\n\n` +
-            `**1** - Change the Office Hours Calendar\n` +
-            `**2** - Change the Office Hours Calendar Embed Url\n`
+            `**🗓** - Change the Calendar Config\n` +
+            `**🔗** - Set the Calendar and Embed URL back to the default\n`
     );
 
     function composeCSCMButtonId(optionNumber: string): string {
@@ -71,12 +71,14 @@ async function calendarSettingsConfigMenu(
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeCSCMButtonId('1'))
+                .setEmoji('🗓')
                 .setLabel('Change Calendar Settings')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
                 .setCustomId(composeCSCMButtonId('2'))
+                .setEmoji('🔗')
                 .setLabel('Set to Default Calendar Settings')
                 .setStyle(ButtonStyle.Secondary)
         );

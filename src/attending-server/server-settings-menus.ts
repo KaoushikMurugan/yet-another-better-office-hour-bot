@@ -346,6 +346,7 @@ function composeReturnToMainMenuButton(
                 generateYabobButtonId('other', 'rtmm', serverId, channelId)
             )
         )
+        .setEmoji('🏠')
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary);
 }
