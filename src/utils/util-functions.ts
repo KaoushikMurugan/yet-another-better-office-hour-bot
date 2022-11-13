@@ -28,16 +28,18 @@ import {
     YabobSelectMenuType
 } from './type-aliases.js';
 
+import { FrozenServer } from '../extensions/extension-utils.js';
+
 /**
  * Centers a string for the console/terminal by padding it with spaces
  * @param text
  */
-function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
-    );
+ function centered(text: string): string {
+    const padding = (process.stdout.columns - text.length) / 2;
+    if (padding <= 0) {
+        return text;
+    }
+    return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
 }
 
 /**
@@ -104,10 +106,7 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
  * @param member
  * @returns list of queue roles
  */
-async function getQueueRoles(
-    server: AttendingServerV2,
-    member: GuildMember
-): Promise<Role[]> {
+async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache

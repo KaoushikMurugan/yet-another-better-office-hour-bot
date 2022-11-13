@@ -9,6 +9,7 @@ import { restorePublicEmbedURL } from './shared-calendar-functions.js';
 import { Collection, Guild } from 'discord.js';
 import { firebaseDB } from '../../global-states.js';
 import { FrozenServer } from '../extension-utils.js';
+import { z } from 'zod';
 
 /**
  * @module Backups
@@ -18,6 +19,13 @@ type CalendarConfigBackup = {
     publicCalendarEmbedUrl: string;
     calendarNameDiscordIdMap: { [key: string]: string };
 };
+
+/** Firebase Backup Schema */
+const calendarConfigBackupSchema = z.object({
+    calendarId: z.string(),
+    publicCalendarEmbedUrl: z.string(),
+    calendarNameDiscordIdMap: z.record(z.string())
+});
 
 class CalendarExtensionState extends BaseServerExtension implements IServerExtension {
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
@@ -116,15 +124,17 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         if (backupDoc.data() === undefined) {
             return;
         }
-        const calendarBackup = backupDoc.data() as CalendarConfigBackup;
-        this.calendarId = calendarBackup.calendarId;
-        // TODO: coalescing is temporary, this is just migration code
-        // once all servers have migrated to the new backup model we can safely remove it
-        this.publicCalendarEmbedUrl =
-            calendarBackup.publicCalendarEmbedUrl ??
-            restorePublicEmbedURL(this.calendarId);
+        const calendarBackup = calendarConfigBackupSchema.safeParse(backupDoc.data());
+        if (!calendarBackup.success) {
+            return;
+        }
+        this.calendarId = calendarBackup.data.calendarId;
+        this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
+        if (this.publicCalendarEmbedUrl.length === 0) {
+            this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
+        }
         this.displayNameDiscordIdMap.load(
-            Object.entries(calendarBackup.calendarNameDiscordIdMap).map(
+            Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]
             )
         );

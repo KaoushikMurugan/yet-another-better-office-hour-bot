@@ -9,6 +9,7 @@ import {
     SelectMenuInteraction
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { QueueError, ServerError } from './error-types.js';
 
 /**
  * Marks 1 property in T as required.
@@ -35,6 +36,13 @@ type NoMethod<T> = Pick<
 >;
 
 type ConstNoMethod<T> = Readonly<NoMethod<T>>;
+
+/**
+ * Non exception based error types
+ */
+type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+type ServerResult<T> = Result<T, ServerError>;
+type QueueResult<T> = Result<T, QueueError>;
 
 // These are just aliases to make keys of collections easier to read
 
@@ -161,12 +169,16 @@ type YabobSelectMenu<YabobSelectMenuType> =
     YabobActionableComponentInfo<YabobSelectMenuType>;
 
 // prettier-ignore
+
 export {
     WithRequired,
     Optional,
     
     NoMethod,
     ConstNoMethod,
+    Result,
+    ServerResult,
+    QueueResult,
     
     GuildId,
     GuildMemberId,
@@ -196,5 +208,5 @@ export {
     YabobModalType,
     YabobModal,
     YabobSelectMenuType,
-    YabobSelectMenu,
+    YabobSelectMenu
 };

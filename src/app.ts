@@ -254,7 +254,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * Dispatches the ineraction to different handlers.
  * @remark This is for dm interactions only. See {@link dispatchServerInteractions}
  * for the server interaction dispatcher
- * @param interaction from the client.on('interactionCreate') event
+ * @param interaction must be DM based
  * @returns boolean, whether the command was handled
  */
 async function dispatchDMInteraction(interaction: Interaction): Promise<boolean> {
@@ -304,7 +304,7 @@ async function dispatchDMInteraction(interaction: Interaction): Promise<boolean>
  * Dispatches the interaction to different handlers.
  * @remark This is for server interactions only. See {@link dispatchDMInteraction}
  * for the dm interaction dispatcher
- * @param interaction from the client.on('interactionCreate') event
+ * @param interaction must be server based
  * @returns boolean, whether the command was handled
  */
 async function dispatchServerInteractions(
@@ -363,7 +363,6 @@ async function dispatchServerInteractions(
 
 /**
  * Prints the title message for the console upon startup
- * @param username
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
@@ -371,9 +370,13 @@ function printTitleString(): void {
     console.log(
         `\n${black(
             magenta(
-                ' '.repeat((process.stdout.columns - titleString.length) / 2) +
+                ' '.repeat(
+                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                ) +
                     titleString +
-                    ' '.repeat((process.stdout.columns - titleString.length) / 2),
+                    ' '.repeat(
+                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                    ),
                 'Bg'
             )
         )}\n`

@@ -2,6 +2,7 @@
 
 import { AutoClearTimeout } from '../help-queue/help-queue.js';
 import { Helpee } from './member-states.js';
+import { z } from 'zod';
 
 /** Represent the data of 1 HelpQueue */
 type QueueBackup = {
@@ -71,4 +72,40 @@ type ServerBackup = {
     studentRoleId: string;
 };
 
-export { QueueBackup, ServerBackup };
+const firebaseTimestampSchema = z.object({
+    _nanoseconds: z.number(),
+    _seconds: z.number()
+});
+
+const queueBackupSchema = z.object({
+    studentsInQueue: z.array(
+        z.object({
+            waitStart: firebaseTimestampSchema,
+            displayName: z.string(),
+            memberId: z.string()
+        })
+    ),
+    name: z.string(),
+    parentCategoryId: z.string()
+});
+
+/**
+ * Describes the data type of server backups stored in FIREBASE
+ */
+const serverBackupSchema = z.object({
+    serverName: z.string(),
+    timeStamp: firebaseTimestampSchema,
+    afterSessionMessage: z.string(),
+    loggingChannelId: z.string(),
+    hoursUntilAutoClear: z.union([
+        z.object({
+            hours: z.number(),
+            minutes: z.number()
+        }),
+        z.literal('AUTO_CLEAR_DISABLED')
+    ]),
+    queues: z.array(queueBackupSchema),
+    seriousServer: z.boolean()
+});
+
+export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };
