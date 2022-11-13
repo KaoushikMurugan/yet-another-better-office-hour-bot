@@ -155,10 +155,10 @@ async function serverRolesConfigMenu(
             `If you want to set the roles manually, use the \`/set_roles\` command.`
     );
 
-    function composeSSRCButtonId(optionName: string): string {
+    function composeSRCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `ssrc${optionName}`,
+            `server_role_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
@@ -170,25 +170,25 @@ async function serverRolesConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
             new ButtonBuilder()
-                .setCustomId(composeSSRCButtonId('1'))
+                .setCustomId(composeSRCButtonId('1'))
                 .setLabel('1')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
-                .setCustomId(composeSSRCButtonId('1a'))
+                .setCustomId(composeSRCButtonId('1a'))
                 .setLabel('1A')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
-                .setCustomId(composeSSRCButtonId('2'))
+                .setCustomId(composeSRCButtonId('2'))
                 .setLabel('2')
                 .setStyle(ButtonStyle.Secondary)
         )
         .addComponents(
             new ButtonBuilder()
-                .setCustomId(composeSSRCButtonId('2a'))
+                .setCustomId(composeSRCButtonId('2a'))
                 .setLabel('2A')
                 .setStyle(ButtonStyle.Secondary)
         );
@@ -235,7 +235,7 @@ async function afterSessionMessageConfigMenu(
     function composeASMCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `asmc${optionName}`,
+            `after_session_message_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
@@ -293,7 +293,7 @@ async function queueAutoClearConfigMenu(
     function composeQACCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `qacc${optionName}`,
+            `queue_auto_clear_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
@@ -352,7 +352,7 @@ async function loggingChannelConfigMenu(
     function composeLCCButtonId(optionName: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `lcc${optionName}`,
+            `logging_channel_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
@@ -388,7 +388,7 @@ function composeReturnToMainMenuButton(
     return new ButtonBuilder()
         .setCustomId(
             yabobButtonToString(
-                generateYabobButtonId('other', 'rtmm')
+                generateYabobButtonId('other', 'return_to_main_menu')
             )
         )
         .setEmoji('🏠')

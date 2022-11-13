@@ -25,10 +25,10 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
  * Map of names of modal that could be sent in servers to their respective handlers
  */
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    asmm: interaction => setAfterSessionMessage(interaction, false),
-    asmmmv: interaction => setAfterSessionMessage(interaction, true),
-    qacm: interaction => setQueueAutoClear(interaction, false),
-    qacmmv: interaction => setQueueAutoClear(interaction, true)
+    after_session_message_modal: interaction => setAfterSessionMessage(interaction, false),
+    after_session_message_modal_mv: interaction => setAfterSessionMessage(interaction, true),
+    queue_auto_clear_modal: interaction => setQueueAutoClear(interaction, false),
+    queue_auto_clear_modal_mv: interaction => setQueueAutoClear(interaction, true)
 } as const;
 
 /**
@@ -41,7 +41,7 @@ const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
 /**
  * List of modal names that should update the parent interaction
  */
-const updateParentInteractionModals = ['asmmmv', 'qacmmv'];
+const updateParentInteractionModals = ['after_session_message_modal_mv', 'queue_auto_clear_modal_mv'];
 
 /**
  * Check if the modal interaction can be handled by this (in-built) handler

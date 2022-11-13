@@ -71,7 +71,7 @@ async function calendarSettingsConfigMenu(
     function composeCSCMButtonId(optionNumber: string): string {
         const newYabobButton = generateYabobButtonId(
             isDm ? 'dm' : 'other',
-            `cscm${optionNumber}`,
+            `calendar_settings_config_menui_${optionNumber}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );

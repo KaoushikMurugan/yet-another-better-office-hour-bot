@@ -22,7 +22,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
             yabobModalToString(
                 generateYabobModalId(
                     'other',
-                    'csm' + (menuVersion ? 'mv' : '')
+                    'calendar_settings_modal' + (menuVersion ? '_mv' : '')
                 )
             )
         )

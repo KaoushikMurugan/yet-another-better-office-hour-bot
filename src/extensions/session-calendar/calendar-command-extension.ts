@@ -284,23 +284,23 @@ const queueButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
 } as const;
 
 const defaultButtonMethodMap: { [buttonName: string]: DefaultButtonCallback } = {
-    cscm2: resetCalendarSettings
+    calendar_settings_config_menui_2: resetCalendarSettings
 } as const;
 
 const showModalOnlyButtons: {
     [buttonName: string]: (interaction: ButtonInteraction<'cached'>) => Promise<void>;
 } = {
-    cscm1: showCalendarSettingsModal
+    calendar_settings_config_menui_1: showCalendarSettingsModal
 } as const;
 
-const updateParentInteractionButtons = ['cscm1', 'cscm2'];
+const updateParentInteractionButtons = ['calendar_settings_config_menui_1', 'calendar_settings_config_menui_2'];
 
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    csm: interaction => updateCalendarSettings(interaction, false),
-    csmmv: interaction => updateCalendarSettings(interaction, true)
+    calendar_settings_modal: interaction => updateCalendarSettings(interaction, false),
+    calendar_settings_modal_mv: interaction => updateCalendarSettings(interaction, true)
 } as const;
 
-const updateParentInteractionModals = ['csmmv'];
+const updateParentInteractionModals = ['calendar_settings_modal_mv'];
 
 /**
  * The `/set_calendar [calendar_id]` command

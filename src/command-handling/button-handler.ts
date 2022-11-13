@@ -59,14 +59,14 @@ const queueButtonMethodMap: {
 const defaultButtonMethodMap: {
     [buttonName: string]: DefaultButtonCallback;
 } = {
-    rtmm: showSettingsMainMenu,
-    ssrc1: interaction => createServerRoles(interaction, false, false),
-    ssrc1a: interaction => createServerRoles(interaction, false, true),
-    ssrc2: interaction => createServerRoles(interaction, true, false),
-    ssrc2a: interaction => createServerRoles(interaction, true, true),
-    asmc2: disableAfterSessionMessage,
-    qacc2: disableQueueAutoClear,
-    lcc2: disableLoggingChannel
+    return_to_main_menu: showSettingsMainMenu,
+    server_role_config_1: interaction => createServerRoles(interaction, false, false),
+    server_role_config_1a: interaction => createServerRoles(interaction, false, true),
+    server_role_config_2: interaction => createServerRoles(interaction, true, false),
+    server_role_config_2a: interaction => createServerRoles(interaction, true, true),
+    after_session_message_config_2: disableAfterSessionMessage,
+    queue_auto_clear_config_2: disableQueueAutoClear,
+    logging_channel_config_2: disableLoggingChannel
 };
 
 /**
@@ -77,8 +77,8 @@ const defaultButtonMethodMap: {
 const showModalOnlyButtons: {
     [buttonName: string]: (inter: ButtonInteraction<'cached'>) => Promise<void>;
 } = {
-    asmc1: showAfterSessionMessageModal,
-    qacc1: showQueueAutoClearModal
+    after_session_message_config_1: showAfterSessionMessageModal,
+    queue_auto_clear_config_1: showQueueAutoClearModal
 } as const;
 
 /**
@@ -87,26 +87,26 @@ const showModalOnlyButtons: {
 const dmButtonMethodMap: {
     [buttonName: string]: DMButtonCallback;
 } = {
-    ssrc1: interaction => createServerRolesDM(false, false, interaction),
-    ssrc1a: interaction => createServerRolesDM(false, true, interaction),
-    ssrc2: interaction => createServerRolesDM(true, false, interaction),
-    ssrc2a: interaction => createServerRolesDM(true, true, interaction)
+    server_role_config_1: interaction => createServerRolesDM(false, false, interaction),
+    server_role_config_1a: interaction => createServerRolesDM(false, true, interaction),
+    server_role_config_2: interaction => createServerRolesDM(true, false, interaction),
+    server_role_config_2a: interaction => createServerRolesDM(true, true, interaction)
 } as const;
 
 /**
  * List of buttons that update the parent interaction
  */
 const updateParentInteractionButtons = [
-    'rtmm',
-    'ssrc1',
-    'ssrc1a',
-    'ssrc2',
-    'ssrc2a',
-    'asmc1',
-    'asmc2',
-    'qacc1',
-    'qacc2',
-    'lcc2'
+    'return_to_main_menu',
+    'server_role_config_1',
+    'server_role_config_1a',
+    'server_role_config_2',
+    'server_role_config_2a',
+    'after_session_message_config_1',
+    'after_session_message_config_2',
+    'queue_auto_clear_config_1',
+    'queue_auto_clear_config_2',
+    'logging_channel_config_2'
 ];
 
 /**

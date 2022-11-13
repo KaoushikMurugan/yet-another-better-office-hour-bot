@@ -25,7 +25,7 @@ function queueAutoClearModal(serverId: string, menuVersion = false): ModalBuilde
             yabobModalToString(
                 generateYabobModalId(
                     'other',
-                    'qacm' + (menuVersion ? 'mv' : '')
+                    'queue_auto_clear_modal' + (menuVersion ? '_mv' : '')
                 )
             )
         )
@@ -76,7 +76,7 @@ function afterSessionMessageModal(serverId: string, menuVersion = false): ModalB
             yabobModalToString(
                 generateYabobModalId(
                     'other',
-                    'asmm' + (menuVersion ? 'mv' : '')
+                    'after_session_message_modal' + (menuVersion ? '_mv' : '')
                 )
             )
         )
