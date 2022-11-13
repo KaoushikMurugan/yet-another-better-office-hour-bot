@@ -381,11 +381,12 @@ function convertBase211ToSnowflake(base211string: string): string {
 }
 
 /**
- * Converts a base to another base
- * @param componentName
- * @param serverId
- * @param channelId
- * @returns a {@link YabobButton}
+ * Generates a YABOB ID
+ * @param type 'dm', 'queue' or 'server'
+ * @param componentName 
+ * @param serverId 
+ * @param channelId 
+ * @returns 
  */
 function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
     type: T,
@@ -429,9 +430,9 @@ function generateSelectMenuId<T extends YabobSelectMenuType>(
 }
 
 /**
- * Converts a yabob button id to a string after converting the snowflakes to base 70
+ * Converts a yabob button id to a string after compressing the snowflakes
  * @param yabobButton the yabob button
- * @param noConvert turns off the conversion of the snowflakes
+ * @param noConvert turns off the compression of the snowflakes
  * @returns
  */
 function yabobActionableComponentToString(
@@ -453,23 +454,23 @@ function yabobButtonToString(
 }
 
 function yabobModalToString(
-    yabobModal: YabobButton<'dm' | 'other' | 'queue'>,
+    yabobModal: YabobModal<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return yabobActionableComponentToString(yabobModal, noConvert);
 }
 
 function yabobSelectMenuToString(
-    yabobSelectMenu: YabobButton<'dm' | 'other' | 'queue'>,
+    yabobSelectMenu: YabobSelectMenu<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return yabobActionableComponentToString(yabobSelectMenu, noConvert);
 }
 
 /**
- * Parses a yabob button id and then converts the snowflakes back to base 10
+ * Parses a yabob button id and then decompresses the snowflakes back to base 10
  * @param customButtonId the custom button id
- * @param noConvert turns off the conversion of the snowflakes
+ * @param noConvert turns off the decompression of the snowflakes
  * @returns
  */
 function parseYabobActionableComponentId(
@@ -507,7 +508,7 @@ function parseYabobModalId(
     return parseYabobActionableComponentId(
         customButtonId,
         noConvert
-    ) as YabobButton<YabobModalType>;
+    ) as YabobModal<YabobModalType>;
 }
 
 function parseYabobSelectMenuId(
@@ -517,7 +518,7 @@ function parseYabobSelectMenuId(
     return parseYabobActionableComponentId(
         customButtonId,
         noConvert
-    ) as YabobButton<YabobSelectMenuType>;
+    ) as YabobSelectMenu<YabobSelectMenuType>;
 }
 
 // prettier-ignore
