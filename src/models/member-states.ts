@@ -15,11 +15,6 @@ type Helpee = {
      */
     waitStart: Date;
     /**
-     * Whether the student is up next or not
-     * @deprecated currently unused, might be removed in future versions
-     */
-    upNext: boolean;
-    /**
      * HelpQueueV2 object backref
      */
     queue: HelpQueueV2;

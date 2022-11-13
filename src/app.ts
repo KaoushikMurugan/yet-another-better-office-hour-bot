@@ -222,7 +222,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
 /**
  * Dispatches the interaction to different handlers.
- * @param interaction from the client.on('interactionCreate') event
+ * @param interaction must be server based
  * @returns boolean, whether the command was handled
  */
 async function dispatchInteractions(
@@ -272,7 +272,6 @@ async function dispatchInteractions(
 
 /**
  * Prints the title message for the console upon startup
- * @param username
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
@@ -280,9 +279,13 @@ function printTitleString(): void {
     console.log(
         `\n${black(
             magenta(
-                ' '.repeat((process.stdout.columns - titleString.length) / 2) +
+                ' '.repeat(
+                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                ) +
                     titleString +
-                    ' '.repeat((process.stdout.columns - titleString.length) / 2),
+                    ' '.repeat(
+                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                    ),
                 'Bg'
             )
         )}\n`

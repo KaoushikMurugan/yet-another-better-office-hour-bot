@@ -3,13 +3,13 @@ import {
     BaseServerExtension,
     IServerExtension
 } from '../extensions/extension-interface.js';
-import { QueueBackup, ServerBackup } from '../models/backups.js';
+import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
 import { blue, cyan, yellow } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
-import { FrozenServer, sendLogs } from '../extensions/extension-utils.js';
+import { FrozenServer } from '../extensions/extension-utils.js';
 
 /**
  * Built in backup extension
@@ -37,21 +37,30 @@ class FirebaseServerBackupExtension
             .collection('serverBackups')
             .doc(serverId)
             .get();
-        const backupData = backupDocument.data() as ServerBackup;
-        backupData.queues.forEach(queue => {
-            queue.studentsInQueue.forEach(student => {
-                student.waitStart = new Date(
-                    // weird hack here becaue firebase stores dates as this object type
-                    (
-                        student.waitStart as unknown as {
-                            _nanoseconds: number;
-                            _seconds: number;
-                        }
-                    )._seconds * 1000
-                );
-            });
-        });
-        // TODO: add a typeguard here to check if schema match
+        const unpack = serverBackupSchema.safeParse(backupDocument.data());
+        if (!unpack.success) {
+            console.warn(
+                `External backups were found for ${this.guild.name} but contains invalid data. Creating new instance.`
+            );
+            return undefined;
+        }
+        const backupData: ServerBackup = {
+            ...unpack.data,
+            queues: unpack.data.queues.map(queue => {
+                return {
+                    ...queue,
+                    studentsInQueue: queue.studentsInQueue
+                        .map(student => {
+                            return {
+                                ...student,
+                                waitStart: new Date(student.waitStart._seconds * 1000)
+                            };
+                        })
+                        .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
+                };
+            }),
+            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000)
+        };
         return backupData;
     }
 
@@ -74,7 +83,6 @@ class FirebaseServerBackupExtension
                 studentsInQueue: queue.students.map(student => {
                     return {
                         waitStart: student.waitStart,
-                        upNext: student.upNext,
                         displayName: student.member.displayName,
                         memberId: student.member.id
                     };
@@ -111,8 +119,7 @@ class FirebaseServerBackupExtension
             .catch((err: Error) =>
                 console.error('Firebase server backup failed.', err.message)
             );
-        sendLogs(
-            server.guild.id,
+        server.sendLogMessage(
             SimpleLogEmbed(`Server Data and Queues Backed-up to Firebase`)
         );
     }

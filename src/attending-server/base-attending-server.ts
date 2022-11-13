@@ -842,11 +842,19 @@ class AttendingServerV2 {
         );
     }
 
-    async sendLogMessage(message: BaseMessageOptions | string): Promise<void> {
+    /**
+     * Sends the log message to the logging channel if it's set up
+     * @param message
+     */
+    sendLogMessage(message: BaseMessageOptions | string): void {
         if (this._loggingChannel) {
-            await this._loggingChannel.send(message);
+            this._loggingChannel.send(message).catch(e => {
+                console.error(red(`Failed to send logs to ${this.guild.name}.`));
+                console.error(e);
+            });
         }
     }
+
     /**
      * Sends the VC invite to the student after successful dequeue
      * @param helperObject

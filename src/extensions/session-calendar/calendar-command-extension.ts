@@ -120,16 +120,14 @@ class CalendarInteractionExtension
     ): Promise<void> {
         //Send logs before* processing the command
         const [server] = isServerCalendarInteraction(interaction);
-        await Promise.all<unknown>([
-            interaction.reply({
-                ...SimpleEmbed(
-                    `Processing command \`${interaction.commandName}\` ...`,
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            }),
-            server.sendLogMessage(SlashCommandLogEmbed(interaction))
-        ]);
+        await interaction.reply({
+            ...SimpleEmbed(
+                `Processing command \`${interaction.commandName}\` ...`,
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
+        server.sendLogMessage(SlashCommandLogEmbed(interaction));
         const commandMethod = commandMethodMap[interaction.commandName];
         logSlashCommand(interaction);
         await commandMethod?.(interaction)
@@ -210,10 +208,8 @@ async function updateCalendarId(
         isTriggeredByUserWithRolesSync(interaction, 'set_calendar', ['Bot Admin'])
     ];
     const [server, state] = isServerCalendarInteraction(interaction);
-    await Promise.all([
-        state.setCalendarId(newCalendarId),
-        server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
-    ]);
+    await state.setCalendarId(newCalendarId);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.updatedCalendarId(newCalendarName);
 }
 
@@ -227,10 +223,8 @@ async function unsetCalendarId(
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     isTriggeredByUserWithRolesSync(interaction, 'unset_calendar', ['Bot Admin']);
-    await Promise.all([
-        state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
-        server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
-    ]);
+    await state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.unsetCalendar;
 }
 
@@ -319,7 +313,7 @@ async function makeParsableCalendarTitle(
                 )} triggered by ${memberToUpdate.displayName}`
             )
         );
-    await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     return CalendarSuccessMessages.completedCalendarString(
         calendarDisplayName,
         validQueueOptions.map(queue => queue.name)
@@ -365,16 +359,14 @@ async function requestCalendarRefresh(
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
     const queueLevelExtension = state.listeners.get(queueName);
-    await Promise.all<unknown>([
-        server.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                `Refresh Upcoming Sessions`,
-                interaction.channel as TextBasedChannel
-            )
-        ),
-        queueLevelExtension?.onCalendarExtensionStateChange()
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Refresh Upcoming Sessions`,
+            interaction.channel as TextBasedChannel
+        )
+    );
+    await queueLevelExtension?.onCalendarExtensionStateChange();
     return CalendarSuccessMessages.refreshSuccess(queueName);
 }
 

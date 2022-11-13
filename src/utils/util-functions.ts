@@ -13,7 +13,7 @@ import {
     TextChannel,
     VoiceChannel
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { FrozenServer } from '../extensions/extension-utils.js';
 import { cyan, yellow, magenta } from './command-line-colors.js';
 
 /**
@@ -66,10 +66,7 @@ function convertMsToShortTime(milliseconds: number): string {
  * @param member
  * @returns list of queue roles
  */
-async function getQueueRoles(
-    server: AttendingServerV2,
-    member: GuildMember
-): Promise<Role[]> {
+async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache
@@ -200,11 +197,11 @@ function isVoiceChannel(
 }
 
 function centered(text: string): string {
-    return (
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}` +
-        `${text}` +
-        `${' '.repeat((process.stdout.columns - text.length) / 2)}`
-    );
+    const padding = (process.stdout.columns - text.length) / 2;
+    if (padding <= 0) {
+        return text;
+    }
+    return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
 }
 
 export {
