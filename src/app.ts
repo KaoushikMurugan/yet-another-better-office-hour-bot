@@ -141,8 +141,14 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 client.on('guildMemberAdd', async member => {
     const server =
         attendingServers.get(member.guild.id) ?? (await joinGuild(member.guild));
-    const studentRole = server.guild.roles.cache.find(role => role.name === 'Student');
-    if (studentRole !== undefined && !member.user.bot) {
+    const studentRole = server.guild.roles.cache.find(
+        role => role.id === server.studentRoleID
+    );
+    if (
+        studentRole !== undefined &&
+        !member.user.bot &&
+        studentRole.id !== server.guild.roles.everyone.id
+    ) {
         await member.roles.add(studentRole);
     }
 });

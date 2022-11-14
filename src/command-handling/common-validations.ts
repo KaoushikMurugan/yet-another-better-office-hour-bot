@@ -63,29 +63,6 @@ function isValidDMInteraction(
 }
 
 /**
- * Checks if the triggerer has the required roles.
- * @deprecated
- * @param commandName the command used
- * @returns GuildMember object of the triggerer
- */
-function isTriggeredByUserWithRolesSync(
-    interaction:
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>,
-    commandName: string,
-    requiredRoles: string[]
-): GuildMember {
-    if (!interaction.member.roles.cache.some(role => requiredRoles.includes(role.name))) {
-        throw ExpectedParseErrors.missingHierarchyRoles(
-            requiredRoles[0] ?? '',
-            commandName
-        );
-    }
-    return interaction.member;
-}
-
-/**
  * Checks if the triggerer has the any role above or equal to the `lowestRequiredRole`.
  * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
@@ -203,7 +180,6 @@ export {
     hasValidQueueArgument,
     isFromQueueChannelWithParent,
     isTriggeredByUserWithValidEmail,
-    isTriggeredByUserWithRolesSync,
     isTriggeredByMemberWithRoles,
     isServerInteraction,
     isValidDMInteraction
