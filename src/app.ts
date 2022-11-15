@@ -33,6 +33,7 @@ import {
     processBuiltInDMSelectMenu,
     processBuiltInSelectMenu
 } from './command-handling/select-menu-handler.js';
+import { serverRolesConfigMenu } from './attending-server/server-settings-menus.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
 const failedInteractions: { username: string; interaction: Interaction }[] = [];
@@ -167,7 +168,7 @@ client.on('roleUpdate', async role => {
     ) {
         console.log(cyan('Got the highest Role! Starting server initialization'));
         const owner = await role.guild.fetchOwner();
-        await Promise.all([
+        const [ , server] = await Promise.all([
             owner.send(
                 SimpleEmbed(
                     `Got the highest Role!` +
@@ -177,6 +178,7 @@ client.on('roleUpdate', async role => {
             ),
             joinGuild(role.guild)
         ]);
+        await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
     }
 });
 

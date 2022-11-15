@@ -261,6 +261,7 @@ class AttendingServerV2 {
             server._afterSessionMessage = externalServerData.afterSessionMessage;
         }
 
+        //check if roles still exist
         server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
         server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
         server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
@@ -282,10 +283,8 @@ class AttendingServerV2 {
             const owner = await guild.fetchOwner();
             await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
         }
-        //check if roles still exist
 
         // This call must block everything else for handling empty servers
-        // await server.createHierarchyRoles();
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
             server.initAllQueues(
