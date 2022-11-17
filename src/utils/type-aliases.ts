@@ -169,7 +169,16 @@ type YabobSelectMenuType = YabobActionableComponentCategory;
 type YabobSelectMenu<YabobSelectMenuType> =
     YabobActionableComponentInfo<YabobSelectMenuType>;
 
+/**
+ * Represents an optional role id that YABOB keeps track of
+ * - Be **very careful** with this type, it's just an alias for a string
+ */
 type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
+
+/** type to couple the entires of an object with the key value types */
+type Entries<T> = {
+    [K in keyof T]: [K, T[K]];
+}[keyof T][];
 
 export {
     WithRequired,
@@ -203,5 +212,6 @@ export {
     YabobModalType,
     YabobModal,
     YabobSelectMenuType,
-    YabobSelectMenu
+    YabobSelectMenu,
+    Entries
 };

@@ -4,13 +4,14 @@
  *  that don't directly affect AttendingServerV2's internal state
  */
 
-import { CategoryChannel, ChannelType, Guild } from 'discord.js';
+import { CategoryChannel, ChannelType, Guild, Snowflake } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
 import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
 import { commandChConfigs } from './command-ch-constants.js';
 import { HelpMessage } from '../utils/type-aliases.js';
 import { isTextChannel } from '../utils/util-functions.js';
+import { ExpectedServerErrors } from './expected-server-errors.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -78,9 +79,7 @@ async function updateCommandHelpChannels(guild: Guild): Promise<void> {
                         .map(roleWithViewPermission =>
                             commandCh.permissionOverwrites.create(
                                 roleWithViewPermission,
-                                {
-                                    ViewChannel: true
-                                }
+                                { ViewChannel: true }
                             )
                         )
                 );
@@ -131,7 +130,57 @@ async function sendCommandHelpChannelMessages(
     );
     console.log(`Successfully updated help messages in ${yellow(helpCategory.name)}!`);
 }
+/**
+ * Creates a new category with `categoryName` and creates `numOfChannels` voice channels
+ * with the name `channelName` within the category
+ * @remark createOfficeCategory('Office Hours', 'Office', 3)  will create a
+ * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
+ */
+async function createOfficeVoiceChannels(
+    guild: Guild,
+    categoryName: string,
+    officeName: string,
+    numberOfOffices: number,
+    permittedRoles: Snowflake[]
+): Promise<void> {
+    const allChannels = await guild.channels.fetch();
+    // Find if a category with the same name exists
+    const existingOfficeCategory = allChannels.filter(
+        (channel): channel is CategoryChannel =>
+            channel !== null &&
+            channel.type === ChannelType.GuildCategory &&
+            channel.name === categoryName
+    );
+    if (existingOfficeCategory.size !== 0) {
+        throw ExpectedServerErrors.categoryAlreadyExists(categoryName);
+    }
+    // If no help category is found, initialize
+    const officeCategory = await guild.channels.create({
+        name: categoryName,
+        type: ChannelType.GuildCategory
+    });
+    // Change the config object and add more functions here if needed
+    await Promise.all(
+        Array(numberOfOffices)
+            .fill(undefined)
+            .map(async (_, officeNumber) => {
+                const officeCh = await officeCategory.children.create({
+                    name: `${officeName} ${officeNumber + 1}`,
+                    type: ChannelType.GuildVoice
+                });
+                await officeCh.permissionOverwrites.create(guild.roles.everyone, {
+                    SendMessages: false,
+                    ViewChannel: false
+                });
+                await Promise.all(
+                    permittedRoles.map(permittedRole =>
+                        officeCh.permissionOverwrites.create(permittedRole, {
+                            ViewChannel: true
+                        })
+                    )
+                );
+            })
+    );
+}
 
-
-
-export { initializationCheck, updateCommandHelpChannels };
+export { initializationCheck, updateCommandHelpChannels, createOfficeVoiceChannels };
