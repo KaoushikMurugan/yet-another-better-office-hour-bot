@@ -5,8 +5,8 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { generateYabobModalId, yabobModalToString } from '../../utils/util-functions.js';
-import { calendarStates } from './calendar-states.js';
+import { generateYabobModalId, yabobModalToString } from '../../../utils/util-functions.js';
+import { calendarStates } from '../calendar-states.js';
 
 /**
  * Composes the calendar settings modal

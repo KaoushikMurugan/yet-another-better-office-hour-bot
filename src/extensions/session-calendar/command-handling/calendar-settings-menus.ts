@@ -4,19 +4,19 @@ import {
     ButtonStyle,
     SelectMenuComponentOptionData
 } from 'discord.js';
-import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
+import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
 import {
     generateYabobButtonId,
     yabobButtonToString
-} from '../../utils/util-functions.js';
-import { calendarStates } from './calendar-states.js';
+} from '../../../utils/util-functions.js';
+import { calendarStates } from '../calendar-states.js';
 import {
     composeReturnToMainMenuButton,
     serverSettingsMainMenuOptions
-} from '../../attending-server/server-settings-menus.js';
-import { restorePublicEmbedURL } from './shared-calendar-functions.js';
-import { FrozenServer } from '../extension-utils.js';
+} from '../../../attending-server/server-settings-menus.js';
+import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
+import { FrozenServer } from '../../extension-utils.js';
 
 /**
  * Options for the server settings main menu

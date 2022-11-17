@@ -44,6 +44,7 @@ import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.j
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { serverSettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import { updateCommandHelpChannels } from '../attending-server/guild-actions.js';
 
 /**
  * The map of available commands
@@ -462,7 +463,7 @@ async function cleanupHelpChannel(
         'cleanup_help_channel',
         'Bot Admin'
     );
-    await server.updateCommandHelpChannels();
+    await updateCommandHelpChannels(server.guild);
     return SuccessMessages.cleanedup.helpChannels;
 }
 

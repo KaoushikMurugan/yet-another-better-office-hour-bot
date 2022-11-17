@@ -14,7 +14,6 @@ import {
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { commandChConfigs } from './command-ch-constants.js';
 import { hierarchyRoleConfigs } from '../models/hierarchy-roles.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
@@ -22,7 +21,7 @@ import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
 import { QueueBackup } from '../models/backups.js';
-import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors.js';
+import { blue, cyan, green, red } from '../utils/command-line-colors.js';
 import {
     convertMsToTime,
     isCategoryChannel,
@@ -33,7 +32,6 @@ import {
 import {
     CategoryChannelId,
     GuildMemberId,
-    HelpMessage,
     Optional,
     OptionalRoleId,
     WithRequired
@@ -41,7 +39,7 @@ import {
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { serverRolesConfigMenu } from './server-settings-menus.js';
-import { initializationCheck } from './guild-actions.js';
+import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
 import { client } from '../global-states.js';
 
 /**
@@ -200,7 +198,6 @@ class AttendingServerV2 {
 
     /**
      * Asynchronously creates a YABOB instance for 1 server
-     * @param user discord client user
      * @param guild the server for YABOB to join
      * @returns a created instance of YABOB
      * @throws ServerError
@@ -266,7 +263,7 @@ class AttendingServerV2 {
                 externalServerData?.hoursUntilAutoClear
             ),
             server.createClassRoles(),
-            server.updateCommandHelpChannels()
+            updateCommandHelpChannels(guild)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
@@ -835,69 +832,6 @@ class AttendingServerV2 {
     }
 
     /**
-     * Updates the help channel messages
-     * Removes all messages in the help channel and posts new ones
-     */
-    async updateCommandHelpChannels(): Promise<void> {
-        const allChannels = await this.guild.channels.fetch();
-        const existingHelpCategory = allChannels.find(
-            (channel): channel is CategoryChannel =>
-                channel !== null &&
-                channel.type === ChannelType.GuildCategory &&
-                channel.name === 'Bot Commands Help'
-        );
-        // If no help category is found, initialize
-        if (!existingHelpCategory) {
-            console.log(
-                cyan(`Found no help channels in ${this.guild.name}. Creating new ones.`)
-            );
-            const helpCategory = await this.guild.channels.create({
-                name: 'Bot Commands Help',
-                type: ChannelType.GuildCategory
-            });
-            // Change the config object and add more functions here if needed
-            await Promise.all(
-                commandChConfigs.map(async roleConfig => {
-                    const commandCh = await helpCategory.children.create({
-                        name: roleConfig.channelName
-                    });
-                    await commandCh.permissionOverwrites.create(
-                        this.guild.roles.everyone,
-                        {
-                            SendMessages: false,
-                            ViewChannel: false
-                        }
-                    );
-                    await Promise.all(
-                        this.guild.roles.cache
-                            .filter(role => roleConfig.visibility.includes(role.name))
-                            .map(roleWithViewPermission =>
-                                commandCh.permissionOverwrites.create(
-                                    roleWithViewPermission,
-                                    {
-                                        ViewChannel: true
-                                    }
-                                )
-                            )
-                    );
-                })
-            );
-            await this.sendCommandHelpChannelMessages(helpCategory, commandChConfigs);
-        } else {
-            console.log(
-                `Found existing help channels in ${yellow(
-                    this.guild.name
-                )}, updating command help files`
-            );
-            await this.sendCommandHelpChannelMessages(
-                existingHelpCategory,
-                commandChConfigs
-            );
-        }
-        console.log(magenta(`✓ Updated help channels on ${this.guild.name} ✓`));
-    }
-
-    /**
      * Called when leaving a server
      * - let all the extensions clean up their own memory
      */
@@ -1214,41 +1148,6 @@ class AttendingServerV2 {
         );
     }
 
-    /**
-     * Overwrites the existing command help channel and send new help messages
-     * @param helpCategory the category named 'Bot Commands Help'
-     * @param messageContents array of embeds to send to each help channel
-     */
-    private async sendCommandHelpChannelMessages(
-        helpCategory: CategoryChannel,
-        messageContents: Array<{
-            channelName: string;
-            file: HelpMessage[];
-            visibility: string[];
-        }>
-    ): Promise<void> {
-        const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
-        await Promise.all(
-            allHelpChannels.map(
-                async ch =>
-                    await ch.messages
-                        .fetch()
-                        .then(messages => messages.map(msg => msg.delete()))
-            )
-        );
-        // send new ones
-        await Promise.all(
-            allHelpChannels.map(channel =>
-                messageContents
-                    .find(val => val.channelName === channel.name)
-                    ?.file?.filter(helpMessage => helpMessage.useInHelpChannel)
-                    .map(helpMessage => channel.send(helpMessage.message))
-            )
-        );
-        console.log(
-            `Successfully updated help messages in ${yellow(helpCategory.name)}!`
-        );
-    }
 }
 
 export { AttendingServerV2, QueueChannel };

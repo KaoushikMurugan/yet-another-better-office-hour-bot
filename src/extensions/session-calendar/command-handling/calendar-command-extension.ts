@@ -2,8 +2,8 @@
 import {
     BaseInteractionExtension,
     IInteractionExtension
-} from '../extension-interface.js';
-import { CalendarExtensionState, calendarStates } from './calendar-states.js';
+} from '../../extension-interface.js';
+import { CalendarExtensionState, calendarStates } from '../calendar-states.js';
 import {
     ButtonInteraction,
     CategoryChannel,
@@ -20,22 +20,22 @@ import {
     ErrorLogEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
-} from '../../utils/embed-helper.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import { CommandData } from '../../command-handling/slash-commands.js';
+} from '../../../utils/embed-helper.js';
+import { ExtensionSetupError } from '../../../utils/error-types.js';
+import { CommandData } from '../../../command-handling/slash-commands.js';
 import {
     hasValidQueueArgument,
     isTriggeredByMemberWithRoles
-} from '../../command-handling/common-validations.js';
+} from '../../../command-handling/common-validations.js';
 import {
     checkCalendarConnection,
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     isServerCalendarInteraction
-} from './shared-calendar-functions.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
-import { calendarCommands } from './calendar-slash-commands.js';
+} from '../shared-calendar-functions.js';
+import { blue, red, yellow } from '../../../utils/command-line-colors.js';
+import { calendarCommands } from '../calendar-slash-commands.js';
 import {
     getQueueRoles,
     isCategoryChannel,
@@ -45,7 +45,7 @@ import {
     logSlashCommand,
     parseYabobButtonId,
     parseYabobModalId
-} from '../../utils/util-functions.js';
+} from '../../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
     QueueButtonCallback,
@@ -53,10 +53,10 @@ import {
     ModalSubmitCallback,
     YabobEmbed,
     DefaultButtonCallback
-} from '../../utils/type-aliases.js';
-import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
-import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors.js';
-import { environment } from '../../environment/environment-manager.js';
+} from '../../../utils/type-aliases.js';
+import { ExpectedCalendarErrors } from '../expected-calendar-errors.js';
+import { ExpectedParseErrors } from '../../../command-handling/expected-interaction-errors.js';
+import { environment } from '../../../environment/environment-manager.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
