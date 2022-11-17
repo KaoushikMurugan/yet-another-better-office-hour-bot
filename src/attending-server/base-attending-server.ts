@@ -35,11 +35,14 @@ import {
     GuildMemberId,
     HelpMessage,
     Optional,
+    OptionalRoleId,
     WithRequired
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { serverRolesConfigMenu } from './server-settings-menus.js';
+import { initializationCheck } from './guild-actions.js';
+import { client } from '../global-states.js';
 
 /**
  * Wrapper for TextChannel
@@ -76,11 +79,11 @@ class AttendingServerV2 {
     // - 'Deleted' means that the role was deleted
 
     /** role id of the bot admin role */
-    private _botAdminRoleID = 'Not Set';
+    private _botAdminRoleID: OptionalRoleId = 'Not Set';
     /** role id of the helper role */
-    private _helperRoleID = 'Not Set';
+    private _helperRoleID: OptionalRoleId = 'Not Set';
     /** role id of the student role */
-    private _studentRoleID = 'Not Set';
+    private _studentRoleID: OptionalRoleId = 'Not Set';
 
     protected constructor(
         readonly user: User,
@@ -202,33 +205,8 @@ class AttendingServerV2 {
      * @returns a created instance of YABOB
      * @throws ServerError
      */
-    static async create(user: User, guild: Guild): Promise<AttendingServerV2> {
-        if (
-            guild.members.me === null ||
-            !guild.members.me.permissions.has('Administrator')
-        ) {
-            const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `Sorry, I need full administrator permission for '${guild.name}'`,
-                    EmbedColor.Error
-                )
-            );
-            await guild.leave();
-            throw Error("YABOB doesn't have admin permission.");
-        }
-        if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
-            const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `It seems like I'm joining a server with existing roles. ` +
-                        `Please go to server settings -> Roles and change ${user.username} ` +
-                        `to the highest role.\n`,
-                    EmbedColor.Error
-                )
-            );
-            throw Error("YABOB doesn't have highest role.");
-        }
+    static async create(guild: Guild): Promise<AttendingServerV2> {
+        await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
             ? []
@@ -238,9 +216,8 @@ class AttendingServerV2 {
                   CalendarExtensionState.load(guild)
               ]);
         // create instance with extensions
-        const server = new AttendingServerV2(user, guild, serverExtensions);
+        const server = new AttendingServerV2(client.user, guild, serverExtensions);
         // Retrieve backup from all sources. Take the first one that's not undefined
-        // TODO: Change behavior here depending on backup strategy
         const externalBackup = environment.disableExtensions
             ? undefined
             : await Promise.all(
@@ -259,12 +236,11 @@ class AttendingServerV2 {
                 server._loggingChannel = loggingChannelFromBackup;
             }
             server._afterSessionMessage = externalServerData.afterSessionMessage;
+            server._botAdminRoleID = externalServerData.botAdminRoleId;
+            server._helperRoleID = externalServerData.helperRoleId;
+            server._studentRoleID = externalServerData.studentRoleId;
         }
-
         //check if roles still exist
-        server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
-        server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
-        server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
         server.roles.forEach(role => {
             if (guild.roles.cache.get(role.id) === undefined)
                 if (role.id === server._botAdminRoleID) {
@@ -275,15 +251,13 @@ class AttendingServerV2 {
                     server._studentRoleID = 'Deleted';
                 }
         });
-
         const missingRoles = server.roles.filter(
             role => role.id === 'Not Set' || role.id === 'Deleted'
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
+            await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
         }
-
         // This call must block everything else for handling empty servers
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([

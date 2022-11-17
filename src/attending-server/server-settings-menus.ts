@@ -104,12 +104,12 @@ async function serverSettingsMainMenu(
  * @param forServerInit
  * @returns
  */
-async function serverRolesConfigMenu(
+ function serverRolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
     forServerInit = false
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
     const studentRole = server.studentRoleID;
@@ -210,11 +210,11 @@ async function serverRolesConfigMenu(
  * @param isDm
  * @returns
  */
-async function afterSessionMessageConfigMenu(
+ function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+):YabobEmbed {
     const embed = SimpleEmbed(
         `📨 After Session Message Configuration for ${server.guild.name} 📨`,
         EmbedColor.Aqua,
@@ -271,11 +271,11 @@ async function afterSessionMessageConfigMenu(
  * @param isDm
  * @returns
  */
-async function queueAutoClearConfigMenu(
+ function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`,
         EmbedColor.Aqua,
@@ -329,11 +329,11 @@ async function queueAutoClearConfigMenu(
  * @param isDm
  * @returns
  */
-async function loggingChannelConfigMenu(
+function loggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🪵 Logging Configuration for ${server.guild.name} 🪵`,
         EmbedColor.Aqua,

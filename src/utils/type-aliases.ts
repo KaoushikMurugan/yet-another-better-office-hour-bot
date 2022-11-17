@@ -6,7 +6,8 @@ import {
     ButtonInteraction,
     ChatInputCommandInteraction,
     ModalSubmitInteraction,
-    SelectMenuInteraction
+    SelectMenuInteraction,
+    Snowflake
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { QueueError, ServerError } from './error-types.js';
@@ -113,7 +114,7 @@ type SettingsMenuCallback = (
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-) => Promise<BaseMessageOptions>;
+) => BaseMessageOptions;
 
 /**
  * SimpleEmbed return type
@@ -168,26 +169,23 @@ type YabobSelectMenuType = YabobActionableComponentCategory;
 type YabobSelectMenu<YabobSelectMenuType> =
     YabobActionableComponentInfo<YabobSelectMenuType>;
 
-// prettier-ignore
+type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
 
 export {
     WithRequired,
     Optional,
-    
+    OptionalRoleId,
     NoMethod,
     ConstNoMethod,
     Result,
     ServerResult,
     QueueResult,
-    
     GuildId,
     GuildMemberId,
     CategoryChannelId,
     MessageId,
     RenderIndex,
-    
     HelpMessage,
-    
     CommandCallback,
     DefaultButtonCallback,
     QueueButtonCallback,
@@ -197,12 +195,9 @@ export {
     SelectMenuCallback,
     DMSelectMenuCallback,
     SettingsMenuCallback,
-    
     YabobEmbed,
-
     YabobActionableComponentCategory,
     YabobActionableComponentInfo,
-
     YabobButtonType,
     YabobButton,
     YabobModalType,
