@@ -44,11 +44,11 @@ const calendarSettingsMainMenuOptions: {
  * @param isDm
  * @returns
  */
-async function calendarSettingsConfigMenu(
+function calendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');

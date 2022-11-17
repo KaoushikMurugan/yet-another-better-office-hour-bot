@@ -181,7 +181,7 @@ async function serverSettingsSelectMenu(
         option => option.optionObj.value === selectedOption
     );
 
-    await server.sendLogMessage(
+    server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
             `Server Settings`,

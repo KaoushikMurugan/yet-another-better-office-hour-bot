@@ -249,7 +249,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         );
     }
     // Extensions for server&queue are loaded inside the create method
-    const server = await AttendingServerV2.create(client.user, guild);
+    const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
     await postSlashCommands(
         guild,

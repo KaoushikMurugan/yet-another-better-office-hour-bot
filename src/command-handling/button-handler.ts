@@ -380,7 +380,7 @@ async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             interaction.component?.label ?? 'Return to Settings Main Menu',
@@ -402,7 +402,7 @@ async function createServerRoles(
     defaultStudentIsEveryone: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Create Roles ${interaction.component?.label ?? ''}`,
@@ -427,7 +427,7 @@ async function createServerRolesDM(
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Create Roles ${interaction.component?.label ?? ''}`,
@@ -445,7 +445,7 @@ async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set After Session Message`,
@@ -465,7 +465,7 @@ async function disableAfterSessionMessage(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setAfterSessionMessage('');
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Disable After Session Message`,
@@ -483,7 +483,7 @@ async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set Queue Auto Clear`,
@@ -502,7 +502,7 @@ async function disableQueueAutoClear(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setQueueAutoClear(0, 0, false);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Disable Queue Auto Clear`,

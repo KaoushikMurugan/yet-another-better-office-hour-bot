@@ -497,7 +497,7 @@ async function showCalendarSettingsModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const [server] = isServerCalendarInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set Calendar URLs`,
@@ -516,7 +516,7 @@ async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Reset Calendar URLs`,
@@ -562,7 +562,7 @@ async function updateCalendarSettings(
         await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
     }
 
-    await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     if (!menuVersion) {
         return CalendarSuccessMessages.updatedCalendarSettings(
             calendarId,
