@@ -26,7 +26,7 @@ import { isServerInteraction } from './common-validations.js';
 const selectMenuMethodMap: {
     [selectMenuName: string]: SelectMenuCallback;
 } = {
-    server_settings: serverSettingsSelectMenu
+    server_settings: showSettingsSelectMenu
 } as const;
 
 /**
@@ -161,7 +161,7 @@ async function processBuiltInDMSelectMenu(
  * Display the Role Config menu
  * @param interaction
  */
-async function serverSettingsSelectMenu(
+async function showSettingsSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);

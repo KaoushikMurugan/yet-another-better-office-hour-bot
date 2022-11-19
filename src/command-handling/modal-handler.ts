@@ -160,18 +160,14 @@ async function processBuiltInDMModalSubmit(
  */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction<'cached'>,
-    menuVersion: boolean
+    useMenu: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    const newAfterSessionMessage =
-        interaction.fields.getTextInputValue('after_session_msg');
-    await server.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
-    if (!menuVersion) {
-        return SuccessMessages.updatedAfterSessionMessage(message);
-    } else {
-        return afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false);
-    }
+    await server.setAfterSessionMessage(message);
+    return useMenu
+        ? afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
+        : SuccessMessages.updatedAfterSessionMessage(message);
 }
 
 /**
@@ -181,7 +177,7 @@ async function setAfterSessionMessage(
  */
 async function setQueueAutoClear(
     interaction: ModalSubmitInteraction<'cached'>,
-    menuVersion: boolean
+    useMenu: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
@@ -193,18 +189,14 @@ async function setQueueAutoClear(
     }
     if (hours === 0 && minutes === 0) {
         await server.setQueueAutoClear(hours, minutes, false);
-        if (!menuVersion) {
-            return SuccessMessages.queueAutoClear.disabled;
-        } else {
-            return queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false);
-        }
+        return useMenu
+            ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+            : SuccessMessages.queueAutoClear.disabled;
     }
     await server.setQueueAutoClear(hours, minutes, true);
-    if (!menuVersion) {
-        return SuccessMessages.queueAutoClear.enabled(hours, minutes);
-    } else {
-        return queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false);
-    }
+    return useMenu
+        ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+        : SuccessMessages.queueAutoClear.enabled(hours, minutes);
 }
 
 /**

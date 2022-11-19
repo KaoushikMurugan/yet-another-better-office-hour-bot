@@ -18,7 +18,7 @@ export enum EmbedColor {
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
-    Aqua = 0x78dce8, // Aqua
+    Aqua = 0x78dce8,
     Purple = 0xa6a5c4,
     Pink = 0xffb7c5,
     Blue = 0x3498db

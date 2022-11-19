@@ -14,10 +14,10 @@ import { generateYabobModalId, yabobModalToString } from '../utils/util-function
  * Has two number inputs:
  * - Hours (2 characters max)
  * - Minutes (2 characters max)
- * @param serverId
+ * @param useMenu whether to return the menu version of queue auto clear modal
  * @returns
  */
-function queueAutoClearModal(serverId: string, menuVersion = false): ModalBuilder {
+function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = new ModalBuilder()
         .setTitle('Set Queue Auto Clear')
@@ -25,7 +25,7 @@ function queueAutoClearModal(serverId: string, menuVersion = false): ModalBuilde
             yabobModalToString(
                 generateYabobModalId(
                     'other',
-                    'queue_auto_clear_modal' + (menuVersion ? '_mv' : '')
+                    'queue_auto_clear_modal' + (useMenu ? '_mv' : '')
                 )
             )
         )
