@@ -4,18 +4,14 @@ import {
     builtInButtonHandlerCanHandle,
     builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
-    processBuiltInDMButton
-} from './command-handling/button-handler.js';
-import {
+    processBuiltInDMButton,
     builtInCommandHandlerCanHandle,
-    processBuiltInCommand
-} from './command-handling/command-handler.js';
-import {
+    processBuiltInCommand,
     builtInDMModalHandlerCanHandle,
     builtInModalHandlerCanHandle,
     processBuiltInDMModalSubmit,
     processBuiltInModalSubmit
-} from './command-handling/modal-handler.js';
+} from './command-handling/interaction-index.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { postSlashCommands } from './command-handling/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
@@ -61,12 +57,10 @@ client.on('ready', async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
+    updatePresence();
+    setInterval(updatePresence, 1000 * 60 * 30);
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
-    //set first presence
-    updatePresence();
-    //update presence every 30 minutes
-    setInterval(updatePresence, 1000 * 60 * 30);
 });
 
 /**

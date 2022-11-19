@@ -193,7 +193,7 @@ async function serverSettingsSelectMenu(
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
-    return await callbackMenu.subMenu(server, interaction.channelId, false);
+    return callbackMenu.subMenu(server, interaction.channelId, false);
 }
 
 export {
