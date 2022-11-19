@@ -12,11 +12,13 @@ import {
     Role,
     SelectMenuInteraction,
     TextChannel,
-    VoiceChannel
+    VoiceChannel,
+    VoiceState
 } from 'discord.js';
 import { convertBase } from 'simple-base-converter';
-import { cyan, magenta, yellow } from './command-line-colors.js';
+import { black, cyan, magenta, yellow } from './command-line-colors.js';
 import {
+    WithRequired,
     YabobActionableComponentCategory,
     YabobActionableComponentInfo,
     YabobButton,
@@ -28,12 +30,13 @@ import {
 } from './type-aliases.js';
 
 import { FrozenServer } from '../extensions/extension-utils.js';
+import { environment } from '../environment/environment-manager.js';
 
 /**
  * Centers a string for the console/terminal by padding it with spaces
  * @param text
  */
-function centered(text: string): string {
+export function centered(text: string): string {
     const padding = (process.stdout.columns - text.length) / 2;
     if (padding <= 0) {
         return text;
@@ -45,7 +48,7 @@ function centered(text: string): string {
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
  */
-function convertMsToTime(milliseconds: number): string {
+export function convertMsToTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
@@ -72,7 +75,7 @@ function convertMsToTime(milliseconds: number): string {
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
  */
-function convertMsToShortTime(milliseconds: number): string {
+export function convertMsToShortTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
@@ -94,7 +97,7 @@ function convertMsToShortTime(milliseconds: number): string {
  * @param minutes
  * @returns
  */
-function addTimeOffset(date: Date, hours: number, minutes: number): Date {
+export function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     // might have problems with daylight saving
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
@@ -105,7 +108,10 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
  * @param member
  * @returns list of queue roles
  */
-async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
+export async function getQueueRoles(
+    server: FrozenServer,
+    member: GuildMember
+): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache
@@ -119,7 +125,7 @@ async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise
  * @param interaction
  * @returns
  */
-function getInteractionName(interaction: Interaction): string {
+export function getInteractionName(interaction: Interaction): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
@@ -136,7 +142,9 @@ function getInteractionName(interaction: Interaction): string {
  * Default logger for slash commands
  * @param interaction
  */
-function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
+export function logSlashCommand(
+    interaction: ChatInputCommandInteraction<'cached'>
+): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -156,7 +164,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
  * @param buttonName
  * @param queueName
  */
-function logButtonPress(
+export function logButtonPress(
     interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName?: string
@@ -180,7 +188,10 @@ function logButtonPress(
  * @param interaction
  * @param buttonName
  */
-function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
+export function logDMButtonPress(
+    interaction: ButtonInteraction,
+    buttonName: string
+): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -200,7 +211,7 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
  * @param interaction
  * @param modalName
  */
-function logModalSubmit(
+export function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
     modalName: string
 ): void {
@@ -222,7 +233,10 @@ function logModalSubmit(
  * @param interaction
  * @param modalName
  */
-function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
+export function logDMModalSubmit(
+    interaction: ModalSubmitInteraction,
+    modalName: string
+): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -242,7 +256,7 @@ function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string
  * @param interaction
  * @param selectMenuName
  */
-function logSelectMenuSelection(
+export function logSelectMenuSelection(
     interaction: SelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
@@ -265,7 +279,7 @@ function logSelectMenuSelection(
  * @param interaction
  * @param selectMenuName
  */
-function logDMSelectMenuSelection(
+export function logDMSelectMenuSelection(
     interaction: SelectMenuInteraction,
     selectMenuName: string
 ): void {
@@ -289,7 +303,7 @@ function logDMSelectMenuSelection(
  * @param channel any channel from a server
  * @returns type narrower
  */
-function isCategoryChannel(
+export function isCategoryChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is CategoryChannel {
     // shorthand syntax, coerces the type into a boolean
@@ -301,7 +315,7 @@ function isCategoryChannel(
  * @param channel any channel from a server
  * @returns type narrower
  */
-function isTextChannel(
+export function isTextChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return !!channel && channel.type === ChannelType.GuildText;
@@ -312,7 +326,7 @@ function isTextChannel(
  * @param channel any channel from a server
  * @returns type narrower
  */
-function isQueueTextChannel(
+export function isQueueTextChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return (
@@ -325,7 +339,7 @@ function isQueueTextChannel(
  * @param channel
  * @returns
  */
-function isVoiceChannel(
+export function isVoiceChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is VoiceChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
@@ -335,7 +349,7 @@ function isVoiceChannel(
  * Returns true if `channelName` can be used as a discord channel name
  * @param channelName
  */
-function isValidChannelName(channelName: string): boolean {
+export function isValidChannelName(channelName: string): boolean {
     const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
     return (
         channelName.length <= 100 &&
@@ -348,7 +362,7 @@ function isValidChannelName(channelName: string): boolean {
  * Returns true if `categoryName` can be used as a discord category name
  * @param categoryName
  */
-function isValidCategoryName(categoryName: string): boolean {
+export function isValidCategoryName(categoryName: string): boolean {
     return (
         categoryName.length <= 100 &&
         categoryName.length > 0 &&
@@ -360,13 +374,13 @@ function isValidCategoryName(categoryName: string): boolean {
  * Just a string with all the characters in the custom base211 alphabet
  */
 const base211charecters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙˚¬…æ≈ç√∫≤≥÷Œ„‰ˇÁ∏”’»ÅÍÎÏ˝ÓÔÒÚÆ¸˛Ç◊ı˜Â¯˘¿';
+    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙˚¬…æ≈ç√∫≤≥÷Œ„‰ˇÁ∏”’»ÅÍÎÏ˝ÓÔÒÚÆ¸˛Ç◊ı˜Â¯˘¿' as const;
 
 /**
  * Converts a snowflake (base 10) to a base211 string
  * @param snowflake
  */
-function convertSnowflakeToBase211(snowflake: string): string {
+export function convertSnowflakeToBase211(snowflake: string): string {
     return convertBase(snowflake, '0123456789', base211charecters);
 }
 
@@ -374,7 +388,7 @@ function convertSnowflakeToBase211(snowflake: string): string {
  * Converts a base211 string to a snowflake (base 10)
  * @param base211string
  */
-function convertBase211ToSnowflake(base211string: string): string {
+export function convertBase211ToSnowflake(base211string: string): string {
     return convertBase(base211string, base211charecters, '0123456789');
 }
 
@@ -386,7 +400,9 @@ function convertBase211ToSnowflake(base211string: string): string {
  * @param channelId
  * @returns
  */
-function generateYabobActionableComponentId<T extends YabobActionableComponentCategory>(
+export function generateYabobActionableComponentId<
+    T extends YabobActionableComponentCategory
+>(
     type: T,
     componentName: string,
     serverId?: string,
@@ -400,7 +416,7 @@ function generateYabobActionableComponentId<T extends YabobActionableComponentCa
     } as YabobButton<T>;
 }
 
-function generateYabobButtonId<T extends YabobButtonType>(
+export function generateYabobButtonId<T extends YabobButtonType>(
     type: T,
     buttonName: string,
     serverId?: string,
@@ -409,7 +425,7 @@ function generateYabobButtonId<T extends YabobButtonType>(
     return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
 }
 
-function generateYabobModalId<T extends YabobModalType>(
+export function generateYabobModalId<T extends YabobModalType>(
     type: T,
     modalName: string,
     serverId?: string,
@@ -418,7 +434,7 @@ function generateYabobModalId<T extends YabobModalType>(
     return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
 
-function generateSelectMenuId<T extends YabobSelectMenuType>(
+export function generateSelectMenuId<T extends YabobSelectMenuType>(
     type: T,
     selectMenuName: string,
     serverId?: string,
@@ -433,7 +449,7 @@ function generateSelectMenuId<T extends YabobSelectMenuType>(
  * @param noConvert turns off the compression of the snowflakes
  * @returns
  */
-function yabobActionableComponentToString(
+export function yabobActionableComponentToString(
     yabobButton: YabobActionableComponentInfo<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
@@ -448,21 +464,21 @@ function yabobActionableComponentToString(
     return JSON.stringify(yabobButton);
 }
 
-function yabobButtonToString(
+export function yabobButtonToString(
     yabobButton: YabobButton<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return yabobActionableComponentToString(yabobButton, noConvert);
 }
 
-function yabobModalToString(
+export function yabobModalToString(
     yabobModal: YabobModal<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return yabobActionableComponentToString(yabobModal, noConvert);
 }
 
-function yabobSelectMenuToString(
+export function yabobSelectMenuToString(
     yabobSelectMenu: YabobSelectMenu<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
@@ -475,7 +491,7 @@ function yabobSelectMenuToString(
  * @param noConvert turns off the decompression of the snowflakes
  * @returns
  */
-function parseYabobActionableComponentId(
+export function parseYabobActionableComponentId(
     customButtonId: string,
     noConvert = false
 ): YabobActionableComponentInfo<YabobActionableComponentCategory> {
@@ -497,56 +513,60 @@ function parseYabobActionableComponentId(
     return yabobActionableComponentId;
 }
 
-function parseYabobButtonId(
+export function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
 ): YabobButton<YabobButtonType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
-function parseYabobModalId(
+export function parseYabobModalId(
     customButtonId: string,
     noConvert = false
 ): YabobModal<YabobModalType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
-function parseYabobSelectMenuId(
+export function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
 ): YabobSelectMenu<YabobSelectMenuType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
-export {
-    centered,
-    convertMsToTime,
-    convertMsToShortTime,
-    addTimeOffset,
-    getQueueRoles,
-    getInteractionName,
-    logSlashCommand,
-    logButtonPress,
-    logDMButtonPress,
-    logModalSubmit,
-    logDMModalSubmit,
-    logSelectMenuSelection,
-    logDMSelectMenuSelection,
-    isCategoryChannel,
-    isTextChannel,
-    isQueueTextChannel,
-    isVoiceChannel,
-    isValidChannelName,
-    isValidCategoryName,
-    convertSnowflakeToBase211,
-    convertBase211ToSnowflake,
-    generateYabobButtonId,
-    generateYabobModalId,
-    generateSelectMenuId,
-    yabobButtonToString,
-    yabobModalToString,
-    yabobSelectMenuToString,
-    parseYabobButtonId,
-    parseYabobModalId,
-    parseYabobSelectMenuId
-};
+/**
+ * Prints the title message for the console upon startup
+ */
+export function printTitleString(): void {
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
+    console.log(`Environment: ${cyan(environment.env)}`);
+    console.log(
+        `\n${black(
+            magenta(
+                ' '.repeat(
+                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                ) +
+                    titleString +
+                    ' '.repeat(
+                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                    ),
+                'Bg'
+            )
+        )}\n`
+    );
+    console.log('Scanning servers I am a part of...');
+}
+
+export function isLeaveVC(
+    oldVoiceState: VoiceState,
+    newVoiceState: VoiceState
+): oldVoiceState is WithRequired<VoiceState, 'channel'> {
+    return oldVoiceState.channel !== null && newVoiceState.channel === null;
+}
+
+export function isJoinVC(
+    oldVoiceState: VoiceState,
+    newVoiceState: VoiceState
+): newVoiceState is WithRequired<VoiceState, 'channel'> {
+    return oldVoiceState.channel === null && newVoiceState.channel !== null;
+}
