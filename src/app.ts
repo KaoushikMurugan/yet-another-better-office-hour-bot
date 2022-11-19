@@ -168,17 +168,17 @@ client.on('roleUpdate', async role => {
     ) {
         console.log(cyan('Got the highest Role! Starting server initialization'));
         const owner = await role.guild.fetchOwner();
-        const [ , server] = await Promise.all([
+        const [server] = await Promise.all([
+            joinGuild(role.guild),
             owner.send(
                 SimpleEmbed(
                     `Got the highest Role!` +
                         ` Starting server initialization for ${role.guild.name}`,
                     EmbedColor.Success
                 )
-            ),
-            joinGuild(role.guild)
+            )
         ]);
-        await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
+        await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
     }
 });
 

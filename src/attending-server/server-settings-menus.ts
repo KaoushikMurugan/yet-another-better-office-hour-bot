@@ -2,11 +2,10 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    SelectMenuBuilder,
-    SelectMenuComponentOptionData
+    SelectMenuBuilder
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
+import { YabobEmbed } from '../utils/type-aliases.js';
 import {
     generateSelectMenuId,
     generateYabobButtonId,
@@ -18,10 +17,7 @@ import { AttendingServerV2 } from './base-attending-server.js';
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: {
-    optionObj: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
-}[] = [
+const serverSettingsMainMenuOptions = [
     {
         optionObj: {
             emoji: '📝',
@@ -58,7 +54,7 @@ const serverSettingsMainMenuOptions: {
         },
         subMenu: loggingChannelConfigMenu
     }
-];
+] as const;
 
 /**
  * Composes the server settings main menu
@@ -104,7 +100,7 @@ async function serverSettingsMainMenu(
  * @param forServerInit
  * @returns
  */
- function serverRolesConfigMenu(
+function serverRolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
@@ -113,7 +109,6 @@ async function serverSettingsMainMenu(
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
     const studentRole = server.studentRoleID;
-
     const embed = SimpleEmbed(
         `📝 Server Roles Configuration for ${server.guild.name} 📝`,
         EmbedColor.Aqua,
@@ -210,11 +205,11 @@ async function serverSettingsMainMenu(
  * @param isDm
  * @returns
  */
- function afterSessionMessageConfigMenu(
+function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-):YabobEmbed {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `📨 After Session Message Configuration for ${server.guild.name} 📨`,
         EmbedColor.Aqua,
@@ -271,7 +266,7 @@ async function serverSettingsMainMenu(
  * @param isDm
  * @returns
  */
- function queueAutoClearConfigMenu(
+function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean

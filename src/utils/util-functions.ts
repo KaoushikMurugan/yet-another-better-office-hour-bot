@@ -527,16 +527,13 @@ function parseYabobSelectMenuId(
     ) as YabobSelectMenu<YabobSelectMenuType>;
 }
 
-// prettier-ignore
 export {
     centered,
     convertMsToTime,
     convertMsToShortTime,
     addTimeOffset,
-
     getQueueRoles,
     getInteractionName,
-    
     logSlashCommand,
     logButtonPress,
     logDMButtonPress,
@@ -544,26 +541,20 @@ export {
     logDMModalSubmit,
     logSelectMenuSelection,
     logDMSelectMenuSelection,
-    
     isCategoryChannel,
     isTextChannel,
     isQueueTextChannel,
     isVoiceChannel,
-    
     isValidChannelName,
     isValidCategoryName,
-    
     convertSnowflakeToBase211,
     convertBase211ToSnowflake,
-
     generateYabobButtonId,
     generateYabobModalId,
     generateSelectMenuId,
-    
     yabobButtonToString,
     yabobModalToString,
     yabobSelectMenuToString,
-
     parseYabobButtonId,
     parseYabobModalId,
     parseYabobSelectMenuId
