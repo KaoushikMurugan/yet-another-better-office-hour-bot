@@ -88,7 +88,7 @@ function isTriggeredByMemberWithRoles(
     let hasARequiredRole = false;
     const missingRoles: string[] = [];
 
-    for (const role of server.roles) {
+    for (const role of server.sortedHierarchyRoles) {
         hasARequiredRole = userRoleIDs.includes(role.id);
         // If reached the lowest required role, stop checking
         if (role.id === lowestRequiredRole || hasARequiredRole) break;

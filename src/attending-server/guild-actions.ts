@@ -1,6 +1,6 @@
 /**
  * @packageDocumentation
- * This file contains functioins that make guild-level changes
+ * This file contains functions that make guild-level changes
  *  that don't directly affect AttendingServerV2's internal state
  */
 
@@ -16,7 +16,6 @@ import { ExpectedServerErrors } from './expected-server-errors.js';
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
  * - Used inside AttendingServerV2.create
- * @param guild
  */
 async function initializationCheck(guild: Guild): Promise<void> {
     if (guild.members.me === null || !guild.members.me.permissions.has('Administrator')) {
@@ -112,12 +111,11 @@ async function sendCommandHelpChannelMessages(
 ): Promise<void> {
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
-        allHelpChannels.map(
-            async ch =>
-                await ch.messages
-                    .fetch()
-                    .then(messages => messages.map(msg => msg.delete()))
-        )
+        allHelpChannels
+            .map(ch =>
+                ch.messages.fetch().then(messages => messages.map(msg => msg.delete()))
+            )
+            .flat()
     );
     // send new ones
     await Promise.all(

@@ -79,7 +79,7 @@ class AttendingServerV2 {
     // - 'Not Set' means that the role is not set
     // - 'Deleted' means that the role was deleted
 
-    private hierarchyRoleIds: HierarchyRoles = {
+    private _hierarchyRoleIds: HierarchyRoles = {
         /** role id of the bot admin role */
         botAdmin: 'Not Set',
         /** role id of the helper role */
@@ -113,13 +113,13 @@ class AttendingServerV2 {
         return this._loggingChannel;
     }
     get botAdminRoleID(): string {
-        return this.hierarchyRoleIds.botAdmin;
+        return this._hierarchyRoleIds.botAdmin;
     }
     get helperRoleID(): string {
-        return this.hierarchyRoleIds.staff;
+        return this._hierarchyRoleIds.staff;
     }
     get studentRoleID(): string {
-        return this.hierarchyRoleIds.student;
+        return this._hierarchyRoleIds.student;
     }
     /**
      * Returns an array of the roles for this server in decreasing order of hierarchy
@@ -128,13 +128,16 @@ class AttendingServerV2 {
      * - [Student, Helper, Bot Admin]
      * @returns: { name: string, id: string }[]
      */
-    get roles(): Array<{ name: keyof HierarchyRoles; id: string }> {
-        return Object.entries(this.hierarchyRoleIds).map(([name, id]) => {
+    get sortedHierarchyRoles(): Array<{ name: keyof HierarchyRoles; id: string }> {
+        return Object.entries(this._hierarchyRoleIds).map(([name, id]) => {
             return {
                 name: name as keyof HierarchyRoles, // guaranteed to be the key
                 id: id
             };
         });
+    }
+    get hierarchyRoleIds(): HierarchyRoles {
+        return this._hierarchyRoleIds;
     }
 
     /** Cleans up all the timers from setInterval */
@@ -164,15 +167,15 @@ class AttendingServerV2 {
             this._loggingChannel = loggingChannelFromBackup;
         }
         this._afterSessionMessage = backup.afterSessionMessage;
-        this.hierarchyRoleIds = {
+        this._hierarchyRoleIds = {
             botAdmin: backup.botAdminRoleId,
             staff: backup.helperRoleId,
             student: backup.studentRoleId
         };
         //check if roles still exist
-        this.roles.forEach(role => {
+        this.sortedHierarchyRoles.forEach(role => {
             if (this.guild.roles.cache.get(role.id) === undefined) {
-                this.hierarchyRoleIds[role.name] = 'Deleted';
+                this._hierarchyRoleIds[role.name] = 'Deleted';
             }
         });
     }
@@ -182,7 +185,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setBotAdminRoleID(roleID: string): Promise<void> {
-        this.hierarchyRoleIds.botAdmin = roleID;
+        this._hierarchyRoleIds.botAdmin = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -192,7 +195,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setHelperRoleID(roleID: string): Promise<void> {
-        this.hierarchyRoleIds.staff = roleID;
+        this._hierarchyRoleIds.staff = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -202,7 +205,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setStudentRoleID(roleID: string): Promise<void> {
-        this.hierarchyRoleIds.student = roleID;
+        this._hierarchyRoleIds.student = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -256,7 +259,7 @@ class AttendingServerV2 {
         if (externalServerData !== undefined) {
             server.loadBackUp(externalServerData);
         }
-        const missingRoles = server.roles.filter(
+        const missingRoles = server.sortedHierarchyRoles.filter(
             role => role.id === 'Not Set' || role.id === 'Deleted'
         );
         if (missingRoles.length > 0) {
@@ -972,52 +975,44 @@ class AttendingServerV2 {
         defaultStudentIsEveryone: boolean
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
-        const foundRoles: Set<Role> = new Set();
-        const createdRoles: Set<Role> = new Set();
+        const foundRoles: Array<{ name: string; pos: number }> = [];
+        const createdRoles: Array<{ name: string; pos: number }> = [];
         if (!forceNewRoles) {
-            for (const role of this.roles) {
+            for (const role of this.sortedHierarchyRoles) {
                 const existingRole = allRoles.get(role.id);
                 if (existingRole !== undefined) {
-                    this.hierarchyRoleIds[role.name] = existingRole.id;
-                    foundRoles.add(existingRole);
+                    this._hierarchyRoleIds[role.name] = existingRole.id;
+                    foundRoles.push({
+                        name: existingRole.name,
+                        pos: existingRole.position
+                    });
                 }
             }
         } else {
-            for (const role of this.roles) {
+            for (const role of this.sortedHierarchyRoles) {
                 const newRole = await this.guild.roles.create({
                     ...hierarchyRoleConfigs[role.name]
                 });
-                this.hierarchyRoleIds[role.name] = newRole.id;
-                createdRoles.add(newRole);
+                this._hierarchyRoleIds[role.name] = newRole.id;
+                createdRoles.push({
+                    name: newRole.name,
+                    pos: newRole.position
+                });
             }
-        }
-        if (defaultStudentIsEveryone) {
-            this.hierarchyRoleIds.student = this.guild.roles.everyone.id;
+            if (defaultStudentIsEveryone) {
+                this._hierarchyRoleIds.student = this.guild.roles.everyone.id;
+            }
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-        if (createdRoles.size !== 0) {
-            console.log('Created roles:');
-            console.log(
-                [...createdRoles]
-                    .map(r => {
-                        return { name: r.name, pos: r.position };
-                    })
-                    .sort((a, b) => a.pos - b.pos)
-            );
+        if (createdRoles.length !== 0) {
+            console.log('Created roles:', createdRoles);
         } else {
             console.log(`All required roles exist in ${this.guild.name}!`);
         }
-        if (foundRoles.size !== 0) {
-            console.log('Found roles:');
-            console.log(
-                [...foundRoles]
-                    .map(r => {
-                        return { name: r.name, pos: r.position };
-                    })
-                    .sort((a, b) => a.pos - b.pos)
-            );
+        if (foundRoles.length !== 0) {
+            console.log('Found roles:', foundRoles);
         }
     }
 
@@ -1031,7 +1026,7 @@ class AttendingServerV2 {
             categoryName,
             officeName,
             numberOfOffices,
-            [this.hierarchyRoleIds.staff]
+            [this._hierarchyRoleIds.staff]
         );
     }
 
@@ -1041,9 +1036,9 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        for (const { name, id } of this.roles) {
+        for (const { name, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
-                this.hierarchyRoleIds[name] = 'Deleted';
+                this._hierarchyRoleIds[name] = 'Deleted';
                 hierarchyRoleDeleted = true;
             }
         }

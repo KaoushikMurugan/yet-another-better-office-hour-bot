@@ -313,11 +313,9 @@ async function updateCalendarId(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const newCalendarId = interaction.options.getString('calendar_id', true);
-    const [newCalendarName] = [
-        await checkCalendarConnection(newCalendarId).catch(() => {
-            throw ExpectedCalendarErrors.badId.newId;
-        })
-    ];
+    const newCalendarName = await checkCalendarConnection(newCalendarId).catch(() => {
+        throw ExpectedCalendarErrors.badId.newId;
+    });
     const [server, state] = isServerCalendarInteraction(interaction);
     await state.setCalendarId(newCalendarId);
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);

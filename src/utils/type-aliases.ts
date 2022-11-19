@@ -48,13 +48,13 @@ type QueueResult<T> = Result<T, QueueError>;
 // These are just aliases to make keys of collections easier to read
 
 /** string */
-type GuildId = string;
+type GuildId = Snowflake;
 /** string */
-type GuildMemberId = string;
+type GuildMemberId = Snowflake;
 /** string */
-type CategoryChannelId = string;
+type CategoryChannelId = Snowflake;
 /** string */
-type MessageId = string;
+type MessageId = Snowflake;
 /** number */
 type RenderIndex = number;
 
@@ -128,7 +128,6 @@ type YabobEmbed = BaseMessageOptions;
  * 'other' - component is in a non-queue guild channel
  */
 type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
-
 /**
  * Actionable Component id format
  * Max length must be 100
@@ -152,7 +151,6 @@ type YabobActionableComponentInfo<YabobActionableComponentCategory> = {
     /** channel id. if in dm, equivalent to userId */
     cid: YabobActionableComponentCategory extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
 };
-
 // type alias for better readability
 /** Location of the Yabob Button */
 type YabobButtonType = YabobActionableComponentCategory;
@@ -162,13 +160,11 @@ type YabobButton<YabobButtonType> = YabobActionableComponentInfo<YabobButtonType
 type YabobModalType = YabobActionableComponentCategory;
 /** Yabob Modal id format */
 type YabobModal<YabobModalType> = YabobActionableComponentInfo<YabobModalType>;
-
 /** Location of the Yabob Select Menu */
 type YabobSelectMenuType = YabobActionableComponentCategory;
 /** Yabob Select Menu id format */
 type YabobSelectMenu<YabobSelectMenuType> =
     YabobActionableComponentInfo<YabobSelectMenuType>;
-
 /**
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
