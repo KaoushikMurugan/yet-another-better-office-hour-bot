@@ -2,10 +2,11 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
-    SelectMenuBuilder
+    SelectMenuBuilder,
+    SelectMenuComponentOptionData
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { YabobEmbed } from '../utils/type-aliases.js';
+import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     generateSelectMenuId,
     generateYabobButtonId,
@@ -17,7 +18,10 @@ import { AttendingServerV2 } from './base-attending-server.js';
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions = [
+const serverSettingsMainMenuOptions: {
+    optionObj: SelectMenuComponentOptionData;
+    subMenu: SettingsMenuCallback;
+}[] = [
     {
         optionObj: {
             emoji: '📝',
@@ -54,7 +58,7 @@ const serverSettingsMainMenuOptions = [
         },
         subMenu: loggingChannelConfigMenu
     }
-] as const;
+];
 
 /**
  * Composes the server settings main menu

@@ -119,6 +119,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
             ));
         return;
     }
+    interaction.channel;
     dispatchServerInteractions(interaction).catch(async (err: Error) => {
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
@@ -129,8 +130,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
                 });
             });
     });
-    if (failedInteractions.length >= 50) {
-        console.error('These 50 interactions failed: ');
+    if (failedInteractions.length >= 5) {
+        console.error(`These ${failedInteractions.length} interactions failed: `);
         console.error(failedInteractions);
         failedInteractions.splice(0, failedInteractions.length);
     }
@@ -327,7 +328,7 @@ async function dispatchServerInteractions(
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleCommand(interaction));
             await externalCommandHandler?.processCommand(interaction);
             return externalCommandHandler !== undefined;
@@ -338,7 +339,7 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalButtonHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleButton(interaction));
             await externalButtonHandler?.processButton(interaction);
             return externalButtonHandler !== undefined;
@@ -349,7 +350,7 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalModalHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             await externalModalHandler?.processModalSubmit(interaction);
             return externalModalHandler !== undefined;
@@ -360,7 +361,7 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalSelectMenuHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleSelectMenu(interaction));
             await externalSelectMenuHandler?.processSelectMenu(interaction);
             return externalSelectMenuHandler !== undefined;

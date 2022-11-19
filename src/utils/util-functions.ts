@@ -501,30 +501,21 @@ function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
 ): YabobButton<YabobButtonType> {
-    return parseYabobActionableComponentId(
-        customButtonId,
-        noConvert
-    ) as YabobButton<YabobButtonType>;
+    return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 function parseYabobModalId(
     customButtonId: string,
     noConvert = false
 ): YabobModal<YabobModalType> {
-    return parseYabobActionableComponentId(
-        customButtonId,
-        noConvert
-    ) as YabobModal<YabobModalType>;
+    return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
 ): YabobSelectMenu<YabobSelectMenuType> {
-    return parseYabobActionableComponentId(
-        customButtonId,
-        noConvert
-    ) as YabobSelectMenu<YabobSelectMenuType>;
+    return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 export {
