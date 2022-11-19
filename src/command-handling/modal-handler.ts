@@ -93,20 +93,14 @@ async function processBuiltInModalSubmit(
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
     await modalMethod?.(interaction)
-        // Everything is reply here because showModal is guaranteed to be the 1st response
-        // modal shown => message not replied, so we always reply
         .then(async successMsg => {
-            if (
-                updateParentInteractionModals.includes(modalName) &&
-                interaction.isFromMessage()
-            ) {
-                await interaction.update(successMsg);
-            } else {
-                await interaction.reply({
-                    ...successMsg,
-                    ephemeral: true
-                });
-            }
+            await (updateParentInteractionModals.includes(modalName) &&
+            interaction.isFromMessage()
+                ? interaction.update(successMsg)
+                : interaction.reply({
+                      ...successMsg,
+                      ephemeral: true
+                  }));
         })
         .catch(async err => {
             const server = isServerInteraction(interaction);

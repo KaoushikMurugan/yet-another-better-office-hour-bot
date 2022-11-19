@@ -158,40 +158,25 @@ async function processBuiltInButton(
     const buttonName = yabobButtonId.name;
     const buttonType = yabobButtonId.type;
     const server = isServerInteraction(interaction);
-
     const queueName =
         (await server.getQueueChannels()).find(
             queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
         )?.queueName ?? '';
-
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
-
     logButtonPress(interaction, buttonName, queueName);
-
     if (buttonName in showModalOnlyButtons) {
         await showModalOnlyButtons[buttonName]?.(interaction);
         return;
     }
-
     if (!updateParentInteraction) {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                )
-            });
-        } else {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-        }
+        const progressMsg = SimpleEmbed(
+            `Processing button \`${interaction.component.label ?? buttonName}` +
+                (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+            EmbedColor.Neutral
+        );
+        await (interaction.deferred || interaction.replied
+            ? interaction.editReply(progressMsg)
+            : interaction.reply({ ...progressMsg, ephemeral: true }));
     }
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
@@ -200,11 +185,9 @@ async function processBuiltInButton(
         : defaultButtonMethodMap[buttonName]?.(interaction)
     )
         ?.then(async successMsg => {
-            if (updateParentInteraction) {
-                await interaction.update(successMsg);
-            } else {
-                await interaction.editReply(successMsg);
-            }
+            await (updateParentInteraction
+                ? interaction.update(successMsg)
+                : interaction.editReply(successMsg));
         })
         .catch(async err => {
             // Central error handling, reply to user with the error
@@ -235,22 +218,13 @@ async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<v
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({
-                ...SimpleEmbed(
-                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                    EmbedColor.Neutral
-                )
-            });
-        } else {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-        }
+        const progressMsg = SimpleEmbed(
+            `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
+            EmbedColor.Neutral
+        );
+        await (interaction.deferred || interaction.replied
+            ? interaction.editReply(progressMsg)
+            : interaction.reply({ ...progressMsg, ephemeral: true }));
     }
     logDMButtonPress(interaction, buttonName);
     // if process is called then buttonMethod is definitely not null

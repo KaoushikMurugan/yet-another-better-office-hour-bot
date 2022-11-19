@@ -83,21 +83,17 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.name;
+    const selectMenuName = parseYabobSelectMenuId(interaction.customId).name;
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
-
     logSelectMenuSelection(interaction, selectMenuName);
-
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
         );
     }
-
     await selectMenuMethod?.(interaction)
         .then(async successMsg => {
             if (updateParentInteraction) {
@@ -108,8 +104,7 @@ async function processBuiltInSelectMenu(
                     : await interaction.editReply(successMsg);
             }
         })
-        .catch(async err => {
-            console.error(err);
+        .catch(async (err: Error) => {
             await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
@@ -130,21 +125,16 @@ async function processBuiltInSelectMenu(
 async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.name;
+    const selectMenuName = parseYabobSelectMenuId(interaction.customId).name;
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];
-
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
-
     logDMSelectMenuSelection(interaction, selectMenuName);
-
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
         );
     }
-
     await selectMenuMethod?.(interaction)
         .then(async successMsg => {
             if (updateParentInteraction) {
@@ -155,8 +145,7 @@ async function processBuiltInDMSelectMenu(
                     : await interaction.editReply(successMsg);
             }
         })
-        .catch(async err => {
-            console.error(err);
+        .catch(async (err: Error) => {
             await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err))
@@ -180,7 +169,6 @@ async function serverSettingsSelectMenu(
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionObj.value === selectedOption
     );
-
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
@@ -189,7 +177,6 @@ async function serverSettingsSelectMenu(
             interaction.channel as TextChannel
         )
     );
-
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
