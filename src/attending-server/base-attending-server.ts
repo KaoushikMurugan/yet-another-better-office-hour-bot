@@ -38,11 +38,7 @@ import {
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { serverRolesConfigMenu } from './server-settings-menus.js';
-import {
-    createOfficeVoiceChannels,
-    initializationCheck,
-    updateCommandHelpChannels
-} from './guild-actions.js';
+import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
 import { client } from '../global-states.js';
 
 /**
@@ -266,7 +262,6 @@ class AttendingServerV2 {
             const owner = await guild.fetchOwner();
             await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
         }
-        // This call must block everything else for handling empty servers
         // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
             server.initAllQueues(
@@ -549,7 +544,7 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student, helperVoiceChannel),
+            this.sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -610,7 +605,7 @@ class AttendingServerV2 {
         }
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student, helperVoiceChannel),
+            this.sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -886,7 +881,7 @@ class AttendingServerV2 {
      * @param helperVoiceChannel
      */
     private async sendInvite(
-        student: Readonly<Helpee>,
+        student: GuildMember,
         helperVoiceChannel: VoiceBasedChannel
     ) {
         const [invite] = await Promise.all([
@@ -894,12 +889,12 @@ class AttendingServerV2 {
                 maxAge: 15 * 60,
                 maxUses: 1
             }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
+            helperVoiceChannel.permissionOverwrites.create(student, {
                 ViewChannel: true,
                 Connect: true
             })
         ]);
-        await student.member.send(
+        await student.send(
             SimpleEmbed(
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
@@ -908,12 +903,10 @@ class AttendingServerV2 {
         // remove the overwrite when the link dies
         setTimeout(() => {
             helperVoiceChannel.permissionOverwrites.cache
-                .find(overwrite => overwrite.id === student.member.id)
+                .find(overwrite => overwrite.id === student.id)
                 ?.delete()
                 .catch(() =>
-                    console.error(
-                        `Failed to delete overwrite for ${student.member.displayName}`
-                    )
+                    console.error(`Failed to delete overwrite for ${student.displayName}`)
                 );
         }, 15 * 60 * 1000);
     }
@@ -969,6 +962,8 @@ class AttendingServerV2 {
     /**
      * Creates all the command access hierarchy roles
      * @param forceNewRoles if true, creates new roles even if they already exist
+     * - Duplicates will be created if roles with the same name already exist
+     * @param defaultStudentIsEveryone whether to treat @everyone as the student role
      */
     async createHierarchyRoles(
         forceNewRoles: boolean,
@@ -999,9 +994,9 @@ class AttendingServerV2 {
                     pos: newRole.position
                 });
             }
-            if (defaultStudentIsEveryone) {
-                this._hierarchyRoleIds.student = this.guild.roles.everyone.id;
-            }
+        }
+        if (defaultStudentIsEveryone) {
+            this._hierarchyRoleIds.student = this.guild.roles.everyone.id;
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
@@ -1014,20 +1009,6 @@ class AttendingServerV2 {
         if (foundRoles.length !== 0) {
             console.log('Found roles:', foundRoles);
         }
-    }
-
-    async createOffices(
-        categoryName: string,
-        officeName: string,
-        numberOfOffices: number
-    ): Promise<void> {
-        await createOfficeVoiceChannels(
-            this.guild,
-            categoryName,
-            officeName,
-            numberOfOffices,
-            [this._hierarchyRoleIds.staff]
-        );
     }
 
     /**
