@@ -240,9 +240,7 @@ class AttendingServerV2 {
                   new FirebaseServerBackupExtension(guild),
                   CalendarExtensionState.load(guild)
               ]);
-        // create instance with extensions
         const server = new AttendingServerV2(client.user, guild, serverExtensions);
-        // Retrieve backup from all sources. Take the first one that's not undefined
         const externalBackup = environment.disableExtensions
             ? undefined
             : await Promise.all(
@@ -250,10 +248,9 @@ class AttendingServerV2 {
                       extension.loadExternalServerData(guild.id)
                   )
               );
-        // now load the data from backup
-        const externalServerData = externalBackup?.find(backup => backup !== undefined);
-        if (externalServerData !== undefined) {
-            server.loadBackUp(externalServerData);
+        const validBackup = externalBackup?.find(backup => backup !== undefined);
+        if (validBackup !== undefined) {
+            server.loadBackUp(validBackup);
         }
         const missingRoles = server.sortedHierarchyRoles.filter(
             role => role.id === 'Not Set' || role.id === 'Deleted'
@@ -262,19 +259,14 @@ class AttendingServerV2 {
             const owner = await guild.fetchOwner();
             await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
         }
-        // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
-            server.initAllQueues(
-                externalServerData?.queues,
-                externalServerData?.hoursUntilAutoClear
-            ),
+            server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
             server.createQueueRoles(),
             updateCommandHelpChannels(guild)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
         });
-        // Now Emit all the events
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
@@ -389,7 +381,7 @@ class AttendingServerV2 {
             return this.queueChannelsCache;
         }
         const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request
+        // cache again on a fresh request, likely triggers GC
         this.queueChannelsCache = [];
         for (const categoryChannel of allChannels.values()) {
             if (!isCategoryChannel(categoryChannel)) {
@@ -921,9 +913,6 @@ class AttendingServerV2 {
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
     ): Promise<void> {
-        if (this._queues.size !== 0) {
-            console.warn('Overriding existing queues.');
-        }
         const queueChannels = await this.getQueueChannels(false);
         await Promise.all(
             queueChannels.map(async channel => {
@@ -954,7 +943,7 @@ class AttendingServerV2 {
         );
         await Promise.all(
             this.serverExtensions.map(extension =>
-                extension.onAllQueuesInit(this, [...this._queues.values()])
+                extension.onAllQueuesInit(this, this.queues)
             )
         );
     }
@@ -1001,14 +990,10 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-        if (createdRoles.length !== 0) {
-            console.log('Created roles:', createdRoles);
-        } else {
-            console.log(`All required roles exist in ${this.guild.name}!`);
-        }
-        if (foundRoles.length !== 0) {
-            console.log('Found roles:', foundRoles);
-        }
+        createdRoles.length > 0
+            ? console.log('Created roles:', createdRoles)
+            : console.log(`All required roles exist in ${this.guild.name}!`);
+        foundRoles.length > 0 && console.log('Found roles:', foundRoles);
     }
 
     /**
@@ -1023,13 +1008,12 @@ class AttendingServerV2 {
                 hierarchyRoleDeleted = true;
             }
         }
-        if (hierarchyRoleDeleted) {
-            await Promise.all(
-                this.serverExtensions.map(extension =>
-                    extension.onServerRequestBackup(this)
-                )
-            );
+        if (!hierarchyRoleDeleted) {
+            return;
         }
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
 
     /**

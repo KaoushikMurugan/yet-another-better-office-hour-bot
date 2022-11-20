@@ -27,7 +27,7 @@ type WithRequired<T, K extends keyof T> = T & { [P in K]-?: T[P] & NonNullable<T
 type Optional<T> = T | undefined;
 
 /**
- * Utility alias to remove all methods from a class
+ * Remove all methods from a class
  */
 type NoMethod<T> = Pick<
     T,
@@ -42,7 +42,9 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
  * Non exception based error types
  */
 type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+
 type ServerResult<T> = Result<T, ServerError>;
+
 type QueueResult<T> = Result<T, QueueError>;
 
 // These are just aliases to make keys of collections easier to read
@@ -83,29 +85,35 @@ type HelpMessage = {
     message: BaseMessageOptions;
 };
 
-/**
- * Used in interaction handlers
- */
+// Used in interaction handlers
+
 type CommandCallback = (
     interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+
 type DefaultButtonCallback = (
     interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+
 type QueueButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+
 type DMButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
+
 type ModalSubmitCallback = (
     interaction: ModalSubmitInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+
 type DMModalSubmitCallback = (
     interaction: ModalSubmitInteraction
 ) => Promise<BaseMessageOptions>;
+
 type SelectMenuCallback = (
     interaction: SelectMenuInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
+
 type DMSelectMenuCallback = (
     interaction: SelectMenuInteraction
 ) => Promise<BaseMessageOptions>;
@@ -127,7 +135,7 @@ type YabobEmbed = BaseMessageOptions;
  * 'queue' - component is in a queue channel
  * 'other' - component is in a non-queue guild channel
  */
-type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
+type ActionableComponentType = 'dm' | 'queue' | 'other';
 /**
  * Actionable Component id format
  * Max length must be 100
@@ -141,36 +149,30 @@ type YabobActionableComponentCategory = 'dm' | 'queue' | 'other';
  *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
  * }
  */
-type YabobActionableComponentInfo<YabobActionableComponentCategory> = {
+type ActionableComponentId<T extends ActionableComponentType> = {
     /** name of the button */
     name: string;
     /** type of button, either 'dm', 'queue', or 'other' */
-    type: YabobActionableComponentCategory; // max length 5
+    type: T; // max length 5
     /** server id. if in dm, to find which server it relates to */
-    sid: YabobActionableComponentCategory extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
+    sid: T extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
     /** channel id. if in dm, equivalent to userId */
-    cid: YabobActionableComponentCategory extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
+    cid: T extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
 };
+
 // type alias for better readability
-/** Location of the Yabob Button */
-type YabobButtonType = YabobActionableComponentCategory;
+
 /** Yabob Button id format */
-type YabobButton<YabobButtonType> = YabobActionableComponentInfo<YabobButtonType>;
-/** Location of the Yabob Modal */
-type YabobModalType = YabobActionableComponentCategory;
+type ButtonId<T extends ActionableComponentType> = ActionableComponentId<T>;
 /** Yabob Modal id format */
-type YabobModal<YabobModalType> = YabobActionableComponentInfo<YabobModalType>;
-/** Location of the Yabob Select Menu */
-type YabobSelectMenuType = YabobActionableComponentCategory;
+type ModalId<T extends ActionableComponentType> = ActionableComponentId<T>;
 /** Yabob Select Menu id format */
-type YabobSelectMenu<YabobSelectMenuType> =
-    YabobActionableComponentInfo<YabobSelectMenuType>;
+type SelectMenuId<T extends ActionableComponentType> = ActionableComponentId<T>;
 /**
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
  */
 type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
-
 /** type to couple the entires of an object with the key value types */
 type Entries<T> = {
     [K in keyof T]: [K, T[K]];
@@ -201,13 +203,10 @@ export {
     DMSelectMenuCallback,
     SettingsMenuCallback,
     YabobEmbed,
-    YabobActionableComponentCategory,
-    YabobActionableComponentInfo,
-    YabobButtonType,
-    YabobButton,
-    YabobModalType,
-    YabobModal,
-    YabobSelectMenuType,
-    YabobSelectMenu,
+    ActionableComponentType,
+    ActionableComponentId,
+    ButtonId,
+    ModalId,
+    SelectMenuId,
     Entries
 };

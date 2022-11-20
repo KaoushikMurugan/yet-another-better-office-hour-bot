@@ -18,17 +18,13 @@ import {
 import { convertBase } from 'simple-base-converter';
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
 import {
+    ActionableComponentType,
     WithRequired,
-    YabobActionableComponentCategory,
-    YabobActionableComponentInfo,
-    YabobButton,
-    YabobButtonType,
-    YabobModal,
-    YabobModalType,
-    YabobSelectMenu,
-    YabobSelectMenuType
+    ActionableComponentId,
+    ButtonId,
+    ModalId,
+    SelectMenuId
 } from './type-aliases.js';
-
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 
@@ -400,46 +396,44 @@ export function convertBase211ToSnowflake(base211string: string): string {
  * @param channelId
  * @returns
  */
-export function generateYabobActionableComponentId<
-    T extends YabobActionableComponentCategory
->(
+export function generateYabobActionableComponentId<T extends ActionableComponentType>(
     type: T,
     componentName: string,
     serverId?: string,
     channelId?: string
-): YabobActionableComponentInfo<T> {
+): ActionableComponentId<T> {
     return {
         name: componentName,
         type: type,
         sid: serverId,
         cid: channelId
-    } as YabobButton<T>;
+    } as ActionableComponentId<T>;
 }
 
-export function generateYabobButtonId<T extends YabobButtonType>(
+export function generateYabobButtonId<T extends ActionableComponentType>(
     type: T,
     buttonName: string,
     serverId?: string,
     channelId?: string
-): YabobButton<T> {
+): ButtonId<T> {
     return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
 }
 
-export function generateYabobModalId<T extends YabobModalType>(
+export function generateYabobModalId<T extends ActionableComponentType>(
     type: T,
     modalName: string,
     serverId?: string,
     channelId?: string
-): YabobModal<T> {
+): ModalId<T> {
     return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
 
-export function generateSelectMenuId<T extends YabobSelectMenuType>(
+export function generateSelectMenuId<T extends ActionableComponentType>(
     type: T,
     selectMenuName: string,
     serverId?: string,
     channelId?: string
-): YabobSelectMenu<T> {
+): SelectMenuId<T> {
     return generateYabobActionableComponentId(type, selectMenuName, serverId, channelId);
 }
 
@@ -449,8 +443,8 @@ export function generateSelectMenuId<T extends YabobSelectMenuType>(
  * @param noConvert turns off the compression of the snowflakes
  * @returns
  */
-export function yabobActionableComponentToString(
-    yabobButton: YabobActionableComponentInfo<'dm' | 'other' | 'queue'>,
+export function serializeComponentId(
+    yabobButton: ActionableComponentId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     if (!noConvert) {
@@ -465,24 +459,24 @@ export function yabobActionableComponentToString(
 }
 
 export function yabobButtonToString(
-    yabobButton: YabobButton<'dm' | 'other' | 'queue'>,
+    yabobButton: ButtonId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return yabobActionableComponentToString(yabobButton, noConvert);
+    return serializeComponentId(yabobButton, noConvert);
 }
 
 export function yabobModalToString(
-    yabobModal: YabobModal<'dm' | 'other' | 'queue'>,
+    yabobModal: ModalId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return yabobActionableComponentToString(yabobModal, noConvert);
+    return serializeComponentId(yabobModal, noConvert);
 }
 
 export function yabobSelectMenuToString(
-    yabobSelectMenu: YabobSelectMenu<'dm' | 'other' | 'queue'>,
+    yabobSelectMenu: SelectMenuId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return yabobActionableComponentToString(yabobSelectMenu, noConvert);
+    return serializeComponentId(yabobSelectMenu, noConvert);
 }
 
 /**
@@ -494,10 +488,10 @@ export function yabobSelectMenuToString(
 export function parseYabobActionableComponentId(
     customButtonId: string,
     noConvert = false
-): YabobActionableComponentInfo<YabobActionableComponentCategory> {
+): ActionableComponentId<ActionableComponentType> {
     const yabobActionableComponentId = JSON.parse(
         customButtonId
-    ) as YabobButton<YabobActionableComponentCategory>;
+    ) as ButtonId<ActionableComponentType>;
     if (!noConvert) {
         if (yabobActionableComponentId.sid) {
             yabobActionableComponentId.sid = convertBase211ToSnowflake(
@@ -516,21 +510,21 @@ export function parseYabobActionableComponentId(
 export function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
-): YabobButton<YabobButtonType> {
+): ButtonId<ActionableComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 export function parseYabobModalId(
     customButtonId: string,
     noConvert = false
-): YabobModal<YabobModalType> {
+): ModalId<ActionableComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 export function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
-): YabobSelectMenu<YabobSelectMenuType> {
+): SelectMenuId<ActionableComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 

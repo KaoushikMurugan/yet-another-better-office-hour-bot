@@ -631,17 +631,22 @@ async function setRoles(
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'Bot Admin');
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
-    if (roleType === 'bot_admin') {
-        await server.setBotAdminRoleID(role.id);
-        return SuccessMessages.setBotAdminRole(role.id);
-    } else if (roleType === 'helper') {
-        await server.setHelperRoleID(role.id);
-        return SuccessMessages.setHelperRole(role.id);
-    } else if (roleType === 'student') {
-        await server.setStudentRoleID(role.id);
-        return SuccessMessages.setStudentRole(role.id);
-    } else {
-        throw new CommandParseError('Invalid role type.');
+    switch (roleType) {
+        case 'bot_admin': {
+            await server.setBotAdminRoleID(role.id);
+            return SuccessMessages.setBotAdminRole(role.id);
+        }
+        case 'helper': {
+            await server.setHelperRoleID(role.id);
+            return SuccessMessages.setHelperRole(role.id);
+        }
+        case 'student': {
+            await server.setStudentRoleID(role.id);
+            return SuccessMessages.setStudentRole(role.id);
+        }
+        default: {
+            throw new CommandParseError('Invalid role type.');
+        }
     }
 }
 
@@ -662,7 +667,6 @@ async function settingsMenu(
         'setup_server_config',
         'Bot Admin'
     );
-
     return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 
