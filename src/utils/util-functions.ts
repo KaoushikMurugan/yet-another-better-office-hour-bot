@@ -32,7 +32,7 @@ import { environment } from '../environment/environment-manager.js';
  * Centers a string for the console/terminal by padding it with spaces
  * @param text
  */
-export function centered(text: string): string {
+function centered(text: string): string {
     const padding = (process.stdout.columns - text.length) / 2;
     if (padding <= 0) {
         return text;
@@ -44,7 +44,7 @@ export function centered(text: string): string {
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
  */
-export function convertMsToTime(milliseconds: number): string {
+function convertMsToTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
@@ -71,7 +71,7 @@ export function convertMsToTime(milliseconds: number): string {
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
  */
-export function convertMsToShortTime(milliseconds: number): string {
+function convertMsToShortTime(milliseconds: number): string {
     function padTo2Digits(num: number): string {
         return num.toString().padStart(2, '0');
     }
@@ -93,7 +93,7 @@ export function convertMsToShortTime(milliseconds: number): string {
  * @param minutes
  * @returns
  */
-export function addTimeOffset(date: Date, hours: number, minutes: number): Date {
+function addTimeOffset(date: Date, hours: number, minutes: number): Date {
     // might have problems with daylight saving
     return new Date(date.getTime() + hours * 60 * 60 * 1000 + minutes * 60 * 1000);
 }
@@ -104,10 +104,7 @@ export function addTimeOffset(date: Date, hours: number, minutes: number): Date 
  * @param member
  * @returns list of queue roles
  */
-export async function getQueueRoles(
-    server: FrozenServer,
-    member: GuildMember
-): Promise<Role[]> {
+async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
     const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache
@@ -121,7 +118,7 @@ export async function getQueueRoles(
  * @param interaction
  * @returns
  */
-export function getInteractionName(interaction: Interaction): string {
+function getInteractionName(interaction: Interaction): string {
     if (interaction.isCommand()) {
         return interaction.commandName;
     }
@@ -138,9 +135,7 @@ export function getInteractionName(interaction: Interaction): string {
  * Default logger for slash commands
  * @param interaction
  */
-export function logSlashCommand(
-    interaction: ChatInputCommandInteraction<'cached'>
-): void {
+function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -160,7 +155,7 @@ export function logSlashCommand(
  * @param buttonName
  * @param queueName
  */
-export function logButtonPress(
+function logButtonPress(
     interaction: ButtonInteraction<'cached'>,
     buttonName: string,
     queueName?: string
@@ -184,10 +179,7 @@ export function logButtonPress(
  * @param interaction
  * @param buttonName
  */
-export function logDMButtonPress(
-    interaction: ButtonInteraction,
-    buttonName: string
-): void {
+function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -207,7 +199,7 @@ export function logDMButtonPress(
  * @param interaction
  * @param modalName
  */
-export function logModalSubmit(
+function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
     modalName: string
 ): void {
@@ -229,10 +221,7 @@ export function logModalSubmit(
  * @param interaction
  * @param modalName
  */
-export function logDMModalSubmit(
-    interaction: ModalSubmitInteraction,
-    modalName: string
-): void {
+function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
     console.log(
         `[${cyan(
             new Date().toLocaleString('en-US', {
@@ -252,7 +241,7 @@ export function logDMModalSubmit(
  * @param interaction
  * @param selectMenuName
  */
-export function logSelectMenuSelection(
+function logSelectMenuSelection(
     interaction: SelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
@@ -275,7 +264,7 @@ export function logSelectMenuSelection(
  * @param interaction
  * @param selectMenuName
  */
-export function logDMSelectMenuSelection(
+function logDMSelectMenuSelection(
     interaction: SelectMenuInteraction,
     selectMenuName: string
 ): void {
@@ -299,7 +288,7 @@ export function logDMSelectMenuSelection(
  * @param channel any channel from a server
  * @returns type narrower
  */
-export function isCategoryChannel(
+function isCategoryChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is CategoryChannel {
     // shorthand syntax, coerces the type into a boolean
@@ -311,7 +300,7 @@ export function isCategoryChannel(
  * @param channel any channel from a server
  * @returns type narrower
  */
-export function isTextChannel(
+function isTextChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return !!channel && channel.type === ChannelType.GuildText;
@@ -322,7 +311,7 @@ export function isTextChannel(
  * @param channel any channel from a server
  * @returns type narrower
  */
-export function isQueueTextChannel(
+function isQueueTextChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is TextChannel {
     return (
@@ -335,7 +324,7 @@ export function isQueueTextChannel(
  * @param channel
  * @returns
  */
-export function isVoiceChannel(
+function isVoiceChannel(
     channel: GuildBasedChannel | null | undefined
 ): channel is VoiceChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
@@ -345,7 +334,7 @@ export function isVoiceChannel(
  * Returns true if `channelName` can be used as a discord channel name
  * @param channelName
  */
-export function isValidChannelName(channelName: string): boolean {
+function isValidChannelName(channelName: string): boolean {
     const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
     return (
         channelName.length <= 100 &&
@@ -358,7 +347,7 @@ export function isValidChannelName(channelName: string): boolean {
  * Returns true if `categoryName` can be used as a discord category name
  * @param categoryName
  */
-export function isValidCategoryName(categoryName: string): boolean {
+function isValidCategoryName(categoryName: string): boolean {
     return (
         categoryName.length <= 100 &&
         categoryName.length > 0 &&
@@ -376,7 +365,7 @@ const base211charecters =
  * Converts a snowflake (base 10) to a base211 string
  * @param snowflake
  */
-export function convertSnowflakeToBase211(snowflake: string): string {
+function convertSnowflakeToBase211(snowflake: string): string {
     return convertBase(snowflake, '0123456789', base211charecters);
 }
 
@@ -384,7 +373,7 @@ export function convertSnowflakeToBase211(snowflake: string): string {
  * Converts a base211 string to a snowflake (base 10)
  * @param base211string
  */
-export function convertBase211ToSnowflake(base211string: string): string {
+function convertBase211ToSnowflake(base211string: string): string {
     return convertBase(base211string, base211charecters, '0123456789');
 }
 
@@ -396,7 +385,7 @@ export function convertBase211ToSnowflake(base211string: string): string {
  * @param channelId
  * @returns
  */
-export function generateYabobActionableComponentId<T extends ActionableComponentType>(
+function generateYabobActionableComponentId<T extends ActionableComponentType>(
     type: T,
     componentName: string,
     serverId?: string,
@@ -410,7 +399,7 @@ export function generateYabobActionableComponentId<T extends ActionableComponent
     } as ActionableComponentId<T>;
 }
 
-export function generateYabobButtonId<T extends ActionableComponentType>(
+function generateYabobButtonId<T extends ActionableComponentType>(
     type: T,
     buttonName: string,
     serverId?: string,
@@ -419,7 +408,7 @@ export function generateYabobButtonId<T extends ActionableComponentType>(
     return generateYabobActionableComponentId(type, buttonName, serverId, channelId);
 }
 
-export function generateYabobModalId<T extends ActionableComponentType>(
+function generateYabobModalId<T extends ActionableComponentType>(
     type: T,
     modalName: string,
     serverId?: string,
@@ -428,7 +417,7 @@ export function generateYabobModalId<T extends ActionableComponentType>(
     return generateYabobActionableComponentId(type, modalName, serverId, channelId);
 }
 
-export function generateSelectMenuId<T extends ActionableComponentType>(
+function generateSelectMenuId<T extends ActionableComponentType>(
     type: T,
     selectMenuName: string,
     serverId?: string,
@@ -443,7 +432,7 @@ export function generateSelectMenuId<T extends ActionableComponentType>(
  * @param noConvert turns off the compression of the snowflakes
  * @returns
  */
-export function serializeComponentId(
+function serializeComponentId(
     yabobButton: ActionableComponentId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
@@ -458,21 +447,21 @@ export function serializeComponentId(
     return JSON.stringify(yabobButton);
 }
 
-export function yabobButtonToString(
+function yabobButtonToString(
     yabobButton: ButtonId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return serializeComponentId(yabobButton, noConvert);
 }
 
-export function yabobModalToString(
+function yabobModalToString(
     yabobModal: ModalId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     return serializeComponentId(yabobModal, noConvert);
 }
 
-export function yabobSelectMenuToString(
+function yabobSelectMenuToString(
     yabobSelectMenu: SelectMenuId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
@@ -485,7 +474,7 @@ export function yabobSelectMenuToString(
  * @param noConvert turns off the decompression of the snowflakes
  * @returns
  */
-export function parseYabobActionableComponentId(
+function parseYabobActionableComponentId(
     customButtonId: string,
     noConvert = false
 ): ActionableComponentId<ActionableComponentType> {
@@ -507,21 +496,21 @@ export function parseYabobActionableComponentId(
     return yabobActionableComponentId;
 }
 
-export function parseYabobButtonId(
+function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
 ): ButtonId<ActionableComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
-export function parseYabobModalId(
+function parseYabobModalId(
     customButtonId: string,
     noConvert = false
 ): ModalId<ActionableComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
-export function parseYabobSelectMenuId(
+function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
 ): SelectMenuId<ActionableComponentType> {
@@ -531,7 +520,7 @@ export function parseYabobSelectMenuId(
 /**
  * Prints the title message for the console upon startup
  */
-export function printTitleString(): void {
+function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);
     console.log(
@@ -551,16 +540,59 @@ export function printTitleString(): void {
     console.log('Scanning servers I am a part of...');
 }
 
-export function isLeaveVC(
+function isLeaveVC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
 ): oldVoiceState is WithRequired<VoiceState, 'channel'> {
     return oldVoiceState.channel !== null && newVoiceState.channel === null;
 }
 
-export function isJoinVC(
+function isJoinVC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
 ): newVoiceState is WithRequired<VoiceState, 'channel'> {
     return oldVoiceState.channel === null && newVoiceState.channel !== null;
 }
+
+export {
+    /** Util Functions */
+    addTimeOffset,
+    centered,
+    printTitleString,
+    /** Type Guards */
+    isLeaveVC,
+    isJoinVC,
+    isCategoryChannel,
+    isQueueTextChannel,
+    isTextChannel,
+    isVoiceChannel,
+    isValidCategoryName,
+    isValidChannelName,
+    /** Id builders */
+    generateYabobActionableComponentId,
+    generateSelectMenuId,
+    generateYabobButtonId,
+    generateYabobModalId,
+    /** Getters */
+    getQueueRoles,
+    getInteractionName,
+    /** Parsers */
+    parseYabobButtonId,
+    parseYabobActionableComponentId,
+    parseYabobModalId,
+    parseYabobSelectMenuId,
+    /** Converters */
+    convertMsToShortTime,
+    convertMsToTime,
+    yabobButtonToString,
+    yabobModalToString,
+    yabobSelectMenuToString,
+    /** Loggers */
+    logDMSelectMenuSelection,
+    logSlashCommand,
+    logButtonPress,
+    logDMButtonPress,
+    logDMModalSubmit,
+    logModalSubmit,
+    logSelectMenuSelection
+};
