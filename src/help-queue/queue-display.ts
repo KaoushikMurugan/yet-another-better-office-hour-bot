@@ -16,9 +16,7 @@ import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { generateComponentId, yabobButtonIdToString } from '../utils/util-functions.js';
 
-/**
- * Wrapper for discord embeds to be sent to the queue
- */
+/** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
     /** Actual embed content */
     contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
@@ -220,16 +218,16 @@ class QueueDisplayV2 {
             return;
         }
         const queueMessages = this.queueChannel.channelObj.messages.cache;
-        const [YABOBMessages, nonYABOBMessages] = queueMessages.partition(
+        const [yabobMessages, nonYabobMessages] = queueMessages.partition(
             msg => msg.author.id === this.user.id
         );
-        const existingEmbeds = YABOBMessages.filter(msg =>
+        const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );
         // all required messages exist and there are no other messages
         const safeToEdit =
             existingEmbeds.size === this.queueChannelEmbeds.size &&
-            nonYABOBMessages.size === 0;
+            nonYabobMessages.size === 0;
         if (!safeToEdit || force) {
             const allMessages = await this.queueChannel.channelObj.messages.fetch();
             await Promise.all(allMessages.map(msg => msg.delete()));

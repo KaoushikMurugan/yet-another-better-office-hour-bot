@@ -43,8 +43,7 @@ import {
     logButtonPress,
     logModalSubmit,
     logSlashCommand,
-    parseYabobButtonId,
-    parseYabobModalId
+    parseYabobComponentId
 } from '../../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
@@ -118,7 +117,7 @@ class CalendarInteractionExtension
     }
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
-        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        const yabobButtonId = parseYabobComponentId(interaction.customId);
         return (
             yabobButtonId.name in queueButtonMethodMap ||
             yabobButtonId.name in defaultButtonMethodMap ||
@@ -131,7 +130,7 @@ class CalendarInteractionExtension
     }
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        const yabobModalId = parseYabobModalId(interaction.customId);
+        const yabobModalId = parseYabobComponentId(interaction.customId);
         return yabobModalId.name in modalMethodMap;
     }
 
@@ -165,7 +164,7 @@ class CalendarInteractionExtension
     override async processButton(
         interaction: ButtonInteraction<'cached'>
     ): Promise<void> {
-        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        const yabobButtonId = parseYabobComponentId(interaction.customId);
         const buttonName = yabobButtonId.name;
         const buttonType = yabobButtonId.type;
         const [server] = isServerCalendarInteraction(interaction);
@@ -233,7 +232,7 @@ class CalendarInteractionExtension
     override async processModalSubmit(
         interaction: ModalSubmitInteraction<'cached'>
     ): Promise<void> {
-        const yabobModalId = parseYabobModalId(interaction.customId);
+        const yabobModalId = parseYabobComponentId(interaction.customId);
         const modalName = yabobModalId.name;
         const [server] = isServerCalendarInteraction(interaction);
         const modalMethod = modalMethodMap[modalName];

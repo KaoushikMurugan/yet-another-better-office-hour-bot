@@ -465,7 +465,7 @@ function yabobSelectMenuIdToString(
  * @param noConvert turns off the decompression of the snowflakes
  * @returns
  */
-function parseYabobActionableComponentId(
+function parseYabobComponentId(
     customButtonId: string,
     noConvert = false
 ): YabobComponentId<YabobComponentType> {
@@ -479,27 +479,6 @@ function parseYabobActionableComponentId(
         }
     }
     return unwrappedId;
-}
-
-function parseYabobButtonId(
-    customButtonId: string,
-    noConvert = false
-): YabobButtonId<YabobComponentType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
-}
-
-function parseYabobModalId(
-    customButtonId: string,
-    noConvert = false
-): YabobModalId<YabobComponentType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
-}
-
-function parseYabobSelectMenuId(
-    customButtonId: string,
-    noConvert = false
-): YabobSelectMenuId<YabobComponentType> {
-    return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 /**
@@ -559,10 +538,7 @@ export {
     getQueueRoles,
     getInteractionName,
     /** Parsers */
-    parseYabobButtonId,
-    parseYabobActionableComponentId,
-    parseYabobModalId,
-    parseYabobSelectMenuId,
+    parseYabobComponentId,
     /** Converters */
     convertMsToShortTime,
     convertMsToTime,

@@ -11,7 +11,7 @@ import {
     ModalSubmitCallback,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { logModalSubmit, parseYabobModalId } from '../utils/util-functions.js';
+import { logModalSubmit, parseYabobComponentId } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { isServerInteraction } from './common-validations.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
@@ -57,7 +57,7 @@ const updateParentInteractionModals = [
 function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
-    const modalId = parseYabobModalId(interaction.customId);
+    const modalId = parseYabobComponentId(interaction.customId);
     const modalName = modalId.name;
     return modalName in modalMethodMap;
 }
@@ -69,7 +69,7 @@ function builtInModalHandlerCanHandle(
  * @returns
  */
 function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
-    const modalId = parseYabobModalId(interaction.customId);
+    const modalId = parseYabobComponentId(interaction.customId);
     const modalName = modalId.name;
     return modalName in dmModalMethodMap;
 }
@@ -86,7 +86,7 @@ function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): bo
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalId = parseYabobModalId(interaction.customId);
+    const modalId = parseYabobComponentId(interaction.customId);
     const modalName = modalId.name;
     const modalMethod = modalMethodMap[modalName];
     logModalSubmit(interaction, modalName);
@@ -127,7 +127,7 @@ async function processBuiltInModalSubmit(
 async function processBuiltInDMModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
-    const modalId = parseYabobModalId(interaction.customId);
+    const modalId = parseYabobComponentId(interaction.customId);
     const modalName = modalId.name;
     const modalMethod = dmModalMethodMap[modalName];
     // if process is called then modalMethod is definitely not null

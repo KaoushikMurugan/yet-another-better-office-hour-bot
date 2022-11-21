@@ -9,7 +9,7 @@ import {
 import {
     logDMSelectMenuSelection,
     logSelectMenuSelection,
-    parseYabobSelectMenuId
+    parseYabobComponentId
 } from '../utils/util-functions.js';
 import { isServerInteraction } from './common-validations.js';
 
@@ -52,7 +52,7 @@ const updateParentInteractionSelectMenus = ['server_settings'];
 function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
+    const yabobSelectMenuId = parseYabobComponentId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in selectMenuMethodMap;
 }
@@ -68,7 +68,7 @@ function builtInSelectMenuHandlerCanHandle(
 function builtInDMSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction
 ): boolean {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
+    const yabobSelectMenuId = parseYabobComponentId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in dmSelectMenuMethodMap;
 }
@@ -83,7 +83,7 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const selectMenuName = parseYabobSelectMenuId(interaction.customId).name;
+    const selectMenuName = parseYabobComponentId(interaction.customId).name;
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
@@ -125,7 +125,7 @@ async function processBuiltInSelectMenu(
 async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
-    const selectMenuName = parseYabobSelectMenuId(interaction.customId).name;
+    const selectMenuName = parseYabobComponentId(interaction.customId).name;
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
