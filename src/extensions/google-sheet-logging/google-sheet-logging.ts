@@ -186,9 +186,10 @@ class GoogleSheetLoggingExtension
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-        const completeHelpSessionEntries = helpSessionEntries.map(entry => {
-            return { ...entry, 'Session End': new Date() };
-        });
+        const completeHelpSessionEntries = helpSessionEntries.map(entry => ({
+            ...entry,
+            'Session End': new Date()
+        }));
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>

@@ -110,12 +110,10 @@ const helloWorldPresenceList: StaticBotPresence[] = [
  */
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
-    () => {
-        return {
-            type: ActivityType.Watching,
-            name: `${client.guilds.cache.size} servers`
-        };
-    }
+    () => ({
+        type: ActivityType.Watching,
+        name: `${client.guilds.cache.size} servers`
+    })
 ];
 
 let previousPresence: StaticBotPresence | undefined = undefined;
