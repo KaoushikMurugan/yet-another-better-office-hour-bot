@@ -18,12 +18,12 @@ import {
 import { convertBase } from 'simple-base-converter';
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
 import {
-    ActionableComponentType,
+    YabobComponentType,
     WithRequired,
-    ActionableComponentId,
-    ButtonId as YabobButtonId,
-    ModalId as YabobModalId,
-    SelectMenuId as YabobSelectMenuId
+    YabobComponentId,
+    YabobButtonId,
+    YabobModalId,
+    YabobSelectMenuId
 } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
@@ -385,21 +385,21 @@ function convertBase211ToSnowflake(base211string: string): string {
  * @param channelId
  * @returns
  */
-function generateComponentId<T extends ActionableComponentType>(
+function generateComponentId<T extends YabobComponentType>(
     type: T,
     componentName: string,
     serverId?: string,
     channelId?: string
-): ActionableComponentId<T> {
+): YabobComponentId<T> {
     return {
         name: componentName,
         type: type,
         sid: serverId,
         cid: channelId
-    } as ActionableComponentId<T>;
+    } as YabobComponentId<T>;
 }
 
-function generateYabobButtonId<T extends ActionableComponentType>(
+function generateYabobButtonId<T extends YabobComponentType>(
     type: T,
     buttonName: string,
     serverId?: string,
@@ -408,7 +408,7 @@ function generateYabobButtonId<T extends ActionableComponentType>(
     return generateComponentId(type, buttonName, serverId, channelId);
 }
 
-function generateYabobModalId<T extends ActionableComponentType>(
+function generateYabobModalId<T extends YabobComponentType>(
     type: T,
     modalName: string,
     serverId?: string,
@@ -417,7 +417,7 @@ function generateYabobModalId<T extends ActionableComponentType>(
     return generateComponentId(type, modalName, serverId, channelId);
 }
 
-function generateSelectMenuId<T extends ActionableComponentType>(
+function generateSelectMenuId<T extends YabobComponentType>(
     type: T,
     selectMenuName: string,
     serverId?: string,
@@ -433,7 +433,7 @@ function generateSelectMenuId<T extends ActionableComponentType>(
  * @returns
  */
 function serializeComponentId(
-    yabobButton: ActionableComponentId<'dm' | 'other' | 'queue'>,
+    yabobButton: YabobComponentId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
     if (!noConvert) {
@@ -447,73 +447,85 @@ function serializeComponentId(
     return JSON.stringify(yabobButton);
 }
 
+/**
+ * Converts a button id object to a serialized JSON string
+ * @param buttonId id object
+ * @param noConvert whether to convert snowflakes to base 211
+ * @returns serialized JSON string
+ */
 function yabobButtonIdToString(
-    yabobButton: YabobButtonId<'dm' | 'other' | 'queue'>,
+    buttonId: YabobButtonId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return serializeComponentId(yabobButton, noConvert);
+    return serializeComponentId(buttonId, noConvert);
 }
 
+/**
+ * Converts a modal id object to a serialized JSON string
+ * @param modalId id object
+ * @param noConvert whether to convert snowflakes to base 211
+ * @returns serialized JSON string
+ */
 function yabobModalIdToString(
-    yabobModal: YabobModalId<'dm' | 'other' | 'queue'>,
+    modalId: YabobModalId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return serializeComponentId(yabobModal, noConvert);
+    return serializeComponentId(modalId, noConvert);
 }
 
+/**
+ * Converts a select menu id object to a serialized JSON string
+ * @param selectMenuId id object
+ * @param noConvert whether to convert snowflakes to base 211
+ * @returns serialized JSON string
+ */
 function yabobSelectMenuIdToString(
-    yabobSelectMenu: YabobSelectMenuId<'dm' | 'other' | 'queue'>,
+    selectMenuId: YabobSelectMenuId<'dm' | 'other' | 'queue'>,
     noConvert = false
 ): string {
-    return serializeComponentId(yabobSelectMenu, noConvert);
+    return serializeComponentId(selectMenuId, noConvert);
 }
 
 /**
  * Parses a yabob button id and then decompresses the snowflakes back to base 10
- * @param customButtonId the custom button id
+ * @param customButtonId the custom button id from interaction.customId
  * @param noConvert turns off the decompression of the snowflakes
  * @returns
  */
 function parseYabobActionableComponentId(
     customButtonId: string,
     noConvert = false
-): ActionableComponentId<ActionableComponentType> {
-    const yabobActionableComponentId = JSON.parse(
-        customButtonId
-    ) as YabobButtonId<ActionableComponentType>;
+): YabobComponentId<YabobComponentType> {
+    const unwrappedId = JSON.parse(customButtonId) as YabobButtonId<YabobComponentType>;
     if (!noConvert) {
-        if (yabobActionableComponentId.sid) {
-            yabobActionableComponentId.sid = convertBase211ToSnowflake(
-                yabobActionableComponentId.sid
-            );
+        if (unwrappedId.sid) {
+            unwrappedId.sid = convertBase211ToSnowflake(unwrappedId.sid);
         }
-        if (yabobActionableComponentId.cid) {
-            yabobActionableComponentId.cid = convertBase211ToSnowflake(
-                yabobActionableComponentId.cid
-            );
+        if (unwrappedId.cid) {
+            unwrappedId.cid = convertBase211ToSnowflake(unwrappedId.cid);
         }
     }
-    return yabobActionableComponentId;
+    return unwrappedId;
 }
 
 function parseYabobButtonId(
     customButtonId: string,
     noConvert = false
-): YabobButtonId<ActionableComponentType> {
+): YabobButtonId<YabobComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 function parseYabobModalId(
     customButtonId: string,
     noConvert = false
-): YabobModalId<ActionableComponentType> {
+): YabobModalId<YabobComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
 function parseYabobSelectMenuId(
     customButtonId: string,
     noConvert = false
-): YabobSelectMenuId<ActionableComponentType> {
+): YabobSelectMenuId<YabobComponentType> {
     return parseYabobActionableComponentId(customButtonId, noConvert);
 }
 
@@ -569,7 +581,7 @@ export {
     isValidCategoryName,
     isValidChannelName,
     /** Id builders */
-    generateComponentId as generateYabobActionableComponentId,
+    generateComponentId,
     generateSelectMenuId,
     generateYabobButtonId,
     generateYabobModalId,
@@ -584,7 +596,7 @@ export {
     /** Converters */
     convertMsToShortTime,
     convertMsToTime,
-     yabobButtonIdToString,
+    yabobButtonIdToString,
     yabobModalIdToString,
     yabobSelectMenuIdToString,
     /** Loggers */

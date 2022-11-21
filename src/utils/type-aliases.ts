@@ -135,7 +135,7 @@ type YabobEmbed = BaseMessageOptions;
  * 'queue' - component is in a queue channel
  * 'other' - component is in a non-queue guild channel
  */
-type ActionableComponentType = 'dm' | 'queue' | 'other';
+type YabobComponentType = 'dm' | 'queue' | 'other';
 /**
  * Actionable Component id format
  * Max length must be 100
@@ -149,7 +149,7 @@ type ActionableComponentType = 'dm' | 'queue' | 'other';
  *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
  * }
  */
-type ActionableComponentId<T extends ActionableComponentType> = {
+type YabobComponentId<T extends YabobComponentType> = {
     /** name of the button */
     name: string;
     /** type of button, either 'dm', 'queue', or 'other' */
@@ -163,11 +163,11 @@ type ActionableComponentId<T extends ActionableComponentType> = {
 // type alias for better readability
 
 /** Yabob Button id format */
-type ButtonId<T extends ActionableComponentType> = ActionableComponentId<T>;
+type YabobButtonId<T extends YabobComponentType> = YabobComponentId<T>;
 /** Yabob Modal id format */
-type ModalId<T extends ActionableComponentType> = ActionableComponentId<T>;
+type YabobModalId<T extends YabobComponentType> = YabobComponentId<T>;
 /** Yabob Select Menu id format */
-type SelectMenuId<T extends ActionableComponentType> = ActionableComponentId<T>;
+type YabobSelectMenuId<T extends YabobComponentType> = YabobComponentId<T>;
 /**
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
@@ -179,6 +179,7 @@ type Entries<T> = {
 }[keyof T][];
 
 export {
+    /** Types */
     WithRequired,
     Optional,
     OptionalRoleId,
@@ -187,12 +188,15 @@ export {
     Result,
     ServerResult,
     QueueResult,
+    HelpMessage,
+    Entries,
+    /** Aliases */
     GuildId,
     GuildMemberId,
     CategoryChannelId,
     MessageId,
     RenderIndex,
-    HelpMessage,
+    /** Callback Types */
     CommandCallback,
     DefaultButtonCallback,
     QueueButtonCallback,
@@ -202,11 +206,11 @@ export {
     SelectMenuCallback,
     DMSelectMenuCallback,
     SettingsMenuCallback,
+    /** Component Types */
     YabobEmbed,
-    ActionableComponentType,
-    ActionableComponentId,
-    ButtonId,
-    ModalId,
-    SelectMenuId,
-    Entries
+    YabobComponentType,
+    YabobComponentId,
+    YabobButtonId,
+    YabobModalId,
+    YabobSelectMenuId
 };
