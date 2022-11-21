@@ -15,7 +15,7 @@ import {
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import {
     generateYabobButtonId,
-    yabobButtonToString
+    yabobButtonIdToString
 } from '../../utils/util-functions.js';
 
 /**
@@ -143,7 +143,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
                 .setCustomId(
-                    yabobButtonToString(
+                    yabobButtonIdToString(
                         generateYabobButtonId(
                             'queue',
                             'refresh',

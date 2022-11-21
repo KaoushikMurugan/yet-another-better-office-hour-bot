@@ -10,8 +10,8 @@ import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
     generateSelectMenuId,
     generateYabobButtonId,
-    yabobButtonToString,
-    yabobSelectMenuToString
+    yabobButtonIdToString,
+    yabobSelectMenuIdToString
 } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
@@ -81,7 +81,7 @@ async function serverSettingsMainMenu(
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         new SelectMenuBuilder()
             .setCustomId(
-                yabobSelectMenuToString(
+                yabobSelectMenuIdToString(
                     generateSelectMenuId(
                         isDm ? 'dm' : 'other',
                         'server_settings',
@@ -161,7 +161,7 @@ function serverRolesConfigMenu(
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     // ssrc = server_settings_roles_config_. shortened due to limited customId length
@@ -238,7 +238,7 @@ function afterSessionMessageConfigMenu(
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
@@ -296,7 +296,7 @@ function queueAutoClearConfigMenu(
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
@@ -355,7 +355,7 @@ function loggingChannelConfigMenu(
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     // TODO: Implement a direct way to change the logging channel
@@ -383,7 +383,7 @@ function loggingChannelConfigMenu(
 function composeReturnToMainMenuButton(): ButtonBuilder {
     return new ButtonBuilder()
         .setCustomId(
-            yabobButtonToString(generateYabobButtonId('other', 'return_to_main_menu'))
+            yabobButtonIdToString(generateYabobButtonId('other', 'return_to_main_menu'))
         )
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')

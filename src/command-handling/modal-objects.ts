@@ -7,7 +7,7 @@ import {
     TextInputStyle
 } from 'discord.js';
 import { attendingServers } from '../global-states.js';
-import { generateYabobModalId, yabobModalToString } from '../utils/util-functions.js';
+import { generateYabobModalId, yabobModalIdToString } from '../utils/util-functions.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -22,7 +22,7 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const modal = new ModalBuilder()
         .setTitle('Set Queue Auto Clear')
         .setCustomId(
-            yabobModalToString(
+            yabobModalIdToString(
                 generateYabobModalId(
                     'other',
                     'queue_auto_clear_modal' + (useMenu ? '_mv' : '')
@@ -73,7 +73,7 @@ function afterSessionMessageModal(serverId: string, menuVersion = false): ModalB
     const modal = new ModalBuilder()
         .setTitle('Set After Session Message')
         .setCustomId(
-            yabobModalToString(
+            yabobModalIdToString(
                 generateYabobModalId(
                     'other',
                     'after_session_message_modal' + (menuVersion ? '_mv' : '')

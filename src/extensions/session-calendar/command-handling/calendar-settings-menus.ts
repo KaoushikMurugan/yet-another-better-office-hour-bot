@@ -8,7 +8,7 @@ import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
 import {
     generateYabobButtonId,
-    yabobButtonToString
+    yabobButtonIdToString
 } from '../../../utils/util-functions.js';
 import { calendarStates } from '../calendar-states.js';
 import {
@@ -75,7 +75,7 @@ function calendarSettingsConfigMenu(
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()

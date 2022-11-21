@@ -7,7 +7,7 @@ import {
 } from 'discord.js';
 import {
     generateYabobModalId,
-    yabobModalToString
+    yabobModalIdToString
 } from '../../../utils/util-functions.js';
 import { calendarStates } from '../calendar-states.js';
 
@@ -22,7 +22,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
     const modal = new ModalBuilder()
         .setTitle('Calendar Settings')
         .setCustomId(
-            yabobModalToString(
+            yabobModalIdToString(
                 generateYabobModalId(
                     'other',
                     'calendar_settings_modal' + (menuVersion ? '_mv' : '')
