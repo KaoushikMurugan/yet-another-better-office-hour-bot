@@ -164,15 +164,19 @@ type YabobComponentId<T extends YabobComponentType> = {
 
 /** Yabob Button id format */
 type YabobButtonId<T extends YabobComponentType> = YabobComponentId<T>;
+
 /** Yabob Modal id format */
 type YabobModalId<T extends YabobComponentType> = YabobComponentId<T>;
+
 /** Yabob Select Menu id format */
 type YabobSelectMenuId<T extends YabobComponentType> = YabobComponentId<T>;
+
 /**
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
  */
 type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
+
 /** type to couple the entires of an object with the key value types */
 type Entries<T> = {
     [K in keyof T]: [K, T[K]];

@@ -193,7 +193,7 @@ class GoogleSheetLoggingExtension
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
-                console.error(red('Cannot update help sessions'), err.name, err.message)
+                console.error(red('Cannot update help sessions.'), err.name, err.message)
             );
     }
 

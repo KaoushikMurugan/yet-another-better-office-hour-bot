@@ -8,8 +8,7 @@ import {
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
-    generateSelectMenuId,
-    generateYabobButtonId,
+    generateComponentId,
     yabobButtonIdToString,
     yabobSelectMenuIdToString
 } from '../utils/util-functions.js';
@@ -82,7 +81,7 @@ async function serverSettingsMainMenu(
         new SelectMenuBuilder()
             .setCustomId(
                 yabobSelectMenuIdToString(
-                    generateSelectMenuId(
+                    generateComponentId(
                         isDm ? 'dm' : 'other',
                         'server_settings',
                         isDm ? server.guild.id : undefined,
@@ -155,7 +154,7 @@ function serverRolesConfigMenu(
     );
 
     function composeSRCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `server_role_config_${optionName}`,
             isDm ? server.guild.id : undefined,
@@ -232,7 +231,7 @@ function afterSessionMessageConfigMenu(
     // asmc = after_session_message_config_. shortened due to limited customId length
 
     function composeASMCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `after_session_message_config_${optionName}`,
             isDm ? server.guild.id : undefined,
@@ -290,7 +289,7 @@ function queueAutoClearConfigMenu(
     // qacc = queue_auto_clear_config_. shortened due to limited customId length
 
     function composeQACCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `queue_auto_clear_config_${optionName}`,
             isDm ? server.guild.id : undefined,
@@ -349,7 +348,7 @@ function loggingChannelConfigMenu(
     // lcc = logging_channel_config_. shortened due to limited customId length
 
     function composeLCCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `logging_channel_config_${optionName}`,
             isDm ? server.guild.id : undefined,
@@ -383,7 +382,7 @@ function loggingChannelConfigMenu(
 function composeReturnToMainMenuButton(): ButtonBuilder {
     return new ButtonBuilder()
         .setCustomId(
-            yabobButtonIdToString(generateYabobButtonId('other', 'return_to_main_menu'))
+            yabobButtonIdToString(generateComponentId('other', 'return_to_main_menu'))
         )
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')

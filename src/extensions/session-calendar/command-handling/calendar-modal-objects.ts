@@ -6,7 +6,7 @@ import {
     TextInputStyle
 } from 'discord.js';
 import {
-    generateYabobModalId,
+    generateComponentId,
     yabobModalIdToString
 } from '../../../utils/util-functions.js';
 import { calendarStates } from '../calendar-states.js';
@@ -23,7 +23,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
         .setTitle('Calendar Settings')
         .setCustomId(
             yabobModalIdToString(
-                generateYabobModalId(
+                generateComponentId(
                     'other',
                     'calendar_settings_modal' + (menuVersion ? '_mv' : '')
                 )

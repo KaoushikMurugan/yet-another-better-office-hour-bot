@@ -399,33 +399,6 @@ function generateComponentId<T extends YabobComponentType>(
     } as YabobComponentId<T>;
 }
 
-function generateYabobButtonId<T extends YabobComponentType>(
-    type: T,
-    buttonName: string,
-    serverId?: string,
-    channelId?: string
-): YabobButtonId<T> {
-    return generateComponentId(type, buttonName, serverId, channelId);
-}
-
-function generateYabobModalId<T extends YabobComponentType>(
-    type: T,
-    modalName: string,
-    serverId?: string,
-    channelId?: string
-): YabobModalId<T> {
-    return generateComponentId(type, modalName, serverId, channelId);
-}
-
-function generateSelectMenuId<T extends YabobComponentType>(
-    type: T,
-    selectMenuName: string,
-    serverId?: string,
-    channelId?: string
-): YabobSelectMenuId<T> {
-    return generateComponentId(type, selectMenuName, serverId, channelId);
-}
-
 /**
  * Converts a yabob button id to a string after compressing the snowflakes
  * @param yabobButton the yabob button
@@ -582,9 +555,6 @@ export {
     isValidChannelName,
     /** Id builders */
     generateComponentId,
-    generateSelectMenuId,
-    generateYabobButtonId,
-    generateYabobModalId,
     /** Getters */
     getQueueRoles,
     getInteractionName,

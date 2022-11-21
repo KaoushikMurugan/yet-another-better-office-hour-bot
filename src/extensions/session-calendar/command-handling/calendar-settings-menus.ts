@@ -7,7 +7,7 @@ import {
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
 import {
-    generateYabobButtonId,
+    generateComponentId,
     yabobButtonIdToString
 } from '../../../utils/util-functions.js';
 import { calendarStates } from '../calendar-states.js';
@@ -69,7 +69,7 @@ function calendarSettingsConfigMenu(
     );
 
     function composeCSCMButtonId(optionNumber: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `calendar_settings_config_menui_${optionNumber}`,
             isDm ? server.guild.id : undefined,

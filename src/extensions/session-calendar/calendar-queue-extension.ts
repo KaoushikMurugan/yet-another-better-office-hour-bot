@@ -14,7 +14,7 @@ import {
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import {
-    generateYabobButtonId,
+    generateComponentId,
     yabobButtonIdToString
 } from '../../utils/util-functions.js';
 
@@ -144,7 +144,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             new ButtonBuilder()
                 .setCustomId(
                     yabobButtonIdToString(
-                        generateYabobButtonId(
+                        generateComponentId(
                             'queue',
                             'refresh',
                             undefined,
