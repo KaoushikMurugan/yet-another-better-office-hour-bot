@@ -184,6 +184,9 @@ class AttendingServerV2 {
 
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this._autoGiveStudentRole = autoGiveStudentRole;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
     }
 
     /**
