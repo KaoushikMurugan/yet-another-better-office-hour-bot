@@ -126,10 +126,15 @@ class AttendingServerV2 {
      * - [Student, Helper, Bot Admin]
      * @returns: { name: string, id: string }[]
      */
-    get sortedHierarchyRoles(): Array<{ name: keyof HierarchyRoles; id: string }> {
+    get sortedHierarchyRoles(): Array<{
+        name: keyof HierarchyRoles;
+        roleName: string;
+        id: string;
+    }> {
         return Object.entries(this._hierarchyRoleIds).map(([name, id]) => {
             return {
                 name: name as keyof HierarchyRoles, // guaranteed to be the key
+                roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].name,
                 id: id
             };
         });
@@ -976,7 +981,12 @@ class AttendingServerV2 {
         const createdRoles: Array<{ name: string; pos: number }> = [];
         if (!forceNewRoles) {
             for (const role of this.sortedHierarchyRoles) {
-                const existingRole = allRoles.get(role.id);
+                const existingRole =
+                    role.id === 'Not Set' || role.id === 'Deleted'
+                        ? allRoles.find(
+                              existingRole => existingRole.name === role.roleName
+                          )
+                        : allRoles.get(role.id);
                 if (existingRole !== undefined) {
                     this._hierarchyRoleIds[role.name] = existingRole.id;
                     foundRoles.push({
