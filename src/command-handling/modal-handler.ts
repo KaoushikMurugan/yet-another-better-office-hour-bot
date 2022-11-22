@@ -142,14 +142,12 @@ async function processBuiltInDMModalSubmit(
             });
         })
         .catch(async err => {
-            await Promise.all([
-                interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err))
-                    : interaction.reply({
-                          ...ErrorEmbed(err),
-                          ephemeral: true
-                      })
-            ]);
+            await (interaction.replied
+                ? interaction.editReply(ErrorEmbed(err))
+                : interaction.reply({
+                      ...ErrorEmbed(err),
+                      ephemeral: true
+                  }));
         });
 }
 

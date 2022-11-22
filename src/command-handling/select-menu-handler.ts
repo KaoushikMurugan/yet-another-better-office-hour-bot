@@ -99,20 +99,18 @@ async function processBuiltInSelectMenu(
             if (updateParentInteraction) {
                 await interaction.update(successMsg);
             } else {
-                interaction.replied
-                    ? await interaction.reply({ ...successMsg, ephemeral: true })
-                    : await interaction.editReply(successMsg);
+                await (interaction.replied
+                    ? interaction.reply({ ...successMsg, ephemeral: true })
+                    : interaction.editReply(successMsg));
             }
         })
         .catch(async (err: Error) => {
-            await Promise.all([
-                interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
-                    : interaction.reply({
-                          ...ErrorEmbed(err, server.botAdminRoleID),
-                          ephemeral: true
-                      })
-            ]);
+            await (interaction.replied
+                ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                : interaction.reply({
+                      ...ErrorEmbed(err, server.botAdminRoleID),
+                      ephemeral: true
+                  }));
         });
 }
 
@@ -140,20 +138,18 @@ async function processBuiltInDMSelectMenu(
             if (updateParentInteraction) {
                 await interaction.update(successMsg);
             } else {
-                interaction.replied
-                    ? await interaction.reply({ ...successMsg, ephemeral: true })
-                    : await interaction.editReply(successMsg);
+                await (interaction.replied
+                    ? interaction.reply({ ...successMsg, ephemeral: true })
+                    : interaction.editReply(successMsg));
             }
         })
         .catch(async (err: Error) => {
-            await Promise.all([
-                interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err))
-                    : interaction.reply({
-                          ...ErrorEmbed(err),
-                          ephemeral: true
-                      })
-            ]);
+            await (interaction.replied
+                ? interaction.editReply(ErrorEmbed(err))
+                : interaction.reply({
+                      ...ErrorEmbed(err),
+                      ephemeral: true
+                  }));
         });
 }
 
