@@ -185,16 +185,13 @@ async function setQueueAutoClear(
     if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
-    if (hours === 0 && minutes === 0) {
-        await server.setQueueAutoClear(hours, minutes, false);
-        return useMenu
-            ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
-            : SuccessMessages.queueAutoClear.disabled;
-    }
-    await server.setQueueAutoClear(hours, minutes, true);
+    const disable = hours === 0 && minutes === 0;
+    await server.setQueueAutoClear(hours, minutes, disable);
     return useMenu
         ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
-        : SuccessMessages.queueAutoClear.enabled(hours, minutes);
+        : disable 
+            ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
+            : SuccessMessages.queueAutoClear.disabled;
 }
 
 /**
