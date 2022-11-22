@@ -75,7 +75,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     serious_mode: setSeriousMode,
     create_offices: createOffices,
     set_roles: setRoles,
-    settings: settingsMenu
+    settings: settingsMenu,
+    auto_give_student_role: setAutoGiveStudentRole
 } as const;
 
 /**
@@ -668,6 +669,26 @@ async function settingsMenu(
         'Bot Admin'
     );
     return serverSettingsMainMenu(server, interaction.channelId, false);
+}
+
+async function setAutoGiveStudentRole(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'set_auto_give_student_role',
+        'Bot Admin'
+    );
+    const onOrOff = interaction.options.getSubcommand();
+    if (onOrOff === 'on') {
+        await server.setAutoGiveStudentRole(true);
+        return SuccessMessages.turnedOnAutoGiveStudentRole;
+    } else {
+        await server.setAutoGiveStudentRole(false);
+        return SuccessMessages.turnedOffAutoGiveStudentRole;
+    }
 }
 
 /**

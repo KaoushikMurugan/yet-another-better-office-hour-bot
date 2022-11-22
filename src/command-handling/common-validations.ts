@@ -20,7 +20,7 @@ import {
     isCategoryChannel,
     isQueueTextChannel,
     isTextChannel,
-    parseYabobComponentId,
+    parseYabobComponentId
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 

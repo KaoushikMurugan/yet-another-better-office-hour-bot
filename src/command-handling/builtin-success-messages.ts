@@ -111,5 +111,11 @@ export const SuccessMessages = {
         SimpleEmbed(
             `Successfully set the student role to <@${roleID}>.`,
             EmbedColor.Success
-        )
+        ),
+    turnedOnAutoGiveStudentRole: SimpleEmbed(
+        `Successfully turned on auto give student role.`
+    ),
+    turnedOffAutoGiveStudentRole: SimpleEmbed(
+        `Successfully turned off auto give student role.`
+    )
 } as const;

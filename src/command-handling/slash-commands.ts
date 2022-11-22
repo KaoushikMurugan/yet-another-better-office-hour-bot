@@ -270,6 +270,17 @@ const settingsCommand = new SlashCommandBuilder()
     .setName('settings')
     .setDescription('Sets up the server config for the bot');
 
+// /auto_give_student_role
+const autoGiveStudentRoleCommand = new SlashCommandBuilder()
+    .setName('auto_give_student_role')
+    .setDescription('Automatically gives the student role to new members')
+    .addSubcommand(subcommand =>
+        subcommand.setName('on').setDescription('Turns on auto giving student role')
+    )
+    .addSubcommand(subcommand =>
+        subcommand.setName('off').setDescription('Turns off auto giving student role')
+    );
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -320,7 +331,8 @@ const commandData = [
     activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
-    settingsCommand.toJSON()
+    settingsCommand.toJSON(),
+    autoGiveStudentRoleCommand.toJSON()
 ];
 
 async function postSlashCommands(

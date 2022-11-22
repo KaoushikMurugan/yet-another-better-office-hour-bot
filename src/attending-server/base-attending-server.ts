@@ -69,6 +69,8 @@ class AttendingServerV2 {
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
 
+    private _autoGiveStudentRole = true;
+
     // Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
     // - https://discord.com/developers/docs/reference#snowflakes
     // Special values for role IDs:
@@ -135,6 +137,9 @@ class AttendingServerV2 {
     get hierarchyRoleIds(): HierarchyRoles {
         return this._hierarchyRoleIds;
     }
+    get autoGiveStudentRole(): boolean {
+        return this._autoGiveStudentRole;
+    }
 
     /** Cleans up all the timers from setInterval */
     clearAllServerTimers(): void {
@@ -174,6 +179,10 @@ class AttendingServerV2 {
                 this._hierarchyRoleIds[role.name] = 'Deleted';
             }
         });
+    }
+
+    async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
+        this._autoGiveStudentRole = autoGiveStudentRole;
     }
 
     /**
