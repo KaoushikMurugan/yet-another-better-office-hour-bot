@@ -2,8 +2,8 @@
 import {
     BaseInteractionExtension,
     IInteractionExtension
-} from '../extension-interface.js';
-import { CalendarExtensionState, calendarStates } from './calendar-states.js';
+} from '../../extension-interface.js';
+import { CalendarExtensionState, calendarStates } from '../calendar-states.js';
 import {
     ButtonInteraction,
     CategoryChannel,
@@ -20,22 +20,22 @@ import {
     ErrorLogEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
-} from '../../utils/embed-helper.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import { CommandData } from '../../command-handling/slash-commands.js';
+} from '../../../utils/embed-helper.js';
+import { ExtensionSetupError } from '../../../utils/error-types.js';
+import { CommandData } from '../../../command-handling/slash-commands.js';
 import {
     hasValidQueueArgument,
     isTriggeredByMemberWithRoles
-} from '../../command-handling/common-validations.js';
+} from '../../../command-handling/common-validations.js';
 import {
     checkCalendarConnection,
     composeUpcomingSessionsEmbedBody,
     getUpComingTutoringEvents,
     restorePublicEmbedURL,
     isServerCalendarInteraction
-} from './shared-calendar-functions.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
-import { calendarCommands } from './calendar-slash-commands.js';
+} from '../shared-calendar-functions.js';
+import { blue, red, yellow } from '../../../utils/command-line-colors.js';
+import { calendarCommands } from '../calendar-slash-commands.js';
 import {
     getQueueRoles,
     isCategoryChannel,
@@ -43,9 +43,8 @@ import {
     logButtonPress,
     logModalSubmit,
     logSlashCommand,
-    parseYabobButtonId,
-    parseYabobModalId
-} from '../../utils/util-functions.js';
+    parseYabobComponentId
+} from '../../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
     QueueButtonCallback,
@@ -53,10 +52,10 @@ import {
     ModalSubmitCallback,
     YabobEmbed,
     DefaultButtonCallback
-} from '../../utils/type-aliases.js';
-import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
-import { ExpectedParseErrors } from '../../command-handling/expected-interaction-errors.js';
-import { environment } from '../../environment/environment-manager.js';
+} from '../../../utils/type-aliases.js';
+import { ExpectedCalendarErrors } from '../expected-calendar-errors.js';
+import { ExpectedParseErrors } from '../../../command-handling/expected-interaction-errors.js';
+import { environment } from '../../../environment/environment-manager.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
@@ -118,7 +117,7 @@ class CalendarInteractionExtension
     }
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
-        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        const yabobButtonId = parseYabobComponentId(interaction.customId);
         return (
             yabobButtonId.name in queueButtonMethodMap ||
             yabobButtonId.name in defaultButtonMethodMap ||
@@ -131,7 +130,7 @@ class CalendarInteractionExtension
     }
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        const yabobModalId = parseYabobModalId(interaction.customId);
+        const yabobModalId = parseYabobComponentId(interaction.customId);
         return yabobModalId.name in modalMethodMap;
     }
 
@@ -165,7 +164,7 @@ class CalendarInteractionExtension
     override async processButton(
         interaction: ButtonInteraction<'cached'>
     ): Promise<void> {
-        const yabobButtonId = parseYabobButtonId(interaction.customId);
+        const yabobButtonId = parseYabobComponentId(interaction.customId);
         const buttonName = yabobButtonId.name;
         const buttonType = yabobButtonId.type;
         const [server] = isServerCalendarInteraction(interaction);
@@ -233,7 +232,7 @@ class CalendarInteractionExtension
     override async processModalSubmit(
         interaction: ModalSubmitInteraction<'cached'>
     ): Promise<void> {
-        const yabobModalId = parseYabobModalId(interaction.customId);
+        const yabobModalId = parseYabobComponentId(interaction.customId);
         const modalName = yabobModalId.name;
         const [server] = isServerCalendarInteraction(interaction);
         const modalMethod = modalMethodMap[modalName];
@@ -313,11 +312,9 @@ async function updateCalendarId(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const newCalendarId = interaction.options.getString('calendar_id', true);
-    const [newCalendarName] = [
-        await checkCalendarConnection(newCalendarId).catch(() => {
-            throw ExpectedCalendarErrors.badId.newId;
-        })
-    ];
+    const newCalendarName = await checkCalendarConnection(newCalendarId).catch(() => {
+        throw ExpectedCalendarErrors.badId.newId;
+    });
     const [server, state] = isServerCalendarInteraction(interaction);
     await state.setCalendarId(newCalendarId);
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
@@ -497,7 +494,7 @@ async function showCalendarSettingsModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const [server] = isServerCalendarInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set Calendar URLs`,
@@ -516,7 +513,7 @@ async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const [server, state] = isServerCalendarInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Reset Calendar URLs`,
@@ -562,7 +559,7 @@ async function updateCalendarSettings(
         await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
     }
 
-    await server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
+    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     if (!menuVersion) {
         return CalendarSuccessMessages.updatedCalendarSettings(
             calendarId,

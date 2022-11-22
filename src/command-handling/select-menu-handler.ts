@@ -9,7 +9,7 @@ import {
 import {
     logDMSelectMenuSelection,
     logSelectMenuSelection,
-    parseYabobSelectMenuId
+    parseYabobComponentId
 } from '../utils/util-functions.js';
 import { isServerInteraction } from './common-validations.js';
 
@@ -26,7 +26,7 @@ import { isServerInteraction } from './common-validations.js';
 const selectMenuMethodMap: {
     [selectMenuName: string]: SelectMenuCallback;
 } = {
-    server_settings: serverSettingsSelectMenu
+    server_settings: showSettingsSelectMenu
 } as const;
 
 /**
@@ -52,7 +52,7 @@ const updateParentInteractionSelectMenus = ['server_settings'];
 function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
+    const yabobSelectMenuId = parseYabobComponentId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in selectMenuMethodMap;
 }
@@ -68,7 +68,7 @@ function builtInSelectMenuHandlerCanHandle(
 function builtInDMSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction
 ): boolean {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
+    const yabobSelectMenuId = parseYabobComponentId(interaction.customId);
     const selectMenuName = yabobSelectMenuId?.name;
     return selectMenuName in dmSelectMenuMethodMap;
 }
@@ -83,21 +83,17 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.name;
+    const selectMenuName = parseYabobComponentId(interaction.customId).name;
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
-
     logSelectMenuSelection(interaction, selectMenuName);
-
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
         );
     }
-
     await selectMenuMethod?.(interaction)
         .then(async successMsg => {
             if (updateParentInteraction) {
@@ -108,8 +104,7 @@ async function processBuiltInSelectMenu(
                     : await interaction.editReply(successMsg);
             }
         })
-        .catch(async err => {
-            console.error(err);
+        .catch(async (err: Error) => {
             await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
@@ -130,21 +125,16 @@ async function processBuiltInSelectMenu(
 async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
-    const yabobSelectMenuId = parseYabobSelectMenuId(interaction.customId);
-    const selectMenuName = yabobSelectMenuId.name;
+    const selectMenuName = parseYabobComponentId(interaction.customId).name;
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];
-
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);
-
     logDMSelectMenuSelection(interaction, selectMenuName);
-
     if (!updateParentInteraction) {
         await interaction.reply(
             SimpleEmbed(`Processing your selection: \`${selectMenuName}\`...`)
         );
     }
-
     await selectMenuMethod?.(interaction)
         .then(async successMsg => {
             if (updateParentInteraction) {
@@ -155,8 +145,7 @@ async function processBuiltInDMSelectMenu(
                     : await interaction.editReply(successMsg);
             }
         })
-        .catch(async err => {
-            console.error(err);
+        .catch(async (err: Error) => {
             await Promise.all([
                 interaction.replied
                     ? interaction.editReply(ErrorEmbed(err))
@@ -172,7 +161,7 @@ async function processBuiltInDMSelectMenu(
  * Display the Role Config menu
  * @param interaction
  */
-async function serverSettingsSelectMenu(
+async function showSettingsSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
@@ -180,8 +169,7 @@ async function serverSettingsSelectMenu(
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionObj.value === selectedOption
     );
-
-    await server.sendLogMessage(
+    server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
             `Server Settings`,
@@ -189,11 +177,10 @@ async function serverSettingsSelectMenu(
             interaction.channel as TextChannel
         )
     );
-
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
-    return await callbackMenu.subMenu(server, interaction.channelId, false);
+    return callbackMenu.subMenu(server, interaction.channelId, false);
 }
 
 export {

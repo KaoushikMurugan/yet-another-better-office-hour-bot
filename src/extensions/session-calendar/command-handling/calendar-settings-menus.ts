@@ -4,19 +4,19 @@ import {
     ButtonStyle,
     SelectMenuComponentOptionData
 } from 'discord.js';
-import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
+import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
 import {
-    generateYabobButtonId,
-    yabobButtonToString
-} from '../../utils/util-functions.js';
-import { calendarStates } from './calendar-states.js';
+    generateComponentId,
+    yabobButtonIdToString
+} from '../../../utils/util-functions.js';
+import { calendarStates } from '../calendar-states.js';
 import {
     composeReturnToMainMenuButton,
     serverSettingsMainMenuOptions
-} from '../../attending-server/server-settings-menus.js';
-import { restorePublicEmbedURL } from './shared-calendar-functions.js';
-import { FrozenServer } from '../extension-utils.js';
+} from '../../../attending-server/server-settings-menus.js';
+import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
+import { FrozenServer } from '../../extension-utils.js';
 
 /**
  * Options for the server settings main menu
@@ -44,11 +44,11 @@ const calendarSettingsMainMenuOptions: {
  * @param isDm
  * @returns
  */
-async function calendarSettingsConfigMenu(
+function calendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
@@ -69,13 +69,13 @@ async function calendarSettingsConfigMenu(
     );
 
     function composeCSCMButtonId(optionNumber: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `calendar_settings_config_menui_${optionNumber}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()

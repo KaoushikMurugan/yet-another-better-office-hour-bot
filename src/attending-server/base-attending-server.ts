@@ -14,15 +14,14 @@ import {
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { commandChConfigs } from './command-ch-constants.js';
-import { hierarchyRoleConfigs } from '../models/hierarchy-roles.js';
+import { hierarchyRoleConfigs, HierarchyRoles } from '../models/hierarchy-roles.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
-import { QueueBackup } from '../models/backups.js';
-import { blue, cyan, green, magenta, red, yellow } from '../utils/command-line-colors.js';
+import { QueueBackup, ServerBackup } from '../models/backups.js';
+import { blue, cyan, green, red } from '../utils/command-line-colors.js';
 import {
     convertMsToTime,
     isCategoryChannel,
@@ -33,13 +32,14 @@ import {
 import {
     CategoryChannelId,
     GuildMemberId,
-    HelpMessage,
     Optional,
     WithRequired
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { serverRolesConfigMenu } from './server-settings-menus.js';
+import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
+import { client } from '../global-states.js';
 
 /**
  * Wrapper for TextChannel
@@ -75,12 +75,14 @@ class AttendingServerV2 {
     // - 'Not Set' means that the role is not set
     // - 'Deleted' means that the role was deleted
 
-    /** role id of the bot admin role */
-    private _botAdminRoleID = 'Not Set';
-    /** role id of the helper role */
-    private _helperRoleID = 'Not Set';
-    /** role id of the student role */
-    private _studentRoleID = 'Not Set';
+    private _hierarchyRoleIds: HierarchyRoles = {
+        /** role id of the bot admin role */
+        botAdmin: 'Not Set',
+        /** role id of the helper role */
+        staff: 'Not Set',
+        /** role id of the student role */
+        student: 'Not Set'
+    };
 
     protected constructor(
         readonly user: User,
@@ -107,15 +109,14 @@ class AttendingServerV2 {
         return this._loggingChannel;
     }
     get botAdminRoleID(): string {
-        return this._botAdminRoleID;
+        return this._hierarchyRoleIds.botAdmin;
     }
     get helperRoleID(): string {
-        return this._helperRoleID;
+        return this._hierarchyRoleIds.staff;
     }
     get studentRoleID(): string {
-        return this._studentRoleID;
+        return this._hierarchyRoleIds.student;
     }
-
     /**
      * Returns an array of the roles for this server in decreasing order of hierarchy
      * - The first element is the highest hierarchy role
@@ -123,21 +124,56 @@ class AttendingServerV2 {
      * - [Student, Helper, Bot Admin]
      * @returns: { name: string, id: string }[]
      */
-    get roles(): { name: string; id: string }[] {
-        return [
-            {
-                name: 'Bot Admin',
-                id: this._botAdminRoleID
-            },
-            {
-                name: 'Staff',
-                id: this._helperRoleID
-            },
-            {
-                name: 'Student',
-                id: this._studentRoleID
+    get sortedHierarchyRoles(): Array<{ name: keyof HierarchyRoles; id: string }> {
+        return Object.entries(this._hierarchyRoleIds).map(([name, id]) => {
+            return {
+                name: name as keyof HierarchyRoles, // guaranteed to be the key
+                id: id
+            };
+        });
+    }
+    get hierarchyRoleIds(): HierarchyRoles {
+        return this._hierarchyRoleIds;
+    }
+
+    /** Cleans up all the timers from setInterval */
+    clearAllServerTimers(): void {
+        this._queues.forEach(queue => queue.clearAllQueueTimers());
+    }
+
+    /**
+     * Sends the log message to the logging channel if it's set up
+     * @param message message to log
+     */
+    sendLogMessage(message: BaseMessageOptions | string): void {
+        if (this._loggingChannel) {
+            this._loggingChannel.send(message).catch(e => {
+                console.error(red(`Failed to send logs to ${this.guild.name}.`));
+                console.error(e);
+            });
+        }
+    }
+
+    loadBackUp(backup: ServerBackup): void {
+        console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
+        const loggingChannelFromBackup = this.guild.channels.cache.get(
+            backup.loggingChannelId
+        );
+        if (isTextChannel(loggingChannelFromBackup)) {
+            this._loggingChannel = loggingChannelFromBackup;
+        }
+        this._afterSessionMessage = backup.afterSessionMessage;
+        this._hierarchyRoleIds = {
+            botAdmin: backup.botAdminRoleId,
+            staff: backup.helperRoleId,
+            student: backup.studentRoleId
+        };
+        //check if roles still exist
+        this.sortedHierarchyRoles.forEach(role => {
+            if (this.guild.roles.cache.get(role.id) === undefined) {
+                this._hierarchyRoleIds[role.name] = 'Deleted';
             }
-        ];
+        });
     }
 
     /**
@@ -145,7 +181,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setBotAdminRoleID(roleID: string): Promise<void> {
-        this._botAdminRoleID = roleID;
+        this._hierarchyRoleIds.botAdmin = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -155,7 +191,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setHelperRoleID(roleID: string): Promise<void> {
-        this._helperRoleID = roleID;
+        this._hierarchyRoleIds.staff = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -165,7 +201,7 @@ class AttendingServerV2 {
      * @param roleID
      */
     async setStudentRoleID(roleID: string): Promise<void> {
-        this._studentRoleID = roleID;
+        this._hierarchyRoleIds.student = roleID;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -189,46 +225,13 @@ class AttendingServerV2 {
     }
 
     /**
-     * Cleans up all the timers from setInterval
-     */
-    clearAllServerTimers(): void {
-        this._queues.forEach(queue => queue.clearAllQueueTimers());
-    }
-
-    /**
      * Asynchronously creates a YABOB instance for 1 server
-     * @param user discord client user
      * @param guild the server for YABOB to join
      * @returns a created instance of YABOB
      * @throws ServerError
      */
-    static async create(user: User, guild: Guild): Promise<AttendingServerV2> {
-        if (
-            guild.members.me === null ||
-            !guild.members.me.permissions.has('Administrator')
-        ) {
-            const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `Sorry, I need full administrator permission for '${guild.name}'`,
-                    EmbedColor.Error
-                )
-            );
-            await guild.leave();
-            throw Error("YABOB doesn't have admin permission.");
-        }
-        if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
-            const owner = await guild.fetchOwner();
-            await owner.send(
-                SimpleEmbed(
-                    `It seems like I'm joining a server with existing roles. ` +
-                        `Please go to server settings -> Roles and change ${user.username} ` +
-                        `to the highest role.\n`,
-                    EmbedColor.Error
-                )
-            );
-            throw Error("YABOB doesn't have highest role.");
-        }
+    static async create(guild: Guild): Promise<AttendingServerV2> {
+        await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
             ? []
@@ -237,10 +240,7 @@ class AttendingServerV2 {
                   new FirebaseServerBackupExtension(guild),
                   CalendarExtensionState.load(guild)
               ]);
-        // create instance with extensions
-        const server = new AttendingServerV2(user, guild, serverExtensions);
-        // Retrieve backup from all sources. Take the first one that's not undefined
-        // TODO: Change behavior here depending on backup strategy
+        const server = new AttendingServerV2(client.user, guild, serverExtensions);
         const externalBackup = environment.disableExtensions
             ? undefined
             : await Promise.all(
@@ -248,56 +248,25 @@ class AttendingServerV2 {
                       extension.loadExternalServerData(guild.id)
                   )
               );
-        // now load the data from backup
-        const externalServerData = externalBackup?.find(backup => backup !== undefined);
-        if (externalServerData !== undefined) {
-            console.log(cyan(`Found external backup for ${guild.name}. Restoring.`));
-            const loggingChannelFromBackup = server.guild.channels.cache.get(
-                externalServerData.loggingChannelId
-            );
-            if (isTextChannel(loggingChannelFromBackup)) {
-                server._loggingChannel = loggingChannelFromBackup;
-            }
-            server._afterSessionMessage = externalServerData.afterSessionMessage;
+        const validBackup = externalBackup?.find(backup => backup !== undefined);
+        if (validBackup !== undefined) {
+            server.loadBackUp(validBackup);
         }
-
-        //check if roles still exist
-        server._botAdminRoleID = externalServerData?.botAdminRoleId ?? 'Not Set';
-        server._helperRoleID = externalServerData?.helperRoleId ?? 'Not Set';
-        server._studentRoleID = externalServerData?.studentRoleId ?? 'Not Set';
-        server.roles.forEach(role => {
-            if (guild.roles.cache.get(role.id) === undefined)
-                if (role.id === server._botAdminRoleID) {
-                    server._botAdminRoleID = 'Deleted';
-                } else if (role.id === server._helperRoleID) {
-                    server._helperRoleID = 'Deleted';
-                } else if (role.id === server._studentRoleID) {
-                    server._studentRoleID = 'Deleted';
-                }
-        });
-
-        const missingRoles = server.roles.filter(
+        const missingRoles = server.sortedHierarchyRoles.filter(
             role => role.id === 'Not Set' || role.id === 'Deleted'
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
+            await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
         }
-
-        // This call must block everything else for handling empty servers
-        // The ones below can be launched together. After this Promise the server is ready
         await Promise.all([
-            server.initAllQueues(
-                externalServerData?.queues,
-                externalServerData?.hoursUntilAutoClear
-            ),
-            server.createClassRoles(),
-            server.updateCommandHelpChannels()
+            server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
+            server.createQueueRoles(),
+            updateCommandHelpChannels(guild)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
         });
-        // Now Emit all the events
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
@@ -412,7 +381,7 @@ class AttendingServerV2 {
             return this.queueChannelsCache;
         }
         const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request
+        // cache again on a fresh request, likely triggers GC
         this.queueChannelsCache = [];
         for (const categoryChannel of allChannels.values()) {
             if (!isCategoryChannel(categoryChannel)) {
@@ -470,7 +439,7 @@ class AttendingServerV2 {
         };
         const [helpQueue] = await Promise.all([
             HelpQueueV2.create(queueChannel, this.user, this.guild.roles.everyone),
-            this.createClassRoles()
+            this.createQueueRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
         await this.getQueueChannels(false);
@@ -566,7 +535,15 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
-        await this.sendInvite(student, helperVoiceChannel);
+        await Promise.all([
+            this.sendInvite(student.member, helperVoiceChannel),
+            ...this.serverExtensions.map(extension =>
+                extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
         return student;
     }
 
@@ -619,7 +596,15 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.badDequeueArguments;
         }
         helperObject.helpedMembers.push(student);
-        await this.sendInvite(student, helperVoiceChannel);
+        await Promise.all([
+            this.sendInvite(student.member, helperVoiceChannel),
+            ...this.serverExtensions.map(extension =>
+                extension.onDequeueFirst(this, student)
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
         return student;
     }
 
@@ -837,7 +822,6 @@ class AttendingServerV2 {
      */
     async setAfterSessionMessage(newMessage: string): Promise<void> {
         this._afterSessionMessage = newMessage;
-        // trigger anything listening to internal updates
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -858,69 +842,6 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Updates the help channel messages
-     * Removes all messages in the help channel and posts new ones
-     */
-    async updateCommandHelpChannels(): Promise<void> {
-        const allChannels = await this.guild.channels.fetch();
-        const existingHelpCategory = allChannels.find(
-            (channel): channel is CategoryChannel =>
-                channel !== null &&
-                channel.type === ChannelType.GuildCategory &&
-                channel.name === 'Bot Commands Help'
-        );
-        // If no help category is found, initialize
-        if (!existingHelpCategory) {
-            console.log(
-                cyan(`Found no help channels in ${this.guild.name}. Creating new ones.`)
-            );
-            const helpCategory = await this.guild.channels.create({
-                name: 'Bot Commands Help',
-                type: ChannelType.GuildCategory
-            });
-            // Change the config object and add more functions here if needed
-            await Promise.all(
-                commandChConfigs.map(async roleConfig => {
-                    const commandCh = await helpCategory.children.create({
-                        name: roleConfig.channelName
-                    });
-                    await commandCh.permissionOverwrites.create(
-                        this.guild.roles.everyone,
-                        {
-                            SendMessages: false,
-                            ViewChannel: false
-                        }
-                    );
-                    await Promise.all(
-                        this.guild.roles.cache
-                            .filter(role => roleConfig.visibility.includes(role.name))
-                            .map(roleWithViewPermission =>
-                                commandCh.permissionOverwrites.create(
-                                    roleWithViewPermission,
-                                    {
-                                        ViewChannel: true
-                                    }
-                                )
-                            )
-                    );
-                })
-            );
-            await this.sendCommandHelpChannelMessages(helpCategory, commandChConfigs);
-        } else {
-            console.log(
-                `Found existing help channels in ${yellow(
-                    this.guild.name
-                )}, updating command help files`
-            );
-            await this.sendCommandHelpChannelMessages(
-                existingHelpCategory,
-                commandChConfigs
-            );
-        }
-        console.log(magenta(`✓ Updated help channels on ${this.guild.name} ✓`));
     }
 
     /**
@@ -946,82 +867,13 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sends the log message to the logging channel if it's set up
-     * @param message
-     */
-    sendLogMessage(message: BaseMessageOptions | string): void {
-        if (this._loggingChannel) {
-            this._loggingChannel.send(message).catch(e => {
-                console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(e);
-            });
-        }
-    }
-
-    /**
-     * Creates a new category with `categoryName` and creates `numOfChannels` voice channels with the name `channelName` within the category
-     * @param categoryName
-     * @param officeName
-     * @param numberOfOffices
-     *
-     * @remark createOfficeCategory('Office Hours', 'Office', 3)  will create a
-     * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
-     */
-    async createOffices(
-        categoryName: string,
-        officeName: string,
-        numberOfOffices: number
-    ): Promise<void> {
-        const allChannels = await this.guild.channels.fetch();
-        // Find if a category with the same name exists
-        const existingOfficeCategory = allChannels
-            .filter(
-                channel =>
-                    channel !== null &&
-                    channel.type === ChannelType.GuildCategory &&
-                    channel.name === categoryName
-            )
-            .map(channel => channel as CategoryChannel);
-
-        // If no help category is found, initialize
-        if (existingOfficeCategory.length === 0) {
-            const officeCategory = await this.guild.channels.create({
-                name: categoryName,
-                type: ChannelType.GuildCategory
-            });
-            // Change the config object and add more functions here if needed
-            await Promise.all(
-                // I have no clue why the next line works like a promise for loop
-                [...Array(numberOfOffices).keys()].map(async officeNumber => {
-                    const officeCh = await officeCategory.children.create({
-                        name: `${officeName} ${officeNumber + 1}`,
-                        type: ChannelType.GuildVoice
-                    });
-                    await officeCh.permissionOverwrites.create(
-                        this.guild.roles.everyone,
-                        {
-                            SendMessages: false,
-                            ViewChannel: false
-                        }
-                    );
-                    await officeCh.permissionOverwrites.create(this._helperRoleID, {
-                        ViewChannel: true
-                    });
-                })
-            );
-        } else {
-            throw ExpectedServerErrors.categoryAlreadyExists(categoryName);
-        }
-    }
-
-    /**
      * Sends the VC invite to the student after successful dequeue
      * @param helperObject
      * @param student
      * @param helperVoiceChannel
      */
     private async sendInvite(
-        student: Readonly<Helpee>,
+        student: GuildMember,
         helperVoiceChannel: VoiceBasedChannel
     ) {
         const [invite] = await Promise.all([
@@ -1029,34 +881,24 @@ class AttendingServerV2 {
                 maxAge: 15 * 60,
                 maxUses: 1
             }),
-            helperVoiceChannel.permissionOverwrites.create(student.member, {
+            helperVoiceChannel.permissionOverwrites.create(student, {
                 ViewChannel: true,
                 Connect: true
             })
         ]);
-        await Promise.all([
-            ...this.serverExtensions.map(extension =>
-                extension.onDequeueFirst(this, student)
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            ),
-            student.member.send(
-                SimpleEmbed(
-                    `It's your turn! Join the call: ${invite.toString()}`,
-                    EmbedColor.Success
-                )
+        await student.send(
+            SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
             )
-        ]);
+        );
         // remove the overwrite when the link dies
         setTimeout(() => {
             helperVoiceChannel.permissionOverwrites.cache
-                .find(overwrite => overwrite.id === student.member.id)
+                .find(overwrite => overwrite.id === student.id)
                 ?.delete()
                 .catch(() =>
-                    console.error(
-                        `Failed to delete overwrite for ${student.member.displayName}`
-                    )
+                    console.error(`Failed to delete overwrite for ${student.displayName}`)
                 );
         }, 15 * 60 * 1000);
     }
@@ -1071,9 +913,6 @@ class AttendingServerV2 {
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
     ): Promise<void> {
-        if (this._queues.size !== 0) {
-            console.warn('Overriding existing queues.');
-        }
         const queueChannels = await this.getQueueChannels(false);
         await Promise.all(
             queueChannels.map(async channel => {
@@ -1104,119 +943,73 @@ class AttendingServerV2 {
         );
         await Promise.all(
             this.serverExtensions.map(extension =>
-                extension.onAllQueuesInit(this, [...this._queues.values()])
+                extension.onAllQueuesInit(this, this.queues)
             )
         );
     }
 
     /**
      * Creates all the command access hierarchy roles
-     * @param forceNewRoles if true, creates new roles even it they already exist
+     * @param forceNewRoles if true, creates new roles even if they already exist
+     * - Duplicates will be created if roles with the same name already exist
+     * @param defaultStudentIsEveryone whether to treat @everyone as the student role
      */
     async createHierarchyRoles(
         forceNewRoles: boolean,
         defaultStudentIsEveryone: boolean
     ): Promise<void> {
-        const existingRoles = await this.guild.roles.fetch();
-        let foundRoles: Role[] = [];
+        const allRoles = await this.guild.roles.fetch();
+        const foundRoles: Array<{ name: string; pos: number }> = [];
+        const createdRoles: Array<{ name: string; pos: number }> = [];
         if (!forceNewRoles) {
-            foundRoles = await Promise.all(
-                this.roles
-                    .map(async role => {
-                        const existingRole = existingRoles.find(
-                            r => r.name === role.name
-                        );
-                        if (existingRole !== undefined) {
-                            if (role.name === 'Bot Admin') {
-                                this._botAdminRoleID = existingRole.id;
-                            } else if (role.name === 'Staff') {
-                                this._helperRoleID = existingRole.id;
-                            } else if (role.name === 'Student') {
-                                this._studentRoleID = defaultStudentIsEveryone
-                                    ? this.guild.roles.everyone.id
-                                    : existingRole.id;
-                            }
-                            return existingRole;
-                        } else {
-                            return undefined;
-                        }
-                    })
-                    .filter((role): role is Promise<Role> => !!role)
-            );
-        }
-        const createdRoles = await Promise.all(
-            this.roles
-                .filter(
-                    role =>
-                        forceNewRoles || role.id === 'Not Set' || role.id === 'Deleted'
-                )
-                .map(async role => {
-                    const roleConfig = hierarchyRoleConfigs.find(
-                        roleConfig => roleConfig.name === role.name
-                    );
-                    if (roleConfig !== undefined) {
-                        const newRole = await this.guild.roles.create(roleConfig);
-                        if (roleConfig.name === 'Bot Admin') {
-                            this._botAdminRoleID = newRole.id;
-                        } else if (roleConfig.name === 'Staff') {
-                            this._helperRoleID = newRole.id;
-                        } else if (roleConfig.name === 'Student') {
-                            this._studentRoleID = defaultStudentIsEveryone
-                                ? this.guild.roles.everyone.id
-                                : newRole.id;
-                        }
-                        return newRole;
-                    } else {
-                        return undefined;
-                    }
-                })
-                .filter((role): role is Promise<Role> => !!role)
-        );
-        if (createdRoles.length !== 0 || foundRoles.length !== 0) {
-            // Call server backup
-            await Promise.all(
-                this.serverExtensions.map(extension =>
-                    extension.onServerRequestBackup(this)
-                )
-            );
-        }
-        if (createdRoles.length !== 0) {
-            console.log('Created roles:');
-            console.log(
-                createdRoles
-                    .map(r => {
-                        return { name: r.name, pos: r.position };
-                    })
-                    .sort((a, b) => a.pos - b.pos)
-            );
-        }
-        if (foundRoles.length !== 0) {
-            console.log('Found roles:');
-            console.log(
-                foundRoles
-                    .map(r => {
-                        return { name: r.name, pos: r.position };
-                    })
-                    .sort((a, b) => a.pos - b.pos)
-            );
+            for (const role of this.sortedHierarchyRoles) {
+                const existingRole = allRoles.get(role.id);
+                if (existingRole !== undefined) {
+                    this._hierarchyRoleIds[role.name] = existingRole.id;
+                    foundRoles.push({
+                        name: existingRole.name,
+                        pos: existingRole.position
+                    });
+                }
+            }
         } else {
-            console.log(`All required roles exist in ${this.guild.name}!`);
+            for (const role of this.sortedHierarchyRoles) {
+                const newRole = await this.guild.roles.create({
+                    ...hierarchyRoleConfigs[role.name]
+                });
+                this._hierarchyRoleIds[role.name] = newRole.id;
+                createdRoles.push({
+                    name: newRole.name,
+                    pos: newRole.position
+                });
+            }
         }
+        if (defaultStudentIsEveryone) {
+            this._hierarchyRoleIds.student = this.guild.roles.everyone.id;
+        }
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+        createdRoles.length > 0
+            ? console.log('Created roles:', createdRoles)
+            : console.log(`All required roles exist in ${this.guild.name}!`);
+        foundRoles.length > 0 && console.log('Found roles:', foundRoles);
     }
 
     /**
      * Checks the deleted `role` was a hierarchy role and if so, mark as deleted
-     * @param role the role that was deleted
+     * @param deletedRole the role that was deleted
      */
-    async onRoleDelete(role: Role): Promise<void> {
-        if (role.id === this.botAdminRoleID) {
-            this._botAdminRoleID = 'Deleted';
+    async onRoleDelete(deletedRole: Role): Promise<void> {
+        let hierarchyRoleDeleted = false;
+        for (const { name, id } of this.sortedHierarchyRoles) {
+            if (deletedRole.id === id) {
+                this._hierarchyRoleIds[name] = 'Deleted';
+                hierarchyRoleDeleted = true;
+            }
         }
-        if (role.id === this.helperRoleID) {
-            this._helperRoleID = 'Deleted';
-        }
-        if (role.id === this.studentRoleID) {
-            this._studentRoleID = 'Deleted';
+        if (!hierarchyRoleDeleted) {
+            return;
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
@@ -1226,7 +1019,7 @@ class AttendingServerV2 {
     /**
      * Creates roles for all the available queues if not already created
      */
-    private async createClassRoles(): Promise<void> {
+    private async createQueueRoles(): Promise<void> {
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
         const queueNames = (await this.getQueueChannels(false)).map(ch => ch.queueName);
         await Promise.all(
@@ -1237,42 +1030,6 @@ class AttendingServerV2 {
                         position: 1
                     });
             })
-        );
-    }
-
-    /**
-     * Overwrites the existing command help channel and send new help messages
-     * @param helpCategory the category named 'Bot Commands Help'
-     * @param messageContents array of embeds to send to each help channel
-     */
-    private async sendCommandHelpChannelMessages(
-        helpCategory: CategoryChannel,
-        messageContents: Array<{
-            channelName: string;
-            file: HelpMessage[];
-            visibility: string[];
-        }>
-    ): Promise<void> {
-        const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
-        await Promise.all(
-            allHelpChannels.map(
-                async ch =>
-                    await ch.messages
-                        .fetch()
-                        .then(messages => messages.map(msg => msg.delete()))
-            )
-        );
-        // send new ones
-        await Promise.all(
-            allHelpChannels.map(channel =>
-                messageContents
-                    .find(val => val.channelName === channel.name)
-                    ?.file?.filter(helpMessage => helpMessage.useInHelpChannel)
-                    .map(helpMessage => channel.send(helpMessage.message))
-            )
-        );
-        console.log(
-            `Successfully updated help messages in ${yellow(helpCategory.name)}!`
         );
     }
 }

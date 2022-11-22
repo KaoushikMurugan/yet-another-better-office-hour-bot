@@ -8,10 +8,9 @@ import {
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
 import {
-    generateSelectMenuId,
-    generateYabobButtonId,
-    yabobButtonToString,
-    yabobSelectMenuToString
+    generateComponentId,
+    yabobButtonIdToString,
+    yabobSelectMenuIdToString
 } from '../utils/util-functions.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
@@ -81,8 +80,8 @@ async function serverSettingsMainMenu(
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         new SelectMenuBuilder()
             .setCustomId(
-                yabobSelectMenuToString(
-                    generateSelectMenuId(
+                yabobSelectMenuIdToString(
+                    generateComponentId(
                         isDm ? 'dm' : 'other',
                         'server_settings',
                         isDm ? server.guild.id : undefined,
@@ -104,16 +103,15 @@ async function serverSettingsMainMenu(
  * @param forServerInit
  * @returns
  */
-async function serverRolesConfigMenu(
+function serverRolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
     forServerInit = false
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const botAdminRole = server.botAdminRoleID;
     const helperRole = server.helperRoleID;
     const studentRole = server.studentRoleID;
-
     const embed = SimpleEmbed(
         `📝 Server Roles Configuration for ${server.guild.name} 📝`,
         EmbedColor.Aqua,
@@ -156,13 +154,13 @@ async function serverRolesConfigMenu(
     );
 
     function composeSRCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `server_role_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     // ssrc = server_settings_roles_config_. shortened due to limited customId length
@@ -210,11 +208,11 @@ async function serverRolesConfigMenu(
  * @param isDm
  * @returns
  */
-async function afterSessionMessageConfigMenu(
+function afterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `📨 After Session Message Configuration for ${server.guild.name} 📨`,
         EmbedColor.Aqua,
@@ -233,13 +231,13 @@ async function afterSessionMessageConfigMenu(
     // asmc = after_session_message_config_. shortened due to limited customId length
 
     function composeASMCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `after_session_message_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
@@ -271,11 +269,11 @@ async function afterSessionMessageConfigMenu(
  * @param isDm
  * @returns
  */
-async function queueAutoClearConfigMenu(
+function queueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`,
         EmbedColor.Aqua,
@@ -291,13 +289,13 @@ async function queueAutoClearConfigMenu(
     // qacc = queue_auto_clear_config_. shortened due to limited customId length
 
     function composeQACCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `queue_auto_clear_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
@@ -329,11 +327,11 @@ async function queueAutoClearConfigMenu(
  * @param isDm
  * @returns
  */
-async function loggingChannelConfigMenu(
+function loggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🪵 Logging Configuration for ${server.guild.name} 🪵`,
         EmbedColor.Aqua,
@@ -350,13 +348,13 @@ async function loggingChannelConfigMenu(
     // lcc = logging_channel_config_. shortened due to limited customId length
 
     function composeLCCButtonId(optionName: string): string {
-        const newYabobButton = generateYabobButtonId(
+        const newYabobButton = generateComponentId(
             isDm ? 'dm' : 'other',
             `logging_channel_config_${optionName}`,
             isDm ? server.guild.id : undefined,
             isDm ? channelId : undefined
         );
-        return yabobButtonToString(newYabobButton);
+        return yabobButtonIdToString(newYabobButton);
     }
 
     // TODO: Implement a direct way to change the logging channel
@@ -384,7 +382,7 @@ async function loggingChannelConfigMenu(
 function composeReturnToMainMenuButton(): ButtonBuilder {
     return new ButtonBuilder()
         .setCustomId(
-            yabobButtonToString(generateYabobButtonId('other', 'return_to_main_menu'))
+            yabobButtonIdToString(generateComponentId('other', 'return_to_main_menu'))
         )
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')

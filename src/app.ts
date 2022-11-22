@@ -1,31 +1,32 @@
-import { Guild, Collection, VoiceState, Interaction } from 'discord.js';
+import { Guild, Collection, Interaction } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import {
     builtInButtonHandlerCanHandle,
     builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
-    processBuiltInDMButton
-} from './command-handling/button-handler.js';
-import {
+    processBuiltInDMButton,
     builtInCommandHandlerCanHandle,
-    processBuiltInCommand
-} from './command-handling/command-handler.js';
-import {
+    processBuiltInCommand,
     builtInDMModalHandlerCanHandle,
     builtInModalHandlerCanHandle,
     processBuiltInDMModalSubmit,
     processBuiltInModalSubmit
-} from './command-handling/modal-handler.js';
-import { magenta, black, cyan, green, red, yellow } from './utils/command-line-colors.js';
+} from './command-handling/interaction-index.js';
+import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { postSlashCommands } from './command-handling/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
+import { CalendarInteractionExtension } from './extensions/session-calendar/command-handling/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
-import { GuildId, WithRequired } from './utils/type-aliases.js';
+import { GuildId } from './utils/type-aliases.js';
 import { client, attendingServers } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
-import { centered } from './utils/util-functions.js';
+import {
+    centered,
+    printTitleString,
+    isLeaveVC,
+    isJoinVC
+} from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 import {
     builtInDMSelectMenuHandlerCanHandle,
@@ -56,12 +57,10 @@ client.on('ready', async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
+    updatePresence();
+    setInterval(updatePresence, 1000 * 60 * 30);
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
-    //set first presence
-    updatePresence();
-    //update presence every 30 minutes
-    setInterval(updatePresence, 1000 * 60 * 30);
 });
 
 /**
@@ -99,15 +98,15 @@ client.on('guildDelete', async guild => {
  */
 client.on('interactionCreate', async (interaction: Interaction) => {
     if (interaction.channel?.isDMBased()) {
-        await dispatchDMInteraction(interaction).catch(async (err: Error) => {
+        dispatchDMInteraction(interaction).catch((err: Error) => {
             interaction.user
                 .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-                .catch(() => {
+                .catch(() =>
                     failedInteractions.push({
                         username: interaction.user.username,
                         interaction: interaction
-                    });
-                });
+                    })
+                );
         });
         return;
     }
@@ -119,7 +118,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
             ));
         return;
     }
-    dispatchServerInteractions(interaction).catch(async (err: Error) => {
+    dispatchServerInteractions(interaction).catch((err: Error) => {
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(() => {
@@ -129,8 +128,8 @@ client.on('interactionCreate', async (interaction: Interaction) => {
                 });
             });
     });
-    if (failedInteractions.length >= 50) {
-        console.error('These 50 interactions failed: ');
+    if (failedInteractions.length >= 5) {
+        console.error(`These ${failedInteractions.length} interactions failed: `);
         console.error(failedInteractions);
         failedInteractions.splice(0, failedInteractions.length);
     }
@@ -168,17 +167,17 @@ client.on('roleUpdate', async role => {
     ) {
         console.log(cyan('Got the highest Role! Starting server initialization'));
         const owner = await role.guild.fetchOwner();
-        const [ , server] = await Promise.all([
+        const [server] = await Promise.all([
+            joinGuild(role.guild),
             owner.send(
                 SimpleEmbed(
                     `Got the highest Role!` +
                         ` Starting server initialization for ${role.guild.name}`,
                     EmbedColor.Success
                 )
-            ),
-            joinGuild(role.guild)
+            )
         ]);
-        await owner.send(await serverRolesConfigMenu(server, owner.id, true, true));
+        await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
     }
 });
 
@@ -190,20 +189,14 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
         throw new Error('Received VC event in a server without initialized YABOB.');
     }
     const serverId = oldVoiceState.guild.id;
-    const isLeaveVC = oldVoiceState.channel !== null && newVoiceState.channel === null;
-    const isJoinVC = oldVoiceState.channel === null && newVoiceState.channel !== null;
-    if (isLeaveVC) {
-        await attendingServers.get(serverId)?.onMemberLeaveVC(
-            newVoiceState.member,
-            // already checked in isLeaveVC condition
-            oldVoiceState as WithRequired<VoiceState, 'channel'>
-        );
-    } else if (isJoinVC) {
-        await attendingServers.get(serverId)?.onMemberJoinVC(
-            newVoiceState.member,
-            // already checked in isJoinVC condition
-            newVoiceState as WithRequired<VoiceState, 'channel'>
-        );
+    if (isLeaveVC(oldVoiceState, newVoiceState)) {
+        await attendingServers
+            .get(serverId)
+            ?.onMemberLeaveVC(newVoiceState.member, oldVoiceState);
+    } else if (isJoinVC(oldVoiceState, newVoiceState)) {
+        await attendingServers
+            .get(serverId)
+            ?.onMemberJoinVC(newVoiceState.member, newVoiceState);
     }
 });
 
@@ -238,9 +231,6 @@ process.on('exit', () => {
  * @throws ServerError if the AttendingServerV2.create failed
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
-    if (client.user === null) {
-        throw Error('Please wait until YABOB has logged in ' + 'to manage the server');
-    }
     console.log(`Joining guild: ${yellow(guild.name)}`);
     if (!environment.disableExtensions) {
         interactionExtensions.set(
@@ -249,7 +239,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         );
     }
     // Extensions for server&queue are loaded inside the create method
-    const server = await AttendingServerV2.create(client.user, guild);
+    const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
     await postSlashCommands(
         guild,
@@ -327,7 +317,7 @@ async function dispatchServerInteractions(
         } else {
             const externalCommandHandler = interactionExtensions
                 // default value is for semantics only
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleCommand(interaction));
             await externalCommandHandler?.processCommand(interaction);
             return externalCommandHandler !== undefined;
@@ -338,7 +328,7 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalButtonHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleButton(interaction));
             await externalButtonHandler?.processButton(interaction);
             return externalButtonHandler !== undefined;
@@ -349,7 +339,7 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalModalHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleModalSubmit(interaction));
             await externalModalHandler?.processModalSubmit(interaction);
             return externalModalHandler !== undefined;
@@ -360,34 +350,11 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalSelectMenuHandler = interactionExtensions
-                .get(interaction.guildId ?? 'Non-Guild Interaction')
+                .get(interaction.guildId)
                 ?.find(ext => ext.canHandleSelectMenu(interaction));
             await externalSelectMenuHandler?.processSelectMenu(interaction);
             return externalSelectMenuHandler !== undefined;
         }
     }
     return false;
-}
-
-/**
- * Prints the title message for the console upon startup
- */
-function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
-    console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(
-        `\n${black(
-            magenta(
-                ' '.repeat(
-                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                ) +
-                    titleString +
-                    ' '.repeat(
-                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                    ),
-                'Bg'
-            )
-        )}\n`
-    );
-    console.log('Scanning servers I am a part of...');
 }

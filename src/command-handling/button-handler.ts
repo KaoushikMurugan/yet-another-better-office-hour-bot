@@ -10,7 +10,7 @@ import {
 import {
     logDMButtonPress,
     logButtonPress,
-    parseYabobButtonId
+    parseYabobComponentId
 } from '../utils/util-functions.js';
 import {
     DefaultButtonCallback,
@@ -119,7 +119,7 @@ const updateParentInteractionButtons = [
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
-    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const yabobButtonId = parseYabobComponentId(interaction.customId);
     const buttonName = yabobButtonId.name;
     return (
         buttonName in queueButtonMethodMap ||
@@ -136,7 +136,7 @@ function builtInButtonHandlerCanHandle(
  * @returns True if the interaction can be handled by this handler.
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
-    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const yabobButtonId = parseYabobComponentId(interaction.customId);
     const buttonName = yabobButtonId.name;
     return buttonName in dmButtonMethodMap;
 }
@@ -154,44 +154,29 @@ async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
-    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const yabobButtonId = parseYabobComponentId(interaction.customId);
     const buttonName = yabobButtonId.name;
     const buttonType = yabobButtonId.type;
     const server = isServerInteraction(interaction);
-
     const queueName =
         (await server.getQueueChannels()).find(
             queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
         )?.queueName ?? '';
-
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
-
     logButtonPress(interaction, buttonName, queueName);
-
     if (buttonName in showModalOnlyButtons) {
         await showModalOnlyButtons[buttonName]?.(interaction);
         return;
     }
-
     if (!updateParentInteraction) {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                )
-            });
-        } else {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-        }
+        const progressMsg = SimpleEmbed(
+            `Processing button \`${interaction.component.label ?? buttonName}` +
+                (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+            EmbedColor.Neutral
+        );
+        await (interaction.deferred || interaction.replied
+            ? interaction.editReply(progressMsg)
+            : interaction.reply({ ...progressMsg, ephemeral: true }));
     }
     // if process is called then buttonMethod is definitely not null
     // this is checked in app.ts with `buttonHandler.canHandle`
@@ -200,11 +185,9 @@ async function processBuiltInButton(
         : defaultButtonMethodMap[buttonName]?.(interaction)
     )
         ?.then(async successMsg => {
-            if (updateParentInteraction) {
-                await interaction.update(successMsg);
-            } else {
-                await interaction.editReply(successMsg);
-            }
+            await (updateParentInteraction
+                ? interaction.update(successMsg)
+                : interaction.editReply(successMsg));
         })
         .catch(async err => {
             // Central error handling, reply to user with the error
@@ -229,28 +212,19 @@ async function processBuiltInButton(
  * @param interaction
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
-    const yabobButtonId = parseYabobButtonId(interaction.customId);
+    const yabobButtonId = parseYabobComponentId(interaction.customId);
     const buttonName = yabobButtonId.name;
     const dmChannelId = yabobButtonId.cid;
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({
-                ...SimpleEmbed(
-                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                    EmbedColor.Neutral
-                )
-            });
-        } else {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-        }
+        const progressMsg = SimpleEmbed(
+            `Processing button \`${buttonName}\`` + `In DM ${dmChannelId} ...`,
+            EmbedColor.Neutral
+        );
+        await (interaction.deferred || interaction.replied
+            ? interaction.editReply(progressMsg)
+            : interaction.reply({ ...progressMsg, ephemeral: true }));
     }
     logDMButtonPress(interaction, buttonName);
     // if process is called then buttonMethod is definitely not null
@@ -380,7 +354,7 @@ async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             interaction.component?.label ?? 'Return to Settings Main Menu',
@@ -402,7 +376,7 @@ async function createServerRoles(
     defaultStudentIsEveryone: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Create Roles ${interaction.component?.label ?? ''}`,
@@ -427,7 +401,7 @@ async function createServerRolesDM(
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Create Roles ${interaction.component?.label ?? ''}`,
@@ -445,7 +419,7 @@ async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set After Session Message`,
@@ -465,7 +439,7 @@ async function disableAfterSessionMessage(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setAfterSessionMessage('');
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Disable After Session Message`,
@@ -483,7 +457,7 @@ async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Set Queue Auto Clear`,
@@ -502,7 +476,7 @@ async function disableQueueAutoClear(
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     await server.setQueueAutoClear(0, 0, false);
-    await server.sendLogMessage(
+    server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
             `Disable Queue Auto Clear`,

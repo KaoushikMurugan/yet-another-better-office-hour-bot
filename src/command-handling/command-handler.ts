@@ -44,6 +44,10 @@ import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.j
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { serverSettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import {
+    createOfficeVoiceChannels,
+    updateCommandHelpChannels
+} from '../attending-server/guild-actions.js';
 
 /**
  * The map of available commands
@@ -462,7 +466,7 @@ async function cleanupHelpChannel(
         'cleanup_help_channel',
         'Bot Admin'
     );
-    await server.updateCommandHelpChannels();
+    await updateCommandHelpChannels(server.guild);
     return SuccessMessages.cleanedup.helpChannels;
 }
 
@@ -604,10 +608,14 @@ async function createOffices(
     const numOffices = interaction.options.getInteger('number_of_offices', true);
     if (!isValidCategoryName(categoryName)) {
         throw ExpectedParseErrors.invalidCategoryName(categoryName);
-    } else if (!isValidChannelName(officeName)) {
+    }
+    if (!isValidChannelName(officeName)) {
         throw ExpectedParseErrors.invalidChannelName(officeName);
     }
-    await server.createOffices(categoryName, officeName, numOffices);
+    await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
+        server.botAdminRoleID,
+        server.helperRoleID
+    ]);
     return SuccessMessages.createdOffices(numOffices);
 }
 
@@ -623,17 +631,22 @@ async function setRoles(
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'Bot Admin');
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
-    if (roleType === 'bot_admin') {
-        await server.setBotAdminRoleID(role.id);
-        return SuccessMessages.setBotAdminRole(role.id);
-    } else if (roleType === 'helper') {
-        await server.setHelperRoleID(role.id);
-        return SuccessMessages.setHelperRole(role.id);
-    } else if (roleType === 'student') {
-        await server.setStudentRoleID(role.id);
-        return SuccessMessages.setStudentRole(role.id);
-    } else {
-        throw new CommandParseError('Invalid role type.');
+    switch (roleType) {
+        case 'bot_admin': {
+            await server.setBotAdminRoleID(role.id);
+            return SuccessMessages.setBotAdminRole(role.id);
+        }
+        case 'helper': {
+            await server.setHelperRoleID(role.id);
+            return SuccessMessages.setHelperRole(role.id);
+        }
+        case 'student': {
+            await server.setStudentRoleID(role.id);
+            return SuccessMessages.setStudentRole(role.id);
+        }
+        default: {
+            throw new CommandParseError('Invalid role type.');
+        }
     }
 }
 
@@ -654,7 +667,6 @@ async function settingsMenu(
         'setup_server_config',
         'Bot Admin'
     );
-
     return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 

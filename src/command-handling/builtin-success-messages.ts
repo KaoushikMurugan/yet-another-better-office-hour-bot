@@ -30,7 +30,7 @@ export const SuccessMessages = {
             `Successfully left the notification group of \`${queueName}\`.`,
             EmbedColor.Success
         ),
-    inviteSent: (studentName = 'unkown student') =>
+    inviteSent: (studentName: string) =>
         SimpleEmbed(`An invite has been sent to ${studentName}.`, EmbedColor.Success),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',

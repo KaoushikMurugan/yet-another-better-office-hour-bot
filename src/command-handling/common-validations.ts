@@ -20,7 +20,7 @@ import {
     isCategoryChannel,
     isQueueTextChannel,
     isTextChannel,
-    parseYabobButtonId
+    parseYabobComponentId,
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
@@ -51,7 +51,7 @@ function isServerInteraction(
 function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
-    const yabobId = parseYabobButtonId(interaction.customId);
+    const yabobId = parseYabobComponentId(interaction.customId);
     if (!yabobId || yabobId.type !== 'dm' || yabobId.sid === undefined) {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
@@ -88,7 +88,7 @@ function isTriggeredByMemberWithRoles(
     let hasARequiredRole = false;
     const missingRoles: string[] = [];
 
-    for (const role of server.roles) {
+    for (const role of server.sortedHierarchyRoles) {
         hasARequiredRole = userRoleIDs.includes(role.id);
         // If reached the lowest required role, stop checking
         if (role.id === lowestRequiredRole || hasARequiredRole) break;

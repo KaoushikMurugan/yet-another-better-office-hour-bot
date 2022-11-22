@@ -18,7 +18,7 @@ export enum EmbedColor {
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
-    Aqua = 0x78dce8, // Aqua
+    Aqua = 0x78dce8,
     Purple = 0xa6a5c4,
     Pink = 0xffb7c5,
     Blue = 0x3498db
@@ -141,7 +141,7 @@ export function ErrorLogEmbed(
     interaction: Interaction
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -198,7 +198,7 @@ export function ErrorLogEmbed(
 export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     if (message.length <= 256) {
         return {
             embeds: [
@@ -244,7 +244,7 @@ export function ButtonLogEmbed(
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     return {
         embeds: [
             {
@@ -295,7 +295,7 @@ export function SelectMenuLogEmbed(
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     return {
         embeds: [
             {
@@ -345,7 +345,7 @@ export function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;
     if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) {
