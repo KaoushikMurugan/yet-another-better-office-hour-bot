@@ -70,6 +70,11 @@ type ServerBackup = {
      * The role id of the Student role
      */
     studentRoleId: string;
+
+    /**
+     * Whether to automcatically give new members the student role
+     */
+    autoGiveStudentRole: boolean;
 };
 
 const firebaseTimestampSchema = z.object({
@@ -108,7 +113,8 @@ const serverBackupSchema = z.object({
     seriousServer: z.boolean(),
     botAdminRoleId: z.string(),
     helperRoleId: z.string(),
-    studentRoleId: z.string()
+    studentRoleId: z.string(),
+    autoGiveStudentRole: z.boolean()
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };

@@ -95,7 +95,8 @@ class FirebaseServerBackupExtension
             seriousServer: server.queues[0]?.seriousModeEnabled ?? false,
             botAdminRoleId: server.botAdminRoleID ?? 'Not Set',
             helperRoleId: server.helperRoleID ?? 'Not Set',
-            studentRoleId: server.studentRoleID ?? 'Not Set'
+            studentRoleId: server.studentRoleID ?? 'Not Set',
+            autoGiveStudentRole: server.autoGiveStudentRole ?? false,
         };
         firebaseDB
             .collection('serverBackups')
