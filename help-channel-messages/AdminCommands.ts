@@ -403,6 +403,41 @@ const settingsHelp: HelpMessage = {
     }
 };
 
+const setAutoGiveStudentRoleHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_auto_give_student_role',
+        value: 'set_auto_give_student_role'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_auto_give_student_role`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Toggles whether or not the bot will automatically give the student role \
+                        to users who join the server.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_auto_give_student_role`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTileMessage,
     queueAddHelp,
@@ -415,7 +450,9 @@ const adminCommandHelpMessages: HelpMessage[] = [
     stopLoggingHelp,
     setQueueAutoClearHelp,
     seriousModeHelp
-    //settingsHelp - temporarily removed since it causes the /help command to fail generation as it get too many fields
+    // ! Temporarily removed since it causes the /help command to fail generation as it get too many fields
+    //settingsHelp,
+    //setAutoGiveStudentRoleHelp
 ];
 
 export { adminCommandHelpMessages };

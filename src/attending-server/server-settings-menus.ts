@@ -56,6 +56,15 @@ const serverSettingsMainMenuOptions: {
             value: 'logging-channel'
         },
         subMenu: loggingChannelConfigMenu
+    },
+    {
+        optionObj: {
+            emoji: '🎓',
+            label: 'Auto Give Student Role',
+            description: 'Configure the auto-giving of the student role',
+            value: 'auto-give-student-role'
+        },
+        subMenu: autoGiveStudentRoleConfigMenu
     }
 ];
 
@@ -145,7 +154,7 @@ function serverRolesConfigMenu(
                     ? '@deleted-role'
                     : `<@&${studentRole}>`
             }\n\n` +
-            `***Select an option below to change the configuration:***\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
             `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
             `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
             `**2** - Create brand new roles for the missing roles\n` +
@@ -162,8 +171,6 @@ function serverRolesConfigMenu(
         );
         return yabobButtonIdToString(newYabobButton);
     }
-
-    // ssrc = server_settings_roles_config_. shortened due to limited customId length
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
@@ -223,12 +230,10 @@ function afterSessionMessageConfigMenu(
                     ? '`Not Set`'
                     : server.afterSessionMessage
             }\n\n` +
-            `***Select an option below to change the configuration:***\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
             `**⚙️** - Set the after session message\n` +
             `**🔒** - Disable the after session message. The bot will no longer sent the message to students after they finish their session\n`
     );
-
-    // asmc = after_session_message_config_. shortened due to limited customId length
 
     function composeASMCButtonId(optionName: string): string {
         const newYabobButton = generateComponentId(
@@ -281,12 +286,10 @@ function queueAutoClearConfigMenu(
         server.queueAutoClearTimeout === undefined
             ? '**\nThe queue auto clear feature is currently disabled. The queue will not be cleared automatically.**\n\n'
             : `**\nQueues will automatically be cleared after __${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}__ since the last time they were closed**\n\n`) +
-            `***Select an option below to change the configuration:***\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
             `**⚙️** - Set the queue auto clear time\n` +
             `**🔒** - Disable the queue auto clear feature.\n`
     );
-
-    // qacc = queue_auto_clear_config_. shortened due to limited customId length
 
     function composeQACCButtonId(optionName: string): string {
         const newYabobButton = generateComponentId(
@@ -340,12 +343,10 @@ function loggingChannelConfigMenu(
                 ? '`Not Set`'
                 : server.loggingChannel.toString()
         }\n\n` +
-            `***Select an option below to change the configuration:***\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
             `**The \`/set_logging_channel\` command** - Enter the channel you want YABOB to log to\n` +
             `**🔒** - Disable the logging feature\n`
     );
-
-    // lcc = logging_channel_config_. shortened due to limited customId length
 
     function composeLCCButtonId(optionName: string): string {
         const newYabobButton = generateComponentId(
@@ -366,6 +367,56 @@ function loggingChannelConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
+
+    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        composeReturnToMainMenuButton()
+    );
+    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+}
+
+function autoGiveStudentRoleConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean
+): YabobEmbed {
+    const embed = SimpleEmbed(
+        `🎓 Auto Give Student Role Configuration for ${server.guild.name} 🎓`,
+        EmbedColor.Aqua,
+        `\n${
+            server.autoGiveStudentRole
+                ? 'The auto give student role feature is currently **__enabled__**'
+                : 'The auto give student role feature is currently **__disabled__**'
+        }\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
+            `**🔓** - Enable the auto give student role feature\n` +
+            `**🔒** - Disable the auto give student role feature\n`
+    );
+
+    function composeAGSRCButtonId(optionName: string): string {
+        const newYabobButton = generateComponentId(
+            isDm ? 'dm' : 'other',
+            `auto_give_student_role_config_${optionName}`,
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
+        );
+        return yabobButtonIdToString(newYabobButton);
+    }
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeAGSRCButtonId('1'))
+                .setEmoji('🔓')
+                .setLabel('Enable')
+                .setStyle(ButtonStyle.Secondary)
+        )
+        .addComponents(
+            new ButtonBuilder()
+                .setCustomId(composeAGSRCButtonId('2'))
+                .setEmoji('🔒')
+                .setLabel('Disable')
+                .setStyle(ButtonStyle.Secondary)
+        );
 
     const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         composeReturnToMainMenuButton()
@@ -396,5 +447,6 @@ export {
     afterSessionMessageConfigMenu,
     queueAutoClearConfigMenu,
     loggingChannelConfigMenu,
+    autoGiveStudentRoleConfigMenu,
     composeReturnToMainMenuButton
 };

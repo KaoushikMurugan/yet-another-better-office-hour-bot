@@ -671,6 +671,11 @@ async function settingsMenu(
     return serverSettingsMainMenu(server, interaction.channelId, false);
 }
 
+/**
+ * The `/auto_give_role` commandf
+ * @param interaction
+ * @returns
+ */
 async function setAutoGiveStudentRole(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {

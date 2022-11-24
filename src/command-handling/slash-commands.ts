@@ -17,7 +17,7 @@ import { adminCommandHelpMessages } from '../../help-channel-messages/AdminComma
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
 
-// /queue
+// /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
     .setName('queue')
     .setDescription('Add or remove queue channels to the server (admin only)')
@@ -270,7 +270,7 @@ const settingsCommand = new SlashCommandBuilder()
     .setName('settings')
     .setDescription('Sets up the server config for the bot');
 
-// /auto_give_student_role
+// /auto_give_student_role {on|off}
 const autoGiveStudentRoleCommand = new SlashCommandBuilder()
     .setName('auto_give_student_role')
     .setDescription('Automatically gives the student role to new members')

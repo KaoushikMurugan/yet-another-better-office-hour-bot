@@ -62,7 +62,7 @@ function calendarSettingsConfigMenu(
             `\n\n` +
             `**Office Hours Calendar Embed URL:** ${state.publicCalendarEmbedUrl}\n\n` +
             `*This is the url that will be linked in the upcoming hours embed.*\n\n` +
-            `***Select an option below to change the configuration:***\n\n` +
+            `***Select an option from below to change the configuration:***\n\n` +
             `**Note:** If you change the calendar, the embed url will be reset to the default embed url for the new calendar.\n\n` +
             `**🗓** - Change the Calendar Config\n` +
             `**🔗** - Set the Calendar and Embed URL back to the default\n`

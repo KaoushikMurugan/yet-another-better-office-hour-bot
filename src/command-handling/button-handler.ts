@@ -26,6 +26,7 @@ import {
 import { SuccessMessages } from './builtin-success-messages.js';
 import {
     afterSessionMessageConfigMenu,
+    autoGiveStudentRoleConfigMenu,
     loggingChannelConfigMenu,
     queueAutoClearConfigMenu,
     serverRolesConfigMenu,
@@ -66,7 +67,11 @@ const defaultButtonMethodMap: {
     server_role_config_2a: interaction => createServerRoles(interaction, true, true),
     after_session_message_config_2: disableAfterSessionMessage,
     queue_auto_clear_config_2: disableQueueAutoClear,
-    logging_channel_config_2: disableLoggingChannel
+    logging_channel_config_2: disableLoggingChannel,
+    auto_give_student_role_config_1: interaction =>
+        toggleAutoGiveStudentRole(interaction, true),
+    auto_give_student_role_config_2: interaction =>
+        toggleAutoGiveStudentRole(interaction, false)
 };
 
 /**
@@ -106,7 +111,9 @@ const updateParentInteractionButtons = [
     'after_session_message_config_2',
     'queue_auto_clear_config_1',
     'queue_auto_clear_config_2',
-    'logging_channel_config_2'
+    'logging_channel_config_2',
+    'auto_give_student_role_config_1',
+    'auto_give_student_role_config_2'
 ];
 
 /**
@@ -494,9 +501,31 @@ async function disableLoggingChannel(
     interaction: ButtonInteraction<'cached'>
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    await server.setLoggingChannel(undefined);
     // No logging call here since we're disabling the logging channel
+    await server.setLoggingChannel(undefined);
     return loggingChannelConfigMenu(server, interaction.channelId, false);
+}
+
+/**
+ * Toggle whether to give students the student role when they join the server
+ * @param interaction
+ * @param autoGiveStudentRole
+ * @returns
+ */
+async function toggleAutoGiveStudentRole(
+    interaction: ButtonInteraction<'cached'>,
+    autoGiveStudentRole: boolean
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    await server.setAutoGiveStudentRole(autoGiveStudentRole);
+    server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Toggle Auto Give Student Role`,
+            interaction.channel as TextBasedChannel
+        )
+    );
+    return autoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
 }
 
 /**

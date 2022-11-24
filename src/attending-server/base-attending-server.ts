@@ -68,7 +68,7 @@ class AttendingServerV2 {
     private queueChannelsCache: QueueChannel[] = [];
     /** unique active helpers, key is member.id */
     private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
-
+    /** automatically give new members the student role */
     private _autoGiveStudentRole = false;
 
     // Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
@@ -187,6 +187,10 @@ class AttendingServerV2 {
         this._autoGiveStudentRole = backup.autoGiveStudentRole;
     }
 
+    /**
+     * Sets the internal boolean value for autoGiveStudentRole
+     * @param autoGiveStudentRole
+     */
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this._autoGiveStudentRole = autoGiveStudentRole;
         await Promise.all(
