@@ -30,7 +30,7 @@ export const SuccessMessages = {
             `Successfully left the notification group of \`${queueName}\`.`,
             EmbedColor.Success
         ),
-    inviteSent: (studentName = 'unkown student') =>
+    inviteSent: (studentName: string) =>
         SimpleEmbed(`An invite has been sent to ${studentName}.`, EmbedColor.Success),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',
@@ -91,5 +91,31 @@ export const SuccessMessages = {
     turnedOnSeriousMode: SimpleEmbed(`Serious mode has been turned on.`),
     turnedOffSeriousMode: SimpleEmbed(
         `Serious mode has been turned off.\nThere's no need to be so serious!`
+    ),
+    createdOffices: (numOffices: number) =>
+        SimpleEmbed(
+            `Successfully created ${numOffices} office${numOffices === 1 ? '' : 's'}.`,
+            EmbedColor.Success
+        ),
+    setBotAdminRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the bot admin role to <@${roleID}>.`,
+            EmbedColor.Success
+        ),
+    setHelperRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the helper role to <@${roleID}>.`,
+            EmbedColor.Success
+        ),
+    setStudentRole: (roleID: string) =>
+        SimpleEmbed(
+            `Successfully set the student role to <@${roleID}>.`,
+            EmbedColor.Success
+        ),
+    turnedOnAutoGiveStudentRole: SimpleEmbed(
+        `Successfully turned on auto give student role.`
+    ),
+    turnedOffAutoGiveStudentRole: SimpleEmbed(
+        `Successfully turned off auto give student role.`
     )
 } as const;

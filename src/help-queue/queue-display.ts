@@ -14,10 +14,9 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
+import { generateComponentId, yabobButtonIdToString } from '../utils/util-functions.js';
 
-/**
- * Wrapper for discord embeds to be sent to the queue
- */
+/** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
     /** Actual embed content */
     contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
@@ -114,7 +113,9 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('join ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId('join', this.queueChannel.channelObj.id)
+                    )
                     .setEmoji('✅')
                     .setDisabled(!viewModel.isOpen)
                     .setLabel('Join')
@@ -122,7 +123,9 @@ class QueueDisplayV2 {
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('leave ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId('leave', this.queueChannel.channelObj.id)
+                    )
                     .setEmoji('❎')
                     .setLabel('Leave')
                     .setStyle(ButtonStyle.Danger)
@@ -130,14 +133,18 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>()
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('notif ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId('notif', this.queueChannel.channelObj.id)
+                    )
                     .setEmoji('🔔')
                     .setLabel('Notify When Open')
                     .setStyle(ButtonStyle.Primary)
             )
             .addComponents(
                 new ButtonBuilder()
-                    .setCustomId('removeN ' + viewModel.queueName)
+                    .setCustomId(
+                        composeQueueButtonId('removeN', this.queueChannel.channelObj.id)
+                    )
                     .setEmoji('🔕')
                     .setLabel('Remove Notifications')
                     .setStyle(ButtonStyle.Primary)
@@ -211,16 +218,16 @@ class QueueDisplayV2 {
             return;
         }
         const queueMessages = this.queueChannel.channelObj.messages.cache;
-        const [YABOBMessages, nonYABOBMessages] = queueMessages.partition(
+        const [yabobMessages, nonYabobMessages] = queueMessages.partition(
             msg => msg.author.id === this.user.id
         );
-        const existingEmbeds = YABOBMessages.filter(msg =>
+        const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );
         // all required messages exist and there are no other messages
         const safeToEdit =
             existingEmbeds.size === this.queueChannelEmbeds.size &&
-            nonYABOBMessages.size === 0;
+            nonYabobMessages.size === 0;
         if (!safeToEdit || force) {
             const allMessages = await this.queueChannel.channelObj.messages.fetch();
             await Promise.all(allMessages.map(msg => msg.delete()));
@@ -286,6 +293,11 @@ class QueueDisplayV2 {
         }
         return '```' + table.toString() + '```';
     }
+}
+
+function composeQueueButtonId(buttonName: string, channelId: string): string {
+    const yabobButtonId = generateComponentId('queue', buttonName, undefined, channelId);
+    return yabobButtonIdToString(yabobButtonId);
 }
 
 export { QueueDisplayV2 };

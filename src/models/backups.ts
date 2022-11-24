@@ -52,9 +52,29 @@ type ServerBackup = {
      */
     hoursUntilAutoClear: AutoClearTimeout;
     /**
-     * seriousness of the server
+     * Seriousness of the server
      */
     seriousServer: boolean;
+
+    /**
+     * The role id of the Bot Admin role
+     */
+    botAdminRoleId: string;
+
+    /**
+     * The role id of the Helper role
+     */
+    helperRoleId: string;
+
+    /**
+     * The role id of the Student role
+     */
+    studentRoleId: string;
+
+    /**
+     * Whether to automcatically give new members the student role
+     */
+    autoGiveStudentRole: boolean;
 };
 
 const firebaseTimestampSchema = z.object({
@@ -90,7 +110,11 @@ const serverBackupSchema = z.object({
         z.literal('AUTO_CLEAR_DISABLED')
     ]),
     queues: z.array(queueBackupSchema),
-    seriousServer: z.boolean()
+    seriousServer: z.boolean(),
+    botAdminRoleId: z.string(),
+    helperRoleId: z.string(),
+    studentRoleId: z.string(),
+    autoGiveStudentRole: z.boolean()
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };

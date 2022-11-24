@@ -13,6 +13,10 @@ import {
     UpComingSessionViewModel
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
+import {
+    generateComponentId,
+    yabobButtonIdToString
+} from '../../utils/util-functions.js';
 
 /**
  * Calendar Extension for individual queues
@@ -138,7 +142,16 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             });
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
-                .setCustomId('refresh ' + queueName)
+                .setCustomId(
+                    yabobButtonIdToString(
+                        generateComponentId(
+                            'queue',
+                            'refresh',
+                            undefined,
+                            this.queueChannel.channelObj.id
+                        )
+                    )
+                )
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')
                 .setStyle(ButtonStyle.Primary)

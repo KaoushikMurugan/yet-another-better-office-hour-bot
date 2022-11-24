@@ -230,7 +230,7 @@ const setAfterSessionsMsgHelp: HelpMessage = {
     }
 };
 
-const setLoggingChannelCommandHelp: HelpMessage = {
+const setLoggingChannelHelp: HelpMessage = {
     nameValuePair: {
         name: 'set_logging_channel',
         value: 'set_logging_channel'
@@ -264,7 +264,7 @@ const setLoggingChannelCommandHelp: HelpMessage = {
     }
 };
 
-const stopLoggingCommandHelp: HelpMessage = {
+const stopLoggingHelp: HelpMessage = {
     nameValuePair: {
         name: 'stop_logging',
         value: 'stop_logging'
@@ -333,7 +333,7 @@ const setQueueAutoClearHelp: HelpMessage = {
     }
 };
 
-const seriousModeCommandHelp: HelpMessage = {
+const seriousModeHelp: HelpMessage = {
     nameValuePair: {
         name: 'serious_mode',
         value: 'serious_mode'
@@ -368,6 +368,76 @@ const seriousModeCommandHelp: HelpMessage = {
     }
 };
 
+const settingsHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'settings',
+        value: 'settings'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/settings`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Displays a server settings menu. This menu allows you to change \
+                        the a variety of settings of the bot for your server.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/settings`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const setAutoGiveStudentRoleHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_auto_give_student_role',
+        value: 'set_auto_give_student_role'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_auto_give_student_role`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Toggles whether or not the bot will automatically give the student role \
+                        to users who join the server.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_auto_give_student_role`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTileMessage,
     queueAddHelp,
@@ -376,10 +446,13 @@ const adminCommandHelpMessages: HelpMessage[] = [
     cleanupHelpChannelHelp,
     clearAllHelp,
     setAfterSessionsMsgHelp,
-    setLoggingChannelCommandHelp,
-    stopLoggingCommandHelp,
+    setLoggingChannelHelp,
+    stopLoggingHelp,
     setQueueAutoClearHelp,
-    seriousModeCommandHelp
+    seriousModeHelp
+    // ! Temporarily removed since it causes the /help command to fail generation as it get too many fields
+    //settingsHelp,
+    //setAutoGiveStudentRoleHelp
 ];
 
 export { adminCommandHelpMessages };

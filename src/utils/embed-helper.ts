@@ -18,7 +18,7 @@ export enum EmbedColor {
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
-    Aqua = 0x78dce8, // Aqua
+    Aqua = 0x78dce8,
     Purple = 0xa6a5c4,
     Pink = 0xffb7c5,
     Blue = 0x3498db
@@ -77,9 +77,13 @@ export function SimpleEmbed(
 /**
  * Creates an embed that displays an error message
  * @param err The error to display in the embed
+ * @param pingForHelp role id of the person to ping for help
  * @returns A message object that only contains the requested embed
  */
-export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
+export function ErrorEmbed(
+    err: Error,
+    pingForHelp?: string
+): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
         client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;
@@ -111,7 +115,10 @@ export function ErrorEmbed(err: Error): Pick<BaseMessageOptions, 'embeds'> {
                     (err.message.length > 256 ? err.message : '') +
                     `If you need help or think this is a mistake, ` +
                     `please post a screenshot of this message in the #help channel ` +
-                    `(or equivalent) and ping @Bot Admin.`
+                    `(or equivalent) and ping ` +
+                    (pingForHelp === undefined
+                        ? `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`
+                        : `<@&${pingForHelp}>.`)
                 ).slice(0, 1024),
                 fields: embedFields,
                 author: {
@@ -134,7 +141,7 @@ export function ErrorLogEmbed(
     interaction: Interaction
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -191,7 +198,7 @@ export function ErrorLogEmbed(
 export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     if (message.length <= 256) {
         return {
             embeds: [
@@ -227,17 +234,17 @@ export function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embed
 /**
  * Creates a log embed for a button interaction
  * @param user The user who pressed the button
- * @param interactionName The name of the button interaction
+ * @param buttonName The name of the button interaction
  * @param channel The channel the button was pressed in
  * @returns A message object that only contains the log embed
  */
 export function ButtonLogEmbed(
     user: User,
-    interactionName: string,
+    buttonName: string,
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     return {
         embeds: [
             {
@@ -255,13 +262,69 @@ export function ButtonLogEmbed(
                     },
                     {
                         name: 'Button Name',
-                        value: interactionName,
+                        value: buttonName,
                         inline: true
                     },
                     {
                         name: 'Channel',
                         value: channel.toString(),
                         inline: true
+                    }
+                ],
+                footer: {
+                    text: 'YABOB',
+                    icon_url: YABOB_PFP_URL
+                }
+            }
+        ]
+    };
+}
+
+/**
+ * Creates a log embed for a select menu interaction
+ * @param user The user who selected an option
+ * @param selectMenuName The name of the select menu interaction
+ * @param optionSelected The option the user selected
+ * @param channel The channel the select menu was used in
+ * @returns A message object that only contains the log embed
+ */
+export function SelectMenuLogEmbed(
+    user: User,
+    selectMenuName: string,
+    optionSelected: string[],
+    channel: TextBasedChannel
+): Pick<BaseMessageOptions, 'embeds'> {
+    const YABOB_PFP_URL =
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    return {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: `Select Menu option was selected at <t:${new Date()
+                    .getTime()
+                    .toString()
+                    .slice(0, -3)}:F>`,
+                timestamp: new Date().toISOString(),
+                fields: [
+                    {
+                        name: 'User',
+                        value: user.toString(),
+                        inline: true
+                    },
+                    {
+                        name: 'Select Menu Name',
+                        value: selectMenuName,
+                        inline: true
+                    },
+                    {
+                        name: 'Option(s) Selected',
+                        value: optionSelected.join(', '),
+                        inline: true
+                    },
+                    {
+                        name: 'Channel',
+                        value: channel.toString(),
+                        inline: false
                     }
                 ],
                 footer: {
@@ -282,7 +345,7 @@ export function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
-        client.user?.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;
     if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) {

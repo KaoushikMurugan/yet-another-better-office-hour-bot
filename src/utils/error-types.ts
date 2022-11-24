@@ -67,6 +67,9 @@ class ExtensionSetupError extends Error {
     }
 }
 
+/**
+ * Error thrown during periodic updates
+ */
 class PeriodicUpdateError extends Error {
     constructor(message: string, public level: 'Server' | 'Queue') {
         super(message);

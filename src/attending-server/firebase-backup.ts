@@ -21,7 +21,7 @@ class FirebaseServerBackupExtension
     constructor(private readonly guild: Guild) {
         super();
         console.log(
-            `[${blue('Firebase Backup')}] ` + `successfully loaded for '${guild.name}'!`
+            `[${blue('Firebase Backup')}] successfully loaded for '${guild.name}'!`
         );
     }
 
@@ -40,25 +40,22 @@ class FirebaseServerBackupExtension
         const unpack = serverBackupSchema.safeParse(backupDocument.data());
         if (!unpack.success) {
             console.warn(
-                `External backups were found for ${this.guild.name} but contains invalid data. Creating new instance.`
+                `External backups were found for ${this.guild.name} but contains invalid data. ` +
+                    `Creating new instance.`
             );
             return undefined;
         }
         const backupData: ServerBackup = {
             ...unpack.data,
-            queues: unpack.data.queues.map(queue => {
-                return {
-                    ...queue,
-                    studentsInQueue: queue.studentsInQueue
-                        .map(student => {
-                            return {
-                                ...student,
-                                waitStart: new Date(student.waitStart._seconds * 1000)
-                            };
-                        })
-                        .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
-                };
-            }),
+            queues: unpack.data.queues.map(queue => ({
+                ...queue,
+                studentsInQueue: queue.studentsInQueue
+                    .map(student => ({
+                        ...student,
+                        waitStart: new Date(student.waitStart._seconds * 1000)
+                    }))
+                    .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
+            })),
             timeStamp: new Date(unpack.data.timeStamp._seconds * 1000)
         };
         return backupData;
@@ -78,19 +75,15 @@ class FirebaseServerBackupExtension
      * @noexcept error is logged to the console
      */
     private backupServerToFirebase(server: FrozenServer): void {
-        const queueBackups: QueueBackup[] = server.queues.map(queue => {
-            return {
-                studentsInQueue: queue.students.map(student => {
-                    return {
-                        waitStart: student.waitStart,
-                        displayName: student.member.displayName,
-                        memberId: student.member.id
-                    };
-                }),
-                name: queue.queueName,
-                parentCategoryId: queue.parentCategoryId
-            };
-        });
+        const queueBackups: QueueBackup[] = server.queues.map(queue => ({
+            studentsInQueue: queue.students.map(student => ({
+                waitStart: student.waitStart,
+                displayName: student.member.displayName,
+                memberId: student.member.id
+            })),
+            name: queue.queueName,
+            parentCategoryId: queue.parentCategoryId
+        }));
         const serverBackup: ServerBackup = {
             serverName: this.guild.name,
             queues: queueBackups,
@@ -99,7 +92,11 @@ class FirebaseServerBackupExtension
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
                 server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
-            seriousServer: server.queues[0]?.seriousModeEnabled ?? false
+            seriousServer: server.queues[0]?.seriousModeEnabled ?? false,
+            botAdminRoleId: server.botAdminRoleID ?? 'Not Set',
+            helperRoleId: server.helperRoleID ?? 'Not Set',
+            studentRoleId: server.studentRoleID ?? 'Not Set',
+            autoGiveStudentRole: server.autoGiveStudentRole ?? false
         };
         firebaseDB
             .collection('serverBackups')

@@ -8,13 +8,11 @@ import { getInteractionName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
-        requiredRoles: string[],
+        lowestRequiredRoleID: string,
         commandName: string
     ): CommandParseError =>
         new CommandParseError(
-            `You need to have: [${requiredRoles.join(
-                ' or '
-            )}] to use \`/${commandName}\`.`
+            `You need to have the role <@&${lowestRequiredRoleID}> or higher to use the \`${commandName}\` command.`
         ),
     invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
@@ -61,12 +59,25 @@ const ExpectedParseErrors = {
                   'I can only accept interactions in correctly initialized servers. ' +
                       `Are you sure ${guildName} has a initialized YABOB?`
               ),
+    nonYabobInteraction: new CommandParseError(
+        'This interaction is not a YABOB interaction.'
+    ),
     badAutoClearValues: new CommandParseError(
         'Please enter valid integers for both `hours` and `minutes`.'
     ),
     messageIsTooLong: new CommandParseError(
         'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
-    )
+    ),
+    invalidChannelName: (channelName: string) =>
+        new CommandParseError(
+            `${channelName} is an invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+only contains alphanumeric characters, hyphens, and underscores.`
+        ),
+    invalidCategoryName: (categoryName: string) =>
+        new CommandParseError(
+            `${categoryName} is an invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
+includes atleast one non-whitespace character.`
+        )
 } as const;
 
 const UnexpectedParseErrors = {
@@ -77,11 +88,12 @@ const UnexpectedParseErrors = {
             )}\` but couldn't reply back to you.`,
             EmbedColor.Error
         ),
-    unexpectedError: (interaction: Interaction<'cached'>, err: Error) =>
+    unexpectedError: (interaction: Interaction, err: Error) =>
         SimpleEmbed(
             `An unexpected error happened when processing your interaction \`${getInteractionName(
                 interaction
-            )}\`. ` + 'Please show this message to @Bot Admin. ',
+            )}\`. ` +
+                'Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).',
             EmbedColor.Error,
             `${err.name}, ${err.message}`
         )

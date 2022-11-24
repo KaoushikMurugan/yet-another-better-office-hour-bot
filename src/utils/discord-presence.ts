@@ -90,7 +90,7 @@ const helloWorldPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: 'cout << "Hello World";' }, // c++
     { type: ActivityType.Playing,   name: 'console.log("Hello World");' }, // javascript
     { type: ActivityType.Playing,   name: 'fmt.Println("Hello World");' }, // go
-    { type: ActivityType.Playing,   name: 'println!("Hello World"); // rust' }, // rust
+    { type: ActivityType.Playing,   name: 'println!("Hello World");' }, // rust
     { type: ActivityType.Playing,   name: 'System.Console.WriteLine("Hello World");' }, // C#
     { type: ActivityType.Playing,   name: 'println("Hello World")' }, // swift
     { type: ActivityType.Playing,   name: "writeln ('Hello, world.');" }, // pascal
@@ -110,12 +110,10 @@ const helloWorldPresenceList: StaticBotPresence[] = [
  */
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
-    () => {
-        return {
-            type: ActivityType.Watching,
-            name: `${client.guilds.cache.size} servers`
-        };
-    }
+    () => ({
+        type: ActivityType.Watching,
+        name: `${client.guilds.cache.size} servers`
+    })
 ];
 
 let previousPresence: StaticBotPresence | undefined = undefined;

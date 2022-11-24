@@ -1,19 +1,33 @@
-import { ColorResolvable } from 'discord.js';
+import { Colors } from 'discord.js';
+import { OptionalRoleId } from '../utils/type-aliases.js';
 
-export const hierarchyRoleConfigs = [
-    {
+type HierarchyRoles = {
+    botAdmin: OptionalRoleId;
+    staff: OptionalRoleId;
+    student: OptionalRoleId;
+};
+/**
+ * Used to store the hierarchy role configurations
+ */
+const hierarchyRoleConfigs = {
+    botAdmin: {
+        key: 'botAdmin',
         name: 'Bot Admin',
-        color: 'LUMINOUS_VIVID_PINK' as ColorResolvable,
+        color: Colors.LuminousVividPink,
         hoist: true
     },
-    {
+    staff: {
+        key: 'staff',
         name: 'Staff',
-        color: 'RED' as ColorResolvable,
+        color: Colors.Red,
         hoist: true
     },
-    {
+    student: {
+        key: 'student',
         name: 'Student',
-        color: 'GREEN' as ColorResolvable, // casting is safe here
+        color: Colors.Green,
         hoist: true
     }
-];
+} as const;
+
+export { hierarchyRoleConfigs, HierarchyRoles };

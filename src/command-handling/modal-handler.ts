@@ -1,9 +1,17 @@
 /** @module BuiltInHandlers */
 
 import { ModalSubmitInteraction } from 'discord.js';
+import {
+    afterSessionMessageConfigMenu,
+    queueAutoClearConfigMenu
+} from '../attending-server/server-settings-menus.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
-import { ModalSubmitCallback, YabobEmbed } from '../utils/type-aliases.js';
-import { logModalSubmit } from '../utils/util-functions.js';
+import {
+    DMModalSubmitCallback,
+    ModalSubmitCallback,
+    YabobEmbed
+} from '../utils/type-aliases.js';
+import { logModalSubmit, parseYabobComponentId } from '../utils/util-functions.js';
 import { SuccessMessages } from './builtin-success-messages.js';
 import { isServerInteraction } from './common-validations.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
@@ -12,20 +20,58 @@ import { ExpectedParseErrors } from './expected-interaction-errors.js';
  * Built in handler for modal submit
  * @category Handler Class
  */
+
+/**
+ * Map of names of modal that could be sent in servers to their respective handlers
+ */
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    after_session_message_modal: setAfterSessionMessage,
-    queue_auto_clear_modal: setQueueAutoClear
+    after_session_message_modal: interaction =>
+        setAfterSessionMessage(interaction, false),
+    after_session_message_modal_mv: interaction =>
+        setAfterSessionMessage(interaction, true),
+    queue_auto_clear_modal: interaction => setQueueAutoClear(interaction, false),
+    queue_auto_clear_modal_mv: interaction => setQueueAutoClear(interaction, true)
 } as const;
 
 /**
+ * Map of names of modal that could be sent in dms to their respective handlers
+ */
+const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
+    // no modals in dms implemented yet
+} as const;
+
+/**
+ * List of modal names that should update the parent interaction
+ */
+const updateParentInteractionModals = [
+    'after_session_message_modal_mv',
+    'queue_auto_clear_modal_mv'
+];
+
+/**
  * Check if the modal interaction can be handled by this (in-built) handler
+ * @remark This is for modals that are prompted in servers
  * @param interaction
  * @returns
  */
-function builtInModalHandlercanHandle(
+function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
-    return interaction.customId in modalMethodMap;
+    const modalId = parseYabobComponentId(interaction.customId);
+    const modalName = modalId.name;
+    return modalName in modalMethodMap;
+}
+
+/**
+ * Check if the modal interaction can be handled by this (in-built) handler
+ * @remark This is for modals that are prompted in dms
+ * @param interaction
+ * @returns
+ */
+function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
+    const modalId = parseYabobComponentId(interaction.customId);
+    const modalName = modalId.name;
+    return modalName in dmModalMethodMap;
 }
 
 /**
@@ -33,13 +79,57 @@ function builtInModalHandlercanHandle(
  * - Calls the appropriate handler based on the modal name
  * - Logs the interaction
  * - Sends the appropriate response
+ * @remark This is for modals that are prompted in servers.
+ * For the version that handles modals in dms, see {@link processBuiltInDMModalSubmit}
  * @param interaction
  */
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalMethod = modalMethodMap[interaction.customId];
-    logModalSubmit(interaction);
+    const modalId = parseYabobComponentId(interaction.customId);
+    const modalName = modalId.name;
+    const modalMethod = modalMethodMap[modalName];
+    logModalSubmit(interaction, modalName);
+    // if process is called then modalMethod is definitely not null
+    // this is checked in app.ts with `modalHandler.canHandle`
+    await modalMethod?.(interaction)
+        .then(async successMsg => {
+            await (updateParentInteractionModals.includes(modalName) &&
+            interaction.isFromMessage()
+                ? interaction.update(successMsg)
+                : interaction.reply({
+                      ...successMsg,
+                      ephemeral: true
+                  }));
+        })
+        .catch(async err => {
+            const server = isServerInteraction(interaction);
+            await Promise.all([
+                interaction.replied
+                    ? interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+                    : interaction.reply({
+                          ...ErrorEmbed(err, server.botAdminRoleID),
+                          ephemeral: true
+                      }),
+                server?.sendLogMessage(ErrorLogEmbed(err, interaction))
+            ]);
+        });
+}
+
+/**
+ * Handles all built in modal submit interactions
+ * - Calls the appropriate handler based on the modal name
+ * - Sends the appropriate response
+ * @remark This is for modals that are prompted in dms.
+ * For the version that handles modals in servers, see {@link processBuiltInModalSubmit}
+ * @param interaction
+ */
+async function processBuiltInDMModalSubmit(
+    interaction: ModalSubmitInteraction
+): Promise<void> {
+    const modalId = parseYabobComponentId(interaction.customId);
+    const modalName = modalId.name;
+    const modalMethod = dmModalMethodMap[modalName];
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
     await modalMethod?.(interaction)
@@ -52,13 +142,12 @@ async function processBuiltInModalSubmit(
             });
         })
         .catch(async err => {
-            const server = isServerInteraction(interaction);
-            await Promise.all([
-                interaction.replied
-                    ? interaction.editReply(ErrorEmbed(err))
-                    : interaction.reply({ ...ErrorEmbed(err), ephemeral: true }),
-                server?.sendLogMessage(ErrorLogEmbed(err, interaction))
-            ]);
+            await (interaction.replied
+                ? interaction.editReply(ErrorEmbed(err))
+                : interaction.reply({
+                      ...ErrorEmbed(err),
+                      ephemeral: true
+                  }));
         });
 }
 
@@ -68,14 +157,15 @@ async function processBuiltInModalSubmit(
  * @returns
  */
 async function setAfterSessionMessage(
-    interaction: ModalSubmitInteraction<'cached'>
+    interaction: ModalSubmitInteraction<'cached'>,
+    useMenu: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
-    const newAfterSessionMessage =
-        interaction.fields.getTextInputValue('after_session_msg');
-    await server.setAfterSessionMessage(newAfterSessionMessage);
     const message = interaction.fields.getTextInputValue('after_session_msg');
-    return SuccessMessages.updatedAfterSessionMessage(message);
+    await server.setAfterSessionMessage(message);
+    return useMenu
+        ? afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
+        : SuccessMessages.updatedAfterSessionMessage(message);
 }
 
 /**
@@ -84,7 +174,8 @@ async function setAfterSessionMessage(
  * @returns
  */
 async function setQueueAutoClear(
-    interaction: ModalSubmitInteraction<'cached'>
+    interaction: ModalSubmitInteraction<'cached'>,
+    useMenu: boolean
 ): Promise<YabobEmbed> {
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
@@ -94,15 +185,21 @@ async function setQueueAutoClear(
     if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
-    if (hours === 0 && minutes === 0) {
-        await server.setQueueAutoClear(hours, minutes, false);
-        return SuccessMessages.queueAutoClear.disabled;
-    }
-    await server.setQueueAutoClear(hours, minutes, true);
-    return SuccessMessages.queueAutoClear.enabled(hours, minutes);
+    const enable = !(hours === 0 && minutes === 0);
+    await server.setQueueAutoClear(hours, minutes, enable);
+    return useMenu
+        ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+        : enable
+        ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
+        : SuccessMessages.queueAutoClear.disabled;
 }
 
 /**
  * Only export the handler and the 'canHandle' check
  */
-export { builtInModalHandlercanHandle, processBuiltInModalSubmit };
+export {
+    builtInModalHandlerCanHandle,
+    builtInDMModalHandlerCanHandle,
+    processBuiltInModalSubmit,
+    processBuiltInDMModalSubmit
+};

@@ -15,6 +15,8 @@ const ExpectedServerErrors = {
             `In the meantime, you can help students by directly messaging them.`
     ),
     queueAlreadyExists: (name: string) => new ServerError(`Queue ${name} already exists`),
+    categoryAlreadyExists: (name: string) =>
+        new ServerError(`Category '${name}' already exists`),
     apiFail: (err: Error) => new ServerError(`API Failure: ${err.name}\n${err.message}`),
     studentNotFound: (studentName: string) =>
         new ServerError(`The student ${studentName} is not in any of the queues.`),
@@ -32,7 +34,12 @@ const ExpectedServerErrors = {
     badDequeueArguments: new ServerError(
         'Either student or the queue should be specified.' +
             ' Did you mean to use `/next` without options?'
-    )
+    ),
+    roleNotSet: (roleName: string) =>
+        new ServerError(
+            `The command can not be used without the role ${roleName} being set. ` +
+                `Please ask a server moderator to use \`/role set ${roleName} <roleID>\` to set it.`
+        )
 } as const;
 
 export { ExpectedServerErrors };

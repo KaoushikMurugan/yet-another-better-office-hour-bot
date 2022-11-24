@@ -17,7 +17,7 @@ import { adminCommandHelpMessages } from '../../help-channel-messages/AdminComma
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
 
-// /queue
+// /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
     .setName('queue')
     .setDescription('Add or remove queue channels to the server (admin only)')
@@ -208,6 +208,79 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
+// /create_officies [category_name] [office_name] [number_of_offices]
+const createOfficesCommand = new SlashCommandBuilder()
+    .setName('create_offices')
+    .setDescription('Creates the a set number of voice channels in a new category')
+    .addStringOption(option =>
+        option
+            .setName('category_name')
+            .setDescription('The name of the category to create the offices in')
+            .setRequired(true)
+    )
+    .addStringOption(option =>
+        option
+            .setName('office_name')
+            .setDescription('The name of the office')
+            .setRequired(true)
+    )
+    .addIntegerOption(option =>
+        option
+            .setName('number_of_offices')
+            .setDescription('The number of offices to create')
+            .setRequired(true)
+            .addChoices(
+                { name: '1', value: 1 },
+                { name: '2', value: 2 },
+                { name: '3', value: 3 },
+                { name: '4', value: 4 },
+                { name: '5', value: 5 },
+                { name: '6', value: 6 },
+                { name: '7', value: 7 },
+                { name: '8', value: 8 },
+                { name: '9', value: 9 },
+                { name: '10', value: 10 }
+            )
+    );
+
+// /set_roles [role_name] [@role]
+const setRolesCommand = new SlashCommandBuilder()
+    .setName('set_roles')
+    .setDescription('Sets the roles that the bot to use')
+    .addStringOption(option =>
+        option
+            .setName('role_name')
+            .setDescription('The name of the role')
+            .setRequired(true)
+            .addChoices(
+                { name: 'Helper', value: 'helper' },
+                { name: 'Bot Admin', value: 'bot_admin' },
+                { name: 'Student', value: 'student' }
+            )
+    )
+    .addRoleOption(option =>
+        option
+            .setName('role')
+            .setDescription('The role to set to the specified role name')
+            .setRequired(true)
+    );
+
+// /settings
+const settingsCommand = new SlashCommandBuilder()
+    .setName('settings')
+    .setDescription('Sets up the server config for the bot');
+
+// /auto_give_student_role {on|off}
+const autoGiveStudentRoleCommand = new SlashCommandBuilder()
+    .setName('auto_give_student_role')
+    .setDescription('Automatically gives the student role to new members')
+    .addSubcommand(subcommand =>
+        subcommand.setName('on').setDescription('Turns on auto giving student role')
+    )
+    .addSubcommand(subcommand =>
+        subcommand.setName('off').setDescription('Turns off auto giving student role')
+    );
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -255,7 +328,11 @@ const commandData = [
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
     setQueueAutoClear.toJSON(),
-    activateSeriousModeCommand.toJSON()
+    activateSeriousModeCommand.toJSON(),
+    createOfficesCommand.toJSON(),
+    setRolesCommand.toJSON(),
+    settingsCommand.toJSON(),
+    autoGiveStudentRoleCommand.toJSON()
 ];
 
 async function postSlashCommands(

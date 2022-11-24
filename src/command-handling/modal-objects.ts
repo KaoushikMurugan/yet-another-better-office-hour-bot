@@ -7,20 +7,28 @@ import {
     TextInputStyle
 } from 'discord.js';
 import { attendingServers } from '../global-states.js';
+import { generateComponentId, yabobModalIdToString } from '../utils/util-functions.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
  * Has two number inputs:
  * - Hours (2 characters max)
  * - Minutes (2 characters max)
- * @param serverId
+ * @param useMenu whether to return the menu version of queue auto clear modal
  * @returns
  */
-function queueAutoClearModal(serverId: string): ModalBuilder {
+function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = new ModalBuilder()
         .setTitle('Set Queue Auto Clear')
-        .setCustomId('queue_auto_clear_modal')
+        .setCustomId(
+            yabobModalIdToString(
+                generateComponentId(
+                    'other',
+                    'queue_auto_clear_modal' + (useMenu ? '_mv' : '')
+                )
+            )
+        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -61,10 +69,17 @@ function queueAutoClearModal(serverId: string): ModalBuilder {
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: string): ModalBuilder {
+function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
     const modal = new ModalBuilder()
         .setTitle('Set After Session Message')
-        .setCustomId('after_session_message_modal')
+        .setCustomId(
+            yabobModalIdToString(
+                generateComponentId(
+                    'other',
+                    'after_session_message_modal' + (menuVersion ? '_mv' : '')
+                )
+            )
+        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
