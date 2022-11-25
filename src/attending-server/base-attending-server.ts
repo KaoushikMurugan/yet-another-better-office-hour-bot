@@ -164,7 +164,7 @@ class AttendingServerV2 {
         }
     }
 
-    loadBackUp(backup: ServerBackup): void {
+    private loadBackUp(backup: ServerBackup): void {
         console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
         const loggingChannelFromBackup = this.guild.channels.cache.get(
             backup.loggingChannelId

@@ -159,12 +159,7 @@ class HelpQueueV2 {
                   )
               ]);
         const display = new QueueDisplayV2(queueChannel);
-        const queue = new HelpQueueV2(
-            queueChannel,
-            queueExtensions,
-            display,
-            backupData
-        );
+        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(
@@ -185,8 +180,8 @@ class HelpQueueV2 {
         queue.timers.set(
             'QUEUE_PERIODIC_UPDATE',
             setInterval(
-                async () =>
-                    await Promise.all(
+                () =>
+                    Promise.all(
                         queueExtensions.map(extension =>
                             extension.onQueuePeriodicUpdate(queue, false)
                         )
@@ -259,7 +254,7 @@ class HelpQueueV2 {
 
     /**
      * Enqueue a student
-     * @param studentMember the complete Helpee object
+     * @param studentMember member to enqueue
      * @throws QueueError
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
@@ -356,16 +351,16 @@ class HelpQueueV2 {
 
     /**
      * Remove a student from the queue. Used for /leave
-     * @param targetStudentMember the student to remove
+     * @param targetStudent the student to remove
      * @throws QueueError: the student is not in the queue
      */
-    async removeStudent(targetStudentMember: GuildMember): Promise<Helpee> {
+    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
-            student => student.member.id === targetStudentMember.id
+            student => student.member.id === targetStudent.id
         );
         if (idx === -1) {
             throw ExpectedQueueErrors.studentNotInQueue(
-                targetStudentMember.displayName,
+                targetStudent.displayName,
                 this.queueName
             );
         }
@@ -480,16 +475,16 @@ class HelpQueueV2 {
     async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
         const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
         existingTimerId && clearInterval(existingTimerId);
-        if (!enable) {
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            this.timers.delete('QUEUE_AUTO_CLEAR');
-            await this.triggerRender();
-        } else {
+        if (enable) {
             this._timeUntilAutoClear = {
                 hours: hours,
                 minutes: minutes
             };
             await this.startAutoClearTimer();
+        } else {
+            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this.timers.delete('QUEUE_AUTO_CLEAR');
+            await this.triggerRender();
         }
     }
 

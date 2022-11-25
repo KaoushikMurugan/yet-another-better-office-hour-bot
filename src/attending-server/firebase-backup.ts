@@ -56,7 +56,8 @@ class FirebaseServerBackupExtension
                     }))
                     .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
             })),
-            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000)
+            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
+            autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false
         };
         return backupData;
     }

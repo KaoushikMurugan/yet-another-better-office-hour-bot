@@ -114,7 +114,7 @@ const serverBackupSchema = z.object({
     botAdminRoleId: z.string(),
     helperRoleId: z.string(),
     studentRoleId: z.string(),
-    autoGiveStudentRole: z.boolean()
+    autoGiveStudentRole: z.optional(z.boolean())
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };
