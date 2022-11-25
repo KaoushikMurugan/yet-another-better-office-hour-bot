@@ -460,7 +460,7 @@ class AttendingServerV2 {
             parentCategoryId: parentCategory.id
         };
         const [helpQueue] = await Promise.all([
-            HelpQueueV2.create(queueChannel, this.user, this.guild.roles.everyone),
+            HelpQueueV2.create(queueChannel, this.guild.roles.everyone),
             this.createQueueRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
@@ -952,7 +952,6 @@ class AttendingServerV2 {
                     channel.parentCategoryId,
                     await HelpQueueV2.create(
                         channel,
-                        this.user,
                         this.guild.roles.everyone,
                         completeBackup
                     )

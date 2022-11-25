@@ -9,12 +9,12 @@ import {
     ButtonBuilder,
     EmbedBuilder,
     BaseMessageOptions,
-    User,
     ButtonStyle
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { generateComponentId, yabobButtonIdToString } from '../utils/util-functions.js';
+import { client } from '../global-states.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -59,7 +59,6 @@ class QueueDisplayV2 {
     readonly renderLoopTimerId: NodeJS.Timeout;
 
     constructor(
-        private readonly user: User,
         private readonly queueChannel: QueueChannel
     ) {
         /** starts the render loop */
@@ -219,7 +218,7 @@ class QueueDisplayV2 {
         }
         const queueMessages = this.queueChannel.channelObj.messages.cache;
         const [yabobMessages, nonYabobMessages] = queueMessages.partition(
-            msg => msg.author.id === this.user.id
+            msg => msg.author.id === client.user.id
         );
         const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)

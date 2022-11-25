@@ -1,6 +1,6 @@
 /** @module HelpQueueV2 */
 
-import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
+import { GuildMember, Role, TextChannel, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
@@ -58,13 +58,12 @@ class HelpQueueV2 {
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
-        user: User,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ) {
-        this.display = new QueueDisplayV2(user, queueChannel);
+        this.display = new QueueDisplayV2(queueChannel);
         if (backupData === undefined) {
             // if no backup then we are done initializing
             return;
@@ -145,7 +144,6 @@ class HelpQueueV2 {
      */
     static async create(
         queueChannel: QueueChannel,
-        user: User,
         everyoneRole: Role,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
@@ -160,12 +158,11 @@ class HelpQueueV2 {
                       queueChannel
                   )
               ]);
-        const display = new QueueDisplayV2(user, queueChannel);
+        const display = new QueueDisplayV2(queueChannel);
         const queue = new HelpQueueV2(
             queueChannel,
             queueExtensions,
             display,
-            user,
             backupData
         );
         // They need to happen first
@@ -283,9 +280,7 @@ class HelpQueueV2 {
         this._students.push(student);
         // converted to use Array.map
         const helperIdArray = [...this._activeHelperIds];
-        // unknown explicitly states that we don't need the return types
-        // this is different from any. Any is skipping type checking
-        await Promise.all<unknown>([
+        await Promise.all([
             ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
