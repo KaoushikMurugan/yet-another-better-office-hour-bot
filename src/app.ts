@@ -35,6 +35,7 @@ import {
     processBuiltInSelectMenu
 } from './command-handling/select-menu-handler.js';
 import { serverRolesConfigMenu } from './attending-server/server-settings-menus.js';
+import { GoogleSheetInteractionExtension } from './extensions/google-sheet-logging/google-sheet-command-extension.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
 const failedInteractions: { username: string; interaction: Interaction }[] = [];
@@ -238,7 +239,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     if (!environment.disableExtensions) {
         interactionExtensions.set(
             guild.id,
-            await Promise.all([CalendarInteractionExtension.load(guild)])
+            await Promise.all([CalendarInteractionExtension.load(guild), GoogleSheetInteractionExtension.load(guild)])
         );
     }
     // Extensions for server&queue are loaded inside the create method
