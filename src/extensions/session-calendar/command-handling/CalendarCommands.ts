@@ -213,18 +213,18 @@ const whenNextHelp: HelpMessage = {
     }
 };
 
-const calendarAdminHelpMessages: HelpMessage[] = [
+const calendarAdminHelpMessages = [
     setCalendarHelp,
     unsetCalendarHelp,
     setPublicEmbedUrlHelp
-];
+] as const;
 
-const calendarHelperHelpMessages: HelpMessage[] = [
+const calendarHelperHelpMessages = [
     makeCalendarStringHelp,
     makeCalendarStringAllHelp
-];
+] as const;
 
-const calendarStudentHelpMessages: HelpMessage[] = [whenNextHelp];
+const calendarStudentHelpMessages = [whenNextHelp] as const;
 
 // Prevent repeated pushing for multiple instances
 function appendCalendarHelpMessages(sent: boolean): void {

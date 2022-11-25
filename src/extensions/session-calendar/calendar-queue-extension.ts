@@ -121,11 +121,6 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             : this.upcomingSessions;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
-            .setURL(
-                state.publicCalendarEmbedUrl.length > 0
-                    ? state.publicCalendarEmbedUrl
-                    : restorePublicEmbedURL(state.calendarId ?? '')
-            )
             .setDescription(
                 composeUpcomingSessionsEmbedBody(
                     this.upcomingSessions,
@@ -135,12 +130,19 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             )
             .setColor(EmbedColor.Blue)
             .setFooter({
-                text:
-                    'This embed shows up to 5 most recent sessions and auto refreshes every hour. ' +
-                    'Click the title to see the full calendar.',
+                text: 'This embed shows up to 5 most recent sessions and auto refreshes every hour. ',
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setURL(
+                    state.publicCalendarEmbedUrl.length > 0
+                        ? state.publicCalendarEmbedUrl
+                        : restorePublicEmbedURL(state.calendarId)
+                )
+                .setEmoji('📅')
+                .setLabel('Full Calendar')
+                .setStyle(ButtonStyle.Link), // this method is required
             new ButtonBuilder()
                 .setCustomId(
                     yabobButtonIdToString(
@@ -154,7 +156,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 )
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Secondary)
         );
         this.display?.requestNonQueueEmbedRender(
             {
