@@ -14,10 +14,10 @@ import { calendarStates } from '../calendar-states.js';
 /**
  * Composes the calendar settings modal
  * @param serverId
- * @param menuVersion
+ * @param useMenu
  * @returns
  */
-function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuilder {
+function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder {
     const state = calendarStates.get(serverId);
     const modal = new ModalBuilder()
         .setTitle('Calendar Settings')
@@ -25,7 +25,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
             yabobModalIdToString(
                 generateComponentId(
                     'other',
-                    'calendar_settings_modal' + (menuVersion ? '_mv' : '')
+                    'calendar_settings_modal' + (useMenu ? '_mv' : '')
                 )
             )
         )

@@ -115,7 +115,7 @@ const serverBackupSchema = z.object({
     helperRoleId: z.string(),
     studentRoleId: z.string(),
     // ! Migration code, make this non-optional in 4.4
-    autoGiveStudentRole: z.optional(z.boolean()) 
+    autoGiveStudentRole: z.optional(z.boolean())
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };

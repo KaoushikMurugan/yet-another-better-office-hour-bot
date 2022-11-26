@@ -172,15 +172,12 @@ class CalendarInteractionExtension
             (await server.getQueueChannels()).find(
                 queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
             )?.queueName ?? '';
-
         const updateParentInteraction =
             updateParentInteractionButtons.includes(buttonName);
-
         if (buttonName in showModalOnlyButtons) {
             await showModalOnlyButtons[buttonName]?.(interaction);
             return;
         }
-
         if (!updateParentInteraction) {
             if (interaction.deferred || interaction.replied) {
                 await interaction.editReply({
@@ -209,11 +206,9 @@ class CalendarInteractionExtension
             : defaultButtonMethodMap[buttonName]?.(interaction)
         )
             ?.then(async successMsg => {
-                if (updateParentInteraction) {
-                    await interaction.update(successMsg);
-                } else {
-                    await interaction.editReply(successMsg);
-                }
+                await (updateParentInteraction
+                    ? interaction.update(successMsg)
+                    : interaction.editReply(successMsg));
             })
             .catch(async err => {
                 // Central error handling, reply to user with the error
@@ -241,17 +236,13 @@ class CalendarInteractionExtension
             // Everything is reply here because showModal is guaranteed to be the 1st response
             // modal shown => message not replied, so we always reply
             .then(async successMsg => {
-                if (
-                    updateParentInteractionModals.includes(modalName) &&
-                    interaction.isFromMessage()
-                ) {
-                    await interaction.update(successMsg);
-                } else {
-                    await interaction.reply({
-                        ...successMsg,
-                        ephemeral: true
-                    });
-                }
+                await (updateParentInteractionModals.includes(modalName) &&
+                interaction.isFromMessage()
+                    ? interaction.update(successMsg)
+                    : interaction.reply({
+                          ...successMsg,
+                          ephemeral: true
+                      }));
             })
             .catch(async err => {
                 await Promise.all([
@@ -386,14 +377,13 @@ async function makeParsableCalendarTitle(
     if (userOption) {
         const memberRoles = memberToUpdate.roles;
         // if they are not admin or doesn't have the queue role, reject
-        if (
+        const noPermission =
             !memberRoles.cache.some(role => role.id === server.botAdminRoleID) &&
-            userOption.id !== interaction.user.id
-        ) {
+            userOption.id !== interaction.user.id;
+        if (noPermission) {
             throw ExpectedCalendarErrors.nonAdminMakingCalendarStringForOthers;
-        } else {
-            memberToUpdate = await server.guild.members.fetch(userOption);
         }
+        memberToUpdate = await server.guild.members.fetch(userOption);
     }
     if (generateAll) {
         validQueueOptions = await getQueueRoles(server, memberToUpdate);
@@ -535,39 +525,30 @@ async function resetCalendarSettings(
  */
 async function updateCalendarSettings(
     interaction: ModalSubmitInteraction<'cached'>,
-    menuVersion: boolean
+    useMenu: boolean
 ): Promise<YabobEmbed> {
-    const [server, state] = isServerCalendarInteraction(interaction);
+    const [server, state, safeInteraction] = isServerCalendarInteraction(interaction);
     const calendarId = interaction.fields.getTextInputValue('calendar_id');
     const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
-
     await checkCalendarConnection(calendarId).catch(() => {
         throw ExpectedCalendarErrors.badId.newId;
     });
-
     await state.setCalendarId(calendarId);
-
     if (publicEmbedUrl !== '') {
         try {
-            new URL(publicEmbedUrl); // call this constructor to check if URL is valid
+            new URL(publicEmbedUrl);
         } catch {
             throw ExpectedCalendarErrors.badPublicEmbedUrl;
         }
         // now rawUrl is valid
         await state.setPublicEmbedUrl(publicEmbedUrl);
     } else {
-        await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+        await state.setPublicEmbedUrl(restorePublicEmbedURL(state.calendarId));
     }
-
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
-    if (!menuVersion) {
-        return CalendarSuccessMessages.updatedCalendarSettings(
-            calendarId,
-            publicEmbedUrl
-        );
-    } else {
-        return calendarSettingsConfigMenu(server, interaction.channelId ?? '0', false);
-    }
+    return useMenu
+        ? calendarSettingsConfigMenu(server, safeInteraction.channel.id, false)
+        : CalendarSuccessMessages.updatedCalendarSettings(calendarId, publicEmbedUrl);
 }
 
 export { CalendarInteractionExtension };

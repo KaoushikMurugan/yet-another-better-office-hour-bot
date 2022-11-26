@@ -14,10 +14,8 @@ import {
     GuildMember,
     VoiceChannel,
     ModalSubmitInteraction,
-    CacheType,
     SelectMenuInteraction
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';

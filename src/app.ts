@@ -57,10 +57,10 @@ client.on('ready', async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    updatePresence();
-    setInterval(updatePresence, 1000 * 60 * 30);
     console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
+    updatePresence();
+    setInterval(updatePresence, 1000 * 60 * 30);
 });
 
 /**
@@ -110,7 +110,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
         });
         return;
     }
-    if (!interaction.inCachedGuild() || !interaction.inGuild()) {
+    if (!interaction.inCachedGuild()) {
         // required check to make sure all the types are safe
         interaction.isRepliable() &&
             (await interaction.reply(
@@ -121,12 +121,12 @@ client.on('interactionCreate', async (interaction: Interaction) => {
     dispatchServerInteractions(interaction).catch((err: Error) => {
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(() => {
+            .catch(() =>
                 failedInteractions.push({
                     username: interaction.user.username,
                     interaction: interaction
-                });
-            });
+                })
+            );
     });
     if (failedInteractions.length >= 5) {
         console.error(`These ${failedInteractions.length} interactions failed: `);

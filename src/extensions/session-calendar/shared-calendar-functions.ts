@@ -8,7 +8,7 @@ import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
-import { Optional } from '../../utils/type-aliases.js';
+import { Optional, WithRequired } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
@@ -73,12 +73,12 @@ async function getUpComingTutoringEvents(
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
     const responseJSON = await response.data;
-    const events = (responseJSON as calendar_v3.Schema$Events)?.items;
-    if (!events || events.length === 0) {
+    const rawEvents = (responseJSON as calendar_v3.Schema$Events)?.items;
+    if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
     const definedViewModels: UpComingSessionViewModel[] = [];
-    for (const rawEvent of events) {
+    for (const rawEvent of rawEvents) {
         const unpack = calendarDataSchema.safeParse(rawEvent);
         if (!unpack.success) {
             continue;
@@ -144,6 +144,8 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         throw ExpectedCalendarErrors.failedRequest;
     }
     const responseJSON = await response.data;
+    // it's just checking for connection
+    // so it's not really worth it to pass through the schema checker
     return (responseJSON as calendar_v3.Schema$Events).summary ?? '';
 }
 
@@ -237,7 +239,7 @@ function composeUpcomingSessionsEmbedBody(
                           }`
                   )
                   .join(`\n${'-'.repeat(30)}\n`)
-            : `There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.`) +
+            : `**There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.**`) +
         `\n${'-'.repeat(30)}\nLast updated: <t:${Math.floor(
             lastUpdatedTimeStamp.getTime() / 1000
         )}:R>`
@@ -280,22 +282,26 @@ function restorePublicEmbedURL(calendarId: string): string {
 }
 
 /**
- * (almost) Pure function that checks if the calendar interactoin is safe to execute
+ * Checks if the calendar interactoin is safe to execute
  * @param interaction
  * @returns server and state object tuple
  */
-function isServerCalendarInteraction(
-    interaction:
+function isServerCalendarInteraction<
+    T extends
         | ChatInputCommandInteraction<'cached'>
         | ButtonInteraction<'cached'>
         | ModalSubmitInteraction<'cached'>
-): [FrozenServer, CalendarExtensionState] {
+>(
+    interaction: T
+): [FrozenServer, CalendarExtensionState, WithRequired<T, 'channel' | 'channelId'>] {
     const server = isServerInteraction(interaction);
     const state = calendarStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
     }
-    return [server, state];
+    // already checked for non-null channelId, idk why type inference doesn't work
+    // destructuring works but it has massive memory overhead
+    return [server, state, interaction as WithRequired<T, 'channel' | 'channelId'>];
 }
 
 export {
