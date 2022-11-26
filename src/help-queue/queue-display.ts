@@ -58,9 +58,7 @@ class QueueDisplayV2 {
      */
     readonly renderLoopTimerId: NodeJS.Timeout;
 
-    constructor(
-        private readonly queueChannel: QueueChannel
-    ) {
+    constructor(private readonly queueChannel: QueueChannel) {
         /** starts the render loop */
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds

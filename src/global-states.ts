@@ -1,7 +1,7 @@
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { GuildId } from './utils/type-aliases.js';
 import { environment } from './environment/environment-manager.js';
-import { Collection, Client, GatewayIntentBits } from 'discord.js';
+import { Collection, Client, GatewayIntentBits, Options } from 'discord.js';
 import { yellow, black, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
@@ -51,7 +51,18 @@ const client: Client<true> = new Client({
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.DirectMessages
-    ]
+    ],
+    makeCache: Options.cacheWithLimits({
+        ...Options.DefaultMakeCacheSettings,
+        ReactionManager: 0,
+        GuildBanManager: 0,
+        GuildScheduledEventManager: 0,
+        MessageManager: {
+            maxSize: 5, // arbitrary, keep 5 messages max in each channel
+            // never clear YABOB messages
+            keepOverLimit: msg => msg.author.id === client.user.id
+        }
+    })
 });
 
 /**
