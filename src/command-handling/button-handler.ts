@@ -293,12 +293,10 @@ async function leave(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        ),
-        server.removeStudentFromQueue(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+    );
+    await server.removeStudentFromQueue(interaction.member, queueChannel);
     return SuccessMessages.leftQueue(queueName);
 }
 
@@ -316,12 +314,10 @@ async function joinNotifGroup(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        ),
-        server.addStudentToNotifGroup(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+    );
+    await server.addStudentToNotifGroup(interaction.member, queueChannel);
     return SuccessMessages.joinedNotif(queueName);
 }
 
@@ -339,16 +335,10 @@ async function leaveNotifGroup(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                'Remove Notifications',
-                queueChannel.channelObj
-            )
-        ),
-        server.removeStudentFromNotifGroup(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Remove Notifications', queueChannel.channelObj)
+    );
+    await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
     return SuccessMessages.removedNotif(queueName);
 }
 

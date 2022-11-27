@@ -85,11 +85,11 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
  * @param isDm
  * @returns
  */
-async function serverSettingsMainMenu(
+function serverSettingsMainMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
-): Promise<YabobEmbed> {
+): YabobEmbed {
     const embed = SimpleEmbed(
         `🛠 Server Settings for ${server.guild.name} 🛠`,
         EmbedColor.Aqua,
