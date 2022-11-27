@@ -68,6 +68,16 @@ const serverSettingsMainMenuOptions: {
     }
 ];
 
+const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    new ButtonBuilder()
+        .setCustomId(
+            yabobButtonIdToString(generateComponentId('other', 'return_to_main_menu'))
+        )
+        .setEmoji('🏠')
+        .setLabel('Return to Main Menu')
+        .setStyle(ButtonStyle.Primary)
+);
+
 /**
  * Composes the server settings main menu
  * @param server
@@ -197,15 +207,10 @@ function serverRolesConfigMenu(
                 .setLabel('2A')
                 .setStyle(ButtonStyle.Secondary)
         );
-
-    if (!isDm) {
-        const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            composeReturnToMainMenuButton()
-        );
-        return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
-    } else {
-        return { embeds: embed.embeds, components: [buttons] };
-    }
+    return {
+        embeds: embed.embeds,
+        components: isDm ? [buttons] : [buttons, mainMenuRow]
+    };
 }
 
 /**
@@ -261,10 +266,7 @@ function afterSessionMessageConfigMenu(
                 .setStyle(ButtonStyle.Secondary)
         );
 
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
-    );
-    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
 
 /**
@@ -316,11 +318,7 @@ function queueAutoClearConfigMenu(
                 .setLabel('Disable')
                 .setStyle(ButtonStyle.Secondary)
         );
-
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
-    );
-    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
 
 /**
@@ -368,10 +366,7 @@ function loggingChannelConfigMenu(
             .setStyle(ButtonStyle.Secondary)
     );
 
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
-    );
-    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
+    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
 
 function autoGiveStudentRoleConfigMenu(
@@ -418,26 +413,7 @@ function autoGiveStudentRoleConfigMenu(
                 .setStyle(ButtonStyle.Secondary)
         );
 
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
-    );
-    return { embeds: embed.embeds, components: [buttons, returnToMainMenuRow] };
-}
-
-/**
- * Composes a return to main menu button
- * @param serverId
- * @param channelId
- * @returns
- */
-function composeReturnToMainMenuButton(): ButtonBuilder {
-    return new ButtonBuilder()
-        .setCustomId(
-            yabobButtonIdToString(generateComponentId('other', 'return_to_main_menu'))
-        )
-        .setEmoji('🏠')
-        .setLabel('Return to Main Menu')
-        .setStyle(ButtonStyle.Primary);
+    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
 
 export {
@@ -448,5 +424,5 @@ export {
     queueAutoClearConfigMenu,
     loggingChannelConfigMenu,
     autoGiveStudentRoleConfigMenu,
-    composeReturnToMainMenuButton
+    mainMenuRow
 };

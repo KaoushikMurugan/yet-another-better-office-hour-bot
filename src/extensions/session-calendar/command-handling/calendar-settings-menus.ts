@@ -12,7 +12,7 @@ import {
 } from '../../../utils/util-functions.js';
 import { calendarStates } from '../calendar-states.js';
 import {
-    composeReturnToMainMenuButton,
+    mainMenuRow,
     serverSettingsMainMenuOptions
 } from '../../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
@@ -49,11 +49,19 @@ function calendarSettingsConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
+    function composeCSCMButtonId(optionNumber: string): string {
+        const newYabobButton = generateComponentId(
+            isDm ? 'dm' : 'other',
+            `calendar_settings_config_menui_${optionNumber}`,
+            isDm ? server.guild.id : undefined,
+            isDm ? channelId : undefined
+        );
+        return yabobButtonIdToString(newYabobButton);
+    }
     const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
-
     const embed = SimpleEmbed(
         `🗓 Calendar Configuration for ${server.guild.name} 🗓`,
         EmbedColor.Aqua,
@@ -67,16 +75,6 @@ function calendarSettingsConfigMenu(
             `**🗓** - Change the Calendar Config\n` +
             `**🔗** - Set the Calendar and Embed URL back to the default\n`
     );
-
-    function composeCSCMButtonId(optionNumber: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `calendar_settings_config_menui_${optionNumber}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
@@ -93,14 +91,9 @@ function calendarSettingsConfigMenu(
                 .setLabel('Set to Default Calendar Settings')
                 .setStyle(ButtonStyle.Secondary)
         );
-
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
-    );
-
     return {
         embeds: embed.embeds,
-        components: [buttons, returnToMainMenuRow]
+        components: [buttons, mainMenuRow]
     };
 }
 
