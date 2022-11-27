@@ -182,31 +182,24 @@ function serverRolesConfigMenu(
         return yabobButtonIdToString(newYabobButton);
     }
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeSRCButtonId('1'))
-                .setLabel('1')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeSRCButtonId('1a'))
-                .setLabel('1A')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeSRCButtonId('2'))
-                .setLabel('2')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeSRCButtonId('2a'))
-                .setLabel('2A')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeSRCButtonId('1'))
+            .setLabel('1')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeSRCButtonId('1a'))
+            .setLabel('1A')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeSRCButtonId('2'))
+            .setLabel('2')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeSRCButtonId('2a'))
+            .setLabel('2A')
+            .setStyle(ButtonStyle.Secondary)
+    );
     return {
         embeds: embed.embeds,
         components: isDm ? [buttons] : [buttons, mainMenuRow]
@@ -250,21 +243,18 @@ function afterSessionMessageConfigMenu(
         return yabobButtonIdToString(newYabobButton);
     }
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeASMCButtonId('1'))
-                .setEmoji('⚙️')
-                .setLabel('Set Message')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeASMCButtonId('2'))
-                .setEmoji('🔒')
-                .setLabel('Disable')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeASMCButtonId('1'))
+            .setEmoji('⚙️')
+            .setLabel('Set Message')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeASMCButtonId('2'))
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
 
     return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
@@ -303,21 +293,18 @@ function queueAutoClearConfigMenu(
         return yabobButtonIdToString(newYabobButton);
     }
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeQACCButtonId('1'))
-                .setEmoji('⚙️')
-                .setLabel('Set Auto Clear Time')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeQACCButtonId('2'))
-                .setEmoji('🔒')
-                .setLabel('Disable')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeQACCButtonId('1'))
+            .setEmoji('⚙️')
+            .setLabel('Set Auto Clear Time')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeQACCButtonId('2'))
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
     return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }
 
@@ -397,21 +384,18 @@ function autoGiveStudentRoleConfigMenu(
         return yabobButtonIdToString(newYabobButton);
     }
 
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeAGSRCButtonId('1'))
-                .setEmoji('🔓')
-                .setLabel('Enable')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeAGSRCButtonId('2'))
-                .setEmoji('🔒')
-                .setLabel('Disable')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeAGSRCButtonId('1'))
+            .setEmoji('🔓')
+            .setLabel('Enable')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeAGSRCButtonId('2'))
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
 
     return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
 }

@@ -72,7 +72,7 @@ const defaultButtonMethodMap: {
         toggleAutoGiveStudentRole(interaction, true),
     auto_give_student_role_config_2: interaction =>
         toggleAutoGiveStudentRole(interaction, false)
-};
+} as const;
 
 /**
  * Buttons in this object only shows a modal on ButtonInteraction<'cached'>

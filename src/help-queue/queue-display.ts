@@ -107,45 +107,39 @@ class QueueDisplayV2 {
                 }
             ]);
         }
-        const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(
-                        composeQueueButtonId('join', this.queueChannel.channelObj.id)
-                    )
-                    .setEmoji('✅')
-                    .setDisabled(!viewModel.isOpen)
-                    .setLabel('Join')
-                    .setStyle(ButtonStyle.Success)
-            )
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(
-                        composeQueueButtonId('leave', this.queueChannel.channelObj.id)
-                    )
-                    .setEmoji('❎')
-                    .setLabel('Leave')
-                    .setStyle(ButtonStyle.Danger)
-            );
-        const notifButtons = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(
-                        composeQueueButtonId('notif', this.queueChannel.channelObj.id)
-                    )
-                    .setEmoji('🔔')
-                    .setLabel('Notify When Open')
-                    .setStyle(ButtonStyle.Primary)
-            )
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId(
-                        composeQueueButtonId('removeN', this.queueChannel.channelObj.id)
-                    )
-                    .setEmoji('🔕')
-                    .setLabel('Remove Notifications')
-                    .setStyle(ButtonStyle.Primary)
-            );
+        const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(
+                    composeQueueButtonId('join', this.queueChannel.channelObj.id)
+                )
+                .setEmoji('✅')
+                .setDisabled(!viewModel.isOpen)
+                .setLabel('Join')
+                .setStyle(ButtonStyle.Success),
+            new ButtonBuilder()
+                .setCustomId(
+                    composeQueueButtonId('leave', this.queueChannel.channelObj.id)
+                )
+                .setEmoji('❎')
+                .setLabel('Leave')
+                .setStyle(ButtonStyle.Danger)
+        );
+        const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            new ButtonBuilder()
+                .setCustomId(
+                    composeQueueButtonId('notif', this.queueChannel.channelObj.id)
+                )
+                .setEmoji('🔔')
+                .setLabel('Notify When Open')
+                .setStyle(ButtonStyle.Primary),
+            new ButtonBuilder()
+                .setCustomId(
+                    composeQueueButtonId('removeN', this.queueChannel.channelObj.id)
+                )
+                .setEmoji('🔕')
+                .setLabel('Remove Notifications')
+                .setStyle(ButtonStyle.Primary)
+        );
         const embedList = [embedTableMsg];
         if (viewModel.helperIDs.length !== 0) {
             const helperList = new EmbedBuilder();

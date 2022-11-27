@@ -1,11 +1,6 @@
-import {
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    SelectMenuComponentOptionData
-} from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
+import { YabobEmbed } from '../../../utils/type-aliases.js';
 import {
     generateComponentId,
     yabobButtonIdToString
@@ -22,10 +17,7 @@ import { FrozenServer } from '../../extension-utils.js';
  * Options for the server settings main menu
  * @see {@link serverSettingsMainMenuOptions}
  */
-const calendarSettingsMainMenuOptions: {
-    optionObj: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
-}[] = [
+const calendarSettingsMainMenuOptions = [
     {
         optionObj: {
             emoji: '🗓',
@@ -35,7 +27,7 @@ const calendarSettingsMainMenuOptions: {
         },
         subMenu: calendarSettingsConfigMenu
     }
-];
+] as const;
 
 /**
  * Compose the calendar settings settings menu
@@ -75,22 +67,18 @@ function calendarSettingsConfigMenu(
             `**🗓** - Change the Calendar Config\n` +
             `**🔗** - Set the Calendar and Embed URL back to the default\n`
     );
-
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeCSCMButtonId('1'))
-                .setEmoji('🗓')
-                .setLabel('Change Calendar Settings')
-                .setStyle(ButtonStyle.Secondary)
-        )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeCSCMButtonId('2'))
-                .setEmoji('🔗')
-                .setLabel('Set to Default Calendar Settings')
-                .setStyle(ButtonStyle.Secondary)
-        );
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+            .setCustomId(composeCSCMButtonId('1'))
+            .setEmoji('🗓')
+            .setLabel('Change Calendar Settings')
+            .setStyle(ButtonStyle.Secondary),
+        new ButtonBuilder()
+            .setCustomId(composeCSCMButtonId('2'))
+            .setEmoji('🔗')
+            .setLabel('Set to Default Calendar Settings')
+            .setStyle(ButtonStyle.Secondary)
+    );
     return {
         embeds: embed.embeds,
         components: [buttons, mainMenuRow]
