@@ -13,10 +13,7 @@ import {
     UpComingSessionViewModel
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
-import {
-    generateComponentId,
-    yabobButtonIdToString
-} from '../../utils/util-functions.js';
+import { buttonFactory } from '../../utils/component-id-factory.js';
 
 /**
  * Calendar Extension for individual queues
@@ -143,16 +140,12 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 .setEmoji('📅')
                 .setLabel('Full Calendar')
                 .setStyle(ButtonStyle.Link), // this method is required
-            new ButtonBuilder()
-                .setCustomId(
-                    yabobButtonIdToString(
-                        generateComponentId(
-                            'queue',
-                            'refresh',
-                            undefined,
-                            this.queueChannel.channelObj.id
-                        )
-                    )
+            buttonFactory
+                .buildComponent(
+                    'queue',
+                    'refresh',
+                    undefined,
+                    this.queueChannel.channelObj.id
                 )
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')

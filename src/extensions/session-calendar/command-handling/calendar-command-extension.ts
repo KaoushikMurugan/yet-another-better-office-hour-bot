@@ -42,8 +42,7 @@ import {
     isQueueTextChannel,
     logButtonPress,
     logModalSubmit,
-    logSlashCommand,
-    parseYabobComponentId
+    logSlashCommand
 } from '../../../utils/util-functions.js';
 import { appendCalendarHelpMessages } from './CalendarCommands.js';
 import {
@@ -65,6 +64,7 @@ import {
     calendarSettingsConfigMenu
 } from './calendar-settings-menus.js';
 import { calendarSettingsModal } from './calendar-modal-objects.js';
+import { buttonFactory, modalFactory } from '../../../utils/component-id-factory.js';
 
 class CalendarInteractionExtension
     extends BaseInteractionExtension
@@ -117,11 +117,11 @@ class CalendarInteractionExtension
     }
 
     override canHandleButton(interaction: ButtonInteraction): boolean {
-        const yabobButtonId = parseYabobComponentId(interaction.customId);
+        const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
         return (
-            yabobButtonId.name in queueButtonMethodMap ||
-            yabobButtonId.name in defaultButtonMethodMap ||
-            yabobButtonId.name in showModalOnlyButtons
+            buttonName in queueButtonMethodMap ||
+            buttonName in defaultButtonMethodMap ||
+            buttonName in showModalOnlyButtons
         );
     }
 
@@ -130,8 +130,8 @@ class CalendarInteractionExtension
     }
 
     override canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        const yabobModalId = parseYabobComponentId(interaction.customId);
-        return yabobModalId.name in modalMethodMap;
+        const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+        return modalName in modalMethodMap;
     }
 
     override async processCommand(
@@ -164,13 +164,13 @@ class CalendarInteractionExtension
     override async processButton(
         interaction: ButtonInteraction<'cached'>
     ): Promise<void> {
-        const yabobButtonId = parseYabobComponentId(interaction.customId);
-        const buttonName = yabobButtonId.name;
-        const buttonType = yabobButtonId.type;
+        const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
+            interaction.customId
+        );
         const [server] = isServerCalendarInteraction(interaction);
         const queueName =
             (await server.getQueueChannels()).find(
-                queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
+                queueChannel => queueChannel.channelObj.id === channelId
             )?.queueName ?? '';
         const updateParentInteraction =
             updateParentInteractionButtons.includes(buttonName);
@@ -227,22 +227,22 @@ class CalendarInteractionExtension
     override async processModalSubmit(
         interaction: ModalSubmitInteraction<'cached'>
     ): Promise<void> {
-        const yabobModalId = parseYabobComponentId(interaction.customId);
-        const modalName = yabobModalId.name;
+        const modalName = buttonFactory.decompressComponentId(interaction.customId)[1];
         const [server] = isServerCalendarInteraction(interaction);
         const modalMethod = modalMethodMap[modalName];
         logModalSubmit(interaction, modalName);
+        // Everything is reply here because showModal is guaranteed to be the 1st response
+        // modal shown => message not replied, so we always reply
         await modalMethod?.(interaction)
-            // Everything is reply here because showModal is guaranteed to be the 1st response
-            // modal shown => message not replied, so we always reply
             .then(async successMsg => {
-                await (updateParentInteractionModals.includes(modalName) &&
-                interaction.isFromMessage()
-                    ? interaction.update(successMsg)
-                    : interaction.reply({
-                          ...successMsg,
-                          ephemeral: true
-                      }));
+                if (updateParentInteractionModals.includes(modalName)) {
+                    await (interaction.isFromMessage()
+                        ? interaction.update(successMsg)
+                        : interaction.reply({
+                              ...successMsg,
+                              ephemeral: true
+                          }));
+                }
             })
             .catch(async err => {
                 await Promise.all([

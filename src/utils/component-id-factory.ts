@@ -1,17 +1,13 @@
 import {
-    CategoryChannelId,
+    TextBasedChannelId,
     GuildId,
     Optional,
-    YabobComponentId,
-    YabobComponentType
+    YabobComponentId
 } from './type-aliases.js';
-import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
-import {
-    ButtonBuilder,
-    ButtonComponent,
-    SelectMenuBuilder,
-    SelectMenuComponent
-} from 'discord.js';
+// import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
+import LZString from 'lz-string';
+import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
+import { green, red } from './command-line-colors.js';
 
 /** Where the component will appear in discord */
 type ComponentLocation = 'dm' | 'queue' | 'other';
@@ -21,7 +17,7 @@ type ComponentLocation = 'dm' | 'queue' | 'other';
  */
 class TwoWayMap<K, V> {
     private reverseMap = new Map<V, K>();
-    private normalMap = new Map<K, V>();
+    normalMap = new Map<K, V>();
 
     /** Gets a value by key, behaves like regular Map.get */
     getByKey(key: K): Optional<V> {
@@ -80,21 +76,30 @@ class TwoWayMap<K, V> {
 // embed create -> request id -> has cache ? return cache : add to cache
 // received interaction -> request deserialization -> has cache ? return cache : add cache
 
-abstract class YabobComponentFactory<U extends ButtonBuilder | SelectMenuBuilder> {
+abstract class YabobComponentFactory<
+    U extends ButtonBuilder | SelectMenuBuilder | ModalBuilder
+> {
     private cache = new TwoWayMap<Parameters<typeof this.buildComponent>, string>();
 
+    /**
+     * Builds the discord js component, but takes over setCustomId
+     * @param type queue, dm , or other
+     * @param componentName expected component customId
+     * @param serverId server id of where this component is supposed to be / comes from
+     * @param channelId category channel id or the dm channel id
+     */
     abstract buildComponent<T extends ComponentLocation>(
         type: T,
         componentName: string,
-        serverId?: string,
-        channelId?: string
-    ): U;
+        serverId: T extends 'dm' ? GuildId : undefined,
+        channelId: T extends 'other' ? undefined : TextBasedChannelId
+    ): Omit<U, 'setCustomId'>;
 
     compressComponentId<T extends ComponentLocation>(
         type: T,
         componentName: string,
-        serverId?: string,
-        channelId?: string
+        serverId: T extends 'dm' ? GuildId : undefined,
+        channelId: T extends 'other' ? undefined : TextBasedChannelId
     ): string {
         const key: Parameters<typeof this.buildComponent> = [
             type,
@@ -102,7 +107,16 @@ abstract class YabobComponentFactory<U extends ButtonBuilder | SelectMenuBuilder
             serverId,
             channelId
         ];
-        const id = compressToUTF16(
+        if (this.cache.hasKey(key)) {
+            console.log(`creation cache ${green('hit')}`);
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return this.cache.getByKey(key)!;
+        }
+        console.log(key, this.cache.normalMap.get(key));
+        console.log(`creation cache ${red('miss')}`);
+        // The following is expected to happen very infrequently
+        // The cache should always have the compressed id after startup
+        const id = LZString.compressToUTF16(
             JSON.stringify({
                 name: componentName,
                 type: type,
@@ -118,12 +132,14 @@ abstract class YabobComponentFactory<U extends ButtonBuilder | SelectMenuBuilder
         compressedId: string
     ): Parameters<typeof this.buildComponent> {
         if (this.cache.hasValue(compressedId)) {
+            console.log(`decompression cache ${green('hit')}`);
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return this.cache.getByValue(compressedId)!;
         }
+        console.log(`decompression cache ${red('miss')}`);
         // The following is expected to happen very infrequently
-        // The cache should have the compressed id most of the time
-        const rawDecompressed = decompressFromUTF16(compressedId);
+        // The cache should always have the compressed id after startup
+        const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
             throw Error('Invalid YABOB ID');
         }
@@ -142,8 +158,8 @@ class YabobButtonFactory extends YabobComponentFactory<ButtonBuilder> {
         type: T,
         componentName: string,
         serverId: T extends 'dm' ? GuildId : undefined,
-        channelId: T extends 'other' ? undefined : CategoryChannelId
-    ): ButtonBuilder {
+        channelId: T extends 'other' ? undefined : TextBasedChannelId
+    ): Omit<ButtonBuilder, 'setCustomId'> {
         return new ButtonBuilder().setCustomId(
             this.compressComponentId(type, componentName, serverId, channelId)
         );
@@ -155,9 +171,22 @@ class YabobSelectMenuFactory extends YabobComponentFactory<SelectMenuBuilder> {
         type: T,
         componentName: string,
         serverId: T extends 'dm' ? GuildId : undefined,
-        channelId: T extends 'other' ? undefined : CategoryChannelId
-    ): SelectMenuBuilder {
+        channelId: T extends 'other' ? undefined : TextBasedChannelId
+    ): Omit<SelectMenuBuilder, 'setCustomId'> {
         return new SelectMenuBuilder().setCustomId(
+            this.compressComponentId(type, componentName, serverId, channelId)
+        );
+    }
+}
+
+class YabobModalFactory extends YabobComponentFactory<ModalBuilder> {
+    buildComponent<T extends ComponentLocation>(
+        type: T,
+        componentName: string,
+        serverId: T extends 'dm' ? string : undefined,
+        channelId: T extends 'other' ? undefined : string
+    ): Omit<ModalBuilder, 'setCustomId'> {
+        return new ModalBuilder().setCustomId(
             this.compressComponentId(type, componentName, serverId, channelId)
         );
     }
@@ -165,5 +194,6 @@ class YabobSelectMenuFactory extends YabobComponentFactory<SelectMenuBuilder> {
 
 const buttonFactory = new YabobButtonFactory();
 const selectMenuFactory = new YabobSelectMenuFactory();
+const modalFactory = new YabobModalFactory();
 
-export { buttonFactory, selectMenuFactory };
+export { buttonFactory, selectMenuFactory, modalFactory };

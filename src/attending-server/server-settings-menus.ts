@@ -7,11 +7,7 @@ import {
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
-import {
-    generateComponentId,
-    yabobButtonIdToString,
-    yabobSelectMenuIdToString
-} from '../utils/util-functions.js';
+import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
 /**
@@ -69,10 +65,8 @@ const serverSettingsMainMenuOptions: {
 ];
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    new ButtonBuilder()
-        .setCustomId(
-            yabobButtonIdToString(generateComponentId('other', 'return_to_main_menu'))
-        )
+    buttonFactory
+        .buildComponent('other', 'return_to_main_menu', undefined, undefined)
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
@@ -97,16 +91,12 @@ function serverSettingsMainMenu(
             `Select an option from the drop-down menu below.`
     );
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        new SelectMenuBuilder()
-            .setCustomId(
-                yabobSelectMenuIdToString(
-                    generateComponentId(
-                        isDm ? 'dm' : 'other',
-                        'server_settings',
-                        isDm ? server.guild.id : undefined,
-                        isDm ? channelId : undefined
-                    )
-                )
+        selectMenuFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'server_settings',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
             )
             .setPlaceholder('Select an option')
             .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
@@ -128,9 +118,6 @@ function serverRolesConfigMenu(
     isDm: boolean,
     forServerInit = false
 ): YabobEmbed {
-    const botAdminRole = server.botAdminRoleID;
-    const helperRole = server.helperRoleID;
-    const studentRole = server.studentRoleID;
     const embed = SimpleEmbed(
         `📝 Server Roles Configuration for ${server.guild.name} 📝`,
         EmbedColor.Aqua,
@@ -140,29 +127,29 @@ function serverRolesConfigMenu(
             `**\n🤖 Bot Admin Role:** ${
                 forServerInit
                     ? ` *Role that can manage the bot and it's settings*\n`
-                    : botAdminRole === 'Not Set'
+                    : server.botAdminRoleID === 'Not Set'
                     ? 'Not Set'
-                    : botAdminRole === 'Deleted'
+                    : server.botAdminRoleID === 'Deleted'
                     ? '@deleted-role'
-                    : `<@&${botAdminRole}>`
+                    : `<@&${server.botAdminRoleID}>`
             }\n\n` +
             `**📚 Helper Role:** ${
                 forServerInit
                     ? ` *Role that allows users to host office hours*\n`
-                    : helperRole === 'Not Set'
+                    : server.helperRoleID === 'Not Set'
                     ? 'Not Set'
-                    : helperRole === 'Deleted'
+                    : server.helperRoleID === 'Deleted'
                     ? '@deleted-role'
-                    : `<@&${helperRole}>`
+                    : `<@&${server.helperRoleID}>`
             }\n\n` +
             `**🎓 Student Role:** ${
                 forServerInit
                     ? ` *Role that allows users to join office hour queues*\n`
-                    : studentRole === 'Not Set'
+                    : server.studentRoleID === 'Not Set'
                     ? 'Not Set'
-                    : studentRole === 'Deleted'
+                    : server.studentRoleID === 'Deleted'
                     ? '@deleted-role'
-                    : `<@&${studentRole}>`
+                    : `<@&${server.studentRoleID}>`
             }\n\n` +
             `***Select an option from below to change the configuration:***\n\n` +
             `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
@@ -171,32 +158,41 @@ function serverRolesConfigMenu(
             `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
             `If you want to set the roles manually, use the \`/set_roles\` command.`
     );
-
-    function composeSRCButtonId(optionName: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `server_role_config_${optionName}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeSRCButtonId('1'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `server_role_config_1`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setLabel('1')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeSRCButtonId('1a'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `server_role_config_1a`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setLabel('1A')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeSRCButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `server_role_config_2`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setLabel('2')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeSRCButtonId('2a'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `server_role_config_2a`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setLabel('2A')
             .setStyle(ButtonStyle.Secondary)
     );
@@ -232,25 +228,24 @@ function afterSessionMessageConfigMenu(
             `**⚙️** - Set the after session message\n` +
             `**🔒** - Disable the after session message. The bot will no longer sent the message to students after they finish their session\n`
     );
-
-    function composeASMCButtonId(optionName: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `after_session_message_config_${optionName}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeASMCButtonId('1'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'after_session_message_config_1',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('⚙️')
             .setLabel('Set Message')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeASMCButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'after_session_message_config_2',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -282,25 +277,24 @@ function queueAutoClearConfigMenu(
             `**⚙️** - Set the queue auto clear time\n` +
             `**🔒** - Disable the queue auto clear feature.\n`
     );
-
-    function composeQACCButtonId(optionName: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `queue_auto_clear_config_${optionName}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeQACCButtonId('1'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `queue_auto_clear_config_1`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('⚙️')
             .setLabel('Set Auto Clear Time')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeQACCButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                `queue_auto_clear_config_2`,
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -333,21 +327,16 @@ function loggingChannelConfigMenu(
             `**🔒** - Disable the logging feature\n`
     );
 
-    function composeLCCButtonId(optionName: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `logging_channel_config_${optionName}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
     // TODO: Implement a direct way to change the logging channel
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeLCCButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'logging_channel_config_2',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -373,25 +362,24 @@ function autoGiveStudentRoleConfigMenu(
             `**🔓** - Enable the auto give student role feature\n` +
             `**🔒** - Disable the auto give student role feature\n`
     );
-
-    function composeAGSRCButtonId(optionName: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `auto_give_student_role_config_${optionName}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeAGSRCButtonId('1'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'auto_give_student_role_config_1',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔓')
             .setLabel('Enable')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeAGSRCButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'auto_give_student_role_config_2',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)

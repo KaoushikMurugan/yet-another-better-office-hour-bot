@@ -9,8 +9,8 @@ import {
 } from '../utils/embed-helper.js';
 import {
     logDMButtonPress,
-    logButtonPress,
-    parseYabobComponentId
+    logButtonPress
+    // parseYabobComponentId
 } from '../utils/util-functions.js';
 import {
     DefaultButtonCallback,
@@ -33,6 +33,7 @@ import {
     serverSettingsMainMenu
 } from '../attending-server/server-settings-menus.js';
 import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
+import { buttonFactory } from '../utils/component-id-factory.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -126,8 +127,7 @@ const updateParentInteractionButtons = [
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
+    const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
     return (
         buttonName in queueButtonMethodMap ||
         buttonName in defaultButtonMethodMap ||
@@ -143,8 +143,7 @@ function builtInButtonHandlerCanHandle(
  * @returns True if the interaction can be handled by this handler.
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
+    const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
     return buttonName in dmButtonMethodMap;
 }
 
@@ -161,13 +160,12 @@ async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
-    const buttonType = yabobButtonId.type;
+    const [buttonType, buttonName, , channelId] =
+        buttonFactory.decompressComponentId<'queue'>(interaction.customId);
     const server = isServerInteraction(interaction);
     const queueName =
         (await server.getQueueChannels()).find(
-            queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
+            queueChannel => queueChannel.channelObj.id === channelId
         )?.queueName ?? '';
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     logButtonPress(interaction, buttonName, queueName);
@@ -219,9 +217,9 @@ async function processBuiltInButton(
  * @param interaction
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
-    const dmChannelId = yabobButtonId.cid;
+    const [, buttonName, , dmChannelId] = buttonFactory.decompressComponentId<'queue'>(
+        interaction.customId
+    );
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {

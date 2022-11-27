@@ -55,6 +55,8 @@ type GuildId = Snowflake;
 type GuildMemberId = Snowflake;
 /** string */
 type CategoryChannelId = Snowflake;
+/** str */
+type TextBasedChannelId = Snowflake;
 /** string */
 type MessageId = Snowflake;
 /** number */
@@ -200,6 +202,7 @@ export {
     CategoryChannelId,
     MessageId,
     RenderIndex,
+    TextBasedChannelId,
     /** Callback Types */
     CommandCallback,
     DefaultButtonCallback,

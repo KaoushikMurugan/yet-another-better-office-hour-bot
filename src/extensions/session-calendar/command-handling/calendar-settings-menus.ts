@@ -1,10 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { YabobEmbed } from '../../../utils/type-aliases.js';
-import {
-    generateComponentId,
-    yabobButtonIdToString
-} from '../../../utils/util-functions.js';
+import { buttonFactory } from '../../../utils/component-id-factory.js';
 import { calendarStates } from '../calendar-states.js';
 import {
     mainMenuRow,
@@ -41,15 +38,6 @@ function calendarSettingsConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    function composeCSCMButtonId(optionNumber: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `calendar_settings_config_menui_${optionNumber}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
     const state = calendarStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
@@ -68,13 +56,23 @@ function calendarSettingsConfigMenu(
             `**🔗** - Set the Calendar and Embed URL back to the default\n`
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        new ButtonBuilder()
-            .setCustomId(composeCSCMButtonId('1'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'calendar_settings_config_menui_1',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🗓')
             .setLabel('Change Calendar Settings')
             .setStyle(ButtonStyle.Secondary),
-        new ButtonBuilder()
-            .setCustomId(composeCSCMButtonId('2'))
+        buttonFactory
+            .buildComponent(
+                isDm ? 'dm' : 'other',
+                'calendar_settings_config_menui_2',
+                isDm ? server.guild.id : undefined,
+                isDm ? channelId : undefined
+            )
             .setEmoji('🔗')
             .setLabel('Set to Default Calendar Settings')
             .setStyle(ButtonStyle.Secondary)

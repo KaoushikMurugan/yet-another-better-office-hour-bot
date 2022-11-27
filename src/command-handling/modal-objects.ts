@@ -7,7 +7,7 @@ import {
     TextInputStyle
 } from 'discord.js';
 import { attendingServers } from '../global-states.js';
-import { generateComponentId, yabobModalIdToString } from '../utils/util-functions.js';
+import { modalFactory } from '../utils/component-id-factory.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -19,16 +19,14 @@ import { generateComponentId, yabobModalIdToString } from '../utils/util-functio
  */
 function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
-    const modal = new ModalBuilder()
-        .setTitle('Set Queue Auto Clear')
-        .setCustomId(
-            yabobModalIdToString(
-                generateComponentId(
-                    'other',
-                    'queue_auto_clear_modal' + (useMenu ? '_mv' : '')
-                )
-            )
+    const modal = modalFactory
+        .buildComponent(
+            'other',
+            'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
+            undefined,
+            undefined
         )
+        .setTitle('Set Queue Auto Clear')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -70,16 +68,14 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
  * @returns
  */
 function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
-    const modal = new ModalBuilder()
-        .setTitle('Set After Session Message')
-        .setCustomId(
-            yabobModalIdToString(
-                generateComponentId(
-                    'other',
-                    'after_session_message_modal' + (menuVersion ? '_mv' : '')
-                )
-            )
+    const modal = modalFactory
+        .buildComponent(
+            'other',
+            'after_session_message_modal' + (menuVersion ? '_mv' : ''),
+            undefined,
+            undefined
         )
+        .setTitle('Set After Session Message')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
