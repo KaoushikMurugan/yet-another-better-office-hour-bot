@@ -8,6 +8,7 @@ import {
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
 import { green, red } from './command-line-colors.js';
+import LRU from 'lru-cache';
 
 /** Where the component will appear in discord */
 type ComponentLocation = 'dm' | 'queue' | 'other';
@@ -16,8 +17,8 @@ type ComponentLocation = 'dm' | 'queue' | 'other';
  * A map that can be accessed by both the key and value
  */
 class TwoWayMap<K, V> {
-    private reverseMap = new Map<V, K>();
-    normalMap = new Map<K, V>();
+    private reverseMap = new LRU<V, K>({ max: 100 });
+    normalMap = new LRU<K, V>({ max: 100 });
 
     /** Gets a value by key, behaves like regular Map.get */
     getByKey(key: K): Optional<V> {
@@ -79,8 +80,6 @@ class TwoWayMap<K, V> {
 abstract class YabobComponentFactory<
     U extends ButtonBuilder | SelectMenuBuilder | ModalBuilder
 > {
-    private cache = new TwoWayMap<Parameters<typeof this.buildComponent>, string>();
-
     /**
      * Builds the discord js component, but takes over setCustomId
      * @param type queue, dm , or other
@@ -101,21 +100,6 @@ abstract class YabobComponentFactory<
         serverId: T extends 'dm' ? GuildId : undefined,
         channelId: T extends 'other' ? undefined : TextBasedChannelId
     ): string {
-        const key: Parameters<typeof this.buildComponent> = [
-            type,
-            componentName,
-            serverId,
-            channelId
-        ];
-        if (this.cache.hasKey(key)) {
-            console.log(`creation cache ${green('hit')}`);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.cache.getByKey(key)!;
-        }
-        console.log(key, this.cache.normalMap.get(key));
-        console.log(`creation cache ${red('miss')}`);
-        // The following is expected to happen very infrequently
-        // The cache should always have the compressed id after startup
         const id = LZString.compressToUTF16(
             JSON.stringify({
                 name: componentName,
@@ -124,21 +108,12 @@ abstract class YabobComponentFactory<
                 cid: channelId
             })
         );
-        this.cache.set(key, id);
         return id;
     }
 
     decompressComponentId<T extends ComponentLocation>(
         compressedId: string
     ): Parameters<typeof this.buildComponent> {
-        if (this.cache.hasValue(compressedId)) {
-            console.log(`decompression cache ${green('hit')}`);
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return this.cache.getByValue(compressedId)!;
-        }
-        console.log(`decompression cache ${red('miss')}`);
-        // The following is expected to happen very infrequently
-        // The cache should always have the compressed id after startup
         const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
             throw Error('Invalid YABOB ID');
