@@ -66,7 +66,7 @@ const serverSettingsMainMenuOptions: {
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buttonFactory
-        .buildComponent('other', 'return_to_main_menu', undefined, undefined)
+        .build('other', 'return_to_main_menu', undefined, undefined)
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
@@ -92,7 +92,7 @@ function serverSettingsMainMenu(
     );
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         selectMenuFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'server_settings',
                 isDm ? server.guild.id : undefined,
@@ -160,7 +160,7 @@ function serverRolesConfigMenu(
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `server_role_config_1`,
                 isDm ? server.guild.id : undefined,
@@ -169,7 +169,7 @@ function serverRolesConfigMenu(
             .setLabel('1')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `server_role_config_1a`,
                 isDm ? server.guild.id : undefined,
@@ -178,7 +178,7 @@ function serverRolesConfigMenu(
             .setLabel('1A')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `server_role_config_2`,
                 isDm ? server.guild.id : undefined,
@@ -187,7 +187,7 @@ function serverRolesConfigMenu(
             .setLabel('2')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `server_role_config_2a`,
                 isDm ? server.guild.id : undefined,
@@ -230,7 +230,7 @@ function afterSessionMessageConfigMenu(
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'after_session_message_config_1',
                 isDm ? server.guild.id : undefined,
@@ -240,7 +240,7 @@ function afterSessionMessageConfigMenu(
             .setLabel('Set Message')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'after_session_message_config_2',
                 isDm ? server.guild.id : undefined,
@@ -279,7 +279,7 @@ function queueAutoClearConfigMenu(
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `queue_auto_clear_config_1`,
                 isDm ? server.guild.id : undefined,
@@ -289,7 +289,7 @@ function queueAutoClearConfigMenu(
             .setLabel('Set Auto Clear Time')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 `queue_auto_clear_config_2`,
                 isDm ? server.guild.id : undefined,
@@ -331,7 +331,7 @@ function loggingChannelConfigMenu(
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'logging_channel_config_2',
                 isDm ? server.guild.id : undefined,
@@ -364,7 +364,7 @@ function autoGiveStudentRoleConfigMenu(
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'auto_give_student_role_config_1',
                 isDm ? server.guild.id : undefined,
@@ -374,7 +374,7 @@ function autoGiveStudentRoleConfigMenu(
             .setLabel('Enable')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .buildComponent(
+            .build(
                 isDm ? 'dm' : 'other',
                 'auto_give_student_role_config_2',
                 isDm ? server.guild.id : undefined,

@@ -137,7 +137,7 @@ type YabobEmbed = BaseMessageOptions;
  * 'queue' - component is in a queue channel
  * 'other' - component is in a non-queue guild channel
  */
-type YabobComponentType = 'dm' | 'queue' | 'other';
+type ComponentLocation = 'dm' | 'queue' | 'other';
 /**
  * Actionable Component id format
  * Max length must be 100
@@ -151,7 +151,7 @@ type YabobComponentType = 'dm' | 'queue' | 'other';
  *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
  * }
  */
-type YabobComponentId<T extends YabobComponentType> = {
+type YabobComponentId<T extends ComponentLocation> = {
     /** name of the button */
     name: string;
     /** type of button, either 'dm', 'queue', or 'other' */
@@ -165,13 +165,13 @@ type YabobComponentId<T extends YabobComponentType> = {
 // type alias for better readability
 
 /** Yabob Button id format */
-type YabobButtonId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobButtonId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /** Yabob Modal id format */
-type YabobModalId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobModalId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /** Yabob Select Menu id format */
-type YabobSelectMenuId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /**
  * Represents an optional role id that YABOB keeps track of
@@ -215,7 +215,7 @@ export {
     SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,
-    YabobComponentType,
+    ComponentLocation,
     YabobComponentId,
     YabobButtonId,
     YabobModalId,

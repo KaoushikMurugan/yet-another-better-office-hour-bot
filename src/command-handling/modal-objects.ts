@@ -20,7 +20,7 @@ import { modalFactory } from '../utils/component-id-factory.js';
 function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = modalFactory
-        .buildComponent(
+        .build(
             'other',
             'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
             undefined,
@@ -69,7 +69,7 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
  */
 function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
     const modal = modalFactory
-        .buildComponent(
+        .build(
             'other',
             'after_session_message_modal' + (menuVersion ? '_mv' : ''),
             undefined,
