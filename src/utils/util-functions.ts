@@ -15,16 +15,8 @@ import {
     VoiceChannel,
     VoiceState
 } from 'discord.js';
-import { convertBase } from 'simple-base-converter';
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
-import {
-    YabobComponentType,
-    WithRequired,
-    YabobComponentId,
-    YabobButtonId,
-    YabobModalId,
-    YabobSelectMenuId
-} from './type-aliases.js';
+import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 
@@ -356,132 +348,6 @@ function isValidCategoryName(categoryName: string): boolean {
 }
 
 /**
- * Just a string with all the characters in the custom base211 alphabet
- */
-const base211charecters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙˚¬…æ≈ç√∫≤≥÷Œ„‰ˇÁ∏”’»ÅÍÎÏ˝ÓÔÒÚÆ¸˛Ç◊ı˜Â¯˘¿' as const;
-
-/**
- * Converts a snowflake (base 10) to a base211 string
- * @param snowflake
- */
-function convertSnowflakeToBase211(snowflake: string): string {
-    return convertBase(snowflake, '0123456789', base211charecters);
-}
-
-/**
- * Converts a base211 string to a snowflake (base 10)
- * @param base211string
- */
-function convertBase211ToSnowflake(base211string: string): string {
-    return convertBase(base211string, base211charecters, '0123456789');
-}
-
-/**
- * Generates a YABOB ID
- * @param type 'dm', 'queue' or 'server'
- * @param componentName
- * @param serverId
- * @param channelId
- * @returns
- */
-function generateComponentId<T extends YabobComponentType>(
-    type: T,
-    componentName: string,
-    serverId?: string,
-    channelId?: string
-): YabobComponentId<T> {
-    return {
-        name: componentName,
-        type: type,
-        sid: serverId,
-        cid: channelId
-    } as YabobComponentId<T>;
-}
-
-/**
- * Converts a yabob button id to a string after compressing the snowflakes
- * @param yabobButton the yabob button
- * @param noConvert turns off the compression of the snowflakes
- * @returns
- */
-function serializeComponentId(
-    yabobButton: YabobComponentId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    if (!noConvert) {
-        if (yabobButton.sid !== undefined) {
-            yabobButton.sid = convertSnowflakeToBase211(yabobButton.sid);
-        }
-        if (yabobButton.cid !== undefined) {
-            yabobButton.cid = convertSnowflakeToBase211(yabobButton.cid);
-        }
-    }
-    return JSON.stringify(yabobButton);
-}
-
-/**
- * Converts a button id object to a serialized JSON string
- * @param buttonId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobButtonIdToString(
-    buttonId: YabobButtonId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(buttonId, noConvert);
-}
-
-/**
- * Converts a modal id object to a serialized JSON string
- * @param modalId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobModalIdToString(
-    modalId: YabobModalId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(modalId, noConvert);
-}
-
-/**
- * Converts a select menu id object to a serialized JSON string
- * @param selectMenuId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobSelectMenuIdToString(
-    selectMenuId: YabobSelectMenuId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(selectMenuId, noConvert);
-}
-
-/**
- * Parses a yabob button id and then decompresses the snowflakes back to base 10
- * @param customButtonId the custom button id from interaction.customId
- * @param noConvert turns off the decompression of the snowflakes
- * @returns
- */
-function parseYabobComponentId(
-    customButtonId: string,
-    noConvert = false
-): YabobComponentId<YabobComponentType> {
-    const unwrappedId = JSON.parse(customButtonId) as YabobButtonId<YabobComponentType>;
-    if (!noConvert) {
-        if (unwrappedId.sid) {
-            unwrappedId.sid = convertBase211ToSnowflake(unwrappedId.sid);
-        }
-        if (unwrappedId.cid) {
-            unwrappedId.cid = convertBase211ToSnowflake(unwrappedId.cid);
-        }
-    }
-    return unwrappedId;
-}
-
-/**
  * Prints the title message for the console upon startup
  */
 function printTitleString(): void {
@@ -532,19 +398,13 @@ export {
     isVoiceChannel,
     isValidCategoryName,
     isValidChannelName,
-    /** Id builders */
-    // generateComponentId,
     /** Getters */
     getQueueRoles,
     getInteractionName,
     /** Parsers */
-    // parseYabobComponentId,
     /** Converters */
     convertMsToShortTime,
     convertMsToTime,
-    // yabobButtonIdToString,
-    // yabobModalIdToString,
-    // yabobSelectMenuIdToString,
     /** Loggers */
     logDMSelectMenuSelection,
     logSlashCommand,
