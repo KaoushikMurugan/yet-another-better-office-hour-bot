@@ -284,32 +284,27 @@ class GoogleSheetLoggingExtension
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
-                this.attendanceEntries.map(entry => {
-                    return {
-                        'Helper Username': entry.member.user.username,
-                        'Time In': entry.helpStart.toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        }),
-                        'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        }),
-                        'Helped Students': JSON.stringify(
-                            entry.helpedMembers.map(
-                                student =>
-                                    new Object({
-                                        displayName: student.member.displayName,
-                                        username: student.member.user.username,
-                                        id: student.member.id
-                                    })
-                            )
-                        ),
-                        'Discord ID': entry.member.id,
-                        'Session Time (ms)':
-                            entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                        'Active Time (ms)': entry.activeTimeMs,
-                        'Number of Students Helped': entry.helpedMembers.length
-                    };
-                }),
+                this.attendanceEntries.map(entry => ({
+                    'Helper Username': entry.member.user.username,
+                    'Time In': entry.helpStart.toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    }),
+                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    }),
+                    'Helped Students': JSON.stringify(
+                        entry.helpedMembers.map(student => ({
+                            displayName: student.member.displayName,
+                            username: student.member.user.username,
+                            id: student.member.id
+                        }))
+                    ),
+                    'Discord ID': entry.member.id,
+                    'Session Time (ms)':
+                        entry.helpEnd.getTime() - entry.helpStart.getTime(),
+                    'Active Time (ms)': entry.activeTimeMs,
+                    'Number of Students Helped': entry.helpedMembers.length
+                })),
                 {
                     raw: true,
                     insert: true
@@ -382,10 +377,12 @@ class GoogleSheetLoggingExtension
                 entries.map(entry =>
                     Object.fromEntries([
                         ...requiredHeaders.map(header =>
-                            entry[header] instanceof Date
+                            header === 'Session End' ||
+                            header === 'Session Start' ||
+                            header === 'Wait Start'
                                 ? [
                                       header,
-                                      (entry[header] as Date).toLocaleString('en-US', {
+                                      entry[header].toLocaleString('en-US', {
                                           timeZone: 'PST8PDT'
                                       })
                                   ]

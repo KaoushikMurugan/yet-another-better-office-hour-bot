@@ -1,5 +1,5 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
-import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
+import { EmbedColor } from '../../../utils/embed-helper.js';
 import { YabobEmbed } from '../../../utils/type-aliases.js';
 import { buttonFactory } from '../../../utils/component-id-factory.js';
 import { calendarStates } from '../calendar-states.js';
@@ -26,13 +26,7 @@ const calendarSettingsMainMenuOptions = [
     }
 ] as const;
 
-/**
- * Compose the calendar settings settings menu
- * @param server
- * @param channelId
- * @param isDm
- * @returns
- */
+/** Compose the calendar settings settings menu */
 function calendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
@@ -50,8 +44,8 @@ function calendarSettingsConfigMenu(
         )
         .setFields(
             {
-                name: 'Office Hours Calendar Id',
-                value: `\`${state.calendarId}\``
+                name: 'Office Hours Calendar',
+                value: restorePublicEmbedURL(state.calendarId)
             },
             {
                 name: 'Office Hours Calendar Embed URL',
