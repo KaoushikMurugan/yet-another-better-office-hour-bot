@@ -23,6 +23,7 @@ function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder 
             undefined,
             undefined
         )
+        .setTitle('Calendar Settings')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -38,7 +39,7 @@ function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder 
                     .setCustomId('public_embed_url')
                     .setLabel('Public Embed URL')
                     .setPlaceholder(
-                        'Enter calendar embed url, leave blank to default to google calendar'
+                        'Enter calendar embed url, leave blank to use the default google calendar embed.'
                     )
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false)

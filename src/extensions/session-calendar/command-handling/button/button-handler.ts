@@ -164,7 +164,7 @@ async function requestCalendarRefresh(
             interaction.channel as TextBasedChannel
         )
     );
-    await queueLevelExtension?.onCalendarExtensionStateChange();
+    await queueLevelExtension?.onCalendarStateChange();
     return CalendarSuccessMessages.refreshSuccess(queueName);
 }
 

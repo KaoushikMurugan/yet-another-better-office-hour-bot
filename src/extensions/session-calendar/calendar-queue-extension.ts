@@ -93,7 +93,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
     /**
      * Event listener/subscriber for changes in calendarExtensionStates
      */
-    async onCalendarExtensionStateChange(): Promise<void> {
+    async onCalendarStateChange(): Promise<void> {
         await this.renderCalendarEmbeds(true);
     }
 

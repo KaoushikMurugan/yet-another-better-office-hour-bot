@@ -82,7 +82,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         await Promise.all([
             this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+            ...this.listeners.map(listener => listener.onCalendarStateChange())
         ]);
     }
 
@@ -94,7 +94,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.publicCalendarEmbedUrl = validUrl;
         await Promise.all([
             this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+            ...this.listeners.map(listener => listener.onCalendarStateChange())
         ]);
     }
 
@@ -108,7 +108,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         // fire and forget, calendar api is slow and should not block yabob's response
         await Promise.all([
             this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarExtensionStateChange())
+            ...this.listeners.map(listener => listener.onCalendarStateChange())
         ]);
     }
 

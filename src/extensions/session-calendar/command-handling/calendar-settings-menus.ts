@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { YabobEmbed } from '../../../utils/type-aliases.js';
 import { buttonFactory } from '../../../utils/component-id-factory.js';
@@ -42,19 +42,25 @@ function calendarSettingsConfigMenu(
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
-    const embed = SimpleEmbed(
-        `🗓 Calendar Configuration for ${server.guild.name} 🗓`,
-        EmbedColor.Aqua,
-        `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
-            `*This is the calendar that the server refers to for office hours events*` +
-            `\n\n` +
-            `**Office Hours Calendar Embed URL:** ${state.publicCalendarEmbedUrl}\n\n` +
-            `*This is the url that will be linked in the upcoming hours embed.*\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**Note:** If you change the calendar, the embed url will be reset to the default embed url for the new calendar.\n\n` +
-            `**🗓** - Change the Calendar Config\n` +
-            `**🔗** - Set the Calendar and Embed URL back to the default\n`
-    );
+    const embed = new EmbedBuilder()
+        .setTitle(`🗓 Calendar Configuration for ${server.guild.name} 🗓`)
+        .setColor(EmbedColor.Aqua)
+        .setDescription(
+            'This is the calendar that this server refers to for office hours events'
+        )
+        .setFields(
+            {
+                name: 'Office Hours Calendar Id',
+                value: `\`${state.calendarId}\``
+            },
+            {
+                name: 'Office Hours Calendar Embed URL',
+                value: state.publicCalendarEmbedUrl
+            }
+        )
+        .setFooter({
+            text: 'Note: If you change the calendar, the embed url will be reset to the default embed url for the new calendar.'
+        });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -74,11 +80,11 @@ function calendarSettingsConfigMenu(
                 isDm ? channelId : undefined
             )
             .setEmoji('🔗')
-            .setLabel('Set to Default Calendar Settings')
+            .setLabel('Reset Calendar Settings')
             .setStyle(ButtonStyle.Secondary)
     );
     return {
-        embeds: embed.embeds,
+        embeds: [embed],
         components: [buttons, mainMenuRow]
     };
 }
