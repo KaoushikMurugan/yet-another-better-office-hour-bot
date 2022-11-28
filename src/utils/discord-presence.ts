@@ -158,7 +158,7 @@ function updatePresence(): void {
         // TS doesn't like that, so we have to check for it
         return;
     }
-    client.user?.setPresence({
+    client.user.setPresence({
         activities: [newPresence]
     });
     previousPresence = newPresence;

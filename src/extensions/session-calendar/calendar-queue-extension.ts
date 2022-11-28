@@ -141,7 +141,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 .setLabel('Full Calendar')
                 .setStyle(ButtonStyle.Link), // this method is required
             buttonFactory
-                .build('queue', 'refresh', undefined, this.queueChannel.channelObj.id)
+                .buildComponent('queue', 'refresh', undefined, this.queueChannel.channelObj.id)
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')
                 .setStyle(ButtonStyle.Secondary)

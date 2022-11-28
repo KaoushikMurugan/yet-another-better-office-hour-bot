@@ -57,7 +57,7 @@ function calendarSettingsConfigMenu(
     );
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
-            .build(
+            .buildComponent(
                 isDm ? 'dm' : 'other',
                 'calendar_settings_config_menui_1',
                 isDm ? server.guild.id : undefined,
@@ -67,7 +67,7 @@ function calendarSettingsConfigMenu(
             .setLabel('Change Calendar Settings')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
-            .build(
+            .buildComponent(
                 isDm ? 'dm' : 'other',
                 'calendar_settings_config_menui_2',
                 isDm ? server.guild.id : undefined,

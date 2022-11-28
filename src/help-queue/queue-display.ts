@@ -110,25 +110,25 @@ class QueueDisplayV2 {
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buttonFactory
-                .build('queue', 'join', undefined, this.queueChannel.channelObj.id)
+                .buildComponent('queue', 'join', undefined, this.queueChannel.channelObj.id)
                 .setEmoji('✅')
                 .setDisabled(!viewModel.isOpen)
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
             buttonFactory
-                .build('queue', 'leave', undefined, this.queueChannel.channelObj.id)
+                .buildComponent('queue', 'leave', undefined, this.queueChannel.channelObj.id)
                 .setEmoji('❎')
                 .setLabel('Leave')
                 .setStyle(ButtonStyle.Danger)
         );
         const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buttonFactory
-                .build('queue', 'notif', undefined, this.queueChannel.channelObj.id)
+                .buildComponent('queue', 'notif', undefined, this.queueChannel.channelObj.id)
                 .setEmoji('🔔')
                 .setLabel('Notify When Open')
                 .setStyle(ButtonStyle.Primary),
             buttonFactory
-                .build('queue', 'removeN', undefined, this.queueChannel.channelObj.id)
+                .buildComponent('queue', 'removeN', undefined, this.queueChannel.channelObj.id)
                 .setEmoji('🔕')
                 .setLabel('Remove Notifications')
                 .setStyle(ButtonStyle.Primary)

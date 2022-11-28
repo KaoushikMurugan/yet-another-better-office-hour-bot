@@ -160,8 +160,9 @@ async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
-    const [buttonType, buttonName, , channelId] =
-        buttonFactory.decompressComponentId<'queue'>(interaction.customId);
+    const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
+        interaction.customId
+    );
     const server = isServerInteraction(interaction);
     const queueName =
         (await server.getQueueChannels()).find(
@@ -217,7 +218,7 @@ async function processBuiltInButton(
  * @param interaction
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
-    const [, buttonName, , dmChannelId] = buttonFactory.decompressComponentId<'queue'>(
+    const [, buttonName, , dmChannelId] = buttonFactory.decompressComponentId(
         interaction.customId
     );
     const buttonMethod = dmButtonMethodMap[buttonName];

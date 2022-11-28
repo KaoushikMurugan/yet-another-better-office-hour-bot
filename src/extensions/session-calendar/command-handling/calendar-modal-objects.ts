@@ -17,7 +17,7 @@ import { calendarStates } from '../calendar-states.js';
 function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder {
     const state = calendarStates.get(serverId);
     const modal = modalFactory
-        .build(
+        .buildComponent(
             'other',
             'calendar_settings_modal' + (useMenu ? '_mv' : ''),
             undefined,

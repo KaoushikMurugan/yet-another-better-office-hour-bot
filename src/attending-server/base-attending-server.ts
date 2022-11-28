@@ -547,11 +547,11 @@ class AttendingServerV2 {
         }
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>(
             (prev, curr) =>
-                prev.first && // use truthyness/falsyness
-                curr.first && // both null & undefined evaluates to false
+                prev.first &&
+                curr.first &&
                 prev.first.waitStart.getTime() < curr.first.waitStart.getTime()
                     ? prev // if the first 2 conditions passed,
-                    : curr //  both prev.first and curr.first will not be undefined
+                    : curr // both prev.first and curr.first will not be undefined
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
@@ -809,8 +809,7 @@ class AttendingServerV2 {
             .filter(queue =>
                 helperMember.roles.cache.some(role => role.name === queue.queueName)
             )
-            .map(queueToAnnounce => queueToAnnounce.students)
-            .flat();
+            .flatMap(queueToAnnounce => queueToAnnounce.students);
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
