@@ -20,13 +20,12 @@ import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 
-
 // #region Util Functions
 
 /**
  * Prints the title message for the console upon startup
  */
- function printTitleString(): void {
+function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
     console.log(`Environment: ${cyan(environment.env)}`);
     console.log(

@@ -49,7 +49,7 @@ const showModalOnlyButtons: {
 // #region canHandle check, process button
 
 // the `this` parameter asserts the `this` binding of this function
-// - The lexical environment must be the CalendarInteractionExtension class, 
+// - The lexical environment must be the CalendarInteractionExtension class,
 // not anything else
 function canHandleCalendarButton(
     this: CalendarInteractionExtension,

@@ -31,13 +31,12 @@ class CalendarInteractionExtension
     extends BaseInteractionExtension
     implements IInteractionExtension
 {
+    private static helpEmbedsSent = false;
+    private static settingsMainMenuOptionSent = false;
+
     protected constructor() {
         super();
     }
-
-    private static helpEmbedsSent = false;
-
-    private static settingsMainMenuOptionSent = false;
 
     /**
      * - Initializes the calendar extension using firebase backup if available
@@ -79,15 +78,10 @@ class CalendarInteractionExtension
     }
 
     override canHandleButton = canHandleCalendarButton;
-
     override canHandleCommand = canHandleCalendarCommand;
-
     override canHandleModalSubmit = canHandleCalendarModalSubmit;
-
-    override processCommand = processCalendarCommand;
-
     override processButton = processCalendarButton;
-
+    override processCommand = processCalendarCommand;
     override processModalSubmit = processCalendarModalSubmit;
 }
 
