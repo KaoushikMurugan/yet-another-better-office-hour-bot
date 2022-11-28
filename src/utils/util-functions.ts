@@ -20,6 +20,32 @@ import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 
+
+// #region Util Functions
+
+/**
+ * Prints the title message for the console upon startup
+ */
+ function printTitleString(): void {
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
+    console.log(`Environment: ${cyan(environment.env)}`);
+    console.log(
+        `\n${black(
+            magenta(
+                ' '.repeat(
+                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                ) +
+                    titleString +
+                    ' '.repeat(
+                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                    ),
+                'Bg'
+            )
+        )}\n`
+    );
+    console.log('Scanning servers I am a part of...');
+}
+
 /**
  * Centers a string for the console/terminal by padding it with spaces
  * @param text
@@ -122,6 +148,10 @@ function getInteractionName(interaction: Interaction): string {
     }
     return 'Unsupported Interaction Type';
 }
+
+// #endregion Util Functions
+
+// #region Loggers
 
 /**
  * Default logger for slash commands
@@ -275,6 +305,10 @@ function logDMSelectMenuSelection(
     );
 }
 
+// #endregion Loggers
+
+// #region Type Guards
+
 /**
  * Narrows the type down to category channel
  * @param channel any channel from a server
@@ -347,29 +381,6 @@ function isValidCategoryName(categoryName: string): boolean {
     );
 }
 
-/**
- * Prints the title message for the console upon startup
- */
-function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
-    console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(
-        `\n${black(
-            magenta(
-                ' '.repeat(
-                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                ) +
-                    titleString +
-                    ' '.repeat(
-                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                    ),
-                'Bg'
-            )
-        )}\n`
-    );
-    console.log('Scanning servers I am a part of...');
-}
-
 function isLeaveVC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
@@ -383,6 +394,8 @@ function isJoinVC(
 ): newVoiceState is WithRequired<VoiceState, 'channel'> {
     return oldVoiceState.channel === null && newVoiceState.channel !== null;
 }
+
+// #endregion Type Guards
 
 export {
     /** Util Functions */

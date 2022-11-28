@@ -4,7 +4,6 @@ import {
     YabobComponentId,
     ComponentLocation
 } from './type-aliases.js';
-// import { compressToUTF16, decompressFromUTF16 } from 'lz-string';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
 
