@@ -5,8 +5,8 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { modalFactory } from '../../../utils/component-id-factory.js';
-import { calendarStates } from '../calendar-states.js';
+import { modalFactory } from '../../../../utils/component-id-factory.js';
+import { calendarStates } from '../../calendar-states.js';
 
 /**
  * Composes the calendar settings modal

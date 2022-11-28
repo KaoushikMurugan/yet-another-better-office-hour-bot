@@ -15,7 +15,7 @@ import {
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { postSlashCommands } from './command-handling/command/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { CalendarInteractionExtension } from './extensions/session-calendar/command-handling/calendar-command-extension.js';
+import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
 import { GuildId } from './utils/type-aliases.js';
 import { client, attendingServers } from './global-states.js';
