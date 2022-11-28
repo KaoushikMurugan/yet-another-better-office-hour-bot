@@ -353,7 +353,7 @@ async function showSettingsMainMenu(
     server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
-            interaction.component?.label ?? 'Return to Settings Main Menu',
+            interaction.component.label ?? 'Return to Settings Main Menu',
             interaction.channel as TextBasedChannel
         )
     );
