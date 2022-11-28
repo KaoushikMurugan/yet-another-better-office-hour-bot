@@ -4,18 +4,18 @@ import { ModalSubmitInteraction } from 'discord.js';
 import {
     afterSessionMessageConfigMenu,
     queueAutoClearConfigMenu
-} from '../attending-server/server-settings-menus.js';
-import { modalFactory } from '../utils/component-id-factory.js';
-import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
+} from '../../attending-server/server-settings-menus.js';
+import { modalFactory } from '../../utils/component-id-factory.js';
+import { ErrorEmbed, ErrorLogEmbed } from '../../utils/embed-helper.js';
 import {
     DMModalSubmitCallback,
     ModalSubmitCallback,
     YabobEmbed
-} from '../utils/type-aliases.js';
-import { logModalSubmit } from '../utils/util-functions.js';
-import { SuccessMessages } from './builtin-success-messages.js';
-import { isServerInteraction } from './common-validations.js';
-import { ExpectedParseErrors } from './expected-interaction-errors.js';
+} from '../../utils/type-aliases.js';
+import { logModalSubmit } from '../../utils/util-functions.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
+import { isServerInteraction } from '../common-validations.js';
+import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 
 /**
  * Built in handler for modal submit

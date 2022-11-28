@@ -20,34 +20,34 @@ import {
     ErrorEmbed,
     SlashCommandLogEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper.js';
-import { CommandParseError } from '../utils/error-types.js';
+} from '../../utils/embed-helper.js';
+import { CommandParseError } from '../../utils/error-types.js';
 import {
     hasValidQueueArgument,
     isServerInteraction,
     isTriggeredByMemberWithRoles
-} from './common-validations.js';
+} from '../common-validations.js';
 import {
     convertMsToShortTime,
     isTextChannel,
     isValidCategoryName,
     isValidChannelName,
     logSlashCommand
-} from '../utils/util-functions.js';
+} from '../../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, YabobEmbed } from '../utils/type-aliases.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
-import { ExpectedParseErrors } from './expected-interaction-errors.js';
-import { SuccessMessages } from './builtin-success-messages.js';
-import { serverSettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import { CommandCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
+import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
+import { ExpectedParseErrors } from '../expected-interaction-errors.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
+import { serverSettingsMainMenu } from '../../attending-server/server-settings-menus.js';
 import {
     createOfficeVoiceChannels,
     updateCommandHelpChannels
-} from '../attending-server/guild-actions.js';
+} from '../../attending-server/guild-actions.js';
 
 /**
  * The map of available commands

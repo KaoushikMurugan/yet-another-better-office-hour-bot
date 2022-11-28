@@ -11,11 +11,11 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v9';
 import { ChannelType, Guild } from 'discord.js';
-import { magenta, red } from '../utils/command-line-colors.js';
-import { environment } from '../environment/environment-manager.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import { magenta, red } from '../../utils/command-line-colors.js';
+import { environment } from '../../environment/environment-manager.js';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()

@@ -22,7 +22,7 @@ import {
     SlashCommandLogEmbed
 } from '../../../utils/embed-helper.js';
 import { ExtensionSetupError } from '../../../utils/error-types.js';
-import { CommandData } from '../../../command-handling/slash-commands.js';
+import { CommandData } from '../../../command-handling/command/slash-commands.js';
 import {
     hasValidQueueArgument,
     isTriggeredByMemberWithRoles

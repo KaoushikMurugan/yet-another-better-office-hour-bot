@@ -1,17 +1,17 @@
 import { SelectMenuInteraction, TextChannel } from 'discord.js';
-import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
-import { ErrorEmbed, SelectMenuLogEmbed, SimpleEmbed } from '../utils/embed-helper.js';
+import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
+import { ErrorEmbed, SelectMenuLogEmbed, SimpleEmbed } from '../../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
     SelectMenuCallback,
     YabobEmbed
-} from '../utils/type-aliases.js';
+} from '../../utils/type-aliases.js';
 import {
     logDMSelectMenuSelection,
     logSelectMenuSelection
-} from '../utils/util-functions.js';
-import { selectMenuFactory } from '../utils/component-id-factory.js';
-import { isServerInteraction } from './common-validations.js';
+} from '../../utils/util-functions.js';
+import { selectMenuFactory } from '../../utils/component-id-factory.js';
+import { isServerInteraction } from '../common-validations.js';
 
 /**
  * Responsible for handling the selection of a menu item.

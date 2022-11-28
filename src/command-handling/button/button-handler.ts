@@ -6,24 +6,24 @@ import {
     ButtonLogEmbed,
     SimpleEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper.js';
+} from '../../utils/embed-helper.js';
 import {
     logDMButtonPress,
     logButtonPress
     // parseYabobComponentId
-} from '../utils/util-functions.js';
+} from '../../utils/util-functions.js';
 import {
     DefaultButtonCallback,
     DMButtonCallback,
     QueueButtonCallback,
     YabobEmbed
-} from '../utils/type-aliases.js';
+} from '../../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
     isServerInteraction,
     isValidDMInteraction
-} from './common-validations.js';
-import { SuccessMessages } from './builtin-success-messages.js';
+} from '../common-validations.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
 import {
     afterSessionMessageConfigMenu,
     autoGiveStudentRoleConfigMenu,
@@ -31,9 +31,9 @@ import {
     queueAutoClearConfigMenu,
     serverRolesConfigMenu,
     serverSettingsMainMenu
-} from '../attending-server/server-settings-menus.js';
-import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
-import { buttonFactory } from '../utils/component-id-factory.js';
+} from '../../attending-server/server-settings-menus.js';
+import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
+import { buttonFactory } from '../../utils/component-id-factory.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers

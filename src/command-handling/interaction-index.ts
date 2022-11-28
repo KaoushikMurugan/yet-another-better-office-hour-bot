@@ -9,23 +9,23 @@ export {
     builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
     processBuiltInDMButton
-} from './button-handler.js';
+} from './button/button-handler.js';
 
 export {
     processBuiltInCommand,
     builtInCommandHandlerCanHandle
-} from './command-handler.js';
+} from './command/command-handler.js';
 
 export {
     builtInModalHandlerCanHandle,
     builtInDMModalHandlerCanHandle,
     processBuiltInModalSubmit,
     processBuiltInDMModalSubmit
-} from './modal-handler.js';
+} from './modal/modal-handler.js';
 
 export {
     builtInSelectMenuHandlerCanHandle,
     builtInDMSelectMenuHandlerCanHandle,
     processBuiltInSelectMenu,
     processBuiltInDMSelectMenu
-} from './select-menu-handler.js';
+} from './select-menu/select-menu-handler.js';

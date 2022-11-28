@@ -13,7 +13,7 @@ import {
     processBuiltInModalSubmit
 } from './command-handling/interaction-index.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
-import { postSlashCommands } from './command-handling/slash-commands.js';
+import { postSlashCommands } from './command-handling/command/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { CalendarInteractionExtension } from './extensions/session-calendar/command-handling/calendar-command-extension.js';
 import { IInteractionExtension } from './extensions/extension-interface.js';
@@ -33,7 +33,7 @@ import {
     builtInSelectMenuHandlerCanHandle,
     processBuiltInDMSelectMenu,
     processBuiltInSelectMenu
-} from './command-handling/select-menu-handler.js';
+} from './command-handling/select-menu/select-menu-handler.js';
 import { serverRolesConfigMenu } from './attending-server/server-settings-menus.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();

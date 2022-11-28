@@ -20,7 +20,7 @@ import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
-import { CommandData } from '../command-handling/slash-commands.js';
+import { CommandData } from '../command-handling/command/slash-commands.js';
 import { Optional } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
 
