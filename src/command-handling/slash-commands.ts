@@ -297,19 +297,19 @@ function generateHelpCommand() {
                 .setRequired(true)
                 .addChoices(
                     ...adminCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                        .filter(helpMessage => helpMessage.useInHelpCommand)
                         .map(helpMessage => helpMessage.nameValuePair),
                     ...helperCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                        .filter(helpMessage => helpMessage.useInHelpCommand)
                         .map(helpMessage => helpMessage.nameValuePair),
                     ...studentCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand === true)
+                        .filter(helpMessage => helpMessage.useInHelpCommand)
                         .map(helpMessage => helpMessage.nameValuePair)
                 )
         );
 }
 
-/** @internal Get the raw data that can be sent to Discord */
+/** The raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
     enqueueCommand.toJSON(),

@@ -205,6 +205,7 @@ class QueueDisplayV2 {
         const [yabobMessages, nonYabobMessages] = queueMessages.partition(
             msg => msg.author.id === client.user.id
         );
+        // TODO: This filter is probably not necessary
         const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );

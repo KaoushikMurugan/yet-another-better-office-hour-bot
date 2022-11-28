@@ -67,11 +67,11 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
+function afterSessionMessageModal(serverId: string, useMenu = false): ModalBuilder {
     const modal = modalFactory
         .build(
             'other',
-            'after_session_message_modal' + (menuVersion ? '_mv' : ''),
+            'after_session_message_modal' + (useMenu ? '_mv' : ''),
             undefined,
             undefined
         )

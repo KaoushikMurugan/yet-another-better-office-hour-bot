@@ -45,8 +45,9 @@ const failedInteractions: { username: string; interaction: Interaction }[] = [];
 client.on('ready', async () => {
     printTitleString();
     // completeGuilds is all the servers this YABOB instance has joined
-    const clientGuilds = await client.guilds.fetch();
-    const completeGuilds = await Promise.all(clientGuilds.map(guild => guild.fetch()));
+    const completeGuilds = await Promise.all(
+        client.guilds.cache.map(guild => guild.fetch())
+    );
     const setupResults = await Promise.allSettled(
         completeGuilds.map(guild => joinGuild(guild))
     );
@@ -141,7 +142,7 @@ client.on('interactionCreate', async (interaction: Interaction) => {
 client.on('guildMemberAdd', async member => {
     const server =
         attendingServers.get(member.guild.id) ?? (await joinGuild(member.guild));
-    if (server.autoGiveStudentRole === false) {
+    if (!server.autoGiveStudentRole) {
         return;
     }
     const studentRole = server.guild.roles.cache.find(
@@ -204,10 +205,7 @@ client.on('voiceStateUpdate', async (oldVoiceState, newVoiceState) => {
 });
 
 client.on('roleDelete', async role => {
-    const server = attendingServers.get(role.guild.id);
-    if (server !== undefined) {
-        await server.onRoleDelete(role);
-    }
+    attendingServers.get(role.guild.id)?.onRoleDelete(role);
 });
 
 /**

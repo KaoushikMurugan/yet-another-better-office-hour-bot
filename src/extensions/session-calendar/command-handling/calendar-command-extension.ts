@@ -520,7 +520,7 @@ async function resetCalendarSettings(
 /**
  * Sets the calendar id and public embed url
  * @param interaction
- * @param menuVersion if true, then returns the menu embed. else returns the success embed
+ * @param useMenu if true, then returns the menu embed. else returns the success embed
  * @returns
  */
 async function updateCalendarSettings(
