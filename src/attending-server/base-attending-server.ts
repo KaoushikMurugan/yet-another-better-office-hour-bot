@@ -33,6 +33,7 @@ import {
     CategoryChannelId,
     GuildMemberId,
     Optional,
+    SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
@@ -79,11 +80,11 @@ class AttendingServerV2 {
 
     private _hierarchyRoleIds: HierarchyRoles = {
         /** role id of the bot admin role */
-        botAdmin: 'Not Set',
+        botAdmin: SpecialRoleValues.NotSet,
         /** role id of the helper role */
-        staff: 'Not Set',
+        staff: SpecialRoleValues.NotSet,
         /** role id of the student role */
-        student: 'Not Set'
+        student: SpecialRoleValues.NotSet
     };
 
     protected constructor(
@@ -179,7 +180,7 @@ class AttendingServerV2 {
         //check if roles still exist
         this.sortedHierarchyRoles.forEach(role => {
             if (this.guild.roles.cache.get(role.id) === undefined) {
-                this._hierarchyRoleIds[role.name] = 'Deleted';
+                this._hierarchyRoleIds[role.name] = SpecialRoleValues.Deleted;
             }
         });
         this._autoGiveStudentRole = backup.autoGiveStudentRole;
@@ -273,7 +274,9 @@ class AttendingServerV2 {
             server.loadBackUp(validBackup);
         }
         const missingRoles = server.sortedHierarchyRoles.filter(
-            role => role.id === 'Not Set' || role.id === 'Deleted'
+            role =>
+                role.id === SpecialRoleValues.NotSet ||
+                role.id === SpecialRoleValues.Deleted
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
@@ -982,7 +985,8 @@ class AttendingServerV2 {
         if (!forceNewRoles) {
             for (const role of this.sortedHierarchyRoles) {
                 const existingRole =
-                    role.id === 'Not Set' || role.id === 'Deleted'
+                    role.id === SpecialRoleValues.NotSet ||
+                    role.id === SpecialRoleValues.Deleted
                         ? allRoles.find(
                               existingRole => existingRole.name === role.roleName
                           )
@@ -1027,7 +1031,7 @@ class AttendingServerV2 {
         let hierarchyRoleDeleted = false;
         for (const { name, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
-                this._hierarchyRoleIds[name] = 'Deleted';
+                this._hierarchyRoleIds[name] = SpecialRoleValues.Deleted;
                 hierarchyRoleDeleted = true;
             }
         }

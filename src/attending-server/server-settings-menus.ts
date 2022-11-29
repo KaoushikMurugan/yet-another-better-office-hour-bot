@@ -6,7 +6,7 @@ import {
     SelectMenuComponentOptionData
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../utils/type-aliases.js';
+import { SettingsMenuCallback, SpecialRoleValues, YabobEmbed } from '../utils/type-aliases.js';
 import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
@@ -127,27 +127,27 @@ function serverRolesConfigMenu(
             `**\n🤖 Bot Admin Role:** ${
                 forServerInit
                     ? ` *Role that can manage the bot and it's settings*\n`
-                    : server.botAdminRoleID === 'Not Set'
+                    : server.botAdminRoleID === SpecialRoleValues.NotSet
                     ? 'Not Set'
-                    : server.botAdminRoleID === 'Deleted'
+                    : server.botAdminRoleID === SpecialRoleValues.Deleted
                     ? '@deleted-role'
                     : `<@&${server.botAdminRoleID}>`
             }\n\n` +
             `**📚 Helper Role:** ${
                 forServerInit
                     ? ` *Role that allows users to host office hours*\n`
-                    : server.helperRoleID === 'Not Set'
+                    : server.helperRoleID === SpecialRoleValues.NotSet
                     ? 'Not Set'
-                    : server.helperRoleID === 'Deleted'
+                    : server.helperRoleID === SpecialRoleValues.Deleted
                     ? '@deleted-role'
                     : `<@&${server.helperRoleID}>`
             }\n\n` +
             `**🎓 Student Role:** ${
                 forServerInit
                     ? ` *Role that allows users to join office hour queues*\n`
-                    : server.studentRoleID === 'Not Set'
+                    : server.studentRoleID === SpecialRoleValues.NotSet
                     ? 'Not Set'
-                    : server.studentRoleID === 'Deleted'
+                    : server.studentRoleID === SpecialRoleValues.Deleted
                     ? '@deleted-role'
                     : `<@&${server.studentRoleID}>`
             }\n\n` +

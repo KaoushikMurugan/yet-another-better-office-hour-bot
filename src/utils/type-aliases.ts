@@ -177,7 +177,12 @@ type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
  */
-type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
+type OptionalRoleId = Snowflake | SpecialRoleValues;
+
+enum SpecialRoleValues {
+    NotSet = 'Not Set',
+    Deleted = 'Deleted'
+}
 
 /** type to couple the entires of an object with the key value types */
 type Entries<T> = {
@@ -189,6 +194,7 @@ export {
     WithRequired,
     Optional,
     OptionalRoleId,
+    SpecialRoleValues,
     NoMethod,
     ConstNoMethod,
     Result,

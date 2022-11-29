@@ -408,12 +408,12 @@ export {
     isQueueTextChannel,
     isTextChannel,
     isVoiceChannel,
+    /** Validators */
     isValidCategoryName,
     isValidChannelName,
     /** Getters */
     getQueueRoles,
     getInteractionName,
-    /** Parsers */
     /** Converters */
     convertMsToShortTime,
     convertMsToTime,

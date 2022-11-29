@@ -13,7 +13,6 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
-// import { generateComponentId, yabobButtonIdToString } from '../utils/util-functions.js';
 import { client } from '../global-states.js';
 import { buttonFactory } from '../utils/component-id-factory.js';
 
@@ -219,6 +218,7 @@ class QueueDisplayV2 {
             )
         ) {
             // temporary fix, do nothing if #queue doesn't exist
+            this.isRendering = false;
             return;
         }
         const queueMessages = this.queueChannel.channelObj.messages.cache;
@@ -299,10 +299,5 @@ class QueueDisplayV2 {
         return '```' + table.toString() + '```';
     }
 }
-
-// function composeQueueButtonId(buttonName: string, channelId: string): string {
-//     const yabobButtonId = generateComponentId('queue', buttonName, undefined, channelId);
-//     return yabobButtonIdToString(yabobButtonId);
-// }
 
 export { QueueDisplayV2 };
