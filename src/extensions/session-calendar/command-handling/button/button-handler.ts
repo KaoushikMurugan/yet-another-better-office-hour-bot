@@ -81,24 +81,18 @@ async function processCalendarButton(
         return;
     }
     if (!updateParentInteraction) {
-        if (interaction.deferred || interaction.replied) {
-            await interaction.editReply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                )
-            });
-        } else {
-            await interaction.reply({
-                ...SimpleEmbed(
-                    `Processing button \`${interaction.component.label ?? buttonName}` +
-                        (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                    EmbedColor.Neutral
-                ),
-                ephemeral: true
-            });
-        }
+        const respond =
+            interaction.deferred || interaction.replied
+                ? interaction.editReply
+                : interaction.reply;
+        await respond({
+            ...SimpleEmbed(
+                `Processing button \`${interaction.component.label ?? buttonName}` +
+                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
+                EmbedColor.Neutral
+            ),
+            ephemeral: true
+        });
     }
     logButtonPress(interaction, buttonName, queueName);
     await (buttonType === 'queue'

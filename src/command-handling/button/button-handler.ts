@@ -5,7 +5,7 @@ import {
     ErrorEmbed,
     ButtonLogEmbed,
     SimpleEmbed,
-    ErrorLogEmbed
+    ErrorLogEmbed,
 } from '../../utils/embed-helper.js';
 import {
     logDMButtonPress,
