@@ -168,7 +168,7 @@ async function queue(
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
             if (!isValidChannelName(queueName)) {
-                throw ExpectedParseErrors.invalidChannelName;
+                throw ExpectedParseErrors.invalidChannelName(queueName);
             }
             await server.createQueue(queueName);
             return SuccessMessages.createdQueue(queueName);

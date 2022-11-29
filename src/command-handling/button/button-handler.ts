@@ -5,7 +5,7 @@ import {
     ErrorEmbed,
     ButtonLogEmbed,
     SimpleEmbed,
-    ErrorLogEmbed,
+    ErrorLogEmbed
 } from '../../utils/embed-helper.js';
 import {
     logDMButtonPress,
@@ -269,12 +269,10 @@ async function join(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
-        ),
-        server.enqueueStudent(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
+    );
+    await server.enqueueStudent(interaction.member, queueChannel);
     return SuccessMessages.joinedQueue(queueName);
 }
 
@@ -396,7 +394,6 @@ async function createServerRolesDM(
     interaction: ButtonInteraction
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
@@ -404,6 +401,7 @@ async function createServerRolesDM(
             interaction.channel as TextBasedChannel
         )
     );
+    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     return serverRolesConfigMenu(server, interaction.channelId, true, false);
 }
 

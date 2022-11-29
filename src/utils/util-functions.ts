@@ -360,7 +360,7 @@ function isVoiceChannel(
  * @param channelName
  */
 function isValidChannelName(channelName: string): boolean {
-    const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
+    const invalidCharacters = /[`!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
     return (
         channelName.length <= 100 &&
         channelName.length > 0 &&
