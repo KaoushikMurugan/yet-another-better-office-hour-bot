@@ -207,6 +207,7 @@ class AttendingServerV2 {
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
     }
+
     /**
      * Sets the Helper Role ID to `roleID` for this server
      * @param roleID
@@ -217,6 +218,7 @@ class AttendingServerV2 {
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
     }
+
     /**
      * Sets the Student Role ID to `roleID` for this server
      * @param roleID
@@ -688,12 +690,9 @@ class AttendingServerV2 {
                     completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
-        const closableQueues = this._queues.filter(
-            queue =>
-                helperMember.roles.cache
-                    .map(role => role.name)
-                    .includes(queue.queueName) && queue.isOpen
-        ); // 2nd condition handles adding queue roles during a tutoring session
+        const closableQueues = this._queues.filter(queue =>
+            queue.activeHelperIds.has(helperMember.id)
+        );
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
             this.serverExtensions.map(extension =>
