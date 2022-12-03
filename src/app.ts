@@ -33,7 +33,7 @@ import {
     builtInSelectMenuHandlerCanHandle,
     processBuiltInDMSelectMenu,
     processBuiltInSelectMenu
-} from './command-handling/select-menu/select-menu-handler.js';
+} from './command-handling/message-component/select-menu-handler.js';
 import { serverRolesConfigMenu } from './attending-server/server-settings-menus.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();

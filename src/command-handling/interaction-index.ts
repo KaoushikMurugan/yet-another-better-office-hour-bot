@@ -9,7 +9,7 @@ export {
     builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
     processBuiltInDMButton
-} from './button/button-handler.js';
+} from './message-component/button-handler.js';
 
 export {
     processBuiltInCommand,
@@ -28,4 +28,4 @@ export {
     builtInDMSelectMenuHandlerCanHandle,
     processBuiltInSelectMenu,
     processBuiltInDMSelectMenu
-} from './select-menu/select-menu-handler.js';
+} from './message-component/select-menu-handler.js';
