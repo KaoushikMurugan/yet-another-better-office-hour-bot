@@ -1,22 +1,30 @@
-import { CacheType, ChatInputCommandInteraction, Guild } from "discord.js";
-import { GoogleSpreadsheet } from "google-spreadsheet";
-import { isServerInteraction } from "../../command-handling/common-validations.js";
-import { CommandData } from "../../command-handling/slash-commands.js";
-import { environment } from "../../environment/environment-manager.js";
-import { blue, red, yellow } from "../../utils/command-line-colors.js";
-import { EmbedColor, ErrorEmbed, SimpleEmbed, SlashCommandLogEmbed } from "../../utils/embed-helper.js";
-import { ExtensionSetupError } from "../../utils/error-types.js";
-import { CommandCallback, YabobEmbed } from "../../utils/type-aliases.js";
-import { logSlashCommand } from "../../utils/util-functions.js";
-import { BaseInteractionExtension, IInteractionExtension } from "../extension-interface.js";
-import { GoogleSheetLoggingExtension } from "./google-sheet-logging.js";
-import { googleSheetsCommands } from "./google-sheet-slash-commands.js";
+import { ChatInputCommandInteraction, Guild } from 'discord.js';
+import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { isServerInteraction } from '../../command-handling/common-validations.js';
+import { CommandData } from '../../command-handling/slash-commands.js';
+import { environment } from '../../environment/environment-manager.js';
+import { red } from '../../utils/command-line-colors.js';
+import {
+    EmbedColor,
+    ErrorEmbed,
+    SimpleEmbed,
+    SlashCommandLogEmbed
+} from '../../utils/embed-helper.js';
+import { ExtensionSetupError } from '../../utils/error-types.js';
+import { CommandCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { logSlashCommand } from '../../utils/util-functions.js';
+import {
+    BaseInteractionExtension,
+    IInteractionExtension
+} from '../extension-interface.js';
+import { getServerGoogleSheet } from './google-sheet-logging.js';
+import { googleSheetsCommands } from './google-sheet-slash-commands.js';
 
 class GoogleSheetInteractionExtension
     extends BaseInteractionExtension
     implements IInteractionExtension
 {
-    constructor(private guild: Guild, private googleSheet: GoogleSpreadsheet) {
+    constructor() {
         super();
     }
 
@@ -31,7 +39,7 @@ class GoogleSheetInteractionExtension
      * - the google sheet id is invalid
      * - the google sheet is not accessible
      */
-     static async load(guild: Guild): Promise<GoogleSheetInteractionExtension> {
+    static async load(guild: Guild): Promise<GoogleSheetInteractionExtension> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             throw new ExtensionSetupError(
                 'No Google Sheet ID or Google Cloud credentials found.'
@@ -49,12 +57,7 @@ class GoogleSheetInteractionExtension
                 )
             );
         });
-        // console.log(
-        //     `[${blue('Google Sheet Logging')}] ` +
-        //         `successfully loaded for '${guild.name}'!\n` +
-        //         ` - Using this google sheet: ${yellow(googleSheet.title)}`
-        // );
-        return new GoogleSheetInteractionExtension(guild, googleSheet);
+        return new GoogleSheetInteractionExtension();
     }
 
     override get slashCommandData(): CommandData {
@@ -91,18 +94,71 @@ class GoogleSheetInteractionExtension
                       })
             );
     }
-
 }
 
-const commandMethodMap: { [commandName: string]: CommandCallback} = {
+const commandMethodMap: { [commandName: string]: CommandCallback } = {
     get_statistics: getStatistics
-}
+};
 
+/**
+ * The `/get_statistics` command
+ * @param interaction
+ * @returns
+ */
 async function getStatistics(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<YabobEmbed> {
+    // get the doc for this server
+    const server = isServerInteraction(interaction);
+    const googleSheet = getServerGoogleSheet(server);
+    if (!googleSheet) {
+        throw new Error(
+            `No google sheet found for server ${server.guild.name}. ` +
+                `Did you forget to set the google sheet id in the environment?`
+        );
+    }
+
+    const sheetTitle = `${server.guild.name.replace(/:/g, ' ')} Attendance`.replace(
+        /\s{2,}/g,
+        ' '
+    );
+
+    const attendanceSheet = googleSheet.sheetsByTitle[sheetTitle];
+
+    if (!attendanceSheet) {
+        throw new Error(
+            `No help session sheet found for server ${server.guild.name}. ` +
+                `Did you forget to set the google sheet id in the environment?`
+        );
+    }
+
+    const rows = await attendanceSheet.getRows();
+
+    const helpSessionCount = rows.length;
+
+    const totalSessionTime = rows
+        .map(row => {
+            return parseInt(row['Session Time (ms)']);
+        })
+        .filter((time: number) => !isNaN(time))
+        .reduce((a, b) => a + b, 0);
+
+    const totalSessionTimeHours = totalSessionTime / (1000 * 60 * 60);
+    const totalSessionTimeMinutes = totalSessionTime / (1000 * 60);
+
+    const numberOfStudents = rows
+        .map(row => {
+            return parseInt(row['Number of Students Helped']);
+        })
+        .filter((num: number) => !isNaN(num))
+        .reduce((a, b) => a + b, 0);
+
     return SimpleEmbed(
-        'nothing has been implemented yet'
+        `Help session statistics for ${server.guild.name}`,
+        EmbedColor.Neutral,
+        `Help sessions: ${helpSessionCount}\n` +
+            `Total session time: ${totalSessionTimeHours} h ${totalSessionTimeMinutes} min\n` +
+            `Number of students helped: ${numberOfStudents}\n`
     );
 }
 

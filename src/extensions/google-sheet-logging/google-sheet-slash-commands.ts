@@ -1,5 +1,6 @@
-import { SlashCommandBuilder } from "discord.js";
+import { SlashCommandBuilder } from 'discord.js';
 
+// `/get_statistics`
 const getStatistics = new SlashCommandBuilder()
     .setName('get_statistics')
     .setDescription('Tutors only: Get your statistics from the past week.')
@@ -10,8 +11,6 @@ const getStatistics = new SlashCommandBuilder()
             .setRequired(false)
     );
 
-const googleSheetsCommands = [
-    getStatistics.toJSON()
-]
+const googleSheetsCommands = [getStatistics.toJSON()];
 
 export { googleSheetsCommands };
