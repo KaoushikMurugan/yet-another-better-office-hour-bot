@@ -58,6 +58,25 @@ function centered(text: string): string {
 }
 
 /**
+ * Attaches a timestamp before the logging message
+ * @param guildName where the logger was used
+ * @param params anything, same params as regualr console log
+ */
+function logWithTimeStamp(
+    guildName = '',
+    ...params: Parameters<typeof console.log>
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ${yellow(guildName)}]\n`,
+        ...params
+    );
+}
+
+/**
  * Converts the time delta in miliseconds into a readable format
  * @param milliseconds the difference to convert
  */
@@ -401,6 +420,7 @@ export {
     addTimeOffset,
     centered,
     printTitleString,
+    logWithTimeStamp,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,

@@ -15,7 +15,6 @@ import {
 } from '../../../../utils/type-aliases.js';
 import { logButtonPress } from '../../../../utils/util-functions.js';
 import { isServerCalendarInteraction } from '../../shared-calendar-functions.js';
-import type { CalendarInteractionExtension } from '../../calendar-command-extension.js';
 import { calendarSettingsConfigMenu } from '../calendar-settings-menus.js';
 import {
     CalendarLogMessages,
@@ -51,10 +50,7 @@ const showModalOnlyButtons: {
 // the `this` parameter asserts the `this` binding of this function
 // - The lexical environment must be the CalendarInteractionExtension class,
 // not anything else
-function canHandleCalendarButton(
-    this: CalendarInteractionExtension,
-    interaction: ButtonInteraction
-): boolean {
+function canHandleCalendarButton(interaction: ButtonInteraction): boolean {
     const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
     return (
         buttonName in queueButtonMethodMap ||
@@ -64,7 +60,6 @@ function canHandleCalendarButton(
 }
 
 async function processCalendarButton(
-    this: CalendarInteractionExtension,
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
@@ -81,18 +76,15 @@ async function processCalendarButton(
         return;
     }
     if (!updateParentInteraction) {
-        const respond =
-            interaction.deferred || interaction.replied
-                ? interaction.editReply
-                : interaction.reply;
-        await respond({
-            ...SimpleEmbed(
-                `Processing button \`${interaction.component.label ?? buttonName}` +
-                    (queueName.length > 0 ? `\` in \`${queueName}\` ...` : ''),
-                EmbedColor.Neutral
-            ),
-            ephemeral: true
-        });
+        const msg =
+            `Processing button \`${interaction.component.label ?? buttonName}` +
+            (queueName.length > 0 ? `\` in \`${queueName}\` ...` : '');
+        await (interaction.replied
+            ? interaction.editReply(SimpleEmbed(msg, EmbedColor.Neutral))
+            : interaction.reply({
+                  ...SimpleEmbed(msg, EmbedColor.Neutral),
+                  ephemeral: true
+              }));
     }
     logButtonPress(interaction, buttonName, queueName);
     await (buttonType === 'queue'

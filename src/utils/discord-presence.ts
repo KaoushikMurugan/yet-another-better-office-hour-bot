@@ -1,6 +1,7 @@
 import { ActivityType } from 'discord.js';
 import { client } from '../global-states.js';
-import { cyan, green } from './command-line-colors.js';
+import { green } from './command-line-colors.js';
+import { logWithTimeStamp } from './util-functions.js';
 
 // You can't set the presence of a bot to Custom Status, so we can't use the general type of ActivityType
 // If you give the presence type of Streaming, it shows up on discord as "Playing" instead of "Streaming"
@@ -162,14 +163,11 @@ function updatePresence(): void {
         activities: [newPresence]
     });
     previousPresence = newPresence;
-    console.log(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${green(`Global`)}] Updated presence to ` +
-            `${presenceTypeMap.get(newPresence.type)}: ${newPresence.name}`
+    logWithTimeStamp(
+        green('Global'),
+        `Updated presence to ${presenceTypeMap.get(newPresence.type)}: ${
+            newPresence.name
+        }`
     );
 }
 

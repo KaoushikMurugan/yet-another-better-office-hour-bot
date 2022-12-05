@@ -6,7 +6,8 @@ import {
     ButtonInteraction,
     ModalSubmitInteraction,
     PermissionsBitField,
-    SelectMenuInteraction
+    SelectMenuInteraction,
+    Interaction
 } from 'discord.js';
 import {
     AttendingServerV2,
@@ -99,6 +100,7 @@ function isTriggeredByMemberWithRoles(
 
     if (!hasARequiredRole) {
         if (missingRoles.length > 0) {
+            // TODO: show warning here, rn this case is never reached
             throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
         }
         throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
@@ -146,10 +148,7 @@ function hasValidQueueArgument(
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByUserWithValidEmail(
-    interaction:
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>,
+    interaction: Interaction<'cached'>,
     commandName: string
 ): GuildMember {
     if (!interaction.member.roles.cache.some(role => role.name === 'Verified Email')) {
@@ -178,6 +177,7 @@ function isFromQueueChannelWithParent(
     };
     return queueChannel;
 }
+
 
 export {
     hasValidQueueArgument,

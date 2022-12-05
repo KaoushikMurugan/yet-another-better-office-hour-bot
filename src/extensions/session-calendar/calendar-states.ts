@@ -10,6 +10,7 @@ import { Collection, Guild } from 'discord.js';
 import { firebaseDB } from '../../global-states.js';
 import { FrozenServer } from '../extension-utils.js';
 import { z } from 'zod';
+import { logWithTimeStamp } from '../../utils/util-functions.js';
 
 /**
  * @module Backups
@@ -158,15 +159,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                console.log(
-                    `[${cyan(
-                        new Date().toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        })
-                    )} ` +
-                        `${yellow(this.guild.name)}]\n` +
-                        ` - Calendar config backup successful`
-                )
+                logWithTimeStamp(this.guild.name, '- Calendar config backup successful')
             )
             .catch((err: Error) =>
                 console.error('Firebase calendar backup failed.', err.message)

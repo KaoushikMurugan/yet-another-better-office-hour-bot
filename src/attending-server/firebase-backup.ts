@@ -10,6 +10,7 @@ import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
+import { logWithTimeStamp } from '../utils/util-functions.js';
 
 /**
  * Built in backup extension
@@ -104,14 +105,9 @@ class FirebaseServerBackupExtension
             .doc(this.guild.id)
             .set(serverBackup)
             .then(() =>
-                console.log(
-                    `[${cyan(
-                        new Date().toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        })
-                    )} ` +
-                        `${yellow(this.guild.name)}]\n` +
-                        ` - Server & queue data backup successful`
+                logWithTimeStamp(
+                    this.guild.name,
+                    '- Server & queue data backup successful'
                 )
             )
             .catch((err: Error) =>

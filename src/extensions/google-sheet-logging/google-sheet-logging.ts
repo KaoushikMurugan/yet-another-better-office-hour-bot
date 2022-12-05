@@ -3,12 +3,13 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
+import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
+import { logWithTimeStamp } from '../../utils/util-functions.js';
 
 /**
  * Additional attendance info for each helper
@@ -91,14 +92,14 @@ class GoogleSheetLoggingExtension
         await googleSheet.loadInfo().catch(() => {
             throw new ExtensionSetupError(
                 red(
-                    `Failed to load google sheet for ${guild.name}. ` +
+                    `Failed to load google sheet for ${yellow(guild.name)}. ` +
                         `Google sheets rejected our connection.`
                 )
             );
         });
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${guild.name}'!\n` +
+                `successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
         return new GoogleSheetLoggingExtension(guild, googleSheet);
@@ -313,12 +314,9 @@ class GoogleSheetLoggingExtension
             attendanceSheet.loadHeaderRow()
         ])
             .then(() => {
-                console.log(
-                    `[${cyan(new Date().toLocaleString())} ${yellow(
-                        this.guild.name
-                    )}]\n - Successfully updated ${
-                        this.attendanceEntries.length
-                    } attendance entries.`
+                logWithTimeStamp(
+                    this.guild.name,
+                    `- Successfully updated ${updatedCountSnapshot} attendance entries.`
                 );
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated

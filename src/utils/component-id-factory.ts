@@ -1,6 +1,12 @@
-import { TextBasedChannelId, GuildId, ComponentLocation } from './type-aliases.js';
+import {
+    TextBasedChannelId,
+    GuildId,
+    ComponentLocation,
+    Result
+} from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
+import { CommandParseError } from './error-types.js';
 
 abstract class YabobComponentFactory<
     U extends ButtonBuilder | SelectMenuBuilder | ModalBuilder
@@ -34,12 +40,34 @@ abstract class YabobComponentFactory<
     decompressComponentId(compressedId: string): Parameters<typeof this.buildComponent> {
         const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
-            throw Error('Invalid YABOB ID');
+            throw new CommandParseError('Invalid Component ID');
         }
         const decompressed = JSON.parse(rawDecompressed);
         decompressed[2] ??= undefined; // JSON.parse returns null
         decompressed[3] ??= undefined;
         return decompressed;
+    }
+
+    /**
+     * Non exception based version of {@link decompressComponentId}
+     */
+    safeDecompressComponentId(
+        compressedId: string
+    ): Result<Parameters<typeof this.buildComponent>, CommandParseError> {
+        const rawDecompressed = LZString.decompressFromUTF16(compressedId);
+        if (!rawDecompressed) {
+            return {
+                ok: false,
+                error: new CommandParseError('Invalid Component ID')
+            };
+        }
+        const decompressed = JSON.parse(rawDecompressed);
+        decompressed[2] ??= undefined; // JSON.parse returns null
+        decompressed[3] ??= undefined;
+        return {
+            ok: true,
+            value: decompressed
+        };
     }
 }
 

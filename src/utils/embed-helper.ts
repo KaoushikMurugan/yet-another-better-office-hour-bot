@@ -7,7 +7,8 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder
+    EmbedBuilder,
+    Snowflake
 } from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
@@ -17,6 +18,7 @@ type ExpectedError = QueueError | ServerError | CommandParseError;
 enum EmbedColor {
     Success = 0xa9dc76, // Green
     Error = 0xff6188, // Red
+    UnexpectedError = 0xff0000, // pure red
     KindaBad = 0xfc9867, // Orange
     Neutral = 0xffffff, // White
     Warning = 0xffd866, // Yellow
@@ -109,7 +111,7 @@ function SimpleEmbed2(
  */
 function ErrorEmbed(
     err: Error,
-    pingForHelp?: string
+    pingForHelp?: Snowflake
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL =
         client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
@@ -157,11 +159,12 @@ function ErrorEmbed(
     };
 }
 
-function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: string): EmbedBuilder {
+function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: Snowflake): EmbedBuilder {
     const YABOB_PFP_URL =
         client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     const embed = new EmbedBuilder();
-    let color = EmbedColor.KindaBad;
+    let color: EmbedColor;
+    // use discriminated union to avoid the instanceof check
     if ('type' in err) {
         switch (err.type) {
             case 'ServerError':
@@ -169,13 +172,18 @@ function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: string): EmbedBui
                 break;
             case 'QueueError':
                 color = EmbedColor.Aqua;
-                embed.setFields({
+                embed.addFields({
                     name: 'In Queue',
                     value: err.queueName,
                     inline: true
                 });
                 break;
+            case 'CommandParseError':
+                color = EmbedColor.KindaBad;
+                break;
         }
+    } else {
+        color = EmbedColor.UnexpectedError;
     }
     return embed
         .setTitle(err.message.length <= 256 ? err.message : err.name)
@@ -271,7 +279,7 @@ function ErrorLogEmbed2(
             inline: true
         }
     ];
-    let color = EmbedColor.KindaBad;
+    let color: EmbedColor;
     if ('type' in err) {
         switch (err.type) {
             case 'ServerError':
@@ -285,7 +293,12 @@ function ErrorLogEmbed2(
                     inline: true
                 });
                 break;
+            case 'CommandParseError':
+                color = EmbedColor.KindaBad;
+                break;
         }
+    } else {
+        color = EmbedColor.UnexpectedError;
     }
     return new EmbedBuilder()
         .setTitle(
@@ -639,8 +652,6 @@ function SelectMenuLogEmbed2(
     optionSelected: string[],
     channel: TextBasedChannel
 ): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
     return new EmbedBuilder()
         .setColor(EmbedColor.NoColor)
         .setTitle(
@@ -674,7 +685,8 @@ function SelectMenuLogEmbed2(
         )
         .setFooter({
             text: 'YABOB',
-            iconURL: YABOB_PFP_URL
+            iconURL:
+                client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
         });
 }
 
