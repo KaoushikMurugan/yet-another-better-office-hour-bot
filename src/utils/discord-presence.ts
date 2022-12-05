@@ -165,7 +165,7 @@ function updatePresence(): void {
     previousPresence = newPresence;
     logWithTimeStamp(
         green('Global'),
-        `Updated presence to ${presenceTypeMap.get(newPresence.type)}: ${
+        `- Updated presence to ${presenceTypeMap.get(newPresence.type)}: ${
             newPresence.name
         }`
     );

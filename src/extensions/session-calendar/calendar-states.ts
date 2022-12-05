@@ -1,6 +1,5 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
-import { cyan, yellow } from '../../utils/command-line-colors.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';

@@ -4,7 +4,7 @@ import {
     IServerExtension
 } from '../extensions/extension-interface.js';
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
-import { blue, cyan, yellow } from '../utils/command-line-colors.js';
+import { blue } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
