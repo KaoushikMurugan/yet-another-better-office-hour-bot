@@ -19,6 +19,7 @@ import {
     isQueueTextChannel,
     logSlashCommand
 } from '../../../../utils/util-functions.js';
+import type { CalendarInteractionExtension } from '../../calendar-command-extension.js';
 import { ExpectedCalendarErrors } from '../../expected-calendar-errors.js';
 import {
     checkCalendarConnection,
@@ -43,11 +44,14 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
 
 // #region
 
-function canHandleCalendarCommand(interaction: ChatInputCommandInteraction): boolean {
+function canHandleCalendarCommand(
+    this: CalendarInteractionExtension,
+    interaction: ChatInputCommandInteraction): boolean {
     return interaction.commandName in commandMethodMap;
 }
 
 async function processCalendarCommand(
+    this: CalendarInteractionExtension,
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server] = isServerCalendarInteraction(interaction);

@@ -14,6 +14,7 @@ import {
     YabobEmbed
 } from '../../../../utils/type-aliases.js';
 import { logButtonPress } from '../../../../utils/util-functions.js';
+import type { CalendarInteractionExtension } from '../../calendar-command-extension.js';
 import { isServerCalendarInteraction } from '../../shared-calendar-functions.js';
 import { calendarSettingsConfigMenu } from '../calendar-settings-menus.js';
 import {
@@ -50,7 +51,10 @@ const showModalOnlyButtons: {
 // the `this` parameter asserts the `this` binding of this function
 // - The lexical environment must be the CalendarInteractionExtension class,
 // not anything else
-function canHandleCalendarButton(interaction: ButtonInteraction): boolean {
+function canHandleCalendarButton(
+    this: CalendarInteractionExtension,
+    interaction: ButtonInteraction
+): boolean {
     const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
     return (
         buttonName in queueButtonMethodMap ||
@@ -60,6 +64,7 @@ function canHandleCalendarButton(interaction: ButtonInteraction): boolean {
 }
 
 async function processCalendarButton(
+    this: CalendarInteractionExtension,
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
