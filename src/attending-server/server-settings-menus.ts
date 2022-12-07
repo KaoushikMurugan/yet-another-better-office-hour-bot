@@ -6,9 +6,21 @@ import {
     SelectMenuComponentOptionData
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { SettingsMenuCallback, SpecialRoleValues, YabobEmbed } from '../utils/type-aliases.js';
+import {
+    SettingsMenuCallback,
+    SpecialRoleValues,
+    YabobEmbed
+} from '../utils/type-aliases.js';
 import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
+
+const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+    buttonFactory
+        .buildComponent('other', 'return_to_main_menu', undefined, undefined)
+        .setEmoji('🏠')
+        .setLabel('Return to Main Menu')
+        .setStyle(ButtonStyle.Primary)
+);
 
 /**
  * Options for the main menu of server settings
@@ -63,14 +75,6 @@ const serverSettingsMainMenuOptions: {
         subMenu: autoGiveStudentRoleConfigMenu
     }
 ];
-
-const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    buttonFactory
-        .buildComponent('other', 'return_to_main_menu', undefined, undefined)
-        .setEmoji('🏠')
-        .setLabel('Return to Main Menu')
-        .setStyle(ButtonStyle.Primary)
-);
 
 /**
  * Composes the server settings main menu

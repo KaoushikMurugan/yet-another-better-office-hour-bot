@@ -260,25 +260,22 @@ function buildCalendarURL(args: {
     timeMax: Date;
     maxResults: number;
 }): string {
-    return (
-        `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?` +
-        `&key=${args.apiKey}` +
-        `&timeMax=${args.timeMax.toISOString()}` +
-        `&timeMin=${args.timeMin.toISOString()}` +
-        `&maxResults=${args.maxResults.toString()}` +
-        `&orderBy=startTime` +
+    return [
+        `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?`,
+        `&key=${args.apiKey}`,
+        `&timeMax=${args.timeMax.toISOString()}`,
+        `&timeMin=${args.timeMin.toISOString()}`,
+        `&maxResults=${args.maxResults.toString()}`,
+        `&orderBy=startTime`,
         `&singleEvents=true`
-    );
+    ].join('');
 }
 
 /**
  * Creates a url from calendar id that takes the user to the public embed
  */
 function restorePublicEmbedURL(calendarId: string): string {
-    return (
-        `https://calendar.google.com/calendar/embed?src=${calendarId}` +
-        `&ctz=America%2FLos_Angeles&mode=WEEK`
-    );
+    return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
 }
 
 /**
@@ -293,7 +290,11 @@ function isServerCalendarInteraction<
         | ModalSubmitInteraction<'cached'>
 >(
     interaction: T
-): [FrozenServer, CalendarExtensionState, WithRequired<T, 'channel' | 'channelId'>] {
+): [
+    server: FrozenServer,
+    state: CalendarExtensionState,
+    interaction: WithRequired<T, 'channel' | 'channelId'>
+] {
     const server = isServerInteraction(interaction);
     const state = calendarStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {

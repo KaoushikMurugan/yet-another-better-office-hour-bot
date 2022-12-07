@@ -41,11 +41,20 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
 /**
  * Non exception based error types
  */
-type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+type Result<T, E extends Error = Error> =
+    | { ok: true; value: T }
+    | { ok: false; error: E };
 
 type ServerResult<T> = Result<T, ServerError>;
 
 type QueueResult<T> = Result<T, QueueError>;
+
+const Ok = <T>(val: T): { ok: true; value: T } => ({ ok: true, value: val });
+
+const Err = <E extends Error>(err: E): { ok: false; error: E } => ({
+    ok: false,
+    error: err
+});
 
 // These are just aliases to make keys of collections easier to read
 
@@ -198,6 +207,8 @@ export {
     NoMethod,
     ConstNoMethod,
     Result,
+    Ok, // these 2 arrow functions comes withe the Result<T,E> types so they are placed here
+    Err,
     ServerResult,
     QueueResult,
     HelpMessage,

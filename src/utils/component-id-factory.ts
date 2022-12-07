@@ -2,12 +2,21 @@ import {
     TextBasedChannelId,
     GuildId,
     ComponentLocation,
-    Result
+    Result,
+    Err,
+    Ok
 } from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
 
+// Honestly idk if using abstract factory is an overkill
+// but it should be easier to modify in the future by adding more abstract methods and implement them in the concrete classes
+// I tried using function overloads but I couldn't figure out the correct types
+
+/**
+ * Abstract Factory class for components that have the setCustomId method
+ */
 abstract class YabobComponentFactory<
     U extends ButtonBuilder | SelectMenuBuilder | ModalBuilder
 > {
@@ -37,6 +46,11 @@ abstract class YabobComponentFactory<
         return id;
     }
 
+    /**
+     * Decompresses the component id that was compressed with LZString.compressToUTF16
+     * @param compressedId the id to decompress
+     * @returns the parameter tuple of buildComponent
+     */
     decompressComponentId(compressedId: string): Parameters<typeof this.buildComponent> {
         const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
@@ -56,21 +70,25 @@ abstract class YabobComponentFactory<
     ): Result<Parameters<typeof this.buildComponent>, CommandParseError> {
         const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
-            return {
-                ok: false,
-                error: new CommandParseError('Invalid Component ID')
-            };
+            return Err(new CommandParseError('Invalid Component ID'));
         }
-        const decompressed = JSON.parse(rawDecompressed);
-        decompressed[2] ??= undefined; // JSON.parse returns null
-        decompressed[3] ??= undefined;
-        return {
-            ok: true,
-            value: decompressed
-        };
+        try {
+            const decompressed = JSON.parse(rawDecompressed);
+            decompressed[2] ??= undefined; // JSON.parse returns null
+            decompressed[3] ??= undefined;
+            return Ok(decompressed);
+        } catch {
+            return Err(new CommandParseError('Failed to parse component JSON'));
+        }
     }
 }
 
+/**
+ * Concrete class for buttons
+ * - usage:
+ * `new YabobButtonFactory().buildComponent()` and chain regular builder methods
+ * - or use the globally exported buttonFactory `buttonFactory.builtComponent()`
+ */
 class YabobButtonFactory extends YabobComponentFactory<ButtonBuilder> {
     buildComponent<T extends ComponentLocation>(
         type: T,
@@ -84,6 +102,12 @@ class YabobButtonFactory extends YabobComponentFactory<ButtonBuilder> {
     }
 }
 
+/**
+ * Concrete class for select menus
+ * - usage:
+ * `new YabobSelectMenuFactory().buildComponent()` and chain regular builder methods
+ * - or use the globally exported selectMenuFactory `selectMenuFactory.builtComponent()`
+ */
 class YabobSelectMenuFactory extends YabobComponentFactory<SelectMenuBuilder> {
     buildComponent<T extends ComponentLocation>(
         type: T,
@@ -97,6 +121,12 @@ class YabobSelectMenuFactory extends YabobComponentFactory<SelectMenuBuilder> {
     }
 }
 
+/**
+ * Concrete class for modals
+ * - usage:
+ * `new YabobModalFactory().buildComponent()` and chain regular builder methods
+ * - or use the globally exported modalFactory `modalFactory.builtComponent()`
+ */
 class YabobModalFactory extends YabobComponentFactory<ModalBuilder> {
     buildComponent<T extends ComponentLocation>(
         type: T,
@@ -114,4 +144,11 @@ const buttonFactory = new YabobButtonFactory();
 const selectMenuFactory = new YabobSelectMenuFactory();
 const modalFactory = new YabobModalFactory();
 
-export { buttonFactory, selectMenuFactory, modalFactory };
+export {
+    buttonFactory,
+    selectMenuFactory,
+    modalFactory,
+    YabobButtonFactory,
+    YabobSelectMenuFactory,
+    YabobModalFactory
+};
