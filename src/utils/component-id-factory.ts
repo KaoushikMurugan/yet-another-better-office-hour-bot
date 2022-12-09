@@ -7,7 +7,12 @@ import {
     Ok
 } from './type-aliases.js';
 import LZString from 'lz-string';
-import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
+import {
+    ButtonBuilder,
+    ModalBuilder,
+    SelectMenuBuilder,
+    TextInputBuilder
+} from 'discord.js';
 import { CommandParseError } from './error-types.js';
 
 // Honestly idk if using abstract factory is an overkill
@@ -144,11 +149,109 @@ const buttonFactory = new YabobButtonFactory();
 const selectMenuFactory = new YabobSelectMenuFactory();
 const modalFactory = new YabobModalFactory();
 
+/** A tuple that represents the infomation encoded in a custom id */
+type CustomIdTuple<T extends ComponentLocation> = [
+    type: T,
+    componentName: string,
+    serverId: GuildId,
+    channelId: TextBasedChannelId
+];
+
+/**
+ * Function variant of YabobComponentFactory, takes over the builder's setCustomId method
+ * @param builder builder method that has 'setCustomId'
+ * @param idInfo the information to compress into the id
+ * @returns builder, but without setCustomId
+ * @example
+ * ```ts
+ * // type is inferred as buildComponent<'dm', ButtonBuilder>
+ * const a = buildComponent(new ButtonBuilder(), ['dm', 'bruh', '11', '22']);
+ * ```
+ */
+function buildComponent<
+    T extends ComponentLocation,
+    R extends { setCustomId: (customId: string) => R }
+>(builder: R, idInfo: CustomIdTuple<T>): Omit<R, 'setCustomId'> {
+    return builder.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
+}
+
+/**
+ * Test to see if the decompressed array is valid
+ * @param expectedComponentType'queue' 'dm' or 'other'
+ * - the consumer of this function needs to specify the correct type
+ * @param decompressedTuple from JSON.parse
+ * @returns boolean
+ */
+function isValidCustomIdTuple<T extends ComponentLocation>(
+    expectedComponentType: T,
+    decompressedTuple: string[]
+): decompressedTuple is CustomIdTuple<T> {
+    const lengthMatch = decompressedTuple.length === 4;
+    const typeMatch = decompressedTuple[0] === expectedComponentType;
+    const snowflakesAreValid = // snowflakes should only have numbers
+        /^[0-9]+$/.test(decompressedTuple[2]!) && /^[0-9]+$/.test(decompressedTuple[3]!);
+    return lengthMatch && typeMatch && snowflakesAreValid;
+}
+
+/**
+ * Decompresses the obfuscated id into CustomIdTuple
+ * @param expectedComponentType 'queue' 'dm' or 'other'
+ * - the consumer of this function needs to specify the correct type
+ * @param compressedId the id to decompress
+ * @returns the original tuple passed into buildComponent
+ * @throws CommandParseError or JSONParseError
+ */
+function decompressComponentId<T extends ComponentLocation>(
+    expectedComponentType: T,
+    compressedId: string
+): CustomIdTuple<T> {
+    const rawDecompressed = LZString.decompressFromUTF16(compressedId);
+    if (!rawDecompressed) {
+        throw new CommandParseError('Invalid Component ID');
+    }
+    // have to cast, JSON parse returns any
+    const parsed = JSON.parse(rawDecompressed);
+    if (!isValidCustomIdTuple(expectedComponentType, parsed)) {
+        throw new CommandParseError('Invalid Component ID');
+    }
+    return parsed;
+}
+
+/**
+ * Non exception based version of {@link decompressComponentId}
+ * @example 
+ * ```ts
+ * const decompressed = safeDecompressComponentId<'queue'>('some id');
+ * decompressed.ok ? doForOk(decompressed.value) : doForErr(decompressed.error)
+ * ```
+ */
+function safeDecompressComponentId<T extends ComponentLocation>(
+    expectedComponentType: T,
+    compressedId: string
+): Result<CustomIdTuple<T>, CommandParseError> {
+    const rawDecompressed = LZString.decompressFromUTF16(compressedId);
+    if (!rawDecompressed) {
+        return Err(new CommandParseError('Invalid Component ID'));
+    }
+    try {
+        const parsed = JSON.parse(rawDecompressed);
+        if (!isValidCustomIdTuple(expectedComponentType, parsed)) {
+            return Err(new CommandParseError('Invalid Component ID'));
+        }
+        return Ok(JSON.parse(rawDecompressed) as CustomIdTuple<T>);
+    } catch {
+        return Err(new CommandParseError('Failed to parse component JSON'));
+    }
+}
+
 export {
     buttonFactory,
     selectMenuFactory,
     modalFactory,
     YabobButtonFactory,
     YabobSelectMenuFactory,
-    YabobModalFactory
+    YabobModalFactory,
+    buildComponent,
+    decompressComponentId,
+    safeDecompressComponentId
 };

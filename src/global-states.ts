@@ -36,7 +36,7 @@ const firebaseDB: Firestore = getFirestore();
 
 /**
  * The discord user object.
- * @remarks Top level await finally works with esmodules,
+ * @remarks Top level await finally works with esmodules
  * - The `true` type parameter asserts that the client has successfully initialized
  * - Asserted because this file handles discord login.
  *  If this object is exported,
@@ -52,6 +52,7 @@ const client: Client<true> = new Client({
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.DirectMessages
     ],
+    // modifies default caching behavior
     makeCache: Options.cacheWithLimits({
         ...Options.DefaultMakeCacheSettings,
         ReactionManager: 0,
