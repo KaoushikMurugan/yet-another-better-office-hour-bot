@@ -879,9 +879,8 @@ class AttendingServerV2 {
 
     /**
      * Sends the VC invite to the student after successful dequeue
-     * @param helperObject
-     * @param student
-     * @param helperVoiceChannel
+     * @param student who will receive the invite
+     * @param helperVoiceChannel which vc channel to invite the student to
      */
     private async sendInvite(
         student: GuildMember,
@@ -918,6 +917,8 @@ class AttendingServerV2 {
      * Creates all the office hour queues
      * @param queueBackups
      * - if a backup extension is enabled, this is the queue data to load
+     * @param hoursUntilAutoClear how long until the queues are cleared
+     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
      */
     private async initAllQueues(
         queueBackups?: QueueBackup[],
@@ -970,29 +971,52 @@ class AttendingServerV2 {
         everyoneIsStudent: boolean
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
+        const everyone = this.guild.roles.everyone.id;
         const foundRoles: Array<{ name: string; pos: number }> = [];
         const createdRoles: Array<{ name: string; pos: number }> = [];
         for (const role of this.sortedHierarchyRoles) {
-            const existingRole = allRoles.get(role.id);
-            // create the role if it doesn't exist or we want to force create
-            if (!existingRole || allowDuplicate) {
-                const newRole = await this.guild.roles.create({
-                    ...hierarchyRoleConfigs[role.name]
-                });
-                this.hierarchyRoleIds[role.name] = newRole.id;
-                createdRoles.push({
-                    name: newRole.name,
-                    pos: newRole.position
-                });
-            } else {
+            const existingRole =
+                role.name in SpecialRoleValues
+                    ? allRoles.find(r => r.name === role.name)
+                    : allRoles.get(role.id);
+            if (role.name === 'student') {
+                continue;
+            }
+            if (existingRole && !allowDuplicate) {
                 foundRoles.push({
                     name: existingRole.name,
                     pos: existingRole.position
                 });
+                continue;
             }
+            const newRole = await this.guild.roles.create({
+                ...hierarchyRoleConfigs[role.name]
+            });
+            this.hierarchyRoleIds[role.name] = newRole.id;
+            createdRoles.push({
+                name: newRole.name,
+                pos: newRole.position
+            });
         }
         if (everyoneIsStudent) {
-            this.hierarchyRoleIds.student = this.guild.roles.everyone.id;
+            this.hierarchyRoleIds.student = everyone;
+        } else if (
+            this.hierarchyRoleIds.student !== everyone &&
+            !allRoles.has(this.hierarchyRoleIds.student)
+        ) {
+            const newRole = await this.guild.roles.create({
+                ...hierarchyRoleConfigs.student
+            });
+            this.hierarchyRoleIds.student = newRole.id;
+            createdRoles.push({
+                name: newRole.name,
+                pos: newRole.position
+            });
+        } else {
+            const existingStudentRole = allRoles.find(r => r.name === 'Student');
+            if (existingStudentRole) {
+                this.hierarchyRoleIds.student = existingStudentRole.id;
+            }
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))

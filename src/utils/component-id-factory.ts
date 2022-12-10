@@ -165,15 +165,15 @@ type CustomIdTuple<T extends ComponentLocation> = [
  */
 function buildComponent<
     T extends ComponentLocation,
-    R extends { setCustomId: (customId: string) => R }
+    R extends ButtonBuilder | ModalBuilder | SelectMenuBuilder
 >(builder: R, idInfo: CustomIdTuple<T>): Omit<R, 'setCustomId'> {
-    return builder.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
+    builder.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
+    return builder;
 }
 
 /**
  * Test to see if the decompressed array is valid
  * @param expectedComponentType'queue' 'dm' or 'other'
- * - the consumer of this function needs to specify the correct type
  * @param decompressedTuple from JSON.parse
  * @returns boolean
  */
@@ -192,7 +192,7 @@ function isValidCustomIdTuple<T extends ComponentLocation>(
 /**
  * Decompresses the obfuscated id into CustomIdTuple
  * @param expectedComponentType 'queue' 'dm' or 'other'
- * - the consumer of this function needs to specify the correct type
+ * - **The consumer of this function needs to specify the correct type**
  * @param compressedId the id to decompress
  * @returns the original tuple passed into buildComponent
  * @throws CommandParseError or JSONParseError
