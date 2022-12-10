@@ -10,7 +10,8 @@ import {
     VoiceState,
     ChannelType,
     VoiceBasedChannel,
-    Role
+    Role,
+    Snowflake
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
@@ -146,7 +147,7 @@ class AttendingServerV2 {
      * - [Student, Helper, Bot Admin]
      * @returns: { name: string, id: string }[]
      */
-    get sortedHierarchyRoles(): Array<{
+    get sortedHierarchyRoles(): ReadonlyArray<{
         name: keyof HierarchyRoles;
         roleName: string;
         id: string;
@@ -206,33 +207,12 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the Bot Admin Role ID to `roleID` for this server
-     * @param roleID
+     * Sets the hieararchy roles to use for this server
+     * @param role name of the role; botAdmin, staff, or student
+     * @param id the role id snowflake
      */
-    async setBotAdminRoleID(roleID: string): Promise<void> {
-        this.settings.hierarchyRoleIds.botAdmin = roleID;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Sets the Helper Role ID to `roleID` for this server
-     * @param roleID
-     */
-    async setHelperRoleID(roleID: string): Promise<void> {
-        this.settings.hierarchyRoleIds.staff = roleID;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Sets the Student Role ID to `roleID` for this server
-     * @param roleID
-     */
-    async setStudentRoleID(roleID: string): Promise<void> {
-        this.settings.hierarchyRoleIds.student = roleID;
+    async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
+        this.settings.hierarchyRoleIds[role] = id;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -249,8 +229,10 @@ class AttendingServerV2 {
             return false;
         }
         await Promise.all([
-            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+            ...this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
         ]);
         return true;
     }

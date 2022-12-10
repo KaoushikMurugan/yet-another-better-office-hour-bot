@@ -634,15 +634,15 @@ async function setRoles(
     const role = interaction.options.getRole('role', true);
     switch (roleType) {
         case 'bot_admin': {
-            await server.setBotAdminRoleID(role.id);
+            await server.setHierarchyRoleId('botAdmin', role.id);
             return SuccessMessages.setBotAdminRole(role.id);
         }
         case 'helper': {
-            await server.setHelperRoleID(role.id);
+            await server.setHierarchyRoleId('staff', role.id);
             return SuccessMessages.setHelperRole(role.id);
         }
         case 'student': {
-            await server.setStudentRoleID(role.id);
+            await server.setHierarchyRoleId('student', role.id);
             return SuccessMessages.setStudentRole(role.id);
         }
         default: {

@@ -73,9 +73,7 @@ const client: Client<true> = new Client({
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
-/**
- * Login before export
- */
+/** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
     .then(() => console.log(`\nLogged in as ${yellow(client.user.username)}!`))

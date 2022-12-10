@@ -29,6 +29,8 @@ enum EmbedColor {
     Blue = 0x3498db
 }
 
+const DEFAULT_PFP = 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;
+
 /**
  * Creates a simple embed that displays only displays text
  *
@@ -44,8 +46,7 @@ function SimpleEmbed(
     color = EmbedColor.Neutral,
     description = ''
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     if (message.length <= 256) {
         return {
             embeds: [
@@ -85,8 +86,7 @@ function SimpleEmbed2(
     color = EmbedColor.Neutral,
     description = ''
 ): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
         .setColor(color)
         .setAuthor({
@@ -113,8 +113,7 @@ function ErrorEmbed(
     err: Error,
     pingForHelp?: Snowflake
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -160,8 +159,7 @@ function ErrorEmbed(
 }
 
 function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: Snowflake): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder();
     let color: EmbedColor;
     // use discriminated union to avoid the instanceof check
@@ -211,8 +209,7 @@ function ErrorLogEmbed(
     err: Error,
     interaction: Interaction
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     let color = EmbedColor.KindaBad;
     const embedFields = [
         {
@@ -265,8 +262,7 @@ function ErrorLogEmbed2(
     err: ExpectedError | Error,
     interaction: Interaction
 ): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const fields = [
         {
             name: 'User',
@@ -320,8 +316,7 @@ function ErrorLogEmbed2(
  */
 function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     if (message.length <= 256) {
         return {
             embeds: [
@@ -356,8 +351,7 @@ function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
 
 function SimpleLogEmbed2(message: string): EmbedBuilder {
     const timeStampString = `at <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
         .setColor(EmbedColor.NoColor)
         .setAuthor({
@@ -387,8 +381,7 @@ function ButtonLogEmbed(
     buttonName: string,
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     return {
         embeds: [
             {
@@ -429,8 +422,7 @@ function ButtonLogEmbed2(
     buttonName: string,
     channel: TextBasedChannel
 ): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     return new EmbedBuilder()
         .setTitle(
             `Button Pressed at <t:${new Date().getTime().toString().slice(0, -3)}:F>`
@@ -474,8 +466,7 @@ function SelectMenuLogEmbed(
     optionSelected: string[],
     channel: TextBasedChannel
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     return {
         embeds: [
             {
@@ -524,8 +515,7 @@ function SelectMenuLogEmbed(
 function SlashCommandLogEmbed(
     commandInteraction: CommandInteraction
 ): Pick<BaseMessageOptions, 'embeds'> {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;
     if (optionsData[0]?.type === ApplicationCommandOptionType.Subcommand) {
@@ -592,8 +582,7 @@ function SlashCommandLogEmbed(
 }
 
 function SlashCommandLogEmbed2(command: CommandInteraction): EmbedBuilder {
-    const YABOB_PFP_URL =
-        client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png';
+    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const subCommandStr = command.options.data[0];
     const embed = new EmbedBuilder()
         .setFields(
@@ -685,8 +674,7 @@ function SelectMenuLogEmbed2(
         )
         .setFooter({
             text: 'YABOB',
-            iconURL:
-                client.user.avatarURL() ?? 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png'
+            iconURL: client.user.avatarURL() ?? DEFAULT_PFP
         });
 }
 

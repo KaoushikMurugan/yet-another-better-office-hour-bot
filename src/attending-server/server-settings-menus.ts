@@ -162,47 +162,51 @@ function serverRolesConfigMenu(
             `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
             `If you want to set the roles manually, use the \`/set_roles\` command.`
     );
-    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `server_role_config_1`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
-            .setLabel('1')
-            .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `server_role_config_1a`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
-            .setLabel('1A')
-            .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `server_role_config_2`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
-            .setLabel('2')
-            .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `server_role_config_2a`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
-            .setLabel('2A')
-            .setStyle(ButtonStyle.Secondary)
-    );
+    const buttons = [
+        new ActionRowBuilder<ButtonBuilder>().addComponents(
+            buttonFactory
+                .buildComponent(
+                    isDm ? 'dm' : 'other',
+                    `server_role_config_1`,
+                    isDm ? server.guild.id : undefined,
+                    isDm ? channelId : undefined
+                )
+                .setLabel('Use Existing Roles')
+                .setStyle(ButtonStyle.Secondary),
+            buttonFactory
+                .buildComponent(
+                    isDm ? 'dm' : 'other',
+                    `server_role_config_1a`,
+                    isDm ? server.guild.id : undefined,
+                    isDm ? channelId : undefined
+                )
+                .setLabel('Use Existing Roles (@everyone is student)')
+                .setStyle(ButtonStyle.Secondary)
+        ),
+        new ActionRowBuilder<ButtonBuilder>().addComponents(
+            buttonFactory
+                .buildComponent(
+                    isDm ? 'dm' : 'other',
+                    `server_role_config_2`,
+                    isDm ? server.guild.id : undefined,
+                    isDm ? channelId : undefined
+                )
+                .setLabel('Create New Roles')
+                .setStyle(ButtonStyle.Secondary),
+            buttonFactory
+                .buildComponent(
+                    isDm ? 'dm' : 'other',
+                    `server_role_config_2a`,
+                    isDm ? server.guild.id : undefined,
+                    isDm ? channelId : undefined
+                )
+                .setLabel('Create New Roles (@everyone is student)')
+                .setStyle(ButtonStyle.Secondary)
+        )
+    ];
     return {
         embeds: embed.embeds,
-        components: isDm ? [buttons] : [buttons, mainMenuRow]
+        components: isDm ? buttons : [...buttons, mainMenuRow]
     };
 }
 
