@@ -979,36 +979,21 @@ class AttendingServerV2 {
 
     /**
      * Creates all the command access hierarchy roles
-     * @param forceNewRoles if true, creates new roles even if they already exist
+     * @param allowDuplicate if true, creates new roles even if they already exist
      * - Duplicates will be created if roles with the same name already exist
-     * @param defaultStudentIsEveryone whether to treat @everyone as the student role
+     * @param everyoneIsStudent whether to treat @ everyone as the student role
      */
     async createHierarchyRoles(
-        forceNewRoles: boolean,
-        defaultStudentIsEveryone: boolean
+        allowDuplicate: boolean,
+        everyoneIsStudent: boolean
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
         const foundRoles: Array<{ name: string; pos: number }> = [];
         const createdRoles: Array<{ name: string; pos: number }> = [];
-        if (!forceNewRoles) {
-            for (const role of this.sortedHierarchyRoles) {
-                const existingRole =
-                    role.id === SpecialRoleValues.NotSet ||
-                    role.id === SpecialRoleValues.Deleted
-                        ? allRoles.find(
-                              existingRole => existingRole.name === role.roleName
-                          )
-                        : allRoles.get(role.id);
-                if (existingRole !== undefined) {
-                    this.hierarchyRoleIds[role.name] = existingRole.id;
-                    foundRoles.push({
-                        name: existingRole.name,
-                        pos: existingRole.position
-                    });
-                }
-            }
-        } else {
-            for (const role of this.sortedHierarchyRoles) {
+        for (const role of this.sortedHierarchyRoles) {
+            const existingRole = allRoles.get(role.id);
+            // create the role if it doesn't exist or we want to force create
+            if (!existingRole || allowDuplicate) {
                 const newRole = await this.guild.roles.create({
                     ...hierarchyRoleConfigs[role.name]
                 });
@@ -1017,9 +1002,14 @@ class AttendingServerV2 {
                     name: newRole.name,
                     pos: newRole.position
                 });
+            } else {
+                foundRoles.push({
+                    name: existingRole.name,
+                    pos: existingRole.position
+                });
             }
         }
-        if (defaultStudentIsEveryone) {
+        if (everyoneIsStudent) {
             this.hierarchyRoleIds.student = this.guild.roles.everyone.id;
         }
         await Promise.all(

@@ -11,7 +11,6 @@ import {
     ButtonBuilder,
     ModalBuilder,
     SelectMenuBuilder,
-    TextInputBuilder
 } from 'discord.js';
 import { CommandParseError } from './error-types.js';
 
@@ -189,6 +188,7 @@ function isValidCustomIdTuple<T extends ComponentLocation>(
     const lengthMatch = decompressedTuple.length === 4;
     const typeMatch = decompressedTuple[0] === expectedComponentType;
     const snowflakesAreValid = // snowflakes should only have numbers
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         /^[0-9]+$/.test(decompressedTuple[2]!) && /^[0-9]+$/.test(decompressedTuple[3]!);
     return lengthMatch && typeMatch && snowflakesAreValid;
 }
