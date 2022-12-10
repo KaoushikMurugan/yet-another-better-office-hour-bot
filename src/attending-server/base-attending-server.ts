@@ -6,7 +6,6 @@ import {
     GuildMember,
     BaseMessageOptions,
     TextChannel,
-    User,
     VoiceState,
     ChannelType,
     VoiceBasedChannel,
@@ -41,7 +40,6 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { serverRolesConfigMenu } from './server-settings-menus.js';
 import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
-import { client } from '../global-states.js';
 
 /**
  * Wrapper for TextChannel
@@ -102,7 +100,6 @@ class AttendingServerV2 {
     };
 
     protected constructor(
-        readonly user: User,
         readonly guild: Guild,
         readonly serverExtensions: IServerExtension[]
     ) {}
@@ -253,7 +250,7 @@ class AttendingServerV2 {
                   new FirebaseServerBackupExtension(guild),
                   CalendarExtensionState.load(guild)
               ]);
-        const server = new AttendingServerV2(client.user, guild, serverExtensions);
+        const server = new AttendingServerV2(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
             ? undefined
             : await Promise.all(
@@ -268,7 +265,8 @@ class AttendingServerV2 {
         const missingRoles = server.sortedHierarchyRoles.filter(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
-                role.id === SpecialRoleValues.Deleted
+                role.id === SpecialRoleValues.Deleted ||
+                !guild.roles.cache.has(role.id)
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
@@ -972,14 +970,14 @@ class AttendingServerV2 {
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
         const everyone = this.guild.roles.everyone.id;
-        const foundRoles: Array<{ name: string; pos: number }> = [];
-        const createdRoles: Array<{ name: string; pos: number }> = [];
+        const foundRoles = []; // sorted low to high
+        const createdRoles = []; // not typed bc we are only using it for logging
         for (const role of this.sortedHierarchyRoles) {
-            // do the search if it's notset, deleted, or everyone
+            // do the search if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
                 role.key in SpecialRoleValues || role.id === everyone
-                    ? allRoles.find(r => r.name === role.roleName)
+                    ? allRoles.find(serverRole => serverRole.name === role.roleName)
                     : allRoles.get(role.id);
             console.log(role.key, existingRole?.name);
             if (role.key === 'student' && everyoneIsStudent) {
@@ -988,27 +986,21 @@ class AttendingServerV2 {
             }
             if (existingRole && !allowDuplicate) {
                 this.hierarchyRoleIds[role.key] = existingRole.id;
-                foundRoles.push({
-                    name: existingRole.name,
-                    pos: existingRole.position
-                });
+                foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
-            const newRole = await this.guild.roles.create(
-                hierarchyRoleConfigs[role.key]
-            );
+            const newRole = await this.guild.roles.create(hierarchyRoleConfigs[role.key]);
             this.hierarchyRoleIds[role.key] = newRole.id;
-            createdRoles.push({
-                name: newRole.name,
-                pos: newRole.position
-            });
+            // set by indices that are larger than arr length is valid in JS
+            // ! do NOT do this with important arrays bc there will be 'empty items'
+            createdRoles[newRole.position] = newRole.name;
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
         createdRoles.length > 0
-            ? console.log('Created roles:', createdRoles)
-            : console.log(`All required roles exist in ${this.guild.name}!`);
+            ? console.log(blue('Created roles:'), createdRoles)
+            : console.log(green(`All required roles exist in ${this.guild.name}!`));
         foundRoles.length > 0 && console.log('Found roles:', foundRoles);
     }
 
@@ -1018,9 +1010,9 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        for (const { key: name, id } of this.sortedHierarchyRoles) {
+        for (const { key: key, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
-                this.hierarchyRoleIds[name] = SpecialRoleValues.Deleted;
+                this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
                 hierarchyRoleDeleted = true;
             }
         }
