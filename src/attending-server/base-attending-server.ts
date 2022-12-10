@@ -148,12 +148,12 @@ class AttendingServerV2 {
      * @returns: { name: string, id: string }[]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
-        name: keyof HierarchyRoles;
+        key: keyof HierarchyRoles;
         roleName: string;
         id: string;
     }> {
         return Object.entries(this.hierarchyRoleIds).map(([name, id]) => ({
-            name: name as keyof HierarchyRoles, // guaranteed to be the key
+            key: name as keyof HierarchyRoles, // guaranteed to be the key
             roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].name,
             id: id
         }));
@@ -975,48 +975,33 @@ class AttendingServerV2 {
         const foundRoles: Array<{ name: string; pos: number }> = [];
         const createdRoles: Array<{ name: string; pos: number }> = [];
         for (const role of this.sortedHierarchyRoles) {
+            // do the search if it's notset, deleted, or everyone
+            // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                role.name in SpecialRoleValues
-                    ? allRoles.find(r => r.name === role.name)
+                role.key in SpecialRoleValues || role.id === everyone
+                    ? allRoles.find(r => r.name === role.roleName)
                     : allRoles.get(role.id);
-            if (role.name === 'student') {
+            console.log(role.key, existingRole?.name);
+            if (role.key === 'student' && everyoneIsStudent) {
+                this.hierarchyRoleIds.student = everyone;
                 continue;
             }
             if (existingRole && !allowDuplicate) {
+                this.hierarchyRoleIds[role.key] = existingRole.id;
                 foundRoles.push({
                     name: existingRole.name,
                     pos: existingRole.position
                 });
                 continue;
             }
-            const newRole = await this.guild.roles.create({
-                ...hierarchyRoleConfigs[role.name]
-            });
-            this.hierarchyRoleIds[role.name] = newRole.id;
+            const newRole = await this.guild.roles.create(
+                hierarchyRoleConfigs[role.key]
+            );
+            this.hierarchyRoleIds[role.key] = newRole.id;
             createdRoles.push({
                 name: newRole.name,
                 pos: newRole.position
             });
-        }
-        if (everyoneIsStudent) {
-            this.hierarchyRoleIds.student = everyone;
-        } else if (
-            this.hierarchyRoleIds.student !== everyone &&
-            !allRoles.has(this.hierarchyRoleIds.student)
-        ) {
-            const newRole = await this.guild.roles.create({
-                ...hierarchyRoleConfigs.student
-            });
-            this.hierarchyRoleIds.student = newRole.id;
-            createdRoles.push({
-                name: newRole.name,
-                pos: newRole.position
-            });
-        } else {
-            const existingStudentRole = allRoles.find(r => r.name === 'Student');
-            if (existingStudentRole) {
-                this.hierarchyRoleIds.student = existingStudentRole.id;
-            }
         }
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
@@ -1033,7 +1018,7 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        for (const { name, id } of this.sortedHierarchyRoles) {
+        for (const { key: name, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
                 this.hierarchyRoleIds[name] = SpecialRoleValues.Deleted;
                 hierarchyRoleDeleted = true;
