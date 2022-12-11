@@ -45,11 +45,11 @@ function calendarSettingsConfigMenu(
         .setFields(
             {
                 name: 'Office Hours Calendar',
-                value: restorePublicEmbedURL(state.calendarId)
+                value: `[Google Calendar](${restorePublicEmbedURL(state.calendarId)})`
             },
             {
                 name: 'Office Hours Calendar Embed URL',
-                value: state.publicCalendarEmbedUrl
+                value: `[Embed Override](${state.publicCalendarEmbedUrl})`
             }
         )
         .setFooter({

@@ -2,6 +2,7 @@ import {
     ActionRowBuilder,
     ButtonBuilder,
     ButtonStyle,
+    EmbedBuilder,
     SelectMenuBuilder,
     SelectMenuComponentOptionData
 } from 'discord.js';
@@ -13,6 +14,7 @@ import {
 } from '../utils/type-aliases.js';
 import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
+import { isTextChannel } from '../utils/util-functions.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buttonFactory
@@ -21,6 +23,15 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
 );
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const EmptyEmbedField = {
+    name: '\u200b',
+    value: '\u200b'
+} as const;
+
+/** Use this string to force a trailing new line in an embed field */
+const trailingNewLine = '\n\u200b' as const;
 
 /**
  * Options for the main menu of server settings
@@ -222,20 +233,30 @@ function afterSessionMessageConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `📨 After Session Message Configuration for ${server.guild.name} 📨`,
-        EmbedColor.Aqua,
-        `\n*The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)*\n\n` +
-            `**The current After Session Message is: **\n\n` +
-            `${
+    const embed = new EmbedBuilder()
+        .setTitle(`📨 After Session Message Configuration for ${server.guild.name} 📨`)
+        .addFields({
+            name: 'Description',
+            value: `The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)${trailingNewLine}`
+        })
+        .addFields({
+            name: 'The Current After Session Message',
+            value: `${
                 server.afterSessionMessage === ''
                     ? '`Not Set`'
-                    : server.afterSessionMessage
-            }\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**⚙️** - Set the after session message\n` +
-            `**🔒** - Disable the after session message. The bot will no longer sent the message to students after they finish their session\n`
-    );
+                    : `${server.afterSessionMessage
+                          .trim()
+                          .split('\n')
+                          .map(line => `> ${line}`)
+                          .join('\n')}` // show the existing message in a quote block
+            }${trailingNewLine}`
+        })
+        // addFields accepts RestOrArray<T>, so they can be combined but prettier makes it ugly
+        .addFields({
+            name: 'Select an option from below to change the configuration',
+            value: `⚙️ - Set the after session message
+            🔒 - Disable the after session message. The bot will no longer send the message to students after they finish their session\n`
+        });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -245,7 +266,7 @@ function afterSessionMessageConfigMenu(
                 isDm ? channelId : undefined
             )
             .setEmoji('⚙️')
-            .setLabel('Set Message')
+            .setLabel('Edit Message')
             .setStyle(ButtonStyle.Secondary),
         buttonFactory
             .buildComponent(
@@ -258,8 +279,7 @@ function afterSessionMessageConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-
-    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
+    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
 }
 
 /**
@@ -274,17 +294,26 @@ function queueAutoClearConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`,
-        EmbedColor.Aqua,
-        (server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED' ||
-        server.queueAutoClearTimeout === undefined
-            ? '**\nThe queue auto clear feature is currently disabled. The queue will not be cleared automatically.**\n\n'
-            : `**\nQueues will automatically be cleared after __${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}__ since the last time they were closed**\n\n`) +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**⚙️** - Set the queue auto clear time\n` +
-            `**🔒** - Disable the queue auto clear feature.\n`
-    );
+    const embed = new EmbedBuilder()
+        .setTitle(`⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`)
+        .setColor(EmbedColor.Aqua)
+        .addFields({
+            name: 'Description',
+            value: `If enabled, YABOB will automatically clear all the closed queues after the set amount of time.${trailingNewLine}`
+        })
+        .addFields({
+            name: 'Current Auto Clear Timeout',
+            value:
+                server.queueAutoClearTimeout === undefined ||
+                server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
+                    ? `The queue auto clear feature is currently disabled. The queue will not be cleared automatically.${trailingNewLine}`
+                    : `Queues will automatically be cleared after __${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}__ since the last time they were closed.${trailingNewLine}`
+        })
+        .addFields({
+            name: 'Select an option from below to change the configuration',
+            value: `⚙️ - Set the queue auto clear time
+            🔒 - Disable the queue auto clear feature.`
+        });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -307,7 +336,7 @@ function queueAutoClearConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
+    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
 }
 
 /**
@@ -322,21 +351,7 @@ function loggingChannelConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `🪵 Logging Configuration for ${server.guild.name} 🪵`,
-        EmbedColor.Aqua,
-        `**\nCurrent Logging Channel:** ${
-            server.loggingChannel === undefined
-                ? '`Not Set`'
-                : server.loggingChannel.toString()
-        }\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**The \`/set_logging_channel\` command** - Enter the channel you want YABOB to log to\n` +
-            `**🔒** - Disable the logging feature\n`
-    );
-
     // TODO: Implement a direct way to change the logging channel
-
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -349,8 +364,46 @@ function loggingChannelConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-
-    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
+    const embed = new EmbedBuilder()
+        .setTitle(`🪵 Logging Configuration for ${server.guild.name} 🪵`)
+        .setColor(EmbedColor.Aqua)
+        .addFields({
+            name: 'Description',
+            value: `If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.${trailingNewLine}`
+        })
+        .addFields({
+            name: 'Current Logging Channel',
+            value:
+                server.loggingChannel === undefined
+                    ? `Not Set${trailingNewLine}`
+                    : `${server.loggingChannel.toString()}${trailingNewLine}`
+        })
+        .addFields({
+            name: 'Select an option from below to change the configuration',
+            value: `The \`/set_logging_channel\` command - Enter the channel you want YABOB to log to.
+             🔒 - Disable the logging feature\n`
+        });
+    const allTextChannels = server.guild.channels.cache
+        .filter(
+            channel =>
+                isTextChannel(channel) &&
+                channel.name !== 'queue' &&
+                channel.name !== 'chat' 
+        )
+        .first(25); // Cannot have more than 25 options
+    const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+        new SelectMenuBuilder().setCustomId('PlaceHolder').addOptions(
+            ...allTextChannels.map(channel => ({
+                label: channel.name,
+                description: channel.name,
+                value: channel.id
+            }))
+        )
+    );
+    return {
+        embeds: [embed.data],
+        components: [channelsSelectMenu, buttons, mainMenuRow]
+    };
 }
 
 function autoGiveStudentRoleConfigMenu(
