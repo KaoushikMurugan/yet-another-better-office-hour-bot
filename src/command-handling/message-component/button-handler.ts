@@ -25,12 +25,12 @@ import {
 } from '../common-validations.js';
 import { SuccessMessages } from '../builtin-success-messages.js';
 import {
-    afterSessionMessageConfigMenu,
-    autoGiveStudentRoleConfigMenu,
-    loggingChannelConfigMenu,
-    queueAutoClearConfigMenu,
-    serverRolesConfigMenu,
-    serverSettingsMainMenu
+    AfterSessionMessageConfigMenu,
+    AutoGiveStudentRoleConfigMenu,
+    LoggingChannelConfigMenu,
+    QueueAutoClearConfigMenu,
+    RolesConfigMenu,
+    SettingsMainMenu
 } from '../../attending-server/server-settings-menus.js';
 import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
 import { buttonFactory } from '../../utils/component-id-factory.js';
@@ -355,7 +355,7 @@ async function showSettingsMainMenu(
             interaction.channel as TextBasedChannel
         )
     );
-    return serverSettingsMainMenu(server, interaction.channelId, false);
+    return SettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -378,7 +378,7 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(server, interaction.channelId, false, false);
+    return RolesConfigMenu(server, interaction.channelId, false, false);
 }
 
 /**
@@ -402,7 +402,7 @@ async function createServerRolesDM(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(server, interaction.channelId, true, false);
+    return RolesConfigMenu(server, interaction.channelId, true, false);
 }
 
 /**
@@ -440,7 +440,7 @@ async function disableAfterSessionMessage(
             interaction.channel as TextBasedChannel
         )
     );
-    return afterSessionMessageConfigMenu(server, interaction.channelId, false);
+    return AfterSessionMessageConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -477,7 +477,7 @@ async function disableQueueAutoClear(
             interaction.channel as TextBasedChannel
         )
     );
-    return queueAutoClearConfigMenu(server, interaction.channelId, false);
+    return QueueAutoClearConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -490,7 +490,7 @@ async function disableLoggingChannel(
     const server = isServerInteraction(interaction);
     // No logging call here since we're disabling the logging channel
     await server.setLoggingChannel(undefined);
-    return loggingChannelConfigMenu(server, interaction.channelId, false);
+    return LoggingChannelConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -512,7 +512,7 @@ async function toggleAutoGiveStudentRole(
             interaction.channel as TextBasedChannel
         )
     );
-    return autoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
+    return AutoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
 }
 
 /**

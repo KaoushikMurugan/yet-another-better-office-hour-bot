@@ -19,7 +19,7 @@ import {
     isJoinVC
 } from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
-import { serverRolesConfigMenu } from './attending-server/server-settings-menus.js';
+import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
@@ -165,7 +165,7 @@ client.on(Events.GuildRoleUpdate, async role => {
                 )
             )
         ]);
-        await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
+        await owner.send(RolesConfigMenu(server, owner.id, true, true));
     }
 });
 

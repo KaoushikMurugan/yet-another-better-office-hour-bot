@@ -2,8 +2,8 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import {
-    afterSessionMessageConfigMenu,
-    queueAutoClearConfigMenu
+    AfterSessionMessageConfigMenu,
+    QueueAutoClearConfigMenu
 } from '../../attending-server/server-settings-menus.js';
 import { modalFactory } from '../../utils/component-id-factory.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../../utils/embed-helper.js';
@@ -161,7 +161,7 @@ async function setAfterSessionMessage(
     const message = interaction.fields.getTextInputValue('after_session_msg');
     await server.setAfterSessionMessage(message);
     return useMenu
-        ? afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
+        ? AfterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
         : SuccessMessages.updatedAfterSessionMessage(message);
 }
 
@@ -185,7 +185,7 @@ async function setQueueAutoClear(
     const enable = !(hours === 0 && minutes === 0);
     await server.setQueueAutoClear(hours, minutes, enable);
     return useMenu
-        ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+        ? QueueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
         : enable
         ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
         : SuccessMessages.queueAutoClear.disabled;

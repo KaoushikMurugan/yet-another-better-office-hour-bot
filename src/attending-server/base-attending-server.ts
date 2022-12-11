@@ -38,7 +38,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { serverRolesConfigMenu } from './server-settings-menus.js';
+import { RolesConfigMenu } from './server-settings-menus.js';
 import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
 
 /**
@@ -270,7 +270,7 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(serverRolesConfigMenu(server, owner.id, true, true));
+            await owner.send(RolesConfigMenu(server, owner.id, true, true));
         }
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),

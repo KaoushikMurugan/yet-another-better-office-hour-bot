@@ -6,7 +6,7 @@ import {
     SelectMenuBuilder,
     SelectMenuComponentOptionData
 } from 'discord.js';
-import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
+import { EmbedColor } from '../utils/embed-helper.js';
 import {
     SettingsMenuCallback,
     SpecialRoleValues,
@@ -32,6 +32,9 @@ const EmptyEmbedField = {
 
 /** Use this string to force a trailing new line in an embed field */
 const trailingNewLine = '\n\u200b' as const;
+/** Use this string to force a leading new line in an embed field */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const leadingNewLine = '\u200b\n' as const;
 
 /**
  * Options for the main menu of server settings
@@ -47,7 +50,7 @@ const serverSettingsMainMenuOptions: {
             description: 'Configure the server roles',
             value: 'server-roles'
         },
-        subMenu: serverRolesConfigMenu
+        subMenu: RolesConfigMenu
     },
     {
         optionObj: {
@@ -56,7 +59,7 @@ const serverSettingsMainMenuOptions: {
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
-        subMenu: afterSessionMessageConfigMenu
+        subMenu: AfterSessionMessageConfigMenu
     },
     {
         optionObj: {
@@ -65,7 +68,7 @@ const serverSettingsMainMenuOptions: {
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
-        subMenu: queueAutoClearConfigMenu
+        subMenu: QueueAutoClearConfigMenu
     },
     {
         optionObj: {
@@ -74,7 +77,7 @@ const serverSettingsMainMenuOptions: {
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
-        subMenu: loggingChannelConfigMenu
+        subMenu: LoggingChannelConfigMenu
     },
     {
         optionObj: {
@@ -83,7 +86,7 @@ const serverSettingsMainMenuOptions: {
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
-        subMenu: autoGiveStudentRoleConfigMenu
+        subMenu: AutoGiveStudentRoleConfigMenu
     }
 ];
 
@@ -94,17 +97,26 @@ const serverSettingsMainMenuOptions: {
  * @param isDm
  * @returns
  */
-function serverSettingsMainMenu(
+function SettingsMainMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `🛠 Server Settings for ${server.guild.name} 🛠`,
-        EmbedColor.Aqua,
-        `**This is the main menu for server settings.**\n\n` +
-            `Select an option from the drop-down menu below.`
-    );
+    const embed = new EmbedBuilder()
+        .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
+        .setColor(EmbedColor.Aqua)
+        .setDescription(
+            'This is the main menu for server settings. Select an option from the drop-down menu below to enter the individual configuration menus.'
+        )
+        .addFields({
+            name: 'User Manual',
+            value: 'Check out our [documentation](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server) for detailed description of each setting. '
+        })
+        .setFooter({
+            text:
+                'Your settings are always automatically saved as soon as you make a change. ' +
+                'You can dismiss this message at any time to finish configuring YABOB.'
+        });
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         selectMenuFactory
             .buildComponent(
@@ -116,7 +128,7 @@ function serverSettingsMainMenu(
             .setPlaceholder('Select an option')
             .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
     );
-    return { embeds: embed.embeds, components: [selectMenu] };
+    return { embeds: [embed.data], components: [selectMenu] };
 }
 
 /**
@@ -127,52 +139,65 @@ function serverSettingsMainMenu(
  * @param forServerInit
  * @returns
  */
-function serverRolesConfigMenu(
+function RolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
     forServerInit = false
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `📝 Server Roles Configuration for ${server.guild.name} 📝`,
-        EmbedColor.Aqua,
-        (forServerInit
-            ? `**Thanks for choosing YABOB for helping you with office hours!\n To start using YABOB, it requires the following roles: **\n`
-            : '') +
-            `**\n🤖 Bot Admin Role:** ${
-                forServerInit
-                    ? ` *Role that can manage the bot and it's settings*\n`
-                    : server.botAdminRoleID === SpecialRoleValues.NotSet
-                    ? 'Not Set'
-                    : server.botAdminRoleID === SpecialRoleValues.Deleted
-                    ? '@deleted-role'
-                    : `<@&${server.botAdminRoleID}>`
-            }\n\n` +
-            `**📚 Helper Role:** ${
-                forServerInit
-                    ? ` *Role that allows users to host office hours*\n`
-                    : server.helperRoleID === SpecialRoleValues.NotSet
-                    ? 'Not Set'
-                    : server.helperRoleID === SpecialRoleValues.Deleted
-                    ? '@deleted-role'
-                    : `<@&${server.helperRoleID}>`
-            }\n\n` +
-            `**🎓 Student Role:** ${
-                forServerInit
-                    ? ` *Role that allows users to join office hour queues*\n`
-                    : server.studentRoleID === SpecialRoleValues.NotSet
-                    ? 'Not Set'
-                    : server.studentRoleID === SpecialRoleValues.Deleted
-                    ? '@deleted-role'
-                    : `<@&${server.studentRoleID}>`
-            }\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**1** - Use existing roles named the same as the missing roles. If not found create new roles\n` +
-            `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
-            `**2** - Create brand new roles for the missing roles\n` +
-            `**⤷ A** - Use the @everyone role for the Student role if missing\n` +
-            `If you want to set the roles manually, use the \`/set_roles\` command.`
-    );
+    const embed = new EmbedBuilder()
+        .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
+        .setColor(EmbedColor.Aqua)
+        .addFields({
+            name: 'Description',
+            value:
+                'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student. ' +
+                'Learn more about YABOB roles [here](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server).'
+        })
+        .addFields({
+            name: 'Options',
+            value: `[Use Existing Roles] Use existing roles named the same as the missing roles. If not found, create new roles.
+            [Create New Roles] Create brand new roles for the missing roles`
+        })
+        .addFields({
+            name: '🤖 Bot Admin Role',
+            value: forServerInit
+                ? `*Role that can manage the bot and it's settings*\n`
+                : server.botAdminRoleID === SpecialRoleValues.NotSet
+                ? 'Not Set'
+                : server.botAdminRoleID === SpecialRoleValues.Deleted
+                ? '@deleted-role'
+                : `<@&${server.botAdminRoleID}>`,
+            inline: true
+        })
+        .addFields({
+            name: '📚 Staff Role',
+            value: forServerInit
+                ? `*Role that allows users to host office hours*\n`
+                : server.helperRoleID === SpecialRoleValues.NotSet
+                ? 'Not Set'
+                : server.helperRoleID === SpecialRoleValues.Deleted
+                ? '@deleted-role'
+                : `<@&${server.helperRoleID}>`,
+            inline: true
+        })
+        .addFields({
+            name: '🎓 Student Role',
+            value: forServerInit
+                ? `*Role that allows users to join office hour queues*\n`
+                : server.studentRoleID === SpecialRoleValues.NotSet
+                ? 'Not Set'
+                : server.studentRoleID === SpecialRoleValues.Deleted
+                ? '@deleted-role'
+                : `<@&${server.studentRoleID}>`,
+            inline: true
+        });
+    if (forServerInit) {
+        embed.setDescription(
+            `**Thanks for choosing YABOB for helping you with office hours!
+            To start using YABOB, it requires the following roles: **\n`
+        );
+    }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buttonFactory
@@ -216,7 +241,7 @@ function serverRolesConfigMenu(
         )
     ];
     return {
-        embeds: embed.embeds,
+        embeds: [embed.data],
         components: isDm ? buttons : [...buttons, mainMenuRow]
     };
 }
@@ -228,7 +253,7 @@ function serverRolesConfigMenu(
  * @param isDm
  * @returns
  */
-function afterSessionMessageConfigMenu(
+function AfterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
@@ -237,10 +262,17 @@ function afterSessionMessageConfigMenu(
         .setTitle(`📨 After Session Message Configuration for ${server.guild.name} 📨`)
         .addFields({
             name: 'Description',
-            value: `The after session message is sent to students after they finish their session with a helper (i.e. upon leaving the voice channel)${trailingNewLine}`
+            value: 'The after session message is sent to students after they finish their session with a helper. (i.e. upon leaving the voice channel)'
+        })
+        // addFields accepts RestOrArray<T>,
+        // so they can be combined into a single addFields call, but prettier makes it ugly
+        .addFields({
+            name: 'Options',
+            value: `⚙️ - Set the after session message
+            🔒 - Disable the after session message. YABOB will no longer send the message to students after they finish their session.`
         })
         .addFields({
-            name: 'The Current After Session Message',
+            name: '» Current After Session Message',
             value: `${
                 server.afterSessionMessage === ''
                     ? '`Not Set`'
@@ -249,13 +281,7 @@ function afterSessionMessageConfigMenu(
                           .split('\n')
                           .map(line => `> ${line}`)
                           .join('\n')}` // show the existing message in a quote block
-            }${trailingNewLine}`
-        })
-        // addFields accepts RestOrArray<T>, so they can be combined but prettier makes it ugly
-        .addFields({
-            name: 'Select an option from below to change the configuration',
-            value: `⚙️ - Set the after session message
-            🔒 - Disable the after session message. The bot will no longer send the message to students after they finish their session\n`
+            }`
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
@@ -289,7 +315,7 @@ function afterSessionMessageConfigMenu(
  * @param isDm
  * @returns
  */
-function queueAutoClearConfigMenu(
+function QueueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
@@ -299,20 +325,20 @@ function queueAutoClearConfigMenu(
         .setColor(EmbedColor.Aqua)
         .addFields({
             name: 'Description',
-            value: `If enabled, YABOB will automatically clear all the closed queues after the set amount of time.${trailingNewLine}`
+            value: `If enabled, YABOB will automatically clear all the closed queues after the set amount of time.`
         })
         .addFields({
-            name: 'Current Auto Clear Timeout',
+            name: 'Options',
+            value: `⚙️ - Set the queue auto clear time
+            🔒 - Disable the queue auto clear feature.`
+        })
+        .addFields({
+            name: '» Current Auto Clear Timeout',
             value:
                 server.queueAutoClearTimeout === undefined ||
                 server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
-                    ? `The queue auto clear feature is currently disabled. The queue will not be cleared automatically.${trailingNewLine}`
-                    : `Queues will automatically be cleared after __${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}__ since the last time they were closed.${trailingNewLine}`
-        })
-        .addFields({
-            name: 'Select an option from below to change the configuration',
-            value: `⚙️ - Set the queue auto clear time
-            🔒 - Disable the queue auto clear feature.`
+                    ? `**Disabled** - Queues will not be cleared automatically.`
+                    : `Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
@@ -346,7 +372,7 @@ function queueAutoClearConfigMenu(
  * @param isDm
  * @returns
  */
-function loggingChannelConfigMenu(
+function LoggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
@@ -369,36 +395,43 @@ function loggingChannelConfigMenu(
         .setColor(EmbedColor.Aqua)
         .addFields({
             name: 'Description',
-            value: `If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.${trailingNewLine}`
+            value: `If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.`
         })
         .addFields({
-            name: 'Current Logging Channel',
+            name: 'Options',
+            value: `Use the select menu below to choose the target text channel.
+            🔒 - Disable the logging feature`
+        })
+        .addFields({
+            name: '» Current Logging Channel',
             value:
                 server.loggingChannel === undefined
-                    ? `Not Set${trailingNewLine}`
-                    : `${server.loggingChannel.toString()}${trailingNewLine}`
+                    ? 'Logging is not enabled.'
+                    : server.loggingChannel.toString()
         })
-        .addFields({
-            name: 'Select an option from below to change the configuration',
-            value: `The \`/set_logging_channel\` command - Enter the channel you want YABOB to log to.
-             🔒 - Disable the logging feature\n`
+        .setFooter({
+            text: 'Note: Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the /set_logging_channel command. It supports choosing any text channel on this server.'
         });
     const allTextChannels = server.guild.channels.cache
         .filter(
             channel =>
                 isTextChannel(channel) &&
                 channel.name !== 'queue' &&
-                channel.name !== 'chat' 
+                channel.name !== 'chat'
         )
         .first(25); // Cannot have more than 25 options
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        new SelectMenuBuilder().setCustomId('PlaceHolder').addOptions(
-            ...allTextChannels.map(channel => ({
-                label: channel.name,
-                description: channel.name,
-                value: channel.id
-            }))
-        )
+        // TODO: change customid
+        new SelectMenuBuilder()
+            .setCustomId('PlaceHolder')
+            .setPlaceholder('Select a Text Channel')
+            .addOptions(
+                allTextChannels.map(channel => ({
+                    label: channel.name,
+                    description: channel.name,
+                    value: channel.id
+                }))
+            )
     );
     return {
         embeds: [embed.data],
@@ -406,23 +439,29 @@ function loggingChannelConfigMenu(
     };
 }
 
-function autoGiveStudentRoleConfigMenu(
+function AutoGiveStudentRoleConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const embed = SimpleEmbed(
-        `🎓 Auto Give Student Role Configuration for ${server.guild.name} 🎓`,
-        EmbedColor.Aqua,
-        `\n${
-            server.autoGiveStudentRole
-                ? 'The auto give student role feature is currently **__enabled__**'
-                : 'The auto give student role feature is currently **__disabled__**'
-        }\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**🔓** - Enable the auto give student role feature\n` +
-            `**🔒** - Disable the auto give student role feature\n`
-    );
+    const embed = new EmbedBuilder()
+        .setTitle(`🎓 Auto Give Student Role Configuration for ${server.guild.name} 🎓`)
+        .setColor(EmbedColor.Aqua)
+        .addFields({
+            name: 'Description',
+            value: `Whether to automatically give new members the <@&${server.studentRoleID}> role if configured.`
+        })
+        .addFields({
+            name: 'Options',
+            value: `🔓 - Enable the auto give student role feature
+            🔒 - Disable the auto give student role feature`
+        })
+        .addFields({
+            name: '» Current Configuration',
+            value: server.autoGiveStudentRole
+                ? `**Enabled** - New members will automatically get <@&${server.studentRoleID}>.`
+                : `**Disabled** - New members need to be manually assigned <@&${server.studentRoleID}>.`
+        });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -445,17 +484,16 @@ function autoGiveStudentRoleConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-
-    return { embeds: embed.embeds, components: [buttons, mainMenuRow] };
+    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
 }
 
 export {
-    serverSettingsMainMenu,
+    SettingsMainMenu,
     serverSettingsMainMenuOptions,
-    serverRolesConfigMenu,
-    afterSessionMessageConfigMenu,
-    queueAutoClearConfigMenu,
-    loggingChannelConfigMenu,
-    autoGiveStudentRoleConfigMenu,
+    RolesConfigMenu,
+    AfterSessionMessageConfigMenu,
+    QueueAutoClearConfigMenu,
+    LoggingChannelConfigMenu,
+    AutoGiveStudentRoleConfigMenu,
     mainMenuRow
 };

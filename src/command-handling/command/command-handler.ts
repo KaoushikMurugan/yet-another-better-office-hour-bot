@@ -43,7 +43,7 @@ import { studentCommandHelpMessages } from '../../../help-channel-messages/Stude
 import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
 import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 import { SuccessMessages } from '../builtin-success-messages.js';
-import { serverSettingsMainMenu } from '../../attending-server/server-settings-menus.js';
+import { SettingsMainMenu } from '../../attending-server/server-settings-menus.js';
 import {
     createOfficeVoiceChannels,
     updateCommandHelpChannels
@@ -668,7 +668,7 @@ async function settingsMenu(
         'setup_server_config',
         'Bot Admin'
     );
-    return serverSettingsMainMenu(server, interaction.channelId, false);
+    return SettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**
