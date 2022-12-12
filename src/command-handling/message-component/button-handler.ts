@@ -390,7 +390,7 @@ async function createServerRoles(
  */
 async function createServerRolesDM(
     forceCreate: boolean,
-    defaultStudentIsEveryone: boolean,
+    everyoneIsStudent: boolean,
     interaction: ButtonInteraction
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
@@ -401,7 +401,8 @@ async function createServerRolesDM(
             interaction.channel as TextBasedChannel
         )
     );
-    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
+    await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
+    console.log(server.hierarchyRoleIds);
     return RolesConfigMenu(server, interaction.channelId, true, false);
 }
 

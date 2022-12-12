@@ -979,7 +979,6 @@ class AttendingServerV2 {
                 role.key in SpecialRoleValues || role.id === everyone
                     ? allRoles.find(serverRole => serverRole.name === role.roleName)
                     : allRoles.get(role.id);
-            console.log(role.key, existingRole?.name);
             if (role.key === 'student' && everyoneIsStudent) {
                 this.hierarchyRoleIds.student = everyone;
                 continue;

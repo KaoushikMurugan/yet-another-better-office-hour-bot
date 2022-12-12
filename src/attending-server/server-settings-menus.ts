@@ -31,6 +31,7 @@ const EmptyEmbedField = {
 } as const;
 
 /** Use this string to force a trailing new line in an embed field */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const trailingNewLine = '\n\u200b' as const;
 /** Use this string to force a leading new line in an embed field */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -156,17 +157,20 @@ function RolesConfigMenu(
         })
         .addFields({
             name: 'Options',
-            value: `[Use Existing Roles] Use existing roles named the same as the missing roles. If not found, create new roles.
-            [Create New Roles] Create brand new roles for the missing roles`
+            value: `🔵 Use Existing Roles - Use existing roles named the same as the missing roles. If not found, create new roles.
+            🟠 Create New Roles - Create brand new roles for the missing roles`
         })
         .addFields({
             name: '🤖 Bot Admin Role',
             value: forServerInit
-                ? `*Role that can manage the bot and it's settings*\n`
+                ? `*Role that can manage the bot and its settings*\n`
                 : server.botAdminRoleID === SpecialRoleValues.NotSet
                 ? 'Not Set'
                 : server.botAdminRoleID === SpecialRoleValues.Deleted
                 ? '@deleted-role'
+                : isDm // role pings shows up as '@deleted-role' in dm even if it exists
+                ? server.guild.roles.cache.get(server.botAdminRoleID)?.name ??
+                  '@deleted-role'
                 : `<@&${server.botAdminRoleID}>`,
             inline: true
         })
@@ -178,6 +182,9 @@ function RolesConfigMenu(
                 ? 'Not Set'
                 : server.helperRoleID === SpecialRoleValues.Deleted
                 ? '@deleted-role'
+                : isDm
+                ? server.guild.roles.cache.get(server.helperRoleID)?.name ??
+                  '@deleted-role'
                 : `<@&${server.helperRoleID}>`,
             inline: true
         })
@@ -189,6 +196,9 @@ function RolesConfigMenu(
                 ? 'Not Set'
                 : server.studentRoleID === SpecialRoleValues.Deleted
                 ? '@deleted-role'
+                : isDm
+                ? server.guild.roles.cache.get(server.studentRoleID)?.name ??
+                  '@deleted-role'
                 : `<@&${server.studentRoleID}>`,
             inline: true
         });
@@ -197,6 +207,11 @@ function RolesConfigMenu(
             `**Thanks for choosing YABOB for helping you with office hours!
             To start using YABOB, it requires the following roles: **\n`
         );
+    }
+    if (!forServerInit && isDm) {
+        embed.setFooter({
+            text: `Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
+        });
     }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -207,7 +222,7 @@ function RolesConfigMenu(
                     isDm ? server.guild.id : undefined,
                     isDm ? channelId : undefined
                 )
-                .setLabel('Use Existing Roles')
+                .setLabel('🔵 Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
             buttonFactory
                 .buildComponent(
@@ -216,7 +231,7 @@ function RolesConfigMenu(
                     isDm ? server.guild.id : undefined,
                     isDm ? channelId : undefined
                 )
-                .setLabel('Use Existing Roles (@everyone is student)')
+                .setLabel('🔵 Use Existing Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -227,7 +242,7 @@ function RolesConfigMenu(
                     isDm ? server.guild.id : undefined,
                     isDm ? channelId : undefined
                 )
-                .setLabel('Create New Roles')
+                .setLabel('🟠 Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
             buttonFactory
                 .buildComponent(
@@ -236,7 +251,7 @@ function RolesConfigMenu(
                     isDm ? server.guild.id : undefined,
                     isDm ? channelId : undefined
                 )
-                .setLabel('Create New Roles (@everyone is student)')
+                .setLabel('🟠 Create New Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         )
     ];
