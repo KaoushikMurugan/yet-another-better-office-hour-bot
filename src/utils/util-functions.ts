@@ -164,7 +164,64 @@ function getInteractionName(interaction: Interaction): string {
     if (interaction.isModalSubmit()) {
         return interaction.customId;
     }
+    if (interaction.isSelectMenu()) {
+        return interaction.component?.placeholder ?? interaction.customId;
+    }
     return 'Unsupported Interaction Type';
+}
+
+/**
+ * A DP implementation that finds the length
+ *  of the longest common subsequence (LCS) between 2 strings
+ * @param str1 string 1
+ * @param str2 string 2
+ * @returns the length of LCS
+ */
+function longestCommonSubsequence(str1: string, str2: string): number {
+    /**
+     * Encodes the recurrence:
+     * LCS(i, j) = {
+     *      0                                   if i == str1.length or j == str2.length
+     *      LCS(i + 1, j + 1)                   if str1[i] == str2[j]
+     *      max(LCS(i + 1, j), LCS(i, j + 1))   if str1[i] != str2[j]
+     * }
+     */
+    try {
+        const M = str1.length;
+        const N = str2.length;
+        const dpTable: number[][] = new Array(M + 1).fill(new Array(N + 1).fill(0));
+        // base cases
+        for (let j = 0; j < N; j++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            dpTable[M]![j] = 0;
+        }
+        for (let i = 0; i < M; i++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            dpTable[i]![N] = 0;
+        }
+        for (let i = M - 1; i >= 0; i--) {
+            for (let j = N - 1; j >= 0; j--) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const skipI = dpTable[i + 1]![j]!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const skipJ = dpTable[i]![j + 1]!;
+                if (str1[i] === str2[j]) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = dpTable[i + 1]![j + 1]! + 1;
+                } else if (skipI > skipJ) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = skipI;
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = skipJ;
+                }
+            }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return dpTable[0]![0]!;
+    } catch {
+        return -1;
+    }
 }
 
 // #endregion Util Functions
@@ -322,7 +379,6 @@ function logDMSelectMenuSelection(
             ` - In DM`
     );
 }
-
 // #endregion Loggers
 
 // #region Type Guards
@@ -421,6 +477,7 @@ export {
     centered,
     printTitleString,
     logWithTimeStamp,
+    longestCommonSubsequence,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,

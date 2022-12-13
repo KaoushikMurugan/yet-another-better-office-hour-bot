@@ -14,7 +14,7 @@ import {
 } from '../utils/type-aliases.js';
 import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
-import { isTextChannel } from '../utils/util-functions.js';
+import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buttonFactory
@@ -427,21 +427,29 @@ function LoggingChannelConfigMenu(
         .setFooter({
             text: 'Note: Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the /set_logging_channel command. It supports choosing any text channel on this server.'
         });
-    const allTextChannels = server.guild.channels.cache
+    // Filter out the channels that are more likely to be logging channels
+    // based on how many characters in the channel name matches with 'logs'
+    const mostLikelyLoggingChannels = server.guild.channels.cache
         .filter(
             channel =>
                 isTextChannel(channel) &&
                 channel.name !== 'queue' &&
                 channel.name !== 'chat'
         )
-        .first(25); // Cannot have more than 25 options
+        .sort(
+            // sort by LCS, higher LCS with 'logs' are closer to the start of the array
+            (channel1, channel2) =>
+                longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
+                longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
+        );
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         // TODO: change customid
         new SelectMenuBuilder()
             .setCustomId('PlaceHolder')
             .setPlaceholder('Select a Text Channel')
             .addOptions(
-                allTextChannels.map(channel => ({
+                // Cannot have more than 25 options
+                mostLikelyLoggingChannels.first(25).map(channel => ({
                     label: channel.name,
                     description: channel.name,
                     value: channel.id
