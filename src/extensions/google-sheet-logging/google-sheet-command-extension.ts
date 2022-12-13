@@ -1,4 +1,4 @@
-import { ChatInputCommandInteraction, Guild } from 'discord.js';
+import { ChatInputCommandInteraction, Guild, User } from 'discord.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { isServerInteraction } from '../../command-handling/common-validations.js';
 import { CommandData } from '../../command-handling/slash-commands.js';
@@ -11,7 +11,7 @@ import {
     SlashCommandLogEmbed
 } from '../../utils/embed-helper.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { CommandCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { CommandCallback, Optional, YabobEmbed } from '../../utils/type-aliases.js';
 import { logSlashCommand } from '../../utils/util-functions.js';
 import {
     BaseInteractionExtension,
@@ -97,11 +97,11 @@ class GoogleSheetInteractionExtension
 }
 
 const commandMethodMap: { [commandName: string]: CommandCallback } = {
-    get_statistics: getStatistics
+    stats: getStatistics
 };
 
 /**
- * The `/get_statistics` command
+ * The `/stats` command
  * @param interaction
  * @returns
  */
@@ -132,21 +132,80 @@ async function getStatistics(
         );
     }
 
+    const commandType = interaction.options.getSubcommand();
+
+    let user: Optional<User> = undefined;
+
+    if (commandType === 'server') {
+        // do nothing
+    } else if (commandType === 'helper') {
+        user = interaction.options.getUser('helper') ?? interaction.user;
+    } else {
+        throw new Error(`Invalid command type ${commandType}`);
+    }
+
+    const timeFrame = interaction.options.getString('time_frame') ?? 'all-time';
+
     const rows = await attendanceSheet.getRows();
 
-    const helpSessionCount = rows.length;
+    let filteredRows = rows.filter(row => {
+        return user ? row['Discord ID'] === user.id : true;
+    });
 
-    const totalSessionTime = rows
+    const startTime = new Date();
+
+    if (timeFrame === 'past_week') {
+        startTime.setDate(startTime.getDate() - 7);
+    } else if (timeFrame === 'past_month') {
+        startTime.setMonth(startTime.getMonth() - 1);
+    } else if (timeFrame === 'all_time') {
+        // set to 0 unix time
+        startTime.setTime(0);
+    }
+
+    filteredRows = filteredRows.filter(row => {
+        // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
+        const returnDate = row['Time In'].split(',')[0];
+        const returnTime = row['Time In'].split(',')[1];
+        const returnDateParts = returnDate.split('/');
+        const returnTimeParts = returnTime.split(':');
+        const returnDateObj = new Date(
+            parseInt(returnDateParts[2]),
+            parseInt(returnDateParts[0]) - 1,
+            parseInt(returnDateParts[1]),
+            parseInt(returnTimeParts[0]),
+            parseInt(returnTimeParts[1]),
+            parseInt(returnTimeParts[2].split(' ')[0])
+        );
+
+        return returnDateObj >= startTime;
+    });
+
+    if (filteredRows.length === 0) {
+        return SimpleEmbed(
+            `No help sessions found for ${user?.username ?? server.guild.name}`,
+            EmbedColor.Neutral
+        );
+    }
+
+    const helpSessionCount = filteredRows.length;
+
+    const totalSessionTime = filteredRows
         .map(row => {
             return parseInt(row['Session Time (ms)']);
         })
         .filter((time: number) => !isNaN(time))
         .reduce((a, b) => a + b, 0);
 
-    const totalSessionTimeHours = totalSessionTime / (1000 * 60 * 60);
-    const totalSessionTimeMinutes = totalSessionTime / (1000 * 60);
+    const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
+    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60));
 
-    const numberOfStudents = rows
+    const averageSessionTime = totalSessionTime / helpSessionCount;
+
+    const averageSessionTimeHours = Math.trunc(averageSessionTime / (1000 * 60 * 60));
+    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60));
+
+    const numberOfStudents = filteredRows
         .map(row => {
             return parseInt(row['Number of Students Helped']);
         })
@@ -154,11 +213,16 @@ async function getStatistics(
         .reduce((a, b) => a + b, 0);
 
     return SimpleEmbed(
-        `Help session statistics for ${server.guild.name}`,
+        `Help session statistics for ` + `${user ? user.username : server.guild.name}`,
         EmbedColor.Neutral,
-        `Help sessions: ${helpSessionCount}\n` +
-            `Total session time: ${totalSessionTimeHours} h ${totalSessionTimeMinutes} min\n` +
-            `Number of students helped: ${numberOfStudents}\n`
+        `Help sessions: **${helpSessionCount}**\n` +
+            `Total session time: **${
+                totalSessionTimeHours > 0 ? `${totalSessionTimeHours} h ` : ''
+            }${totalSessionTimeMinutes} min**\n` +
+            `Number of students helped: **${numberOfStudents}**\n` +
+            `Average session time: **${
+                averageSessionTimeHours > 0 ? `${averageSessionTimeHours} h ` : ''
+            }${averageSessionTimeMinutes} min**\n`
     );
 }
 
