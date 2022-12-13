@@ -230,5 +230,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         guild,
         interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
     );
+    await server.guild.commands.fetch(); // populate cache
     return server;
 }

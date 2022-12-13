@@ -393,6 +393,9 @@ function LoggingChannelConfigMenu(
     isDm: boolean
 ): YabobEmbed {
     // TODO: Implement a direct way to change the logging channel
+    const setLoggingChannelCommandId = server.guild.commands.cache.find(
+        command => command.name === 'set_logging_channel'
+    )?.id;
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buttonFactory
             .buildComponent(
@@ -410,7 +413,15 @@ function LoggingChannelConfigMenu(
         .setColor(EmbedColor.Aqua)
         .addFields({
             name: 'Description',
-            value: `If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.`
+            value: 'If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.'
+        })
+        .addFields({
+            name: 'Note: Select menu length limit',
+            value: `Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
+                setLoggingChannelCommandId
+                    ? `</set_logging_channel:${setLoggingChannelCommandId}>`
+                    : '`/set_logging_channel`'
+            } command to select any text channel on this server.`
         })
         .addFields({
             name: 'Options',
@@ -423,9 +434,6 @@ function LoggingChannelConfigMenu(
                 server.loggingChannel === undefined
                     ? 'Logging is not enabled.'
                     : server.loggingChannel.toString()
-        })
-        .setFooter({
-            text: 'Note: Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the /set_logging_channel command. It supports choosing any text channel on this server.'
         });
     // Filter out the channels that are more likely to be logging channels
     // based on how many characters in the channel name matches with 'logs'
