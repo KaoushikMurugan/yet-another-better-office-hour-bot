@@ -4,7 +4,8 @@ import {
     ButtonStyle,
     EmbedBuilder,
     SelectMenuBuilder,
-    SelectMenuComponentOptionData
+    SelectMenuComponentOptionData,
+    Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
@@ -146,6 +147,15 @@ function RolesConfigMenu(
     isDm: boolean,
     forServerInit = false
 ): YabobEmbed {
+    const generatePing = (id: Snowflake | SpecialRoleValues) => {
+        return id === SpecialRoleValues.NotSet
+            ? 'Not Set'
+            : id === SpecialRoleValues.Deleted
+            ? '@deleted-role'
+            : isDm // role pings shows up as '@deleted-role' in dm even if it exists
+            ? server.guild.roles.cache.get(id)?.name ?? '@deleted-role'
+            : `<@&${id}>`;
+    };
     const embed = new EmbedBuilder()
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
         .setColor(EmbedColor.Aqua)
@@ -164,42 +174,21 @@ function RolesConfigMenu(
             name: '🤖 Bot Admin Role',
             value: forServerInit
                 ? `*Role that can manage the bot and its settings*\n`
-                : server.botAdminRoleID === SpecialRoleValues.NotSet
-                ? 'Not Set'
-                : server.botAdminRoleID === SpecialRoleValues.Deleted
-                ? '@deleted-role'
-                : isDm // role pings shows up as '@deleted-role' in dm even if it exists
-                ? server.guild.roles.cache.get(server.botAdminRoleID)?.name ??
-                  '@deleted-role'
-                : `<@&${server.botAdminRoleID}>`,
+                : generatePing(server.botAdminRoleID),
             inline: true
         })
         .addFields({
             name: '📚 Staff Role',
             value: forServerInit
                 ? `*Role that allows users to host office hours*\n`
-                : server.helperRoleID === SpecialRoleValues.NotSet
-                ? 'Not Set'
-                : server.helperRoleID === SpecialRoleValues.Deleted
-                ? '@deleted-role'
-                : isDm
-                ? server.guild.roles.cache.get(server.helperRoleID)?.name ??
-                  '@deleted-role'
-                : `<@&${server.helperRoleID}>`,
+                : generatePing(server.helperRoleID),
             inline: true
         })
         .addFields({
             name: '🎓 Student Role',
             value: forServerInit
                 ? `*Role that allows users to join office hour queues*\n`
-                : server.studentRoleID === SpecialRoleValues.NotSet
-                ? 'Not Set'
-                : server.studentRoleID === SpecialRoleValues.Deleted
-                ? '@deleted-role'
-                : isDm
-                ? server.guild.roles.cache.get(server.studentRoleID)?.name ??
-                  '@deleted-role'
-                : `<@&${server.studentRoleID}>`,
+                : generatePing(server.studentRoleID),
             inline: true
         });
     if (forServerInit) {
@@ -443,9 +432,10 @@ function LoggingChannelConfigMenu(
                 isTextChannel(channel) &&
                 channel.name !== 'queue' &&
                 channel.name !== 'chat'
-        )
+        ) // don't consider the queue channels
         .sort(
             // sort by LCS, higher LCS with 'logs' are closer to the start of the array
+            // TODO: change the 'logs' parameter to another string if necessary
             (channel1, channel2) =>
                 longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
                 longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')

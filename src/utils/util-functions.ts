@@ -189,7 +189,12 @@ function longestCommonSubsequence(str1: string, str2: string): number {
     try {
         const M = str1.length;
         const N = str2.length;
-        const dpTable: number[][] = new Array(M + 1).fill(new Array(N + 1).fill(0));
+        const dpTable: number[][] = [];
+        for (let i = 0; i < M + 1; i++) {
+            // must use a loop here,
+            // using array fill on the outer array creates a bunch of inner arrays with the same reference
+            dpTable.push(new Array(N + 1).fill(0));
+        }
         // base cases
         for (let j = 0; j < N; j++) {
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
