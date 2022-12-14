@@ -59,8 +59,40 @@ const getStatistics = new SlashCommandBuilder()
                         }
                     )
             )
-        )
+    );
 
-const googleSheetsCommands = [getStatistics.toJSON()];
+const weeklyReport = new SlashCommandBuilder()
+    .setName('weekly_report')
+    .setDescription('Get a weekly report for the past `x` weeks.')
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('helper')
+            .setDescription('Get a weekly report for a helper.')
+            .addIntegerOption(option =>
+                option
+                    .setName('num_weeks')
+                    .setDescription('The number of weeks to get the report for')
+                    .setRequired(true)
+            )
+            .addUserOption(option =>
+                option
+                    .setName('user')
+                    .setDescription('The user to get the report for')
+                    .setRequired(false)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand
+            .setName('server')
+            .setDescription('Get a weekly report for the server.')
+            .addIntegerOption(option =>
+                option
+                    .setName('num_weeks')
+                    .setDescription('The number of weeks to get the report for')
+                    .setRequired(true)
+            )
+    );
+
+const googleSheetsCommands = [getStatistics.toJSON(), weeklyReport.toJSON()];
 
 export { googleSheetsCommands };
