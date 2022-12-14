@@ -4,7 +4,6 @@ import {
     ErrorEmbed,
     SelectMenuLogEmbed,
     SimpleEmbed,
-    SimpleEmbed2
 } from '../../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
@@ -18,7 +17,6 @@ import {
 } from '../../utils/util-functions.js';
 import { selectMenuFactory } from '../../utils/component-id-factory.js';
 import { isServerInteraction } from '../common-validations.js';
-import { CommandParseError } from '../../utils/error-types.js';
 import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 
 /**

@@ -50,7 +50,8 @@ abstract class YabobComponentFactory<
      * Decompresses the component id that was compressed with LZString.compressToUTF16
      * @param compressedId the id to decompress
      * @returns the parameter tuple of buildComponent
-     */
+     */ 
+    // vs code might have red squiggle with the 'this' keyword ------|
     decompressComponentId(compressedId: string): Parameters<typeof this.buildComponent> {
         const rawDecompressed = LZString.decompressFromUTF16(compressedId);
         if (!rawDecompressed) {
@@ -153,6 +154,13 @@ type CustomIdTuple<T extends ComponentLocation> = [
 ];
 
 /**
+ * This variable is coupled with the type definition of CustomIdTuple
+ * - if we ever add more stuff to CustomIdTuple, simply change the value after the equal sign
+ * - there will be only 1 possible value
+ */
+const expectedLength: CustomIdTuple<ComponentLocation>['length'] = 4 as const;
+
+/**
  * Function variant of YabobComponentFactory, takes over the builder's setCustomId method
  * @param builder builder method that has 'setCustomId'
  * @param idInfo the information to compress into the id
@@ -181,7 +189,7 @@ function isValidCustomIdTuple<T extends ComponentLocation>(
     expectedComponentType: T,
     decompressedTuple: string[]
 ): decompressedTuple is CustomIdTuple<T> {
-    const lengthMatch = decompressedTuple.length === 4;
+    const lengthMatch = decompressedTuple.length === expectedLength;
     const typeMatch = decompressedTuple[0] === expectedComponentType;
     const snowflakesAreValid = // snowflakes should only have numbers
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
