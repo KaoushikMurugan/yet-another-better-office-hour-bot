@@ -199,12 +199,12 @@ async function getStatistics(
         .reduce((a, b) => a + b, 0);
 
     const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
-    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60));
+    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60)) % 60;
 
     const averageSessionTime = totalSessionTime / helpSessionCount;
 
     const averageSessionTimeHours = Math.trunc(averageSessionTime / (1000 * 60 * 60));
-    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60));
+    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60)) % 60;
 
     const numberOfStudents = filteredRows
         .map(row => {
@@ -213,6 +213,20 @@ async function getStatistics(
         .filter((num: number) => !isNaN(num))
         .reduce((a, b) => a + b, 0);
 
+    const uniqueStudents = new Set<string>();
+
+    // each cell in the 'Helped Student' is an arry of json strings, where the json is of the form
+    // {displayName: string, username: string, id: string}
+    filteredRows.forEach(row => {
+        const students = row['Helped Students'];
+        if (students) {
+            const studentArray = JSON.parse(students);
+            studentArray.forEach((student: { id: string }) => {
+                uniqueStudents.add(student.id);
+            });
+        }
+    });
+
     return SimpleEmbed(
         `Help session statistics for ` + `${user ? user.username : server.guild.name}`,
         EmbedColor.Neutral,
@@ -220,7 +234,8 @@ async function getStatistics(
             `Total session time: **${
                 totalSessionTimeHours > 0 ? `${totalSessionTimeHours} h ` : ''
             }${totalSessionTimeMinutes} min**\n` +
-            `Number of students helped: **${numberOfStudents}**\n` +
+            `Number of students sessions: **${numberOfStudents}**\n` +
+            `Unique students helped: **${uniqueStudents.size}**\n` +
             `Average session time: **${
                 averageSessionTimeHours > 0 ? `${averageSessionTimeHours} h ` : ''
             }${averageSessionTimeMinutes} min**\n`
