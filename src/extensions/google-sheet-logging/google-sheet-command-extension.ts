@@ -213,7 +213,7 @@ async function getStatistics(
         .filter((num: number) => !isNaN(num))
         .reduce((a, b) => a + b, 0);
 
-    const uniqueStudents = new Set<string>();
+    let studentsList: string[] = [];
 
     // each cell in the 'Helped Student' is an arry of json strings, where the json is of the form
     // {displayName: string, username: string, id: string}
@@ -222,10 +222,17 @@ async function getStatistics(
         if (students) {
             const studentArray = JSON.parse(students);
             studentArray.forEach((student: { id: string }) => {
-                uniqueStudents.add(student.id);
+                studentsList.push(student.id);
             });
         }
     });
+
+    const uniqueStudents = new Set(studentsList);
+
+    // count students who were helped multiple times
+    const returningStudents = new Set(studentsList.filter(
+        (student, index) => studentsList.indexOf(student) !== index
+    ));
 
     return SimpleEmbed(
         `Help session statistics for ` + `${user ? user.username : server.guild.name}`,
@@ -236,6 +243,7 @@ async function getStatistics(
             }${totalSessionTimeMinutes} min**\n` +
             `Number of students sessions: **${numberOfStudents}**\n` +
             `Unique students helped: **${uniqueStudents.size}**\n` +
+            `Returning students: **${returningStudents.size}**\n` +
             `Average session time: **${
                 averageSessionTimeHours > 0 ? `${averageSessionTimeHours} h ` : ''
             }${averageSessionTimeMinutes} min**\n`
