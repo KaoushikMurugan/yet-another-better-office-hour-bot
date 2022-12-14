@@ -1,17 +1,25 @@
 import { SelectMenuInteraction, TextChannel } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
-import { ErrorEmbed, SelectMenuLogEmbed, SimpleEmbed } from '../../utils/embed-helper.js';
+import {
+    ErrorEmbed,
+    SelectMenuLogEmbed,
+    SimpleEmbed,
+    SimpleEmbed2
+} from '../../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
     SelectMenuCallback,
     YabobEmbed
 } from '../../utils/type-aliases.js';
 import {
+    isTextChannel,
     logDMSelectMenuSelection,
     logSelectMenuSelection
 } from '../../utils/util-functions.js';
 import { selectMenuFactory } from '../../utils/component-id-factory.js';
 import { isServerInteraction } from '../common-validations.js';
+import { CommandParseError } from '../../utils/error-types.js';
+import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 
 /**
  * Responsible for handling the selection of a menu item.
@@ -26,7 +34,8 @@ import { isServerInteraction } from '../common-validations.js';
 const selectMenuMethodMap: {
     [selectMenuName: string]: SelectMenuCallback;
 } = {
-    server_settings: showSettingsSelectMenu
+    server_settings: showSettingsSelectMenu,
+    select_logging_channel: selectLoggingChannel
 } as const;
 
 /**
@@ -39,7 +48,7 @@ const dmSelectMenuMethodMap: {
 /**
  * List of select menus that should update the parent interaction
  */
-const updateParentInteractionSelectMenus = ['server_settings'];
+const updateParentInteractionSelectMenus = ['server_settings', 'select_logging_channel'];
 
 /**
  * Check if the select menu interaction can be handled by this (in-built) handler.
@@ -88,6 +97,7 @@ async function processBuiltInSelectMenu(
     const selectMenuName = selectMenuFactory.decompressComponentId(
         interaction.customId
     )[1];
+    console.log(selectMenuName);
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
@@ -160,7 +170,7 @@ async function processBuiltInDMSelectMenu(
 }
 
 /**
- * Display the Role Config menu
+ * Display the settings main menu
  * @param interaction
  */
 async function showSettingsSelectMenu(
@@ -182,6 +192,25 @@ async function showSettingsSelectMenu(
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
+    return callbackMenu.subMenu(server, interaction.channelId, false);
+}
+
+async function selectLoggingChannel(
+    interaction: SelectMenuInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    const channelId = interaction.values[0];
+    const loggingChannel = server.guild.channels.cache.get(channelId ?? '');
+    const callbackMenu = serverSettingsMainMenuOptions.find(
+        option => option.optionObj.value === 'logging-channel'
+    );
+    if (!loggingChannel || !isTextChannel(loggingChannel)) {
+        throw ExpectedParseErrors.nonExistentTextChannel(channelId);
+    }
+    if (!callbackMenu) {
+        throw new Error('Invalid option selected:');
+    }
+    await server.setLoggingChannel(loggingChannel);
     return callbackMenu.subMenu(server, interaction.channelId, false);
 }
 

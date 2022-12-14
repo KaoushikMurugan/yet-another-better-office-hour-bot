@@ -442,8 +442,8 @@ function LoggingChannelConfigMenu(
         );
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         // TODO: change customid
-        new SelectMenuBuilder()
-            .setCustomId('PlaceHolder')
+        selectMenuFactory
+            .buildComponent('other', 'select_logging_channel', undefined, undefined)
             .setPlaceholder('Select a Text Channel')
             .addOptions(
                 // Cannot have more than 25 options
