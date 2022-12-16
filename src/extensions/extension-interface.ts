@@ -247,7 +247,7 @@ interface IQueueExtension {
      */
     onQueueRender: (
         queue: FrozenQueue,
-        display: Readonly<QueueDisplayV2>
+        display: FrozenDisplay
     ) => Promise<void>;
     /**
      * Called every hour

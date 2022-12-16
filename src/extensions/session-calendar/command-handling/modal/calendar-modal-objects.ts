@@ -5,7 +5,7 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { modalFactory } from '../../../../utils/component-id-factory.js';
+import { buildComponent, UnknownId } from '../../../../utils/component-id-factory.js';
 import { calendarStates } from '../../calendar-states.js';
 
 /**
@@ -16,13 +16,12 @@ import { calendarStates } from '../../calendar-states.js';
  */
 function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder {
     const state = calendarStates.get(serverId);
-    const modal = modalFactory
-        .buildComponent(
-            'other',
-            'calendar_settings_modal' + (useMenu ? '_mv' : ''),
-            undefined,
-            undefined
-        )
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'calendar_settings_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Calendar Settings')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(

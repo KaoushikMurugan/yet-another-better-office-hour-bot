@@ -1,6 +1,6 @@
 import { ButtonInteraction, TextBasedChannel } from 'discord.js';
 import { environment } from '../../../../environment/environment-manager.js';
-import { buttonFactory } from '../../../../utils/component-id-factory.js';
+import { decompressComponentId } from '../../../../utils/component-id-factory.js';
 import {
     ButtonLogEmbed,
     EmbedColor,
@@ -55,7 +55,7 @@ function canHandleCalendarButton(
     this: CalendarInteractionExtension,
     interaction: ButtonInteraction
 ): boolean {
-    const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
+    const buttonName = decompressComponentId(interaction.customId)[1];
     return (
         buttonName in queueButtonMethodMap ||
         buttonName in defaultButtonMethodMap ||
@@ -67,7 +67,7 @@ async function processCalendarButton(
     this: CalendarInteractionExtension,
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
+    const [buttonType, buttonName, , channelId] = decompressComponentId(
         interaction.customId
     );
     const [server] = isServerCalendarInteraction(interaction);

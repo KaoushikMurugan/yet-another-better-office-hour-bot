@@ -16,7 +16,7 @@ import {
 import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { attendingServers } from '../global-states.js';
-import { buttonFactory, modalFactory } from '../utils/component-id-factory.js';
+import { decompressComponentId } from '../utils/component-id-factory.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
     isCategoryChannel,
@@ -53,10 +53,8 @@ function isServerInteraction(
 function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
-    const [type, , serverId] = interaction.isButton()
-        ? buttonFactory.decompressComponentId(interaction.customId)
-        : modalFactory.decompressComponentId(interaction.customId);
-    if (type !== 'dm' || serverId === undefined) {
+    const [type, , serverId] = decompressComponentId(interaction.customId);
+    if (type !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
     const server = attendingServers.get(serverId);
@@ -177,7 +175,6 @@ function isFromQueueChannelWithParent(
     };
     return queueChannel;
 }
-
 
 export {
     hasValidQueueArgument,

@@ -1,5 +1,5 @@
 import { ModalSubmitInteraction } from 'discord.js';
-import { modalFactory } from '../../../../utils/component-id-factory.js';
+import { decompressComponentId } from '../../../../utils/component-id-factory.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../../../../utils/embed-helper.js';
 import { ModalSubmitCallback, YabobEmbed } from '../../../../utils/type-aliases.js';
 import { logModalSubmit } from '../../../../utils/util-functions.js';
@@ -27,7 +27,7 @@ function canHandleCalendarModalSubmit(
     this: CalendarInteractionExtension,
     interaction: ModalSubmitInteraction
 ): boolean {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     return modalName in modalMethodMap;
 }
 
@@ -35,7 +35,7 @@ async function processCalendarModalSubmit(
     this: CalendarInteractionExtension,
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     const [server] = isServerCalendarInteraction(interaction);
     const modalMethod = modalMethodMap[modalName];
     logModalSubmit(interaction, modalName);

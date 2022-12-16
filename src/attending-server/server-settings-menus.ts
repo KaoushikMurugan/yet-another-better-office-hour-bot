@@ -13,13 +13,17 @@ import {
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { buttonFactory, selectMenuFactory } from '../utils/component-id-factory.js';
+import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    buttonFactory
-        .buildComponent('other', 'return_to_main_menu', undefined, undefined)
+    buildComponent(new ButtonBuilder(), [
+        'other',
+        'return_to_main_menu',
+        UnknownId,
+        UnknownId
+    ])
         .setEmoji('🏠')
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
@@ -120,13 +124,12 @@ function SettingsMainMenu(
                 'You can dismiss this message at any time to finish configuring YABOB.'
         });
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        selectMenuFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'server_settings',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new SelectMenuBuilder(), [
+            isDm ? 'dm' : 'other',
+            'server_settings',
+            server.guild.id,
+            channelId
+        ])
             .setPlaceholder('Select an option')
             .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
     );
@@ -204,42 +207,38 @@ function RolesConfigMenu(
     }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buttonFactory
-                .buildComponent(
-                    isDm ? 'dm' : 'other',
-                    `server_role_config_1`,
-                    isDm ? server.guild.id : undefined,
-                    isDm ? channelId : undefined
-                )
+            buildComponent(new ButtonBuilder(), [
+                isDm ? 'dm' : 'other',
+                `server_role_config_1`,
+                server.guild.id,
+                channelId
+            ])
                 .setLabel('🔵 Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
-            buttonFactory
-                .buildComponent(
-                    isDm ? 'dm' : 'other',
-                    `server_role_config_1a`,
-                    isDm ? server.guild.id : undefined,
-                    isDm ? channelId : undefined
-                )
+            buildComponent(new ButtonBuilder(), [
+                isDm ? 'dm' : 'other',
+                `server_role_config_1a`,
+                server.guild.id,
+                channelId
+            ])
                 .setLabel('🔵 Use Existing Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buttonFactory
-                .buildComponent(
-                    isDm ? 'dm' : 'other',
-                    `server_role_config_2`,
-                    isDm ? server.guild.id : undefined,
-                    isDm ? channelId : undefined
-                )
+            buildComponent(new ButtonBuilder(), [
+                isDm ? 'dm' : 'other',
+                'server_role_config_2',
+                server.guild.id,
+                channelId
+            ])
                 .setLabel('🟠 Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
-            buttonFactory
-                .buildComponent(
-                    isDm ? 'dm' : 'other',
-                    `server_role_config_2a`,
-                    isDm ? server.guild.id : undefined,
-                    isDm ? channelId : undefined
-                )
+            buildComponent(new ButtonBuilder(), [
+                isDm ? 'dm' : 'other',
+                'server_role_config_2a',
+                server.guild.id,
+                channelId
+            ])
                 .setLabel('🟠 Create New Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         )
@@ -279,7 +278,7 @@ function AfterSessionMessageConfigMenu(
             name: '» Current After Session Message',
             value: `${
                 server.afterSessionMessage === ''
-                    ? '`Not Set`'
+                    ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
                     : `${server.afterSessionMessage
                           .trim()
                           .split('\n')
@@ -288,23 +287,21 @@ function AfterSessionMessageConfigMenu(
             }`
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'after_session_message_config_1',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'after_session_message_config_1',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('⚙️')
             .setLabel('Edit Message')
             .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'after_session_message_config_2',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'after_session_message_config_2',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -345,23 +342,21 @@ function QueueAutoClearConfigMenu(
                     : `Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `queue_auto_clear_config_1`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'queue_auto_clear_config_1',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('⚙️')
             .setLabel('Set Auto Clear Time')
             .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                `queue_auto_clear_config_2`,
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'queue_auto_clear_config_2',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -386,13 +381,12 @@ function LoggingChannelConfigMenu(
         command => command.name === 'set_logging_channel'
     )?.id;
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'logging_channel_config_2',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'logging_channel_config_2',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -421,7 +415,7 @@ function LoggingChannelConfigMenu(
             name: '» Current Logging Channel',
             value:
                 server.loggingChannel === undefined
-                    ? 'Logging is not enabled.'
+                    ? '**Disabled** - YABOB will not send logs to this server.'
                     : server.loggingChannel.toString()
         });
     // Filter out the channels that are more likely to be logging channels
@@ -441,9 +435,12 @@ function LoggingChannelConfigMenu(
                 longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
         );
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        // TODO: change customid
-        selectMenuFactory
-            .buildComponent('other', 'select_logging_channel', undefined, undefined)
+        buildComponent(new SelectMenuBuilder(), [
+            'other',
+            'select_logging_channel',
+            UnknownId,
+            UnknownId
+        ])
             .setPlaceholder('Select a Text Channel')
             .addOptions(
                 // Cannot have more than 25 options
@@ -480,27 +477,25 @@ function AutoGiveStudentRoleConfigMenu(
         .addFields({
             name: '» Current Configuration',
             value: server.autoGiveStudentRole
-                ? `**Enabled** - New members will automatically get <@&${server.studentRoleID}>.`
+                ? `**Enabled** - New members will automatically become <@&${server.studentRoleID}>.`
                 : `**Disabled** - New members need to be manually assigned <@&${server.studentRoleID}>.`
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'auto_give_student_role_config_1',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'auto_give_student_role_config_1',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔓')
             .setLabel('Enable')
             .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'auto_give_student_role_config_2',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'auto_give_student_role_config_2',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔒')
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
@@ -510,11 +505,11 @@ function AutoGiveStudentRoleConfigMenu(
 
 export {
     SettingsMainMenu,
-    serverSettingsMainMenuOptions,
     RolesConfigMenu,
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    mainMenuRow
+    mainMenuRow,
+    serverSettingsMainMenuOptions,
 };

@@ -33,7 +33,10 @@ import {
     SettingsMainMenu
 } from '../../attending-server/server-settings-menus.js';
 import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
-import { buttonFactory } from '../../utils/component-id-factory.js';
+import {
+    decompressComponentId,
+    extractComponentName
+} from '../../utils/component-id-factory.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -127,7 +130,7 @@ const updateParentInteractionButtons = [
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
-    const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
+    const buttonName = extractComponentName(interaction.customId);
     return (
         buttonName in queueButtonMethodMap ||
         buttonName in defaultButtonMethodMap ||
@@ -143,7 +146,7 @@ function builtInButtonHandlerCanHandle(
  * @returns True if the interaction can be handled by this handler.
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
-    const buttonName = buttonFactory.decompressComponentId(interaction.customId)[1];
+    const buttonName = extractComponentName(interaction.customId);
     return buttonName in dmButtonMethodMap;
 }
 
@@ -160,7 +163,7 @@ async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
-    const [buttonType, buttonName, , channelId] = buttonFactory.decompressComponentId(
+    const [buttonType, buttonName, , channelId] = decompressComponentId(
         interaction.customId
     );
     const server = isServerInteraction(interaction);
@@ -218,9 +221,7 @@ async function processBuiltInButton(
  * @param interaction
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
-    const [, buttonName, , dmChannelId] = buttonFactory.decompressComponentId(
-        interaction.customId
-    );
+    const [, buttonName, , dmChannelId] = decompressComponentId(interaction.customId);
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {

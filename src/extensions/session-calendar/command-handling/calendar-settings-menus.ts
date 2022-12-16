@@ -1,7 +1,7 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { YabobEmbed } from '../../../utils/type-aliases.js';
-import { buttonFactory } from '../../../utils/component-id-factory.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { calendarStates } from '../calendar-states.js';
 import {
     mainMenuRow,
@@ -56,23 +56,21 @@ function calendarSettingsConfigMenu(
             text: 'Note: If you change the calendar, the embed url will be reset to the default embed url for the new calendar.'
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'calendar_settings_config_menui_1',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'calendar_settings_config_menui_1',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🗓')
             .setLabel('Change Calendar Settings')
             .setStyle(ButtonStyle.Secondary),
-        buttonFactory
-            .buildComponent(
-                isDm ? 'dm' : 'other',
-                'calendar_settings_config_menui_2',
-                isDm ? server.guild.id : undefined,
-                isDm ? channelId : undefined
-            )
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'calendar_settings_config_menui_2',
+            server.guild.id,
+            channelId
+        ])
             .setEmoji('🔗')
             .setLabel('Reset Calendar Settings')
             .setStyle(ButtonStyle.Secondary)

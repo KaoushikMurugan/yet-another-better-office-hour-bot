@@ -14,7 +14,7 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
-import { buttonFactory } from '../utils/component-id-factory.js';
+import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -108,46 +108,43 @@ class QueueDisplayV2 {
             ]);
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buttonFactory
-                .buildComponent(
-                    'queue',
-                    'join',
-                    undefined,
-                    this.queueChannel.channelObj.id
-                )
+            buildComponent(new ButtonBuilder(), [
+                'queue',
+                'join',
+                UnknownId,
+                this.queueChannel.channelObj.id
+            ])
                 .setEmoji('✅')
                 .setDisabled(!viewModel.isOpen)
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
-            buttonFactory
-                .buildComponent(
-                    'queue',
-                    'leave',
-                    undefined,
-                    this.queueChannel.channelObj.id
-                )
+
+            buildComponent(new ButtonBuilder(), [
+                'queue',
+                'leave',
+                UnknownId,
+                this.queueChannel.channelObj.id
+            ])
                 .setEmoji('❎')
                 .setLabel('Leave')
                 .setStyle(ButtonStyle.Danger)
         );
         const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buttonFactory
-                .buildComponent(
-                    'queue',
-                    'notif',
-                    undefined,
-                    this.queueChannel.channelObj.id
-                )
+            buildComponent(new ButtonBuilder(), [
+                'queue',
+                'notif',
+                UnknownId,
+                this.queueChannel.channelObj.id
+            ])
                 .setEmoji('🔔')
                 .setLabel('Notify When Open')
                 .setStyle(ButtonStyle.Primary),
-            buttonFactory
-                .buildComponent(
-                    'queue',
-                    'removeN',
-                    undefined,
-                    this.queueChannel.channelObj.id
-                )
+            buildComponent(new ButtonBuilder(), [
+                'queue',
+                'removeN',
+                UnknownId,
+                this.queueChannel.channelObj.id
+            ])
                 .setEmoji('🔕')
                 .setLabel('Remove Notifications')
                 .setStyle(ButtonStyle.Primary)

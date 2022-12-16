@@ -15,7 +15,7 @@ import {
     logDMSelectMenuSelection,
     logSelectMenuSelection
 } from '../../utils/util-functions.js';
-import { selectMenuFactory } from '../../utils/component-id-factory.js';
+import { decompressComponentId } from '../../utils/component-id-factory.js';
 import { isServerInteraction } from '../common-validations.js';
 import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 
@@ -59,7 +59,7 @@ const updateParentInteractionSelectMenus = ['server_settings', 'select_logging_c
 function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
-    const selectMenuName = selectMenuFactory.decompressComponentId(
+    const selectMenuName = decompressComponentId(
         interaction.customId
     )[1];
     return selectMenuName in selectMenuMethodMap;
@@ -76,7 +76,7 @@ function builtInSelectMenuHandlerCanHandle(
 function builtInDMSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction
 ): boolean {
-    const selectMenuName = selectMenuFactory.decompressComponentId(
+    const selectMenuName = decompressComponentId(
         interaction.customId
     )[1];
     return selectMenuName in dmSelectMenuMethodMap;
@@ -92,7 +92,7 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const selectMenuName = selectMenuFactory.decompressComponentId(
+    const selectMenuName = decompressComponentId(
         interaction.customId
     )[1];
     console.log(selectMenuName);
@@ -135,7 +135,7 @@ async function processBuiltInSelectMenu(
 async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
-    const selectMenuName = selectMenuFactory.decompressComponentId(
+    const selectMenuName = decompressComponentId(
         interaction.customId
     )[1];
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];

@@ -5,7 +5,7 @@ import {
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu
 } from '../../attending-server/server-settings-menus.js';
-import { modalFactory } from '../../utils/component-id-factory.js';
+import { decompressComponentId } from '../../utils/component-id-factory.js';
 import { ErrorEmbed, ErrorLogEmbed } from '../../utils/embed-helper.js';
 import {
     DMModalSubmitCallback,
@@ -58,7 +58,7 @@ const updateParentInteractionModals = [
 function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     return modalName in modalMethodMap;
 }
 
@@ -69,7 +69,7 @@ function builtInModalHandlerCanHandle(
  * @returns
  */
 function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     return modalName in dmModalMethodMap;
 }
 
@@ -85,7 +85,7 @@ function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): bo
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     const modalMethod = modalMethodMap[modalName];
     logModalSubmit(interaction, modalName);
     // if process is called then modalMethod is definitely not null
@@ -125,7 +125,7 @@ async function processBuiltInModalSubmit(
 async function processBuiltInDMModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
-    const modalName = modalFactory.decompressComponentId(interaction.customId)[1];
+    const modalName = decompressComponentId(interaction.customId)[1];
     const modalMethod = dmModalMethodMap[modalName];
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`

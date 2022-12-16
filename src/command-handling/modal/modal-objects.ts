@@ -7,7 +7,7 @@ import {
     TextInputStyle
 } from 'discord.js';
 import { attendingServers } from '../../global-states.js';
-import { modalFactory } from '../../utils/component-id-factory.js';
+import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -19,13 +19,12 @@ import { modalFactory } from '../../utils/component-id-factory.js';
  */
 function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
-    const modal = modalFactory
-        .buildComponent(
-            'other',
-            'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
-            undefined,
-            undefined
-        )
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Set Queue Auto Clear')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
@@ -68,13 +67,12 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
  * @returns
  */
 function afterSessionMessageModal(serverId: string, useMenu = false): ModalBuilder {
-    const modal = modalFactory
-        .buildComponent(
-            'other',
-            'after_session_message_modal' + (useMenu ? '_mv' : ''),
-            undefined,
-            undefined
-        )
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'after_session_message_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Set After Session Message')
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
