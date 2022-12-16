@@ -6,33 +6,37 @@ import {
     ButtonLogEmbed,
     SimpleEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper.js';
+} from '../../utils/embed-helper.js';
 import {
     logDMButtonPress,
-    logButtonPress,
-    parseYabobComponentId
-} from '../utils/util-functions.js';
+    logButtonPress
+    // parseYabobComponentId
+} from '../../utils/util-functions.js';
 import {
     DefaultButtonCallback,
     DMButtonCallback,
     QueueButtonCallback,
     YabobEmbed
-} from '../utils/type-aliases.js';
+} from '../../utils/type-aliases.js';
 import {
     isFromQueueChannelWithParent,
     isServerInteraction,
     isValidDMInteraction
-} from './common-validations.js';
-import { SuccessMessages } from './builtin-success-messages.js';
+} from '../common-validations.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
 import {
-    afterSessionMessageConfigMenu,
-    autoGiveStudentRoleConfigMenu,
-    loggingChannelConfigMenu,
-    queueAutoClearConfigMenu,
-    serverRolesConfigMenu,
-    serverSettingsMainMenu
-} from '../attending-server/server-settings-menus.js';
-import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
+    AfterSessionMessageConfigMenu,
+    AutoGiveStudentRoleConfigMenu,
+    LoggingChannelConfigMenu,
+    QueueAutoClearConfigMenu,
+    RolesConfigMenu,
+    SettingsMainMenu
+} from '../../attending-server/server-settings-menus.js';
+import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
+import {
+    decompressComponentId,
+    extractComponentName
+} from '../../utils/component-id-factory.js';
 
 /**
  * Responsible for preprocessing button presses and dispatching them to servers
@@ -72,7 +76,7 @@ const defaultButtonMethodMap: {
         toggleAutoGiveStudentRole(interaction, true),
     auto_give_student_role_config_2: interaction =>
         toggleAutoGiveStudentRole(interaction, false)
-};
+} as const;
 
 /**
  * Buttons in this object only shows a modal on ButtonInteraction<'cached'>
@@ -126,8 +130,7 @@ const updateParentInteractionButtons = [
 function builtInButtonHandlerCanHandle(
     interaction: ButtonInteraction<'cached'>
 ): boolean {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
+    const buttonName = extractComponentName(interaction.customId);
     return (
         buttonName in queueButtonMethodMap ||
         buttonName in defaultButtonMethodMap ||
@@ -143,8 +146,7 @@ function builtInButtonHandlerCanHandle(
  * @returns True if the interaction can be handled by this handler.
  */
 function builtInDMButtonHandlerCanHandle(interaction: ButtonInteraction): boolean {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
+    const buttonName = extractComponentName(interaction.customId);
     return buttonName in dmButtonMethodMap;
 }
 
@@ -161,13 +163,13 @@ async function processBuiltInButton(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     // For now, if queueName is absent, then it is not a queue button
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
-    const buttonType = yabobButtonId.type;
+    const [buttonType, buttonName, , channelId] = decompressComponentId(
+        interaction.customId
+    );
     const server = isServerInteraction(interaction);
     const queueName =
         (await server.getQueueChannels()).find(
-            queueChannel => queueChannel.channelObj.id === yabobButtonId.cid
+            queueChannel => queueChannel.channelObj.id === channelId
         )?.queueName ?? '';
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     logButtonPress(interaction, buttonName, queueName);
@@ -219,9 +221,7 @@ async function processBuiltInButton(
  * @param interaction
  */
 async function processBuiltInDMButton(interaction: ButtonInteraction): Promise<void> {
-    const yabobButtonId = parseYabobComponentId(interaction.customId);
-    const buttonName = yabobButtonId.name;
-    const dmChannelId = yabobButtonId.cid;
+    const [, buttonName, , dmChannelId] = decompressComponentId(interaction.customId);
     const buttonMethod = dmButtonMethodMap[buttonName];
     const updateParentInteraction = updateParentInteractionButtons.includes(buttonName);
     if (!updateParentInteraction) {
@@ -270,12 +270,10 @@ async function join(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
-        ),
-        server.enqueueStudent(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Join', queueChannel.channelObj)
+    );
+    await server.enqueueStudent(interaction.member, queueChannel);
     return SuccessMessages.joinedQueue(queueName);
 }
 
@@ -293,12 +291,10 @@ async function leave(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        ),
-        server.removeStudentFromQueue(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+    );
+    await server.removeStudentFromQueue(interaction.member, queueChannel);
     return SuccessMessages.leftQueue(queueName);
 }
 
@@ -316,12 +312,10 @@ async function joinNotifGroup(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-        ),
-        server.addStudentToNotifGroup(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
+    );
+    await server.addStudentToNotifGroup(interaction.member, queueChannel);
     return SuccessMessages.joinedNotif(queueName);
 }
 
@@ -339,16 +333,10 @@ async function leaveNotifGroup(
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction, queueName)
     ];
-    await Promise.all([
-        server.sendLogMessage(
-            ButtonLogEmbed(
-                interaction.user,
-                'Remove Notifications',
-                queueChannel.channelObj
-            )
-        ),
-        server.removeStudentFromNotifGroup(interaction.member, queueChannel)
-    ]);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, 'Remove Notifications', queueChannel.channelObj)
+    );
+    await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
     return SuccessMessages.removedNotif(queueName);
 }
 
@@ -364,11 +352,11 @@ async function showSettingsMainMenu(
     server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
-            interaction.component?.label ?? 'Return to Settings Main Menu',
+            interaction.component.label ?? 'Return to Settings Main Menu',
             interaction.channel as TextBasedChannel
         )
     );
-    return serverSettingsMainMenu(server, interaction.channelId, false);
+    return SettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -391,7 +379,7 @@ async function createServerRoles(
         )
     );
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
-    return serverRolesConfigMenu(server, interaction.channelId, false, false);
+    return RolesConfigMenu(server, interaction.channelId, false, false);
 }
 
 /**
@@ -403,11 +391,10 @@ async function createServerRoles(
  */
 async function createServerRolesDM(
     forceCreate: boolean,
-    defaultStudentIsEveryone: boolean,
+    everyoneIsStudent: boolean,
     interaction: ButtonInteraction
 ): Promise<YabobEmbed> {
     const server = isValidDMInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     server.sendLogMessage(
         ButtonLogEmbed(
             interaction.user,
@@ -415,7 +402,9 @@ async function createServerRolesDM(
             interaction.channel as TextBasedChannel
         )
     );
-    return serverRolesConfigMenu(server, interaction.channelId, true, false);
+    await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
+    console.log(server.hierarchyRoleIds);
+    return RolesConfigMenu(server, interaction.channelId, true, false);
 }
 
 /**
@@ -453,7 +442,7 @@ async function disableAfterSessionMessage(
             interaction.channel as TextBasedChannel
         )
     );
-    return afterSessionMessageConfigMenu(server, interaction.channelId, false);
+    return AfterSessionMessageConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -490,7 +479,7 @@ async function disableQueueAutoClear(
             interaction.channel as TextBasedChannel
         )
     );
-    return queueAutoClearConfigMenu(server, interaction.channelId, false);
+    return QueueAutoClearConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -503,7 +492,7 @@ async function disableLoggingChannel(
     const server = isServerInteraction(interaction);
     // No logging call here since we're disabling the logging channel
     await server.setLoggingChannel(undefined);
-    return loggingChannelConfigMenu(server, interaction.channelId, false);
+    return LoggingChannelConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -525,7 +514,7 @@ async function toggleAutoGiveStudentRole(
             interaction.channel as TextBasedChannel
         )
     );
-    return autoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
+    return AutoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
 }
 
 /**

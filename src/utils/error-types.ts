@@ -5,6 +5,7 @@
  * - This error should be triggered before any server related methods are called
  */
 class CommandParseError extends Error {
+    readonly type = 'CommandParseError' as const;
     constructor(message: string) {
         super(message);
         this.name = 'CommandParseError';
@@ -19,6 +20,7 @@ class CommandParseError extends Error {
  * - This error should be triggered before any queue related methods are called
  */
 class ServerError extends Error {
+    readonly type = 'ServerError' as const;
     constructor(message: string) {
         super(message);
         this.name = 'ExpectedServerError';
@@ -32,6 +34,7 @@ class ServerError extends Error {
  * Describes behavioral errors in a HelpQueue
  */
 class QueueError extends Error {
+    readonly type = 'QueueError' as const;
     constructor(message: string, public queueName: string) {
         super(message);
         this.name = 'ExpectedQueueError';

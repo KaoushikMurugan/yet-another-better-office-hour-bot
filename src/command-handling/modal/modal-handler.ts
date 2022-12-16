@@ -2,19 +2,20 @@
 
 import { ModalSubmitInteraction } from 'discord.js';
 import {
-    afterSessionMessageConfigMenu,
-    queueAutoClearConfigMenu
-} from '../attending-server/server-settings-menus.js';
-import { ErrorEmbed, ErrorLogEmbed } from '../utils/embed-helper.js';
+    AfterSessionMessageConfigMenu,
+    QueueAutoClearConfigMenu
+} from '../../attending-server/server-settings-menus.js';
+import { decompressComponentId } from '../../utils/component-id-factory.js';
+import { ErrorEmbed, ErrorLogEmbed } from '../../utils/embed-helper.js';
 import {
     DMModalSubmitCallback,
     ModalSubmitCallback,
     YabobEmbed
-} from '../utils/type-aliases.js';
-import { logModalSubmit, parseYabobComponentId } from '../utils/util-functions.js';
-import { SuccessMessages } from './builtin-success-messages.js';
-import { isServerInteraction } from './common-validations.js';
-import { ExpectedParseErrors } from './expected-interaction-errors.js';
+} from '../../utils/type-aliases.js';
+import { logModalSubmit } from '../../utils/util-functions.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
+import { isServerInteraction } from '../common-validations.js';
+import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 
 /**
  * Built in handler for modal submit
@@ -57,8 +58,7 @@ const updateParentInteractionModals = [
 function builtInModalHandlerCanHandle(
     interaction: ModalSubmitInteraction<'cached'>
 ): boolean {
-    const modalId = parseYabobComponentId(interaction.customId);
-    const modalName = modalId.name;
+    const modalName = decompressComponentId(interaction.customId)[1];
     return modalName in modalMethodMap;
 }
 
@@ -69,8 +69,7 @@ function builtInModalHandlerCanHandle(
  * @returns
  */
 function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): boolean {
-    const modalId = parseYabobComponentId(interaction.customId);
-    const modalName = modalId.name;
+    const modalName = decompressComponentId(interaction.customId)[1];
     return modalName in dmModalMethodMap;
 }
 
@@ -86,8 +85,7 @@ function builtInDMModalHandlerCanHandle(interaction: ModalSubmitInteraction): bo
 async function processBuiltInModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
-    const modalId = parseYabobComponentId(interaction.customId);
-    const modalName = modalId.name;
+    const modalName = decompressComponentId(interaction.customId)[1];
     const modalMethod = modalMethodMap[modalName];
     logModalSubmit(interaction, modalName);
     // if process is called then modalMethod is definitely not null
@@ -127,8 +125,7 @@ async function processBuiltInModalSubmit(
 async function processBuiltInDMModalSubmit(
     interaction: ModalSubmitInteraction
 ): Promise<void> {
-    const modalId = parseYabobComponentId(interaction.customId);
-    const modalName = modalId.name;
+    const modalName = decompressComponentId(interaction.customId)[1];
     const modalMethod = dmModalMethodMap[modalName];
     // if process is called then modalMethod is definitely not null
     // this is checked in app.ts with `modalHandler.canHandle`
@@ -164,7 +161,7 @@ async function setAfterSessionMessage(
     const message = interaction.fields.getTextInputValue('after_session_msg');
     await server.setAfterSessionMessage(message);
     return useMenu
-        ? afterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
+        ? AfterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
         : SuccessMessages.updatedAfterSessionMessage(message);
 }
 
@@ -188,7 +185,7 @@ async function setQueueAutoClear(
     const enable = !(hours === 0 && minutes === 0);
     await server.setQueueAutoClear(hours, minutes, enable);
     return useMenu
-        ? queueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+        ? QueueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
         : enable
         ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
         : SuccessMessages.queueAutoClear.disabled;

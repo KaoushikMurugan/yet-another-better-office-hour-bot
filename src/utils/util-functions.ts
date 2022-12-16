@@ -15,18 +15,35 @@ import {
     VoiceChannel,
     VoiceState
 } from 'discord.js';
-import { convertBase } from 'simple-base-converter';
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
-import {
-    YabobComponentType,
-    WithRequired,
-    YabobComponentId,
-    YabobButtonId,
-    YabobModalId,
-    YabobSelectMenuId
-} from './type-aliases.js';
+import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
+
+// #region Util Functions
+
+/**
+ * Prints the title message for the console upon startup
+ */
+function printTitleString(): void {
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
+    console.log(`Environment: ${cyan(environment.env)}`);
+    console.log(
+        `\n${black(
+            magenta(
+                ' '.repeat(
+                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                ) +
+                    titleString +
+                    ' '.repeat(
+                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
+                    ),
+                'Bg'
+            )
+        )}\n`
+    );
+    console.log('Scanning servers I am a part of...');
+}
 
 /**
  * Centers a string for the console/terminal by padding it with spaces
@@ -38,6 +55,25 @@ function centered(text: string): string {
         return text;
     }
     return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
+}
+
+/**
+ * Attaches a timestamp before the logging message
+ * @param guildName where the logger was used
+ * @param params anything, same params as regualr console log
+ */
+function logWithTimeStamp(
+    guildName = '',
+    ...params: Parameters<typeof console.log>
+): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ${yellow(guildName)}]\n`,
+        ...params
+    );
 }
 
 /**
@@ -128,8 +164,74 @@ function getInteractionName(interaction: Interaction): string {
     if (interaction.isModalSubmit()) {
         return interaction.customId;
     }
+    if (interaction.isSelectMenu()) {
+        return interaction.component?.placeholder ?? interaction.customId;
+    }
     return 'Unsupported Interaction Type';
 }
+
+/**
+ * A DP implementation that finds the length
+ *  of the longest common subsequence (LCS) between 2 strings
+ * @param str1 string 1
+ * @param str2 string 2
+ * @returns the length of LCS
+ */
+function longestCommonSubsequence(str1: string, str2: string): number {
+    /**
+     * Encodes the recurrence:
+     * LCS(i, j) = {
+     *      0                                   if i == str1.length or j == str2.length
+     *      LCS(i + 1, j + 1)                   if str1[i] == str2[j]
+     *      max(LCS(i + 1, j), LCS(i, j + 1))   if str1[i] != str2[j]
+     * }
+     */
+    try {
+        const M = str1.length;
+        const N = str2.length;
+        const dpTable: number[][] = [];
+        for (let i = 0; i < M + 1; i++) {
+            // must use a loop here,
+            // using array fill on the outer array creates a bunch of inner arrays with the same reference
+            dpTable.push(new Array(N + 1).fill(0));
+        }
+        // base cases
+        for (let j = 0; j < N; j++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            dpTable[M]![j] = 0;
+        }
+        for (let i = 0; i < M; i++) {
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            dpTable[i]![N] = 0;
+        }
+        for (let i = M - 1; i >= 0; i--) {
+            for (let j = N - 1; j >= 0; j--) {
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const skipI = dpTable[i + 1]![j]!;
+                // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                const skipJ = dpTable[i]![j + 1]!;
+                if (str1[i] === str2[j]) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = dpTable[i + 1]![j + 1]! + 1;
+                } else if (skipI > skipJ) {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = skipI;
+                } else {
+                    // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+                    dpTable[i]![j] = skipJ;
+                }
+            }
+        }
+        // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+        return dpTable[0]![0]!;
+    } catch {
+        return -1;
+    }
+}
+
+// #endregion Util Functions
+
+// #region Loggers
 
 /**
  * Default logger for slash commands
@@ -282,6 +384,9 @@ function logDMSelectMenuSelection(
             ` - In DM`
     );
 }
+// #endregion Loggers
+
+// #region Type Guards
 
 /**
  * Narrows the type down to category channel
@@ -335,7 +440,7 @@ function isVoiceChannel(
  * @param channelName
  */
 function isValidChannelName(channelName: string): boolean {
-    const invalidCharacters = /[ `!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
+    const invalidCharacters = /[`!@#$%^&*()+=[\]{};':"\\|,.<>/?~]/;
     return (
         channelName.length <= 100 &&
         channelName.length > 0 &&
@@ -355,155 +460,6 @@ function isValidCategoryName(categoryName: string): boolean {
     );
 }
 
-/**
- * Just a string with all the characters in the custom base211 alphabet
- */
-const base211charecters =
-    'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!#$%&()*+,./:;<=>?@[]^_`{|}~"αβξδεφγηιςκλμνοπθρστυωχψζΞΔΦΓΛΠΘΣΩΨάέήίϊΐόύϋΰώ£¢∞§¶•ªº≠€‹›ﬁﬂ‡°·±œ∑´®†¥¨ˆø“‘åƒ©˙˚¬…æ≈ç√∫≤≥÷Œ„‰ˇÁ∏”’»ÅÍÎÏ˝ÓÔÒÚÆ¸˛Ç◊ı˜Â¯˘¿' as const;
-
-/**
- * Converts a snowflake (base 10) to a base211 string
- * @param snowflake
- */
-function convertSnowflakeToBase211(snowflake: string): string {
-    return convertBase(snowflake, '0123456789', base211charecters);
-}
-
-/**
- * Converts a base211 string to a snowflake (base 10)
- * @param base211string
- */
-function convertBase211ToSnowflake(base211string: string): string {
-    return convertBase(base211string, base211charecters, '0123456789');
-}
-
-/**
- * Generates a YABOB ID
- * @param type 'dm', 'queue' or 'server'
- * @param componentName
- * @param serverId
- * @param channelId
- * @returns
- */
-function generateComponentId<T extends YabobComponentType>(
-    type: T,
-    componentName: string,
-    serverId?: string,
-    channelId?: string
-): YabobComponentId<T> {
-    return {
-        name: componentName,
-        type: type,
-        sid: serverId,
-        cid: channelId
-    } as YabobComponentId<T>;
-}
-
-/**
- * Converts a yabob button id to a string after compressing the snowflakes
- * @param yabobButton the yabob button
- * @param noConvert turns off the compression of the snowflakes
- * @returns
- */
-function serializeComponentId(
-    yabobButton: YabobComponentId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    if (!noConvert) {
-        if (yabobButton.sid !== undefined) {
-            yabobButton.sid = convertSnowflakeToBase211(yabobButton.sid);
-        }
-        if (yabobButton.cid !== undefined) {
-            yabobButton.cid = convertSnowflakeToBase211(yabobButton.cid);
-        }
-    }
-    return JSON.stringify(yabobButton);
-}
-
-/**
- * Converts a button id object to a serialized JSON string
- * @param buttonId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobButtonIdToString(
-    buttonId: YabobButtonId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(buttonId, noConvert);
-}
-
-/**
- * Converts a modal id object to a serialized JSON string
- * @param modalId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobModalIdToString(
-    modalId: YabobModalId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(modalId, noConvert);
-}
-
-/**
- * Converts a select menu id object to a serialized JSON string
- * @param selectMenuId id object
- * @param noConvert whether to convert snowflakes to base 211
- * @returns serialized JSON string
- */
-function yabobSelectMenuIdToString(
-    selectMenuId: YabobSelectMenuId<'dm' | 'other' | 'queue'>,
-    noConvert = false
-): string {
-    return serializeComponentId(selectMenuId, noConvert);
-}
-
-/**
- * Parses a yabob button id and then decompresses the snowflakes back to base 10
- * @param customButtonId the custom button id from interaction.customId
- * @param noConvert turns off the decompression of the snowflakes
- * @returns
- */
-function parseYabobComponentId(
-    customButtonId: string,
-    noConvert = false
-): YabobComponentId<YabobComponentType> {
-    const unwrappedId = JSON.parse(customButtonId) as YabobButtonId<YabobComponentType>;
-    if (!noConvert) {
-        if (unwrappedId.sid) {
-            unwrappedId.sid = convertBase211ToSnowflake(unwrappedId.sid);
-        }
-        if (unwrappedId.cid) {
-            unwrappedId.cid = convertBase211ToSnowflake(unwrappedId.cid);
-        }
-    }
-    return unwrappedId;
-}
-
-/**
- * Prints the title message for the console upon startup
- */
-function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
-    console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(
-        `\n${black(
-            magenta(
-                ' '.repeat(
-                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                ) +
-                    titleString +
-                    ' '.repeat(
-                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                    ),
-                'Bg'
-            )
-        )}\n`
-    );
-    console.log('Scanning servers I am a part of...');
-}
-
 function isLeaveVC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
@@ -518,11 +474,15 @@ function isJoinVC(
     return oldVoiceState.channel === null && newVoiceState.channel !== null;
 }
 
+// #endregion Type Guards
+
 export {
     /** Util Functions */
     addTimeOffset,
     centered,
     printTitleString,
+    logWithTimeStamp,
+    longestCommonSubsequence,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,
@@ -530,21 +490,15 @@ export {
     isQueueTextChannel,
     isTextChannel,
     isVoiceChannel,
+    /** Validators */
     isValidCategoryName,
     isValidChannelName,
-    /** Id builders */
-    generateComponentId,
     /** Getters */
     getQueueRoles,
     getInteractionName,
-    /** Parsers */
-    parseYabobComponentId,
     /** Converters */
     convertMsToShortTime,
     convertMsToTime,
-    yabobButtonIdToString,
-    yabobModalIdToString,
-    yabobSelectMenuIdToString,
     /** Loggers */
     logDMSelectMenuSelection,
     logSlashCommand,

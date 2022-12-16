@@ -1,6 +1,6 @@
 /** @module HelpQueueV2 */
 
-import { GuildMember, Role, TextChannel, User, Collection } from 'discord.js';
+import { GuildMember, Role, TextChannel, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
@@ -58,13 +58,12 @@ class HelpQueueV2 {
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
-        user: User,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ) {
-        this.display = new QueueDisplayV2(user, queueChannel);
+        this.display = new QueueDisplayV2(queueChannel);
         if (backupData === undefined) {
             // if no backup then we are done initializing
             return;
@@ -145,7 +144,6 @@ class HelpQueueV2 {
      */
     static async create(
         queueChannel: QueueChannel,
-        user: User,
         everyoneRole: Role,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
@@ -160,14 +158,8 @@ class HelpQueueV2 {
                       queueChannel
                   )
               ]);
-        const display = new QueueDisplayV2(user, queueChannel);
-        const queue = new HelpQueueV2(
-            queueChannel,
-            queueExtensions,
-            display,
-            user,
-            backupData
-        );
+        const display = new QueueDisplayV2(queueChannel);
+        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(
@@ -188,8 +180,8 @@ class HelpQueueV2 {
         queue.timers.set(
             'QUEUE_PERIODIC_UPDATE',
             setInterval(
-                async () =>
-                    await Promise.all(
+                () =>
+                    Promise.all(
                         queueExtensions.map(extension =>
                             extension.onQueuePeriodicUpdate(queue, false)
                         )
@@ -262,7 +254,7 @@ class HelpQueueV2 {
 
     /**
      * Enqueue a student
-     * @param studentMember the complete Helpee object
+     * @param studentMember member to enqueue
      * @throws QueueError
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
@@ -283,9 +275,7 @@ class HelpQueueV2 {
         this._students.push(student);
         // converted to use Array.map
         const helperIdArray = [...this._activeHelperIds];
-        // unknown explicitly states that we don't need the return types
-        // this is different from any. Any is skipping type checking
-        await Promise.all<unknown>([
+        await Promise.all([
             ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
@@ -361,16 +351,16 @@ class HelpQueueV2 {
 
     /**
      * Remove a student from the queue. Used for /leave
-     * @param targetStudentMember the student to remove
+     * @param targetStudent the student to remove
      * @throws QueueError: the student is not in the queue
      */
-    async removeStudent(targetStudentMember: GuildMember): Promise<Helpee> {
+    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
-            student => student.member.id === targetStudentMember.id
+            student => student.member.id === targetStudent.id
         );
         if (idx === -1) {
             throw ExpectedQueueErrors.studentNotInQueue(
-                targetStudentMember.displayName,
+                targetStudent.displayName,
                 this.queueName
             );
         }
@@ -485,16 +475,16 @@ class HelpQueueV2 {
     async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
         const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
         existingTimerId && clearInterval(existingTimerId);
-        if (!enable) {
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            this.timers.delete('QUEUE_AUTO_CLEAR');
-            await this.triggerRender();
-        } else {
+        if (enable) {
             this._timeUntilAutoClear = {
                 hours: hours,
                 minutes: minutes
             };
             await this.startAutoClearTimer();
+        } else {
+            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this.timers.delete('QUEUE_AUTO_CLEAR');
+            await this.triggerRender();
         }
     }
 

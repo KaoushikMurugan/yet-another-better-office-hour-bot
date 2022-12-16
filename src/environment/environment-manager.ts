@@ -1,3 +1,4 @@
+import { red } from '../utils/command-line-colors.js';
 import development from './development.json' assert { type: 'json' };
 import production from './production.json' assert { type: 'json' };
 
@@ -5,15 +6,15 @@ const configuration = {
     development,
     production
 };
-const possibleEnvironments = ['development', 'production'];
-const env = process.env.NODE_ENV as 'development' | 'production'; // checked
+const possibleEnvironments = ['development', 'production'] as const;
+const env = process.env.NODE_ENV as typeof possibleEnvironments[number]; // checked
 const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
 
 if (env === undefined) {
-    throw new Error('Environment not specified');
+    throw new Error(red('Environment not specified'));
 }
 if (!possibleEnvironments.includes(env)) {
-    throw new Error(`Unknwon environment ${env}`);
+    throw new Error(red(`Unknwon environment '${env}'`));
 }
 
 const environment = { ...configuration[env], env: env, disableExtensions };

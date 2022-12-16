@@ -6,8 +6,8 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { attendingServers } from '../global-states.js';
-import { generateComponentId, yabobModalIdToString } from '../utils/util-functions.js';
+import { attendingServers } from '../../global-states.js';
+import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -19,16 +19,13 @@ import { generateComponentId, yabobModalIdToString } from '../utils/util-functio
  */
 function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
-    const modal = new ModalBuilder()
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Set Queue Auto Clear')
-        .setCustomId(
-            yabobModalIdToString(
-                generateComponentId(
-                    'other',
-                    'queue_auto_clear_modal' + (useMenu ? '_mv' : '')
-                )
-            )
-        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -69,17 +66,14 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: string, menuVersion = false): ModalBuilder {
-    const modal = new ModalBuilder()
+function afterSessionMessageModal(serverId: string, useMenu = false): ModalBuilder {
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'after_session_message_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Set After Session Message')
-        .setCustomId(
-            yabobModalIdToString(
-                generateComponentId(
-                    'other',
-                    'after_session_message_modal' + (menuVersion ? '_mv' : '')
-                )
-            )
-        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()

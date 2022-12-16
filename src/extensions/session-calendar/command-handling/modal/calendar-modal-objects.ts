@@ -5,30 +5,24 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import {
-    generateComponentId,
-    yabobModalIdToString
-} from '../../../utils/util-functions.js';
-import { calendarStates } from '../calendar-states.js';
+import { buildComponent, UnknownId } from '../../../../utils/component-id-factory.js';
+import { calendarStates } from '../../calendar-states.js';
 
 /**
  * Composes the calendar settings modal
  * @param serverId
- * @param menuVersion
+ * @param useMenu
  * @returns
  */
-function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuilder {
+function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder {
     const state = calendarStates.get(serverId);
-    const modal = new ModalBuilder()
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        'calendar_settings_modal' + (useMenu ? '_mv' : ''),
+        serverId,
+        UnknownId
+    ])
         .setTitle('Calendar Settings')
-        .setCustomId(
-            yabobModalIdToString(
-                generateComponentId(
-                    'other',
-                    'calendar_settings_modal' + (menuVersion ? '_mv' : '')
-                )
-            )
-        )
         .setComponents(
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
@@ -44,7 +38,7 @@ function calendarSettingsModal(serverId: string, menuVersion = false): ModalBuil
                     .setCustomId('public_embed_url')
                     .setLabel('Public Embed URL')
                     .setPlaceholder(
-                        'Enter calendar embed url, leave blank to default to google calendar'
+                        'Enter calendar embed url, leave blank to use the default google calendar embed.'
                     )
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false)

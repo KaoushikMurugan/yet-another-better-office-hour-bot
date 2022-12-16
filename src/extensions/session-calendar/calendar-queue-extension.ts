@@ -13,10 +13,7 @@ import {
     UpComingSessionViewModel
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
-import {
-    generateComponentId,
-    yabobButtonIdToString
-} from '../../utils/util-functions.js';
+import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
 
 /**
  * Calendar Extension for individual queues
@@ -96,7 +93,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
     /**
      * Event listener/subscriber for changes in calendarExtensionStates
      */
-    async onCalendarExtensionStateChange(): Promise<void> {
+    async onCalendarStateChange(): Promise<void> {
         await this.renderCalendarEmbeds(true);
     }
 
@@ -121,11 +118,6 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             : this.upcomingSessions;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
-            .setURL(
-                state.publicCalendarEmbedUrl.length > 0
-                    ? state.publicCalendarEmbedUrl
-                    : restorePublicEmbedURL(state.calendarId ?? '')
-            )
             .setDescription(
                 composeUpcomingSessionsEmbedBody(
                     this.upcomingSessions,
@@ -135,26 +127,28 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
             )
             .setColor(EmbedColor.Blue)
             .setFooter({
-                text:
-                    'This embed shows up to 5 most recent sessions and auto refreshes every hour. ' +
-                    'Click the title to see the full calendar.',
+                text: 'This embed shows up to 5 most recent sessions and auto refreshes every hour. ',
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
         const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
-                .setCustomId(
-                    yabobButtonIdToString(
-                        generateComponentId(
-                            'queue',
-                            'refresh',
-                            undefined,
-                            this.queueChannel.channelObj.id
-                        )
-                    )
+                .setURL(
+                    state.publicCalendarEmbedUrl.length > 0
+                        ? state.publicCalendarEmbedUrl
+                        : restorePublicEmbedURL(state.calendarId)
                 )
+                .setEmoji('📅')
+                .setLabel('Full Calendar')
+                .setStyle(ButtonStyle.Link), // this method is required
+            buildComponent(new ButtonBuilder(), [
+                'queue',
+                'refresh',
+                UnknownId,
+                this.queueChannel.channelObj.id
+            ])
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')
-                .setStyle(ButtonStyle.Primary)
+                .setStyle(ButtonStyle.Secondary)
         );
         this.display?.requestNonQueueEmbedRender(
             {

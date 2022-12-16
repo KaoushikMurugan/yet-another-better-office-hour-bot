@@ -6,7 +6,8 @@ import {
     ButtonInteraction,
     ModalSubmitInteraction,
     PermissionsBitField,
-    SelectMenuInteraction
+    SelectMenuInteraction,
+    Interaction
 } from 'discord.js';
 import {
     AttendingServerV2,
@@ -15,12 +16,13 @@ import {
 import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { attendingServers } from '../global-states.js';
+import { decompressComponentId } from '../utils/component-id-factory.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
     isCategoryChannel,
     isQueueTextChannel,
-    isTextChannel,
-    parseYabobComponentId
+    isTextChannel
+    // parseYabobComponentId
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 
@@ -51,13 +53,13 @@ function isServerInteraction(
 function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction
 ): AttendingServerV2 {
-    const yabobId = parseYabobComponentId(interaction.customId);
-    if (!yabobId || yabobId.type !== 'dm' || yabobId.sid === undefined) {
+    const [type, , serverId] = decompressComponentId(interaction.customId);
+    if (type !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
-    const server = attendingServers.get(yabobId.sid);
+    const server = attendingServers.get(serverId);
     if (!server) {
-        throw ExpectedParseErrors.nonServerInterction(yabobId.sid);
+        throw ExpectedParseErrors.nonServerInterction(serverId);
     }
     return server;
 }
@@ -96,6 +98,7 @@ function isTriggeredByMemberWithRoles(
 
     if (!hasARequiredRole) {
         if (missingRoles.length > 0) {
+            // TODO: show warning here, rn this case is never reached
             throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
         }
         throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
@@ -143,10 +146,7 @@ function hasValidQueueArgument(
  * @returns GuildMember object of the triggerer
  */
 function isTriggeredByUserWithValidEmail(
-    interaction:
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>,
+    interaction: Interaction<'cached'>,
     commandName: string
 ): GuildMember {
     if (!interaction.member.roles.cache.some(role => role.name === 'Verified Email')) {
