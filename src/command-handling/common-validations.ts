@@ -80,29 +80,19 @@ function isTriggeredByMemberWithRoles(
     commandName: string,
     lowestRequiredRole: keyof HierarchyRoles
 ): GuildMember {
-    if (member === null) {
-        throw ExpectedParseErrors.nonServerInterction();
-    }
-    // If member is a server admin, skip role check
-    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
-        return member;
-    }
-    const userRoleIDs = member.roles.cache.map(role => role.id);
-    let hasARequiredRole = false;
-    const missingRoles: string[] = [];
-    for (const role of server.sortedHierarchyRoles) {
-        hasARequiredRole = userRoleIDs.includes(role.id);
-        // If reached the lowest required role, stop checking
-        if (role.id === server.hierarchyRoleIds[lowestRequiredRole] || hasARequiredRole) {
-            break;
-        }
-    }
-    if (!hasARequiredRole) {
-        if (missingRoles.length > 0) {
-            // TODO: show warning here, rn this case is never reached
-            throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
-        }
-        throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
+    const memberRoleIds = member.roles.cache.map(role => role.id);
+    const hasLowestRequiredRoleOrAdmin =
+        member.permissions.has(PermissionsBitField.Flags.Administrator) ||
+        // this loop won't be run unless the LHS is false
+        memberRoleIds.some(
+            memberRoleId => memberRoleId === server.hierarchyRoleIds[lowestRequiredRole]
+        );
+    if (!hasLowestRequiredRoleOrAdmin) {
+        throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
+            server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])
+                ?.name,
+            commandName
+        );
     }
     return member;
 }

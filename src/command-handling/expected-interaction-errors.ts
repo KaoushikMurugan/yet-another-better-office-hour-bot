@@ -1,6 +1,6 @@
 /** @module ExpectedErrors */
 
-import { Interaction } from 'discord.js';
+import { Interaction, Snowflake } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { Optional } from '../utils/type-aliases.js';
@@ -8,11 +8,18 @@ import { getInteractionName } from '../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (
-        lowestRequiredRoleID: string,
+        lowestRequiredRoleID: Snowflake,
         commandName: string
     ): CommandParseError =>
         new CommandParseError(
             `You need to have the role <@&${lowestRequiredRoleID}> or higher to use the \`${commandName}\` command.`
+        ),
+    missingHierarchyRolesNameVariant: (
+        lowestRequiredRoleName: Optional<string>,
+        commandName: string
+    ): CommandParseError =>
+        new CommandParseError(
+            `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command.`
         ),
     invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
