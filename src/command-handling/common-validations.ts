@@ -6,14 +6,12 @@ import {
     ButtonInteraction,
     ModalSubmitInteraction,
     PermissionsBitField,
-    SelectMenuInteraction,
     Interaction
 } from 'discord.js';
 import {
     AttendingServerV2,
     QueueChannel
 } from '../attending-server/base-attending-server.js';
-import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { attendingServers } from '../global-states.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
@@ -32,13 +30,7 @@ import { HierarchyRoles } from '../models/hierarchy-roles.js';
  * - Extensions that wish to do additional checks can use this as a base
  * @returns the {@link AttendingServerV2} object
  */
-function isServerInteraction(
-    interaction:
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>
-        | SelectMenuInteraction<'cached'>
-): AttendingServerV2 {
+function isServerInteraction(interaction: Interaction<'cached'>): AttendingServerV2 {
     const server = attendingServers.get(interaction.guild.id);
     if (!server) {
         throw ExpectedParseErrors.nonServerInterction(interaction.guild.name);
@@ -83,7 +75,7 @@ function isTriggeredByMemberWithRoles(
     const memberRoleIds = member.roles.cache.map(role => role.id);
     const hasLowestRequiredRoleOrAdmin =
         member.permissions.has(PermissionsBitField.Flags.Administrator) ||
-        // this loop won't be run unless the LHS is false
+        // this loop won't run unless the LHS is false
         memberRoleIds.some(
             memberRoleId => memberRoleId === server.hierarchyRoleIds[lowestRequiredRole]
         );
