@@ -1,7 +1,7 @@
 import { ChatInputCommandInteraction, Guild, User } from 'discord.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { isServerInteraction } from '../../command-handling/common-validations.js';
-import { CommandData } from '../../command-handling/slash-commands.js';
+import { CommandData } from '../../command-handling/command/slash-commands.js';
 import { environment } from '../../environment/environment-manager.js';
 import { red } from '../../utils/command-line-colors.js';
 import {

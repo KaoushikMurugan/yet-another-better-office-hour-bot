@@ -20,6 +20,7 @@ import {
 } from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
+import { GoogleSheetInteractionExtension } from './extensions/google-sheet-logging/google-sheet-command-extension.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
