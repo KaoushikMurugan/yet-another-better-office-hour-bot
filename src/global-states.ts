@@ -1,7 +1,7 @@
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { GuildId } from './utils/type-aliases.js';
 import { environment } from './environment/environment-manager.js';
-import { Collection, Client, GatewayIntentBits } from 'discord.js';
+import { Collection, Client, GatewayIntentBits, Options } from 'discord.js';
 import { yellow, black, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
@@ -36,7 +36,7 @@ const firebaseDB: Firestore = getFirestore();
 
 /**
  * The discord user object.
- * @remarks Top level await finally works with esmodules,
+ * @remarks Top level await finally works with esmodules
  * - The `true` type parameter asserts that the client has successfully initialized
  * - Asserted because this file handles discord login.
  *  If this object is exported,
@@ -51,7 +51,19 @@ const client: Client<true> = new Client({
         GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.DirectMessages
-    ]
+    ],
+    // modifies default caching behavior
+    makeCache: Options.cacheWithLimits({
+        ...Options.DefaultMakeCacheSettings,
+        ReactionManager: 0,
+        GuildBanManager: 0,
+        GuildScheduledEventManager: 0,
+        MessageManager: {
+            maxSize: 5, // arbitrary, keep 5 messages max in each channel
+            // never clear YABOB messages
+            keepOverLimit: msg => msg.author.id === client.user.id
+        }
+    })
 });
 
 /**
@@ -61,9 +73,7 @@ const client: Client<true> = new Client({
  */
 const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
 
-/**
- * Login before export
- */
+/** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
     .then(() => console.log(`\nLogged in as ${yellow(client.user.username)}!`))

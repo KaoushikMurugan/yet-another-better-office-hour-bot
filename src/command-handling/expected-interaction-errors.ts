@@ -77,6 +77,10 @@ only contains alphanumeric characters, hyphens, and underscores.`
         new CommandParseError(
             `${categoryName} is an invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
 includes atleast one non-whitespace character.`
+        ),
+    nonExistentTextChannel: (channelId: string | undefined) =>
+        new CommandParseError(
+            `The channel with id ${channelId} does not exist on this server.`
         )
 } as const;
 

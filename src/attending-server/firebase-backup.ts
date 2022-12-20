@@ -4,12 +4,13 @@ import {
     IServerExtension
 } from '../extensions/extension-interface.js';
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
-import { blue, cyan, yellow } from '../utils/command-line-colors.js';
+import { blue } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
+import { logWithTimeStamp } from '../utils/util-functions.js';
 
 /**
  * Built in backup extension
@@ -56,7 +57,8 @@ class FirebaseServerBackupExtension
                     }))
                     .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
             })),
-            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000)
+            timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
+            autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false
         };
         return backupData;
     }
@@ -103,14 +105,9 @@ class FirebaseServerBackupExtension
             .doc(this.guild.id)
             .set(serverBackup)
             .then(() =>
-                console.log(
-                    `[${cyan(
-                        new Date().toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        })
-                    )} ` +
-                        `${yellow(this.guild.name)}]\n` +
-                        ` - Server & queue data backup successful`
+                logWithTimeStamp(
+                    this.guild.name,
+                    '- Server & queue data backup successful'
                 )
             )
             .catch((err: Error) =>

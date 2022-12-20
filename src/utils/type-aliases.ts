@@ -41,11 +41,20 @@ type ConstNoMethod<T> = Readonly<NoMethod<T>>;
 /**
  * Non exception based error types
  */
-type Result<T, E = Error> = { ok: true; value: T } | { ok: false; error: E };
+type Result<T, E extends Error = Error> =
+    | { ok: true; value: T }
+    | { ok: false; error: E };
 
 type ServerResult<T> = Result<T, ServerError>;
 
 type QueueResult<T> = Result<T, QueueError>;
+
+const Ok = <T>(val: T): { ok: true; value: T } => ({ ok: true, value: val });
+
+const Err = <E extends Error>(err: E): { ok: false; error: E } => ({
+    ok: false,
+    error: err
+});
 
 // These are just aliases to make keys of collections easier to read
 
@@ -55,6 +64,8 @@ type GuildId = Snowflake;
 type GuildMemberId = Snowflake;
 /** string */
 type CategoryChannelId = Snowflake;
+/** str */
+type TextBasedChannelId = Snowflake;
 /** string */
 type MessageId = Snowflake;
 /** number */
@@ -135,7 +146,7 @@ type YabobEmbed = BaseMessageOptions;
  * 'queue' - component is in a queue channel
  * 'other' - component is in a non-queue guild channel
  */
-type YabobComponentType = 'dm' | 'queue' | 'other';
+type ComponentLocation = 'dm' | 'queue' | 'other';
 /**
  * Actionable Component id format
  * Max length must be 100
@@ -149,7 +160,7 @@ type YabobComponentType = 'dm' | 'queue' | 'other';
  *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
  * }
  */
-type YabobComponentId<T extends YabobComponentType> = {
+type YabobComponentId<T extends ComponentLocation> = {
     /** name of the button */
     name: string;
     /** type of button, either 'dm', 'queue', or 'other' */
@@ -163,19 +174,24 @@ type YabobComponentId<T extends YabobComponentType> = {
 // type alias for better readability
 
 /** Yabob Button id format */
-type YabobButtonId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobButtonId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /** Yabob Modal id format */
-type YabobModalId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobModalId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /** Yabob Select Menu id format */
-type YabobSelectMenuId<T extends YabobComponentType> = YabobComponentId<T>;
+type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /**
  * Represents an optional role id that YABOB keeps track of
  * - Be **very careful** with this type, it's just an alias for a string
  */
-type OptionalRoleId = Snowflake | 'Not Set' | 'Deleted';
+type OptionalRoleId = Snowflake | SpecialRoleValues;
+
+enum SpecialRoleValues {
+    NotSet = 'Not Set',
+    Deleted = 'Deleted'
+}
 
 /** type to couple the entires of an object with the key value types */
 type Entries<T> = {
@@ -187,9 +203,12 @@ export {
     WithRequired,
     Optional,
     OptionalRoleId,
+    SpecialRoleValues,
     NoMethod,
     ConstNoMethod,
     Result,
+    Ok, // these 2 arrow functions comes withe the Result<T,E> types so they are placed here
+    Err,
     ServerResult,
     QueueResult,
     HelpMessage,
@@ -200,6 +219,7 @@ export {
     CategoryChannelId,
     MessageId,
     RenderIndex,
+    TextBasedChannelId,
     /** Callback Types */
     CommandCallback,
     DefaultButtonCallback,
@@ -212,7 +232,7 @@ export {
     SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,
-    YabobComponentType,
+    ComponentLocation,
     YabobComponentId,
     YabobButtonId,
     YabobModalId,

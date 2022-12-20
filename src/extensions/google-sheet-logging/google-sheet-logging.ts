@@ -3,12 +3,13 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, cyan, red, yellow } from '../../utils/command-line-colors.js';
+import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildId, GuildMemberId, Optional } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
+import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
@@ -96,14 +97,14 @@ class GoogleSheetLoggingExtension
         await googleSheet.loadInfo().catch(() => {
             throw new ExtensionSetupError(
                 red(
-                    `Failed to load google sheet for ${guild.name}. ` +
+                    `Failed to load google sheet for ${yellow(guild.name)}. ` +
                         `Google sheets rejected our connection.`
                 )
             );
         });
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${guild.name}'!\n` +
+                `successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
         const newExt = new GoogleSheetLoggingExtension(guild, googleSheet);
@@ -291,32 +292,27 @@ class GoogleSheetLoggingExtension
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
-                this.attendanceEntries.map(entry => {
-                    return {
-                        'Helper Username': entry.member.user.username,
-                        'Time In': entry.helpStart.toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        }),
-                        'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                            timeZone: 'PST8PDT'
-                        }),
-                        'Helped Students': JSON.stringify(
-                            entry.helpedMembers.map(
-                                student =>
-                                    new Object({
-                                        displayName: student.member.displayName,
-                                        username: student.member.user.username,
-                                        id: student.member.id
-                                    })
-                            )
-                        ),
-                        'Discord ID': entry.member.id,
-                        'Session Time (ms)':
-                            entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                        'Active Time (ms)': entry.activeTimeMs,
-                        'Number of Students Helped': entry.helpedMembers.length
-                    };
-                }),
+                this.attendanceEntries.map(entry => ({
+                    'Helper Username': entry.member.user.username,
+                    'Time In': entry.helpStart.toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    }),
+                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
+                        timeZone: 'PST8PDT'
+                    }),
+                    'Helped Students': JSON.stringify(
+                        entry.helpedMembers.map(student => ({
+                            displayName: student.member.displayName,
+                            username: student.member.user.username,
+                            id: student.member.id
+                        }))
+                    ),
+                    'Discord ID': entry.member.id,
+                    'Session Time (ms)':
+                        entry.helpEnd.getTime() - entry.helpStart.getTime(),
+                    'Active Time (ms)': entry.activeTimeMs,
+                    'Number of Students Helped': entry.helpedMembers.length
+                })),
                 {
                     raw: true,
                     insert: true
@@ -325,12 +321,9 @@ class GoogleSheetLoggingExtension
             attendanceSheet.loadHeaderRow()
         ])
             .then(() => {
-                console.log(
-                    `[${cyan(new Date().toLocaleString())} ${yellow(
-                        this.guild.name
-                    )}]\n - Successfully updated ${
-                        this.attendanceEntries.length
-                    } attendance entries.`
+                logWithTimeStamp(
+                    this.guild.name,
+                    `- Successfully updated ${updatedCountSnapshot} attendance entries.`
                 );
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated
@@ -389,10 +382,12 @@ class GoogleSheetLoggingExtension
                 entries.map(entry =>
                     Object.fromEntries([
                         ...requiredHeaders.map(header =>
-                            entry[header] instanceof Date
+                            header === 'Session End' ||
+                            header === 'Session Start' ||
+                            header === 'Wait Start'
                                 ? [
                                       header,
-                                      (entry[header] as Date).toLocaleString('en-US', {
+                                      entry[header].toLocaleString('en-US', {
                                           timeZone: 'PST8PDT'
                                       })
                                   ]

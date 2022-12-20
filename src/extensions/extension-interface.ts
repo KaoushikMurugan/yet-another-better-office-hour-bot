@@ -14,15 +14,13 @@ import {
     GuildMember,
     VoiceChannel,
     ModalSubmitInteraction,
-    CacheType,
     SelectMenuInteraction
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
-import { CommandData } from '../command-handling/slash-commands.js';
+import { CommandData } from '../command-handling/command/slash-commands.js';
 import { Optional } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
 
@@ -249,7 +247,7 @@ interface IQueueExtension {
      */
     onQueueRender: (
         queue: FrozenQueue,
-        display: Readonly<QueueDisplayV2>
+        display: FrozenDisplay
     ) => Promise<void>;
     /**
      * Called every hour

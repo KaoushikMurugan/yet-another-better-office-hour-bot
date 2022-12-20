@@ -1,18 +1,10 @@
-import {
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    SelectMenuComponentOptionData
-} from 'discord.js';
-import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
-import { SettingsMenuCallback, YabobEmbed } from '../../../utils/type-aliases.js';
-import {
-    generateComponentId,
-    yabobButtonIdToString
-} from '../../../utils/util-functions.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { EmbedColor } from '../../../utils/embed-helper.js';
+import { YabobEmbed } from '../../../utils/type-aliases.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { calendarStates } from '../calendar-states.js';
 import {
-    composeReturnToMainMenuButton,
+    mainMenuRow,
     serverSettingsMainMenuOptions
 } from '../../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
@@ -22,10 +14,7 @@ import { FrozenServer } from '../../extension-utils.js';
  * Options for the server settings main menu
  * @see {@link serverSettingsMainMenuOptions}
  */
-const calendarSettingsMainMenuOptions: {
-    optionObj: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
-}[] = [
+const calendarSettingsMainMenuOptions = [
     {
         optionObj: {
             emoji: '🗓',
@@ -35,15 +24,9 @@ const calendarSettingsMainMenuOptions: {
         },
         subMenu: calendarSettingsConfigMenu
     }
-];
+] as const;
 
-/**
- * Compose the calendar settings settings menu
- * @param server
- * @param channelId
- * @param isDm
- * @returns
- */
+/** Compose the calendar settings settings menu */
 function calendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
@@ -53,54 +36,48 @@ function calendarSettingsConfigMenu(
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
-
-    const embed = SimpleEmbed(
-        `🗓 Calendar Configuration for ${server.guild.name} 🗓`,
-        EmbedColor.Aqua,
-        `**\nOffice Hours Calendar:** ${restorePublicEmbedURL(state.calendarId)}\n\n` +
-            `*This is the calendar that the server refers to for office hours events*` +
-            `\n\n` +
-            `**Office Hours Calendar Embed URL:** ${state.publicCalendarEmbedUrl}\n\n` +
-            `*This is the url that will be linked in the upcoming hours embed.*\n\n` +
-            `***Select an option from below to change the configuration:***\n\n` +
-            `**Note:** If you change the calendar, the embed url will be reset to the default embed url for the new calendar.\n\n` +
-            `**🗓** - Change the Calendar Config\n` +
-            `**🔗** - Set the Calendar and Embed URL back to the default\n`
-    );
-
-    function composeCSCMButtonId(optionNumber: string): string {
-        const newYabobButton = generateComponentId(
-            isDm ? 'dm' : 'other',
-            `calendar_settings_config_menui_${optionNumber}`,
-            isDm ? server.guild.id : undefined,
-            isDm ? channelId : undefined
-        );
-        return yabobButtonIdToString(newYabobButton);
-    }
-
-    const buttons = new ActionRowBuilder<ButtonBuilder>()
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeCSCMButtonId('1'))
-                .setEmoji('🗓')
-                .setLabel('Change Calendar Settings')
-                .setStyle(ButtonStyle.Secondary)
+    const embed = new EmbedBuilder()
+        .setTitle(`🗓 Calendar Configuration for ${server.guild.name} 🗓`)
+        .setColor(EmbedColor.Aqua)
+        .setDescription(
+            'This is the calendar that this server refers to for office hours events'
         )
-        .addComponents(
-            new ButtonBuilder()
-                .setCustomId(composeCSCMButtonId('2'))
-                .setEmoji('🔗')
-                .setLabel('Set to Default Calendar Settings')
-                .setStyle(ButtonStyle.Secondary)
-        );
-
-    const returnToMainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        composeReturnToMainMenuButton()
+        .setFields(
+            {
+                name: 'Office Hours Calendar',
+                value: `[Google Calendar](${restorePublicEmbedURL(state.calendarId)})`
+            },
+            {
+                name: 'Office Hours Calendar Embed URL',
+                value: `[Embed Override](${state.publicCalendarEmbedUrl})`
+            }
+        )
+        .setFooter({
+            text: 'Note: If you change the calendar, the embed url will be reset to the default embed url for the new calendar.'
+        });
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'calendar_settings_config_menui_1',
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🗓')
+            .setLabel('Change Calendar Settings')
+            .setStyle(ButtonStyle.Secondary),
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            'calendar_settings_config_menui_2',
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔗')
+            .setLabel('Reset Calendar Settings')
+            .setStyle(ButtonStyle.Secondary)
     );
-
     return {
-        embeds: embed.embeds,
-        components: [buttons, returnToMainMenuRow]
+        embeds: [embed],
+        components: [buttons, mainMenuRow]
     };
 }
 

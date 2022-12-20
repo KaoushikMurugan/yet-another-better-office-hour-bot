@@ -20,34 +20,34 @@ import {
     ErrorEmbed,
     SlashCommandLogEmbed,
     ErrorLogEmbed
-} from '../utils/embed-helper.js';
-import { CommandParseError } from '../utils/error-types.js';
+} from '../../utils/embed-helper.js';
+import { CommandParseError } from '../../utils/error-types.js';
 import {
     hasValidQueueArgument,
     isServerInteraction,
     isTriggeredByMemberWithRoles
-} from './common-validations.js';
+} from '../common-validations.js';
 import {
     convertMsToShortTime,
     isTextChannel,
     isValidCategoryName,
     isValidChannelName,
     logSlashCommand
-} from '../utils/util-functions.js';
+} from '../../utils/util-functions.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandCallback, YabobEmbed } from '../utils/type-aliases.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import { afterSessionMessageModal, queueAutoClearModal } from './modal-objects.js';
-import { ExpectedParseErrors } from './expected-interaction-errors.js';
-import { SuccessMessages } from './builtin-success-messages.js';
-import { serverSettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import { CommandCallback, YabobEmbed } from '../../utils/type-aliases.js';
+import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
+import { afterSessionMessageModal, queueAutoClearModal } from '../modal/modal-objects.js';
+import { ExpectedParseErrors } from '../expected-interaction-errors.js';
+import { SuccessMessages } from '../builtin-success-messages.js';
+import { SettingsMainMenu } from '../../attending-server/server-settings-menus.js';
 import {
     createOfficeVoiceChannels,
     updateCommandHelpChannels
-} from '../attending-server/guild-actions.js';
+} from '../../attending-server/guild-actions.js';
 
 /**
  * The map of available commands
@@ -168,7 +168,7 @@ async function queue(
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
             if (!isValidChannelName(queueName)) {
-                throw ExpectedParseErrors.invalidChannelName;
+                throw ExpectedParseErrors.invalidChannelName(queueName);
             }
             await server.createQueue(queueName);
             return SuccessMessages.createdQueue(queueName);
@@ -634,15 +634,15 @@ async function setRoles(
     const role = interaction.options.getRole('role', true);
     switch (roleType) {
         case 'bot_admin': {
-            await server.setBotAdminRoleID(role.id);
+            await server.setHierarchyRoleId('botAdmin', role.id);
             return SuccessMessages.setBotAdminRole(role.id);
         }
         case 'helper': {
-            await server.setHelperRoleID(role.id);
+            await server.setHierarchyRoleId('staff', role.id);
             return SuccessMessages.setHelperRole(role.id);
         }
         case 'student': {
-            await server.setStudentRoleID(role.id);
+            await server.setHierarchyRoleId('student', role.id);
             return SuccessMessages.setStudentRole(role.id);
         }
         default: {
@@ -668,7 +668,7 @@ async function settingsMenu(
         'setup_server_config',
         'Bot Admin'
     );
-    return serverSettingsMainMenu(server, interaction.channelId, false);
+    return SettingsMainMenu(server, interaction.channelId, false);
 }
 
 /**
