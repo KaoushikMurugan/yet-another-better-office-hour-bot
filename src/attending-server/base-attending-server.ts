@@ -151,7 +151,7 @@ class AttendingServerV2 {
     }> {
         return Object.entries(this.hierarchyRoleIds).map(([name, id]) => ({
             key: name as keyof HierarchyRoles, // guaranteed to be the key
-            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].name,
+            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
             id: id
         }));
     }

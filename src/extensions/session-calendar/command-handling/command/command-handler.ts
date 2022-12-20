@@ -46,7 +46,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
 
 function canHandleCalendarCommand(
     this: CalendarInteractionExtension,
-    interaction: ChatInputCommandInteraction): boolean {
+    interaction: ChatInputCommandInteraction
+): boolean {
     return interaction.commandName in commandMethodMap;
 }
 
@@ -111,7 +112,7 @@ async function unsetCalendarId(
         server,
         interaction.member,
         'unset_calendar',
-        'Bot Admin'
+        'botAdmin'
     );
     await state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
@@ -154,7 +155,7 @@ async function makeParsableCalendarTitle(
         server,
         interaction.member,
         'make_calendar_string',
-        'Staff'
+        'staff'
     );
     const calendarDisplayName = interaction.options.getString('calendar_name', true);
     const userOption = interaction.options.getUser('user', false);
@@ -223,7 +224,7 @@ async function setPublicEmbedUrl(
     const [server, state] = isServerCalendarInteraction(interaction);
     const rawUrl = interaction.options.getString('url', true);
     const enable = interaction.options.getBoolean('enable', true);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', 'Bot Admin');
+    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', 'botAdmin');
     if (enable) {
         try {
             new URL(rawUrl); // call this constructor to check if URL is valid

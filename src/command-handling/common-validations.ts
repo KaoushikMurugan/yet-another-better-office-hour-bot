@@ -25,6 +25,7 @@ import {
     // parseYabobComponentId
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
+import { HierarchyRoles } from '../models/hierarchy-roles.js';
 
 /**
  * Checks if the command came from a server with correctly initialized YABOB
@@ -75,27 +76,27 @@ function isValidDMInteraction(
  */
 function isTriggeredByMemberWithRoles(
     server: FrozenServer,
-    member: GuildMember | null,
+    member: GuildMember,
     commandName: string,
-    lowestRequiredRole: string
+    lowestRequiredRole: keyof HierarchyRoles
 ): GuildMember {
     if (member === null) {
         throw ExpectedParseErrors.nonServerInterction();
     }
-
     // If member is a server admin, skip role check
-    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) return member;
-
+    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return member;
+    }
     const userRoleIDs = member.roles.cache.map(role => role.id);
     let hasARequiredRole = false;
     const missingRoles: string[] = [];
-
     for (const role of server.sortedHierarchyRoles) {
         hasARequiredRole = userRoleIDs.includes(role.id);
         // If reached the lowest required role, stop checking
-        if (role.id === lowestRequiredRole || hasARequiredRole) break;
+        if (role.id === server.hierarchyRoleIds[lowestRequiredRole] || hasARequiredRole) {
+            break;
+        }
     }
-
     if (!hasARequiredRole) {
         if (missingRoles.length > 0) {
             // TODO: show warning here, rn this case is never reached
@@ -103,7 +104,7 @@ function isTriggeredByMemberWithRoles(
         }
         throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
     }
-    return member as GuildMember;
+    return member;
 }
 
 /**
