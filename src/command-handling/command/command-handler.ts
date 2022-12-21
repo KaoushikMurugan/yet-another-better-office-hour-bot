@@ -615,7 +615,7 @@ async function createOffices(
     }
     await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
         server.botAdminRoleID,
-        server.helperRoleID
+        server.staffRoleID
     ]);
     return SuccessMessages.createdOffices(numOffices);
 }

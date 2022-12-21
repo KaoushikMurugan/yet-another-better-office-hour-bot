@@ -15,65 +15,38 @@ type QueueBackup = {
             memberId: string;
         }
     >;
-    /**
-     * Queue name
-     */
+    /** Queue name */
     name: string;
-    /**
-     * The channel id of the category that this queue belongs to
-     */
+    /** The channel id of the category that this queue belongs to */
     parentCategoryId: string;
 };
 
-/** Represent the data of 1 AttendingServer */
+/** Represents the data of 1 AttendingServer */
 type ServerBackup = {
-    /**
-     * Discord server name
-     */
+    /** Discord server name */
     serverName: string;
-    /**
-     * When the backup started
-     */
+    /** When the backup started */
     timeStamp: Date;
-    /**
-     * List of queue backups
-     */
+    /** List of queue backups */
     queues: QueueBackup[];
-    /**
-     * After session message from `/set_after_session_msg`
-     */
+    /** After session message from `/set_after_session_msg` */
     afterSessionMessage: string;
     /**
-     * Channel id of the text channel to send logs. Empty if logging is disabled
+     * Channel id of the text channel to send logs.
+     * Empty if logging is disabled
      */
     loggingChannelId: string;
-    /**
-     * Auto clear timeout from `/set_queue_auto_clear`
-     */
+    /** Auto clear timeout from `/set_queue_auto_clear` */
     hoursUntilAutoClear: AutoClearTimeout;
-    /**
-     * Seriousness of the server
-     */
+    /** Seriousness of the server */
     seriousServer: boolean;
-
-    /**
-     * The role id of the Bot Admin role
-     */
+    /** The role id of the Bot Admin role */
     botAdminRoleId: string;
-
-    /**
-     * The role id of the Helper role
-     */
-    helperRoleId: string;
-
-    /**
-     * The role id of the Student role
-     */
+    /** The role id of the Staff role */
+    staffRoleId: string;
+    /** The role id of the Student role */
     studentRoleId: string;
-
-    /**
-     * Whether to automcatically give new members the student role
-     */
+    /** Whether to automcatically give new members the student role */
     autoGiveStudentRole: boolean;
 };
 
@@ -112,7 +85,8 @@ const serverBackupSchema = z.object({
     queues: z.array(queueBackupSchema),
     seriousServer: z.boolean(),
     botAdminRoleId: z.string(),
-    helperRoleId: z.string(),
+    helperRoleId: z.string(), // ! Migration code, remove in production
+    staffRoleId: z.optional(z.string()), // ! Migration code, replace helperRoleId with this
     studentRoleId: z.string(),
     // ! Migration code, make this non-optional in 4.4
     autoGiveStudentRole: z.optional(z.boolean())

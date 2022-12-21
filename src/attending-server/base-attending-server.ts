@@ -125,7 +125,7 @@ class AttendingServerV2 {
     get botAdminRoleID(): string {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
-    get helperRoleID(): string {
+    get staffRoleID(): string {
         return this.settings.hierarchyRoleIds.staff;
     }
     get studentRoleID(): string {
@@ -183,7 +183,7 @@ class AttendingServerV2 {
             ...backup,
             hierarchyRoleIds: {
                 botAdmin: backup.botAdminRoleId,
-                staff: backup.helperRoleId,
+                staff: backup.staffRoleId,
                 student: backup.studentRoleId
             }
         };

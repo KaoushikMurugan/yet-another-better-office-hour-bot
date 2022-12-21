@@ -209,7 +209,7 @@ function RolesConfigMenu(
             name: '📚 Staff Role',
             value: forServerInit
                 ? `*Role that allows users to host office hours*\n`
-                : generatePing(server.helperRoleID),
+                : generatePing(server.staffRoleID),
             inline: true
         })
         .addFields({

@@ -58,7 +58,8 @@ class FirebaseServerBackupExtension
                     .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
             })),
             timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
-            autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false
+            autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
+            staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId
         };
         return backupData;
     }
@@ -95,10 +96,10 @@ class FirebaseServerBackupExtension
             hoursUntilAutoClear:
                 server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
             seriousServer: server.queues[0]?.seriousModeEnabled ?? false,
-            botAdminRoleId: server.botAdminRoleID ?? 'Not Set',
-            helperRoleId: server.helperRoleID ?? 'Not Set',
-            studentRoleId: server.studentRoleID ?? 'Not Set',
-            autoGiveStudentRole: server.autoGiveStudentRole ?? false
+            botAdminRoleId: server.botAdminRoleID,
+            staffRoleId: server.staffRoleID,
+            studentRoleId: server.studentRoleID,
+            autoGiveStudentRole: server.autoGiveStudentRole
         };
         firebaseDB
             .collection('serverBackups')
