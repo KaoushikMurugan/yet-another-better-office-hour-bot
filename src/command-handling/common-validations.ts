@@ -72,21 +72,26 @@ function isTriggeredByMemberWithRoles(
     commandName: string,
     lowestRequiredRole: keyof HierarchyRoles
 ): GuildMember {
-    const memberRoleIds = member.roles.cache.map(role => role.id);
-    const hasLowestRequiredRoleOrAdmin =
-        member.permissions.has(PermissionsBitField.Flags.Administrator) ||
-        // this loop won't run unless the LHS is false
-        memberRoleIds.some(
-            memberRoleId => memberRoleId === server.hierarchyRoleIds[lowestRequiredRole]
-        );
-    if (!hasLowestRequiredRoleOrAdmin) {
-        throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
-            server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])
-                ?.name,
-            commandName
-        );
+    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return member;
     }
-    return member;
+    const memberRoleIds = member.roles.cache.map(role => role.id);
+    for (const hierarchyRole of server.sortedHierarchyRoles) {
+        // if memberRoleIds.some returns true, then exit early
+        // if the lowestRequiredRole is hit first, then break and throw
+        if (memberRoleIds.some(memberRoleId => memberRoleId === hierarchyRole.id)) {
+            return member;
+        }
+        if (hierarchyRole.key === lowestRequiredRole) {
+            break;
+        }
+    }
+    // the for loop should directly return if the lowestRequiredRole is satisfied
+    // otherwise if the loop breaks then we must throw
+    throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
+        server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])?.name,
+        commandName
+    );
 }
 
 /**

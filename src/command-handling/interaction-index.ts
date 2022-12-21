@@ -32,6 +32,7 @@ import {
 } from './modal/modal-handler.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
+const interactionExtensions2: IInteractionExtension[] = [];
 
 /**
  * Dispatches the ineraction to different handlers.
@@ -75,10 +76,11 @@ async function dispatchDMInteraction(interaction: Interaction): Promise<boolean>
             return externalDMSelectMenuHandler !== undefined;
         }
     } else {
-        interaction.isRepliable() &&
-            (await interaction.reply(
+        if (interaction.isRepliable()) {
+            await interaction.reply(
                 SimpleEmbed('I can not process this DM interaction.')
-            ));
+            );
+        }
         return false;
     }
 }
@@ -101,7 +103,6 @@ async function dispatchServerInteractions(
             return true;
         } else {
             const externalCommandHandler = interactionExtensions
-                // default value is for semantics only
                 .get(interaction.guildId)
                 ?.find(ext => ext.canHandleCommand(interaction));
             await externalCommandHandler?.processCommand(interaction);
@@ -144,4 +145,9 @@ async function dispatchServerInteractions(
     return false;
 }
 
-export { interactionExtensions, dispatchDMInteraction, dispatchServerInteractions };
+export {
+    interactionExtensions,
+    interactionExtensions2,
+    dispatchDMInteraction,
+    dispatchServerInteractions
+};
