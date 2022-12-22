@@ -6,14 +6,12 @@ import {
     ButtonInteraction,
     ModalSubmitInteraction,
     PermissionsBitField,
-    SelectMenuInteraction,
     Interaction
 } from 'discord.js';
 import {
     AttendingServerV2,
     QueueChannel
 } from '../attending-server/base-attending-server.js';
-import { ExpectedServerErrors } from '../attending-server/expected-server-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { attendingServers } from '../global-states.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
@@ -25,19 +23,14 @@ import {
     // parseYabobComponentId
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
+import { HierarchyRoles } from '../models/hierarchy-roles.js';
 
 /**
  * Checks if the command came from a server with correctly initialized YABOB
  * - Extensions that wish to do additional checks can use this as a base
  * @returns the {@link AttendingServerV2} object
  */
-function isServerInteraction(
-    interaction:
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>
-        | SelectMenuInteraction<'cached'>
-): AttendingServerV2 {
+function isServerInteraction(interaction: Interaction<'cached'>): AttendingServerV2 {
     const server = attendingServers.get(interaction.guild.id);
     if (!server) {
         throw ExpectedParseErrors.nonServerInterction(interaction.guild.name);
@@ -75,35 +68,30 @@ function isValidDMInteraction(
  */
 function isTriggeredByMemberWithRoles(
     server: FrozenServer,
-    member: GuildMember | null,
+    member: GuildMember,
     commandName: string,
-    lowestRequiredRole: string
+    lowestRequiredRole: keyof HierarchyRoles
 ): GuildMember {
-    if (member === null) {
-        throw ExpectedParseErrors.nonServerInterction();
+    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
+        return member;
     }
-
-    // If member is a server admin, skip role check
-    if (member.permissions.has(PermissionsBitField.Flags.Administrator)) return member;
-
-    const userRoleIDs = member.roles.cache.map(role => role.id);
-    let hasARequiredRole = false;
-    const missingRoles: string[] = [];
-
-    for (const role of server.sortedHierarchyRoles) {
-        hasARequiredRole = userRoleIDs.includes(role.id);
-        // If reached the lowest required role, stop checking
-        if (role.id === lowestRequiredRole || hasARequiredRole) break;
-    }
-
-    if (!hasARequiredRole) {
-        if (missingRoles.length > 0) {
-            // TODO: show warning here, rn this case is never reached
-            throw ExpectedServerErrors.roleNotSet(missingRoles[0] ?? 'Unknown');
+    const memberRoleIds = member.roles.cache.map(role => role.id);
+    for (const hierarchyRole of server.sortedHierarchyRoles) {
+        // if memberRoleIds.some returns true, then exit early
+        // if the lowestRequiredRole is hit first, then break and throw
+        if (memberRoleIds.some(memberRoleId => memberRoleId === hierarchyRole.id)) {
+            return member;
         }
-        throw ExpectedParseErrors.missingHierarchyRoles(lowestRequiredRole, commandName);
+        if (hierarchyRole.key === lowestRequiredRole) {
+            break;
+        }
     }
-    return member as GuildMember;
+    // the for loop should directly return if the lowestRequiredRole is satisfied
+    // otherwise if the loop breaks then we must throw
+    throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
+        server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])?.name,
+        commandName
+    );
 }
 
 /**

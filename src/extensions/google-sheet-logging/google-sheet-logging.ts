@@ -322,6 +322,10 @@ class GoogleSheetLoggingExtension
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
+                logWithTimeStamp(
+                    this.guild.name,
+                    `- ${this.attendanceEntries.length} entries still remain.`
+                );
             })
             .catch((err: Error) => {
                 console.error(

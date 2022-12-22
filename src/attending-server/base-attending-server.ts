@@ -125,7 +125,7 @@ class AttendingServerV2 {
     get botAdminRoleID(): string {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
-    get helperRoleID(): string {
+    get staffRoleID(): string {
         return this.settings.hierarchyRoleIds.staff;
     }
     get studentRoleID(): string {
@@ -141,17 +141,16 @@ class AttendingServerV2 {
      * Returns an array of the roles for this server in decreasing order of hierarchy
      * - The first element is the highest hierarchy role
      * - The last element is the lowest hierarchy role
-     * - [Student, Helper, Bot Admin]
-     * @returns: { name: string, id: string }[]
+     * - [Bot Admin, Helper, Student]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
         key: keyof HierarchyRoles;
         roleName: string;
         id: string;
     }> {
-        return Object.entries(this.hierarchyRoleIds).map(([name, id]) => ({
+        return Object.entries(this.settings.hierarchyRoleIds).map(([name, id]) => ({
             key: name as keyof HierarchyRoles, // guaranteed to be the key
-            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].name,
+            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
             id: id
         }));
     }
@@ -174,13 +173,17 @@ class AttendingServerV2 {
         }
     }
 
-    private loadBackUp(backup: ServerBackup): void {
+    /**
+     * Loads the server data from a backup
+     * @param backup the data to load
+     */
+    private loadBackup(backup: ServerBackup): void {
         console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
         this.settings = {
             ...backup,
             hierarchyRoleIds: {
                 botAdmin: backup.botAdminRoleId,
-                staff: backup.helperRoleId,
+                staff: backup.staffRoleId,
                 student: backup.studentRoleId
             }
         };
@@ -260,7 +263,7 @@ class AttendingServerV2 {
               );
         const validBackup = externalBackup?.find(backup => backup !== undefined);
         if (validBackup !== undefined) {
-            server.loadBackUp(validBackup);
+            server.loadBackup(validBackup);
         }
         const missingRoles = server.sortedHierarchyRoles.filter(
             role =>
