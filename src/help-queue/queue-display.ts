@@ -9,7 +9,8 @@ import {
     ButtonBuilder,
     EmbedBuilder,
     BaseMessageOptions,
-    ButtonStyle
+    ButtonStyle,
+    Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
@@ -181,27 +182,33 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        if (viewModel.helperIDs.length !== 0) {
+        const getVcStatus = (id: Snowflake) => {
+            const voiceChannel =
+                this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
+            const vcStatus = voiceChannel
+                ? voiceChannel.members.size > 1
+                    ? `Busy in [${voiceChannel.name}]`
+                    : `Idling in [${voiceChannel.name}]`
+                : 'Not in voice channel.';
+            return `<@${id}>\t**|\t${vcStatus}**`;
+        };
+        if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
             helperList
-                .setTitle('Currently available helpers and voice channel status')
-                .setDescription(
-                    viewModel.helperIDs
-                        .map(id => {
-                            const voiceChannel =
-                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
-                                    id
-                                )?.channel;
-                            const vcStatus = voiceChannel
-                                ? voiceChannel.members.size > 1
-                                    ? `Busy in [${voiceChannel.name}]`
-                                    : `Idling in [${voiceChannel.name}]`
-                                : 'Not in voice channel.';
-                            return `<@${id}>\t**|\t${vcStatus}**`;
-                        })
-                        .join('\n')
-                )
+                .setTitle('Currently Available Helpers and Voice Channel Status')
                 .setColor(queueStateStyles[viewModel.state].color);
+            if (viewModel.activeHelperIDs.length > 0) {
+                helperList.addFields({
+                    name: 'Active Helpers',
+                    value: viewModel.activeHelperIDs.map(getVcStatus).join('\n')
+                });
+            }
+            if (viewModel.pausedHelperIDs.length > 0) {
+                helperList.addFields({
+                    name: 'Paused Helpers',
+                    value: viewModel.pausedHelperIDs.map(getVcStatus).join('\n')
+                });
+            }
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {

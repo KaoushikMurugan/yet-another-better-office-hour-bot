@@ -16,7 +16,8 @@ import { addTimeOffset } from '../utils/util-functions.js';
 
 type QueueViewModel = {
     queueName: string;
-    helperIDs: string[];
+    activeHelperIDs: Snowflake[];
+    pausedHelperIDs: Snowflake[];
     studentDisplayNames: string[];
     state: 'closed' | 'open' | 'paused';
     seriousModeEnabled: boolean;
@@ -493,7 +494,8 @@ class HelpQueueV2 {
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
             // TODO: Should paused helpers be listed separately?
-            helperIDs: [...this.activeHelperIds, ...this.pausedHelperIds],
+            activeHelperIDs: [...this.activeHelperIds],
+            pausedHelperIDs: [...this.pausedHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
