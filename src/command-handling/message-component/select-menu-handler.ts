@@ -1,10 +1,6 @@
 import { SelectMenuInteraction, TextChannel } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
-import {
-    ErrorEmbed,
-    SelectMenuLogEmbed,
-    SimpleEmbed,
-} from '../../utils/embed-helper.js';
+import { ErrorEmbed, SelectMenuLogEmbed, SimpleEmbed } from '../../utils/embed-helper.js';
 import {
     DMSelectMenuCallback,
     SelectMenuCallback,
@@ -59,9 +55,7 @@ const updateParentInteractionSelectMenus = ['server_settings', 'select_logging_c
 function builtInSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction<'cached'>
 ): boolean {
-    const selectMenuName = decompressComponentId(
-        interaction.customId
-    )[1];
+    const selectMenuName = decompressComponentId(interaction.customId)[1];
     return selectMenuName in selectMenuMethodMap;
 }
 
@@ -76,9 +70,7 @@ function builtInSelectMenuHandlerCanHandle(
 function builtInDMSelectMenuHandlerCanHandle(
     interaction: SelectMenuInteraction
 ): boolean {
-    const selectMenuName = decompressComponentId(
-        interaction.customId
-    )[1];
+    const selectMenuName = decompressComponentId(interaction.customId)[1];
     return selectMenuName in dmSelectMenuMethodMap;
 }
 
@@ -92,9 +84,7 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const selectMenuName = decompressComponentId(
-        interaction.customId
-    )[1];
+    const selectMenuName = decompressComponentId(interaction.customId)[1];
     console.log(selectMenuName);
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
@@ -135,9 +125,7 @@ async function processBuiltInSelectMenu(
 async function processBuiltInDMSelectMenu(
     interaction: SelectMenuInteraction
 ): Promise<void> {
-    const selectMenuName = decompressComponentId(
-        interaction.customId
-    )[1];
+    const selectMenuName = decompressComponentId(interaction.customId)[1];
     const selectMenuMethod = dmSelectMenuMethodMap[selectMenuName];
     const updateParentInteraction =
         updateParentInteractionSelectMenus.includes(selectMenuName);

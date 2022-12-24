@@ -138,7 +138,7 @@ class HelpQueueV2 {
      * Computes the state of the queue
      * **This is the single source of truth for queue state**
      * - don't turn this into a getter.
-     * - TS treats getters as static propeties which conflicts with some of the checks
+     * - TS treats getters as static properties which conflicts with some of the checks
      */
     getQueueState(): QueueViewModel['state'] {
         return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
@@ -148,7 +148,8 @@ class HelpQueueV2 {
             : 'open'; // open if at least 1 helper is active
     }
 
-    /** Check if a helper is helping, whether they are active or paused
+    /**
+     * Check if a helper is helping, whether they are active or paused
      * @param helperId id of the helper guild member
      */
     hasHelper(helperId: GuildMemberId): boolean {
