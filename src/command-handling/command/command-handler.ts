@@ -68,6 +68,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     next: next,
     queue: queue,
     start: start,
+    pause: pause,
+    resume: resume,
     stop: stop,
     help: help,
     set_logging_channel: setLoggingChannel,
@@ -269,6 +271,34 @@ async function stop(
     );
     const helpTimeEntry = await server.closeAllClosableQueues(member);
     return SuccessMessages.finishedHelping(helpTimeEntry);
+}
+
+async function pause(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'pause',
+        'staff'
+    );
+    const existOtherActiveHelpers = await server.pauseHelping(member);
+    return SuccessMessages.pausedHelping(existOtherActiveHelpers);
+}
+
+async function resume(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'pause',
+        'staff'
+    );
+    await server.resumeHelping(member);
+    return SuccessMessages.resumedHelping;
 }
 
 /**

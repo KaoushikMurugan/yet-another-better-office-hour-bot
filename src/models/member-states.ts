@@ -40,6 +40,12 @@ type Helper = {
      */
     helpEnd?: Date;
     /**
+     * Whether the helper is accepting new students into the queue
+     * - active: new students are accepted
+     * - paused: allow helper to dequeue, but new students not accepted
+     */
+    activeState: 'active' | 'paused';
+    /**
      * The members dequeued from `/next`
      */
     helpedMembers: Helpee[];

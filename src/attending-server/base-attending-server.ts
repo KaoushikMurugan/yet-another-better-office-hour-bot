@@ -641,14 +641,16 @@ class AttendingServerV2 {
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
+            activeState: 'active',
             member: helperMember
         };
         this._activeHelpers.set(helperMember.id, helper);
+        const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
-            helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
+            helperRoles.includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            ExpectedServerErrors.noClassRole;
+            ExpectedServerErrors.missingClassRole;
         }
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -691,6 +693,34 @@ class AttendingServerV2 {
             )
         );
         return completeHelper;
+    }
+
+    /**
+     * Marks a helper as 'paused'. Used for the '/pause' command
+     * @returns whether there are other active helpers
+     */
+    async pauseHelping(helperMember: GuildMember): Promise<boolean> {
+        const helper = this._activeHelpers.get(helperMember.id);
+        if (!helper) {
+            throw ExpectedServerErrors.notHosting;
+        }
+        if (helper.activeState === 'paused') {
+            throw ExpectedServerErrors.alreadyPaused;
+        }
+        helper.activeState = 'paused';
+        return false;
+    }
+
+    async resumeHelping(helperMember: GuildMember): Promise<void> {
+        const helper = this._activeHelpers.get(helperMember.id);
+        if (!helper) {
+            throw ExpectedServerErrors.notHosting;
+        }
+        if (helper.activeState === 'active') {
+            // maybe show a different error
+            throw ExpectedServerErrors.alreadyHosting;
+        }
+        helper.activeState = 'active';
     }
 
     /**
