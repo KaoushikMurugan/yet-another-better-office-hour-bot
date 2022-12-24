@@ -708,9 +708,19 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.alreadyPaused;
         }
         helper.activeState = 'paused';
+        const pausableQueues = this._queues.filter(queue =>
+            queue.activeHelperIds.has(helperMember.id)
+        );
+        await Promise.all(
+            pausableQueues.map(queue => queue.markHelperAsPaused(helperMember))
+        );
         return false;
     }
 
+    /**
+     * Change the helper state from paused to active
+     * @param helperMember
+     */
     async resumeHelping(helperMember: GuildMember): Promise<void> {
         const helper = this._activeHelpers.get(helperMember.id);
         if (!helper) {
@@ -721,6 +731,12 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.alreadyHosting;
         }
         helper.activeState = 'active';
+        const resumableQueues = this._queues.filter(queue =>
+            queue.pausedHelperIds.has(helperMember.id)
+        );
+        await Promise.all(
+            resumableQueues.map(queue => queue.markHelperAsActive(helperMember))
+        );
     }
 
     /**

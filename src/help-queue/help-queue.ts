@@ -1,6 +1,6 @@
 /** @module HelpQueueV2 */
 
-import { GuildMember, TextChannel, Collection } from 'discord.js';
+import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
@@ -18,7 +18,7 @@ type QueueViewModel = {
     queueName: string;
     helperIDs: string[];
     studentDisplayNames: string[];
-    isOpen: boolean;
+    state: 'closed' | 'open' | 'paused';
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
 };
@@ -41,12 +41,16 @@ class HelpQueueV2 {
     private _seriousModeEnabled = false;
     /** Set of active helpers' ids */
     private _activeHelperIds: Set<string> = new Set();
+    /** Set of helpers ids that have paused helping */
+    private _pausedHelperIds: Set<Snowflake> = new Set();
     /** The actual queue of students */
     private _students: Helpee[] = [];
     /** The set of students to notify when queue opens, key is Guildmember.id */
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
     /** When to automatically remove everyone */
     private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
+    /** The queue display */
+    private readonly display: QueueDisplayV2;
 
     /**
      * @param user YABOB's user object for QueueDisplay
@@ -57,7 +61,6 @@ class HelpQueueV2 {
     protected constructor(
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
-        private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
@@ -114,8 +117,12 @@ class HelpQueueV2 {
         return this._students;
     }
     /** set of helper IDs. Enforce readonly */
-    get activeHelperIds(): ReadonlySet<string> {
+    get activeHelperIds(): ReadonlySet<Snowflake> {
         return this._activeHelperIds;
+    }
+    /** set of paused helper ids */
+    get pausedHelperIds(): ReadonlySet<Snowflake> {
+        return this._pausedHelperIds;
     }
     /** Time until auto clear happens */
     get timeUntilAutoClear(): AutoClearTimeout {
@@ -124,6 +131,17 @@ class HelpQueueV2 {
     /** The seriousness of the queue */
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
+    }
+
+    /** Check if a helper is helping.
+     * @param helperMemberResolvable guild member object or its id
+     */
+    isHelping(helperMemberResolvable: GuildMember | GuildMemberId): boolean {
+        const id =
+            typeof helperMemberResolvable === 'string'
+                ? helperMemberResolvable
+                : helperMemberResolvable.id;
+        return this._activeHelperIds.has(id) || this._pausedHelperIds.has(id);
     }
 
     /**
@@ -158,8 +176,7 @@ class HelpQueueV2 {
                       queueChannel
                   )
               ]);
-        const display = new QueueDisplayV2(queueChannel);
-        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
+        const queue = new HelpQueueV2(queueChannel, queueExtensions, backupData);
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(
@@ -252,6 +269,25 @@ class HelpQueueV2 {
         ]);
     }
 
+    async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
+        if (this.pausedHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyPaused(this.queueName);
+        }
+        this._activeHelperIds.delete(helperMember.id);
+        this._pausedHelperIds.add(helperMember.id);
+        await this.triggerRender();
+        // TODO: Maybe emit a extension event here
+    }
+
+    async markHelperAsActive(helperMember: GuildMember): Promise<void> {
+        if (this.activeHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyActive(this.queueName);
+        }
+        this._pausedHelperIds.delete(helperMember.id);
+        this._activeHelperIds.add(helperMember.id);
+        await this.triggerRender();
+    }
+
     /**
      * Enqueue a student
      * @param studentMember member to enqueue
@@ -261,7 +297,7 @@ class HelpQueueV2 {
         if (!this.isOpen) {
             throw ExpectedQueueErrors.notOpen(this.queueName);
         }
-        if (this._students.find(s => s.member.id === studentMember.id) !== undefined) {
+        if (this._students.some(student => student.member.id === studentMember.id)) {
             throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
         }
         if (this._activeHelperIds.has(studentMember.id)) {
@@ -431,13 +467,19 @@ class HelpQueueV2 {
      */
     async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
+        const queueState: QueueViewModel['state'] =
+            this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
+                ? 'closed' // queue is Closed if 0 helpers is here
+                : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
+                ? 'paused' // paused if everyone paused
+                : 'open'; // open if at least 1 helper is active
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
             helperIDs: [...this._activeHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
-            isOpen: this.isOpen,
+            state: queueState,
             seriousModeEnabled: this._seriousModeEnabled,
             timeUntilAutoClear:
                 this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'

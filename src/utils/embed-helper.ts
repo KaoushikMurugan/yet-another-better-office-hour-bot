@@ -21,7 +21,7 @@ enum EmbedColor {
     UnexpectedError = 0xff0000, // pure red
     KindaBad = 0xfc9867, // Orange
     Neutral = 0xffffff, // White
-    Warning = 0xffd866, // Yellow
+    Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8,
     Purple = 0xa6a5c4,

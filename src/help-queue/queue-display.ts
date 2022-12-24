@@ -26,6 +26,37 @@ type QueueChannelEmbed = {
     stale: boolean;
 };
 
+/** d */
+const queueStateStyles: {
+    [K in QueueViewModel['state']]: {
+        color: EmbedColor;
+        statusText: { serious: string; notSerious: string };
+    };
+} = {
+    // colors are arbitary, feel free to change these
+    closed: {
+        color: EmbedColor.Purple,
+        statusText: {
+            serious: '**CLOSED**',
+            notSerious: '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
+        }
+    },
+    open: {
+        color: EmbedColor.Aqua,
+        statusText: {
+            serious: '**OPEN**',
+            notSerious: '**OPEN**\t(ﾟ∀ﾟ )'
+        }
+    },
+    paused: {
+        color: EmbedColor.Yellow,
+        statusText: {
+            serious: '**PAUSED**',
+            notSerious: '**PAUSED**'
+        }
+    }
+};
+
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
  * the queue embeds
@@ -82,20 +113,16 @@ class QueueDisplayV2 {
         embedTableMsg
             .setTitle(
                 `Queue for〚${viewModel.queueName}〛is ${
-                    viewModel.seriousModeEnabled
-                        ? viewModel.isOpen
-                            ? '**OPEN**'
-                            : '**CLOSED**'
-                        : viewModel.isOpen
-                        ? '**OPEN**\t(ﾟ∀ﾟ )'
-                        : '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
+                    queueStateStyles[viewModel.state].statusText[
+                        viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
+                    ]
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(viewModel))
-            .setColor(viewModel.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
+            .setColor(queueStateStyles[viewModel.state].color);
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
-            !viewModel.isOpen &&
+            viewModel.state === 'closed' &&
             viewModel.studentDisplayNames.length !== 0
         ) {
             embedTableMsg.setFields([
@@ -115,10 +142,9 @@ class QueueDisplayV2 {
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('✅')
-                .setDisabled(!viewModel.isOpen)
+                .setDisabled(viewModel.state !== 'open')
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
-
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 'leave',
