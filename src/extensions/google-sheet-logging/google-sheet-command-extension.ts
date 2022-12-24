@@ -230,9 +230,9 @@ async function getStatistics(
     const uniqueStudents = new Set(studentsList);
 
     // count students who were helped multiple times
-    const returningStudents = new Set(studentsList.filter(
-        (student, index) => studentsList.indexOf(student) !== index
-    ));
+    const returningStudents = new Set(
+        studentsList.filter((student, index) => studentsList.indexOf(student) !== index)
+    );
 
     return SimpleEmbed(
         `Help session statistics for ` + `${user ? user.username : server.guild.name}`,

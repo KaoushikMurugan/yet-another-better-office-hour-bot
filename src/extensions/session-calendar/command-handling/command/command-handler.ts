@@ -46,7 +46,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
 
 function canHandleCalendarCommand(
     this: CalendarInteractionExtension,
-    interaction: ChatInputCommandInteraction): boolean {
+    interaction: ChatInputCommandInteraction
+): boolean {
     return interaction.commandName in commandMethodMap;
 }
 

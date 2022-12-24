@@ -245,10 +245,7 @@ interface IQueueExtension {
      * @param display the QueueDisplayV2 object that handles the rendering
      * @remark Extensions with custom embeds should override this method to get the display object
      */
-    onQueueRender: (
-        queue: FrozenQueue,
-        display: FrozenDisplay
-    ) => Promise<void>;
+    onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**
      * Called every hour
      * @param queue queue that triggered the call

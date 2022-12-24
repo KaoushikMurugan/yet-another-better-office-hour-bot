@@ -511,5 +511,5 @@ export {
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
     mainMenuRow,
-    serverSettingsMainMenuOptions,
+    serverSettingsMainMenuOptions
 };
