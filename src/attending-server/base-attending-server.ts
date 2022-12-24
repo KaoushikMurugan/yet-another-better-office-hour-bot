@@ -524,7 +524,7 @@ class AttendingServerV2 {
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
+            this._queues.filter(queue => queue.hasHelper(helperMember.id)),
             this._activeHelpers.get(helperMember.id)
         ];
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
@@ -534,9 +534,7 @@ class AttendingServerV2 {
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
-        const nonEmptyQueues = currentlyHelpingQueues.filter(
-            queue => queue.isOpen && queue.length !== 0
-        );
+        const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;

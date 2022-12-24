@@ -92,10 +92,6 @@ class HelpQueueV2 {
     get length(): number {
         return this._students.length;
     }
-    /** is the queue open */
-    get isOpen(): boolean {
-        return this.activeHelperIds.size > 0;
-    }
     /** name of corresponding queue */
     get queueName(): string {
         return this.queueChannel.queueName;
@@ -132,11 +128,24 @@ class HelpQueueV2 {
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }
+    /**
+     * Computes the state of the queue
+     * ! **This is the single source of truth for queue state**
+     * - don't turn this into a getter.
+     * - TS treats getters as static propeties which conflicts with some of the checks
+     */
+    getQueueState(): QueueViewModel['state'] {
+        return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
+            ? 'closed' // queue is Closed if 0 helpers is here
+            : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
+            ? 'paused' // paused if everyone paused
+            : 'open'; // open if at least 1 helper is active
+    }
 
     /** Check if a helper is helping.
      * @param helperMemberResolvable guild member object or its id
      */
-    isHelping(helperMemberResolvable: GuildMember | GuildMemberId): boolean {
+    hasHelper(helperMemberResolvable: GuildMember | GuildMemberId): boolean {
         const id =
             typeof helperMemberResolvable === 'string'
                 ? helperMemberResolvable
@@ -253,14 +262,14 @@ class HelpQueueV2 {
      */
     async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
-        if (!this.isOpen) {
+        if (this.getQueueState() === 'closed') {
             throw ExpectedQueueErrors.alreadyClosed(this.queueName);
         }
         if (!this._activeHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
         this._activeHelperIds.delete(helperMember.id);
-        if (!this.isOpen) {
+        if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
         await Promise.all([
@@ -294,14 +303,14 @@ class HelpQueueV2 {
      * @throws QueueError
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
-        if (!this.isOpen) {
-            throw ExpectedQueueErrors.notOpen(this.queueName);
+        if (this.getQueueState() !== 'open') {
+            throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
         }
         if (this._students.some(student => student.member.id === studentMember.id)) {
             throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
         }
         if (this._activeHelperIds.has(studentMember.id)) {
-            throw ExpectedQueueErrors.enqueueHelper(this.queueName);
+            throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
         }
         const student: Helpee = {
             waitStart: new Date(),
@@ -342,10 +351,10 @@ class HelpQueueV2 {
         helperMember: GuildMember,
         targetStudentMember?: GuildMember
     ): Promise<Readonly<Helpee>> {
-        if (!this.isOpen) {
+        if (this.getQueueState() === 'closed') {
             throw ExpectedQueueErrors.dequeue.closed(this.queueName);
         }
-        if (!this._activeHelperIds.has(helperMember.id)) {
+        if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.dequeue.noPermission(this.queueName);
         }
         if (this._students.length === 0) {
@@ -467,19 +476,13 @@ class HelpQueueV2 {
      */
     async triggerRender(): Promise<void> {
         // build viewModel, then call display.render()
-        const queueState: QueueViewModel['state'] =
-            this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
-                ? 'closed' // queue is Closed if 0 helpers is here
-                : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
-                ? 'paused' // paused if everyone paused
-                : 'open'; // open if at least 1 helper is active
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
             helperIDs: [...this._activeHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
-            state: queueState,
+            state: this.getQueueState(),
             seriousModeEnabled: this._seriousModeEnabled,
             timeUntilAutoClear:
                 this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
@@ -544,7 +547,10 @@ class HelpQueueV2 {
             setTimeout(async () => {
                 // if the queue is open when the timer finishes, do nothing
                 // if auto clear is disabled half way, do nothing
-                if (!this.isOpen && this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
+                if (
+                    this.getQueueState() === 'closed' &&
+                    this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
+                ) {
                     await this.removeAllStudents();
                 }
             }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
