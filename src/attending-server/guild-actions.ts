@@ -137,7 +137,7 @@ async function sendCommandHelpChannelMessages(
 async function createOfficeVoiceChannels(
     guild: Guild,
     categoryName: string,
-    officeName: string,
+    officeNamePrefix: string,
     numberOfOffices: number,
     permittedRoles: Snowflake[]
 ): Promise<void> {
@@ -163,7 +163,7 @@ async function createOfficeVoiceChannels(
             .fill(undefined)
             .map(async (_, officeNumber) => {
                 const officeCh = await officeCategory.children.create({
-                    name: `${officeName} ${officeNumber + 1}`,
+                    name: `${officeNamePrefix} ${officeNumber + 1}`,
                     type: ChannelType.GuildVoice
                 });
                 await officeCh.permissionOverwrites.create(guild.roles.everyone, {

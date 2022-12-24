@@ -128,6 +128,7 @@ class HelpQueueV2 {
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }
+    /** all the helpers for this queue, both active and paused */
     get allHelpers(): Snowflake[] {
         return [...this._activeHelperIds, ...this._pausedHelperIds];
     }
@@ -169,8 +170,6 @@ class HelpQueueV2 {
     /**
      * Asynchronously creates a clean queue
      * @param queueChannel the corresponding text channel and its name
-     * @param user YABOB's client object. Used for queue rendering
-     * @param everyoneRole used for locking the queue
      * @param backupData backup queue data directly passed to the constructor
      */
     static async create(
@@ -285,6 +284,11 @@ class HelpQueueV2 {
         ]);
     }
 
+    /**
+     * Marks a helper with the 'paused' state
+     *  and moves the id from active helper id to pasued helperid
+     * @param helperMember
+     */
     async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
         if (this.pausedHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyPaused(this.queueName);
@@ -295,6 +299,12 @@ class HelpQueueV2 {
         // TODO: Maybe emit a extension event here
     }
 
+    /**
+     * Marks a helper with the 'active' state
+     *  and moves the id from paused helper id to active helperid
+     * - very similar to markHelperAsPaused, combine if necessary
+     * @param helperMember
+     */
     async markHelperAsActive(helperMember: GuildMember): Promise<void> {
         if (this.activeHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyActive(this.queueName);

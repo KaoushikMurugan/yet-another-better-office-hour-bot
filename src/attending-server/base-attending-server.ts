@@ -317,9 +317,7 @@ class AttendingServerV2 {
                 vcMember => vcMember.id !== member.id
             );
             const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
@@ -331,7 +329,7 @@ class AttendingServerV2 {
         if (memberIsHelper) {
             await Promise.all(
                 this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
                 )
             );
         }
@@ -359,9 +357,7 @@ class AttendingServerV2 {
                 vcMember => vcMember.id !== member.id
             );
             const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
             );
             await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
@@ -380,7 +376,7 @@ class AttendingServerV2 {
             // the overwrite will die in 15 minutes after the invite was sent
             await Promise.all(
                 this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
                 )
             );
         }
