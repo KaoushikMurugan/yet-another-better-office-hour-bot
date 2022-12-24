@@ -708,7 +708,10 @@ class AttendingServerV2 {
         await Promise.all(
             pausableQueues.map(queue => queue.markHelperAsPaused(helperMember))
         );
-        return false;
+        const existOtherActiveHelpers = pausableQueues.some(
+            queue => queue.activeHelperIds.size > 0
+        );
+        return existOtherActiveHelpers;
     }
 
     /**

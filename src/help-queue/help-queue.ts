@@ -135,7 +135,7 @@ class HelpQueueV2 {
 
     /**
      * Computes the state of the queue
-     * ! **This is the single source of truth for queue state**
+     * **This is the single source of truth for queue state**
      * - don't turn this into a getter.
      * - TS treats getters as static propeties which conflicts with some of the checks
      */
@@ -148,14 +148,10 @@ class HelpQueueV2 {
     }
 
     /** Check if a helper is helping.
-     * @param helperMemberResolvable guild member object or its id
+     * @param helperId id of the helper guild member
      */
-    hasHelper(helperMemberResolvable: GuildMember | GuildMemberId): boolean {
-        const id =
-            typeof helperMemberResolvable === 'string'
-                ? helperMemberResolvable
-                : helperMemberResolvable.id;
-        return this._activeHelperIds.has(id) || this._pausedHelperIds.has(id);
+    hasHelper(helperId: GuildMemberId): boolean {
+        return this._activeHelperIds.has(helperId) || this._pausedHelperIds.has(helperId);
     }
 
     /**
@@ -496,7 +492,7 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            // TODO: Should pause helpers be listed separately?
+            // TODO: Should paused helpers be listed separately?
             helperIDs: [...this.activeHelperIds, ...this.pausedHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName

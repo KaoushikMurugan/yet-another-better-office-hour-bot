@@ -125,14 +125,19 @@ class QueueDisplayV2 {
             viewModel.state === 'closed' &&
             viewModel.studentDisplayNames.length !== 0
         ) {
-            embedTableMsg.setFields([
-                {
-                    name: 'Auto Clear',
-                    value: `This queue will be cleared <t:${Math.floor(
-                        viewModel.timeUntilAutoClear.getTime() / 1000
-                    )}:R>`
-                }
-            ]);
+            embedTableMsg.addFields({
+                name: 'Auto Clear',
+                value: `This queue will be cleared <t:${Math.floor(
+                    viewModel.timeUntilAutoClear.getTime() / 1000
+                )}:R>`
+            });
+        }
+        if (viewModel.state === 'paused') {
+            embedTableMsg.addFields({
+                name: 'Paused Queue',
+                value: `All helpers of this queue have paused new students from joining.
+                If you are already in the queue, helpers can still dequeue you.`
+            });
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
