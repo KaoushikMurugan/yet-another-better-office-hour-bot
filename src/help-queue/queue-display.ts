@@ -134,6 +134,7 @@ class QueueDisplayV2 {
             });
         }
         if (viewModel.state === 'paused') {
+            // this is optional, if the embed takes up too much screen remove this first
             embedTableMsg.addFields({
                 name: 'Paused Queue',
                 value: `All helpers of this queue have paused new students from joining.
@@ -296,20 +297,20 @@ class QueueDisplayV2 {
 
     /**
      * Create an ascii table of the queue
-     * @param queue
+     * @param viewModel
      * @returns the ascii table as a `string` in a code block
      */
-    private composeQueueAsciiTable(queue: QueueViewModel): string {
+    private composeQueueAsciiTable(viewModel: QueueViewModel): string {
         const table = new AsciiTable3();
-        if (queue.studentDisplayNames.length > 0) {
+        if (viewModel.studentDisplayNames.length > 0) {
             table
                 .setHeading('Position', 'Student Name')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setAlign(2, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix')
                 .addRowMatrix([
-                    ...queue.studentDisplayNames.map((name, idx) => [
-                        queue.seriousModeEnabled
+                    ...viewModel.studentDisplayNames.map((name, idx) => [
+                        viewModel.seriousModeEnabled
                             ? idx + 1
                             : idx === 0
                             ? `(☞°∀°)☞ 1`
@@ -323,7 +324,7 @@ class QueueDisplayV2 {
                 .addRow('This queue is empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
-            if (!queue.seriousModeEnabled) {
+            if (!viewModel.seriousModeEnabled) {
                 if (rand <= 0.1) {
                     table.addRow(`=^ Φ ω Φ ^=`);
                 } else if (rand <= 0.3 && rand >= 0.11) {

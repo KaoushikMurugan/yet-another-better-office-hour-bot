@@ -148,7 +148,7 @@ class HelpQueueV2 {
             : 'open'; // open if at least 1 helper is active
     }
 
-    /** Check if a helper is helping.
+    /** Check if a helper is helping, whether they are active or paused
      * @param helperId id of the helper guild member
      */
     hasHelper(helperId: GuildMemberId): boolean {
@@ -239,7 +239,6 @@ class HelpQueueV2 {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
         // default the helper to 'active state'
-        // TODO: Can we allow /pause to open queues?
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.notifGroup.map(
@@ -333,7 +332,6 @@ class HelpQueueV2 {
         };
         this._students.push(student);
         // converted to use Array.map
-        // TODO: Should we notify the paused helpers?
         const helperIdArray = [...this.activeHelperIds];
         await Promise.all([
             ...helperIdArray.map(helperId =>
@@ -493,7 +491,6 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            // TODO: Should paused helpers be listed separately?
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],
             studentDisplayNames: this._students.map(
