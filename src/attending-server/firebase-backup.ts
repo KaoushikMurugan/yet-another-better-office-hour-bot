@@ -63,7 +63,6 @@ class FirebaseServerBackupExtension
             autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
             staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
         };
-        console.log(backupData.staffRoleId);
         return backupData;
     }
 

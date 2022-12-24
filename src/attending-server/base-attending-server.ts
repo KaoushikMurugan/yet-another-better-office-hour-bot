@@ -83,8 +83,8 @@ class AttendingServerV2 {
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     /** cached result of {@link getQueueChannels} */
     private queueChannelsCache: QueueChannel[] = [];
-    /** unique active helpers, key is member.id */
-    private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
+    /** unique helpers (both active and paused), key is member.id */
+    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /** server settings */
     private settings: ServerSettings = {
         afterSessionMessage: '',
@@ -110,8 +110,8 @@ class AttendingServerV2 {
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this._queues.map(queue => queue.students).flat();
     }
-    get activeHelpers(): ReadonlyMap<string, Helper> {
-        return this._activeHelpers;
+    get helpers(): ReadonlyMap<string, Helper> {
+        return this._helpers;
     }
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
@@ -306,12 +306,12 @@ class AttendingServerV2 {
             return;
         }
         const vc = newVoiceState.channel;
-        const memberIsStudent = this._activeHelpers.some(helper =>
+        const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
+        const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
             const possibleHelpers = newVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
@@ -348,12 +348,12 @@ class AttendingServerV2 {
         member: GuildMember,
         oldVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
-        const memberIsStudent = this._activeHelpers.some(helper =>
+        const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
+        const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
             const possibleHelpers = oldVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
@@ -525,7 +525,7 @@ class AttendingServerV2 {
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const [currentlyHelpingQueues, helperObject] = [
             this._queues.filter(queue => queue.hasHelper(helperMember.id)),
-            this._activeHelpers.get(helperMember.id)
+            this._helpers.get(helperMember.id)
         ];
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
@@ -572,8 +572,8 @@ class AttendingServerV2 {
         specificQueue?: QueueChannel
     ): Promise<Readonly<Helpee>> {
         const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
-            this._activeHelpers.get(helperMember.id)
+            this._queues.filter(queue => queue.hasHelper(helperMember.id)),
+            this._helpers.get(helperMember.id)
         ];
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             console.log(currentlyHelpingQueues.size, helperObject);
@@ -633,7 +633,7 @@ class AttendingServerV2 {
         helperMember: GuildMember,
         notify: boolean
     ): Promise<void> {
-        if (this._activeHelpers.has(helperMember.id)) {
+        if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
         const helper: Helper = {
@@ -642,7 +642,7 @@ class AttendingServerV2 {
             activeState: 'active',
             member: helperMember
         };
-        this._activeHelpers.set(helperMember.id, helper);
+        this._helpers.set(helperMember.id, helper);
         const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
             helperRoles.includes(queue.queueName)
@@ -666,11 +666,11 @@ class AttendingServerV2 {
      * @throws ServerError: If the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
-        const helper = this._activeHelpers.get(helperMember.id);
+        const helper = this._helpers.get(helperMember.id);
         if (helper === undefined) {
             throw ExpectedServerErrors.notHosting;
         }
-        this._activeHelpers.delete(helperMember.id);
+        this._helpers.delete(helperMember.id);
         const completeHelper: Required<Helper> = {
             ...helper,
             helpEnd: new Date()
@@ -698,7 +698,7 @@ class AttendingServerV2 {
      * @returns whether there are other active helpers
      */
     async pauseHelping(helperMember: GuildMember): Promise<boolean> {
-        const helper = this._activeHelpers.get(helperMember.id);
+        const helper = this._helpers.get(helperMember.id);
         if (!helper) {
             throw ExpectedServerErrors.notHosting;
         }
@@ -720,7 +720,7 @@ class AttendingServerV2 {
      * @param helperMember
      */
     async resumeHelping(helperMember: GuildMember): Promise<void> {
-        const helper = this._activeHelpers.get(helperMember.id);
+        const helper = this._helpers.get(helperMember.id);
         if (!helper) {
             throw ExpectedServerErrors.notHosting;
         }

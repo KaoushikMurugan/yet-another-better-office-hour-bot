@@ -129,7 +129,7 @@ class GoogleSheetLoggingExtension
         voiceChannel: VoiceChannel
     ): Promise<void> {
         const helpersInVC = voiceChannel.members.filter(member =>
-            server.activeHelpers.has(member.id)
+            server.helpers.has(member.id)
         );
         const [studentId, student] = [
             studentMember.id,
@@ -140,7 +140,7 @@ class GoogleSheetLoggingExtension
         }
         this.studentsJustDequeued.delete(studentId);
         for (const helper of helpersInVC.map(helperInVC =>
-            server.activeHelpers.get(helperInVC.id)
+            server.helpers.get(helperInVC.id)
         )) {
             if (helper === undefined) {
                 continue;

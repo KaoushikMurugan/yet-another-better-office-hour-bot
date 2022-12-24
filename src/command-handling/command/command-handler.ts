@@ -371,8 +371,8 @@ async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<BaseMessageOptions> {
     const server = isServerInteraction(interaction);
-    const helpers = server.activeHelpers;
-    if (helpers === undefined || helpers.size === 0) {
+    const helpers = server.helpers;
+    if (helpers.size === 0) {
         return SimpleEmbed('No one is currently helping.');
     }
     const allQueues = await server.getQueueChannels();
@@ -390,7 +390,9 @@ async function listHelpers(
         .setStyle('unicode-mix')
         .addRowMatrix(
             [...helpers.values()].map(helper => [
-                helper.member.displayName, // Tutor Name
+                `${helper.member.displayName} ${
+                    helper.activeState === 'paused' ? '(paused)' : ''
+                }`, // Tutor Name
                 helper.member.roles.cache
                     .filter(
                         role =>
