@@ -682,7 +682,7 @@ class AttendingServerV2 {
                 )}`
         );
         const closableQueues = this._queues.filter(queue =>
-            queue.activeHelperIds.has(helperMember.id)
+            queue.hasHelper(helperMember.id)
         );
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(

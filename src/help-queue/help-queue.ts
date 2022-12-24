@@ -128,6 +128,10 @@ class HelpQueueV2 {
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
     }
+    get allHelpers(): Snowflake[] {
+        return [...this._activeHelperIds, ...this._pausedHelperIds];
+    }
+
     /**
      * Computes the state of the queue
      * ! **This is the single source of truth for queue state**
@@ -235,15 +239,17 @@ class HelpQueueV2 {
      * @throws QueueError: do nothing if helperMemeber is already helping
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
-        if (this._activeHelperIds.has(helperMember.id)) {
+        if (this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
+        // default the helper to 'active state'
+        // TODO: Can we allow /pause to open queues?
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.notifGroup.map(
                 notifMember =>
                     notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.activeHelperIds.has(notifMember.id) && // don't notify helpers
+                    !this.hasHelper(notifMember.id) && // don't notify helpers
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
@@ -265,10 +271,11 @@ class HelpQueueV2 {
         if (this.getQueueState() === 'closed') {
             throw ExpectedQueueErrors.alreadyClosed(this.queueName);
         }
-        if (!this._activeHelperIds.has(helperMember.id)) {
+        if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
         this._activeHelperIds.delete(helperMember.id);
+        this._pausedHelperIds.delete(helperMember.id);
         if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
@@ -309,7 +316,7 @@ class HelpQueueV2 {
         if (this._students.some(student => student.member.id === studentMember.id)) {
             throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
         }
-        if (this._activeHelperIds.has(studentMember.id)) {
+        if (this.hasHelper(studentMember.id)) {
             throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
         }
         const student: Helpee = {
@@ -319,7 +326,8 @@ class HelpQueueV2 {
         };
         this._students.push(student);
         // converted to use Array.map
-        const helperIdArray = [...this._activeHelperIds];
+        // TODO: Should we notify the paused helpers?
+        const helperIdArray = [...this.activeHelperIds];
         await Promise.all([
             ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
@@ -478,7 +486,8 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            helperIDs: [...this._activeHelperIds],
+            // TODO: Should pause helpers be listed separately?
+            helperIDs: [...this.activeHelperIds, ...this.pausedHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),

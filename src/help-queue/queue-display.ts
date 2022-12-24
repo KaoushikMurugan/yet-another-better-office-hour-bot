@@ -26,7 +26,7 @@ type QueueChannelEmbed = {
     stale: boolean;
 };
 
-/** d */
+/** Styled text for different queue states */
 const queueStateStyles: {
     [K in QueueViewModel['state']]: {
         color: EmbedColor;
@@ -55,7 +55,7 @@ const queueStateStyles: {
             notSerious: '**PAUSED**'
         }
     }
-};
+} as const;
 
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
@@ -196,7 +196,7 @@ class QueueDisplayV2 {
                         })
                         .join('\n')
                 )
-                .setColor(EmbedColor.Aqua);
+                .setColor(queueStateStyles[viewModel.state].color);
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {
