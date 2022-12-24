@@ -101,7 +101,7 @@ class AttendingServerV2 {
 
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: IServerExtension[]
+        readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
 
     get queues(): ReadonlyArray<HelpQueueV2> {
@@ -145,12 +145,12 @@ class AttendingServerV2 {
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
         key: keyof HierarchyRoles;
-        roleName: string;
+        displayName: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'];
         id: string;
     }> {
         return Object.entries(this.settings.hierarchyRoleIds).map(([name, id]) => ({
             key: name as keyof HierarchyRoles, // guaranteed to be the key
-            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
+            displayName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
             id: id
         }));
     }
@@ -454,7 +454,7 @@ class AttendingServerV2 {
             parentCategoryId: parentCategory.id
         };
         const [helpQueue] = await Promise.all([
-            HelpQueueV2.create(queueChannel, this.guild.roles.everyone),
+            HelpQueueV2.create(queueChannel),
             this.createQueueRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
@@ -941,11 +941,7 @@ class AttendingServerV2 {
                     : undefined;
                 this._queues.set(
                     channel.parentCategoryId,
-                    await HelpQueueV2.create(
-                        channel,
-                        this.guild.roles.everyone,
-                        completeBackup
-                    )
+                    await HelpQueueV2.create(channel, completeBackup)
                 );
             })
         );
@@ -979,8 +975,9 @@ class AttendingServerV2 {
             // do the search if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                role.key in SpecialRoleValues || role.id === everyone
-                    ? allRoles.find(serverRole => serverRole.name === role.roleName)
+                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
+                role.id === everyone
+                    ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
                 this.hierarchyRoleIds.student = everyone;
@@ -991,7 +988,10 @@ class AttendingServerV2 {
                 foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
-            const newRole = await this.guild.roles.create(hierarchyRoleConfigs[role.key]);
+            const newRole = await this.guild.roles.create({
+                ...hierarchyRoleConfigs[role.key],
+                name: hierarchyRoleConfigs[role.key].displayName
+            });
             this.hierarchyRoleIds[role.key] = newRole.id;
             // set by indices that are larger than arr length is valid in JS
             // ! do NOT do this with important arrays bc there will be 'empty items'

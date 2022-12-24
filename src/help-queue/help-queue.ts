@@ -1,6 +1,6 @@
 /** @module HelpQueueV2 */
 
-import { GuildMember, Role, TextChannel, Collection } from 'discord.js';
+import { GuildMember, TextChannel, Collection } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
@@ -144,12 +144,12 @@ class HelpQueueV2 {
      */
     static async create(
         queueChannel: QueueChannel,
-        everyoneRole: Role,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ): Promise<HelpQueueV2> {
+        const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
         const queueExtensions = environment.disableExtensions
             ? []
             : await Promise.all([

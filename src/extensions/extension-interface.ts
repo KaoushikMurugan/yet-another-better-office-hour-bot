@@ -117,8 +117,8 @@ interface IServerExtension {
     /**
      * When all the queues are successfully created.
      * Happens before {@link onServerInitSuccess}
-     * @param server
-     * @param allQueues
+     * @param server the newly created server
+     * @param allQueues all the newly created queues
      */
     onAllQueuesInit: (
         server: FrozenServer,
