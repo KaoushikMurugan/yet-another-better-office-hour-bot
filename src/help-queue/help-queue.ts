@@ -14,18 +14,29 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 
+/**
+ * Render props for the queue display.
+ */
 type QueueViewModel = {
     queueName: string;
     activeHelperIDs: Snowflake[];
     pausedHelperIDs: Snowflake[];
     studentDisplayNames: string[];
-    state: 'closed' | 'open' | 'paused';
+    state: QueueState;
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
 };
 
-/** @internal */
+/**
+ * Different timers that each queue keeps track of.
+ * Used as the key of HelpQueueV2.timers
+ */
 type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
+
+/**
+ * Current state of the queue
+ */
+type QueueState = 'closed' | 'open' | 'paused';
 
 /**
  * Represents the time until the queue is automatically cleared
@@ -37,7 +48,8 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  */
 class HelpQueueV2 {
     /** Keeps track of all the setTimout / setIntervals we started */
-    timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
+    private timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> =
+        new Collection();
     /** Why so serious? */
     private _seriousModeEnabled = false;
     /** Set of active helpers' ids */
@@ -140,7 +152,7 @@ class HelpQueueV2 {
      * - don't turn this into a getter.
      * - TS treats getters as static properties which conflicts with some of the checks
      */
-    getQueueState(): QueueViewModel['state'] {
+    getQueueState(): QueueState {
         return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
             ? 'closed' // queue is Closed if 0 helpers is here
             : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
@@ -574,4 +586,4 @@ class HelpQueueV2 {
     }
 }
 
-export { HelpQueueV2, QueueViewModel, AutoClearTimeout };
+export { HelpQueueV2, QueueViewModel, AutoClearTimeout, QueueState };

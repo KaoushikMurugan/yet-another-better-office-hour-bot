@@ -1,7 +1,7 @@
 /** @module HelpQueueV2 */
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { QueueViewModel } from './help-queue.js';
+import { QueueState, QueueViewModel } from './help-queue.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import {
     Collection,
@@ -29,7 +29,7 @@ type QueueChannelEmbed = {
 
 /** Styled text for different queue states */
 const queueStateStyles: {
-    [K in QueueViewModel['state']]: {
+    [K in QueueState]: {
         color: EmbedColor;
         statusText: { serious: string; notSerious: string };
     };
