@@ -111,7 +111,7 @@ class AttendingServerV2 {
         return [...this._queues.values()];
     }
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
-        return this._queues.map(queue => queue.students).flat();
+        return this.queues.flatMap(queue => queue.students);
     }
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;
@@ -830,15 +830,14 @@ class AttendingServerV2 {
             ) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
+            const annountmentEmbed = SimpleEmbed(
+                `Staff member ${helperMember.displayName} announced:\n${announcement}`,
+                EmbedColor.Aqua,
+                `In queue: ${targetQueue.queueName}`
+            );
             await Promise.all(
                 queueToAnnounce.students.map(student =>
-                    student.member.send(
-                        SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${announcement}`,
-                            EmbedColor.Aqua,
-                            `In queue: ${targetQueue.queueName}`
-                        )
-                    )
+                    student.member.send(annountmentEmbed)
                 )
             );
             return;
@@ -852,16 +851,13 @@ class AttendingServerV2 {
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
+        const annountmentEmbed = SimpleEmbed(
+            `Staff member ${helperMember.displayName} announced:`,
+            EmbedColor.Aqua,
+            announcement
+        );
         await Promise.all(
-            studentsToAnnounceTo.map(student =>
-                student.member.send(
-                    SimpleEmbed(
-                        `Staff member ${helperMember.displayName} announced:`,
-                        EmbedColor.Aqua,
-                        announcement
-                    )
-                )
-            )
+            studentsToAnnounceTo.map(student => student.member.send(annountmentEmbed))
         );
     }
 
@@ -921,49 +917,6 @@ class AttendingServerV2 {
         this.settings.loggingChannel = loggingChannel;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Creates all the office hour queues
-     * @param queueBackups
-     * - if a backup extension is enabled, this is the queue data to load
-     * @param hoursUntilAutoClear how long until the queues are cleared
-     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
-     */
-    private async initAllQueues(
-        queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
-        seriousModeEnabled = false
-    ): Promise<void> {
-        const queueChannels = await this.getQueueChannels(false);
-        await Promise.all(
-            queueChannels.map(async channel => {
-                const backup = queueBackups?.find(
-                    backup => backup.parentCategoryId === channel.parentCategoryId
-                );
-                const completeBackup = backup
-                    ? {
-                          ...backup,
-                          timeUntilAutoClear: hoursUntilAutoClear,
-                          seriousModeEnabled: seriousModeEnabled
-                      }
-                    : undefined;
-                this._queues.set(
-                    channel.parentCategoryId,
-                    await HelpQueueV2.create(channel, completeBackup)
-                );
-            })
-        );
-        console.log(
-            `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue(' with their extensions')
-            }!`
-        );
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onAllQueuesInit(this, this.queues)
-            )
         );
     }
 
@@ -1050,6 +1003,49 @@ class AttendingServerV2 {
                         position: 1
                     });
             })
+        );
+    }
+
+    /**
+     * Creates all the office hour queues
+     * @param queueBackups
+     * - if a backup extension is enabled, this is the queue data to load
+     * @param hoursUntilAutoClear how long until the queues are cleared
+     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
+     */
+    private async initAllQueues(
+        queueBackups?: QueueBackup[],
+        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        seriousModeEnabled = false
+    ): Promise<void> {
+        const queueChannels = await this.getQueueChannels(false);
+        await Promise.all(
+            queueChannels.map(async channel => {
+                const backup = queueBackups?.find(
+                    backup => backup.parentCategoryId === channel.parentCategoryId
+                );
+                const completeBackup = backup
+                    ? {
+                          ...backup,
+                          timeUntilAutoClear: hoursUntilAutoClear,
+                          seriousModeEnabled: seriousModeEnabled
+                      }
+                    : undefined;
+                this._queues.set(
+                    channel.parentCategoryId,
+                    await HelpQueueV2.create(channel, completeBackup)
+                );
+            })
+        );
+        console.log(
+            `All queues in '${this.guild.name}' successfully created ${
+                environment.disableExtensions ? '' : blue(' with their extensions')
+            }!`
+        );
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onAllQueuesInit(this, this.queues)
+            )
         );
     }
 }

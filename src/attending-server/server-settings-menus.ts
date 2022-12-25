@@ -43,21 +43,19 @@ const trailingNewLine = '\n\u200b' as const;
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const leadingNewLine = '\u200b\n' as const;
 
+const documentationBaseUrl =
+    'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server' as const;
+
 /**
  * Links to the documentation
  */
 const documentationLinks = {
-    main: 'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server',
-    serverRoles:
-        'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server',
-    autoClear:
-        'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#queue-auto-clear',
-    loggingChannel:
-        'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#logging-channel',
-    afterSessionMessage:
-        'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#after-session-message',
-    autoGiveStudentRole:
-        'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#after-session-message'
+    main: documentationBaseUrl,
+    serverRoles: `${documentationBaseUrl}#server-roles`,
+    autoClear: `${documentationBaseUrl}#queue-auto-clear`,
+    loggingChannel: `${documentationBaseUrl}#logging-channel`,
+    afterSessionMessage: `${documentationBaseUrl}#after-session-message`,
+    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`
 } as const;
 
 /**
