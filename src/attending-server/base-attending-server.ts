@@ -8,7 +8,6 @@ import {
     TextChannel,
     VoiceState,
     ChannelType,
-    VoiceBasedChannel,
     Role,
     Snowflake
 } from 'discord.js';
@@ -39,7 +38,11 @@ import {
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { RolesConfigMenu } from './server-settings-menus.js';
-import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
+import {
+    initializationCheck,
+    sendInvite,
+    updateCommandHelpChannels
+} from './guild-actions.js';
 
 /**
  * Wrapper for TextChannel
@@ -546,7 +549,7 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -607,7 +610,7 @@ class AttendingServerV2 {
         }
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -919,42 +922,6 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Sends the VC invite to the student after successful dequeue
-     * @param student who will receive the invite
-     * @param helperVoiceChannel which vc channel to invite the student to
-     */
-    private async sendInvite(
-        student: GuildMember,
-        helperVoiceChannel: VoiceBasedChannel
-    ) {
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60,
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await student.send(
-            SimpleEmbed(
-                `It's your turn! Join the call: ${invite.toString()}`,
-                EmbedColor.Success
-            )
-        );
-        // remove the overwrite when the link dies
-        setTimeout(() => {
-            helperVoiceChannel.permissionOverwrites.cache
-                .find(overwrite => overwrite.id === student.id)
-                ?.delete()
-                .catch(() =>
-                    console.error(`Failed to delete overwrite for ${student.displayName}`)
-                );
-        }, 15 * 60 * 1000);
     }
 
     /**

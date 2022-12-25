@@ -4,7 +4,14 @@
  *  that don't directly affect AttendingServerV2's internal state
  */
 
-import { CategoryChannel, ChannelType, Guild, Snowflake } from 'discord.js';
+import {
+    CategoryChannel,
+    ChannelType,
+    Guild,
+    GuildMember,
+    Snowflake,
+    VoiceBasedChannel
+} from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
 import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
@@ -181,4 +188,42 @@ async function createOfficeVoiceChannels(
     );
 }
 
-export { initializationCheck, updateCommandHelpChannels, createOfficeVoiceChannels };
+/**
+ * Sends the VC invite to the student after successful dequeue
+ * @param student who will receive the invite
+ * @param helperVoiceChannel which vc channel to invite the student to
+ */
+async function sendInvite(student: GuildMember, helperVoiceChannel: VoiceBasedChannel): Promise<void> {
+    const [invite] = await Promise.all([
+        helperVoiceChannel.createInvite({
+            maxAge: 15 * 60,
+            maxUses: 1
+        }),
+        helperVoiceChannel.permissionOverwrites.create(student, {
+            ViewChannel: true,
+            Connect: true
+        })
+    ]);
+    await student.send(
+        SimpleEmbed(
+            `It's your turn! Join the call: ${invite.toString()}`,
+            EmbedColor.Success
+        )
+    );
+    // remove the overwrite when the link dies
+    setTimeout(() => {
+        helperVoiceChannel.permissionOverwrites.cache
+            .find(overwrite => overwrite.id === student.id)
+            ?.delete()
+            .catch(() =>
+                console.error(`Failed to delete overwrite for ${student.displayName}`)
+            );
+    }, 15 * 60 * 1000);
+}
+
+export {
+    initializationCheck,
+    updateCommandHelpChannels,
+    createOfficeVoiceChannels,
+    sendInvite
+};
