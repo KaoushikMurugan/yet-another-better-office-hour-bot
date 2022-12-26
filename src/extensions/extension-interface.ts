@@ -117,8 +117,8 @@ interface IServerExtension {
     /**
      * When all the queues are successfully created.
      * Happens before {@link onServerInitSuccess}
-     * @param server
-     * @param allQueues
+     * @param server the newly created server
+     * @param allQueues all the newly created queues
      */
     onAllQueuesInit: (
         server: FrozenServer,
@@ -245,10 +245,7 @@ interface IQueueExtension {
      * @param display the QueueDisplayV2 object that handles the rendering
      * @remark Extensions with custom embeds should override this method to get the display object
      */
-    onQueueRender: (
-        queue: FrozenQueue,
-        display: FrozenDisplay
-    ) => Promise<void>;
+    onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**
      * Called every hour
      * @param queue queue that triggered the call

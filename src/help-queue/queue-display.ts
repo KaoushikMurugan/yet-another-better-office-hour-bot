@@ -1,7 +1,7 @@
 /** @module HelpQueueV2 */
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { QueueViewModel } from './help-queue.js';
+import { QueueState, QueueViewModel } from './help-queue.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import {
     Collection,
@@ -9,7 +9,8 @@ import {
     ButtonBuilder,
     EmbedBuilder,
     BaseMessageOptions,
-    ButtonStyle
+    ButtonStyle,
+    Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
@@ -25,6 +26,37 @@ type QueueChannelEmbed = {
     /** whether it has already been rendered */
     stale: boolean;
 };
+
+/** Styled text for different queue states */
+const queueStateStyles: {
+    [K in QueueState]: {
+        color: EmbedColor;
+        statusText: { serious: string; notSerious: string };
+    };
+} = {
+    // colors are arbitary, feel free to change these
+    closed: {
+        color: EmbedColor.Purple,
+        statusText: {
+            serious: '**CLOSED**',
+            notSerious: '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
+        }
+    },
+    open: {
+        color: EmbedColor.Aqua,
+        statusText: {
+            serious: '**OPEN**',
+            notSerious: '**OPEN**\t(ﾟ∀ﾟ )'
+        }
+    },
+    paused: {
+        color: EmbedColor.Yellow,
+        statusText: {
+            serious: '**PAUSED**',
+            notSerious: '**PAUSED**'
+        }
+    }
+} as const;
 
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
@@ -82,30 +114,32 @@ class QueueDisplayV2 {
         embedTableMsg
             .setTitle(
                 `Queue for〚${viewModel.queueName}〛is ${
-                    viewModel.seriousModeEnabled
-                        ? viewModel.isOpen
-                            ? '**OPEN**'
-                            : '**CLOSED**'
-                        : viewModel.isOpen
-                        ? '**OPEN**\t(ﾟ∀ﾟ )'
-                        : '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
+                    queueStateStyles[viewModel.state].statusText[
+                        viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
+                    ]
                 }`
             )
             .setDescription(this.composeQueueAsciiTable(viewModel))
-            .setColor(viewModel.isOpen ? EmbedColor.Aqua : EmbedColor.Purple);
+            .setColor(queueStateStyles[viewModel.state].color);
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
-            !viewModel.isOpen &&
+            viewModel.state === 'closed' &&
             viewModel.studentDisplayNames.length !== 0
         ) {
-            embedTableMsg.setFields([
-                {
-                    name: 'Auto Clear',
-                    value: `This queue will be cleared <t:${Math.floor(
-                        viewModel.timeUntilAutoClear.getTime() / 1000
-                    )}:R>`
-                }
-            ]);
+            embedTableMsg.addFields({
+                name: 'Auto Clear',
+                value: `This queue will be cleared <t:${Math.floor(
+                    viewModel.timeUntilAutoClear.getTime() / 1000
+                )}:R>`
+            });
+        }
+        if (viewModel.state === 'paused') {
+            // this is optional, if the embed takes up too much screen remove this first
+            embedTableMsg.addFields({
+                name: 'Paused Queue',
+                value: `All helpers of this queue have paused new students from joining.
+                If you are already in the queue, helpers can still dequeue you.`
+            });
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
@@ -115,10 +149,9 @@ class QueueDisplayV2 {
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('✅')
-                .setDisabled(!viewModel.isOpen)
+                .setDisabled(viewModel.state !== 'open')
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
-
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 'leave',
@@ -150,27 +183,33 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        if (viewModel.helperIDs.length !== 0) {
+        const getVcStatus = (id: Snowflake) => {
+            const voiceChannel =
+                this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
+            const vcStatus = voiceChannel
+                ? voiceChannel.members.size > 1
+                    ? `Busy in [${voiceChannel.name}]`
+                    : `Idling in [${voiceChannel.name}]`
+                : 'Not in voice channel.';
+            return `<@${id}>\t**|\t${vcStatus}**`;
+        };
+        if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
             helperList
-                .setTitle('Currently available helpers and voice channel status')
-                .setDescription(
-                    viewModel.helperIDs
-                        .map(id => {
-                            const voiceChannel =
-                                this.queueChannel.channelObj.guild.voiceStates.cache.get(
-                                    id
-                                )?.channel;
-                            const vcStatus = voiceChannel
-                                ? voiceChannel.members.size > 1
-                                    ? `Busy in [${voiceChannel.name}]`
-                                    : `Idling in [${voiceChannel.name}]`
-                                : 'Not in voice channel.';
-                            return `<@${id}>\t**|\t${vcStatus}**`;
-                        })
-                        .join('\n')
-                )
-                .setColor(EmbedColor.Aqua);
+                .setTitle('Currently Available Helpers and Voice Channel Status')
+                .setColor(queueStateStyles[viewModel.state].color);
+            if (viewModel.activeHelperIDs.length > 0) {
+                helperList.addFields({
+                    name: 'Active Helpers',
+                    value: viewModel.activeHelperIDs.map(getVcStatus).join('\n')
+                });
+            }
+            if (viewModel.pausedHelperIDs.length > 0) {
+                helperList.addFields({
+                    name: 'Paused Helpers',
+                    value: viewModel.pausedHelperIDs.map(getVcStatus).join('\n')
+                });
+            }
             embedList.push(helperList);
         }
         this.queueChannelEmbeds.set(0, {
@@ -258,20 +297,20 @@ class QueueDisplayV2 {
 
     /**
      * Create an ascii table of the queue
-     * @param queue
+     * @param viewModel
      * @returns the ascii table as a `string` in a code block
      */
-    private composeQueueAsciiTable(queue: QueueViewModel): string {
+    private composeQueueAsciiTable(viewModel: QueueViewModel): string {
         const table = new AsciiTable3();
-        if (queue.studentDisplayNames.length > 0) {
+        if (viewModel.studentDisplayNames.length > 0) {
             table
                 .setHeading('Position', 'Student Name')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setAlign(2, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix')
                 .addRowMatrix([
-                    ...queue.studentDisplayNames.map((name, idx) => [
-                        queue.seriousModeEnabled
+                    ...viewModel.studentDisplayNames.map((name, idx) => [
+                        viewModel.seriousModeEnabled
                             ? idx + 1
                             : idx === 0
                             ? `(☞°∀°)☞ 1`
@@ -285,7 +324,7 @@ class QueueDisplayV2 {
                 .addRow('This queue is empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setStyle('unicode-mix');
-            if (!queue.seriousModeEnabled) {
+            if (!viewModel.seriousModeEnabled) {
                 if (rand <= 0.1) {
                     table.addRow(`=^ Φ ω Φ ^=`);
                 } else if (rand <= 0.3 && rand >= 0.11) {

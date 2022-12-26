@@ -85,7 +85,7 @@ const serverBackupSchema = z.object({
     queues: z.array(queueBackupSchema),
     seriousServer: z.boolean(),
     botAdminRoleId: z.string(),
-    helperRoleId: z.string(), // ! Migration code, remove in production
+    helperRoleId: z.optional(z.string()), // ! Migration code, remove in production
     staffRoleId: z.optional(z.string()), // ! Migration code, replace helperRoleId with this
     studentRoleId: z.string(),
     // ! Migration code, make this non-optional in 4.4

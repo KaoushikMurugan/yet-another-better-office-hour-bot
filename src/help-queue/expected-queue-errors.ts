@@ -7,12 +7,20 @@ const ExpectedQueueErrors = {
         new QueueError('Queue is already open.', queueName),
     alreadyClosed: (queueName: string) =>
         new QueueError('Queue is already closed.', queueName),
-    notOpen: (queueName: string) => new QueueError(`Queue is not open.`, queueName),
+    enqueueNotAllowed: (queueName: string) =>
+        new QueueError(
+            `You cannot join this queue because it's either closed or paused.`,
+            queueName
+        ),
     notActiveHelper: (queueName: string) =>
         new QueueError(`You are not one of the helpers for ${queueName}`, queueName),
+    alreadyPaused: (queueName: string) =>
+        new QueueError(`You have already paused helping.`, queueName),
+    alreadyActive: (queueName: string) =>
+        new QueueError(`You are already an active helper for ${queueName}`, queueName),
     alreadyInQueue: (queueName: string) =>
         new QueueError('You are already in the queue.', queueName),
-    enqueueHelper: (queueName: string) =>
+    cannotEnqueueHelper: (queueName: string) =>
         new QueueError("You can't enqueue yourself while helping.", queueName),
     dequeue: {
         closed: (queueName: string) =>

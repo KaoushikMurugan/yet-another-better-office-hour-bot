@@ -1,6 +1,6 @@
 /** @module HelpQueueV2 */
 
-import { GuildMember, Role, TextChannel, Collection } from 'discord.js';
+import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
@@ -14,17 +14,29 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 
+/**
+ * Render props for the queue display.
+ */
 type QueueViewModel = {
     queueName: string;
-    helperIDs: string[];
+    activeHelperIDs: Snowflake[];
+    pausedHelperIDs: Snowflake[];
     studentDisplayNames: string[];
-    isOpen: boolean;
+    state: QueueState;
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
 };
 
-/** @internal */
+/**
+ * Different timers that each queue keeps track of.
+ * Used as the key of HelpQueueV2.timers
+ */
 type QueueTimerType = 'QUEUE_PERIODIC_UPDATE' | 'QUEUE_AUTO_CLEAR';
+
+/**
+ * Current state of the queue
+ */
+type QueueState = 'closed' | 'open' | 'paused';
 
 /**
  * Represents the time until the queue is automatically cleared
@@ -36,17 +48,22 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  */
 class HelpQueueV2 {
     /** Keeps track of all the setTimout / setIntervals we started */
-    timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> = new Collection();
+    private timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> =
+        new Collection();
     /** Why so serious? */
     private _seriousModeEnabled = false;
     /** Set of active helpers' ids */
     private _activeHelperIds: Set<string> = new Set();
+    /** Set of helpers ids that have paused helping */
+    private _pausedHelperIds: Set<Snowflake> = new Set();
     /** The actual queue of students */
     private _students: Helpee[] = [];
     /** The set of students to notify when queue opens, key is Guildmember.id */
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
     /** When to automatically remove everyone */
     private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
+    /** The queue display */
+    private readonly display: QueueDisplayV2;
 
     /**
      * @param user YABOB's user object for QueueDisplay
@@ -57,7 +74,6 @@ class HelpQueueV2 {
     protected constructor(
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
-        private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
@@ -89,10 +105,6 @@ class HelpQueueV2 {
     get length(): number {
         return this._students.length;
     }
-    /** is the queue open */
-    get isOpen(): boolean {
-        return this.activeHelperIds.size > 0;
-    }
     /** name of corresponding queue */
     get queueName(): string {
         return this.queueChannel.queueName;
@@ -114,8 +126,12 @@ class HelpQueueV2 {
         return this._students;
     }
     /** set of helper IDs. Enforce readonly */
-    get activeHelperIds(): ReadonlySet<string> {
+    get activeHelperIds(): ReadonlySet<Snowflake> {
         return this._activeHelperIds;
+    }
+    /** set of paused helper ids */
+    get pausedHelperIds(): ReadonlySet<Snowflake> {
+        return this._pausedHelperIds;
     }
     /** Time until auto clear happens */
     get timeUntilAutoClear(): AutoClearTimeout {
@@ -124,6 +140,32 @@ class HelpQueueV2 {
     /** The seriousness of the queue */
     get seriousModeEnabled(): boolean {
         return this._seriousModeEnabled;
+    }
+    /** all the helpers for this queue, both active and paused */
+    get allHelpers(): Snowflake[] {
+        return [...this._activeHelperIds, ...this._pausedHelperIds];
+    }
+
+    /**
+     * Computes the state of the queue
+     * **This is the single source of truth for queue state**
+     * - don't turn this into a getter.
+     * - TS treats getters as static properties which conflicts with some of the checks
+     */
+    getQueueState(): QueueState {
+        return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
+            ? 'closed' // queue is Closed if 0 helpers is here
+            : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
+            ? 'paused' // paused if everyone paused
+            : 'open'; // open if at least 1 helper is active
+    }
+
+    /**
+     * Check if a helper is helping, whether they are active or paused
+     * @param helperId id of the helper guild member
+     */
+    hasHelper(helperId: GuildMemberId): boolean {
+        return this._activeHelperIds.has(helperId) || this._pausedHelperIds.has(helperId);
     }
 
     /**
@@ -138,18 +180,16 @@ class HelpQueueV2 {
     /**
      * Asynchronously creates a clean queue
      * @param queueChannel the corresponding text channel and its name
-     * @param user YABOB's client object. Used for queue rendering
-     * @param everyoneRole used for locking the queue
      * @param backupData backup queue data directly passed to the constructor
      */
     static async create(
         queueChannel: QueueChannel,
-        everyoneRole: Role,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ): Promise<HelpQueueV2> {
+        const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
         const queueExtensions = environment.disableExtensions
             ? []
             : await Promise.all([
@@ -158,8 +198,7 @@ class HelpQueueV2 {
                       queueChannel
                   )
               ]);
-        const display = new QueueDisplayV2(queueChannel);
-        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
+        const queue = new HelpQueueV2(queueChannel, queueExtensions, backupData);
         // They need to happen first
         // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(
@@ -209,15 +248,16 @@ class HelpQueueV2 {
      * @throws QueueError: do nothing if helperMemeber is already helping
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
-        if (this._activeHelperIds.has(helperMember.id)) {
+        if (this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
+        // default the helper to 'active state'
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.notifGroup.map(
                 notifMember =>
                     notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.activeHelperIds.has(notifMember.id) && // don't notify helpers
+                    !this.hasHelper(notifMember.id) && // don't notify helpers
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
@@ -236,14 +276,15 @@ class HelpQueueV2 {
      */
     async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
-        if (!this.isOpen) {
+        if (this.getQueueState() === 'closed') {
             throw ExpectedQueueErrors.alreadyClosed(this.queueName);
         }
-        if (!this._activeHelperIds.has(helperMember.id)) {
+        if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
         this._activeHelperIds.delete(helperMember.id);
-        if (!this.isOpen) {
+        this._pausedHelperIds.delete(helperMember.id);
+        if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
         await Promise.all([
@@ -253,19 +294,49 @@ class HelpQueueV2 {
     }
 
     /**
+     * Marks a helper with the 'paused' state
+     *  and moves the id from active helper id to pasued helperid
+     * @param helperMember
+     */
+    async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
+        if (this.pausedHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyPaused(this.queueName);
+        }
+        this._activeHelperIds.delete(helperMember.id);
+        this._pausedHelperIds.add(helperMember.id);
+        await this.triggerRender();
+        // TODO: Maybe emit a extension event here
+    }
+
+    /**
+     * Marks a helper with the 'active' state
+     *  and moves the id from paused helper id to active helperid
+     * - very similar to markHelperAsPaused, combine if necessary
+     * @param helperMember
+     */
+    async markHelperAsActive(helperMember: GuildMember): Promise<void> {
+        if (this.activeHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyActive(this.queueName);
+        }
+        this._pausedHelperIds.delete(helperMember.id);
+        this._activeHelperIds.add(helperMember.id);
+        await this.triggerRender();
+    }
+
+    /**
      * Enqueue a student
      * @param studentMember member to enqueue
      * @throws QueueError
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
-        if (!this.isOpen) {
-            throw ExpectedQueueErrors.notOpen(this.queueName);
+        if (this.getQueueState() !== 'open') {
+            throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
         }
-        if (this._students.find(s => s.member.id === studentMember.id) !== undefined) {
+        if (this._students.some(student => student.member.id === studentMember.id)) {
             throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
         }
-        if (this._activeHelperIds.has(studentMember.id)) {
-            throw ExpectedQueueErrors.enqueueHelper(this.queueName);
+        if (this.hasHelper(studentMember.id)) {
+            throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
         }
         const student: Helpee = {
             waitStart: new Date(),
@@ -274,7 +345,7 @@ class HelpQueueV2 {
         };
         this._students.push(student);
         // converted to use Array.map
-        const helperIdArray = [...this._activeHelperIds];
+        const helperIdArray = [...this.activeHelperIds];
         await Promise.all([
             ...helperIdArray.map(helperId =>
                 this.queueChannel.channelObj.members
@@ -306,10 +377,10 @@ class HelpQueueV2 {
         helperMember: GuildMember,
         targetStudentMember?: GuildMember
     ): Promise<Readonly<Helpee>> {
-        if (!this.isOpen) {
+        if (this.getQueueState() === 'closed') {
             throw ExpectedQueueErrors.dequeue.closed(this.queueName);
         }
-        if (!this._activeHelperIds.has(helperMember.id)) {
+        if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.dequeue.noPermission(this.queueName);
         }
         if (this._students.length === 0) {
@@ -433,11 +504,12 @@ class HelpQueueV2 {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
-            helperIDs: [...this._activeHelperIds],
+            activeHelperIDs: [...this.activeHelperIds],
+            pausedHelperIDs: [...this.pausedHelperIds],
             studentDisplayNames: this._students.map(
                 student => student.member.displayName
             ),
-            isOpen: this.isOpen,
+            state: this.getQueueState(),
             seriousModeEnabled: this._seriousModeEnabled,
             timeUntilAutoClear:
                 this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
@@ -502,7 +574,10 @@ class HelpQueueV2 {
             setTimeout(async () => {
                 // if the queue is open when the timer finishes, do nothing
                 // if auto clear is disabled half way, do nothing
-                if (!this.isOpen && this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
+                if (
+                    this.getQueueState() === 'closed' &&
+                    this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
+                ) {
                     await this.removeAllStudents();
                 }
             }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
@@ -511,4 +586,4 @@ class HelpQueueV2 {
     }
 }
 
-export { HelpQueueV2, QueueViewModel, AutoClearTimeout };
+export { HelpQueueV2, QueueViewModel, AutoClearTimeout, QueueState };

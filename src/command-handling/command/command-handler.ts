@@ -68,6 +68,8 @@ const commandMethodMap: { [commandName: string]: CommandCallback } = {
     next: next,
     queue: queue,
     start: start,
+    pause: pause,
+    resume: resume,
     stop: stop,
     help: help,
     set_logging_channel: setLoggingChannel,
@@ -271,6 +273,34 @@ async function stop(
     return SuccessMessages.finishedHelping(helpTimeEntry);
 }
 
+async function pause(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'pause',
+        'staff'
+    );
+    const existOtherActiveHelpers = await server.pauseHelping(member);
+    return SuccessMessages.pausedHelping(existOtherActiveHelpers);
+}
+
+async function resume(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<YabobEmbed> {
+    const server = isServerInteraction(interaction);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'pause',
+        'staff'
+    );
+    await server.resumeHelping(member);
+    return SuccessMessages.resumedHelping;
+}
+
 /**
  * The `/leave queue` command
  * @param interaction
@@ -341,8 +371,8 @@ async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<BaseMessageOptions> {
     const server = isServerInteraction(interaction);
-    const helpers = server.activeHelpers;
-    if (helpers === undefined || helpers.size === 0) {
+    const helpers = server.helpers;
+    if (helpers.size === 0) {
         return SimpleEmbed('No one is currently helping.');
     }
     const allQueues = await server.getQueueChannels();
@@ -360,7 +390,9 @@ async function listHelpers(
         .setStyle('unicode-mix')
         .addRowMatrix(
             [...helpers.values()].map(helper => [
-                helper.member.displayName, // Tutor Name
+                `${helper.member.displayName} ${
+                    helper.activeState === 'paused' ? '(paused)' : ''
+                }`, // Tutor Name
                 helper.member.roles.cache
                     .filter(
                         role =>

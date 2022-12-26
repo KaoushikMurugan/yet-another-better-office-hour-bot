@@ -36,6 +36,16 @@ export const SuccessMessages = {
         'You have started helping! Have fun!',
         EmbedColor.Success
     ),
+    pausedHelping: (existOtherActiveHelpers: boolean) =>
+        SimpleEmbed(
+            `Successfully paused helping. ${
+                existOtherActiveHelpers
+                    ? 'Since there are other active helpers for at least one of the queues that you help for, some queues will still accept new students.'
+                    : ''
+            }`,
+            EmbedColor.Success
+        ),
+    resumedHelping: SimpleEmbed('Successfully resumed helping.', EmbedColor.Success),
     finishedHelping: (helpTimeEntry: Required<Helper>) =>
         SimpleEmbed(
             `You helped for ` +

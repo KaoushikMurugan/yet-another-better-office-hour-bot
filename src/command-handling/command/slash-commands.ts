@@ -281,6 +281,16 @@ const autoGiveStudentRoleCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off auto giving student role')
     );
 
+const pauseCommand = new SlashCommandBuilder()
+    .setName('pause')
+    .setDescription(
+        'Prevents students from joining the queue, but allows the helper to dequeue.'
+    );
+
+const resumeCommand = new SlashCommandBuilder()
+    .setName('resume')
+    .setDescription('Allow students to join the queue again after /pause was used.');
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -332,7 +342,9 @@ const commandData = [
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
     settingsCommand.toJSON(),
-    autoGiveStudentRoleCommand.toJSON()
+    autoGiveStudentRoleCommand.toJSON(),
+    pauseCommand.toJSON(),
+    resumeCommand.toJSON()
 ];
 
 async function postSlashCommands(

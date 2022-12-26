@@ -4,7 +4,7 @@ import {
     IServerExtension
 } from '../extensions/extension-interface.js';
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
-import { blue } from '../utils/command-line-colors.js';
+import { blue, red } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { Guild } from 'discord.js';
@@ -41,8 +41,10 @@ class FirebaseServerBackupExtension
         const unpack = serverBackupSchema.safeParse(backupDocument.data());
         if (!unpack.success) {
             console.warn(
-                `External backups were found for ${this.guild.name} but contains invalid data. ` +
-                    `Creating new instance.`
+                red(
+                    `External backups were found for ${this.guild.name} but contains invalid data. ` +
+                        `Creating new instance.`
+                )
             );
             return undefined;
         }
@@ -59,7 +61,7 @@ class FirebaseServerBackupExtension
             })),
             timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
             autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
-            staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId
+            staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
         };
         return backupData;
     }

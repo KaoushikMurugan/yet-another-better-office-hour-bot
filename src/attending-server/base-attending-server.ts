@@ -8,7 +8,6 @@ import {
     TextChannel,
     VoiceState,
     ChannelType,
-    VoiceBasedChannel,
     Role,
     Snowflake
 } from 'discord.js';
@@ -33,13 +32,18 @@ import {
     CategoryChannelId,
     GuildMemberId,
     Optional,
+    OptionalRoleId,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { RolesConfigMenu } from './server-settings-menus.js';
-import { initializationCheck, updateCommandHelpChannels } from './guild-actions.js';
+import {
+    initializationCheck,
+    sendInvite,
+    updateCommandHelpChannels
+} from './guild-actions.js';
 
 /**
  * Wrapper for TextChannel
@@ -83,8 +87,8 @@ class AttendingServerV2 {
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
     /** cached result of {@link getQueueChannels} */
     private queueChannelsCache: QueueChannel[] = [];
-    /** unique active helpers, key is member.id */
-    private _activeHelpers: Collection<GuildMemberId, Helper> = new Collection();
+    /** unique helpers (both active and paused), key is member.id */
+    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /** server settings */
     private settings: ServerSettings = {
         afterSessionMessage: '',
@@ -101,17 +105,17 @@ class AttendingServerV2 {
 
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: IServerExtension[]
+        readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
 
     get queues(): ReadonlyArray<HelpQueueV2> {
         return [...this._queues.values()];
     }
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
-        return this._queues.map(queue => queue.students).flat();
+        return this.queues.flatMap(queue => queue.students);
     }
-    get activeHelpers(): ReadonlyMap<string, Helper> {
-        return this._activeHelpers;
+    get helpers(): ReadonlyMap<string, Helper> {
+        return this._helpers;
     }
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
@@ -139,18 +143,16 @@ class AttendingServerV2 {
     }
     /**
      * Returns an array of the roles for this server in decreasing order of hierarchy
-     * - The first element is the highest hierarchy role
-     * - The last element is the lowest hierarchy role
-     * - [Bot Admin, Helper, Student]
+     * - Returns in the order [Bot Admin, Helper, Student]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
-        key: keyof HierarchyRoles;
-        roleName: string;
-        id: string;
+        key: keyof HierarchyRoles; // this can be used to index hierarchyRoleConfigs and HierarchyRoles
+        displayName: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'];
+        id: OptionalRoleId;
     }> {
         return Object.entries(this.settings.hierarchyRoleIds).map(([name, id]) => ({
             key: name as keyof HierarchyRoles, // guaranteed to be the key
-            roleName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
+            displayName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
             id: id
         }));
     }
@@ -306,20 +308,18 @@ class AttendingServerV2 {
             return;
         }
         const vc = newVoiceState.channel;
-        const memberIsStudent = this._activeHelpers.some(helper =>
+        const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
+        const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
             const possibleHelpers = newVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
             );
             const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
@@ -331,7 +331,7 @@ class AttendingServerV2 {
         if (memberIsHelper) {
             await Promise.all(
                 this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
                 )
             );
         }
@@ -348,25 +348,23 @@ class AttendingServerV2 {
         member: GuildMember,
         oldVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
-        const memberIsStudent = this._activeHelpers.some(helper =>
+        const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
             )
         );
-        const memberIsHelper = this._activeHelpers.has(member.id);
+        const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
             const possibleHelpers = oldVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
-            );
+            ); // treat everyone that's not this student as a potential helper
             const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper =>
-                    queue.activeHelperIds.has(possibleHelper.id)
-                )
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
             );
             await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
                     overwrite => overwrite.id === member.id && overwrite.delete()
-                ),
+                ), // delete the student permission overwrite
                 ...this.serverExtensions.map(extension =>
                     extension.onStudentLeaveVC(this, member)
                 ),
@@ -380,7 +378,7 @@ class AttendingServerV2 {
             // the overwrite will die in 15 minutes after the invite was sent
             await Promise.all(
                 this.queues.map(
-                    queue => queue.activeHelperIds.has(member.id) && queue.triggerRender()
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
                 )
             );
         }
@@ -454,7 +452,7 @@ class AttendingServerV2 {
             parentCategoryId: parentCategory.id
         };
         const [helpQueue] = await Promise.all([
-            HelpQueueV2.create(queueChannel, this.guild.roles.everyone),
+            HelpQueueV2.create(queueChannel),
             this.createQueueRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
@@ -523,10 +521,10 @@ class AttendingServerV2 {
      * - QueueError: if the queue to dequeue from rejects
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
-        const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
-            this._activeHelpers.get(helperMember.id)
-        ];
+        const currentlyHelpingQueues = this._queues.filter(queue =>
+            queue.hasHelper(helperMember.id)
+        );
+        const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
@@ -534,9 +532,7 @@ class AttendingServerV2 {
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
-        const nonEmptyQueues = currentlyHelpingQueues.filter(
-            queue => queue.isOpen && queue.length !== 0
-        );
+        const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays will throw an error
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
@@ -552,7 +548,7 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -573,10 +569,10 @@ class AttendingServerV2 {
         targetStudentMember?: GuildMember,
         specificQueue?: QueueChannel
     ): Promise<Readonly<Helpee>> {
-        const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.activeHelperIds.has(helperMember.id)),
-            this._activeHelpers.get(helperMember.id)
-        ];
+        const currentlyHelpingQueues = this._queues.filter(queue =>
+            queue.hasHelper(helperMember.id)
+        );
+        const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
@@ -613,7 +609,7 @@ class AttendingServerV2 {
         }
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            this.sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
@@ -635,20 +631,22 @@ class AttendingServerV2 {
         helperMember: GuildMember,
         notify: boolean
     ): Promise<void> {
-        if (this._activeHelpers.has(helperMember.id)) {
+        if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
+            activeState: 'active',
             member: helperMember
         };
-        this._activeHelpers.set(helperMember.id, helper);
+        this._helpers.set(helperMember.id, helper);
+        const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
-            helperMember.roles.cache.map(role => role.name).includes(queue.queueName)
+            helperRoles.includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            ExpectedServerErrors.noClassRole;
+            throw ExpectedServerErrors.missingClassRole;
         }
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -666,11 +664,11 @@ class AttendingServerV2 {
      * @throws ServerError: If the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
-        const helper = this._activeHelpers.get(helperMember.id);
+        const helper = this._helpers.get(helperMember.id);
         if (helper === undefined) {
             throw ExpectedServerErrors.notHosting;
         }
-        this._activeHelpers.delete(helperMember.id);
+        this._helpers.delete(helperMember.id);
         const completeHelper: Required<Helper> = {
             ...helper,
             helpEnd: new Date()
@@ -682,7 +680,7 @@ class AttendingServerV2 {
                 )}`
         );
         const closableQueues = this._queues.filter(queue =>
-            queue.activeHelperIds.has(helperMember.id)
+            queue.hasHelper(helperMember.id)
         );
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
         await Promise.all(
@@ -691,6 +689,52 @@ class AttendingServerV2 {
             )
         );
         return completeHelper;
+    }
+
+    /**
+     * Marks a helper as 'paused'. Used for the '/pause' command
+     * @returns whether there are other active helpers
+     */
+    async pauseHelping(helperMember: GuildMember): Promise<boolean> {
+        const helper = this._helpers.get(helperMember.id);
+        if (!helper) {
+            throw ExpectedServerErrors.notHosting;
+        }
+        if (helper.activeState === 'paused') {
+            throw ExpectedServerErrors.alreadyPaused;
+        }
+        helper.activeState = 'paused';
+        const pausableQueues = this._queues.filter(queue =>
+            queue.activeHelperIds.has(helperMember.id)
+        );
+        await Promise.all(
+            pausableQueues.map(queue => queue.markHelperAsPaused(helperMember))
+        );
+        const existOtherActiveHelpers = pausableQueues.some(
+            queue => queue.activeHelperIds.size > 0
+        );
+        return existOtherActiveHelpers;
+    }
+
+    /**
+     * Change the helper state from paused to active
+     * @param helperMember
+     */
+    async resumeHelping(helperMember: GuildMember): Promise<void> {
+        const helper = this._helpers.get(helperMember.id);
+        if (!helper) {
+            throw ExpectedServerErrors.notHosting;
+        }
+        if (helper.activeState === 'active') {
+            throw ExpectedServerErrors.alreadyActive;
+        }
+        helper.activeState = 'active';
+        const resumableQueues = this._queues.filter(queue =>
+            queue.pausedHelperIds.has(helperMember.id)
+        );
+        await Promise.all(
+            resumableQueues.map(queue => queue.markHelperAsActive(helperMember))
+        );
     }
 
     /**
@@ -774,25 +818,21 @@ class AttendingServerV2 {
     ): Promise<void> {
         if (targetQueue !== undefined) {
             const queueToAnnounce = this._queues.get(targetQueue.parentCategoryId);
-            if (
-                queueToAnnounce === undefined ||
-                !helperMember.roles.cache.some(
-                    role =>
-                        role.name === targetQueue.queueName ||
-                        role.id === this.botAdminRoleID
-                )
-            ) {
+            const hasQueueRole = helperMember.roles.cache.some(
+                role =>
+                    role.name === targetQueue.queueName || role.id === this.botAdminRoleID
+            );
+            if (!queueToAnnounce || !hasQueueRole) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
+            const annountmentEmbed = SimpleEmbed(
+                `Staff member ${helperMember.displayName} announced:\n${announcement}`,
+                EmbedColor.Aqua,
+                `In queue: ${targetQueue.queueName}`
+            );
             await Promise.all(
                 queueToAnnounce.students.map(student =>
-                    student.member.send(
-                        SimpleEmbed(
-                            `Staff member ${helperMember.displayName} announced:\n${announcement}`,
-                            EmbedColor.Aqua,
-                            `In queue: ${targetQueue.queueName}`
-                        )
-                    )
+                    student.member.send(annountmentEmbed)
                 )
             );
             return;
@@ -806,16 +846,13 @@ class AttendingServerV2 {
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
+        const annountmentEmbed = SimpleEmbed(
+            `Staff member ${helperMember.displayName} announced:`,
+            EmbedColor.Aqua,
+            announcement
+        );
         await Promise.all(
-            studentsToAnnounceTo.map(student =>
-                student.member.send(
-                    SimpleEmbed(
-                        `Staff member ${helperMember.displayName} announced:`,
-                        EmbedColor.Aqua,
-                        announcement
-                    )
-                )
-            )
+            studentsToAnnounceTo.map(student => student.member.send(annountmentEmbed))
         );
     }
 
@@ -879,89 +916,6 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sends the VC invite to the student after successful dequeue
-     * @param student who will receive the invite
-     * @param helperVoiceChannel which vc channel to invite the student to
-     */
-    private async sendInvite(
-        student: GuildMember,
-        helperVoiceChannel: VoiceBasedChannel
-    ) {
-        const [invite] = await Promise.all([
-            helperVoiceChannel.createInvite({
-                maxAge: 15 * 60,
-                maxUses: 1
-            }),
-            helperVoiceChannel.permissionOverwrites.create(student, {
-                ViewChannel: true,
-                Connect: true
-            })
-        ]);
-        await student.send(
-            SimpleEmbed(
-                `It's your turn! Join the call: ${invite.toString()}`,
-                EmbedColor.Success
-            )
-        );
-        // remove the overwrite when the link dies
-        setTimeout(() => {
-            helperVoiceChannel.permissionOverwrites.cache
-                .find(overwrite => overwrite.id === student.id)
-                ?.delete()
-                .catch(() =>
-                    console.error(`Failed to delete overwrite for ${student.displayName}`)
-                );
-        }, 15 * 60 * 1000);
-    }
-
-    /**
-     * Creates all the office hour queues
-     * @param queueBackups
-     * - if a backup extension is enabled, this is the queue data to load
-     * @param hoursUntilAutoClear how long until the queues are cleared
-     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
-     */
-    private async initAllQueues(
-        queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
-        seriousModeEnabled = false
-    ): Promise<void> {
-        const queueChannels = await this.getQueueChannels(false);
-        await Promise.all(
-            queueChannels.map(async channel => {
-                const backup = queueBackups?.find(
-                    backup => backup.parentCategoryId === channel.parentCategoryId
-                );
-                const completeBackup = backup
-                    ? {
-                          ...backup,
-                          timeUntilAutoClear: hoursUntilAutoClear,
-                          seriousModeEnabled: seriousModeEnabled
-                      }
-                    : undefined;
-                this._queues.set(
-                    channel.parentCategoryId,
-                    await HelpQueueV2.create(
-                        channel,
-                        this.guild.roles.everyone,
-                        completeBackup
-                    )
-                );
-            })
-        );
-        console.log(
-            `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue(' with their extensions')
-            }!`
-        );
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onAllQueuesInit(this, this.queues)
-            )
-        );
-    }
-
-    /**
      * Creates all the command access hierarchy roles
      * @param allowDuplicate if true, creates new roles even if they already exist
      * - Duplicates will be created if roles with the same name already exist
@@ -972,18 +926,19 @@ class AttendingServerV2 {
         everyoneIsStudent: boolean
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
-        const everyone = this.guild.roles.everyone.id;
+        const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
         for (const role of this.sortedHierarchyRoles) {
             // do the search if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                role.key in SpecialRoleValues || role.id === everyone
-                    ? allRoles.find(serverRole => serverRole.name === role.roleName)
+                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
+                role.id === everyoneRoleId
+                    ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
-                this.hierarchyRoleIds.student = everyone;
+                this.hierarchyRoleIds.student = everyoneRoleId;
                 continue;
             }
             if (existingRole && !allowDuplicate) {
@@ -991,7 +946,10 @@ class AttendingServerV2 {
                 foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
-            const newRole = await this.guild.roles.create(hierarchyRoleConfigs[role.key]);
+            const newRole = await this.guild.roles.create({
+                ...hierarchyRoleConfigs[role.key],
+                name: hierarchyRoleConfigs[role.key].displayName
+            });
             this.hierarchyRoleIds[role.key] = newRole.id;
             // set by indices that are larger than arr length is valid in JS
             // ! do NOT do this with important arrays bc there will be 'empty items'
@@ -1012,7 +970,8 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        for (const { key: key, id } of this.sortedHierarchyRoles) {
+        // shorthand syntax to take the propertiess of an object with the same name
+        for (const { key, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
                 this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
                 hierarchyRoleDeleted = true;
@@ -1040,6 +999,48 @@ class AttendingServerV2 {
                         position: 1
                     });
             })
+        );
+    }
+
+    /**
+     * Creates all the office hour queues
+     * @param queueBackups the queue data to load
+     * @param hoursUntilAutoClear how long until the queues are cleared
+     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
+     */
+    private async initAllQueues(
+        queueBackups?: QueueBackup[],
+        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        seriousModeEnabled = false
+    ): Promise<void> {
+        const queueChannels = await this.getQueueChannels(false);
+        await Promise.all(
+            queueChannels.map(async channel => {
+                const backup = queueBackups?.find(
+                    backup => backup.parentCategoryId === channel.parentCategoryId
+                );
+                const completeBackup = backup
+                    ? {
+                          ...backup,
+                          timeUntilAutoClear: hoursUntilAutoClear,
+                          seriousModeEnabled: seriousModeEnabled
+                      }
+                    : undefined;
+                this._queues.set(
+                    channel.parentCategoryId,
+                    await HelpQueueV2.create(channel, completeBackup)
+                );
+            })
+        );
+        console.log(
+            `All queues in '${this.guild.name}' successfully created ${
+                environment.disableExtensions ? '' : blue(' with their extensions')
+            }!`
+        );
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onAllQueuesInit(this, this.queues)
+            )
         );
     }
 }
