@@ -63,9 +63,9 @@ function isValidCustomIdTuple(
     decompressedTuple: string[]
 ): decompressedTuple is CustomIdTuple<ComponentLocation> {
     const lengthMatch = decompressedTuple.length === ExpectedLength;
-    const isValidType = !!(
-        decompressedTuple[0] && ['dm', 'queue', 'other'].includes(decompressedTuple[0])
-    );
+    // TODO: Check for expected ComponentLocation here
+    const isValidType =
+        !!decompressedTuple[0] && ['dm', 'queue', 'other'].includes(decompressedTuple[0]);
     const snowflakesAreValid = // snowflakes should only have numbers
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         /^[0-9]+$/.test(decompressedTuple[2]!) && /^[0-9]+$/.test(decompressedTuple[3]!);
@@ -74,8 +74,6 @@ function isValidCustomIdTuple(
 
 /**
  * Decompresses the obfuscated id into CustomIdTuple
- * @param expectedComponentType 'queue' 'dm' or 'other'
- * - **The consumer of this function needs to specify the correct type**
  * @param compressedId the id to decompress
  * @returns the original tuple passed into buildComponent
  * @throws CommandParseError or JSONParseError
@@ -95,6 +93,7 @@ function decompressComponentId(compressedId: string): CustomIdTuple<ComponentLoc
 
 /**
  * Decompresses the component id and extract the component name
+ * - this is kind of a duplicate of decompressComponentId but skips the validation step
  * @param compressedId compressed component custom id
  * @returns component name
  */
@@ -121,12 +120,12 @@ function safeDecompressComponentId<T extends ComponentLocation>(
 ): Result<CustomIdTuple<T>, CommandParseError> {
     const rawDecompressed = LZString.decompressFromUTF16(compressedId);
     if (!rawDecompressed) {
-        return Err(new CommandParseError('Invalid Component ID'));
+        return Err(new CommandParseError('Cannot decompress this component id'));
     }
     try {
         const parsed = JSON.parse(rawDecompressed);
         if (!isValidCustomIdTuple(parsed)) {
-            return Err(new CommandParseError('Invalid Component ID'));
+            return Err(new CommandParseError('Invalid Component ID Tuple'));
         }
         return Ok(JSON.parse(rawDecompressed) as CustomIdTuple<T>);
     } catch {

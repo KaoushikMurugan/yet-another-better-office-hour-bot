@@ -32,6 +32,7 @@ import {
     CategoryChannelId,
     GuildMemberId,
     Optional,
+    OptionalRoleId,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -142,14 +143,12 @@ class AttendingServerV2 {
     }
     /**
      * Returns an array of the roles for this server in decreasing order of hierarchy
-     * - The first element is the highest hierarchy role
-     * - The last element is the lowest hierarchy role
-     * - [Bot Admin, Helper, Student]
+     * - Returns in the order [Bot Admin, Helper, Student]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
-        key: keyof HierarchyRoles;
+        key: keyof HierarchyRoles; // this can be used to index hierarchyRoleConfigs and HierarchyRoles
         displayName: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'];
-        id: string;
+        id: OptionalRoleId;
     }> {
         return Object.entries(this.settings.hierarchyRoleIds).map(([name, id]) => ({
             key: name as keyof HierarchyRoles, // guaranteed to be the key
@@ -358,14 +357,14 @@ class AttendingServerV2 {
         if (memberIsStudent) {
             const possibleHelpers = oldVoiceState.channel.members.filter(
                 vcMember => vcMember.id !== member.id
-            );
+            ); // treat everyone that's not this student as a potential helper
             const queuesToRerender = this.queues.filter(queue =>
                 possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
             );
             await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
                     overwrite => overwrite.id === member.id && overwrite.delete()
-                ),
+                ), // delete the student permission overwrite
                 ...this.serverExtensions.map(extension =>
                     extension.onStudentLeaveVC(this, member)
                 ),
@@ -522,10 +521,10 @@ class AttendingServerV2 {
      * - QueueError: if the queue to dequeue from rejects
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
-        const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.hasHelper(helperMember.id)),
-            this._helpers.get(helperMember.id)
-        ];
+        const currentlyHelpingQueues = this._queues.filter(queue =>
+            queue.hasHelper(helperMember.id)
+        );
+        const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
@@ -570,10 +569,10 @@ class AttendingServerV2 {
         targetStudentMember?: GuildMember,
         specificQueue?: QueueChannel
     ): Promise<Readonly<Helpee>> {
-        const [currentlyHelpingQueues, helperObject] = [
-            this._queues.filter(queue => queue.hasHelper(helperMember.id)),
-            this._helpers.get(helperMember.id)
-        ];
+        const currentlyHelpingQueues = this._queues.filter(queue =>
+            queue.hasHelper(helperMember.id)
+        );
+        const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
@@ -647,7 +646,7 @@ class AttendingServerV2 {
             helperRoles.includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            ExpectedServerErrors.missingClassRole;
+            throw ExpectedServerErrors.missingClassRole;
         }
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -727,8 +726,7 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.notHosting;
         }
         if (helper.activeState === 'active') {
-            // maybe show a different error
-            throw ExpectedServerErrors.alreadyHosting;
+            throw ExpectedServerErrors.alreadyActive;
         }
         helper.activeState = 'active';
         const resumableQueues = this._queues.filter(queue =>
@@ -820,14 +818,11 @@ class AttendingServerV2 {
     ): Promise<void> {
         if (targetQueue !== undefined) {
             const queueToAnnounce = this._queues.get(targetQueue.parentCategoryId);
-            if (
-                queueToAnnounce === undefined ||
-                !helperMember.roles.cache.some(
-                    role =>
-                        role.name === targetQueue.queueName ||
-                        role.id === this.botAdminRoleID
-                )
-            ) {
+            const hasQueueRole = helperMember.roles.cache.some(
+                role =>
+                    role.name === targetQueue.queueName || role.id === this.botAdminRoleID
+            );
+            if (!queueToAnnounce || !hasQueueRole) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
             const annountmentEmbed = SimpleEmbed(
@@ -931,7 +926,7 @@ class AttendingServerV2 {
         everyoneIsStudent: boolean
     ): Promise<void> {
         const allRoles = await this.guild.roles.fetch();
-        const everyone = this.guild.roles.everyone.id;
+        const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
         for (const role of this.sortedHierarchyRoles) {
@@ -939,11 +934,11 @@ class AttendingServerV2 {
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
                 (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
-                role.id === everyone
+                role.id === everyoneRoleId
                     ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
-                this.hierarchyRoleIds.student = everyone;
+                this.hierarchyRoleIds.student = everyoneRoleId;
                 continue;
             }
             if (existingRole && !allowDuplicate) {
@@ -975,7 +970,8 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        for (const { key: key, id } of this.sortedHierarchyRoles) {
+        // shorthand syntax to take the propertiess of an object with the same name
+        for (const { key, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
                 this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
                 hierarchyRoleDeleted = true;
@@ -1008,8 +1004,7 @@ class AttendingServerV2 {
 
     /**
      * Creates all the office hour queues
-     * @param queueBackups
-     * - if a backup extension is enabled, this is the queue data to load
+     * @param queueBackups the queue data to load
      * @param hoursUntilAutoClear how long until the queues are cleared
      * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
      */

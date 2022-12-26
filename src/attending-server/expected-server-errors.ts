@@ -17,6 +17,9 @@ const ExpectedServerErrors = {
     alreadyPaused: new ServerError(
         'You have already paused students from joining the queue. Did you mean to use `/resume`?'
     ),
+    alreadyActive: new ServerError(
+        'You are already an active helper. Did you mean to use `/pause`?'
+    ),
     queueAlreadyExists: (name: string) => new ServerError(`Queue ${name} already exists`),
     categoryAlreadyExists: (name: string) =>
         new ServerError(`Category '${name}' already exists`),
