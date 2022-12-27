@@ -11,9 +11,9 @@ import {
     DMSelectMenuCallback,
     ModalSubmitCallback,
     RegularButtonCallback,
-    SelectMenuCallback
+    SelectMenuCallback,
+    QueueButtonCallback
 } from '../utils/type-aliases.js';
-import { QueueButtonCallback } from '../../dist/src/utils/type-aliases.js';
 
 /**
  * The information needed for the generic command interaction handler
@@ -67,7 +67,7 @@ interface ModalSubmitHandlerProps {
     /** Regular guild based modals */
     regularModals: { [modalName: string]: ModalSubmitCallback };
     /** Modals that will always REPLY inside the hdndler function body */
-    updateParentInterfactionModals: {
+    updateParentInteractionModals: {
         [modalName: string]: (i: ModalSubmitInteraction<'cached'>) => Promise<undefined>;
     };
     /** modals inside DM channels */

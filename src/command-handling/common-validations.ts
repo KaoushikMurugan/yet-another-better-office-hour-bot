@@ -24,18 +24,29 @@ import {
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './expected-interaction-errors.js';
 import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { GuildId } from '../utils/type-aliases.js';
 
 /**
- * Checks if the command came from a server with correctly initialized YABOB
+ * Checks if the interaction is associated with a correctly initialized AttendingServerV2
  * - Extensions that wish to do additional checks can use this as a base
  * @returns the {@link AttendingServerV2} object
  */
-function isServerInteraction(interaction: Interaction<'cached'>): AttendingServerV2 {
-    const server = attendingServers.get(interaction.guild.id);
-    if (!server) {
-        throw ExpectedParseErrors.nonServerInterction(interaction.guild.name);
+function isServerInteraction(
+    idOrInteraction: Interaction<'cached'> | GuildId
+): AttendingServerV2 {
+    if (typeof idOrInteraction === 'string') {
+        const server = attendingServers.get(idOrInteraction);
+        if (!server) {
+            throw ExpectedParseErrors.nonServerInterction(idOrInteraction);
+        }
+        return server;
+    } else {
+        const server = attendingServers.get(idOrInteraction.guild.id);
+        if (!server) {
+            throw ExpectedParseErrors.nonServerInterction(idOrInteraction.guild.name);
+        }
+        return server;
     }
-    return server;
 }
 
 /**
@@ -147,7 +158,7 @@ function isTriggeredByUserWithValidEmail(
 
 /**
  * Checks if the queue channel has a parent folder
- * @returns the complete {@link AttendingServerV2.QueueChannel} that {@link AttendingServerV2} accepts
+ * @returns the complete {@link QueueChannel} that {@link AttendingServerV2} accepts
  */
 function isFromQueueChannelWithParent(
     interaction: ButtonInteraction<'cached'> | ChatInputCommandInteraction<'cached'>,
