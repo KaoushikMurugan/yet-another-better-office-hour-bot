@@ -106,6 +106,10 @@ type DefaultButtonCallback = (
     interaction: ButtonInteraction<'cached'>
 ) => Promise<BaseMessageOptions>;
 
+type RegularButtonCallback = (
+    interaction: ButtonInteraction<'cached'>
+) => Promise<BaseMessageOptions>;
+
 type QueueButtonCallback = (
     queueName: string,
     interaction: ButtonInteraction<'cached'>
@@ -224,6 +228,7 @@ export {
     CommandCallback,
     DefaultButtonCallback,
     QueueButtonCallback,
+    RegularButtonCallback,
     DMButtonCallback,
     ModalSubmitCallback,
     DMModalSubmitCallback,
