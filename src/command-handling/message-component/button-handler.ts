@@ -1,4 +1,12 @@
-/** @module BuiltInHandlers */
+/**
+ * @packageDocumentation
+ * @module BuiltInHandlers
+ * Responsible for preprocessing button presses and dispatching them to servers
+ * ----
+ * @category Handler Classes
+ * @see BuiltInCommandHander for detailed comments
+ * - The difference here is that a button command is guaranteed to happen in a queue as of right now
+ */
 import { ButtonInteraction, TextBasedChannel } from 'discord.js';
 import {
     EmbedColor,
@@ -37,25 +45,20 @@ import {
     decompressComponentId,
     extractComponentName
 } from '../../utils/component-id-factory.js';
+import { ButtonNames } from '../interaction-names.js';
 
-/**
- * Responsible for preprocessing button presses and dispatching them to servers
- * ----
- * @category Handler Classes
- * @see BuiltInCommandHander for detailed comments
- * - The difference here is that a button command is guaranteed to happen in a queue as of right now
- */
 
-/**
+
+/**,
  * Button method map for queue buttons
  */
 const queueButtonMethodMap: {
     [buttonName: string]: QueueButtonCallback;
 } = {
-    join: join,
-    leave: leave,
-    notif: joinNotifGroup,
-    removeN: leaveNotifGroup
+    [ButtonNames.Join]: join,
+    [ButtonNames.Leave]: leave,
+    [ButtonNames.Notif]: joinNotifGroup,
+    [ButtonNames.RemoveNotif]: leaveNotifGroup
 } as const;
 
 /**
@@ -64,17 +67,21 @@ const queueButtonMethodMap: {
 const defaultButtonMethodMap: {
     [buttonName: string]: DefaultButtonCallback;
 } = {
-    return_to_main_menu: showSettingsMainMenu,
-    server_role_config_1: interaction => createServerRoles(interaction, false, false),
-    server_role_config_1a: interaction => createServerRoles(interaction, false, true),
-    server_role_config_2: interaction => createServerRoles(interaction, true, false),
-    server_role_config_2a: interaction => createServerRoles(interaction, true, true),
-    after_session_message_config_2: disableAfterSessionMessage,
-    queue_auto_clear_config_2: disableQueueAutoClear,
-    logging_channel_config_2: disableLoggingChannel,
-    auto_give_student_role_config_1: interaction =>
+    [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
+    [ButtonNames.ServerRoleConfig1]: interaction =>
+        createServerRoles(interaction, false, false),
+    [ButtonNames.ServerRoleConfig1a]: interaction =>
+        createServerRoles(interaction, false, true),
+    [ButtonNames.ServerRoleConfig2]: interaction =>
+        createServerRoles(interaction, true, false),
+    [ButtonNames.ServerRoleConfig2a]: interaction =>
+        createServerRoles(interaction, true, true),
+    [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
+    [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
+    [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
+    [ButtonNames.AutoGiveStudentRoleConfig1]: interaction =>
         toggleAutoGiveStudentRole(interaction, true),
-    auto_give_student_role_config_2: interaction =>
+    [ButtonNames.AutoGiveStudentRoleConfig2]: interaction =>
         toggleAutoGiveStudentRole(interaction, false)
 } as const;
 
@@ -86,8 +93,8 @@ const defaultButtonMethodMap: {
 const showModalOnlyButtons: {
     [buttonName: string]: (inter: ButtonInteraction<'cached'>) => Promise<void>;
 } = {
-    after_session_message_config_1: showAfterSessionMessageModal,
-    queue_auto_clear_config_1: showQueueAutoClearModal
+    [ButtonNames.ShowAfterSessionMessageModal]: showAfterSessionMessageModal,
+    [ButtonNames.ShowQueueAutoClearModal]: showQueueAutoClearModal
 } as const;
 
 /**
@@ -96,28 +103,32 @@ const showModalOnlyButtons: {
 const dmButtonMethodMap: {
     [buttonName: string]: DMButtonCallback;
 } = {
-    server_role_config_1: interaction => createServerRolesDM(false, false, interaction),
-    server_role_config_1a: interaction => createServerRolesDM(false, true, interaction),
-    server_role_config_2: interaction => createServerRolesDM(true, false, interaction),
-    server_role_config_2a: interaction => createServerRolesDM(true, true, interaction)
+    [ButtonNames.ServerRoleConfig1]: interaction =>
+        createServerRolesDM(false, false, interaction),
+    [ButtonNames.ServerRoleConfig1a]: interaction =>
+        createServerRolesDM(false, true, interaction),
+    [ButtonNames.ServerRoleConfig2]: interaction =>
+        createServerRolesDM(true, false, interaction),
+    [ButtonNames.ServerRoleConfig2a]: interaction =>
+        createServerRolesDM(true, true, interaction)
 } as const;
 
 /**
  * List of buttons that update the parent interaction
  */
-const updateParentInteractionButtons = [
-    'return_to_main_menu',
-    'server_role_config_1',
-    'server_role_config_1a',
-    'server_role_config_2',
-    'server_role_config_2a',
-    'after_session_message_config_1',
-    'after_session_message_config_2',
-    'queue_auto_clear_config_1',
-    'queue_auto_clear_config_2',
-    'logging_channel_config_2',
-    'auto_give_student_role_config_1',
-    'auto_give_student_role_config_2'
+const updateParentInteractionButtons: string[] = [
+    ButtonNames.ReturnToMainMenu,
+    ButtonNames.ServerRoleConfig1,
+    ButtonNames.ServerRoleConfig1a,
+    ButtonNames.ServerRoleConfig2,
+    ButtonNames.ServerRoleConfig2a,
+    ButtonNames.DisableAfterSessionMessage,
+    ButtonNames.ShowAfterSessionMessageModal,
+    ButtonNames.DisableQueueAutoClear,
+    ButtonNames.ShowQueueAutoClearModal,
+    ButtonNames.DisableLoggingChannel,
+    ButtonNames.AutoGiveStudentRoleConfig1,
+    ButtonNames.AutoGiveStudentRoleConfig2
 ];
 
 /**
@@ -524,5 +535,5 @@ export {
     builtInButtonHandlerCanHandle,
     builtInDMButtonHandlerCanHandle,
     processBuiltInButton,
-    processBuiltInDMButton
+    processBuiltInDMButton,
 };

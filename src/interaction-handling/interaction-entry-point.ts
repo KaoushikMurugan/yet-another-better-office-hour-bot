@@ -1,5 +1,4 @@
 import { Interaction } from 'discord.js';
-import { commandMethodMap2 } from '../command-handling/command/command-handler.js';
 import {
     ButtonHandlerProps,
     CommandHandlerProps,

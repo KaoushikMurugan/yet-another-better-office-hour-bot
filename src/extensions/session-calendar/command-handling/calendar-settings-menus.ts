@@ -9,6 +9,7 @@ import {
 } from '../../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
 import { FrozenServer } from '../../extension-utils.js';
+import { CalendarButtonNames } from '../calendar-interaction-names.js';
 
 /**
  * Options for the server settings main menu
@@ -58,7 +59,7 @@ function calendarSettingsConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'calendar_settings_config_menui_1',
+            CalendarButtonNames.ShowCalendarSettingsModal,
             server.guild.id,
             channelId
         ])
@@ -67,7 +68,7 @@ function calendarSettingsConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'calendar_settings_config_menui_2',
+            CalendarButtonNames.ResetCalendarSettings,
             server.guild.id,
             channelId
         ])

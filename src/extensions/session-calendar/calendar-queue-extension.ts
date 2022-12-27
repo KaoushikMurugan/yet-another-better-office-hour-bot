@@ -13,7 +13,8 @@ import {
     UpComingSessionViewModel
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
-import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
+import { buildComponent } from '../../utils/component-id-factory.js';
+import { CalendarButtonNames } from './calendar-interaction-names.js';
 
 /**
  * Calendar Extension for individual queues
@@ -142,8 +143,8 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 .setStyle(ButtonStyle.Link), // this method is required
             buildComponent(new ButtonBuilder(), [
                 'queue',
-                'refresh',
-                UnknownId,
+                CalendarButtonNames.Refresh,
+                this.queueChannel.channelObj.guildId,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('🔄')

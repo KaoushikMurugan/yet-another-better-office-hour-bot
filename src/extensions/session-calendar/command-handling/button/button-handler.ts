@@ -22,26 +22,27 @@ import {
     CalendarSuccessMessages
 } from '../calendar-success-messages.js';
 import { calendarSettingsModal } from '../modal/calendar-modal-objects.js';
+import { CalendarButtonNames } from '../../calendar-interaction-names.js';
 
 // #region Method Maps
 
 const queueButtonMethodMap: { [buttonName: string]: QueueButtonCallback } = {
-    refresh: requestCalendarRefresh
+    [CalendarButtonNames.Refresh]: requestCalendarRefresh
 } as const;
 
 const defaultButtonMethodMap: { [buttonName: string]: DefaultButtonCallback } = {
-    calendar_settings_config_menui_2: resetCalendarSettings
+    [CalendarButtonNames.ResetCalendarSettings]: resetCalendarSettings
 } as const;
 
-const updateParentInteractionButtons = [
-    'calendar_settings_config_menui_1',
-    'calendar_settings_config_menui_2'
+const updateParentInteractionButtons: string[] = [
+    CalendarButtonNames.ShowCalendarSettingsModal,
+    CalendarButtonNames.ResetCalendarSettings
 ];
 
 const showModalOnlyButtons: {
     [buttonName: string]: (i: ButtonInteraction<'cached'>) => Promise<void>;
 } = {
-    calendar_settings_config_menui_1: showCalendarSettingsModal
+    [CalendarButtonNames.ShowCalendarSettingsModal]: showCalendarSettingsModal
 } as const;
 
 // #endregion
