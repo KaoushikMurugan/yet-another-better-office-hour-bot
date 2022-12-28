@@ -16,10 +16,11 @@ import { environment } from '../../environment/environment-manager.js';
 import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
+import { CommandNames } from '../interaction-names.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
-    .setName('queue')
+    .setName(CommandNames.queue)
     .setDescription('Add or remove queue channels to the server (admin only)')
     .addSubcommand(subcommand =>
         subcommand // /queue add [queue_name]
@@ -47,7 +48,7 @@ const queueCommand = new SlashCommandBuilder()
 
 // /enqueue [queue_name] (user)
 const enqueueCommand = new SlashCommandBuilder()
-    .setName('enqueue')
+    .setName(CommandNames.enqueue)
     .setDescription('Enter a help queue')
     .addChannelOption(option =>
         option
@@ -59,7 +60,7 @@ const enqueueCommand = new SlashCommandBuilder()
 
 // /next (queue_name) (user)
 const dequeueCommand = new SlashCommandBuilder()
-    .setName('next')
+    .setName(CommandNames.next)
     .setDescription('Bring in the next student to help from any of your queues (FIFO)')
     .addChannelOption(option =>
         option
@@ -74,7 +75,7 @@ const dequeueCommand = new SlashCommandBuilder()
 
 // /start (mute_notif)
 const startCommand = new SlashCommandBuilder()
-    .setName('start')
+    .setName(CommandNames.start)
     .setDescription('Start helping students')
     .addBooleanOption(option =>
         option
@@ -87,12 +88,12 @@ const startCommand = new SlashCommandBuilder()
 
 // /stop
 const stopCommand = new SlashCommandBuilder()
-    .setName('stop')
+    .setName(CommandNames.stop)
     .setDescription('Stop helping students');
 
 // /leave
 const leaveCommand = new SlashCommandBuilder()
-    .setName('leave')
+    .setName(CommandNames.leave)
     .setDescription('Leave your current queue')
     .addChannelOption(option =>
         option
@@ -104,7 +105,7 @@ const leaveCommand = new SlashCommandBuilder()
 
 // /clear (queue_name) (all)
 const clearCommand = new SlashCommandBuilder()
-    .setName('clear')
+    .setName(CommandNames.clear)
     .setDescription('Clear all of the waiting students from a queue.')
     .addChannelOption(option =>
         option
@@ -116,12 +117,12 @@ const clearCommand = new SlashCommandBuilder()
 
 // /clear_all
 const clearAllCommand = new SlashCommandBuilder()
-    .setName('clear_all')
+    .setName(CommandNames.clear_all)
     .setDescription('Admin only. Clears all the queues on this server');
 
 // /announce [message] (queue_name)
 const announceCommand = new SlashCommandBuilder()
-    .setName('announce')
+    .setName(CommandNames.announce)
     .setDescription('Announce a message to all of the waiting students in a queue.')
     .addStringOption(option =>
         option
@@ -141,12 +142,12 @@ const announceCommand = new SlashCommandBuilder()
 
 // /list_helpers
 const listHelpersCommand = new SlashCommandBuilder()
-    .setName('list_helpers')
+    .setName(CommandNames.list_helpers)
     .setDescription('See who is online and helping.');
 
 // /cleanup_queue [queue_name]
 const cleanupQueue = new SlashCommandBuilder()
-    .setName('cleanup_queue')
+    .setName(CommandNames.cleanup_queue)
     .setDescription(
         "Debug feature: Forces updates of embed in the specified queue's #queue channel"
     )
@@ -160,29 +161,29 @@ const cleanupQueue = new SlashCommandBuilder()
 
 // /cleanup_all
 const cleanupAllQueues = new SlashCommandBuilder()
-    .setName('cleanup_all')
+    .setName(CommandNames.cleanup_all)
     .setDescription('Debug feature: Forces updates of embed in all #queue channels');
 
 // /cleanup_help_channel
 const cleanupHelpChannelCommand = new SlashCommandBuilder()
-    .setName('cleanup_help_channels')
+    .setName(CommandNames.cleanup_help_channels)
     .setDescription('Debug feature: Force updates the command help channels');
 
 // /set_after_session_message
 const setAfterSessionMessageCommand = new SlashCommandBuilder()
-    .setName('set_after_session_msg')
+    .setName(CommandNames.set_after_session_msg)
     .setDescription(
         'Sets the message automatically sent to students after they leave the voice chat'
     );
 
 // /set_queue_auto_clear
 const setQueueAutoClear = new SlashCommandBuilder()
-    .setName('set_queue_auto_clear')
+    .setName(CommandNames.set_queue_auto_clear)
     .setDescription('Sets the timeout before automatically clearing all the queues');
 
 // /set_logging_channel [channel]
 const setLoggingChannelCommand = new SlashCommandBuilder()
-    .setName('set_logging_channel')
+    .setName(CommandNames.set_logging_channel)
     .setDescription('Sets the channel where the bot will log events')
     .addChannelOption(option =>
         option
@@ -194,12 +195,12 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
 
 // /stop_logging
 const stopLoggingCommand = new SlashCommandBuilder()
-    .setName('stop_logging')
+    .setName(CommandNames.stop_logging)
     .setDescription('Stops the bot from logging events');
 
 // /serious_mode [enable]
 const activateSeriousModeCommand = new SlashCommandBuilder()
-    .setName('serious_mode')
+    .setName(CommandNames.serious_mode)
     .setDescription('Activates serious mode')
     .addSubcommand(subcommand =>
         subcommand.setName('on').setDescription('Turns on serious mode')
@@ -210,7 +211,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
 
 // /create_officies [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
-    .setName('create_offices')
+    .setName(CommandNames.create_offices)
     .setDescription('Creates the a set number of voice channels in a new category')
     .addStringOption(option =>
         option
@@ -245,7 +246,7 @@ const createOfficesCommand = new SlashCommandBuilder()
 
 // /set_roles [role_name] [@role]
 const setRolesCommand = new SlashCommandBuilder()
-    .setName('set_roles')
+    .setName(CommandNames.set_roles)
     .setDescription('Sets the roles that the bot to use')
     .addStringOption(option =>
         option
@@ -267,12 +268,12 @@ const setRolesCommand = new SlashCommandBuilder()
 
 // /settings
 const settingsCommand = new SlashCommandBuilder()
-    .setName('settings')
+    .setName(CommandNames.settings)
     .setDescription('Sets up the server config for the bot');
 
 // /auto_give_student_role {on|off}
 const autoGiveStudentRoleCommand = new SlashCommandBuilder()
-    .setName('auto_give_student_role')
+    .setName(CommandNames.auto_give_student_role)
     .setDescription('Automatically gives the student role to new members')
     .addSubcommand(subcommand =>
         subcommand.setName('on').setDescription('Turns on auto giving student role')
@@ -282,13 +283,13 @@ const autoGiveStudentRoleCommand = new SlashCommandBuilder()
     );
 
 const pauseCommand = new SlashCommandBuilder()
-    .setName('pause')
+    .setName(CommandNames.pause)
     .setDescription(
         'Prevents students from joining the queue, but allows the helper to dequeue.'
     );
 
 const resumeCommand = new SlashCommandBuilder()
-    .setName('resume')
+    .setName(CommandNames.resume)
     .setDescription('Allow students to join the queue again after /pause was used.');
 
 // /help
@@ -298,7 +299,7 @@ const resumeCommand = new SlashCommandBuilder()
  */
 function generateHelpCommand() {
     return new SlashCommandBuilder()
-        .setName('help')
+        .setName(CommandNames.help)
         .setDescription('Get help with the bot')
         .addStringOption(option =>
             option
