@@ -23,8 +23,14 @@ import { ServerBackup } from '../models/backups.js';
 import { CommandData } from '../command-handling/command/slash-commands.js';
 import { Optional } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
+import {
+    ButtonHandlerProps,
+    CommandHandlerProps,
+    ModalSubmitHandlerProps,
+    SelectMenuHandlerProps
+} from '../interaction-handling/handler-interface.js';
 
-/** Server Level Extension */
+/** YABOB Instance Level Extension */
 interface IInteractionExtension {
     /**
      * The command data json to post to the discord server
@@ -105,6 +111,21 @@ interface IInteractionExtension {
      * @param interaction the select menu that's guaranteed to be handled by this extension
      */
     processDMSelectMenu: (interaction: SelectMenuInteraction) => Promise<void>;
+}
+
+interface IInteractionExtension2 {
+    /**
+     * The command data json to post to the discord server
+     */
+    slashCommandData: CommandData;
+    /** Command method map */
+    commandMap: CommandHandlerProps;
+    /** Button method map */
+    buttonMap: ButtonHandlerProps;
+    /** Select menu method map */
+    selectMenuMap: SelectMenuHandlerProps;
+    /** Modal submit method map */
+    modalMap: ModalSubmitHandlerProps;
 }
 
 /** Server Level Extension */
@@ -316,6 +337,39 @@ class BaseInteractionExtension implements IInteractionExtension {
     }
 }
 
+class BaseInteractionExtension2 implements IInteractionExtension2 {
+    get slashCommandData(): CommandData {
+        return [];
+    }
+    commandMap: CommandHandlerProps = {
+        methodMap: {},
+        skipProgressMessageCommands: new Set()
+    };
+    buttonMap: ButtonHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {},
+        skipProgressMessageButtons: new Set()
+    };
+    selectMenuMap: SelectMenuHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {},
+        skipProgressMessageSelectMenus: new Set()
+    };
+    modalMap: ModalSubmitHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {}
+    };
+}
+
 /**
  * Boilerplate base class of server related extensions.
  * ----
@@ -418,9 +472,11 @@ class BaseQueueExtension implements IQueueExtension {
 
 export {
     IInteractionExtension,
+    IInteractionExtension2,
     IServerExtension,
     IQueueExtension,
     BaseInteractionExtension,
+    BaseInteractionExtension2,
     BaseServerExtension,
     BaseQueueExtension
 };
