@@ -5,6 +5,9 @@
  * Values and enum names should the same because values are also used as keys
  */
 
+/** Known base yabob slash command names */
+enum CommandNames {}
+
 /**
  * Known base yabob button names
  */
@@ -43,4 +46,4 @@ enum SelectMenuNames {
     SelectLoggingChannel = 'SelectLoggingChannel'
 }
 
-export { ButtonNames, ModalNames, SelectMenuNames };
+export { CommandNames, ButtonNames, ModalNames, SelectMenuNames };

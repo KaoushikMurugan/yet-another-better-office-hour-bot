@@ -4,74 +4,76 @@ import {
     ModalSubmitInteraction,
     SelectMenuInteraction
 } from 'discord.js';
-import {
-    CommandCallback,
-    DMButtonCallback,
-    DMModalSubmitCallback,
-    DMSelectMenuCallback,
-    ModalSubmitCallback,
-    RegularButtonCallback,
-    SelectMenuCallback,
-    QueueButtonCallback
-} from '../utils/type-aliases.js';
+
+type CommandHanlder = (
+    interaction: ChatInputCommandInteraction<'cached'>
+) => Promise<void>;
+
+type GuildButtonHanlder = (interaction: ButtonInteraction<'cached'>) => Promise<void>;
+
+type DMButtonHanlder = (interaction: ButtonInteraction) => Promise<void>;
+
+type GuildSelectMenuHandler = (
+    interaction: SelectMenuInteraction<'cached'>
+) => Promise<void>;
+
+type DMSelectMenuHandler = (interaction: SelectMenuInteraction) => Promise<void>;
+
+type GuildModalSubmitHandler = (
+    interaction: ModalSubmitInteraction<'cached'>
+) => Promise<void>;
+
+type DMModalSubmitHandler = (interaction: ModalSubmitInteraction) => Promise<void>;
+
+export type ModalSubmitHandler = GuildModalSubmitHandler | DMModalSubmitHandler;
 
 /**
  * The information needed for the generic command interaction handler
  */
 interface CommandHandlerProps {
-    /** Commands that return an embed
-     */
-    regularCommands: { [commandName: string]: CommandCallback };
-    /** Commands that will always REPLY inside the function body */
-    requireFirstResponseCommands: {
-        [commandName: string]: (
-            i: ChatInputCommandInteraction<'cached'>
-        ) => Promise<undefined>;
-    };
+    /** All the commands */
+    methodMap: { readonly [commandName: string]: CommandHanlder };
+    /** Commands that will REPLY/UPDATE inside the function body */
+    skipProgressMessageCommands: Set<string>;
 }
 
 /**
  * The information needed for the generic button interaction handler
  */
 interface ButtonHandlerProps {
-    /** Buttons inside #queue channels */
-    queueButtons: { [buttonName: string]: QueueButtonCallback };
-    /** Regular buttons in a guild that return an embed */
-    regularButtons: { [buttonName: string]: RegularButtonCallback };
-    /** Buttons that will always REPLY inside the handler function body */
-    requireFirstResponseButtons: {
-        [buttonName: string]: (i: ButtonInteraction<'cached'>) => Promise<undefined>;
+    /** All the guild buttons */
+    guildMethodMap: {
+        queue: { readonly [buttonName: string]: GuildButtonHanlder };
+        other: { readonly [buttonName: string]: GuildButtonHanlder };
     };
-    /** Buttons that need to update the previous interaction */
-    updateParentInteractionButtons: { [buttonName: string]: RegularButtonCallback };
-    /** Buttons that show up in DM channels */
-    dmButtons: { [buttonName: string]: DMButtonCallback };
+    /** All the DM buttons */
+    dmMethodMap: { readonly [buttonName: string]: DMButtonHanlder };
+    /** Buttons that will REPLY/UPDATE inside the function body */
+    skipProgressMessageButtons: Set<string>;
 }
 
 interface SelectMenuHandlerProps {
-    /** Regular guild based select menus */
-    regularSelectMenus: { [selectMenuName: string]: SelectMenuCallback };
-    /** Select menus that will always REPLY inside the handler function body */
-    requireFirstResponseSelectMenus: {
-        [selectMenuName: string]: (
-            i: SelectMenuInteraction<'cached'>
-        ) => Promise<undefined>;
+    /** All the guild select menus */
+    guildMethodMap: {
+        queue: { readonly [selectMenuName: string]: GuildSelectMenuHandler };
+        other: { readonly [selectMenuName: string]: GuildSelectMenuHandler };
     };
-    /** Select Menus that need to update the previous interaction */
-    updateParentInteractionSelectMenus: { [selectMenuName: string]: SelectMenuCallback };
-    /** Select Menus that show up in DM channels */
-    dmSelectMenus: { [selectMenuName: string]: DMSelectMenuCallback };
+    /** All the DM select menus */
+    dmMethodMap: { readonly [selectMenuName: string]: DMSelectMenuHandler };
+    /** Select menus that will REPLY/UPDATE inside the function body */
+    skipProgressMessageSelectMenus: Set<string>;
 }
 
 interface ModalSubmitHandlerProps {
-    /** Regular guild based modals */
-    regularModals: { [modalName: string]: ModalSubmitCallback };
-    /** Modals that will always REPLY inside the hdndler function body */
-    updateParentInteractionModals: {
-        [modalName: string]: (i: ModalSubmitInteraction<'cached'>) => Promise<undefined>;
+    /** All the guild modals */
+    guildMethodMap: {
+        queue: { readonly [modalName: string]: GuildModalSubmitHandler };
+        other: { readonly [modalName: string]: GuildModalSubmitHandler };
     };
-    /** modals inside DM channels */
-    dmModals: { [modalName: string]: DMModalSubmitCallback };
+    /** All the DM modals */
+    dmMethodMap: { readonly [modalName: string]: DMModalSubmitHandler };
+    /** Modals that will REPLY/UPDATE inside the function body */
+    skipProgressMessageModals: Set<string>;
 }
 
 export {

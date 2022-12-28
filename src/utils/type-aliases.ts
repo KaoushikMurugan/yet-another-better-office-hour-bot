@@ -202,6 +202,15 @@ type Entries<T> = {
     [K in keyof T]: [K, T[K]];
 }[keyof T][];
 
+/**
+ * Compile time check to make sure that a enum's key and value are exactly the same
+ * @example
+ * ```ts
+ * type A = EnsureCorrectEnum<typeof ButtonNames>;
+ * ```
+ */
+type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
+
 export {
     /** Types */
     WithRequired,
@@ -217,6 +226,7 @@ export {
     QueueResult,
     HelpMessage,
     Entries,
+    EnsureCorrectEnum,
     /** Aliases */
     GuildId,
     GuildMemberId,
