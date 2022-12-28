@@ -20,8 +20,10 @@ import {
 } from './utils/util-functions.js';
 import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
+import { getHandler } from './interaction-handling/interaction-entry-point.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
+const useNewHandler = true;
 
 /**
  * After login startup seqence
@@ -82,8 +84,31 @@ client.on(Events.GuildDelete, async guild => {
  * - Modal submissions
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-    if (interaction.channel?.isDMBased()) {
-        dispatchDMInteraction(interaction).catch((err: Error) => {
+    if (useNewHandler) {
+        await getHandler(interaction)(interaction);
+    } else {
+        if (interaction.channel?.isDMBased()) {
+            dispatchDMInteraction(interaction).catch((err: Error) => {
+                interaction.user
+                    .send(UnexpectedParseErrors.unexpectedError(interaction, err))
+                    .catch(() =>
+                        failedInteractions.push({
+                            username: interaction.user.username,
+                            interaction: interaction
+                        })
+                    );
+            });
+            return;
+        }
+        if (!interaction.inCachedGuild()) {
+            // required check to make sure all the types are safe
+            interaction.isRepliable() &&
+                (await interaction.reply(
+                    SimpleEmbed('I can only accept server based interactions.')
+                ));
+            return;
+        }
+        dispatchServerInteractions(interaction).catch((err: Error) => {
             interaction.user
                 .send(UnexpectedParseErrors.unexpectedError(interaction, err))
                 .catch(() =>
@@ -93,30 +118,11 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
                     })
                 );
         });
-        return;
-    }
-    if (!interaction.inCachedGuild()) {
-        // required check to make sure all the types are safe
-        interaction.isRepliable() &&
-            (await interaction.reply(
-                SimpleEmbed('I can only accept server based interactions.')
-            ));
-        return;
-    }
-    dispatchServerInteractions(interaction).catch((err: Error) => {
-        interaction.user
-            .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(() =>
-                failedInteractions.push({
-                    username: interaction.user.username,
-                    interaction: interaction
-                })
-            );
-    });
-    if (failedInteractions.length >= 5) {
-        console.error(`These ${failedInteractions.length} interactions failed: `);
-        console.error(failedInteractions);
-        failedInteractions.splice(0, failedInteractions.length);
+        if (failedInteractions.length >= 5) {
+            console.error(`These ${failedInteractions.length} interactions failed: `);
+            console.error(failedInteractions);
+            failedInteractions.splice(0, failedInteractions.length);
+        }
     }
 });
 

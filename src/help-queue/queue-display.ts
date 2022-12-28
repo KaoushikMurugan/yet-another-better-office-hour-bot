@@ -15,7 +15,7 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
-import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../command-handling/interaction-names.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
@@ -146,7 +146,7 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Join,
-                UnknownId,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('✅')
@@ -156,7 +156,7 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Leave,
-                UnknownId,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('❎')
@@ -167,7 +167,7 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Notif,
-                UnknownId,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('🔔')
@@ -176,7 +176,7 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.RemoveNotif,
-                UnknownId,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('🔕')

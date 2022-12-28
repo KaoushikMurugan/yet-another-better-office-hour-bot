@@ -1,6 +1,6 @@
 import { ButtonHandlerProps } from './handler-interface.js';
 import { ButtonNames } from '../command-handling/interaction-names.js';
-import { ButtonInteraction, TextBasedChannel } from 'discord.js';
+import { ButtonInteraction } from 'discord.js';
 import { SuccessMessages } from '../command-handling/builtin-success-messages.js';
 import {
     isServerInteraction,
@@ -19,7 +19,6 @@ import {
     afterSessionMessageModal,
     queueAutoClearModal
 } from '../command-handling/modal/modal-objects.js';
-import { ButtonLogEmbed } from '../utils/embed-helper.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -80,7 +79,6 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
  * Join a queue through button press
  * @param queueName queue to join
  * @param interaction
- * @s success message
  */
 async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -95,18 +93,14 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
  * Leave a queue through button press
  * @param queueName queue to leave
  * @param interaction
- * @returns success message
  */
 async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction)
     ];
-    server.sendLogMessage(
-        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-    );
     await server.removeStudentFromQueue(interaction.member, queueChannel);
-    SuccessMessages.leftQueue(queueChannel.queueName);
+    await interaction.editReply(SuccessMessages.leftQueue(queueChannel.queueName));
 }
 
 /**
@@ -120,9 +114,6 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction)
     ];
-    server.sendLogMessage(
-        ButtonLogEmbed(interaction.user, 'Leave', queueChannel.channelObj)
-    );
     await server.addStudentToNotifGroup(interaction.member, queueChannel);
     await interaction.editReply(SuccessMessages.joinedNotif(queueChannel.queueName));
 }
@@ -138,9 +129,6 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction)
     ];
-    server.sendLogMessage(
-        ButtonLogEmbed(interaction.user, 'Remove Notifications', queueChannel.channelObj)
-    );
     await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
     await interaction.editReply(SuccessMessages.removedNotif(queueChannel.queueName));
 }
@@ -154,13 +142,6 @@ async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            interaction.component.label ?? ' to Settings Main Menu',
-            interaction.channel as TextBasedChannel
-        )
-    );
     await interaction.update(SettingsMainMenu(server, interaction.channelId, false));
 }
 
@@ -194,15 +175,7 @@ async function createServerRolesDM(
     interaction: ButtonInteraction
 ): Promise<void> {
     const server = isValidDMInteraction(interaction);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Create Roles ${interaction.component?.label ?? ''}`,
-            interaction.channel as TextBasedChannel
-        )
-    );
     await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
-    console.log(server.hierarchyRoleIds);
     await interaction.update(RolesConfigMenu(server, interaction.channelId, true, false));
 }
 
@@ -214,13 +187,6 @@ async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Set After Session Message`,
-            interaction.channel as TextBasedChannel
-        )
-    );
     await interaction.showModal(afterSessionMessageModal(server.guild.id, true));
 }
 
@@ -234,13 +200,6 @@ async function disableAfterSessionMessage(
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     await server.setAfterSessionMessage('');
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Disable After Session Message`,
-            interaction.channel as TextBasedChannel
-        )
-    );
     await interaction.update(
         AfterSessionMessageConfigMenu(server, interaction.channelId, false)
     );
@@ -254,13 +213,6 @@ async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Set Queue Auto Clear`,
-            interaction.channel as TextBasedChannel
-        )
-    );
     await interaction.showModal(queueAutoClearModal(server.guild.id, true));
 }
 
@@ -273,14 +225,9 @@ async function disableQueueAutoClear(
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     await server.setQueueAutoClear(0, 0, false);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Disable Queue Auto Clear`,
-            interaction.channel as TextBasedChannel
-        )
+    await interaction.update(
+        QueueAutoClearConfigMenu(server, interaction.channelId, false)
     );
-    QueueAutoClearConfigMenu(server, interaction.channelId, false);
 }
 
 /**
@@ -291,9 +238,10 @@ async function disableLoggingChannel(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    // No logging call here since we're disabling the logging channel
     await server.setLoggingChannel(undefined);
-    LoggingChannelConfigMenu(server, interaction.channelId, false);
+    await interaction.update(
+        LoggingChannelConfigMenu(server, interaction.channelId, false)
+    );
 }
 
 /**
@@ -308,14 +256,9 @@ async function toggleAutoGiveStudentRole(
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
-    server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Toggle Auto Give Student Role`,
-            interaction.channel as TextBasedChannel
-        )
+    await interaction.update(
+        AutoGiveStudentRoleConfigMenu(server, interaction.channelId, false)
     );
-    AutoGiveStudentRoleConfigMenu(server, interaction.channelId, false);
 }
 
 export { baseYabobButtonMethodMap };

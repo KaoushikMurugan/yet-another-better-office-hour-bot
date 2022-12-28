@@ -98,7 +98,9 @@ function SimpleEmbed2(
         embed.setDescription((message + '\n\n' + description).slice(0, 4096));
     } else {
         embed.setTitle(message);
-        embed.setDescription(description.slice(0, 4096));
+        if (description.length > 0) {
+            embed.setDescription(description.slice(0, 4096));
+        }
     }
     return embed;
 }

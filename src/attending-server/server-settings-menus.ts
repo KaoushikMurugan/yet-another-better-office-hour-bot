@@ -456,8 +456,8 @@ function LoggingChannelConfigMenu(
         buildComponent(new SelectMenuBuilder(), [
             'other',
             SelectMenuNames.SelectLoggingChannel,
-            UnknownId,
-            UnknownId
+            server.guild.id,
+            channelId
         ])
             .setPlaceholder('Select a Text Channel')
             .addOptions(

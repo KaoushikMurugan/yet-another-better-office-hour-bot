@@ -258,7 +258,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
  * @param queueName
  */
 function logButtonPress(
-    interaction: ButtonInteraction<'cached'>,
+    interaction: ButtonInteraction,
     buttonName: string,
     queueName?: string
 ): void {
@@ -268,11 +268,11 @@ function logButtonPress(
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
+            `${yellow(interaction.guild?.name ?? 'DM')}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}` +
-            (queueName === undefined ? `\n - In Queue: ${queueName}` : '')
+            (queueName ? `\n - In Queue: ${queueName}` : '')
     );
 }
 

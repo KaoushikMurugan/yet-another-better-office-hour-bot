@@ -9,63 +9,50 @@ import {
     ButtonLogEmbed,
     ErrorEmbed,
     SelectMenuLogEmbed,
-    SimpleEmbed,
-    SimpleEmbed2
+    SimpleEmbed
 } from '../utils/embed-helper.js';
 import { isServerInteraction } from '../command-handling/common-validations.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
+import {
+    logButtonPress,
+    logDMButtonPress,
+    logDMModalSubmit,
+    logDMSelectMenuSelection,
+    logModalSubmit,
+    logSelectMenuSelection,
+    logSlashCommand
+} from '../utils/util-functions.js';
+import { baseYabobButtonMethodMap } from './button-handler.js';
+import { baseYabobCommandMap } from './command-handler.js';
+import { baseYabobSelectMenuMap } from './select-menu-handler.js';
+import { baseYabobModalMap } from './modal-handler.js';
 
 /**
  * All the processors are using the double dispatch pattern
  * allows the {@link getHandler} function to act like a function factory
  */
 
-const testCommandMap: CommandHandlerProps = {
-    methodMap: {},
-    skipProgressMessageCommands: new Set()
-};
-
-const completeButtonMap: ButtonHandlerProps = {
-    guildMethodMap: {
-        queue: {},
-        other: {}
-    },
-    dmMethodMap: {},
-    skipProgressMessageButtons: new Set()
-};
-
-const testSelectMenuMap: SelectMenuHandlerProps = {
-    guildMethodMap: {
-        queue: {},
-        other: {}
-    },
-    dmMethodMap: {},
-    skipProgressMessageSelectMenus: new Set()
-};
-
-const testModalMap: ModalSubmitHandlerProps = {
-    guildMethodMap: {
-        queue: {},
-        other: {}
-    },
-    dmMethodMap: {}
-};
+const completeCommandMap: CommandHandlerProps = { ...baseYabobCommandMap };
+const completeButtonMap: ButtonHandlerProps = { ...baseYabobButtonMethodMap };
+const completeSelectMenuMap: SelectMenuHandlerProps = { ...baseYabobSelectMenuMap };
+const completeModalMap: ModalSubmitHandlerProps = { ...baseYabobModalMap };
 
 /**
  * Process ChatInputCommandInteractions
  * @param interaction
  */
 async function processChatInputCommand(interaction: Interaction): Promise<void> {
-    const props = testCommandMap; // TODO: Remove this
+    const props = completeCommandMap; // TODO: Remove this
     if (!interaction.inCachedGuild() || !interaction.isChatInputCommand()) {
         return;
     }
     const commandName = interaction.commandName;
     const handleCommand = props.methodMap[commandName];
     const server = isServerInteraction(interaction);
+    logSlashCommand(interaction);
     if (!props.skipProgressMessageCommands.has(commandName)) {
         await interaction.reply({
-            ...SimpleEmbed2(`Processing command \`${commandName}\``).data,
+            ...SimpleEmbed(`Processing command \`${commandName}\``),
             ephemeral: true
         });
     }
@@ -84,13 +71,13 @@ async function processButton(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(serverId);
+    const server = isServerInteraction(interaction.guildId ?? serverId); // serverId might be unknown
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
     if (!props.skipProgressMessageButtons.has(buttonName)) {
         await interaction.reply({
-            ...SimpleEmbed2(`Processing button \`${buttonName}\``).data,
+            ...SimpleEmbed(`Processing button \`${buttonName}\`...`),
             ephemeral: true
         });
     }
@@ -99,11 +86,13 @@ async function processButton(interaction: Interaction): Promise<void> {
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logButtonPress(interaction, buttonName);
     } else {
         const handleModalSubmit = props.dmMethodMap[buttonName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logDMButtonPress(interaction, buttonName);
     }
 }
 
@@ -112,12 +101,12 @@ async function processButton(interaction: Interaction): Promise<void> {
  * @param interaction
  */
 async function processSelectMenu(interaction: Interaction): Promise<void> {
-    const props = testSelectMenuMap;
+    const props = completeSelectMenuMap;
     if (!interaction.isSelectMenu()) {
         return;
     }
     const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(serverId);
+    const server = isServerInteraction(interaction.guildId ?? serverId);
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
@@ -128,7 +117,7 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     );
     if (!props.skipProgressMessageSelectMenus.has(selectMenuName)) {
         await interaction.reply({
-            ...SimpleEmbed2(`Processing button \`${selectMenuName}\``).data,
+            ...SimpleEmbed(`Processing button \`${selectMenuName}\``),
             ephemeral: true
         });
     }
@@ -137,11 +126,13 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logSelectMenuSelection(interaction, selectMenuName);
     } else {
         const handleModalSubmit = props.dmMethodMap[selectMenuName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logDMSelectMenuSelection(interaction, selectMenuName);
     }
 }
 
@@ -150,12 +141,12 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
  * @param interaction
  */
 async function processModalSubmit(interaction: Interaction): Promise<void> {
-    const props = testModalMap;
+    const props = completeModalMap;
     if (!interaction.isModalSubmit()) {
         return;
     }
     const [type, modalName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(serverId);
+    const server = isServerInteraction(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
     );
@@ -164,11 +155,13 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logModalSubmit(interaction, modalName);
     } else {
         const handleModalSubmit = props.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
+        logDMModalSubmit(interaction, modalName);
     }
 }
 

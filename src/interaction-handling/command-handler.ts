@@ -77,7 +77,7 @@ async function enqueue(
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
     await server.enqueueStudent(interaction.member, queueChannel);
-    SuccessMessages.joinedQueue(queueChannel.queueName);
+    await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
 }
 
 /**
@@ -103,7 +103,9 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
         targetQueue || targetStudent
             ? await server.dequeueWithArgs(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
-    SuccessMessages.inviteSent(dequeuedStudent.member.displayName);
+    await interaction.editReply(
+        SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
+    );
 }
 
 /**
@@ -120,7 +122,7 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
     );
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
     await server.openAllOpenableQueues(member, !muteNotif);
-    SuccessMessages.startedHelping;
+    await interaction.editReply(SuccessMessages.startedHelping);
 }
 
 /**
@@ -136,7 +138,7 @@ async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise
         'staff'
     );
     const helpTimeEntry = await server.closeAllClosableQueues(member);
-    SuccessMessages.finishedHelping(helpTimeEntry);
+    await interaction.editReply(SuccessMessages.finishedHelping(helpTimeEntry));
 }
 
 async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
@@ -148,7 +150,7 @@ async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promis
         'staff'
     );
     const existOtherActiveHelpers = await server.pauseHelping(member);
-    SuccessMessages.pausedHelping(existOtherActiveHelpers);
+    await interaction.editReply(SuccessMessages.pausedHelping(existOtherActiveHelpers));
 }
 
 async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
@@ -160,7 +162,7 @@ async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promi
         'staff'
     );
     await server.resumeHelping(member);
-    SuccessMessages.resumedHelping;
+    await interaction.editReply(SuccessMessages.resumedHelping);
 }
 
 /**
@@ -174,7 +176,7 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
     await server.removeStudentFromQueue(interaction.member, queue);
-    SuccessMessages.leftQueue(queue.queueName);
+    await interaction.editReply(SuccessMessages.leftQueue(queue.queueName));
 }
 
 /**
@@ -201,7 +203,7 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
     }
     await server.clearQueue(queue);
-    SuccessMessages.clearedQueue(queue.queueName);
+    await interaction.editReply(SuccessMessages.clearedQueue(queue.queueName));
 }
 
 /**
@@ -218,7 +220,7 @@ async function clearAll(
         throw ExpectedParseErrors.serverHasNoQueue;
     }
     await server.clearAllQueues();
-    SuccessMessages.clearedAllQueues(server.guild.name);
+    await interaction.editReply(SuccessMessages.clearedAllQueues(server.guild.name));
 }
 
 /**
@@ -308,7 +310,7 @@ async function announce(
     } else {
         await server.announceToStudentsInQueue(member, announcement);
     }
-    SuccessMessages.announced(announcement);
+    await interaction.editReply(SuccessMessages.announced(announcement));
 }
 
 /**
@@ -324,7 +326,7 @@ async function cleanup(
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
     await server.cleanUpQueue(queue);
-    SuccessMessages.cleanedup.queue(queue.queueName);
+    await interaction.editReply(SuccessMessages.cleanedup.queue(queue.queueName));
 }
 
 /**
@@ -338,7 +340,7 @@ async function cleanupAllQueues(
     isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
     const allQueues = await server.getQueueChannels();
     await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
-    SuccessMessages.cleanedup.allQueues;
+    await interaction.editReply(SuccessMessages.cleanedup.allQueues);
 }
 
 /**
@@ -356,7 +358,7 @@ async function cleanupHelpChannel(
         'botAdmin'
     );
     await updateCommandHelpChannels(server.guild);
-    SuccessMessages.cleanedup.helpChannels;
+    await interaction.editReply(SuccessMessages.cleanedup.helpChannels);
 }
 
 /**
@@ -418,7 +420,9 @@ async function setLoggingChannel(
         throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
     }
     await server.setLoggingChannel(loggingChannel);
-    SuccessMessages.updatedLoggingChannel(loggingChannel.name);
+    await interaction.editReply(
+        SuccessMessages.updatedLoggingChannel(loggingChannel.name)
+    );
 }
 
 /**
@@ -448,7 +452,7 @@ async function stopLogging(
     const server = isServerInteraction(interaction);
     isTriggeredByMemberWithRoles(server, interaction.member, 'stop_logging', 'botAdmin');
     await server.setLoggingChannel(undefined);
-    SuccessMessages.stoppedLogging;
+    await interaction.editReply(SuccessMessages.stoppedLogging);
 }
 
 /**
@@ -468,10 +472,10 @@ async function setSeriousMode(
     const onOrOff = interaction.options.getSubcommand();
     if (onOrOff === 'on') {
         await server.setSeriousServer(true);
-        SuccessMessages.turnedOnSeriousMode;
+        await interaction.editReply(SuccessMessages.turnedOnSeriousMode);
     } else {
         await server.setSeriousServer(false);
-        SuccessMessages.turnedOffSeriousMode;
+        await interaction.editReply(SuccessMessages.turnedOffSeriousMode);
     }
 }
 
@@ -503,7 +507,7 @@ async function createOffices(
         server.botAdminRoleID,
         server.staffRoleID
     ]);
-    SuccessMessages.createdOffices(numOffices);
+    await interaction.editReply(SuccessMessages.createdOffices(numOffices));
 }
 
 /**
@@ -521,17 +525,17 @@ async function setRoles(
     switch (roleType) {
         case 'bot_admin': {
             await server.setHierarchyRoleId('botAdmin', role.id);
-            SuccessMessages.setBotAdminRole(role.id);
+            await interaction.editReply(SuccessMessages.setBotAdminRole(role.id));
             break;
         }
         case 'helper': {
             await server.setHierarchyRoleId('staff', role.id);
-            SuccessMessages.setHelperRole(role.id);
+            await interaction.editReply(SuccessMessages.setHelperRole(role.id));
             break;
         }
         case 'student': {
             await server.setHierarchyRoleId('student', role.id);
-            SuccessMessages.setStudentRole(role.id);
+            await interaction.editReply(SuccessMessages.setStudentRole(role.id));
             break;
         }
         default: {
@@ -557,7 +561,7 @@ async function settingsMenu(
         'setup_server_config',
         'botAdmin'
     );
-    SettingsMainMenu(server, interaction.channelId, false);
+    await interaction.editReply(SettingsMainMenu(server, interaction.channelId, false));
 }
 
 /**
@@ -578,10 +582,10 @@ async function setAutoGiveStudentRole(
     const onOrOff = interaction.options.getSubcommand();
     if (onOrOff === 'on') {
         await server.setAutoGiveStudentRole(true);
-        SuccessMessages.turnedOnAutoGiveStudentRole;
+        await interaction.editReply(SuccessMessages.turnedOnAutoGiveStudentRole);
     } else {
         await server.setAutoGiveStudentRole(false);
-        SuccessMessages.turnedOffAutoGiveStudentRole;
+        await interaction.editReply(SuccessMessages.turnedOffAutoGiveStudentRole);
     }
 }
 
