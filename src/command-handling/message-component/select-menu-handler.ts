@@ -11,16 +11,13 @@ import {
     logDMSelectMenuSelection,
     logSelectMenuSelection
 } from '../../utils/util-functions.js';
-import { decompressComponentId } from '../../utils/component-id-factory.js';
+import {
+    decompressComponentId,
+    extractComponentName
+} from '../../utils/component-id-factory.js';
 import { isServerInteraction } from '../common-validations.js';
 import { ExpectedParseErrors } from '../expected-interaction-errors.js';
-
-/**
- * Responsible for handling the selection of a menu item.
- * ----
- * @category Handler Classes
- * @see
- */
+import { SelectMenuNames } from '../interaction-names.js';
 
 /**
  * Map of server select menu names to their respective handlers
@@ -28,8 +25,8 @@ import { ExpectedParseErrors } from '../expected-interaction-errors.js';
 const selectMenuMethodMap: {
     [selectMenuName: string]: SelectMenuCallback;
 } = {
-    server_settings: showSettingsSelectMenu,
-    select_logging_channel: selectLoggingChannel
+    [SelectMenuNames.ServerSettings]: showSettingsSelectMenu,
+    [SelectMenuNames.SelectLoggingChannel]: selectLoggingChannel
 } as const;
 
 /**
@@ -42,7 +39,10 @@ const dmSelectMenuMethodMap: {
 /**
  * List of select menus that should update the parent interaction
  */
-const updateParentInteractionSelectMenus = ['server_settings', 'select_logging_channel'];
+const updateParentInteractionSelectMenus: string[] = [
+    SelectMenuNames.ServerSettings,
+    SelectMenuNames.SelectLoggingChannel
+];
 
 /**
  * Check if the select menu interaction can be handled by this (in-built) handler.
@@ -84,8 +84,7 @@ function builtInDMSelectMenuHandlerCanHandle(
 async function processBuiltInSelectMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const selectMenuName = decompressComponentId(interaction.customId)[1];
-    console.log(selectMenuName);
+    const selectMenuName = extractComponentName(interaction.customId);
     const server = isServerInteraction(interaction);
     const selectMenuMethod = selectMenuMethodMap[selectMenuName];
     const updateParentInteraction =

@@ -2,6 +2,7 @@
  * @packageDocumentation
  * This file contains all the names that are encoded in setCustomId and setCommandName
  * New Interaction names should also be placed in this file to avoid circular dependency
+ * Values and enum names should the same because values are also used as keys
  */
 
 /**
@@ -36,4 +37,10 @@ enum ModalNames {
     QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion'
 }
 
-export { ButtonNames, ModalNames };
+/** Known base yabob select menu names */
+enum SelectMenuNames {
+    ServerSettings = 'ServerSettings',
+    SelectLoggingChannel = 'SelectLoggingChannel'
+}
+
+export { ButtonNames, ModalNames, SelectMenuNames };

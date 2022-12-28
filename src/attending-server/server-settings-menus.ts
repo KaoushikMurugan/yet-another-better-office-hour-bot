@@ -16,7 +16,7 @@ import {
 import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
-import { ButtonNames } from '../command-handling/interaction-names.js';
+import { ButtonNames, SelectMenuNames } from '../command-handling/interaction-names.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
@@ -143,7 +143,7 @@ function SettingsMainMenu(
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
             isDm ? 'dm' : 'other',
-            'server_settings',
+            SelectMenuNames.ServerSettings,
             server.guild.id,
             channelId
         ])
@@ -455,7 +455,7 @@ function LoggingChannelConfigMenu(
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
             'other',
-            'select_logging_channel',
+            SelectMenuNames.SelectLoggingChannel,
             UnknownId,
             UnknownId
         ])

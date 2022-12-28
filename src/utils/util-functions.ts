@@ -356,7 +356,7 @@ function logSelectMenuSelection(
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Select Menu Used: ${magenta(selectMenuName)}` +
+            ` - Select Menu Used: ${magenta(selectMenuName)}\n` +
             ` - Selected Options: ${magenta(interaction.values.join(', '))}`
     );
 }
