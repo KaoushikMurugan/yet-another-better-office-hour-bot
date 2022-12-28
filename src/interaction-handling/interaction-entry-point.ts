@@ -76,30 +76,6 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
 }
 
 /**
- * Process ModalSubmitInteractions
- * @param interaction
- */
-async function processModalSubmit(interaction: Interaction): Promise<void> {
-    const props = testModalMap;
-    if (!interaction.isModalSubmit()) {
-        return;
-    }
-    const [type, modalName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(serverId);
-    if (interaction.inCachedGuild() && type !== 'dm') {
-        const handleModalSubmit = props.guildMethodMap[type][modalName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
-    } else {
-        const handleModalSubmit = props.dmMethodMap[modalName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
-    }
-}
-
-/**
  * Process ButtonInteractions
  * @param interaction
  */
@@ -111,11 +87,7 @@ async function processButton(interaction: Interaction): Promise<void> {
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
     const server = isServerInteraction(serverId);
     server.sendLogMessage(
-        ButtonLogEmbed(
-            interaction.user,
-            `Create Roles ${interaction.component?.label ?? ''}`,
-            interaction.channel as TextChannel
-        )
+        ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
     if (interaction.inCachedGuild() && type !== 'dm') {
         const handleModalSubmit = props.guildMethodMap[type][buttonName];
@@ -144,7 +116,7 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
-            `Server Settings`,
+            selectMenuName,
             interaction.values,
             interaction.channel as TextChannel
         )
@@ -156,6 +128,33 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         });
     } else {
         const handleModalSubmit = props.dmMethodMap[selectMenuName];
+        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
+        });
+    }
+}
+
+/**
+ * Process ModalSubmitInteractions
+ * @param interaction
+ */
+async function processModalSubmit(interaction: Interaction): Promise<void> {
+    const props = testModalMap;
+    if (!interaction.isModalSubmit()) {
+        return;
+    }
+    const [type, modalName, serverId] = decompressComponentId(interaction.customId);
+    const server = isServerInteraction(serverId);
+    server.sendLogMessage(
+        ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
+    );
+    if (interaction.inCachedGuild() && type !== 'dm') {
+        const handleModalSubmit = props.guildMethodMap[type][modalName];
+        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
+        });
+    } else {
+        const handleModalSubmit = props.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
