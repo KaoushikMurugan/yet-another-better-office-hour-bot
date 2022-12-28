@@ -1,27 +1,19 @@
-import { Interaction } from 'discord.js';
+import { Interaction, TextChannel } from 'discord.js';
 import {
     ButtonHandlerProps,
     CommandHandlerProps,
-    ModalSubmitHandler,
     ModalSubmitHandlerProps,
     SelectMenuHandlerProps
 } from './handler-interface.js';
 import {
     ButtonLogEmbed,
     ErrorEmbed,
-    ErrorEmbed2,
-    ErrorLogEmbed,
+    SelectMenuLogEmbed,
     SimpleEmbed,
-    SimpleEmbed2,
-    SlashCommandLogEmbed
+    SimpleEmbed2
 } from '../utils/embed-helper.js';
 import { isServerInteraction } from '../command-handling/common-validations.js';
-import {
-    UnknownId,
-    decompressComponentId,
-    extractComponentName
-} from '../utils/component-id-factory.js';
-import { logDMButtonPress } from '../utils/util-functions.js';
+import { decompressComponentId } from '../utils/component-id-factory.js';
 
 /**
  * All the processors are using the double dispatch pattern
@@ -118,6 +110,13 @@ async function processButton(interaction: Interaction): Promise<void> {
     }
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
     const server = isServerInteraction(serverId);
+    server.sendLogMessage(
+        ButtonLogEmbed(
+            interaction.user,
+            `Create Roles ${interaction.component?.label ?? ''}`,
+            interaction.channel as TextChannel
+        )
+    );
     if (interaction.inCachedGuild() && type !== 'dm') {
         const handleModalSubmit = props.guildMethodMap[type][buttonName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
@@ -142,6 +141,14 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     }
     const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
     const server = isServerInteraction(serverId);
+    server.sendLogMessage(
+        SelectMenuLogEmbed(
+            interaction.user,
+            `Server Settings`,
+            interaction.values,
+            interaction.channel as TextChannel
+        )
+    );
     if (interaction.inCachedGuild() && type !== 'dm') {
         const handleModalSubmit = props.guildMethodMap[type][selectMenuName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
