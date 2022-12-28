@@ -6,7 +6,33 @@
  */
 
 /** Known base yabob slash command names */
-enum CommandNames {}
+enum CommandNames {
+    announce = 'announce',
+    cleanup_queue = 'cleanup_queue',
+    cleanup_all = 'cleanup_all',
+    cleanup_help_channels = 'cleanup_help_channels',
+    clear = 'clear',
+    clear_all = 'clear_all',
+    enqueue = 'enqueue',
+    leave = 'leave',
+    list_helpers = 'list_helpers',
+    next = 'next',
+    queue = 'queue',
+    start = 'start',
+    pause = 'pause',
+    resume = 'resume',
+    stop = 'stop',
+    help = 'help',
+    set_logging_channel = 'set_logging_channel',
+    stop_logging = 'stop_logging',
+    serious_mode = 'serious_mode',
+    create_offices = 'create_offices',
+    set_roles = 'set_roles',
+    settings = 'settings',
+    auto_give_student_role = 'auto_give_student_role',
+    set_after_session_msg = 'set_after_session_msg',
+    set_queue_auto_clear = 'set_queue_auto_clear'
+}
 
 /**
  * Known base yabob button names

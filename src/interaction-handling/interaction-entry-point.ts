@@ -25,7 +25,7 @@ const testCommandMap: CommandHandlerProps = {
     skipProgressMessageCommands: new Set()
 };
 
-const testButtonMap: ButtonHandlerProps = {
+const completeButtonMap: ButtonHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {}
@@ -48,8 +48,7 @@ const testModalMap: ModalSubmitHandlerProps = {
         queue: {},
         other: {}
     },
-    dmMethodMap: {},
-    skipProgressMessageModals: new Set()
+    dmMethodMap: {}
 };
 
 /**
@@ -80,7 +79,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
  * @param interaction
  */
 async function processButton(interaction: Interaction): Promise<void> {
-    const props = testButtonMap;
+    const props = completeButtonMap;
     if (!interaction.isButton()) {
         return;
     }
@@ -89,6 +88,12 @@ async function processButton(interaction: Interaction): Promise<void> {
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
+    if (!props.skipProgressMessageButtons.has(buttonName)) {
+        await interaction.reply({
+            ...SimpleEmbed2(`Processing button \`${buttonName}\``).data,
+            ephemeral: true
+        });
+    }
     if (interaction.inCachedGuild() && type !== 'dm') {
         const handleModalSubmit = props.guildMethodMap[type][buttonName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
@@ -121,6 +126,12 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
             interaction.channel as TextChannel
         )
     );
+    if (!props.skipProgressMessageSelectMenus.has(selectMenuName)) {
+        await interaction.reply({
+            ...SimpleEmbed2(`Processing button \`${selectMenuName}\``).data,
+            ephemeral: true
+        });
+    }
     if (interaction.inCachedGuild() && type !== 'dm') {
         const handleModalSubmit = props.guildMethodMap[type][selectMenuName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {

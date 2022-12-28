@@ -25,8 +25,6 @@ type GuildModalSubmitHandler = (
 
 type DMModalSubmitHandler = (interaction: ModalSubmitInteraction) => Promise<void>;
 
-export type ModalSubmitHandler = GuildModalSubmitHandler | DMModalSubmitHandler;
-
 /**
  * The information needed for the generic command interaction handler
  */
@@ -72,8 +70,6 @@ interface ModalSubmitHandlerProps {
     };
     /** All the DM modals */
     dmMethodMap: { readonly [modalName: string]: DMModalSubmitHandler };
-    /** Modals that will REPLY/UPDATE inside the function body */
-    skipProgressMessageModals: Set<string>;
 }
 
 export {
