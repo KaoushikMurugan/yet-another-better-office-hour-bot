@@ -4,7 +4,9 @@
  * New Interaction names should also be placed in this file to avoid circular dependency
  */
 
-/** Known button names */
+/**
+ * Known base yabob button names
+ */
 enum ButtonNames {
     Join = 'Join',
     Leave = 'Leave',
@@ -24,4 +26,14 @@ enum ButtonNames {
     ShowQueueAutoClearModal = 'ShowQueueAutoClearModal'
 }
 
-export { ButtonNames };
+/**
+ * Known base yabob modal names
+ */
+enum ModalNames {
+    AfterSessionMessageModal = 'AfterSessionMessageModal',
+    AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
+    QueueAutoClearModal = 'QueueAutoClearModal',
+    QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion'
+}
+
+export { ButtonNames, ModalNames };

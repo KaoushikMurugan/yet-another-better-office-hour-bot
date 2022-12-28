@@ -16,6 +16,7 @@ import { logModalSubmit } from '../../utils/util-functions.js';
 import { SuccessMessages } from '../builtin-success-messages.js';
 import { isServerInteraction } from '../common-validations.js';
 import { ExpectedParseErrors } from '../expected-interaction-errors.js';
+import { ModalNames } from '../interaction-names.js';
 
 /**
  * Built in handler for modal submit
@@ -26,12 +27,14 @@ import { ExpectedParseErrors } from '../expected-interaction-errors.js';
  * Map of names of modal that could be sent in servers to their respective handlers
  */
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    after_session_message_modal: interaction =>
+    [ModalNames.AfterSessionMessageModal]: interaction =>
         setAfterSessionMessage(interaction, false),
-    after_session_message_modal_mv: interaction =>
+    [ModalNames.AfterSessionMessageModalMenuVersion]: interaction =>
         setAfterSessionMessage(interaction, true),
-    queue_auto_clear_modal: interaction => setQueueAutoClear(interaction, false),
-    queue_auto_clear_modal_mv: interaction => setQueueAutoClear(interaction, true)
+    [ModalNames.QueueAutoClearModal]: interaction =>
+        setQueueAutoClear(interaction, false),
+    [ModalNames.QueueAutoClearModalMenuVersion]: interaction =>
+        setQueueAutoClear(interaction, true)
 } as const;
 
 /**
@@ -44,9 +47,9 @@ const dmModalMethodMap: { [modalName: string]: DMModalSubmitCallback } = {
 /**
  * List of modal names that should update the parent interaction
  */
-const updateParentInteractionModals = [
-    'after_session_message_modal_mv',
-    'queue_auto_clear_modal_mv'
+const updateParentInteractionModals: string[] = [
+    ModalNames.AfterSessionMessageModalMenuVersion,
+    ModalNames.QueueAutoClearModalMenuVersion
 ];
 
 /**

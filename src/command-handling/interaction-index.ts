@@ -32,7 +32,6 @@ import {
 } from './modal/modal-handler.js';
 
 const interactionExtensions = new Collection<GuildId, IInteractionExtension[]>();
-const interactionExtensions2: IInteractionExtension[] = [];
 
 /**
  * Dispatches the ineraction to different handlers.
@@ -145,9 +144,4 @@ async function dispatchServerInteractions(
     return false;
 }
 
-export {
-    interactionExtensions,
-    interactionExtensions2,
-    dispatchDMInteraction,
-    dispatchServerInteractions
-};
+export { interactionExtensions, dispatchDMInteraction, dispatchServerInteractions };

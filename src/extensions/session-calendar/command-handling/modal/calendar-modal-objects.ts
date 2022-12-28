@@ -7,18 +7,21 @@ import {
 } from 'discord.js';
 import { buildComponent, UnknownId } from '../../../../utils/component-id-factory.js';
 import { calendarStates } from '../../calendar-states.js';
+import { CalendarModalNames } from '../../calendar-interaction-names.js';
 
 /**
  * Composes the calendar settings modal
- * @param serverId
- * @param useMenu
+ * @param serverId related server id
+ * @param useMenu whether this modal should show the settings menu or the success message
  * @returns
  */
 function calendarSettingsModal(serverId: string, useMenu = false): ModalBuilder {
     const state = calendarStates.get(serverId);
     const modal = buildComponent(new ModalBuilder(), [
         'other',
-        'calendar_settings_modal' + (useMenu ? '_mv' : ''),
+        useMenu
+            ? CalendarModalNames.CalendarSettingsModalMenuVersion
+            : CalendarModalNames.CalendarSettingsModal,
         serverId,
         UnknownId
     ])

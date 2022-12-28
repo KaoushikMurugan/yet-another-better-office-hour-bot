@@ -57,11 +57,7 @@ function canHandleCalendarButton(
     interaction: ButtonInteraction
 ): boolean {
     const buttonName = decompressComponentId(interaction.customId)[1];
-    return (
-        buttonName in queueButtonMethodMap ||
-        buttonName in defaultButtonMethodMap ||
-        buttonName in showModalOnlyButtons
-    );
+    return buttonName in CalendarButtonNames;
 }
 
 async function processCalendarButton(

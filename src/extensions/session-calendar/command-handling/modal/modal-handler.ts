@@ -15,12 +15,17 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from '../calendar-success-messages.js';
+import { CalendarModalNames } from '../../calendar-interaction-names.js';
 
-const updateParentInteractionModals = ['calendar_settings_modal_mv'];
+const updateParentInteractionModals: string[] = [
+    CalendarModalNames.CalendarSettingsModalMenuVersion
+];
 
 const modalMethodMap: { [modalName: string]: ModalSubmitCallback } = {
-    calendar_settings_modal: interaction => updateCalendarSettings(interaction, false),
-    calendar_settings_modal_mv: interaction => updateCalendarSettings(interaction, true)
+    [CalendarModalNames.CalendarSettingsModal]: interaction =>
+        updateCalendarSettings(interaction, false),
+    [CalendarModalNames.CalendarSettingsModalMenuVersion]: interaction =>
+        updateCalendarSettings(interaction, true)
 } as const;
 
 function canHandleCalendarModalSubmit(

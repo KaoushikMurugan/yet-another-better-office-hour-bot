@@ -8,4 +8,16 @@ enum CalendarCommandNames {}
 
 enum CalendarSelectMenuNames {}
 
-export { CalendarButtonNames, CalendarCommandNames, CalendarSelectMenuNames };
+enum CalendarModalNames {
+    // this returns a success message
+    CalendarSettingsModal = 'CalendarSettingsModal',
+    // this shows a menu
+    CalendarSettingsModalMenuVersion = 'CalendarSettingsModalMenuVersion'
+}
+
+export {
+    CalendarButtonNames,
+    CalendarCommandNames,
+    CalendarSelectMenuNames,
+    CalendarModalNames
+};

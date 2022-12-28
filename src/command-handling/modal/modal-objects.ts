@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { attendingServers } from '../../global-states.js';
 import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
+import { ModalNames } from '../interaction-names.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.
@@ -21,7 +22,9 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
-        'queue_auto_clear_modal' + (useMenu ? '_mv' : ''),
+        useMenu
+            ? ModalNames.QueueAutoClearModalMenuVersion
+            : ModalNames.QueueAutoClearModal,
         serverId,
         UnknownId
     ])
@@ -69,7 +72,9 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
 function afterSessionMessageModal(serverId: string, useMenu = false): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
-        'after_session_message_modal' + (useMenu ? '_mv' : ''),
+        useMenu
+            ? ModalNames.AfterSessionMessageModalMenuVersion
+            : ModalNames.AfterSessionMessageModal,
         serverId,
         UnknownId
     ])
