@@ -14,10 +14,10 @@ import {
     GuildMember,
     VoiceChannel,
     ModalSubmitInteraction,
-    SelectMenuInteraction
+    SelectMenuInteraction,
+    Guild
 } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
-import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
 import { CommandData } from '../command-handling/command/slash-commands.js';
@@ -114,6 +114,11 @@ interface IInteractionExtension {
 }
 
 interface IInteractionExtension2 {
+    /**
+     * Create a state for each guild if necessary
+     * @param guild which guild to create state for
+     */
+    loadState(guild: Guild): Promise<void>;
     /**
      * The command data json to post to the discord server
      */
@@ -340,6 +345,9 @@ class BaseInteractionExtension implements IInteractionExtension {
 class BaseInteractionExtension2 implements IInteractionExtension2 {
     get slashCommandData(): CommandData {
         return [];
+    }
+    loadState(guild: Guild): Promise<void> {
+        return Promise.resolve();
     }
     commandMap: CommandHandlerProps = {
         methodMap: {},
