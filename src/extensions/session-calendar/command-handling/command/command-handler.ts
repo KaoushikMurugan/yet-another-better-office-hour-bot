@@ -32,14 +32,17 @@ import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from '../calendar-success-messages.js';
+import { CalendarCommandNames } from '../../calendar-interaction-names.js';
 
 const commandMethodMap: { [commandName: string]: CommandCallback } = {
-    set_calendar: updateCalendarId,
-    unset_calendar: unsetCalendarId,
-    when_next: listUpComingHours,
-    make_calendar_string: interaction => makeParsableCalendarTitle(interaction, false),
-    make_calendar_string_all: interaction => makeParsableCalendarTitle(interaction, true),
-    set_public_embd_url: setPublicEmbedUrl
+    [CalendarCommandNames.set_calendar]: updateCalendarId,
+    [CalendarCommandNames.unset_calendar]: unsetCalendarId,
+    [CalendarCommandNames.when_next]: listUpComingHours,
+    [CalendarCommandNames.make_calendar_string]: interaction =>
+        makeParsableCalendarTitle(interaction, false),
+    [CalendarCommandNames.make_calendar_string_all]: interaction =>
+        makeParsableCalendarTitle(interaction, true),
+    [CalendarCommandNames.set_public_embd_url]: setPublicEmbedUrl
 } as const;
 
 // #region

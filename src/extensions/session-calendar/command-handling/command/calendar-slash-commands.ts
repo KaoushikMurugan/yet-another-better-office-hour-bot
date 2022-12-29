@@ -2,10 +2,11 @@
 
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChannelType } from 'discord.js';
+import { CalendarCommandNames } from '../../calendar-interaction-names.js';
 
 // /set_calendar [calendar_id]
 const setCalendar = new SlashCommandBuilder()
-    .setName('set_calendar')
+    .setName(CalendarCommandNames.set_calendar)
     .setDescription(
         'Commands to modify the resources connected to the /when_next command'
     )
@@ -18,14 +19,14 @@ const setCalendar = new SlashCommandBuilder()
 
 // /unset_calendar
 const unsetCalendar = new SlashCommandBuilder()
-    .setName('unset_calendar')
+    .setName(CalendarCommandNames.unset_calendar)
     .setDescription(
         'Desyncs the bot from the current calendar and sets it to the default calendar'
     );
 
 // /when_next [queue_name]
 const whenNext = new SlashCommandBuilder()
-    .setName('when_next')
+    .setName(CalendarCommandNames.when_next)
     .setDescription('View the upcoming tutoring hours')
     .addChannelOption(option =>
         option
@@ -47,7 +48,7 @@ const makeCalendarStringCommand: Omit<
     'addSubcommand' | 'addSubcommandGroup'
 > = (() => {
     const command = new SlashCommandBuilder()
-        .setName('make_calendar_string')
+        .setName(CalendarCommandNames.make_calendar_string)
         .setDescription('Generates a valid calendar string that can be parsed by YABOB')
         .addStringOption(option =>
             option
@@ -78,7 +79,7 @@ const makeCalendarStringCommand: Omit<
 
 // /make_calendar_string_all [calendar_name] (user)
 const makeCalendarStringAll = new SlashCommandBuilder()
-    .setName('make_calendar_string_all')
+    .setName(CalendarCommandNames.make_calendar_string_all)
     .setDescription('Generates a valid calendar string for all your approved queues')
     .addStringOption(option =>
         option
@@ -95,7 +96,7 @@ const makeCalendarStringAll = new SlashCommandBuilder()
 
 // /set_public_embd_url [url] (enable)
 const setPublicEmbedUrl = new SlashCommandBuilder()
-    .setName('set_public_embd_url')
+    .setName(CalendarCommandNames.set_public_embd_url)
     .setDescription('Use another public calendar embed')
     .addStringOption(option =>
         option
