@@ -43,7 +43,7 @@ import {
     sendInvite,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarExtensionState } from '../extensions/session-calenar-2/calendar-states.js';
+import { CalendarExtensionState } from '../extensions/session-calenar/calendar-states.js';
 
 /**
  * Wrapper for TextChannel

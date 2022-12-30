@@ -34,7 +34,7 @@ import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { IInteractionExtension } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
-import { SessionCalendarInteractionExtension } from '../extensions/session-calenar-2/calendar-interaction-extension.js';
+import { SessionCalendarInteractionExtension } from '../extensions/session-calenar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
 
 /**
