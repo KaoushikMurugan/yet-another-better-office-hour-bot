@@ -2,7 +2,7 @@
 
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChannelType } from 'discord.js';
-import { CalendarCommandNames } from '../../calendar-interaction-names.js';
+import { CalendarCommandNames } from './calendar-interaction-names.js';
 
 // /set_calendar [calendar_id]
 const setCalendar = new SlashCommandBuilder()
