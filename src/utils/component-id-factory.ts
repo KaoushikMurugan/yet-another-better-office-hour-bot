@@ -35,10 +35,7 @@ const UnknownId = '0' as const;
  * Function variant of YabobComponentFactory, takes over the builder's setCustomId method
  * @param builder builder method that has 'setCustomId'
  * @param idInfo the information to compress into the id
- * @returns builder, but without setCustomId
- * @remark the return type will guarantee that setCustomId doesn't show up for the first chained method,
- *  but chaining more methods will still expose the setCustomId method
- *  - be careful to avoid calling setCustomId
+ * @returns builder
  * @example
  * ```ts
  * // type is inferred as buildComponent<'dm', ButtonBuilder>
@@ -48,7 +45,7 @@ const UnknownId = '0' as const;
 function buildComponent<
     T extends ComponentLocation,
     R extends ButtonBuilder | ModalBuilder | SelectMenuBuilder
->(builder: R, idInfo: CustomIdTuple<T>): Omit<R, 'setCustomId'> {
+>(builder: R, idInfo: CustomIdTuple<T>): R {
     builder.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
     return builder;
 }

@@ -1,14 +1,11 @@
+import {
+    getHandler,
+    interactionExtensions
+} from './interaction-handling/interaction-entry-point.js';
 import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
-import {
-    interactionExtensions,
-    dispatchDMInteraction,
-    dispatchServerInteractions
-} from './command-handling/interaction-index.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
-import { postSlashCommands } from './command-handling/command/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { client, attendingServers } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
@@ -18,9 +15,15 @@ import {
     isLeaveVC,
     isJoinVC
 } from './utils/util-functions.js';
-import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
-import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
-import { GoogleSheetInteractionExtension } from './extensions/google-sheet-logging/google-sheet-command-extension.js';
+import {
+    RolesConfigMenu,
+    serverSettingsMainMenuOptions
+} from './attending-server/server-settings-menus.js';
+import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
+import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
+import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
@@ -43,7 +46,8 @@ client.on(Events.ClientReady, async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
+    collectInteractionExtensionStaticData();
+    console.log(`\n${green('✅ Ready to go! ✅')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
@@ -83,28 +87,8 @@ client.on(Events.GuildDelete, async guild => {
  * - Modal submissions
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-    if (interaction.channel?.isDMBased()) {
-        dispatchDMInteraction(interaction).catch((err: Error) => {
-            interaction.user
-                .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-                .catch(() =>
-                    failedInteractions.push({
-                        username: interaction.user.username,
-                        interaction: interaction
-                    })
-                );
-        });
-        return;
-    }
-    if (!interaction.inCachedGuild()) {
-        // required check to make sure all the types are safe
-        interaction.isRepliable() &&
-            (await interaction.reply(
-                SimpleEmbed('I can only accept server based interactions.')
-            ));
-        return;
-    }
-    dispatchServerInteractions(interaction).catch((err: Error) => {
+    getHandler(interaction)(interaction).catch((err: Error) => {
+        console.error(err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(() =>
@@ -114,11 +98,6 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
                 })
             );
     });
-    if (failedInteractions.length >= 5) {
-        console.error(`These ${failedInteractions.length} interactions failed: `);
-        console.error(failedInteractions);
-        failedInteractions.splice(0, failedInteractions.length);
-    }
 });
 
 /**
@@ -218,22 +197,38 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
+    // Extensions need to load their states first
     if (!environment.disableExtensions) {
-        interactionExtensions.set(
-            guild.id,
-            await Promise.all([
-                CalendarInteractionExtension.load(guild),
-                GoogleSheetInteractionExtension.load(guild)
-            ])
+        await Promise.all(
+            interactionExtensions.map(extension => extension.loadState(guild))
+        );
+        await postSlashCommands(
+            guild,
+            interactionExtensions.flatMap(ext => ext.slashCommandData)
         );
     }
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
-    await postSlashCommands(
-        guild,
-        interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
-    );
     await server.guild.commands.fetch(); // populate cache
     return server;
+}
+
+/**
+ * Combines all the extension help messages and settings menu options
+ * - if we have more static data in interacion level extensions, collect them here
+ */
+function collectInteractionExtensionStaticData(): void {
+    adminCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.botAdmin)
+    );
+    helperCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.staff)
+    );
+    studentCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.student)
+    );
+    serverSettingsMainMenuOptions.push(
+        ...interactionExtensions.flatMap(ext => ext.settingsMainMenuOptions)
+    );
 }

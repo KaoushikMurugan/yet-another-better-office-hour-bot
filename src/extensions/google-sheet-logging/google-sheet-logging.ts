@@ -7,7 +7,7 @@ import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildId, GuildMemberId, Optional } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
-import { ExpectedSheetErrors } from './expected-sheet-errors.js';
+import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
@@ -44,7 +44,9 @@ class GoogleSheetLoggingExtension
     extends BaseServerExtension
     implements IServerExtension
 {
-    /** key is student member.id, value is corresponding helpee object */
+    /** 
+     * key is student member.id, value is corresponding helpee object 
+     */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     /**
      * Used to compose the final attendance entry.
@@ -71,7 +73,7 @@ class GoogleSheetLoggingExtension
         super();
     }
 
-    get googleSheet() {
+    get googleSheet(): GoogleSpreadsheet {
         return this._googleSheet;
     }
 

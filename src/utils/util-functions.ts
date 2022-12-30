@@ -26,7 +26,7 @@ import { environment } from '../environment/environment-manager.js';
  * Prints the title message for the console upon startup
  */
 function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
     console.log(`Environment: ${cyan(environment.env)}`);
     console.log(
         `\n${black(
@@ -258,7 +258,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
  * @param queueName
  */
 function logButtonPress(
-    interaction: ButtonInteraction<'cached'>,
+    interaction: ButtonInteraction,
     buttonName: string,
     queueName?: string
 ): void {
@@ -268,11 +268,11 @@ function logButtonPress(
                 timeZone: 'PST8PDT'
             })
         )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
+            `${yellow(interaction.guild?.name ?? 'DM')}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}` +
-            (queueName === undefined ? `\n - In Queue: ${queueName}` : '')
+            (queueName ? `\n - In Queue: ${queueName}` : '')
     );
 }
 
@@ -356,7 +356,7 @@ function logSelectMenuSelection(
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Select Menu Used: ${magenta(selectMenuName)}` +
+            ` - Select Menu Used: ${magenta(selectMenuName)}\n` +
             ` - Selected Options: ${magenta(interaction.values.join(', '))}`
     );
 }

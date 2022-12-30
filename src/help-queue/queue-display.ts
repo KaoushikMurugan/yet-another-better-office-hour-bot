@@ -15,7 +15,8 @@ import {
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
-import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
+import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -53,7 +54,7 @@ const queueStateStyles: {
         color: EmbedColor.Yellow,
         statusText: {
             serious: '**PAUSED**',
-            notSerious: '**PAUSED**'
+            notSerious: '**PAUSED**' // TODO: Add Emoticon here
         }
     }
 } as const;
@@ -144,8 +145,8 @@ class QueueDisplayV2 {
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'queue',
-                'join',
-                UnknownId,
+                ButtonNames.Join,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('✅')
@@ -154,8 +155,8 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), [
                 'queue',
-                'leave',
-                UnknownId,
+                ButtonNames.Leave,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('❎')
@@ -165,8 +166,8 @@ class QueueDisplayV2 {
         const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'queue',
-                'notif',
-                UnknownId,
+                ButtonNames.Notif,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('🔔')
@@ -174,8 +175,8 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary),
             buildComponent(new ButtonBuilder(), [
                 'queue',
-                'removeN',
-                UnknownId,
+                ButtonNames.RemoveNotif,
+                this.queueChannel.channelObj.guild.id,
                 this.queueChannel.channelObj.id
             ])
                 .setEmoji('🔕')
@@ -248,11 +249,10 @@ class QueueDisplayV2 {
      */
     private async render(force = false): Promise<void> {
         this.isRendering = true;
-        if (
-            !this.queueChannel.channelObj.guild.channels.cache.has(
-                this.queueChannel.channelObj.id
-            )
-        ) {
+        const queueChannelExists = this.queueChannel.channelObj.guild.channels.cache.has(
+            this.queueChannel.channelObj.id
+        );
+        if (!queueChannelExists) {
             // temporary fix, do nothing if #queue doesn't exist
             this.isRendering = false;
             return;

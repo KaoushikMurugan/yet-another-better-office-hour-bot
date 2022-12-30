@@ -16,9 +16,9 @@ import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
 import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
 import { commandChConfigs } from './command-ch-constants.js';
-import { HelpMessage } from '../utils/type-aliases.js';
-import { isTextChannel } from '../utils/util-functions.js';
+import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
+import { HierarchyRoles } from '../models/hierarchy-roles.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -54,7 +54,10 @@ async function initializationCheck(guild: Guild): Promise<void> {
  * Updates the help channel messages
  * Removes all messages in the help channel and posts new ones
  */
-async function updateCommandHelpChannels(guild: Guild): Promise<void> {
+async function updateCommandHelpChannels(
+    guild: Guild,
+    hieararchyRoleIds: HierarchyRoles
+): Promise<void> {
     const allChannels = await guild.channels.fetch();
     const existingHelpCategory = allChannels.find(
         (channel): channel is CategoryChannel =>
@@ -72,33 +75,39 @@ async function updateCommandHelpChannels(guild: Guild): Promise<void> {
         // Change the config object and add more functions here if needed
         await Promise.all(
             commandChConfigs.map(async roleConfig => {
-                const commandCh = await helpCategory.children.create({
+                const commandHelpChannel = await helpCategory.children.create({
                     name: roleConfig.channelName
                 });
-                await commandCh.permissionOverwrites.create(guild.roles.everyone, {
-                    SendMessages: false,
-                    ViewChannel: false
-                });
+                await commandHelpChannel.permissionOverwrites.create(
+                    guild.roles.everyone,
+                    {
+                        SendMessages: false,
+                        ViewChannel: false
+                    }
+                );
+                const rolesWithViewPermission = roleConfig.visibility
+                    // elements of visibility are keys of hieararchyRoleIds
+                    .map(key => hieararchyRoleIds[key])
+                    // now get role by id
+                    .map(id => guild.roles.cache.get(id));
                 await Promise.all(
-                    guild.roles.cache
-                        .filter(role => roleConfig.visibility.includes(role.name))
-                        .map(roleWithViewPermission =>
-                            commandCh.permissionOverwrites.create(
-                                roleWithViewPermission,
-                                { ViewChannel: true }
-                            )
-                        )
+                    rolesWithViewPermission.map(role => {
+                        role &&
+                            commandHelpChannel.permissionOverwrites.create(role, {
+                                ViewChannel: true
+                            });
+                    })
                 );
             })
         );
-        await sendCommandHelpChannelMessages(helpCategory, commandChConfigs);
+        await sendCommandHelpChannelMessages(helpCategory);
     } else {
         console.log(
             `Found existing help channels in ${yellow(
                 guild.name
             )}, updating command help files`
         );
-        await sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
+        await sendCommandHelpChannelMessages(existingHelpCategory);
     }
     console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`));
 }
@@ -106,28 +115,24 @@ async function updateCommandHelpChannels(guild: Guild): Promise<void> {
 /**
  * Overwrites the existing command help channel and send new help messages
  * @param helpCategory the category named 'Bot Commands Help'
- * @param messageContents array of embeds to send to each help channel
  */
 async function sendCommandHelpChannelMessages(
-    helpCategory: CategoryChannel,
-    messageContents: Array<{
-        channelName: string;
-        file: HelpMessage[];
-        visibility: string[];
-    }>
+    helpCategory: CategoryChannel
 ): Promise<void> {
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
         allHelpChannels
-            .map(ch =>
-                ch.messages.fetch().then(messages => messages.map(msg => msg.delete()))
+            .map(channel =>
+                channel.messages
+                    .fetch()
+                    .then(messages => messages.map(msg => msg.delete()))
             )
             .flat()
     );
     // send new ones
     await Promise.all(
         allHelpChannels.map(channel =>
-            messageContents
+            commandChConfigs
                 .find(val => val.channelName === channel.name)
                 ?.file?.filter(helpMessage => helpMessage.useInHelpChannel)
                 .map(helpMessage => channel.send(helpMessage.message))
@@ -135,6 +140,50 @@ async function sendCommandHelpChannelMessages(
     );
     console.log(`Successfully updated help messages in ${yellow(helpCategory.name)}!`);
 }
+
+/**
+ * Updates the command help channel visibility when hierarchy roles get updated
+ * @param guild
+ * @param hieararchyRoleIds the newly updated hierarchy role ids
+ */
+async function updateCommandHelpChannelVisibility(
+    guild: Guild,
+    hieararchyRoleIds: HierarchyRoles
+): Promise<void> {
+    const helpCategory = guild.channels.cache.find(
+        (channel): channel is CategoryChannel =>
+            isCategoryChannel(channel) && channel.name === 'Bot Commands Help'
+    );
+    if (!helpCategory) {
+        await updateCommandHelpChannels(guild, hieararchyRoleIds);
+        return;
+    }
+    const helpChannels = (await helpCategory.fetch()).children.cache.filter(
+        isTextChannel
+    );
+    await Promise.all(
+        helpChannels
+            .map(helpChannel =>
+                helpChannel.permissionOverwrites.cache.map(overwrite =>
+                    overwrite.delete()
+                )
+            )
+            .flat()
+    );
+    await Promise.all(
+        helpChannels.map(channel =>
+            commandChConfigs
+                .find(channelConfig => channelConfig.channelName === channel.name)
+                ?.visibility.map(key => hieararchyRoleIds[key])
+                ?.map(roleId =>
+                    channel.permissionOverwrites.create(roleId, {
+                        ViewChannel: true
+                    })
+                )
+        )
+    );
+}
+
 /**
  * Creates a new category with `categoryName` and creates `numOfChannels` voice channels
  * with the name `channelName` within the category
@@ -193,7 +242,10 @@ async function createOfficeVoiceChannels(
  * @param student who will receive the invite
  * @param helperVoiceChannel which vc channel to invite the student to
  */
-async function sendInvite(student: GuildMember, helperVoiceChannel: VoiceBasedChannel): Promise<void> {
+async function sendInvite(
+    student: GuildMember,
+    helperVoiceChannel: VoiceBasedChannel
+): Promise<void> {
     const [invite] = await Promise.all([
         helperVoiceChannel.createInvite({
             maxAge: 15 * 60,
@@ -224,6 +276,7 @@ async function sendInvite(student: GuildMember, helperVoiceChannel: VoiceBasedCh
 export {
     initializationCheck,
     updateCommandHelpChannels,
+    updateCommandHelpChannelVisibility,
     createOfficeVoiceChannels,
     sendInvite
 };

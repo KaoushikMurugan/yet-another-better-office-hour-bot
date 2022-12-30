@@ -2,7 +2,6 @@
 
 import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
 import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
@@ -13,6 +12,7 @@ import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
+import { CalendarQueueExtension } from '../extensions/session-calenar/calendar-queue-extension.js';
 
 /**
  * Render props for the queue display.
@@ -53,7 +53,7 @@ class HelpQueueV2 {
     /** Why so serious? */
     private _seriousModeEnabled = false;
     /** Set of active helpers' ids */
-    private _activeHelperIds: Set<string> = new Set();
+    private _activeHelperIds: Set<Snowflake> = new Set();
     /** Set of helpers ids that have paused helping */
     private _pausedHelperIds: Set<Snowflake> = new Set();
     /** The actual queue of students */

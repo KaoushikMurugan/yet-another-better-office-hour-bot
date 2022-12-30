@@ -3,10 +3,7 @@
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
-    ButtonInteraction,
-    ChatInputCommandInteraction,
-    ModalSubmitInteraction,
-    SelectMenuInteraction,
+    SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
@@ -98,37 +95,6 @@ type HelpMessage = {
 
 // Used in interaction handlers
 
-type CommandCallback = (
-    interaction: ChatInputCommandInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DefaultButtonCallback = (
-    interaction: ButtonInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type QueueButtonCallback = (
-    queueName: string,
-    interaction: ButtonInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
-
-type ModalSubmitCallback = (
-    interaction: ModalSubmitInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMModalSubmitCallback = (
-    interaction: ModalSubmitInteraction
-) => Promise<BaseMessageOptions>;
-
-type SelectMenuCallback = (
-    interaction: SelectMenuInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMSelectMenuCallback = (
-    interaction: SelectMenuInteraction
-) => Promise<BaseMessageOptions>;
-
 type SettingsMenuCallback = (
     server: AttendingServerV2,
     channelId: string,
@@ -198,6 +164,21 @@ type Entries<T> = {
     [K in keyof T]: [K, T[K]];
 }[keyof T][];
 
+/**
+ * Compile time check to make sure that a enum's key and value are exactly the same
+ * @example
+ * ```ts
+ * type A = EnsureCorrectEnum<typeof ButtonNames>;
+ * ```
+ */
+type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
+
+/** Represents 1 option inside the main settings menu */
+type SettingsMenuOption = {
+    optionData: SelectMenuComponentOptionData;
+    subMenu: SettingsMenuCallback;
+};
+
 export {
     /** Types */
     WithRequired,
@@ -213,6 +194,8 @@ export {
     QueueResult,
     HelpMessage,
     Entries,
+    EnsureCorrectEnum,
+    SettingsMenuOption,
     /** Aliases */
     GuildId,
     GuildMemberId,
@@ -221,14 +204,6 @@ export {
     RenderIndex,
     TextBasedChannelId,
     /** Callback Types */
-    CommandCallback,
-    DefaultButtonCallback,
-    QueueButtonCallback,
-    DMButtonCallback,
-    ModalSubmitCallback,
-    DMModalSubmitCallback,
-    SelectMenuCallback,
-    DMSelectMenuCallback,
     SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,

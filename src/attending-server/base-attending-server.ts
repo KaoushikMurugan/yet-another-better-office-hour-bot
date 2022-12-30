@@ -18,7 +18,6 @@ import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';
 import {
@@ -42,8 +41,10 @@ import { RolesConfigMenu } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
+    updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
+import { CalendarExtensionState } from '../extensions/session-calenar/calendar-states.js';
 
 /**
  * Wrapper for TextChannel
@@ -126,13 +127,13 @@ class AttendingServerV2 {
     get loggingChannel(): Optional<TextChannel> {
         return this.settings.loggingChannel;
     }
-    get botAdminRoleID(): string {
+    get botAdminRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
-    get staffRoleID(): string {
+    get staffRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.staff;
     }
-    get studentRoleID(): string {
+    get studentRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.student;
     }
     get hierarchyRoleIds(): HierarchyRoles {
@@ -215,9 +216,15 @@ class AttendingServerV2 {
      */
     async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
         this.settings.hierarchyRoleIds[role] = id;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        await Promise.all([
+            updateCommandHelpChannelVisibility(
+                this.guild,
+                this.settings.hierarchyRoleIds
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
     }
 
     /**
@@ -249,7 +256,7 @@ class AttendingServerV2 {
         await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
-            ? []
+            ? [] // TODO: Should we always load the firebase extension?
             : await Promise.all([
                   GoogleSheetLoggingExtension.load(guild),
                   new FirebaseServerBackupExtension(guild),
@@ -280,7 +287,7 @@ class AttendingServerV2 {
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
             server.createQueueRoles(),
-            updateCommandHelpChannels(guild)
+            updateCommandHelpChannels(guild, server.hierarchyRoleIds)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);

@@ -4,23 +4,26 @@ import {
     ButtonStyle,
     EmbedBuilder,
     SelectMenuBuilder,
-    SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
-    SettingsMenuCallback,
+    SettingsMenuOption,
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
 import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
+import {
+    ButtonNames,
+    SelectMenuNames
+} from '../interaction-handling/interaction-constants/interaction-names.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
         'other',
-        'return_to_main_menu',
+        ButtonNames.ReturnToMainMenu,
         UnknownId,
         UnknownId
     ])
@@ -61,12 +64,9 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: {
-    optionObj: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
-}[] = [
+const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionObj: {
+        optionData: {
             emoji: '📝',
             label: 'Server Roles',
             description: 'Configure the server roles',
@@ -75,7 +75,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: RolesConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '📨',
             label: 'After Session Message',
             description: 'Configure the message sent after a session',
@@ -84,7 +84,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: AfterSessionMessageConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '⏳',
             label: 'Queue Auto Clear',
             description: 'Configure the auto-clearing of queues',
@@ -93,7 +93,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: QueueAutoClearConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '🪵',
             label: 'Logging Channel',
             description: 'Configure the logging channel',
@@ -102,7 +102,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: LoggingChannelConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '🎓',
             label: 'Auto Give Student Role',
             description: 'Configure the auto-giving of the student role',
@@ -142,12 +142,12 @@ function SettingsMainMenu(
     const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
             isDm ? 'dm' : 'other',
-            'server_settings',
+            SelectMenuNames.ServerSettings,
             server.guild.id,
             channelId
         ])
             .setPlaceholder('Select an option')
-            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
+            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionData))
     );
     return { embeds: [embed.data], components: [selectMenu] };
 }
@@ -232,7 +232,7 @@ function RolesConfigMenu(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
-                `server_role_config_1`,
+                ButtonNames.ServerRoleConfig1,
                 server.guild.id,
                 channelId
             ])
@@ -240,7 +240,7 @@ function RolesConfigMenu(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
-                `server_role_config_1a`,
+                ButtonNames.ServerRoleConfig1a,
                 server.guild.id,
                 channelId
             ])
@@ -250,7 +250,7 @@ function RolesConfigMenu(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
-                'server_role_config_2',
+                ButtonNames.ServerRoleConfig2,
                 server.guild.id,
                 channelId
             ])
@@ -258,7 +258,7 @@ function RolesConfigMenu(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
-                'server_role_config_2a',
+                ButtonNames.ServerRoleConfig2a,
                 server.guild.id,
                 channelId
             ])
@@ -309,7 +309,7 @@ function AfterSessionMessageConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'after_session_message_config_1',
+            ButtonNames.ShowAfterSessionMessageModal,
             server.guild.id,
             channelId
         ])
@@ -318,7 +318,7 @@ function AfterSessionMessageConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'after_session_message_config_2',
+            ButtonNames.DisableAfterSessionMessage,
             server.guild.id,
             channelId
         ])
@@ -363,7 +363,7 @@ function QueueAutoClearConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'queue_auto_clear_config_1',
+            ButtonNames.ShowQueueAutoClearModal,
             server.guild.id,
             channelId
         ])
@@ -372,7 +372,7 @@ function QueueAutoClearConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'queue_auto_clear_config_2',
+            ButtonNames.DisableQueueAutoClear,
             server.guild.id,
             channelId
         ])
@@ -401,7 +401,7 @@ function LoggingChannelConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'logging_channel_config_2',
+            ButtonNames.DisableLoggingChannel,
             server.guild.id,
             channelId
         ])
@@ -454,9 +454,9 @@ function LoggingChannelConfigMenu(
     const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
             'other',
-            'select_logging_channel',
-            UnknownId,
-            UnknownId
+            SelectMenuNames.SelectLoggingChannel,
+            server.guild.id,
+            channelId
         ])
             .setPlaceholder('Select a Text Channel')
             .addOptions(
@@ -499,7 +499,7 @@ function AutoGiveStudentRoleConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'auto_give_student_role_config_1',
+            ButtonNames.AutoGiveStudentRoleConfig1,
             server.guild.id,
             channelId
         ])
@@ -508,7 +508,7 @@ function AutoGiveStudentRoleConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            'auto_give_student_role_config_2',
+            ButtonNames.AutoGiveStudentRoleConfig2,
             server.guild.id,
             channelId
         ])

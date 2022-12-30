@@ -9,102 +9,62 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import {
-    ButtonInteraction,
-    ChatInputCommandInteraction,
     GuildMember,
     VoiceChannel,
-    ModalSubmitInteraction,
-    SelectMenuInteraction
+    Guild,
 } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
-import { QueueDisplayV2 } from '../help-queue/queue-display.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
-import { CommandData } from '../command-handling/command/slash-commands.js';
-import { Optional } from '../utils/type-aliases.js';
+import { HelpMessage, Optional, SettingsMenuOption } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
+import {
+    ButtonHandlerProps,
+    CommandHandlerProps,
+    ModalSubmitHandlerProps,
+    SelectMenuHandlerProps
+} from '../interaction-handling/handler-interface.js';
+import { CommandData } from '../interaction-handling/interaction-constants/builtin-slash-commands.js';
 
-/** Server Level Extension */
 interface IInteractionExtension {
+    /**
+     * Create a state for each guild if necessary
+     * - Called inside joinGuild()
+     * @param guild which guild to create state for
+     */
+    loadState(guild: Guild): Promise<void>; // TODO: Maybe move this to onServerCreate?
     /**
      * The command data json to post to the discord server
      */
     slashCommandData: CommandData;
     /**
-     * Whether the extension can handle slash commands.
-     * @param interaction the slash command to test
+     * Help messages to be combined with base yabob help messages
      */
-    canHandleCommand: (interaction: ChatInputCommandInteraction<'cached'>) => boolean;
+    helpMessages: {
+        botAdmin: ReadonlyArray<HelpMessage>;
+        staff: ReadonlyArray<HelpMessage>;
+        student: ReadonlyArray<HelpMessage>;
+    };
     /**
-     * Whether the extension can handle buttons
-     * @param interaction the button to test
+     *
      */
-    canHandleButton: (interaction: ButtonInteraction<'cached'>) => boolean;
+    settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption>;
     /**
-     * Whether the extension can handle DM buttons
-     * @param interaction
+     * Command method map
      */
-    canHandleDMButton: (interaction: ButtonInteraction) => boolean;
+    commandMap: CommandHandlerProps;
     /**
-     * Whether the extension can handle modal submit
-     * @param interaction
+     * Button method map
      */
-    canHandleModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => boolean;
+    buttonMap: ButtonHandlerProps;
     /**
-     * Whether the extension can hendle DM modal submit
-     * @param interaction
+     * Select menu method map
      */
-    canHandleDMModalSubmit: (interaction: ModalSubmitInteraction) => boolean;
+    selectMenuMap: SelectMenuHandlerProps;
     /**
-     * Whether the extension can handle select menus
-     * @param interaction
+     * Modal submit method map
      */
-    canHandleSelectMenu: (interaction: SelectMenuInteraction<'cached'>) => boolean;
-    /**
-     * Whether the extension can handle DM select menus
-     * @param interaction
-     */
-    canHandleDMSelectMenu: (interaction: SelectMenuInteraction) => boolean;
-    /**
-     * Interface to the command processor. If the extension can handle this slash command,
-     * it should reply inside this method
-     * @param interaction the slash command that's guaranteed to be handled by this extension
-     */
-    processCommand: (interaction: ChatInputCommandInteraction<'cached'>) => Promise<void>;
-    /**
-     * Interface to the button processor. If the extension can handle this button,
-     * it should reply inside this method
-     * @param interaction the button that's guaranteed to be handled by this extension
-     */
-    processButton: (interaction: ButtonInteraction<'cached'>) => Promise<void>;
-    /**
-     * Interface to the DM button processor. If the extension can handle this button,
-     * it should reply inside this method
-     * @param interaction
-     */
-    processDMButton: (interaction: ButtonInteraction) => Promise<void>;
-    /**
-     * Interface to the modal submit processor. If the extension can handle this button,
-     * it should reply inside this method
-     * @param interaction the modal that's guaranteed to be handled by this extension
-     */
-    processModalSubmit: (interaction: ModalSubmitInteraction<'cached'>) => Promise<void>;
-    /**
-     * Interface to the DM modal submit processor. If the extension can handle this button,
-     * it should reply inside this method
-     * @param interaction the modal that's guaranteed to be handled by this extension
-     */
-    processDMModalSubmit: (interaction: ModalSubmitInteraction) => Promise<void>;
-    /**
-     * Interface to the select menu processor. If the extension can handle this button,
-     * @param interaction the select menu that's guaranteed to be handled by this extension
-     */
-    processSelectMenu: (interaction: SelectMenuInteraction<'cached'>) => Promise<void>;
-    /**
-     * Interface to the DM select menu processor. If the extension can handle this button,
-     * @param interaction the select menu that's guaranteed to be handled by this extension
-     */
-    processDMSelectMenu: (interaction: SelectMenuInteraction) => Promise<void>;
+    modalMap: ModalSubmitHandlerProps;
 }
 
 /** Server Level Extension */
@@ -265,55 +225,52 @@ interface IQueueExtension {
  * Boilerplate base class of interaction related extensions.
  * ----
  * - Any INTERACTION extension must inherit from here
- * - Always override postExternalSlashCommands() if you want to post your own commands
- * - override processCommand and/or processButton depending on which type you want
+ * - Provide method maps by overriding commandMap, buttonMap, selectMenuMap, or modalMap
+ * - Add help messages in the helpMessages array
+ * - Add setting menu options in the settingsMainMenuOptions array
  */
 class BaseInteractionExtension implements IInteractionExtension {
-    get slashCommandData(): CommandData {
-        return [];
-    }
-    canHandleButton(interaction: ButtonInteraction): boolean {
-        return false;
-    }
-    canHandleDMButton(interactoin: ButtonInteraction): boolean {
-        return false;
-    }
-    canHandleCommand(interaction: ChatInputCommandInteraction): boolean {
-        return false;
-    }
-    canHandleModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        return false;
-    }
-    canHandleDMModalSubmit(interaction: ModalSubmitInteraction): boolean {
-        return false;
-    }
-    canHandleSelectMenu(interaction: SelectMenuInteraction): boolean {
-        return false;
-    }
-    canHandleDMSelectMenu(interaction: SelectMenuInteraction): boolean {
-        return false;
-    }
-    processCommand(interaction: ChatInputCommandInteraction): Promise<void> {
+    loadState(guild: Guild): Promise<void> {
         return Promise.resolve();
     }
-    processButton(interaction: ButtonInteraction): Promise<void> {
-        return Promise.resolve();
-    }
-    processDMButton(interaction: ButtonInteraction): Promise<void> {
-        return Promise.resolve();
-    }
-    processModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
-        return Promise.resolve();
-    }
-    processDMModalSubmit(interaction: ModalSubmitInteraction): Promise<void> {
-        return Promise.resolve();
-    }
-    processSelectMenu(interaction: SelectMenuInteraction): Promise<void> {
-        return Promise.resolve();
-    }
-    processDMSelectMenu(interaction: SelectMenuInteraction): Promise<void> {
-        return Promise.resolve();
-    }
+    helpMessages: {
+        botAdmin: ReadonlyArray<HelpMessage>;
+        staff: ReadonlyArray<HelpMessage>;
+        student: ReadonlyArray<HelpMessage>;
+    } = {
+        botAdmin: [],
+        staff: [],
+        student: []
+    };
+    settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption> = [];
+    slashCommandData: CommandData = [];
+    commandMap: CommandHandlerProps = {
+        methodMap: {},
+        skipProgressMessageCommands: new Set()
+    };
+    buttonMap: ButtonHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {},
+        skipProgressMessageButtons: new Set()
+    };
+    selectMenuMap: SelectMenuHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {},
+        skipProgressMessageSelectMenus: new Set()
+    };
+    modalMap: ModalSubmitHandlerProps = {
+        guildMethodMap: {
+            queue: {},
+            other: {}
+        },
+        dmMethodMap: {}
+    };
 }
 
 /**
