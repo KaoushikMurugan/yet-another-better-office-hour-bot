@@ -1,3 +1,7 @@
+import {
+    getHandler,
+    interactionExtensions
+} from './interaction-handling/interaction-entry-point.js';
 import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
@@ -11,13 +15,15 @@ import {
     isLeaveVC,
     isJoinVC
 } from './utils/util-functions.js';
-import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
 import {
-    getHandler,
-    interactionExtensions
-} from './interaction-handling/interaction-entry-point.js';
+    RolesConfigMenu,
+    serverSettingsMainMenuOptions
+} from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
+import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
@@ -40,7 +46,8 @@ client.on(Events.ClientReady, async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    console.log(`\n✅ ${green('Ready to go!')} ✅\n`);
+    collectExtensionStaticData();
+    console.log(`\n${green(centered('✅ Ready to go! ✅'), 'Bg')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
@@ -205,4 +212,23 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     attendingServers.set(guild.id, server);
     await server.guild.commands.fetch(); // populate cache
     return server;
+}
+
+/**
+ * Combines all the extension help messages and settings menu options
+ * - if we have more static data in interacion level extensions, collect them here
+ */
+function collectExtensionStaticData(): void {
+    adminCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.botAdmin)
+    );
+    helperCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.staff)
+    );
+    studentCommandHelpMessages.push(
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.student)
+    );
+    serverSettingsMainMenuOptions.push(
+        ...interactionExtensions.flatMap(ext => ext.settingsMainMenuOptions)
+    );
 }

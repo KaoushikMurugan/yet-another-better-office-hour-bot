@@ -1,6 +1,6 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
-import { YabobEmbed } from '../../../utils/type-aliases.js';
+import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import { calendarStates } from '../calendar-states.js';
 import { mainMenuRow } from '../../../attending-server/server-settings-menus.js';
@@ -12,7 +12,7 @@ import { CalendarButtonNames } from './calendar-interaction-names.js';
  * Options for the server settings main menu
  * @see {@link serverSettingsMainMenuOptions}
  */
-const calendarSettingsMainMenuOptions = [
+const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
         optionData: {
             emoji: '🗓',
@@ -20,12 +20,12 @@ const calendarSettingsMainMenuOptions = [
             description: 'Configure the calendar settings',
             value: 'calendar-settings'
         },
-        subMenu: calendarSettingsConfigMenu
+        subMenu: CalendarSettingsConfigMenu
     }
 ];
 
 /** Compose the calendar settings settings menu */
-function calendarSettingsConfigMenu(
+function CalendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
     isDm: boolean
@@ -79,4 +79,4 @@ function calendarSettingsConfigMenu(
     };
 }
 
-export { calendarSettingsConfigMenu, calendarSettingsMainMenuOptions };
+export { CalendarSettingsConfigMenu, calendarSettingsMainMenuOptions };

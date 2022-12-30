@@ -1,7 +1,7 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { ModalSubmitHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { CalendarModalNames } from '../calendar-constants/calendar-interaction-names.js';
-import { calendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
+import { CalendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
@@ -57,7 +57,7 @@ async function updateCalendarSettings(
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              calendarSettingsConfigMenu(server, safeInteraction.channel.id, false)
+              CalendarSettingsConfigMenu(server, safeInteraction.channel.id, false)
           )
         : interaction.reply(
               CalendarSuccessMessages.updatedCalendarSettings(calendarId, publicEmbedUrl)

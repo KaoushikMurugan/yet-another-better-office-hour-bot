@@ -19,7 +19,6 @@ import {
     ButtonNames,
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
-import { interactionExtensions } from '../interaction-handling/interaction-entry-point.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
@@ -148,12 +147,7 @@ function SettingsMainMenu(
             channelId
         ])
             .setPlaceholder('Select an option')
-            .addOptions(
-                ...serverSettingsMainMenuOptions.map(option => option.optionData),
-                ...interactionExtensions
-                    .flatMap(ext => ext.settingsMainMenuOptions)
-                    .map(option => option.optionData)
-            )
+            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionData))
     );
     return { embeds: [embed.data], components: [selectMenu] };
 }

@@ -26,7 +26,7 @@ import { environment } from '../environment/environment-manager.js';
  * Prints the title message for the console upon startup
  */
 function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.2';
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
     console.log(`Environment: ${cyan(environment.env)}`);
     console.log(
         `\n${black(

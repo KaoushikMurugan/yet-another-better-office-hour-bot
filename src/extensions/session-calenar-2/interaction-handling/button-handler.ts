@@ -3,7 +3,7 @@ import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { CalendarButtonNames } from '../calendar-constants/calendar-interaction-names.js';
 import { calendarSettingsModal } from '../calendar-constants/calendar-modal-objects.js';
-import { calendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
+import { CalendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
@@ -32,7 +32,7 @@ async function resetCalendarSettings(
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
     ]);
     await interaction.update(
-        calendarSettingsConfigMenu(server, interaction.channelId, false)
+        CalendarSettingsConfigMenu(server, interaction.channelId, false)
     );
 }
 
