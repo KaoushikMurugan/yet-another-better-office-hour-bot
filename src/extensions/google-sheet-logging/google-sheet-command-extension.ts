@@ -1,24 +1,17 @@
-import { ChatInputCommandInteraction, Guild, User } from 'discord.js';
-import { GoogleSpreadsheet } from 'google-spreadsheet';
-import { isServerInteraction } from '../../command-handling/common-validations.js';
-import { CommandData } from '../../command-handling/command/slash-commands.js';
-import { environment } from '../../environment/environment-manager.js';
-import { red } from '../../utils/command-line-colors.js';
-import {
-    EmbedColor,
-    ErrorEmbed,
-    SimpleEmbed,
-    SlashCommandLogEmbed
-} from '../../utils/embed-helper.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import { CommandCallback, Optional, YabobEmbed } from '../../utils/type-aliases.js';
-import { logSlashCommand } from '../../utils/util-functions.js';
-import {
-    BaseInteractionExtension,
-    IInteractionExtension
-} from '../extension-interface.js';
-import { getServerGoogleSheet } from './google-sheet-logging.js';
-import { googleSheetsCommands } from './google-sheet-slash-commands.js';
+import { Guild, ChatInputCommandInteraction, User } from "discord.js";
+import { GoogleSpreadsheet } from "google-spreadsheet";
+import { environment } from "../../environment/environment-manager.js";
+import { CommandData } from "../../interaction-handling/interaction-constants/builtin-slash-commands.js";
+import { isServerInteraction } from "../../interaction-handling/shared-validations.js";
+import { red } from "../../utils/command-line-colors.js";
+import { SimpleEmbed, EmbedColor, SlashCommandLogEmbed, ErrorEmbed } from "../../utils/embed-helper.js";
+import { ExtensionSetupError } from "../../utils/error-types.js";
+import { YabobEmbed, Optional } from "../../utils/type-aliases.js";
+import { logSlashCommand } from "../../utils/util-functions.js";
+import { BaseInteractionExtension, IInteractionExtension } from "../extension-interface.js";
+import { getServerGoogleSheet } from "./google-sheet-logging.js";
+import { googleSheetsCommands } from "./google-sheet-constants/google-sheet-slash-commands.js";
+
 
 class GoogleSheetInteractionExtension
     extends BaseInteractionExtension
@@ -27,8 +20,6 @@ class GoogleSheetInteractionExtension
     constructor() {
         super();
     }
-
-    private static helpEmbedsSent = false;
 
     /**
      * Returns a new GoogleSheetLoggingExtension for the server with the given name
@@ -361,7 +352,7 @@ async function getWeeklyReport(
                 parseInt(returnTimeParts[0]),
                 parseInt(returnTimeParts[1]),
                 parseInt(returnTimeParts[2].split(' ')[0])
-            );
+            ); //TODO: remove manual parsing
 
             return returnDateObj >= weekStartTime && returnDateObj <= weekEndTime;
         });
