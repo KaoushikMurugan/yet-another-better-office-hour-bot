@@ -80,9 +80,9 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
             ephemeral: true
         });
     }
-    await handleCommand?.(interaction).catch(async (err: Error) => {
-        await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-    });
+    await handleCommand?.(interaction).catch((err: Error) =>
+        interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+    );
 }
 
 /**
@@ -94,7 +94,9 @@ async function processButton(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(interaction.guildId ?? serverId); // serverId might be unknown
+    // serverId might be unknown
+    // TODO: Maybe require all buildComponent calls to accept only valid server id's
+    const server = isServerInteraction(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
@@ -105,17 +107,17 @@ async function processButton(interaction: Interaction): Promise<void> {
         });
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
-        const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
         logButtonPress(interaction, buttonName);
+        const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
+        await handleModalSubmit?.(interaction).catch((err: Error) =>
+            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+        );
     } else {
-        const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
         logDMButtonPress(interaction, buttonName);
+        const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
+        await handleModalSubmit?.(interaction).catch((err: Error) =>
+            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+        );
     }
 }
 
@@ -144,17 +146,18 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         });
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
-        const handleModalSubmit = completeSelectMenuMap.guildMethodMap[type][selectMenuName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
         logSelectMenuSelection(interaction, selectMenuName);
+        const handleModalSubmit =
+            completeSelectMenuMap.guildMethodMap[type][selectMenuName];
+        await handleModalSubmit?.(interaction).catch((err: Error) =>
+            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+        );
     } else {
-        const handleModalSubmit = completeSelectMenuMap.dmMethodMap[selectMenuName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
-        });
         logDMSelectMenuSelection(interaction, selectMenuName);
+        const handleModalSubmit = completeSelectMenuMap.dmMethodMap[selectMenuName];
+        await handleModalSubmit?.(interaction).catch((err: Error) =>
+            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+        );
     }
 }
 
@@ -172,17 +175,17 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
     );
     if (interaction.inCachedGuild() && type !== 'dm') {
+        logModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.guildMethodMap[type][modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
-        logModalSubmit(interaction, modalName);
     } else {
+        logDMModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
             await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
         });
-        logDMModalSubmit(interaction, modalName);
     }
 }
 
