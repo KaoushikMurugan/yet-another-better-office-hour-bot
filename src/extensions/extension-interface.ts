@@ -12,7 +12,6 @@ import {
     GuildMember,
     VoiceChannel,
     Guild,
-    RESTPostAPIApplicationCommandsJSONBody
 } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
@@ -30,9 +29,10 @@ import { CommandData } from '../interaction-handling/interaction-constants/built
 interface IInteractionExtension {
     /**
      * Create a state for each guild if necessary
+     * - Called inside joinGuild()
      * @param guild which guild to create state for
      */
-    loadState(guild: Guild): Promise<void>;
+    loadState(guild: Guild): Promise<void>; // TODO: Maybe move this to onServerCreate?
     /**
      * The command data json to post to the discord server
      */
@@ -225,8 +225,9 @@ interface IQueueExtension {
  * Boilerplate base class of interaction related extensions.
  * ----
  * - Any INTERACTION extension must inherit from here
- * - Always override postExternalSlashCommands() if you want to post your own commands
- * - override processCommand and/or processButton depending on which type you want
+ * - Provide method maps by overriding commandMap, buttonMap, selectMenuMap, or modalMap
+ * - Add help messages in the helpMessages array
+ * - Add setting menu options in the settingsMainMenuOptions array
  */
 class BaseInteractionExtension implements IInteractionExtension {
     loadState(guild: Guild): Promise<void> {

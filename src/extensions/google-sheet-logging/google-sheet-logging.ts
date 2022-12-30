@@ -44,7 +44,9 @@ class GoogleSheetLoggingExtension
     extends BaseServerExtension
     implements IServerExtension
 {
-    /** key is student member.id, value is corresponding helpee object */
+    /** 
+     * key is student member.id, value is corresponding helpee object 
+     */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     /**
      * Used to compose the final attendance entry.
