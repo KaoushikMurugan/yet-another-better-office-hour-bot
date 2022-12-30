@@ -14,7 +14,7 @@ import { CalendarButtonNames } from './calendar-interaction-names.js';
  */
 const calendarSettingsMainMenuOptions = [
     {
-        optionObj: {
+        optionData: {
             emoji: '🗓',
             label: 'Calendar Settings',
             description: 'Configure the calendar settings',
@@ -22,7 +22,7 @@ const calendarSettingsMainMenuOptions = [
         },
         subMenu: calendarSettingsConfigMenu
     }
-] as const;
+];
 
 /** Compose the calendar settings settings menu */
 function calendarSettingsConfigMenu(

@@ -31,7 +31,7 @@ async function showSettingsSelectMenu(
     const server = isServerInteraction(interaction);
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
-        option => option.optionObj.value === selectedOption
+        option => option.optionData.value === selectedOption
     );
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
@@ -46,7 +46,7 @@ async function selectLoggingChannel(
     const channelId = interaction.values[0];
     const loggingChannel = server.guild.channels.cache.get(channelId ?? '');
     const callbackMenu = serverSettingsMainMenuOptions.find(
-        option => option.optionObj.value === 'logging-channel'
+        option => option.optionData.value === 'logging-channel'
     );
     if (!loggingChannel || !isTextChannel(loggingChannel)) {
         throw ExpectedParseErrors.nonExistentTextChannel(channelId);

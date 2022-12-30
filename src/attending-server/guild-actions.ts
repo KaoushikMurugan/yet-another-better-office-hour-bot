@@ -16,7 +16,6 @@ import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
 import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
 import { commandChConfigs } from './command-ch-constants.js';
-import { HelpMessage } from '../utils/type-aliases.js';
 import { isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 
@@ -91,14 +90,14 @@ async function updateCommandHelpChannels(guild: Guild): Promise<void> {
                 );
             })
         );
-        await sendCommandHelpChannelMessages(helpCategory, commandChConfigs);
+        await sendCommandHelpChannelMessages(helpCategory);
     } else {
         console.log(
             `Found existing help channels in ${yellow(
                 guild.name
             )}, updating command help files`
         );
-        await sendCommandHelpChannelMessages(existingHelpCategory, commandChConfigs);
+        await sendCommandHelpChannelMessages(existingHelpCategory);
     }
     console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`));
 }
@@ -106,28 +105,24 @@ async function updateCommandHelpChannels(guild: Guild): Promise<void> {
 /**
  * Overwrites the existing command help channel and send new help messages
  * @param helpCategory the category named 'Bot Commands Help'
- * @param messageContents array of embeds to send to each help channel
  */
 async function sendCommandHelpChannelMessages(
-    helpCategory: CategoryChannel,
-    messageContents: Array<{
-        channelName: string;
-        file: HelpMessage[];
-        visibility: string[];
-    }>
+    helpCategory: CategoryChannel
 ): Promise<void> {
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
         allHelpChannels
-            .map(ch =>
-                ch.messages.fetch().then(messages => messages.map(msg => msg.delete()))
+            .map(channel =>
+                channel.messages
+                    .fetch()
+                    .then(messages => messages.map(msg => msg.delete()))
             )
             .flat()
     );
     // send new ones
     await Promise.all(
         allHelpChannels.map(channel =>
-            messageContents
+            commandChConfigs
                 .find(val => val.channelName === channel.name)
                 ?.file?.filter(helpMessage => helpMessage.useInHelpChannel)
                 .map(helpMessage => channel.send(helpMessage.message))
@@ -135,6 +130,7 @@ async function sendCommandHelpChannelMessages(
     );
     console.log(`Successfully updated help messages in ${yellow(helpCategory.name)}!`);
 }
+
 /**
  * Creates a new category with `categoryName` and creates `numOfChannels` voice channels
  * with the name `channelName` within the category
@@ -193,7 +189,10 @@ async function createOfficeVoiceChannels(
  * @param student who will receive the invite
  * @param helperVoiceChannel which vc channel to invite the student to
  */
-async function sendInvite(student: GuildMember, helperVoiceChannel: VoiceBasedChannel): Promise<void> {
+async function sendInvite(
+    student: GuildMember,
+    helperVoiceChannel: VoiceBasedChannel
+): Promise<void> {
     const [invite] = await Promise.all([
         helperVoiceChannel.createInvite({
             maxAge: 15 * 60,

@@ -4,12 +4,11 @@ import {
     ButtonStyle,
     EmbedBuilder,
     SelectMenuBuilder,
-    SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
-    SettingsMenuCallback,
+    SettingsMenuOption,
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
@@ -20,6 +19,7 @@ import {
     ButtonNames,
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
+import { interactionExtensions } from '../interaction-handling/interaction-entry-point.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
@@ -65,12 +65,9 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: {
-    optionObj: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
-}[] = [
+const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionObj: {
+        optionData: {
             emoji: '📝',
             label: 'Server Roles',
             description: 'Configure the server roles',
@@ -79,7 +76,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: RolesConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '📨',
             label: 'After Session Message',
             description: 'Configure the message sent after a session',
@@ -88,7 +85,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: AfterSessionMessageConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '⏳',
             label: 'Queue Auto Clear',
             description: 'Configure the auto-clearing of queues',
@@ -97,7 +94,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: QueueAutoClearConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '🪵',
             label: 'Logging Channel',
             description: 'Configure the logging channel',
@@ -106,7 +103,7 @@ const serverSettingsMainMenuOptions: {
         subMenu: LoggingChannelConfigMenu
     },
     {
-        optionObj: {
+        optionData: {
             emoji: '🎓',
             label: 'Auto Give Student Role',
             description: 'Configure the auto-giving of the student role',
@@ -151,7 +148,12 @@ function SettingsMainMenu(
             channelId
         ])
             .setPlaceholder('Select an option')
-            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionObj))
+            .addOptions(
+                ...serverSettingsMainMenuOptions.map(option => option.optionData),
+                ...interactionExtensions
+                    .flatMap(ext => ext.settingsMainMenuOptions)
+                    .map(option => option.optionData)
+            )
     );
     return { embeds: [embed.data], components: [selectMenu] };
 }
