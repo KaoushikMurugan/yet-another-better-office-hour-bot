@@ -5,6 +5,7 @@ import {
     SelectMenuInteraction
 } from 'discord.js';
 
+/** ChatInputCommands can only exist in guilds, so we can assume it will always be cached */
 type CommandHanlder = (
     interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<void>;

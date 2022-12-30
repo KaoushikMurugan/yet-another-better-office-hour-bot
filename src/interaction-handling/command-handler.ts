@@ -66,7 +66,6 @@ const baseYabobCommandMap: CommandHandlerProps = {
 
 /**
  * The `/enqueue command`
- * @param interaction
  */
 async function enqueue(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -82,7 +81,6 @@ async function enqueue(
 
 /**
  * The `/next` command, both with arguments or without arguments
- * @param interaction
  */
 async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
@@ -110,7 +108,6 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
 
 /**
  * The `/start` command
- * @param interaction
  */
 async function start(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
@@ -127,7 +124,6 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
 
 /**
  * The `/stop` command
- * @param interaction
  */
 async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
@@ -141,6 +137,9 @@ async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise
     await interaction.editReply(SuccessMessages.finishedHelping(helpTimeEntry));
 }
 
+/**
+ * The `/pause` command
+ */
 async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
     const member = isTriggeredByMemberWithRoles(
@@ -153,6 +152,9 @@ async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promis
     await interaction.editReply(SuccessMessages.pausedHelping(existOtherActiveHelpers));
 }
 
+/**
+ * The `/resume` command
+ */
 async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
     const member = isTriggeredByMemberWithRoles(
@@ -167,7 +169,6 @@ async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promi
 
 /**
  * The `/leave queue` command
- * @param interaction
  */
 async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const [server, queue] = [
@@ -181,7 +182,6 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
 
 /**
  * The `/clear queueName` command
- * @param interaction
  */
 async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const [server, queue] = [
@@ -208,7 +208,6 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
 
 /**
  * The `/clear_all` command
- * @param interaction
  */
 async function clearAll(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -225,7 +224,6 @@ async function clearAll(
 
 /**
  * The `/list_helpers` command
- * @param interaction
  */
 async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -287,7 +285,6 @@ async function listHelpers(
 
 /**
  * The `/announce` command
- * @param interaction
  */
 async function announce(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -315,7 +312,6 @@ async function announce(
 
 /**
  * Then `/clean_up` command
- * @param interaction
  */
 async function cleanup(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -331,7 +327,6 @@ async function cleanup(
 
 /**
  * The `/cleanup_all` command
- * @param interaction
  */
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -345,7 +340,6 @@ async function cleanupAllQueues(
 
 /**
  * The `/cleanup_help_channel` command
- * @param interaction
  */
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -363,7 +357,6 @@ async function cleanupHelpChannel(
 
 /**
  * The `/set_after_session_msg` command
- * @param interaction
  */
 async function showAfterSessionMessageModal(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -380,7 +373,6 @@ async function showAfterSessionMessageModal(
 
 /**
  * The `/help` command
- * @param interaction
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const commandName = interaction.options.getString('command', true);
@@ -403,7 +395,6 @@ async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise
 
 /**
  * The `/set_logging_channel` command
- * @param interaction
  */
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -427,7 +418,7 @@ async function setLoggingChannel(
 
 /**
  * The `/set_queue_auto_clear` command
- * @param interaction
+
  */
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -444,7 +435,7 @@ async function showQueueAutoClearModal(
 
 /**
  * The `/stop_logging` command
- * @param interaction
+
  */
 async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -457,7 +448,7 @@ async function stopLogging(
 
 /**
  * The `/serious_mode` command
- * @param interaction
+
  */
 async function setSeriousMode(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -481,7 +472,7 @@ async function setSeriousMode(
 
 /**
  * The `/create_offices` command
- * @param interaction
+
  * @s
  */
 async function createOffices(
@@ -512,7 +503,7 @@ async function createOffices(
 
 /**
  * The `/set_roles` command
- * @param interaction
+
  * @s
  */
 async function setRoles(
@@ -546,10 +537,7 @@ async function setRoles(
 
 /**
  * The `/settings` command
- *
  * Only prompts the "menu". The button presses are handled by button-handlers.ts
- * @param interaction
- * @s
  */
 async function settingsMenu(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -565,9 +553,7 @@ async function settingsMenu(
 }
 
 /**
- * The `/auto_give_role` commandf
- * @param interaction
- * @s
+ * The `/auto_give_role` command
  */
 async function setAutoGiveStudentRole(
     interaction: ChatInputCommandInteraction<'cached'>

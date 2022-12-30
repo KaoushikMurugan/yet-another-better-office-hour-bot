@@ -77,8 +77,6 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
 
 /**
  * Join a queue through button press
- * @param queueName queue to join
- * @param interaction
  */
 async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -91,8 +89,6 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
 
 /**
  * Leave a queue through button press
- * @param queueName queue to leave
- * @param interaction
  */
 async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -105,9 +101,6 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
 
 /**
  * Join the notification group with button press
- * @param queueName which queue's notif group to join
- * @param interaction
- * @returns success message
  */
 async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -120,9 +113,6 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
 
 /**
  * Leave the notification group with button press
- * @param queueName which queue's notif group to leave
- * @param interaction
- * @returns success message
  */
 async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -135,8 +125,6 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
 
 /**
  * Displays the Settings Main Menu
- * @param interaction
- * @s
  */
 async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
@@ -148,7 +136,6 @@ async function showSettingsMainMenu(
 /**
  * Creates roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
- * @param interaction
  */
 async function createServerRoles(
     interaction: ButtonInteraction<'cached'>,
@@ -166,8 +153,6 @@ async function createServerRoles(
  * Creates roles for the server
  * Version for DM Button Interactions
  * @param forceCreate if true, will create new roles even if they already exist
- * @param interaction
- * @s
  */
 async function createServerRolesDM(
     forceCreate: boolean,
@@ -181,7 +166,6 @@ async function createServerRolesDM(
 
 /**
  * Show the modal for after session message
- * @param interaction
  */
 async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
@@ -192,8 +176,6 @@ async function showAfterSessionMessageModal(
 
 /**
  * Disable the after session message
- * @param interaction
- * @s
  */
 async function disableAfterSessionMessage(
     interaction: ButtonInteraction<'cached'>
@@ -207,7 +189,6 @@ async function disableAfterSessionMessage(
 
 /**
  * Show the modal for queue auto clear
- * @param interaction
  */
 async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
@@ -218,7 +199,6 @@ async function showQueueAutoClearModal(
 
 /**
  * Disable queue auto clear
- * @param interaction
  */
 async function disableQueueAutoClear(
     interaction: ButtonInteraction<'cached'>
@@ -232,7 +212,6 @@ async function disableQueueAutoClear(
 
 /**
  * Disable logging channel
- * @param interaction
  */
 async function disableLoggingChannel(
     interaction: ButtonInteraction<'cached'>
@@ -246,9 +225,7 @@ async function disableLoggingChannel(
 
 /**
  * Toggle whether to give students the student role when they join the server
- * @param interaction
- * @param autoGiveStudentRole
- * @s
+ * @param autoGiveStudentRole turn on or off auto give student roleƒ
  */
 async function toggleAutoGiveStudentRole(
     interaction: ButtonInteraction<'cached'>,
