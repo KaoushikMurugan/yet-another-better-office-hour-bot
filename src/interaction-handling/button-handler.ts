@@ -124,7 +124,7 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
 }
 
 /**
- * Displays the Settings Main Menu
+ * Displays the Settings Main Menu, used for the ReturnToMainMenu button
  */
 async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>

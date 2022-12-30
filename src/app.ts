@@ -46,7 +46,7 @@ client.on(Events.ClientReady, async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    collectExtensionStaticData();
+    collectInteractionExtensionStaticData();
     console.log(`\n${green('✅ Ready to go! ✅')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
@@ -218,7 +218,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * Combines all the extension help messages and settings menu options
  * - if we have more static data in interacion level extensions, collect them here
  */
-function collectExtensionStaticData(): void {
+function collectInteractionExtensionStaticData(): void {
     adminCommandHelpMessages.push(
         ...interactionExtensions.flatMap(ext => ext.helpMessages.botAdmin)
     );

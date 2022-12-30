@@ -256,7 +256,7 @@ class AttendingServerV2 {
         await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: IServerExtension[] = environment.disableExtensions
-            ? []
+            ? [] // TODO: Should we always load the firebase extension?
             : await Promise.all([
                   GoogleSheetLoggingExtension.load(guild),
                   new FirebaseServerBackupExtension(guild),

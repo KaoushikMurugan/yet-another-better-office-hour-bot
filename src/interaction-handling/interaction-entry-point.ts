@@ -1,7 +1,12 @@
 /**
  * @packageDocumentation
- * All the processors are using the double dispatch pattern
- * allows the {@link getHandler} function to act like a function factory
+ * This file contains all the generic processor for all the supported
+ *  types of interactions
+ * - Each `process...()` function provides central error handling and logging functionalities,
+ *  but no longer replies to the interaction besides the progress message
+ * - The individual handlers will now decide whether they want to edit, reply, or update
+ * - All the processors are using the double dispatch pattern
+ *  allowing the {@link getHandler} function to act like a function factory
  */
 
 import { Interaction, TextChannel } from 'discord.js';
@@ -227,6 +232,14 @@ function combineMethodMaps(
     SelectMenuHandlerProps,
     ModalSubmitHandlerProps
 ] {
+    if (interactionExtensions.length === 0) {
+        return [
+            baseYabobCommandMap,
+            baseYabobButtonMethodMap,
+            baseYabobSelectMenuMap,
+            baseYabobModalMap
+        ];
+    }
     const completeCommandMap: CommandHandlerProps = {
         methodMap: {
             ...baseYabobCommandMap.methodMap,
