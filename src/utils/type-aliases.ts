@@ -3,11 +3,7 @@
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
-    ButtonInteraction,
-    ChatInputCommandInteraction,
-    ModalSubmitInteraction,
     SelectMenuComponentOptionData,
-    SelectMenuInteraction,
     Snowflake
 } from 'discord.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
@@ -98,41 +94,6 @@ type HelpMessage = {
 };
 
 // Used in interaction handlers
-
-type CommandCallback = (
-    interaction: ChatInputCommandInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DefaultButtonCallback = (
-    interaction: ButtonInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type RegularButtonCallback = (
-    interaction: ButtonInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type QueueButtonCallback = (
-    queueName: string,
-    interaction: ButtonInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMButtonCallback = (interaction: ButtonInteraction) => Promise<BaseMessageOptions>;
-
-type ModalSubmitCallback = (
-    interaction: ModalSubmitInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMModalSubmitCallback = (
-    interaction: ModalSubmitInteraction
-) => Promise<BaseMessageOptions>;
-
-type SelectMenuCallback = (
-    interaction: SelectMenuInteraction<'cached'>
-) => Promise<BaseMessageOptions>;
-
-type DMSelectMenuCallback = (
-    interaction: SelectMenuInteraction
-) => Promise<BaseMessageOptions>;
 
 type SettingsMenuCallback = (
     server: AttendingServerV2,
@@ -243,15 +204,6 @@ export {
     RenderIndex,
     TextBasedChannelId,
     /** Callback Types */
-    CommandCallback,
-    DefaultButtonCallback,
-    QueueButtonCallback,
-    RegularButtonCallback,
-    DMButtonCallback,
-    ModalSubmitCallback,
-    DMModalSubmitCallback,
-    SelectMenuCallback,
-    DMSelectMenuCallback,
     SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,

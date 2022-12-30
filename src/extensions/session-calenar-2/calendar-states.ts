@@ -5,7 +5,7 @@ import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import { restorePublicEmbedURL } from './shared-calendar-functions.js';
-import { Collection, Guild } from 'discord.js';
+import { Collection, Guild, Snowflake } from 'discord.js';
 import { firebaseDB } from '../../global-states.js';
 import { FrozenServer } from '../extension-utils.js';
 import { z } from 'zod';
@@ -103,12 +103,14 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
 
     /**
      * Adds a new calendar_name -> discord_id mapping to displayNameDiscordIdMap
-     * @param calendarName
-     * @param discordId
+     * @param calendarName display name on the calendar
+     * @param discordId id of the user that used /make_calendar_string
      */
-    async updateNameDiscordIdMap(calendarName: string, discordId: string): Promise<void> {
+    async updateNameDiscordIdMap(
+        calendarName: string,
+        discordId: Snowflake
+    ): Promise<void> {
         this.displayNameDiscordIdMap.set(calendarName, discordId);
-        // fire and forget, calendar api is slow and should not block yabob's response
         await Promise.all([
             this.backupToFirebase(),
             ...this.listeners.map(listener => listener.onCalendarStateChange())
@@ -119,7 +121,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
      * Restores the calendar config from firebase
      * @param serverId
      */
-    async restoreFromBackup(serverId: string): Promise<void> {
+    async restoreFromBackup(serverId: Snowflake): Promise<void> {
         const backupDoc = await firebaseDB
             .collection('calendarBackups')
             .doc(serverId)

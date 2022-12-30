@@ -242,7 +242,7 @@ class BaseInteractionExtension implements IInteractionExtension {
         student: []
     };
     settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption> = [];
-    slashCommandData: RESTPostAPIApplicationCommandsJSONBody[] = [];
+    slashCommandData: CommandData = [];
     commandMap: CommandHandlerProps = {
         methodMap: {},
         skipProgressMessageCommands: new Set()

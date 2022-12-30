@@ -51,6 +51,9 @@ interface ButtonHandlerProps {
     skipProgressMessageButtons: Set<string>;
 }
 
+/**
+ * The information needed for the generic select menu handler
+ */
 interface SelectMenuHandlerProps {
     /** All the guild select menus */
     guildMethodMap: {
@@ -63,6 +66,9 @@ interface SelectMenuHandlerProps {
     skipProgressMessageSelectMenus: Set<string>;
 }
 
+/**
+ * The information needed for the generic modal submit handler
+ */
 interface ModalSubmitHandlerProps {
     /** All the guild modals */
     guildMethodMap: {

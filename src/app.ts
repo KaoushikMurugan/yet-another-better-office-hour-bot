@@ -47,7 +47,7 @@ client.on(Events.ClientReady, async () => {
         process.exit(1);
     }
     collectExtensionStaticData();
-    console.log(`\n${green(centered('✅ Ready to go! ✅'), 'Bg')}\n`);
+    console.log(`\n${green('✅ Ready to go! ✅')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);

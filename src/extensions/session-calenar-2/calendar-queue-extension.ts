@@ -29,7 +29,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
     private lastUpdatedTimeStamp = new Date();
 
     private constructor(
-        private readonly renderIndex: number,
+        private readonly renderIndex: RenderIndex,
         private readonly queueChannel: QueueChannel
     ) {
         super();

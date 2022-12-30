@@ -16,8 +16,8 @@ const ExpectedSheetErrors = {
     ),
     recordedButCannotUpdate: new AttendanceError(
         'Failed to update attendace. ' +
-            'The attendance sheet might have missing headers or does not allow this YABOB to write.\n' +
-            "Don't worry, your time is still being logged, " +
+            'The attendance sheet might have missing headers or does not allow this YABOB to make changes.\n' +
+            "Don't worry, your hours are still being logged, " +
             'just not viewable on Google Sheets. ' +
             'Please contact @Bot Admin to manually update.'
     )
