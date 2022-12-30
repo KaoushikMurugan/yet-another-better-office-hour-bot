@@ -1,32 +1,19 @@
-import { Guild } from 'discord.js';
-import {
-    BaseInteractionExtension2,
-    IInteractionExtension2
-} from '../extension-interface.js';
-import { calendarCommands } from '../session-calendar/command-handling/command/calendar-slash-commands.js';
-import { environment } from '../../environment/environment-manager.js';
-import { blue, yellow } from '../../utils/command-line-colors.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import {
-    calendarStates,
-    CalendarExtensionState
-} from '../session-calendar/calendar-states.js';
-import {
-    calendarAdminHelpMessages,
-    calendarHelperHelpMessages,
-    calendarStudentHelpMessages
-} from '../session-calendar/command-handling/command/CalendarCommands.js';
-import { ExpectedCalendarErrors } from '../session-calendar/expected-calendar-errors.js';
-import { checkCalendarConnection } from '../session-calendar/shared-calendar-functions.js';
-import {
-    ButtonHandlerProps,
-    CommandHandlerProps,
-    ModalSubmitHandlerProps
-} from '../../interaction-handling/handler-interface.js';
-import { calendarCommandMap } from './interaction-handling/command-handler.js';
-import { calendarButtonMap } from './interaction-handling/button-handler.js';
-import { calendarModalMap } from './interaction-handling/modal-handler.js';
-import { calendarSettingsMainMenuOptions } from '../session-calendar/command-handling/calendar-settings-menus.js';
+import { Guild } from "discord.js";
+import { environment } from "../../environment/environment-manager.js";
+import { CommandHandlerProps, ButtonHandlerProps, ModalSubmitHandlerProps } from "../../interaction-handling/handler-interface.js";
+import { blue, yellow } from "../../utils/command-line-colors.js";
+import { ExtensionSetupError } from "../../utils/error-types.js";
+import { BaseInteractionExtension2, IInteractionExtension2 } from "../extension-interface.js";
+import { calendarCommands } from "./calendar-constants/calendar-slash-commands.js";
+import { ExpectedCalendarErrors } from "./calendar-constants/expected-calendar-errors.js";
+import { calendarStates, CalendarExtensionState } from "./calendar-states.js";
+import { calendarButtonMap } from "./interaction-handling/button-handler.js";
+import { calendarCommandMap } from "./interaction-handling/command-handler.js";
+import { calendarModalMap } from "./interaction-handling/modal-handler.js";
+import { checkCalendarConnection } from "./shared-calendar-functions.js";
+import { calendarAdminHelpMessages, calendarHelperHelpMessages, calendarStudentHelpMessages } from "./calendar-constants/CalendarCommands.js";
+import { calendarSettingsMainMenuOptions } from "./calendar-constants/calendar-settings-menu.js";
+
 
 class SessionCalendarInteractionExtension
     extends BaseInteractionExtension2

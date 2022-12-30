@@ -1,14 +1,14 @@
 import { ButtonInteraction } from 'discord.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
-import { CalendarButtonNames } from '../../session-calendar/calendar-interaction-names.js';
-import { calendarSettingsConfigMenu } from '../../session-calendar/command-handling/calendar-settings-menus.js';
+import { CalendarButtonNames } from '../calendar-constants/calendar-interaction-names.js';
+import { calendarSettingsModal } from '../calendar-constants/calendar-modal-objects.js';
+import { calendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
-} from '../../session-calendar/command-handling/calendar-success-messages.js';
-import { calendarSettingsModal } from '../../session-calendar/command-handling/modal/calendar-modal-objects.js';
-import { isServerCalendarInteraction } from '../../session-calendar/shared-calendar-functions.js';
+} from '../calendar-constants/calendar-success-messsages.js';
+import { isServerCalendarInteraction } from '../shared-calendar-functions.js';
 import { isFromQueueChannelWithParent } from '../../../interaction-handling/shared-validations.js';
 
 const calendarButtonMap: ButtonHandlerProps = {

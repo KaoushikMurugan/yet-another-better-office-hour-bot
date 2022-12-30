@@ -1,6 +1,6 @@
 /** @module ExpectedErrors */
 
-import { CommandParseError } from '../../utils/error-types.js';
+import { CommandParseError } from '../../../utils/error-types.js';
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
@@ -20,23 +20,21 @@ const ExpectedCalendarErrors = {
     nonServerInteraction: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(
-                  'I can only accept server based interactions. ' +
-                      'Please use this interaction inside a server.'
+                  'I can only accept server based interactions. Please use this interaction inside a server.'
               )
             : new CommandParseError(
                   'I can only accept server based interactions. ' +
                       `Are you sure ${guildName} has a initialized YABOB with the calendar extension?`
               ),
     inaccessibleCalendar: new CalendarConnectionError(
-        'Failed to connect to Google Calendar. ' +
-            'The calendar might have been deleted or set to private.'
+        'Failed to connect to Google Calendar. The calendar might have been deleted or set to private.'
     ),
     refreshTimedout: new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'
     ),
     failedRequest: new CalendarConnectionError('Calendar request failed.'),
     nonAdminMakingCalendarStringForOthers: new CommandParseError(
-        'Only Bot Admins have the permission to update calendar string for users that are not yourself.'
+        'Only Bot Admins have the permission to update calendar strings for users that are not yourself.'
     ),
     badPublicEmbedUrl: new CommandParseError(
         'Please provide a valid and complete URL. (it should start with https://...)'

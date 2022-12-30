@@ -1,21 +1,17 @@
-// const updateParentInteractionModals: string[] = [
-//     CalendarModalNames.CalendarSettingsModalMenuVersion
-// ];
-
 import { ModalSubmitInteraction } from 'discord.js';
 import { ModalSubmitHandlerProps } from '../../../interaction-handling/handler-interface.js';
-import { CalendarModalNames } from '../../session-calendar/calendar-interaction-names.js';
-import { calendarSettingsConfigMenu } from '../../session-calendar/command-handling/calendar-settings-menus.js';
+import { CalendarModalNames } from '../calendar-constants/calendar-interaction-names.js';
+import { calendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
-} from '../../session-calendar/command-handling/calendar-success-messages.js';
-import { ExpectedCalendarErrors } from '../../session-calendar/expected-calendar-errors.js';
+} from '../calendar-constants/calendar-success-messsages.js';
+import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
 import {
     isServerCalendarInteraction,
     checkCalendarConnection,
     restorePublicEmbedURL
-} from '../../session-calendar/shared-calendar-functions.js';
+} from '../shared-calendar-functions.js';
 
 const calendarModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {

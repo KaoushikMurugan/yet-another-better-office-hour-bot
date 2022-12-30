@@ -14,7 +14,7 @@ import {
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
-import { CalendarButtonNames } from './calendar-interaction-names.js';
+import { CalendarButtonNames } from './calendar-constants/calendar-interaction-names.js';
 
 /**
  * Calendar Extension for individual queues

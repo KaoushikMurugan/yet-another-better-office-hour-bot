@@ -13,19 +13,19 @@ import {
     isCategoryChannel,
     isQueueTextChannel
 } from '../../../utils/util-functions.js';
-import { CalendarCommandNames } from '../../session-calendar/calendar-interaction-names.js';
+import { CalendarCommandNames } from '../calendar-constants/calendar-interaction-names.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
-} from '../../session-calendar/command-handling/calendar-success-messages.js';
-import { ExpectedCalendarErrors } from '../../session-calendar/expected-calendar-errors.js';
+} from '../calendar-constants/calendar-success-messsages.js';
+import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
 import {
     checkCalendarConnection,
     isServerCalendarInteraction,
     getUpComingTutoringEvents,
     composeUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
-} from '../../session-calendar/shared-calendar-functions.js';
+} from '../shared-calendar-functions.js';
 
 const calendarCommandMap: CommandHandlerProps = {
     methodMap: {

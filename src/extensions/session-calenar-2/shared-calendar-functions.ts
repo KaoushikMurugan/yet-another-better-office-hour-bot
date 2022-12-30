@@ -9,7 +9,7 @@ import { CalendarExtensionState, calendarStates } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
 import { Optional, WithRequired } from '../../utils/type-aliases.js';
-import { ExpectedCalendarErrors } from './expected-calendar-errors.js';
+import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     ChatInputCommandInteraction,
