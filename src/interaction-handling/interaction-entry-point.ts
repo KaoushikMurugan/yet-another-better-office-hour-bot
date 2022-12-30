@@ -11,7 +11,6 @@ import {
     SelectMenuLogEmbed,
     SimpleEmbed
 } from '../utils/embed-helper.js';
-import { isServerInteraction } from '../command-handling/common-validations.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 import {
     logButtonPress,
@@ -27,6 +26,7 @@ import { baseYabobCommandMap } from './command-handler.js';
 import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { IInteractionExtension2 } from '../extensions/extension-interface.js';
+import { isServerInteraction } from './shared-validations.js';
 
 /**
  * Combines all the method maps from base yabob and all the extensions

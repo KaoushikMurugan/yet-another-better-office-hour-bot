@@ -1,10 +1,10 @@
 import { SelectMenuInteraction } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
-import { isServerInteraction } from '../command-handling/common-validations.js';
-import { ExpectedParseErrors } from '../command-handling/expected-interaction-errors.js';
 import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
-import { SelectMenuNames } from '../command-handling/interaction-names.js';
+import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import { SelectMenuNames } from './interaction-constants/interaction-names.js';
+import { isServerInteraction } from './shared-validations.js';
 
 const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
     guildMethodMap: {

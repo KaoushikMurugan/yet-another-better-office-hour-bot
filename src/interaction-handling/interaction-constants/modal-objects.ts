@@ -8,7 +8,7 @@ import {
 } from 'discord.js';
 import { attendingServers } from '../../global-states.js';
 import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
-import { ModalNames } from '../interaction-names.js';
+import { ModalNames } from './interaction-names.js';
 
 /**
  * Creats a modal for the user to set the queue auto clear time.

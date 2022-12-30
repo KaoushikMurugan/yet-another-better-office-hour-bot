@@ -1,23 +1,3 @@
-import { ChatInputCommandInteraction } from 'discord.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import {
-    updateCommandHelpChannels,
-    createOfficeVoiceChannels
-} from '../attending-server/guild-actions.js';
-import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
-import { SuccessMessages } from '../command-handling/builtin-success-messages.js';
-import {
-    isServerInteraction,
-    hasValidQueueArgument,
-    isTriggeredByMemberWithRoles
-} from '../command-handling/common-validations.js';
-import { ExpectedParseErrors } from '../command-handling/expected-interaction-errors.js';
-import {
-    afterSessionMessageModal,
-    queueAutoClearModal
-} from '../command-handling/modal/modal-objects.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
@@ -29,7 +9,27 @@ import {
 import { CommandHandlerProps } from './handler-interface.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandNames } from '../command-handling/interaction-names.js';
+import { CommandNames } from './interaction-constants/interaction-names.js';
+import { ChatInputCommandInteraction } from 'discord.js';
+import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import {
+    updateCommandHelpChannels,
+    createOfficeVoiceChannels
+} from '../attending-server/guild-actions.js';
+import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import {
+    afterSessionMessageModal,
+    queueAutoClearModal
+} from './interaction-constants/modal-objects.js';
+import { SuccessMessages } from './interaction-constants/success-messages.js';
+import {
+    isServerInteraction,
+    hasValidQueueArgument,
+    isTriggeredByMemberWithRoles
+} from './shared-validations.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {

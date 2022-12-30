@@ -1,10 +1,10 @@
 /** @module ExpectedErrors */
 
-import { Interaction, Snowflake } from 'discord.js';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { CommandParseError } from '../utils/error-types.js';
-import { Optional } from '../utils/type-aliases.js';
-import { getInteractionName } from '../utils/util-functions.js';
+import { Snowflake, Interaction } from 'discord.js';
+import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
+import { CommandParseError } from '../../utils/error-types.js';
+import { Optional } from '../../utils/type-aliases.js';
+import { getInteractionName } from '../../utils/util-functions.js';
 
 const ExpectedParseErrors = {
     missingHierarchyRoles: (

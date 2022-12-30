@@ -1,24 +1,24 @@
-import { ButtonHandlerProps } from './handler-interface.js';
-import { ButtonNames } from '../command-handling/interaction-names.js';
 import { ButtonInteraction } from 'discord.js';
-import { SuccessMessages } from '../command-handling/builtin-success-messages.js';
 import {
+    SettingsMainMenu,
+    RolesConfigMenu,
+    AfterSessionMessageConfigMenu,
+    QueueAutoClearConfigMenu,
+    LoggingChannelConfigMenu,
+    AutoGiveStudentRoleConfigMenu
+} from '../attending-server/server-settings-menus.js';
+import { ButtonHandlerProps } from './handler-interface.js';
+import {
+    isFromQueueChannelWithParent,
     isServerInteraction,
     isValidDMInteraction
-} from '../command-handling/common-validations.js';
-import { isFromQueueChannelWithParent } from './shared-validations.js';
-import {
-    AfterSessionMessageConfigMenu,
-    AutoGiveStudentRoleConfigMenu,
-    LoggingChannelConfigMenu,
-    QueueAutoClearConfigMenu,
-    RolesConfigMenu,
-    SettingsMainMenu
-} from '../attending-server/server-settings-menus.js';
+} from './shared-validations.js';
+import { ButtonNames } from './interaction-constants/interaction-names.js';
+import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     afterSessionMessageModal,
     queueAutoClearModal
-} from '../command-handling/modal/modal-objects.js';
+} from './interaction-constants/modal-objects.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {

@@ -1,13 +1,11 @@
-import { ModalSubmitInteraction } from 'discord.js';
-import {
-    AfterSessionMessageConfigMenu,
-    QueueAutoClearConfigMenu
-} from '../attending-server/server-settings-menus.js';
-import { SuccessMessages } from '../command-handling/builtin-success-messages.js';
-import { isServerInteraction } from '../command-handling/common-validations.js';
-import { ExpectedParseErrors } from '../command-handling/expected-interaction-errors.js';
-import { ModalSubmitHandlerProps } from './handler-interface.js';
-import { ModalNames } from '../command-handling/interaction-names.js';
+import { ModalSubmitInteraction } from "discord.js";
+import { AfterSessionMessageConfigMenu, QueueAutoClearConfigMenu } from "../attending-server/server-settings-menus.js";
+import { ModalSubmitHandlerProps } from "./handler-interface.js";
+import { ExpectedParseErrors } from "./interaction-constants/expected-interaction-errors.js";
+import { ModalNames } from "./interaction-constants/interaction-names.js";
+import { SuccessMessages } from "./interaction-constants/success-messages.js";
+import { isServerInteraction } from "./shared-validations.js";
+
 
 const baseYabobModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
