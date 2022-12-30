@@ -16,7 +16,7 @@ import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
 import { buildComponent } from '../utils/component-id-factory.js';
-import { ButtonNames } from '../command-handling/interaction-names.js';
+import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {

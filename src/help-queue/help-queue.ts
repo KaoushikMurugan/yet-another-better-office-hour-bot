@@ -2,7 +2,6 @@
 
 import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 import { IQueueExtension } from '../extensions/extension-interface.js';
 import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
@@ -13,6 +12,7 @@ import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
+import { CalendarQueueExtension } from '../extensions/session-calenar-2/calendar-queue-extension.js';
 
 /**
  * Render props for the queue display.

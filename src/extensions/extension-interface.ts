@@ -21,7 +21,6 @@ import {
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
-import { CommandData } from '../command-handling/command/slash-commands.js';
 import { HelpMessage, Optional, SettingsMenuOption } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
 import {
@@ -30,6 +29,7 @@ import {
     ModalSubmitHandlerProps,
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
+import { CommandData } from '../interaction-handling/interaction-constants/builtin-slash-commands.js';
 
 /** YABOB Instance Level Extension */
 interface IInteractionExtension {

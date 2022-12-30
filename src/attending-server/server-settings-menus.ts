@@ -16,7 +16,10 @@ import {
 import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
-import { ButtonNames, SelectMenuNames } from '../command-handling/interaction-names.js';
+import {
+    ButtonNames,
+    SelectMenuNames
+} from '../interaction-handling/interaction-constants/interaction-names.js';
 
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [

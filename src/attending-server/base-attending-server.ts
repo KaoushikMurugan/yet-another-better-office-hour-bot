@@ -18,7 +18,6 @@ import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';
 import {
@@ -44,6 +43,7 @@ import {
     sendInvite,
     updateCommandHelpChannels
 } from './guild-actions.js';
+import { CalendarExtensionState } from '../extensions/session-calenar-2/calendar-states.js';
 
 /**
  * Wrapper for TextChannel

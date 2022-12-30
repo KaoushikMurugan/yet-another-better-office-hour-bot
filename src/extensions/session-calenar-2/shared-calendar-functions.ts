@@ -16,10 +16,10 @@ import {
     ButtonInteraction,
     ModalSubmitInteraction
 } from 'discord.js';
-import { isServerInteraction } from '../../command-handling/common-validations.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
 import { FrozenServer } from '../extension-utils.js';
+import { isServerInteraction } from '../../interaction-handling/shared-validations.js';
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {

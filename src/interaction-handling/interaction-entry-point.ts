@@ -1,3 +1,9 @@
+/**
+ * @packageDocumentation
+ * All the processors are using the double dispatch pattern
+ * allows the {@link getHandler} function to act like a function factory
+ */
+
 import { Interaction, TextChannel } from 'discord.js';
 import {
     ButtonHandlerProps,
@@ -27,141 +33,21 @@ import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { IInteractionExtension2 } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
+import { SessionCalendarInteractionExtension } from '../extensions/session-calenar-2/calendar-interaction-extension.js';
+import { environment } from '../environment/environment-manager.js';
 
 /**
- * Combines all the method maps from base yabob and all the extensions
- * - This function should only be called once during startup
- * @param interactionExtensions interaction extensions
- * @returns 4-tuple of command, button, selectmenu, and modal maps
+ * Create the interaction extension instances here
+ * - states are loaded in joinGuild() in app.ts
  */
-function combineMethodMaps(
-    interactionExtensions: IInteractionExtension2[]
-): [
-    CommandHandlerProps,
-    ButtonHandlerProps,
-    SelectMenuHandlerProps,
-    ModalSubmitHandlerProps
-] {
-    const completeCommandMap: CommandHandlerProps = {
-        methodMap: {
-            ...baseYabobCommandMap.methodMap,
-            ...interactionExtensions
-                .flatMap(ext => ext.commandMap)
-                .map(m => m.methodMap)
-                .reduce((prev, curr) => Object.assign(prev, curr))
-        },
-        skipProgressMessageCommands: new Set([
-            ...baseYabobCommandMap.skipProgressMessageCommands,
-            ...interactionExtensions
-                .flatMap(ext => ext.commandMap.skipProgressMessageCommands)
-                .flatMap(set => [...set.values()])
-        ])
-    };
-    const completeButtonMap: ButtonHandlerProps = {
-        guildMethodMap: {
-            queue: {
-                ...baseYabobButtonMethodMap.guildMethodMap.queue,
-                ...interactionExtensions
-                    .flatMap(ext => ext.buttonMap)
-                    .map(buttonMap => buttonMap.guildMethodMap.queue)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            },
-            other: {
-                ...baseYabobButtonMethodMap.guildMethodMap.other,
-                ...interactionExtensions
-                    .flatMap(ext => ext.buttonMap)
-                    .map(buttonMap => buttonMap.guildMethodMap.other)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            }
-        },
-        dmMethodMap: {
-            ...baseYabobButtonMethodMap.dmMethodMap,
-            ...interactionExtensions
-                .flatMap(ext => ext.buttonMap)
-                .map(buttonMap => buttonMap.dmMethodMap)
-                .reduce((prev, curr) => Object.assign(prev, curr))
-        },
-        skipProgressMessageButtons: new Set([
-            ...baseYabobButtonMethodMap.skipProgressMessageButtons,
-            ...interactionExtensions
-                .flatMap(ext => ext.buttonMap.skipProgressMessageButtons)
-                .flatMap(set => [...set.values()])
-        ])
-    };
-    const completeSelectMenuMap: SelectMenuHandlerProps = {
-        guildMethodMap: {
-            queue: {
-                ...baseYabobSelectMenuMap.guildMethodMap.queue,
-                ...interactionExtensions
-                    .flatMap(ext => ext.selectMenuMap)
-                    .map(selectMenuMap => selectMenuMap.guildMethodMap.queue)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            },
-            other: {
-                ...baseYabobSelectMenuMap.guildMethodMap.other,
-                ...interactionExtensions
-                    .flatMap(ext => ext.selectMenuMap)
-                    .map(selectMenuMap => selectMenuMap.guildMethodMap.other)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            }
-        },
-        dmMethodMap: {
-            ...baseYabobSelectMenuMap.dmMethodMap,
-            ...interactionExtensions
-                .flatMap(ext => ext.selectMenuMap)
-                .map(selectMenuMap => selectMenuMap.dmMethodMap)
-                .reduce((prev, curr) => Object.assign(prev, curr))
-        },
-        skipProgressMessageSelectMenus: new Set([
-            ...baseYabobSelectMenuMap.skipProgressMessageSelectMenus,
-            ...interactionExtensions
-                .flatMap(ext => ext.selectMenuMap.skipProgressMessageSelectMenus)
-                .flatMap(set => [...set.values()])
-        ])
-    };
-    const completeModalMap: ModalSubmitHandlerProps = {
-        guildMethodMap: {
-            queue: {
-                ...baseYabobModalMap.guildMethodMap.queue,
-                ...interactionExtensions
-                    .flatMap(ext => ext.modalMap)
-                    .map(modalMap => modalMap.guildMethodMap.queue)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            },
-            other: {
-                ...baseYabobModalMap.guildMethodMap.other,
-                ...interactionExtensions
-                    .flatMap(ext => ext.modalMap)
-                    .map(modalMap => modalMap.guildMethodMap.other)
-                    .reduce((prev, curr) => Object.assign(prev, curr))
-            }
-        },
-        dmMethodMap: {
-            ...baseYabobModalMap.dmMethodMap,
-            ...interactionExtensions
-                .flatMap(ext => ext.modalMap)
-                .map(selectMenuMap => selectMenuMap.dmMethodMap)
-                .reduce((prev, curr) => Object.assign(prev, curr))
-        }
-    };
-    return [
-        completeCommandMap,
-        completeButtonMap,
-        completeSelectMenuMap,
-        completeModalMap
-    ];
-}
-
-/**
- * All the processors are using the double dispatch pattern
- * allows the {@link getHandler} function to act like a function factory
- */
+const interactionExtensions: ReadonlyArray<IInteractionExtension2> =
+    environment.disableExtensions ? [] : [new SessionCalendarInteractionExtension()];
 
 /**
  * The 4-tuple of ALL supported interactions
  */
 const [completeCommandMap, completeButtonMap, completeSelectMenuMap, completeModalMap] =
-    combineMethodMaps([]);
+    combineMethodMaps(interactionExtensions);
 
 /**
  * Process ChatInputCommandInteractions
@@ -325,4 +211,128 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
     return unsupportedInteraction;
 }
 
-export { getHandler };
+/**
+ * Combines all the method maps from base yabob and all the extensions
+ * - This function should only be called once during startup
+ * @param interactionExtensions interaction extensions
+ * @returns 4-tuple of command, button, selectmenu, and modal maps
+ */
+function combineMethodMaps(
+    interactionExtensions: ReadonlyArray<IInteractionExtension2>
+): [
+    CommandHandlerProps,
+    ButtonHandlerProps,
+    SelectMenuHandlerProps,
+    ModalSubmitHandlerProps
+] {
+    const completeCommandMap: CommandHandlerProps = {
+        methodMap: {
+            ...baseYabobCommandMap.methodMap,
+            ...interactionExtensions
+                .flatMap(ext => ext.commandMap)
+                .map(m => m.methodMap)
+                .reduce((prev, curr) => Object.assign(prev, curr))
+        },
+        skipProgressMessageCommands: new Set([
+            ...baseYabobCommandMap.skipProgressMessageCommands,
+            ...interactionExtensions
+                .flatMap(ext => ext.commandMap.skipProgressMessageCommands)
+                .flatMap(set => [...set.values()])
+        ])
+    };
+    const completeButtonMap: ButtonHandlerProps = {
+        guildMethodMap: {
+            queue: {
+                ...baseYabobButtonMethodMap.guildMethodMap.queue,
+                ...interactionExtensions
+                    .flatMap(ext => ext.buttonMap)
+                    .map(buttonMap => buttonMap.guildMethodMap.queue)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            },
+            other: {
+                ...baseYabobButtonMethodMap.guildMethodMap.other,
+                ...interactionExtensions
+                    .flatMap(ext => ext.buttonMap)
+                    .map(buttonMap => buttonMap.guildMethodMap.other)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            }
+        },
+        dmMethodMap: {
+            ...baseYabobButtonMethodMap.dmMethodMap,
+            ...interactionExtensions
+                .flatMap(ext => ext.buttonMap)
+                .map(buttonMap => buttonMap.dmMethodMap)
+                .reduce((prev, curr) => Object.assign(prev, curr))
+        },
+        skipProgressMessageButtons: new Set([
+            ...baseYabobButtonMethodMap.skipProgressMessageButtons,
+            ...interactionExtensions
+                .flatMap(ext => ext.buttonMap.skipProgressMessageButtons)
+                .flatMap(set => [...set.values()])
+        ])
+    };
+    const completeSelectMenuMap: SelectMenuHandlerProps = {
+        guildMethodMap: {
+            queue: {
+                ...baseYabobSelectMenuMap.guildMethodMap.queue,
+                ...interactionExtensions
+                    .flatMap(ext => ext.selectMenuMap)
+                    .map(selectMenuMap => selectMenuMap.guildMethodMap.queue)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            },
+            other: {
+                ...baseYabobSelectMenuMap.guildMethodMap.other,
+                ...interactionExtensions
+                    .flatMap(ext => ext.selectMenuMap)
+                    .map(selectMenuMap => selectMenuMap.guildMethodMap.other)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            }
+        },
+        dmMethodMap: {
+            ...baseYabobSelectMenuMap.dmMethodMap,
+            ...interactionExtensions
+                .flatMap(ext => ext.selectMenuMap)
+                .map(selectMenuMap => selectMenuMap.dmMethodMap)
+                .reduce((prev, curr) => Object.assign(prev, curr))
+        },
+        skipProgressMessageSelectMenus: new Set([
+            ...baseYabobSelectMenuMap.skipProgressMessageSelectMenus,
+            ...interactionExtensions
+                .flatMap(ext => ext.selectMenuMap.skipProgressMessageSelectMenus)
+                .flatMap(set => [...set.values()])
+        ])
+    };
+    const completeModalMap: ModalSubmitHandlerProps = {
+        guildMethodMap: {
+            queue: {
+                ...baseYabobModalMap.guildMethodMap.queue,
+                ...interactionExtensions
+                    .flatMap(ext => ext.modalMap)
+                    .map(modalMap => modalMap.guildMethodMap.queue)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            },
+            other: {
+                ...baseYabobModalMap.guildMethodMap.other,
+                ...interactionExtensions
+                    .flatMap(ext => ext.modalMap)
+                    .map(modalMap => modalMap.guildMethodMap.other)
+                    .reduce((prev, curr) => Object.assign(prev, curr))
+            }
+        },
+        dmMethodMap: {
+            ...baseYabobModalMap.dmMethodMap,
+            ...interactionExtensions
+                .flatMap(ext => ext.modalMap)
+                .map(selectMenuMap => selectMenuMap.dmMethodMap)
+                .reduce((prev, curr) => Object.assign(prev, curr))
+        }
+    };
+    return [
+        completeCommandMap,
+        completeButtonMap,
+        completeSelectMenuMap,
+        completeModalMap
+    ];
+}
+
+export { getHandler, interactionExtensions };

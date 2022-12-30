@@ -1,9 +1,4 @@
 import { ChatInputCommandInteraction, CategoryChannel, Role } from 'discord.js';
-import {
-    isTriggeredByMemberWithRoles,
-    hasValidQueueArgument
-} from '../../../command-handling/common-validations.js';
-import { ExpectedParseErrors } from '../../../command-handling/expected-interaction-errors.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { red } from '../../../utils/command-line-colors.js';
@@ -26,6 +21,11 @@ import {
     composeUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
 } from '../shared-calendar-functions.js';
+import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
+import {
+    isTriggeredByMemberWithRoles,
+    hasValidQueueArgument
+} from '../../../interaction-handling/shared-validations.js';
 
 const calendarCommandMap: CommandHandlerProps = {
     methodMap: {

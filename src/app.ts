@@ -1,14 +1,7 @@
 import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
-import {
-    interactionExtensions,
-    dispatchDMInteraction,
-    dispatchServerInteractions
-} from './command-handling/interaction-index.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
-import { postSlashCommands } from './command-handling/command/slash-commands.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { CalendarInteractionExtension } from './extensions/session-calendar/calendar-command-extension.js';
 import { client, attendingServers } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
@@ -18,12 +11,15 @@ import {
     isLeaveVC,
     isJoinVC
 } from './utils/util-functions.js';
-import { UnexpectedParseErrors } from './command-handling/expected-interaction-errors.js';
 import { RolesConfigMenu } from './attending-server/server-settings-menus.js';
-import { getHandler } from './interaction-handling/interaction-entry-point.js';
+import {
+    getHandler,
+    interactionExtensions
+} from './interaction-handling/interaction-entry-point.js';
+import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
+import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
 
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
-const useNewHandler = true;
 
 /**
  * After login startup seqence
@@ -84,46 +80,17 @@ client.on(Events.GuildDelete, async guild => {
  * - Modal submissions
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
-    if (useNewHandler) {
-        await getHandler(interaction)(interaction);
-    } else {
-        if (interaction.channel?.isDMBased()) {
-            dispatchDMInteraction(interaction).catch((err: Error) => {
-                interaction.user
-                    .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-                    .catch(() =>
-                        failedInteractions.push({
-                            username: interaction.user.username,
-                            interaction: interaction
-                        })
-                    );
-            });
-            return;
-        }
-        if (!interaction.inCachedGuild()) {
-            // required check to make sure all the types are safe
-            interaction.isRepliable() &&
-                (await interaction.reply(
-                    SimpleEmbed('I can only accept server based interactions.')
-                ));
-            return;
-        }
-        dispatchServerInteractions(interaction).catch((err: Error) => {
-            interaction.user
-                .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-                .catch(() =>
-                    failedInteractions.push({
-                        username: interaction.user.username,
-                        interaction: interaction
-                    })
-                );
-        });
-        if (failedInteractions.length >= 5) {
-            console.error(`These ${failedInteractions.length} interactions failed: `);
-            console.error(failedInteractions);
-            failedInteractions.splice(0, failedInteractions.length);
-        }
-    }
+    getHandler(interaction)(interaction).catch((err: Error) => {
+        console.error(err);
+        interaction.user
+            .send(UnexpectedParseErrors.unexpectedError(interaction, err))
+            .catch(() =>
+                failedInteractions.push({
+                    username: interaction.user.username,
+                    interaction: interaction
+                })
+            );
+    });
 });
 
 /**
@@ -223,19 +190,18 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
-    if (!environment.disableExtensions) {
-        interactionExtensions.set(
-            guild.id,
-            await Promise.all([CalendarInteractionExtension.load(guild)])
-        );
-    }
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
-    await postSlashCommands(
-        guild,
-        interactionExtensions.get(guild.id)?.flatMap(ext => ext.slashCommandData)
-    );
+    if (!environment.disableExtensions) {
+        await Promise.all(
+            interactionExtensions.map(extension => extension.loadState(guild))
+        );
+        await postSlashCommands(
+            guild,
+            interactionExtensions.flatMap(ext => ext.slashCommandData)
+        );
+    }
     await server.guild.commands.fetch(); // populate cache
     return server;
 }
