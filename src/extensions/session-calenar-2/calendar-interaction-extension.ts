@@ -1,5 +1,4 @@
 import { Guild } from 'discord.js';
-import { CommandData } from '../../command-handling/command/slash-commands.js';
 import {
     BaseInteractionExtension2,
     IInteractionExtension2
@@ -8,26 +7,31 @@ import { calendarCommands } from '../session-calendar/command-handling/command/c
 import { environment } from '../../environment/environment-manager.js';
 import { blue, yellow } from '../../utils/command-line-colors.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
-import { CalendarInteractionExtension } from '../session-calendar/calendar-command-extension.js';
 import {
     calendarStates,
     CalendarExtensionState
 } from '../session-calendar/calendar-states.js';
-import { appendSettingsMainMenuOptions } from '../session-calendar/command-handling/calendar-settings-menus.js';
-import { appendCalendarHelpMessages } from '../session-calendar/command-handling/command/CalendarCommands.js';
+import {
+    calendarAdminHelpMessages,
+    calendarHelperHelpMessages,
+    calendarStudentHelpMessages
+} from '../session-calendar/command-handling/command/CalendarCommands.js';
 import { ExpectedCalendarErrors } from '../session-calendar/expected-calendar-errors.js';
 import { checkCalendarConnection } from '../session-calendar/shared-calendar-functions.js';
-import { CommandHandlerProps } from '../../interaction-handling/handler-interface.js';
+import {
+    ButtonHandlerProps,
+    CommandHandlerProps,
+    ModalSubmitHandlerProps
+} from '../../interaction-handling/handler-interface.js';
 import { calendarCommandMap } from './interaction-handling/command-handler.js';
+import { calendarButtonMap } from './interaction-handling/button-handler.js';
+import { calendarModalMap } from './interaction-handling/modal-handler.js';
+import { calendarSettingsMainMenuOptions } from '../session-calendar/command-handling/calendar-settings-menus.js';
 
 class SessionCalendarInteractionExtension
     extends BaseInteractionExtension2
     implements IInteractionExtension2
 {
-    override get slashCommandData(): CommandData {
-        return calendarCommands;
-    }
-
     override async loadState(guild: Guild): Promise<void> {
         if (
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
@@ -48,7 +52,21 @@ class SessionCalendarInteractionExtension
         );
     }
 
+    override helpMessages = {
+        botAdmin: calendarAdminHelpMessages,
+        staff: calendarHelperHelpMessages,
+        student: calendarStudentHelpMessages
+    };
+
+    override settingsMainMenuOptions = calendarSettingsMainMenuOptions;
+
+    override slashCommandData = calendarCommands;
+
     override commandMap: CommandHandlerProps = calendarCommandMap;
+
+    override buttonMap: ButtonHandlerProps = calendarButtonMap;
+
+    override modalMap: ModalSubmitHandlerProps = calendarModalMap;
 }
 
 export { SessionCalendarInteractionExtension };

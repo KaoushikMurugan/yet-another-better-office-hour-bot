@@ -157,6 +157,9 @@ function combineMethodMaps(
  * allows the {@link getHandler} function to act like a function factory
  */
 
+/**
+ * The 4-tuple of ALL supported interactions
+ */
 const [completeCommandMap, completeButtonMap, completeSelectMenuMap, completeModalMap] =
     combineMethodMaps([]);
 

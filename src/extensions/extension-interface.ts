@@ -15,13 +15,14 @@ import {
     VoiceChannel,
     ModalSubmitInteraction,
     SelectMenuInteraction,
-    Guild
+    Guild,
+    RESTPostAPIApplicationCommandsJSONBody
 } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
 import { CommandData } from '../command-handling/command/slash-commands.js';
-import { Optional } from '../utils/type-aliases.js';
+import { HelpMessage, Optional, SettingsMenuOption } from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
 import {
     ButtonHandlerProps,
@@ -123,13 +124,33 @@ interface IInteractionExtension2 {
      * The command data json to post to the discord server
      */
     slashCommandData: CommandData;
-    /** Command method map */
+    /**
+     * Help messages to be combined with base yabob help messages
+     */
+    helpMessages: {
+        botAdmin: ReadonlyArray<HelpMessage>;
+        staff: ReadonlyArray<HelpMessage>;
+        student: ReadonlyArray<HelpMessage>;
+    };
+    /**
+     *
+     */
+    settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption>;
+    /**
+     * Command method map
+     */
     commandMap: CommandHandlerProps;
-    /** Button method map */
+    /**
+     * Button method map
+     */
     buttonMap: ButtonHandlerProps;
-    /** Select menu method map */
+    /**
+     * Select menu method map
+     */
     selectMenuMap: SelectMenuHandlerProps;
-    /** Modal submit method map */
+    /**
+     * Modal submit method map
+     */
     modalMap: ModalSubmitHandlerProps;
 }
 
@@ -343,12 +364,20 @@ class BaseInteractionExtension implements IInteractionExtension {
 }
 
 class BaseInteractionExtension2 implements IInteractionExtension2 {
-    get slashCommandData(): CommandData {
-        return [];
-    }
     loadState(guild: Guild): Promise<void> {
         return Promise.resolve();
     }
+    helpMessages: {
+        botAdmin: ReadonlyArray<HelpMessage>;
+        staff: ReadonlyArray<HelpMessage>;
+        student: ReadonlyArray<HelpMessage>;
+    } = {
+        botAdmin: [],
+        staff: [],
+        student: []
+    };
+    settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption> = [];
+    slashCommandData: RESTPostAPIApplicationCommandsJSONBody[] = [];
     commandMap: CommandHandlerProps = {
         methodMap: {},
         skipProgressMessageCommands: new Set()

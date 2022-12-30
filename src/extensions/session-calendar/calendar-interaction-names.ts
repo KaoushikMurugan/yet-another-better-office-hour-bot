@@ -1,3 +1,9 @@
+/**
+ * !! @see interaction-names.ts for naming convention
+ * - Names and values need to be exactly the same
+ * because we use the 'in' operator to check if an interaction name is supported
+ */
+
 enum CalendarCommandNames {
     set_calendar = 'set_calendar',
     unset_calendar = 'unset_calendar',

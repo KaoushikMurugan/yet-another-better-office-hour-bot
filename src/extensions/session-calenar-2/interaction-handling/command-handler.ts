@@ -42,8 +42,7 @@ const calendarCommandMap: CommandHandlerProps = {
 };
 
 /**
- * The `/set_calendar [calendar_id]` command
- *
+ * The `/set_calendar [calendar_id]` command,
  * Updates the calendar id in the shared calendar extension states
  * - Triggers the queue level extensions to update
  */

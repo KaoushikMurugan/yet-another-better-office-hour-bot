@@ -235,4 +235,9 @@ function appendCalendarHelpMessages(sent: boolean): void {
     }
 }
 
-export { appendCalendarHelpMessages };
+export {
+    appendCalendarHelpMessages,
+    calendarAdminHelpMessages,
+    calendarHelperHelpMessages,
+    calendarStudentHelpMessages
+};

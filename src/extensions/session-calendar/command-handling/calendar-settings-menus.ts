@@ -92,4 +92,8 @@ function appendSettingsMainMenuOptions(sent: boolean): void {
     }
 }
 
-export { calendarSettingsConfigMenu, appendSettingsMainMenuOptions };
+export {
+    calendarSettingsConfigMenu,
+    appendSettingsMainMenuOptions,
+    calendarSettingsMainMenuOptions
+};
