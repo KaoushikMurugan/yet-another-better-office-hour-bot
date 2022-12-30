@@ -41,13 +41,19 @@ import { IInteractionExtension } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calenar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
+import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-command-extension.js';
 
 /**
  * Create the interaction extension instances here
  * - states are loaded in joinGuild() in app.ts
  */
 const interactionExtensions: ReadonlyArray<IInteractionExtension> =
-    environment.disableExtensions ? [] : [new SessionCalendarInteractionExtension()];
+    environment.disableExtensions
+        ? []
+        : [
+              new SessionCalendarInteractionExtension(),
+              new GoogleSheetInteractionExtension()
+          ];
 
 /**
  * The 4-tuple of ALL supported interactions
