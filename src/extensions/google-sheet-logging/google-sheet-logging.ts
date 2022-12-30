@@ -5,11 +5,12 @@ import { BaseServerExtension, IServerExtension } from '../extension-interface.js
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildMemberId } from '../../utils/type-aliases.js';
+import { GuildId, GuildMemberId, Optional } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * Additional attendance info for each helper
@@ -66,8 +67,12 @@ class GoogleSheetLoggingExtension
      */
     private attendanceUpdateIsScheduled = false;
 
-    constructor(private guild: Guild, private googleSheet: GoogleSpreadsheet) {
+    constructor(private guild: Guild, private _googleSheet: GoogleSpreadsheet) {
         super();
+    }
+
+    get googleSheet() {
+        return this._googleSheet;
     }
 
     /**
@@ -102,7 +107,9 @@ class GoogleSheetLoggingExtension
                 `successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
-        return new GoogleSheetLoggingExtension(guild, googleSheet);
+        const newExt = new GoogleSheetLoggingExtension(guild, googleSheet);
+        googleSheetsStates.set(guild.id, newExt);
+        return newExt;
     }
 
     /**
@@ -266,8 +273,8 @@ class GoogleSheetLoggingExtension
             ' '
         );
         const attendanceSheet =
-            this.googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this.googleSheet.addSheet({
+            this._googleSheet.sheetsByTitle[sheetTitle] ??
+            (await this._googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
@@ -356,8 +363,8 @@ class GoogleSheetLoggingExtension
         );
         const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
-            this.googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this.googleSheet.addSheet({
+            this._googleSheet.sheetsByTitle[sheetTitle] ??
+            (await this._googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
@@ -410,4 +417,18 @@ class GoogleSheetLoggingExtension
     }
 }
 
-export { GoogleSheetLoggingExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };
+const googleSheetsStates = new Collection<GuildId, GoogleSheetLoggingExtension>();
+
+function getServerGoogleSheet(server: AttendingServerV2): Optional<GoogleSpreadsheet> {
+    const ext = googleSheetsStates.get(server.guild.id);
+    return ext?.googleSheet;
+}
+
+export {
+    GoogleSheetLoggingExtension,
+    ActiveTime,
+    HelpSessionEntry,
+    AttendanceEntry,
+    googleSheetsStates,
+    getServerGoogleSheet
+};
