@@ -190,9 +190,7 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
-    // Extensions for server&queue are loaded inside the create method
-    const server = await AttendingServerV2.create(guild);
-    attendingServers.set(guild.id, server);
+    // Extensions need to load their states first
     if (!environment.disableExtensions) {
         await Promise.all(
             interactionExtensions.map(extension => extension.loadState(guild))
@@ -202,6 +200,9 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
             interactionExtensions.flatMap(ext => ext.slashCommandData)
         );
     }
+    // Extensions for server&queue are loaded inside the create method
+    const server = await AttendingServerV2.create(guild);
+    attendingServers.set(guild.id, server);
     await server.guild.commands.fetch(); // populate cache
     return server;
 }

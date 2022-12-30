@@ -28,12 +28,13 @@ const calendarConfigBackupSchema = z.object({
 });
 
 class CalendarExtensionState extends BaseServerExtension implements IServerExtension {
+    /** which calendar to read from */
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
-    // save the data from /make_calendar_string, key is calendar display name, value is discord id
+    /** save the data from /make_calendar_string, key is calendar display name, value is discord id */
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
-    // event listeners, their onCalendarStateChange will be called, key is queue name
+    /** event listeners, their onCalendarStateChange will be called, key is queue name */
     listeners: Collection<string, CalendarQueueExtension> = new Collection();
-    // full url to the public calendar embed
+    /** full url to the public calendar embed */
     publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
     constructor(private readonly guild: Guild) {
@@ -42,10 +43,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
 
     /**
      * Returns a new CalendarExtensionState for the server with the given id and name
-     *
      * Uses firebase backup to intialize the Calendar config if the server has a backup
-     * @param serverId
-     * @param serverName
      * @returns CalendarExtensionState
      */
     static async load(guild: Guild): Promise<CalendarExtensionState> {
@@ -56,6 +54,11 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
             firebaseCredentials.projectId === ''
         ) {
             return new CalendarExtensionState(guild);
+        }
+        if (calendarStates.has(guild.id)) {
+            // avoid creating duplicates
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
+            return calendarStates.get(guild.id)!;
         }
         const instance = new CalendarExtensionState(guild);
         await instance.restoreFromBackup(guild.id);

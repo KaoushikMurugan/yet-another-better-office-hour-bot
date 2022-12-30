@@ -15,6 +15,7 @@ import {
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
 import { CalendarButtonNames } from './calendar-constants/calendar-interaction-names.js';
+import { RenderIndex } from '../../utils/type-aliases.js';
 
 /**
  * Calendar Extension for individual queues
@@ -40,7 +41,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param queueChannel channel object
      */
     static async load(
-        renderIndex: number,
+        renderIndex: RenderIndex,
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
         if (!calendarStates.has(queueChannel.channelObj.guild.id)) {
