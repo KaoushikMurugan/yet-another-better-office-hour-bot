@@ -351,7 +351,7 @@ async function cleanupHelpChannel(
         'cleanup_help_channel',
         'botAdmin'
     );
-    await updateCommandHelpChannels(server.guild);
+    await updateCommandHelpChannels(server.guild, server.hierarchyRoleIds);
     await interaction.editReply(SuccessMessages.cleanedup.helpChannels);
 }
 

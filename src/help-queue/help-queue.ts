@@ -53,7 +53,7 @@ class HelpQueueV2 {
     /** Why so serious? */
     private _seriousModeEnabled = false;
     /** Set of active helpers' ids */
-    private _activeHelperIds: Set<string> = new Set();
+    private _activeHelperIds: Set<Snowflake> = new Set();
     /** Set of helpers ids that have paused helping */
     private _pausedHelperIds: Set<Snowflake> = new Set();
     /** The actual queue of students */

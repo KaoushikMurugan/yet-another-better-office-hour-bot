@@ -5,21 +5,27 @@
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { HelpMessage } from '../utils/type-aliases.js';
 
-export const commandChConfigs = [
+export const commandChConfigs: {
+    channelName: string;
+    file: HelpMessage[];
+    visibility: (keyof HierarchyRoles)[];
+}[] = [
     {
         channelName: 'admin-commands',
         file: adminCommandHelpMessages,
-        visibility: ['Bot Admin']
+        visibility: ['botAdmin']
     },
     {
         channelName: 'staff-commands',
         file: helperCommandHelpMessages,
-        visibility: ['Bot Admin', 'Staff']
+        visibility: ['botAdmin', 'staff']
     },
     {
         channelName: 'student-commands',
         file: studentCommandHelpMessages,
-        visibility: ['Bot Admin', 'Staff', 'Student']
+        visibility: ['botAdmin', 'staff', 'student']
     }
 ];

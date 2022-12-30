@@ -1,4 +1,4 @@
-import {
+import type {
     ButtonInteraction,
     ChatInputCommandInteraction,
     ModalSubmitInteraction,
@@ -79,7 +79,7 @@ interface ModalSubmitHandlerProps {
     dmMethodMap: { readonly [modalName: string]: DMModalSubmitHandler };
 }
 
-export {
+export type {
     CommandHandlerProps,
     ButtonHandlerProps,
     SelectMenuHandlerProps,

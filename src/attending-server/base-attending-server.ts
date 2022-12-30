@@ -41,6 +41,7 @@ import { RolesConfigMenu } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
+    updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarExtensionState } from '../extensions/session-calenar/calendar-states.js';
@@ -126,13 +127,13 @@ class AttendingServerV2 {
     get loggingChannel(): Optional<TextChannel> {
         return this.settings.loggingChannel;
     }
-    get botAdminRoleID(): string {
+    get botAdminRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
-    get staffRoleID(): string {
+    get staffRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.staff;
     }
-    get studentRoleID(): string {
+    get studentRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.student;
     }
     get hierarchyRoleIds(): HierarchyRoles {
@@ -215,9 +216,15 @@ class AttendingServerV2 {
      */
     async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
         this.settings.hierarchyRoleIds[role] = id;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        await Promise.all([
+            updateCommandHelpChannelVisibility(
+                this.guild,
+                this.settings.hierarchyRoleIds
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
     }
 
     /**
@@ -280,7 +287,7 @@ class AttendingServerV2 {
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
             server.createQueueRoles(),
-            updateCommandHelpChannels(guild)
+            updateCommandHelpChannels(guild, server.hierarchyRoleIds)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
