@@ -15,7 +15,8 @@ import {
     ButtonLogEmbed,
     ErrorEmbed,
     SelectMenuLogEmbed,
-    SimpleEmbed
+    SimpleEmbed,
+    SlashCommandLogEmbed
 } from '../utils/embed-helper.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 import {
@@ -31,7 +32,7 @@ import { baseYabobButtonMethodMap } from './button-handler.js';
 import { baseYabobCommandMap } from './command-handler.js';
 import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
-import { IInteractionExtension2 } from '../extensions/extension-interface.js';
+import { IInteractionExtension } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calenar-2/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
@@ -40,7 +41,7 @@ import { environment } from '../environment/environment-manager.js';
  * Create the interaction extension instances here
  * - states are loaded in joinGuild() in app.ts
  */
-const interactionExtensions: ReadonlyArray<IInteractionExtension2> =
+const interactionExtensions: ReadonlyArray<IInteractionExtension> =
     environment.disableExtensions ? [] : [new SessionCalendarInteractionExtension()];
 
 /**
@@ -59,9 +60,10 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
         return;
     }
     const commandName = interaction.commandName;
-    const handleCommand = props.methodMap[commandName];
     const server = isServerInteraction(interaction);
+    const handleCommand = props.methodMap[commandName];
     logSlashCommand(interaction);
+    server.sendLogMessage(SlashCommandLogEmbed(interaction));
     if (!props.skipProgressMessageCommands.has(commandName)) {
         await interaction.reply({
             ...SimpleEmbed(`Processing command \`${commandName}\``),
@@ -218,7 +220,7 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
  * @returns 4-tuple of command, button, selectmenu, and modal maps
  */
 function combineMethodMaps(
-    interactionExtensions: ReadonlyArray<IInteractionExtension2>
+    interactionExtensions: ReadonlyArray<IInteractionExtension>
 ): [
     CommandHandlerProps,
     ButtonHandlerProps,

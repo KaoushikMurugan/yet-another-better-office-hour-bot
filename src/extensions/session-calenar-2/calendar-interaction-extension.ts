@@ -3,8 +3,8 @@ import { environment } from '../../environment/environment-manager.js';
 import { blue, yellow } from '../../utils/command-line-colors.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import {
-    BaseInteractionExtension2,
-    IInteractionExtension2
+    BaseInteractionExtension,
+    IInteractionExtension
 } from '../extension-interface.js';
 import { calendarCommands } from './calendar-constants/calendar-slash-commands.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
@@ -21,8 +21,8 @@ import {
 import { calendarSettingsMainMenuOptions } from './calendar-constants/calendar-settings-menu.js';
 
 class SessionCalendarInteractionExtension
-    extends BaseInteractionExtension2
-    implements IInteractionExtension2
+    extends BaseInteractionExtension
+    implements IInteractionExtension
 {
     override async loadState(guild: Guild): Promise<void> {
         if (
