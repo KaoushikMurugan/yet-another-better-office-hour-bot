@@ -1,15 +1,13 @@
 /** @module GoogleSheetLogging */
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
-import { environment } from '../../environment/environment-manager.js';
+import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
+import { GoogleSheetExtensionState } from './google-sheet-states.js';
 
 /**
  * Additional attendance info for each helper
@@ -19,6 +17,9 @@ type ActiveTime = {
     activeTimeMs: number;
 };
 
+/**
+ * 1 Attendance entry of 1 helper
+ */
 type AttendanceEntry = Omit<Required<ActiveTime & Helper>, 'latestStudentJoinTimeStamp'>;
 
 /**
@@ -42,10 +43,7 @@ type HelpSessionEntry = {
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
-class GoogleSheetLoggingExtension
-    extends BaseServerExtension
-    implements IServerExtension
-{
+class GoogleSheetServerExtension extends BaseServerExtension implements IServerExtension {
     /**
      * Students that just got dequeued but haven't joined the VC yet
      * - Key is student member.id, value is corresponding helpee object
@@ -73,12 +71,8 @@ class GoogleSheetLoggingExtension
      */
     private attendanceUpdateIsScheduled = false;
 
-    constructor(private guild: Guild, private _googleSheet: GoogleSpreadsheet) {
+    constructor(private guild: Guild) {
         super();
-    }
-
-    get googleSheet(): GoogleSpreadsheet {
-        return this._googleSheet;
     }
 
     /**
@@ -90,31 +84,9 @@ class GoogleSheetLoggingExtension
      * - the google sheet id is invalid
      * - the google sheet is not accessible
      */
-    static async load(guild: Guild): Promise<GoogleSheetLoggingExtension> {
-        if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
-            throw new ExtensionSetupError(
-                'No Google Sheet ID or Google Cloud credentials found.'
-            );
-        }
-        const googleSheet = new GoogleSpreadsheet(
-            environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
-        );
-        await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
-        await googleSheet.loadInfo().catch(() => {
-            throw new ExtensionSetupError(
-                red(
-                    `Failed to load google sheet for ${yellow(guild.name)}. ` +
-                        `Google sheets rejected our connection.`
-                )
-            );
-        });
-        console.log(
-            `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${yellow(guild.name)}'!\n` +
-                ` - Using this google sheet: ${yellow(googleSheet.title)}`
-        );
-        const newExtension = new GoogleSheetLoggingExtension(guild, googleSheet);
-        googleSheetsStates.set(guild.id, newExtension);
+    static async load(guild: Guild): Promise<GoogleSheetServerExtension> {
+        const newExtension = new GoogleSheetServerExtension(guild);
+        await GoogleSheetExtensionState.load(guild, newExtension);
         return newExtension;
     }
 
@@ -257,23 +229,12 @@ class GoogleSheetLoggingExtension
         this.activeTimeEntries.delete(helper.member.id);
     }
 
-    /**
-     * Changes which google sheet this yabob reads from
-     * - TODO: for now, this does not move any of the old data to the new google sheet
-     * @param sheetId the id of the new google sheet, found in the google sheet's url
-     */
-    async setGoogleSheet(sheetId: string): Promise<void> {
-        const newSheet = new GoogleSpreadsheet(sheetId);
-        await newSheet.useServiceAccountAuth(environment.googleCloudCredentials);
-        await newSheet.loadInfo().catch(() => {
-            throw ExpectedSheetErrors.badGoogleSheetId;
-        });
-        this._googleSheet = newSheet;
-    }
-
     /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
-        if (this.attendanceEntries.length === 0) {
+        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+            this.guild.id
+        )?.googleSheet;
+        if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
         const requiredHeaders = [
@@ -293,8 +254,8 @@ class GoogleSheetLoggingExtension
             ' '
         );
         const attendanceSheet =
-            this._googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this._googleSheet.addSheet({
+            googleSheet.sheetsByTitle[sheetTitle] ??
+            (await googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
@@ -373,7 +334,10 @@ class GoogleSheetLoggingExtension
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        if (entries[0] === undefined) {
+        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+            this.guild.id
+        )?.googleSheet;
+        if (entries[0] === undefined || !googleSheet) {
             return; // do nothing if there's nothing to update
         }
         // trim off colon because google api bug, then trim off any excess spaces
@@ -383,8 +347,8 @@ class GoogleSheetLoggingExtension
         );
         const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
-            this._googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this._googleSheet.addSheet({
+            googleSheet.sheetsByTitle[sheetTitle] ??
+            (await googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
@@ -437,12 +401,4 @@ class GoogleSheetLoggingExtension
     }
 }
 
-const googleSheetsStates = new Collection<GuildId, GoogleSheetLoggingExtension>();
-
-export {
-    GoogleSheetLoggingExtension,
-    ActiveTime,
-    HelpSessionEntry,
-    AttendanceEntry,
-    googleSheetsStates
-};
+export { GoogleSheetServerExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };

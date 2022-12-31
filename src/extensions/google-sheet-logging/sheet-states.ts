@@ -1,3 +1,0 @@
-class GoogleSheetExtensionStates {}
-
-export { GoogleSheetExtensionStates };
