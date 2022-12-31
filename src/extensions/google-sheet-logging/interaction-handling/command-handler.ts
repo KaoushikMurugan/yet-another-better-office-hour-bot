@@ -4,20 +4,23 @@ import { isServerInteraction } from '../../../interaction-handling/shared-valida
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { Optional } from '../../../utils/type-aliases.js';
 import { GoogleSheetCommands } from '../google-sheet-constants/google-sheet-interaction-names.js';
-import { getServerGoogleSheet } from '../google-sheet-logging.js';
+import {
+    getServerGoogleSheet,
+    isServerGoogleSheetInteraction
+} from '../shared-sheet-functions.js';
+import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
         [GoogleSheetCommands.stats]: getStatistics,
-        [GoogleSheetCommands.weekly_report]: getWeeklyReport
+        [GoogleSheetCommands.weekly_report]: getWeeklyReport,
+        [GoogleSheetCommands.set_google_sheet]: setGoogleSheet
     },
     skipProgressMessageCommands: new Set()
 };
 
 /**
  * The `/stats` command
- * @param interaction
- * @returns
  */
 async function getStatistics(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -166,6 +169,9 @@ async function getStatistics(
     await interaction.editReply(result);
 }
 
+/**
+ * The `/weekly_report` command
+ */
 async function getWeeklyReport(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
@@ -328,6 +334,20 @@ async function getWeeklyReport(
             EmbedColor.Neutral,
             weeklyStatsString
         )
+    );
+}
+
+/**
+ * Changes which google sheet to read from. The `/set_google_sheet` command
+ */
+async function setGoogleSheet(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const [state] = isServerGoogleSheetInteraction(interaction);
+    const sheetId = interaction.options.getString('sheet_id', true);
+    await state.setGoogleSheet(sheetId);
+    await interaction.editReply(
+        GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheet.title)
     );
 }
 

@@ -17,7 +17,7 @@ import { logWithTimeStamp } from '../../utils/util-functions.js';
 type CalendarConfigBackup = {
     calendarId: string;
     publicCalendarEmbedUrl: string;
-    calendarNameDiscordIdMap: { [key: string]: string };
+    calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
 };
 
 /** Firebase Backup Schema */
@@ -42,8 +42,9 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
     }
 
     /**
-     * Returns a new CalendarExtensionState for the server with the given id and name
+     * Returns a new CalendarExtensionState for 1 server
      * Uses firebase backup to intialize the Calendar config if the server has a backup
+     * @param guild which guild's state to load
      * @returns CalendarExtensionState
      */
     static async load(guild: Guild): Promise<CalendarExtensionState> {
@@ -83,10 +84,10 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.calendarId = validNewId;
         // fall back to default embed in case the user forgets to set up a new public embed
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
-        await Promise.all([
-            this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarStateChange())
-        ]);
+        this.backupToFirebase();
+        await Promise.all(
+            this.listeners.map(listener => listener.onCalendarStateChange())
+        );
     }
 
     /**
@@ -95,10 +96,10 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
      */
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;
-        await Promise.all([
-            this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarStateChange())
-        ]);
+        this.backupToFirebase();
+        await Promise.all(
+            this.listeners.map(listener => listener.onCalendarStateChange())
+        );
     }
 
     /**
@@ -111,10 +112,10 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         discordId: Snowflake
     ): Promise<void> {
         this.displayNameDiscordIdMap.set(calendarName, discordId);
-        await Promise.all([
-            this.backupToFirebase(),
-            ...this.listeners.map(listener => listener.onCalendarStateChange())
-        ]);
+        this.backupToFirebase();
+        await Promise.all(
+            this.listeners.map(listener => listener.onCalendarStateChange())
+        );
     }
 
     /**
@@ -147,8 +148,9 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
 
     /**
      * Backs up the calendar config to firebase
+     * - This is synchronous, we don't need to `await backupToFirebase`
      */
-    private async backupToFirebase(): Promise<void> {
+    private backupToFirebase(): void {
         const backupData: CalendarConfigBackup = {
             calendarId: this.calendarId,
             publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,

@@ -1,7 +1,7 @@
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
-import { HelpQueueV2 } from '../help-queue/help-queue.js';
-import { QueueDisplayV2 } from '../help-queue/queue-display.js';
-import { ConstNoMethod } from '../utils/type-aliases.js';
+import type { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import type { HelpQueueV2 } from '../help-queue/help-queue.js';
+import type { QueueDisplayV2 } from '../help-queue/queue-display.js';
+import type { ConstNoMethod } from '../utils/type-aliases.js';
 
 /**
  * Removes all public methods from HelpQueueV2 and marks everything readonly
@@ -22,4 +22,4 @@ type FrozenServer = ConstNoMethod<AttendingServerV2> &
  */
 type FrozenDisplay = Pick<QueueDisplayV2, 'requestNonQueueEmbedRender'>;
 
-export { FrozenServer, FrozenQueue, FrozenDisplay };
+export type { FrozenServer, FrozenQueue, FrozenDisplay };

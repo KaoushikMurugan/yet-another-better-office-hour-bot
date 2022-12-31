@@ -5,12 +5,11 @@ import { BaseServerExtension, IServerExtension } from '../extension-interface.js
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { blue, red, yellow } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildId, GuildMemberId, Optional } from '../../utils/type-aliases.js';
+import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import { environment } from '../../environment/environment-manager.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * Additional attendance info for each helper
@@ -65,7 +64,7 @@ class GoogleSheetLoggingExtension
     private attendanceEntries: AttendanceEntry[] = [];
     /**
      * Whether an attendence update has been scheduled.
-     * - If true, writeing to the attendanceEntries will not create another setTimeout
+     * - If true, writing to the attendanceEntries will not create another setTimeout
      */
     private attendanceUpdateIsScheduled = false;
 
@@ -109,9 +108,9 @@ class GoogleSheetLoggingExtension
                 `successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
-        const newExt = new GoogleSheetLoggingExtension(guild, googleSheet);
-        googleSheetsStates.set(guild.id, newExt);
-        return newExt;
+        const newExtension = new GoogleSheetLoggingExtension(guild, googleSheet);
+        googleSheetsStates.set(guild.id, newExtension);
+        return newExtension;
     }
 
     /**
@@ -251,6 +250,19 @@ class GoogleSheetLoggingExtension
             }, 60 * 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
+    }
+
+    /**
+     * Changes which google sheet this yabob reads from
+     * - TODO: for now, this does not migrate any of the old data
+     * @param sheetId the id of the new google sheet, found in the google sheet's url
+     */
+    async setGoogleSheet(sheetId: string): Promise<void> {
+        const newSheet = new GoogleSpreadsheet(sheetId);
+        await newSheet.loadInfo().catch(() => {
+            throw ExpectedSheetErrors.badGoogleSheetId;
+        });
+        this._googleSheet = newSheet;
     }
 
     /** Updates all the cached attendance entries */
@@ -421,16 +433,10 @@ class GoogleSheetLoggingExtension
 
 const googleSheetsStates = new Collection<GuildId, GoogleSheetLoggingExtension>();
 
-function getServerGoogleSheet(server: AttendingServerV2): Optional<GoogleSpreadsheet> {
-    const ext = googleSheetsStates.get(server.guild.id);
-    return ext?.googleSheet;
-}
-
 export {
     GoogleSheetLoggingExtension,
     ActiveTime,
     HelpSessionEntry,
     AttendanceEntry,
-    googleSheetsStates,
-    getServerGoogleSheet
+    googleSheetsStates
 };
