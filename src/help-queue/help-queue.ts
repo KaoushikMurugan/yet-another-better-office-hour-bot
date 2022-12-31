@@ -12,7 +12,7 @@ import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
-import { CalendarQueueExtension } from '../extensions/session-calenar/calendar-queue-extension.js';
+import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 
 /**
  * Render props for the queue display.

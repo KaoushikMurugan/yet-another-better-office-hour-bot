@@ -44,7 +44,7 @@ import {
     updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarExtensionState } from '../extensions/session-calenar/calendar-states.js';
+import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
 
 /**
  * Wrapper for TextChannel
