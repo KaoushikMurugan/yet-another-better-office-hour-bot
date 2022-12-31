@@ -4,21 +4,22 @@ import {
     ActionRowBuilder,
     ModalActionRowComponentBuilder,
     TextInputBuilder,
-    TextInputStyle
+    TextInputStyle,
+    Snowflake
 } from 'discord.js';
 import { attendingServers } from '../../global-states.js';
 import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
 import { ModalNames } from './interaction-names.js';
 
 /**
- * Creats a modal for the user to set the queue auto clear time.
+ * Creates a modal for the user to set the queue auto clear time.
  * Has two number inputs:
  * - Hours (2 characters max)
  * - Minutes (2 characters max)
  * @param useMenu whether to return the menu version of queue auto clear modal
  * @returns
  */
-function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
+function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
@@ -63,13 +64,13 @@ function queueAutoClearModal(serverId: string, useMenu = false): ModalBuilder {
 }
 
 /**
- * Creats a modal for the user to set the after session message.
+ * Creates a modal for the user to set the after session message.
  * Has one paragraph text input:
  * - After session message
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: string, useMenu = false): ModalBuilder {
+function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu

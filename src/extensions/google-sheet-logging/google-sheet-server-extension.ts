@@ -1,16 +1,13 @@
 /** @module GoogleSheetLogging */
-import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
-import { blue, red, yellow } from '../../utils/command-line-colors.js';
+import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildId, GuildMemberId, Optional } from '../../utils/type-aliases.js';
-import { environment } from '../../environment/environment-manager.js';
+import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import { GoogleSheetExtensionState } from './google-sheet-states.js';
 
 /**
  * Additional attendance info for each helper
@@ -20,6 +17,9 @@ type ActiveTime = {
     activeTimeMs: number;
 };
 
+/**
+ * 1 Attendance entry of 1 helper
+ */
 type AttendanceEntry = Omit<Required<ActiveTime & Helper>, 'latestStudentJoinTimeStamp'>;
 
 /**
@@ -37,15 +37,16 @@ type HelpSessionEntry = {
     'Wait Time (ms)': number; // wait end - wait start
 };
 
+/**
+ * Required headers of the help session GoogleSpreadsheetWorkSheet
+ */
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
-class GoogleSheetLoggingExtension
-    extends BaseServerExtension
-    implements IServerExtension
-{
+class GoogleSheetServerExtension extends BaseServerExtension implements IServerExtension {
     /**
-     * key is student member.id, value is corresponding helpee object
+     * Students that just got dequeued but haven't joined the VC yet
+     * - Key is student member.id, value is corresponding helpee object
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     /**
@@ -54,7 +55,8 @@ class GoogleSheetLoggingExtension
      */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
     /**
-     * key is student member.id, value is an array of entries to handle multiple helpers
+     * Current active help session entries of each student
+     * - key is student member.id, value is an array of entries to handle multiple helpers
      */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
@@ -64,21 +66,17 @@ class GoogleSheetLoggingExtension
      */
     private attendanceEntries: AttendanceEntry[] = [];
     /**
-     * Whether an attendence update has been scheduled.
-     * - If true, writeing to the attendanceEntries will not create another setTimeout
+     * Whether an attendance update has been scheduled.
+     * - If true, writing to the attendanceEntries will not create another setTimeout
      */
     private attendanceUpdateIsScheduled = false;
 
-    constructor(private guild: Guild, private _googleSheet: GoogleSpreadsheet) {
+    constructor(private guild: Guild) {
         super();
     }
 
-    get googleSheet(): GoogleSpreadsheet {
-        return this._googleSheet;
-    }
-
     /**
-     * Returns a new GoogleSheetLoggingExtension for the server with the given name
+     * Returns a new GoogleSheetLoggingExtension for 1 guild
      * - Uses the google sheet id from the environment
      * @param guild
      * @throws ExtensionSetupError if
@@ -86,32 +84,10 @@ class GoogleSheetLoggingExtension
      * - the google sheet id is invalid
      * - the google sheet is not accessible
      */
-    static async load(guild: Guild): Promise<GoogleSheetLoggingExtension> {
-        if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
-            throw new ExtensionSetupError(
-                'No Google Sheet ID or Google Cloud credentials found.'
-            );
-        }
-        const googleSheet = new GoogleSpreadsheet(
-            environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
-        );
-        await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
-        await googleSheet.loadInfo().catch(() => {
-            throw new ExtensionSetupError(
-                red(
-                    `Failed to load google sheet for ${yellow(guild.name)}. ` +
-                        `Google sheets rejected our connection.`
-                )
-            );
-        });
-        console.log(
-            `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${yellow(guild.name)}'!\n` +
-                ` - Using this google sheet: ${yellow(googleSheet.title)}`
-        );
-        const newExt = new GoogleSheetLoggingExtension(guild, googleSheet);
-        googleSheetsStates.set(guild.id, newExt);
-        return newExt;
+    static async load(guild: Guild): Promise<GoogleSheetServerExtension> {
+        const newExtension = new GoogleSheetServerExtension(guild);
+        await GoogleSheetExtensionState.load(guild, newExtension);
+        return newExtension;
     }
 
     /**
@@ -127,7 +103,7 @@ class GoogleSheetLoggingExtension
     }
 
     /**
-     * Start logging the {@link HelpSessionEntry} as sson as the student joins VC
+     * Start logging the {@link HelpSessionEntry} as soon as the student joins VC
      * @param server
      * @param studentMember
      * @param voiceChannel
@@ -255,7 +231,10 @@ class GoogleSheetLoggingExtension
 
     /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
-        if (this.attendanceEntries.length === 0) {
+        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+            this.guild.id
+        )?.googleSheet;
+        if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
         const requiredHeaders = [
@@ -275,16 +254,16 @@ class GoogleSheetLoggingExtension
             ' '
         );
         const attendanceSheet =
-            this._googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this._googleSheet.addSheet({
+            googleSheet.sheetsByTitle[sheetTitle] ??
+            (await googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
         if (
-            !attendanceSheet.headerValues ||
-            attendanceSheet.headerValues.length !== requiredHeaders.length ||
-            !attendanceSheet.headerValues.every(header =>
-                requiredHeaders.includes(header)
+            !attendanceSheet.headerValues || // doesn't have header
+            attendanceSheet.headerValues.length !== requiredHeaders.length || // header count is different
+            !attendanceSheet.headerValues.every(
+                header => requiredHeaders.includes(header) // finally check if all headers exist
             )
         ) {
             // very slow, O(n^2 * m) string array comparison is faster than this
@@ -350,13 +329,16 @@ class GoogleSheetLoggingExtension
 
     /**
      * Updates the help session entries for 1 student
-     * @param entries
+     * @param entries the complete help session entries
      */
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        if (entries[0] === undefined) {
-            return;
+        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+            this.guild.id
+        )?.googleSheet;
+        if (entries[0] === undefined || !googleSheet) {
+            return; // do nothing if there's nothing to update
         }
         // trim off colon because google api bug, then trim off any excess spaces
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
@@ -365,8 +347,8 @@ class GoogleSheetLoggingExtension
         );
         const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
-            this._googleSheet.sheetsByTitle[sheetTitle] ??
-            (await this._googleSheet.addSheet({
+            googleSheet.sheetsByTitle[sheetTitle] ??
+            (await googleSheet.addSheet({
                 title: sheetTitle,
                 headerValues: requiredHeaders
             }));
@@ -419,18 +401,4 @@ class GoogleSheetLoggingExtension
     }
 }
 
-const googleSheetsStates = new Collection<GuildId, GoogleSheetLoggingExtension>();
-
-function getServerGoogleSheet(server: AttendingServerV2): Optional<GoogleSpreadsheet> {
-    const ext = googleSheetsStates.get(server.guild.id);
-    return ext?.googleSheet;
-}
-
-export {
-    GoogleSheetLoggingExtension,
-    ActiveTime,
-    HelpSessionEntry,
-    AttendanceEntry,
-    googleSheetsStates,
-    getServerGoogleSheet
-};
+export { GoogleSheetServerExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };

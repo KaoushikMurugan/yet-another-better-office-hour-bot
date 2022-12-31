@@ -10,7 +10,7 @@ enum CalendarCommandNames {
     when_next = 'when_next',
     make_calendar_string = 'make_calendar_string',
     make_calendar_string_all = 'make_calendar_string_all',
-    set_public_embd_url = 'set_public_embd_url'
+    set_public_embed_url = 'set_public_embed_url'
 }
 
 enum CalendarButtonNames {
@@ -18,8 +18,6 @@ enum CalendarButtonNames {
     ResetCalendarSettings = 'ResetCalendarSettings',
     ShowCalendarSettingsModal = 'ShowCalendarSettingsModal'
 }
-
-enum CalendarSelectMenuNames /** nothing yet */ {}
 
 enum CalendarModalNames {
     // this returns a success message
@@ -31,6 +29,5 @@ enum CalendarModalNames {
 export {
     CalendarButtonNames,
     CalendarCommandNames,
-    CalendarSelectMenuNames,
     CalendarModalNames
 };

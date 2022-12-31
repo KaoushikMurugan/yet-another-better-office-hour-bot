@@ -21,7 +21,7 @@ const setCalendar = new SlashCommandBuilder()
 const unsetCalendar = new SlashCommandBuilder()
     .setName(CalendarCommandNames.unset_calendar)
     .setDescription(
-        'Desyncs the bot from the current calendar and sets it to the default calendar'
+        'De-syncs the bot from the current calendar and sets it to the default calendar'
     );
 
 // /when_next [queue_name]
@@ -94,9 +94,9 @@ const makeCalendarStringAll = new SlashCommandBuilder()
             .setRequired(false)
     );
 
-// /set_public_embd_url [url] (enable)
+// /set_public_embed_url [url] (enable)
 const setPublicEmbedUrl = new SlashCommandBuilder()
-    .setName(CalendarCommandNames.set_public_embd_url)
+    .setName(CalendarCommandNames.set_public_embed_url)
     .setDescription('Use another public calendar embed')
     .addStringOption(option =>
         option

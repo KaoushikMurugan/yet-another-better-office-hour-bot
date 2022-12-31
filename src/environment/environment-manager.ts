@@ -14,7 +14,7 @@ if (env === undefined) {
     throw new Error(red('Environment not specified'));
 }
 if (!possibleEnvironments.includes(env)) {
-    throw new Error(red(`Unknwon environment '${env}'`));
+    throw new Error(red(`Unknown environment '${env}'`));
 }
 
 const environment = { ...configuration[env], env: env, disableExtensions };

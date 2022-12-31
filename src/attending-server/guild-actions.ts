@@ -56,7 +56,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
  */
 async function updateCommandHelpChannels(
     guild: Guild,
-    hieararchyRoleIds: HierarchyRoles
+    hierarchyRoleIds: HierarchyRoles
 ): Promise<void> {
     const allChannels = await guild.channels.fetch();
     const existingHelpCategory = allChannels.find(
@@ -86,8 +86,8 @@ async function updateCommandHelpChannels(
                     }
                 );
                 const rolesWithViewPermission = roleConfig.visibility
-                    // elements of visibility are keys of hieararchyRoleIds
-                    .map(key => hieararchyRoleIds[key])
+                    // elements of visibility are keys of hierarchyRoleIds
+                    .map(key => hierarchyRoleIds[key])
                     // now get role by id
                     .map(id => guild.roles.cache.get(id));
                 await Promise.all(
@@ -144,18 +144,18 @@ async function sendCommandHelpChannelMessages(
 /**
  * Updates the command help channel visibility when hierarchy roles get updated
  * @param guild
- * @param hieararchyRoleIds the newly updated hierarchy role ids
+ * @param hierarchyRoleIds the newly updated hierarchy role ids
  */
 async function updateCommandHelpChannelVisibility(
     guild: Guild,
-    hieararchyRoleIds: HierarchyRoles
+    hierarchyRoleIds: HierarchyRoles
 ): Promise<void> {
     const helpCategory = guild.channels.cache.find(
         (channel): channel is CategoryChannel =>
             isCategoryChannel(channel) && channel.name === 'Bot Commands Help'
     );
     if (!helpCategory) {
-        await updateCommandHelpChannels(guild, hieararchyRoleIds);
+        await updateCommandHelpChannels(guild, hierarchyRoleIds);
         return;
     }
     const helpChannels = (await helpCategory.fetch()).children.cache.filter(
@@ -174,7 +174,7 @@ async function updateCommandHelpChannelVisibility(
         helpChannels.map(channel =>
             commandChConfigs
                 .find(channelConfig => channelConfig.channelName === channel.name)
-                ?.visibility.map(key => hieararchyRoleIds[key])
+                ?.visibility.map(key => hierarchyRoleIds[key])
                 ?.map(roleId =>
                     channel.permissionOverwrites.create(roleId, {
                         ViewChannel: true

@@ -10,7 +10,7 @@ import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
 
-/** A tuple that represents the infomation encoded in a custom id */
+/** A tuple that represents the information encoded in a custom id */
 type CustomIdTuple<T extends ComponentLocation> = [
     type: T,
     componentName: string,

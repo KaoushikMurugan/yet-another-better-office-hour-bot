@@ -225,7 +225,7 @@ async function disableLoggingChannel(
 
 /**
  * Toggle whether to give students the student role when they join the server
- * @param autoGiveStudentRole turn on or off auto give student roleƒ
+ * @param autoGiveStudentRole turn on or off auto give student role
  */
 async function toggleAutoGiveStudentRole(
     interaction: ButtonInteraction<'cached'>,

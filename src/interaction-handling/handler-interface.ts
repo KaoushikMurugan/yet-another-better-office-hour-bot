@@ -6,13 +6,13 @@ import type {
 } from 'discord.js';
 
 /** ChatInputCommands can only exist in guilds, so we can assume it will always be cached */
-type CommandHanlder = (
+type CommandHandler = (
     interaction: ChatInputCommandInteraction<'cached'>
 ) => Promise<void>;
 
-type GuildButtonHanlder = (interaction: ButtonInteraction<'cached'>) => Promise<void>;
+type GuildButtonHandler = (interaction: ButtonInteraction<'cached'>) => Promise<void>;
 
-type DMButtonHanlder = (interaction: ButtonInteraction) => Promise<void>;
+type DMButtonHandler = (interaction: ButtonInteraction) => Promise<void>;
 
 type GuildSelectMenuHandler = (
     interaction: SelectMenuInteraction<'cached'>
@@ -31,7 +31,7 @@ type DMModalSubmitHandler = (interaction: ModalSubmitInteraction) => Promise<voi
  */
 interface CommandHandlerProps {
     /** All the commands */
-    methodMap: { readonly [commandName: string]: CommandHanlder };
+    methodMap: { readonly [commandName: string]: CommandHandler };
     /** Commands that will REPLY/UPDATE inside the function body */
     skipProgressMessageCommands: Set<string>;
 }
@@ -42,11 +42,11 @@ interface CommandHandlerProps {
 interface ButtonHandlerProps {
     /** All the guild buttons */
     guildMethodMap: {
-        queue: { readonly [buttonName: string]: GuildButtonHanlder };
-        other: { readonly [buttonName: string]: GuildButtonHanlder };
+        queue: { readonly [buttonName: string]: GuildButtonHandler };
+        other: { readonly [buttonName: string]: GuildButtonHandler };
     };
     /** All the DM buttons */
-    dmMethodMap: { readonly [buttonName: string]: DMButtonHanlder };
+    dmMethodMap: { readonly [buttonName: string]: DMButtonHandler };
     /** Buttons that will REPLY/UPDATE inside the function body */
     skipProgressMessageButtons: Set<string>;
 }

@@ -60,7 +60,7 @@ function centered(text: string): string {
 /**
  * Attaches a timestamp before the logging message
  * @param guildName where the logger was used
- * @param params anything, same params as regualr console log
+ * @param params anything, same params as regular console log
  */
 function logWithTimeStamp(
     guildName = '',
@@ -77,7 +77,7 @@ function logWithTimeStamp(
 }
 
 /**
- * Converts the time delta in miliseconds into a readable format
+ * Converts the time delta in milliseconds into a readable format
  * @param milliseconds the difference to convert
  */
 function convertMsToTime(milliseconds: number): string {
@@ -104,7 +104,7 @@ function convertMsToTime(milliseconds: number): string {
 }
 
 /**
- * Converts the time delta in miliseconds into a readable format
+ * Converts the time delta in milliseconds into a readable format
  * @param milliseconds the difference to convert
  */
 function convertMsToShortTime(milliseconds: number): string {

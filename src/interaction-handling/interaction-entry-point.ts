@@ -39,9 +39,9 @@ import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { IInteractionExtension } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
-import { SessionCalendarInteractionExtension } from '../extensions/session-calenar/calendar-interaction-extension.js';
+import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
-import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-command-extension.js';
+import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
 
 /**
  * Create the interaction extension instances here
@@ -202,7 +202,7 @@ async function unsupportedInteraction(interaction: Interaction): Promise<void> {
 }
 
 /**
- * Higer order function that abstracts away all the condictionals needed to find the correct handler
+ * Higher order function that abstracts away all the conditionals needed to find the correct handler
  * - getHandler and all the processors use the double dispatch pattern
  * @param interaction
  * @returns the handler function that can be invoked with any interaction
@@ -227,7 +227,7 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
  * Combines all the method maps from base yabob and all the extensions
  * - This function should only be called once during startup
  * @param interactionExtensions interaction extensions
- * @returns 4-tuple of command, button, selectmenu, and modal maps
+ * @returns 4-tuple of command, button, select menu, and modal maps
  */
 function combineMethodMaps(
     interactionExtensions: ReadonlyArray<IInteractionExtension>
