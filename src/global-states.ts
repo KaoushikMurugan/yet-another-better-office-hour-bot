@@ -31,12 +31,12 @@ if (getApps().length === 0) {
 
 /** The following are global constant references */
 
-/** Datatbase object used for backups, shared across base yabob and extensions */
+/** Database object used for backups, shared across base yabob and extensions */
 const firebaseDB: Firestore = getFirestore();
 
 /**
  * The discord user object.
- * @remarks Top level await finally works with esmodules
+ * @remarks Top level await finally works with es-modules
  * - The `true` type parameter asserts that the client has successfully initialized
  * - Asserted because this file handles discord login.
  *  If this object is exported,

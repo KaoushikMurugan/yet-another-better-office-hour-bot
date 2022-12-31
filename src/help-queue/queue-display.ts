@@ -35,7 +35,7 @@ const queueStateStyles: {
         statusText: { serious: string; notSerious: string };
     };
 } = {
-    // colors are arbitary, feel free to change these
+    // colors are arbitrary, feel free to change these
     closed: {
         color: EmbedColor.Purple,
         statusText: {

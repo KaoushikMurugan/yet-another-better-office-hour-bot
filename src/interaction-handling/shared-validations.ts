@@ -35,13 +35,13 @@ function isServerInteraction(
     if (typeof idOrInteraction === 'string') {
         const server = attendingServers.get(idOrInteraction);
         if (!server) {
-            throw ExpectedParseErrors.nonServerInterction(idOrInteraction);
+            throw ExpectedParseErrors.nonServerInteraction(idOrInteraction);
         }
         return server;
     } else {
         const server = attendingServers.get(idOrInteraction.guild.id);
         if (!server) {
-            throw ExpectedParseErrors.nonServerInterction(idOrInteraction.guild.name);
+            throw ExpectedParseErrors.nonServerInteraction(idOrInteraction.guild.name);
         }
         return server;
     }
@@ -61,7 +61,7 @@ function isValidDMInteraction(
     }
     const server = attendingServers.get(serverId);
     if (!server) {
-        throw ExpectedParseErrors.nonServerInterction(serverId);
+        throw ExpectedParseErrors.nonServerInteraction(serverId);
     }
     return server;
 }
@@ -81,13 +81,13 @@ function isFromQueueChannelWithParent(
 }
 
 /**
- * Checks if the triggerer has the any role above or equal to the `lowestRequiredRole`.
+ * Checks if the trigger-er has the any role above or equal to the `lowestRequiredRole`.
  * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
  * @param member the member who triggered the interaction
  * @param commandName the command used
  * @param lowestRequiredRole the minimum role required to use the command
- * @returns GuildMember object of the triggerer
+ * @returns GuildMember object of the trigger-er
  */
 function isTriggeredByMemberWithRoles(
     server: FrozenServer,
@@ -154,7 +154,7 @@ function hasValidQueueArgument(
  * Checks if the user has the Valid Email role
  * @deprecated
  * @param commandName the command used
- * @returns GuildMember object of the triggerer
+ * @returns GuildMember object of the trigger-er
  */
 function isTriggeredByUserWithValidEmail(
     interaction: Interaction<'cached'>,

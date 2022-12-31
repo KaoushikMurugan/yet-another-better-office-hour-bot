@@ -84,13 +84,23 @@ type ServerSettings = {
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
-    /** Key is CategoryChannel.id of the parent catgory of #queue */
+    /**
+     * All the queues of this server
+     * - Key is CategoryChannel.id of the parent category of #queue
+     */
     private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
-    /** cached result of {@link getQueueChannels} */
+    /**
+     * Cached result of {@link getQueueChannels}
+     */
     private queueChannelsCache: QueueChannel[] = [];
-    /** unique helpers (both active and paused), key is member.id */
+    /**
+     * Unique helpers (both active and paused)
+     * - Key is GuildMember.id
+     */
     private _helpers: Collection<GuildMemberId, Helper> = new Collection();
-    /** server settings */
+    /**
+     * Server settings. An firebase update is requested as soon as this changes
+     */
     private settings: ServerSettings = {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
@@ -158,7 +168,9 @@ class AttendingServerV2 {
         }));
     }
 
-    /** Cleans up all the timers from setInterval */
+    /**
+     * Cleans up all the timers from setInterval
+     */
     clearAllServerTimers(): void {
         this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
@@ -228,7 +240,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the serious server flag, and updates the queues if changing from serious to not serious, or vice versa
+     * Sets the serious server flag, and updates the queues if seriousness is changed
      * @param enableSeriousMode new value for seriousServer
      * @returns True if triggered renders for all queues
      */
@@ -250,7 +262,7 @@ class AttendingServerV2 {
      * Asynchronously creates a YABOB instance for 1 server
      * @param guild the server for YABOB to join
      * @returns a created instance of YABOB
-     * @throws ServerError
+     * @throws Uncaught Error if any setup functions fail
      */
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
@@ -290,12 +302,12 @@ class AttendingServerV2 {
             updateCommandHelpChannels(guild, server.hierarchyRoleIds)
         ]).catch(err => {
             console.error(err);
-            throw new Error(`❗ ${red(`Initilization for ${guild.name} failed.`)}`);
+            throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
         });
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
-        console.log(`⭐ ${green(`Initilization for ${guild.name} is successful!`)}`);
+        console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
 
@@ -303,8 +315,8 @@ class AttendingServerV2 {
      * Called when a member joins a voice channel
      * - triggers onStudentJoinVC for all extensions if the member is a
      * student and was just removed from the queue
-     * @param member
-     * @param newVoiceState
+     * @param member the guild member that just joined a VC
+     * @param newVoiceState voice state object with a guaranteed non-null channel
      */
     async onMemberJoinVC(
         member: GuildMember,
@@ -348,8 +360,8 @@ class AttendingServerV2 {
      * Called when a member leaves a voice channel
      * - triggers onStudentLeaveVC for all extensions if the member is a
      * student and was in a session
-     * @param member
-     * @param oldVoiceState
+     * @param member the guild member that just joined a VC
+     * @param oldVoiceState voice state object with a guaranteed non-null channel
      */
     async onMemberLeaveVC(
         member: GuildMember,
@@ -434,9 +446,10 @@ class AttendingServerV2 {
     }
 
     /**
-     * Creates a new OH queue
-     * @param newQueueName name for this class/queue
-     * @throws ServerError: if a queue with the same name already exists
+     * Creates a new office hour queue
+     * @param newQueueName name for this queue
+     * @throws ServerError if
+     * - a queue with the same name already exists
      */
     async createQueue(newQueueName: string): Promise<void> {
         const queueWithSameName = this._queues.find(
@@ -469,8 +482,8 @@ class AttendingServerV2 {
     /**
      * Deletes a queue by categoryID
      * @param queueCategoryID CategoryChannel.id of the target queue
-     * @throws ServerError: If a discord API failure happened
-     * - #queue existence is checked by CentralCommandHandler
+     * @throws ServerError if
+     * - a discord API failure happened
      */
     async deleteQueueById(queueCategoryID: string): Promise<void> {
         const queue = this._queues.get(queueCategoryID);
@@ -507,7 +520,8 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
-     * @throws QueueError: if queue rejects
+     * @throws QueueError
+     * - if queue rejects
      */
     async enqueueStudent(
         studentMember: GuildMember,
@@ -521,8 +535,7 @@ class AttendingServerV2 {
 
     /**
      * Dequeue the student that has been waiting for the longest
-     * @param helperMember the helper that used /next
-     * - ignored if specified queue is undefined
+     * @param helperMember the helper that used /next.
      * @throws
      * - ServerError: if specificQueue is given but helper doesn't have the role
      * - QueueError: if the queue to dequeue from rejects
@@ -668,7 +681,8 @@ class AttendingServerV2 {
     /**
      * Closes all the queue that the helper has permission to & logs the help time to console
      * @param helperMember helper that used /stop
-     * @throws ServerError: If the helper is not hosting
+     * @throws ServerError if
+     * - the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._helpers.get(helperMember.id);
@@ -700,7 +714,11 @@ class AttendingServerV2 {
 
     /**
      * Marks a helper as 'paused'. Used for the '/pause' command
+     * @param helperMember the active helper to be marked as 'paused'
      * @returns whether there are other active helpers
+     * @throws ServerError if
+     * - helper is not hosting
+     * - helper is already paused
      */
     async pauseHelping(helperMember: GuildMember): Promise<boolean> {
         const helper = this._helpers.get(helperMember.id);
@@ -711,21 +729,21 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.alreadyPaused;
         }
         helper.activeState = 'paused';
-        const pausableQueues = this._queues.filter(queue =>
+        const pauseableQueues = this._queues.filter(queue =>
             queue.activeHelperIds.has(helperMember.id)
         );
         await Promise.all(
-            pausableQueues.map(queue => queue.markHelperAsPaused(helperMember))
+            pauseableQueues.map(queue => queue.markHelperAsPaused(helperMember))
         );
-        const existOtherActiveHelpers = pausableQueues.some(
+        const existOtherActiveHelpers = pauseableQueues.some(
             queue => queue.activeHelperIds.size > 0
         );
         return existOtherActiveHelpers;
     }
 
     /**
-     * Change the helper state from paused to active
-     * @param helperMember
+     * Changes the helper state from paused to active
+     * @param helperMember a paused helper to resume helping
      */
     async resumeHelping(helperMember: GuildMember): Promise<void> {
         const helper = this._helpers.get(helperMember.id);
@@ -787,7 +805,7 @@ class AttendingServerV2 {
     /**
      * Adds a student to the notification group
      * @param studentMember student to add
-     * @param targetQueue which notif group to add to
+     * @param targetQueue which notification group to add to
      */
     async addStudentToNotifGroup(
         studentMember: GuildMember,
@@ -801,7 +819,7 @@ class AttendingServerV2 {
     /**
      * Removes a student from the notification group
      * @param studentMember student to add
-     * @param targetQueue which notif group to remove from
+     * @param targetQueue which notification group to remove from
      */
     async removeStudentFromNotifGroup(
         studentMember: GuildMember,
@@ -832,14 +850,14 @@ class AttendingServerV2 {
             if (!queueToAnnounce || !hasQueueRole) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
-            const annountmentEmbed = SimpleEmbed(
+            const announcementEmbed = SimpleEmbed(
                 `Staff member ${helperMember.displayName} announced:\n${announcement}`,
                 EmbedColor.Aqua,
                 `In queue: ${targetQueue.queueName}`
             );
             await Promise.all(
                 queueToAnnounce.students.map(student =>
-                    student.member.send(annountmentEmbed)
+                    student.member.send(announcementEmbed)
                 )
             );
             return;
@@ -853,13 +871,13 @@ class AttendingServerV2 {
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
-        const annountmentEmbed = SimpleEmbed(
+        const announcementEmbed = SimpleEmbed(
             `Staff member ${helperMember.displayName} announced:`,
             EmbedColor.Aqua,
             announcement
         );
         await Promise.all(
-            studentsToAnnounceTo.map(student => student.member.send(annountmentEmbed))
+            studentsToAnnounceTo.map(student => student.member.send(announcementEmbed))
         );
     }
 
@@ -872,7 +890,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the after sesseion message for this server
+     * Sets the after session message for this server
      * @param newMessage after session message to set
      * - Side Effect: Triggers a firebase backup
      */
@@ -902,7 +920,7 @@ class AttendingServerV2 {
 
     /**
      * Called when leaving a server
-     * - let all the extensions clean up their own memory
+     * - let all the extensions clean up their own memory first before deleting them
      */
     async gracefulDelete(): Promise<void> {
         await Promise.all(
@@ -977,7 +995,7 @@ class AttendingServerV2 {
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let hierarchyRoleDeleted = false;
-        // shorthand syntax to take the propertiess of an object with the same name
+        // shorthand syntax to take the properties of an object with the same name
         for (const { key, id } of this.sortedHierarchyRoles) {
             if (deletedRole.id === id) {
                 this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;

@@ -237,7 +237,7 @@ async function listHelpers(
     const table = new AsciiTable3()
         .setHeading(
             'Tutor name',
-            'Availbale Queues',
+            'Available Queues',
             'Time Elapsed (hh:mm:ss)',
             'VC Status'
         )
@@ -322,7 +322,7 @@ async function cleanup(
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
     await server.cleanUpQueue(queue);
-    await interaction.editReply(SuccessMessages.cleanedup.queue(queue.queueName));
+    await interaction.editReply(SuccessMessages.cleanedUp.queue(queue.queueName));
 }
 
 /**
@@ -335,7 +335,7 @@ async function cleanupAllQueues(
     isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
     const allQueues = await server.getQueueChannels();
     await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
-    await interaction.editReply(SuccessMessages.cleanedup.allQueues);
+    await interaction.editReply(SuccessMessages.cleanedUp.allQueues);
 }
 
 /**
@@ -352,7 +352,7 @@ async function cleanupHelpChannel(
         'botAdmin'
     );
     await updateCommandHelpChannels(server.guild, server.hierarchyRoleIds);
-    await interaction.editReply(SuccessMessages.cleanedup.helpChannels);
+    await interaction.editReply(SuccessMessages.cleanedUp.helpChannels);
 }
 
 /**

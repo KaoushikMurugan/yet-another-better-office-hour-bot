@@ -46,7 +46,7 @@ type ServerBackup = {
     staffRoleId: string;
     /** The role id of the Student role */
     studentRoleId: string;
-    /** Whether to automcatically give new members the student role */
+    /** Whether to automatically give new members the student role */
     autoGiveStudentRole: boolean;
 };
 

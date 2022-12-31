@@ -36,7 +36,7 @@ const calendarCommandMap: CommandHandlerProps = {
             makeParsableCalendarTitle(interaction, false),
         [CalendarCommandNames.make_calendar_string_all]: interaction =>
             makeParsableCalendarTitle(interaction, true),
-        [CalendarCommandNames.set_public_embd_url]: setPublicEmbedUrl
+        [CalendarCommandNames.set_public_embed_url]: setPublicEmbedUrl
     },
     skipProgressMessageCommands: new Set()
 };

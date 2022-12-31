@@ -190,7 +190,7 @@ process.on('exit', () => {
 });
 
 /**
- * YABOB Initilization sequence
+ * YABOB Initialization sequence
  * @param guild server to join
  * @returns AttendingServerV2 if successfully initialized
  * @throws ServerError if the AttendingServerV2.create failed
@@ -216,7 +216,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 
 /**
  * Combines all the extension help messages and settings menu options
- * - if we have more static data in interacion level extensions, collect them here
+ * - if we have more static data in interaction level extensions, collect them here
  */
 function collectInteractionExtensionStaticData(): void {
     adminCommandHelpMessages.push(

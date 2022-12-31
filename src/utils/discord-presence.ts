@@ -131,7 +131,7 @@ const presenceTypeMap = new Map<ActivityType, string>([
  */
 function updatePresence(): void {
     let selectedPresenceList: StaticBotPresence[];
-    const rand = Math.random(); // gaurantueed to be between 0 and 1
+    const rand = Math.random(); // guaranteed to be between 0 and 1
     if (rand < 0.05) {
         // 5% chance of yabob related presence
         selectedPresenceList = yabobRelatedPresenceList;

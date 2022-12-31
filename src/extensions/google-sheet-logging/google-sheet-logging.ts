@@ -36,6 +36,9 @@ type HelpSessionEntry = {
     'Wait Time (ms)': number; // wait end - wait start
 };
 
+/**
+ * Required headers of the help session GoogleSpreadsheetWorkSheet
+ */
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
@@ -44,7 +47,8 @@ class GoogleSheetLoggingExtension
     implements IServerExtension
 {
     /**
-     * key is student member.id, value is corresponding helpee object
+     * Students that just got dequeued but haven't joined the VC yet
+     * - Key is student member.id, value is corresponding helpee object
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
     /**
@@ -53,7 +57,8 @@ class GoogleSheetLoggingExtension
      */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
     /**
-     * key is student member.id, value is an array of entries to handle multiple helpers
+     * Current active help session entries of each student
+     * - key is student member.id, value is an array of entries to handle multiple helpers
      */
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
@@ -63,7 +68,7 @@ class GoogleSheetLoggingExtension
      */
     private attendanceEntries: AttendanceEntry[] = [];
     /**
-     * Whether an attendence update has been scheduled.
+     * Whether an attendance update has been scheduled.
      * - If true, writing to the attendanceEntries will not create another setTimeout
      */
     private attendanceUpdateIsScheduled = false;
@@ -77,7 +82,7 @@ class GoogleSheetLoggingExtension
     }
 
     /**
-     * Returns a new GoogleSheetLoggingExtension for the server with the given name
+     * Returns a new GoogleSheetLoggingExtension for 1 guild
      * - Uses the google sheet id from the environment
      * @param guild
      * @throws ExtensionSetupError if
@@ -126,7 +131,7 @@ class GoogleSheetLoggingExtension
     }
 
     /**
-     * Start logging the {@link HelpSessionEntry} as sson as the student joins VC
+     * Start logging the {@link HelpSessionEntry} as soon as the student joins VC
      * @param server
      * @param studentMember
      * @param voiceChannel
@@ -294,7 +299,7 @@ class GoogleSheetLoggingExtension
                 headerValues: requiredHeaders
             }));
         if (
-            !attendanceSheet.headerValues || // doens't have header
+            !attendanceSheet.headerValues || // doesn't have header
             attendanceSheet.headerValues.length !== requiredHeaders.length || // header count is different
             !attendanceSheet.headerValues.every(
                 header => requiredHeaders.includes(header) // finally check if all headers exist

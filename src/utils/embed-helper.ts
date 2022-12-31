@@ -245,7 +245,7 @@ function ErrorLogEmbed(
         embeds: [
             {
                 color: color,
-                title: `Error occured at <t:${new Date()
+                title: `Error occurred at <t:${new Date()
                     .getTime()
                     .toString()
                     .slice(0, -3)}:F> `,
@@ -300,7 +300,7 @@ function ErrorLogEmbed2(
     }
     return new EmbedBuilder()
         .setTitle(
-            `Error occured at <t:${new Date().getTime().toString().slice(0, -3)}:F> `
+            `Error occurred at <t:${new Date().getTime().toString().slice(0, -3)}:F> `
         )
         .setColor(color)
         .setTimestamp(new Date())

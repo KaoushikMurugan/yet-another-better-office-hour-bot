@@ -56,7 +56,7 @@ const ExpectedParseErrors = {
         `This server doesn't seem to have any queues. ` +
             `You can use \`/queue add <name>\` to create one.`
     ),
-    nonServerInterction: (guildName?: string) =>
+    nonServerInteraction: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(
                   'I can only accept server based interactions.' +
@@ -83,7 +83,7 @@ only contains alphanumeric characters, hyphens, and underscores.`
     invalidCategoryName: (categoryName: string) =>
         new CommandParseError(
             `${categoryName} is an invalid category name. Please use a name that is between 1 and 100 characters (inclusive) long and \
-includes atleast one non-whitespace character.`
+includes at least one non-whitespace character.`
         ),
     nonExistentTextChannel: (channelId: string | undefined) =>
         new CommandParseError(

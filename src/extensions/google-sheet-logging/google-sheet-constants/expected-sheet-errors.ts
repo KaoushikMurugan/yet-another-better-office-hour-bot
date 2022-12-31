@@ -25,10 +25,10 @@ class GoogleSheetConnectionError extends Error {
 
 const ExpectedSheetErrors = {
     unknownEntry: new AttendanceError(
-        "Failed to update attendace. YABOB doesn't recognize this entry."
+        "Failed to update attendance. YABOB doesn't recognize this entry."
     ),
     recordedButCannotUpdate: new AttendanceError(
-        'Failed to update attendace. ' +
+        'Failed to update attendance. ' +
             'The attendance sheet might have missing headers or does not allow this YABOB to make changes.\n' +
             "Don't worry, your hours are still being logged, " +
             'just not viewable on Google Sheets. ' +

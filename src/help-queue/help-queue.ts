@@ -47,27 +47,47 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  * Class that manages the queue for a specific category
  */
 class HelpQueueV2 {
-    /** Keeps track of all the setTimout / setIntervals we started */
-    private timers: Collection<QueueTimerType, NodeJS.Timer | NodeJS.Timeout> =
-        new Collection();
-    /** Why so serious? */
+    /**
+     * Keeps track of all the setTimeout / setIntervals we started
+     * - Timers can be from setInterval or setTimeout
+     */
+    private timers: Collection<QueueTimerType, NodeJS.Timer> = new Collection();
+    /**
+     * Why so serious?
+     * - if true, no emoticons will be shown
+     */
     private _seriousModeEnabled = false;
-    /** Set of active helpers' ids */
+    /**
+     * Set of active helpers' ids
+     * - This is synchronized with the helpers that are marked 'active' in AttendingServerV2
+     */
     private _activeHelperIds: Set<Snowflake> = new Set();
-    /** Set of helpers ids that have paused helping */
+    /**
+     * Set of helpers ids that have paused helping
+     * - This is synchronized with the helpers that are marked 'paused' in AttendingServerV2
+     */
     private _pausedHelperIds: Set<Snowflake> = new Set();
-    /** The actual queue of students */
+    /**
+     * The actual queue of students
+     */
     private _students: Helpee[] = [];
-    /** The set of students to notify when queue opens, key is Guildmember.id */
+    /**
+     * The set of students to notify when queue opens
+     * - Key is GuildMember.id
+     */
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
-    /** When to automatically remove everyone */
+    /**
+     * When to automatically remove everyone
+     */
     private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
-    /** The queue display */
+    /**
+     * The queue display that sends the embeds to the #queue channel
+     */
     private readonly display: QueueDisplayV2;
 
     /**
-     * @param user YABOB's user object for QueueDisplay
-     * @param queueChannel the channel to manage
+     * Help queue constructor
+     * @param queueChannel the #queue text channel to manage
      * @param queueExtensions individual queue extensions to inject
      * @param backupData If defined, use this data to restore the students array
      */
@@ -149,7 +169,7 @@ class HelpQueueV2 {
     /**
      * Computes the state of the queue
      * **This is the single source of truth for queue state**
-     * - don't turn this into a getter.
+     * - Don't turn this into a getter.
      * - TS treats getters as static properties which conflicts with some of the checks
      */
     getQueueState(): QueueState {
@@ -199,8 +219,6 @@ class HelpQueueV2 {
                   )
               ]);
         const queue = new HelpQueueV2(queueChannel, queueExtensions, backupData);
-        // They need to happen first
-        // because extensions need to rerender in cleanUpQueueChannel()
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
         );
@@ -245,7 +263,7 @@ class HelpQueueV2 {
      * Open a queue with a helper
      * @param helperMember member with Staff/Admin that used /start
      * @param notify whether to notify everyone in the notif group
-     * @throws QueueError: do nothing if helperMemeber is already helping
+     * @throws QueueError: do nothing if helperMember is already helping
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
         if (this.hasHelper(helperMember.id)) {
@@ -295,8 +313,8 @@ class HelpQueueV2 {
 
     /**
      * Marks a helper with the 'paused' state
-     *  and moves the id from active helper id to pasued helperid
-     * @param helperMember
+     *  and moves the id from active helper id to paused helper id
+     * @param helperMember the currently 'active' helper
      */
     async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
         if (this.pausedHelperIds.has(helperMember.id)) {
@@ -310,9 +328,9 @@ class HelpQueueV2 {
 
     /**
      * Marks a helper with the 'active' state
-     *  and moves the id from paused helper id to active helperid
+     *  and moves the id from paused helper id to active helper id
      * - very similar to markHelperAsPaused, combine if necessary
-     * @param helperMember
+     * @param helperMember the currently 'paused' helper
      */
     async markHelperAsActive(helperMember: GuildMember): Promise<void> {
         if (this.activeHelperIds.has(helperMember.id)) {
@@ -326,7 +344,10 @@ class HelpQueueV2 {
     /**
      * Enqueue a student
      * @param studentMember member to enqueue
-     * @throws QueueError
+     * @throws QueueError if
+     * - queue is not open
+     * - student is already in the queue
+     * - studentMember is a helper
      */
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (this.getQueueState() !== 'open') {
@@ -408,7 +429,7 @@ class HelpQueueV2 {
             ]);
             return foundStudent;
         }
-        // assertion is safe becasue we already checked for length
+        // assertion is safe because we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this._students.shift()!;
         await Promise.all([
@@ -421,9 +442,10 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove a student from the queue. Used for /leave
+     * Removes a student from the queue. Used for /leave
      * @param targetStudent the student to remove
-     * @throws QueueError: the student is not in the queue
+     * @throws QueueError if
+     * - the student is not in the queue
      */
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
@@ -450,6 +472,7 @@ class HelpQueueV2 {
 
     /**
      * Remove all students from the queue. Used for /clear_all
+     * @noexcept - This will never throw an error even if there's no one to remove
      */
     async removeAllStudents(): Promise<void> {
         await Promise.all(
@@ -465,8 +488,9 @@ class HelpQueueV2 {
     }
 
     /**
-     * Adds a student to the notification group.
-     * Used for JoinNotif button
+     * Adds a student to the notification group. Used for JoinNotif button
+     * @throws QueueError
+     * - if student is already in the notif group
      */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (this.notifGroup.has(targetStudent.id)) {
@@ -476,8 +500,9 @@ class HelpQueueV2 {
     }
 
     /**
-     * Adds a student to the notification group.
-     * - Used for RemoveNotif button
+     * Adds a student to the notification group. Used for RemoveNotif button
+     * @throws QueueError
+     * - if student is already in the notif group
      */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
@@ -528,6 +553,9 @@ class HelpQueueV2 {
         );
     }
 
+    /**
+     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
+     */
     async triggerForceRender(): Promise<void> {
         await this.display.requestForceRender();
     }
@@ -539,7 +567,7 @@ class HelpQueueV2 {
 
     /**
      * Sets up auto clear parameters
-     * - The timer won't start until autoClearQueue is called
+     * - The timer won't start until startAutoClearTimer is called
      * @param hours clear queue after this many hours
      * @param minutes clear queue after this many minutes
      * @param enable whether to enable auto clear, overrides @param hours and @param minutes
@@ -565,7 +593,9 @@ class HelpQueueV2 {
      */
     private async startAutoClearTimer(): Promise<void> {
         const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
-        existingTimer && clearTimeout(existingTimer);
+        if (existingTimer !== undefined) {
+            clearTimeout(existingTimer);
+        }
         if (this._timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }

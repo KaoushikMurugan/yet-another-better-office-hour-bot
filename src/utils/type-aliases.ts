@@ -73,15 +73,14 @@ type RenderIndex = number;
  * @remark
  * - This is used to store help messages in the help channel
  * - It is also used to store help messages in the help command
- * - The `nameValuePair` property is utlized by the help command to display the subcommands
+ * - The `nameValuePair` property is utilized by the help command to display the subcommands
  * - The `useInHelpChannel` property is used to determine if the message should be displayed in the help channel
  * - The `useInHelpCommand` property is used to determine if the message can be displayed in the help command
  * - The `message` property is the actual message to be displayed
  */
 type HelpMessage = {
     /**
-     * Utlized by the help command to display the subcommands.
-     *
+     * Utilized by the help command to display the subcommands.
      * Structure: {name: string, value: string}
      */
     nameValuePair: APIApplicationCommandOptionChoice<string>;

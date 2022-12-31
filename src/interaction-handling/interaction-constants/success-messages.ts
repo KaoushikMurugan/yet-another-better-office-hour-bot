@@ -58,7 +58,7 @@ export const SuccessMessages = {
     clearedQueue: (queueName: string) =>
         SimpleEmbed(`Everyone in  queue ${queueName} was removed.`, EmbedColor.Success),
     clearedAllQueues: (serverName = 'unknown server') =>
-        SimpleEmbed(`All queues on ${serverName} was cleard.`, EmbedColor.Success),
+        SimpleEmbed(`All queues on ${serverName} was cleared.`, EmbedColor.Success),
     announced: (announcement: string) =>
         SimpleEmbed(`Your announcement has been sent!`, EmbedColor.Success, announcement),
     updatedLoggingChannel: (loggingChannelName: string) =>
@@ -70,7 +70,7 @@ export const SuccessMessages = {
     updatedAfterSessionMessage: (message: string) =>
         message.length === 0
             ? SimpleEmbed(
-                  'Successfully disabled after session messages. YABOB will not send messges to students after they finish receiving help.'
+                  'Successfully disabled after session messages. YABOB will not send messages to students after they finish receiving help.'
               )
             : SimpleEmbed(
                   'The following message will be sent to the student after they finish receiving help:',
@@ -90,7 +90,7 @@ export const SuccessMessages = {
             EmbedColor.Success
         )
     },
-    cleanedup: {
+    cleanedUp: {
         queue: (queueName: string) =>
             SimpleEmbed(`Queue ${queueName} has been cleaned up.`, EmbedColor.Success),
         allQueues: SimpleEmbed('All queues have been cleaned up.'),
