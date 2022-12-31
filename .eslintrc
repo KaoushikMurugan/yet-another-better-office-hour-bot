@@ -13,6 +13,7 @@
     "rules": {
         "@typescript-eslint/no-floating-promises": ["error"],
         "semi": [2, "always"],
-        "eqeqeq": 2
+        "eqeqeq": 2,
+        "no-throw-literal": "error"
     }
 }

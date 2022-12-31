@@ -8,11 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import {
-    GuildMember,
-    VoiceChannel,
-    Guild,
-} from 'discord.js';
+import { GuildMember, VoiceChannel, Guild } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
