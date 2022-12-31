@@ -344,7 +344,7 @@ async function setGoogleSheet(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [state] = isServerGoogleSheetInteraction(interaction);
-    const sheetId = interaction.options.getString('sheet_id', true);
+    const sheetId = interaction.options.getString('sheet_id', true).trim();
     await state.setGoogleSheet(sheetId);
     await interaction.editReply(
         GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheet.title)

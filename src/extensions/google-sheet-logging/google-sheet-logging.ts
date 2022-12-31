@@ -254,11 +254,12 @@ class GoogleSheetLoggingExtension
 
     /**
      * Changes which google sheet this yabob reads from
-     * - TODO: for now, this does not migrate any of the old data
+     * - TODO: for now, this does not move any of the old data to the new google sheet
      * @param sheetId the id of the new google sheet, found in the google sheet's url
      */
     async setGoogleSheet(sheetId: string): Promise<void> {
         const newSheet = new GoogleSpreadsheet(sheetId);
+        await newSheet.useServiceAccountAuth(environment.googleCloudCredentials);
         await newSheet.loadInfo().catch(() => {
             throw ExpectedSheetErrors.badGoogleSheetId;
         });
@@ -293,10 +294,10 @@ class GoogleSheetLoggingExtension
                 headerValues: requiredHeaders
             }));
         if (
-            !attendanceSheet.headerValues ||
-            attendanceSheet.headerValues.length !== requiredHeaders.length ||
-            !attendanceSheet.headerValues.every(header =>
-                requiredHeaders.includes(header)
+            !attendanceSheet.headerValues || // doens't have header
+            attendanceSheet.headerValues.length !== requiredHeaders.length || // header count is different
+            !attendanceSheet.headerValues.every(
+                header => requiredHeaders.includes(header) // finally check if all headers exist
             )
         ) {
             // very slow, O(n^2 * m) string array comparison is faster than this
@@ -362,13 +363,13 @@ class GoogleSheetLoggingExtension
 
     /**
      * Updates the help session entries for 1 student
-     * @param entries
+     * @param entries the complete help session entries
      */
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
         if (entries[0] === undefined) {
-            return;
+            return; // do nothing if there's nothing to update
         }
         // trim off colon because google api bug, then trim off any excess spaces
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(

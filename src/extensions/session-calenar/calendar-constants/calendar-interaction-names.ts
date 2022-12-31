@@ -19,8 +19,6 @@ enum CalendarButtonNames {
     ShowCalendarSettingsModal = 'ShowCalendarSettingsModal'
 }
 
-enum CalendarSelectMenuNames /** nothing yet */ {}
-
 enum CalendarModalNames {
     // this returns a success message
     CalendarSettingsModal = 'CalendarSettingsModal',
@@ -31,6 +29,5 @@ enum CalendarModalNames {
 export {
     CalendarButtonNames,
     CalendarCommandNames,
-    CalendarSelectMenuNames,
     CalendarModalNames
 };
