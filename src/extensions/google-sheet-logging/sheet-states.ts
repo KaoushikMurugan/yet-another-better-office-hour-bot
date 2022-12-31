@@ -1,0 +1,3 @@
+class GoogleSheetExtensionStates {}
+
+export { GoogleSheetExtensionStates };

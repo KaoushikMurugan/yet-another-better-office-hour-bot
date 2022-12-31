@@ -16,7 +16,7 @@ import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { hierarchyRoleConfigs, HierarchyRoles } from '../models/hierarchy-roles.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { IServerExtension } from '../extensions/extension-interface.js';
-import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-logging.js';
+import { GoogleSheetLoggingExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';

@@ -4,7 +4,7 @@ import { Optional } from '../../utils/type-aliases.js';
 import {
     GoogleSheetLoggingExtension,
     googleSheetsStates
-} from './google-sheet-logging.js';
+} from './google-sheet-server-extension.js';
 import { isServerInteraction } from '../../interaction-handling/shared-validations.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { Interaction } from 'discord.js';

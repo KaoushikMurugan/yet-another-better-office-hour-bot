@@ -41,7 +41,7 @@ import { IInteractionExtension } from '../extensions/extension-interface.js';
 import { isServerInteraction } from './shared-validations.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
-import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-command-extension.js';
+import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
 
 /**
  * Create the interaction extension instances here
