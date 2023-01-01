@@ -7,7 +7,7 @@ import {
     Snowflake
 } from 'discord.js';
 import { buildComponent, UnknownId } from '../../../utils/component-id-factory.js';
-import { calendarStates } from '../calendar-states.js';
+import { CalendarExtensionState } from '../calendar-states.js';
 import { CalendarModalNames } from './calendar-interaction-names.js';
 
 /**
@@ -17,7 +17,7 @@ import { CalendarModalNames } from './calendar-interaction-names.js';
  * @returns the settings modal
  */
 function calendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuilder {
-    const state = calendarStates.get(serverId);
+    const state = CalendarExtensionState.states.get(serverId);
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu

@@ -8,7 +8,6 @@ import {
 } from '../extension-interface.js';
 import { calendarCommands } from './calendar-constants/calendar-slash-commands.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
-import { calendarStates, CalendarExtensionState } from './calendar-states.js';
 import { calendarButtonMap } from './interaction-handling/button-handler.js';
 import { calendarCommandMap } from './interaction-handling/command-handler.js';
 import { calendarModalMap } from './interaction-handling/modal-handler.js';
@@ -36,7 +35,6 @@ class SessionCalendarInteractionExtension
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });
-        calendarStates.set(guild.id, await CalendarExtensionState.load(guild));
         console.log(
             `[${blue('Session Calendar')}] ` +
                 `successfully loaded for '${guild.name}'!\n` +

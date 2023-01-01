@@ -44,7 +44,7 @@ import {
     updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 
 /**
  * Wrapper for TextChannel
@@ -272,7 +272,7 @@ class AttendingServerV2 {
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
                   new FirebaseServerBackupExtension(guild),
-                  CalendarExtensionState.load(guild)
+                  CalendarServerExtension.load(guild)
               ]);
         const server = new AttendingServerV2(guild, serverExtensions);
         const externalBackup = environment.disableExtensions

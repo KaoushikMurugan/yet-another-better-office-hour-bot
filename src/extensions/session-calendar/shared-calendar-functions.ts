@@ -5,7 +5,7 @@
  *  used by the calendar extension
  */
 import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { CalendarExtensionState, calendarStates } from './calendar-states.js';
+import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
 import { Optional, WithRequired } from '../../utils/type-aliases.js';
@@ -55,7 +55,7 @@ async function getUpComingTutoringEvents(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: calendarStates.get(serverId)?.calendarId ?? '',
+        calendarId: CalendarExtensionState.states.get(serverId)?.calendarId ?? '',
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
@@ -194,7 +194,7 @@ function composeViewModel(
         eventQueue: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: calendarStates.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
+        discordId: CalendarExtensionState.states.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
         location: location
     };
 }
@@ -296,7 +296,7 @@ function isServerCalendarInteraction<
     interaction: WithRequired<T, 'channel' | 'channelId'>
 ] {
     const server = isServerInteraction(interaction);
-    const state = calendarStates.get(server.guild.id);
+    const state = CalendarExtensionState.states.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
     }

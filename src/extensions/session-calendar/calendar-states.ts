@@ -10,6 +10,7 @@ import { firebaseDB } from '../../global-states.js';
 import { FrozenServer } from '../extension-utils.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
+import { CalendarServerExtension } from './calendar-server-extension.js';
 
 /**
  * @module Backups
@@ -20,24 +21,44 @@ type CalendarConfigBackup = {
     calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
 };
 
-/** Firebase Backup Schema */
-const calendarConfigBackupSchema = z.object({
-    calendarId: z.string(),
-    publicCalendarEmbedUrl: z.string(),
-    calendarNameDiscordIdMap: z.record(z.string())
-});
-
 class CalendarExtensionState extends BaseServerExtension implements IServerExtension {
-    /** which calendar to read from */
+    /**
+     * Firebase Backup Schema
+     */
+    static readonly backupSchema = z.object({
+        calendarId: z.string(),
+        publicCalendarEmbedUrl: z.string(),
+        calendarNameDiscordIdMap: z.record(z.string())
+    });
+    /**
+     * Collection of all the created calendar states
+     * - static, shared across all instances
+     */
+    static states = new Collection<GuildId, CalendarExtensionState>();
+    /**
+     * which calendar to read from
+     * - See the setup guide for how to find this id
+     */
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
-    /** save the data from /make_calendar_string, key is calendar display name, value is discord id */
+    /**
+     * save the data from /make_calendar_string,
+     * - key is calendar display name, value is discord id
+     */
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
-    /** event listeners, their onCalendarStateChange will be called, key is queue name */
-    listeners: Collection<string, CalendarQueueExtension> = new Collection();
-    /** full url to the public calendar embed */
+    /**
+     * event listeners, their onCalendarStateChange will be called
+     * - key is queue name
+     */
+    queueExtensions: Collection<string, CalendarQueueExtension> = new Collection();
+    /**
+     * full url to the public calendar embed
+     */
     publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
-    constructor(private readonly guild: Guild) {
+    constructor(
+        private readonly guild: Guild,
+        private serverExtension: CalendarServerExtension
+    ) {
         super();
     }
 
@@ -47,21 +68,25 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
      * @param guild which guild's state to load
      * @returns CalendarExtensionState
      */
-    static async load(guild: Guild): Promise<CalendarExtensionState> {
+    static async load(
+        guild: Guild,
+        serverExtension: CalendarServerExtension
+    ): Promise<CalendarExtensionState> {
         const firebaseCredentials = environment.firebaseCredentials;
+        const instance = new CalendarExtensionState(guild, serverExtension);
+        CalendarExtensionState.states.set(guild.id, instance);
         if (
             firebaseCredentials.clientEmail === '' &&
             firebaseCredentials.privateKey === '' &&
             firebaseCredentials.projectId === ''
         ) {
-            return new CalendarExtensionState(guild);
+            return new CalendarExtensionState(guild, serverExtension);
         }
-        if (calendarStates.has(guild.id)) {
+        if (CalendarExtensionState.states.has(guild.id)) {
             // avoid creating duplicates
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return calendarStates.get(guild.id)!;
+            return CalendarExtensionState.states.get(guild.id)!;
         }
-        const instance = new CalendarExtensionState(guild);
         await instance.restoreFromBackup(guild.id);
         return instance;
     }
@@ -69,11 +94,40 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
     /**
      * If a server gets deleted, remove it from the calendar server map
      * @param server
-     * @returns
      */
     override onServerDelete(server: FrozenServer): Promise<void> {
-        calendarStates.delete(server.guild.id);
+        CalendarExtensionState.states.delete(server.guild.id);
         return Promise.resolve();
+    }
+
+    /**
+     * Restores the calendar config from firebase
+     * @param serverId
+     */
+    async restoreFromBackup(serverId: Snowflake): Promise<void> {
+        const backupDoc = await firebaseDB
+            .collection('calendarBackups')
+            .doc(serverId)
+            .get();
+        if (backupDoc.data() === undefined) {
+            return;
+        }
+        const calendarBackup = CalendarExtensionState.backupSchema.safeParse(
+            backupDoc.data()
+        );
+        if (!calendarBackup.success) {
+            return;
+        }
+        this.calendarId = calendarBackup.data.calendarId;
+        this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
+        if (this.publicCalendarEmbedUrl.length === 0) {
+            this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
+        }
+        this.displayNameDiscordIdMap.load(
+            Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
+                ([key, value]) => [key, { value: value }]
+            )
+        );
     }
 
     /**
@@ -86,7 +140,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         this.backupToFirebase();
         await Promise.all(
-            this.listeners.map(listener => listener.onCalendarStateChange())
+            this.queueExtensions.map(listener => listener.onCalendarStateChange())
         );
     }
 
@@ -98,7 +152,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.publicCalendarEmbedUrl = validUrl;
         this.backupToFirebase();
         await Promise.all(
-            this.listeners.map(listener => listener.onCalendarStateChange())
+            this.queueExtensions.map(listener => listener.onCalendarStateChange())
         );
     }
 
@@ -114,35 +168,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         this.displayNameDiscordIdMap.set(calendarName, discordId);
         this.backupToFirebase();
         await Promise.all(
-            this.listeners.map(listener => listener.onCalendarStateChange())
-        );
-    }
-
-    /**
-     * Restores the calendar config from firebase
-     * @param serverId
-     */
-    async restoreFromBackup(serverId: Snowflake): Promise<void> {
-        const backupDoc = await firebaseDB
-            .collection('calendarBackups')
-            .doc(serverId)
-            .get();
-        if (backupDoc.data() === undefined) {
-            return;
-        }
-        const calendarBackup = calendarConfigBackupSchema.safeParse(backupDoc.data());
-        if (!calendarBackup.success) {
-            return;
-        }
-        this.calendarId = calendarBackup.data.calendarId;
-        this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
-        if (this.publicCalendarEmbedUrl.length === 0) {
-            this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
-        }
-        this.displayNameDiscordIdMap.load(
-            Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
-                ([key, value]) => [key, { value: value }]
-            )
+            this.queueExtensions.map(listener => listener.onCalendarStateChange())
         );
     }
 
@@ -173,7 +199,4 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
     }
 }
 
-/** static, key is guild id, value is 1 calendar extension state */
-const calendarStates = new Collection<GuildId, CalendarExtensionState>();
-
-export { CalendarExtensionState, calendarStates };
+export { CalendarExtensionState };

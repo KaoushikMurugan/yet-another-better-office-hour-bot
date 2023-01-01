@@ -2,7 +2,7 @@ import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'disc
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
-import { calendarStates } from '../calendar-states.js';
+import { CalendarExtensionState } from '../calendar-states.js';
 import { mainMenuRow } from '../../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
 import { FrozenServer } from '../../extension-utils.js';
@@ -30,7 +30,7 @@ function CalendarSettingsConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const state = calendarStates.get(server.guild.id);
+    const state = CalendarExtensionState.states.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }

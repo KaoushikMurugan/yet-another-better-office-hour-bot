@@ -3,7 +3,6 @@ import { BaseQueueExtension, IQueueExtension } from '../extension-interface.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { EmbedColor } from '../../utils/embed-helper.js';
 import { red } from '../../utils/command-line-colors.js';
-import { calendarStates } from './calendar-states.js';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
@@ -16,6 +15,7 @@ import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
 import { CalendarButtonNames } from './calendar-constants/calendar-interaction-names.js';
 import { RenderIndex } from '../../utils/type-aliases.js';
+import { CalendarExtensionState } from './calendar-states.js';
 
 /**
  * Calendar Extension for individual queues
@@ -44,15 +44,15 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         renderIndex: RenderIndex,
         queueChannel: QueueChannel
     ): Promise<CalendarQueueExtension> {
-        if (!calendarStates.has(queueChannel.channelObj.guild.id)) {
+        if (!CalendarExtensionState.states.has(queueChannel.channelObj.guild.id)) {
             throw new ExtensionSetupError(
                 red('The command level extension is required.')
             );
         }
         const instance = new CalendarQueueExtension(renderIndex, queueChannel);
-        calendarStates
+        CalendarExtensionState.states
             .get(queueChannel.channelObj.guild.id)
-            ?.listeners.set(queueChannel.queueName, instance);
+            ?.queueExtensions.set(queueChannel.queueName, instance);
         return instance;
     }
 
@@ -85,9 +85,9 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param deletedQueue
      */
     override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
-        calendarStates
+        CalendarExtensionState.states
             .get(this.queueChannel.channelObj.guild.id)
-            ?.listeners.delete(deletedQueue.queueName);
+            ?.queueExtensions.delete(deletedQueue.queueName);
         // now garbage collector should clean up this instance
         // when server deletes the queue from queue collection
     }
@@ -107,7 +107,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
         const [serverId, queueName, state] = [
             this.queueChannel.channelObj.guild.id,
             this.queueChannel.queueName,
-            calendarStates.get(this.queueChannel.channelObj.guild.id)
+            CalendarExtensionState.states.get(this.queueChannel.channelObj.guild.id)
         ];
         if (!state) {
             return;
