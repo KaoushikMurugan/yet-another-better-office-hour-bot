@@ -22,6 +22,7 @@ import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import {
     afterSessionMessageModal,
+    helpTopicPromptModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
@@ -60,7 +61,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
     },
     skipProgressMessageCommands: new Set([
         CommandNames.set_after_session_msg,
-        CommandNames.set_queue_auto_clear
+        CommandNames.set_queue_auto_clear,
+        CommandNames.enqueue
     ])
 };
 
@@ -76,7 +78,8 @@ async function enqueue(
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
     await server.enqueueStudent(interaction.member, queueChannel);
-    await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
+    await interaction.showModal(helpTopicPromptModal(server.guild.id));
+    //await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
 }
 
 /**

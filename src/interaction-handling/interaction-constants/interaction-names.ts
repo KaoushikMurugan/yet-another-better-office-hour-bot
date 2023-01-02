@@ -63,7 +63,8 @@ enum ModalNames {
     AfterSessionMessageModal = 'AfterSessionMessageModal',
     AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
     QueueAutoClearModal = 'QueueAutoClearModal',
-    QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion'
+    QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion',
+    HelpTopicPromptModal = 'HelpTopicPromptModal'
 }
 
 /** Known base yabob select menu names */

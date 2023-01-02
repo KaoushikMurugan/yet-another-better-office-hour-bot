@@ -65,10 +65,12 @@ function isValidDMInteraction(
     }
     return server;
 }
-
-function isFromQueueChannelWithParent(
-    interaction: ButtonInteraction<'cached'> | ChatInputCommandInteraction<'cached'>
-): QueueChannel {
+/**
+ * Checks if the `interaction` is from a queue channel
+ * @param interaction
+ * @returns the {@link QueueChannel} object of the queue channel
+ */
+function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): QueueChannel {
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }

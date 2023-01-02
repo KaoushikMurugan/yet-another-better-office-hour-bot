@@ -94,4 +94,25 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
     return modal;
 }
 
-export { queueAutoClearModal, afterSessionMessageModal };
+function helpTopicPromptModal(serverId: Snowflake): ModalBuilder {
+    const modal = buildComponent(new ModalBuilder(), [
+        'other',
+        ModalNames.HelpTopicPromptModal,
+        serverId,
+        UnknownId
+    ])
+        .setTitle('What do you need help with?')
+        .setComponents(
+            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('help_topic')
+                    .setLabel('Topic')
+                    .setPlaceholder('Type what you need help with here')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setRequired(true)
+            )
+        );
+    return modal;
+}
+
+export { queueAutoClearModal, afterSessionMessageModal, helpTopicPromptModal };

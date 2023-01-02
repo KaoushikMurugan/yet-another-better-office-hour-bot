@@ -17,6 +17,7 @@ import { ButtonNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     afterSessionMessageModal,
+    helpTopicPromptModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 
@@ -60,6 +61,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             createServerRolesDM(true, true, interaction)
     },
     skipProgressMessageButtons: new Set([
+        ButtonNames.Join,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1,
         ButtonNames.ServerRoleConfig1a,
@@ -84,7 +86,10 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
         isFromQueueChannelWithParent(interaction)
     ];
     await server.enqueueStudent(interaction.member, queueChannel);
-    await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
+
+    await interaction.showModal(helpTopicPromptModal(server.guild.id));
+
+    //await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
 }
 
 /**
