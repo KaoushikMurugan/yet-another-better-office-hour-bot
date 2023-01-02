@@ -14,7 +14,8 @@ import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     ChatInputCommandInteraction,
     ButtonInteraction,
-    ModalSubmitInteraction
+    ModalSubmitInteraction,
+    Snowflake
 } from 'discord.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
@@ -23,15 +24,39 @@ import { isServerInteraction } from '../../interaction-handling/shared-validatio
 
 // ViewModel for 1 tutor's upcoming session
 type UpComingSessionViewModel = {
+    /**
+     * start time
+     */
     start: Date;
+    /**
+     * end time
+     */
     end: Date;
+    /**
+     * raw summary of the event, found in the title
+     */
     eventSummary: string;
+    /**
+     * Display name of the tutor
+     */
     displayName: string;
-    eventQueue: string; // the queue that this event corrsponds to
+    /**
+     * Name of the queue that this event corresponds to
+     */
+    queueName: string;
+    /**
+     * Discord snowflake of the helper
+     */
     discordId?: string;
+    /**
+     * Location string found in the event, will be truncated to 25 characters
+     */
     location?: string;
 };
 
+/**
+ * Validation schema for data coming from the google api
+ */
 const calendarDataSchema = z.object({
     start: z.object({
         dateTime: z.string()
@@ -48,7 +73,7 @@ const calendarDataSchema = z.object({
  * @param queueName the name to look for in the calendar event
  */
 async function getUpComingTutoringEvents(
-    serverId: string,
+    serverId: Snowflake,
     queueName: string
 ): Promise<UpComingSessionViewModel[]> {
     const nextWeek = new Date();
@@ -67,7 +92,7 @@ async function getUpComingTutoringEvents(
             method: 'GET'
         })
         .catch(() => {
-            throw ExpectedCalendarErrors.refreshTimedout;
+            throw ExpectedCalendarErrors.refreshTimedOut;
         });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
@@ -95,7 +120,7 @@ async function getUpComingTutoringEvents(
             serverId,
             queueName,
             rawEvent.summary ?? '',
-            parsableCalendarString ?? '',
+            parsableCalendarString,
             new Date(parsedEvent.start.dateTime),
             new Date(parsedEvent.end.dateTime),
             rawEvent.location ?? undefined
@@ -117,7 +142,7 @@ async function getUpComingTutoringEvents(
 /**
  * Attempts to connect to the google calendar
  * @param newCalendarId
- * @returns data from the google calendar
+ * @returns title of the calendar
  * @throws ExpectedCalendarErrors if
  * - API request fails
  * - API request times out
@@ -134,11 +159,11 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
     });
     const response = await axios.default
         .get(calendarUrl, {
-            timeout: 5000,
+            timeout: 5000, // 5 second timeout
             method: 'GET'
         })
         .catch(() => {
-            throw ExpectedCalendarErrors.refreshTimedout;
+            throw ExpectedCalendarErrors.refreshTimedOut;
         });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.failedRequest;
@@ -191,10 +216,12 @@ function composeViewModel(
     return {
         start: start,
         end: end,
-        eventQueue: targetQueue,
+        queueName: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: CalendarExtensionState.states.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
+        discordId: CalendarExtensionState.states
+            .get(serverId)
+            ?.displayNameDiscordIdMap.get(tutorName),
         location: location
     };
 }
@@ -215,7 +242,12 @@ function composeUpcomingSessionsEmbedBody(
     return (
         (viewModels.length > 0
             ? viewModels
-                  .slice(0, returnCount) // take the first 10
+                  .slice(0, returnCount) // take the first 10 sessions
+                  /**
+                   * The final string should look like
+                   * @TutorDiscordHandle | Event Summary
+                   * Start: <Relative Time> | End: <Relative Time> | Location: <Truncated location string if it exists>
+                   */
                   .map(
                       viewModel =>
                           `**${
@@ -279,7 +311,7 @@ function restorePublicEmbedURL(calendarId: string): string {
 }
 
 /**
- * Checks if the calendar interactoin is safe to execute
+ * Checks if the calendar interaction is safe to execute
  * @param interaction
  * @returns server and state object tuple
  */

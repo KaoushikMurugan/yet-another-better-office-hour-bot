@@ -80,26 +80,23 @@ class HelpQueueV2 {
      * When to automatically remove everyone
      */
     private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
-    /**
-     * The queue display that sends the embeds to the #queue channel
-     */
-    private readonly display: QueueDisplayV2;
 
     /**
      * Help queue constructor
      * @param queueChannel the #queue text channel to manage
      * @param queueExtensions individual queue extensions to inject
      * @param backupData If defined, use this data to restore the students array
+     * @param display The queue display that sends the embeds to the #queue channel
      */
     protected constructor(
         private queueChannel: QueueChannel,
         private queueExtensions: IQueueExtension[],
+        private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
     ) {
-        this.display = new QueueDisplayV2(queueChannel);
         if (backupData === undefined) {
             // if no backup then we are done initializing
             return;
@@ -210,15 +207,17 @@ class HelpQueueV2 {
         }
     ): Promise<HelpQueueV2> {
         const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
-        const queueExtensions = environment.disableExtensions
+        const display = new QueueDisplayV2(queueChannel);
+        const queueExtensions: IQueueExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                   CalendarQueueExtension.load(
                       1, // renderIndex
-                      queueChannel
+                      queueChannel,
+                      display
                   )
               ]);
-        const queue = new HelpQueueV2(queueChannel, queueExtensions, backupData);
+        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
         );

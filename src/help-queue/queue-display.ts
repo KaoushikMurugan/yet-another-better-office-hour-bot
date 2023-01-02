@@ -66,7 +66,6 @@ const queueStateStyles: {
 class QueueDisplayV2 {
     /**
      * The collection of actual embeds. key is render index
-     * @remarks
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
      */
@@ -74,14 +73,12 @@ class QueueDisplayV2 {
         new Collection();
     /**
      * The collection of message ids that are safe to edit
-     * @remarks
      * - binds the render index with a specific message
      * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
      */
     private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
     /**
      * The mutex that locks the render method during render
-     * @remarks
      * - avoids the message.delete method from being called on a deleted message
      * - queue and extensions can still request render and write to queueChannelEmbeds
      */
@@ -92,7 +89,7 @@ class QueueDisplayV2 {
     readonly renderLoopTimerId: NodeJS.Timeout;
 
     constructor(private readonly queueChannel: QueueChannel) {
-        /** starts the render loop */
+        // starts the render loop
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
             // actually render if and only if we have to

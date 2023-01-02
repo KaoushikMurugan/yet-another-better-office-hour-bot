@@ -29,7 +29,7 @@ const ExpectedCalendarErrors = {
     inaccessibleCalendar: new CalendarConnectionError(
         'Failed to connect to Google Calendar. The calendar might have been deleted or set to private.'
     ),
-    refreshTimedout: new CalendarConnectionError(
+    refreshTimedOut: new CalendarConnectionError(
         'This calendar refresh timed out. Please try again later.'
     ),
     failedRequest: new CalendarConnectionError('Calendar request failed.'),

@@ -28,17 +28,18 @@ import { studentCommandHelpMessages } from '../help-channel-messages/StudentComm
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
 /**
- * After login startup seqence
+ * After login startup sequence
  */
 client.on(Events.ClientReady, async () => {
     printTitleString();
+    // do the global initialization checks
+    await Promise.all(interactionExtensions.map(ext => ext.initializationCheck()));
     // completeGuilds is all the servers this YABOB instance has joined
     const completeGuilds = await Promise.all(
         client.guilds.cache.map(guild => guild.fetch())
     );
-    const setupResults = await Promise.allSettled(
-        completeGuilds.map(guild => joinGuild(guild))
-    );
+    // create all the AttendingServerV2 objects
+    const setupResults = await Promise.allSettled(completeGuilds.map(joinGuild));
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );

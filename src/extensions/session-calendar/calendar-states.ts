@@ -1,13 +1,14 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
-import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
-import { restorePublicEmbedURL } from './shared-calendar-functions.js';
+import {
+    UpComingSessionViewModel,
+    restorePublicEmbedURL
+} from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
 import { firebaseDB } from '../../global-states.js';
-import { FrozenServer } from '../extension-utils.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
@@ -15,13 +16,22 @@ import { CalendarServerExtension } from './calendar-server-extension.js';
 /**
  * @module Backups
  */
-type CalendarConfigBackup = {
+interface CalendarConfigBackup {
     calendarId: string;
     publicCalendarEmbedUrl: string;
     calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
-};
+}
 
-class CalendarExtensionState extends BaseServerExtension implements IServerExtension {
+class CalendarExtensionState {
+    /**
+     * When was the upcomingSessions cache last updated
+     */
+    private lastUpdatedTimeStamp = new Date();
+    /**
+     * All upcoming sessions of this server
+     */
+    private upcomingSessions: UpComingSessionViewModel[] = [];
+
     /**
      * Firebase Backup Schema
      */
@@ -30,41 +40,41 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         publicCalendarEmbedUrl: z.string(),
         calendarNameDiscordIdMap: z.record(z.string())
     });
+
     /**
      * Collection of all the created calendar states
      * - static, shared across all instances
      */
     static states = new Collection<GuildId, CalendarExtensionState>();
+
     /**
-     * which calendar to read from
+     * Which calendar to read from
      * - See the setup guide for how to find this id
      */
     calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
     /**
-     * save the data from /make_calendar_string,
+     * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     /**
-     * event listeners, their onCalendarStateChange will be called
+     * Full url to the public calendar embed
+     */
+    publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
+    /**
+     * Corresponding queue extensions, their onCalendarStateChange will be called
      * - key is queue name
      */
     queueExtensions: Collection<string, CalendarQueueExtension> = new Collection();
-    /**
-     * full url to the public calendar embed
-     */
-    publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
 
     constructor(
         private readonly guild: Guild,
-        private serverExtension: CalendarServerExtension
-    ) {
-        super();
-    }
+        private serverExtension: CalendarServerExtension // unused, only here as an example
+    ) {}
 
     /**
      * Returns a new CalendarExtensionState for 1 server
-     * Uses firebase backup to intialize the Calendar config if the server has a backup
+     * Uses firebase backup to initialize the Calendar config if the server has a backup
      * @param guild which guild's state to load
      * @returns CalendarExtensionState
      */
@@ -72,18 +82,10 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
         guild: Guild,
         serverExtension: CalendarServerExtension
     ): Promise<CalendarExtensionState> {
-        const firebaseCredentials = environment.firebaseCredentials;
         const instance = new CalendarExtensionState(guild, serverExtension);
         CalendarExtensionState.states.set(guild.id, instance);
-        if (
-            firebaseCredentials.clientEmail === '' &&
-            firebaseCredentials.privateKey === '' &&
-            firebaseCredentials.projectId === ''
-        ) {
-            return new CalendarExtensionState(guild, serverExtension);
-        }
         if (CalendarExtensionState.states.has(guild.id)) {
-            // avoid creating duplicates
+            // avoid creating duplicates, existence already checked
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             return CalendarExtensionState.states.get(guild.id)!;
         }
@@ -92,16 +94,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
     }
 
     /**
-     * If a server gets deleted, remove it from the calendar server map
-     * @param server
-     */
-    override onServerDelete(server: FrozenServer): Promise<void> {
-        CalendarExtensionState.states.delete(server.guild.id);
-        return Promise.resolve();
-    }
-
-    /**
-     * Restores the calendar config from firebase
+     * Restores the calendar state from firebase
      * @param serverId
      */
     async restoreFromBackup(serverId: Snowflake): Promise<void> {
@@ -132,7 +125,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
 
     /**
      * Sets the calendar id for the server to `validNewId` and updates the public embed url
-     * @param validNewId
+     * @param validNewId new google calendar id
      */
     async setCalendarId(validNewId: string): Promise<void> {
         this.calendarId = validNewId;
@@ -146,7 +139,7 @@ class CalendarExtensionState extends BaseServerExtension implements IServerExten
 
     /**
      * Sets the public embed url for the server to `validUrl`
-     * @param validUrl
+     * @param validUrl complete embed url string
      */
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;

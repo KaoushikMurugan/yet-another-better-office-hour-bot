@@ -24,6 +24,11 @@ import { CommandData } from '../interaction-handling/interaction-constants/built
 
 interface IInteractionExtension {
     /**
+     * Do an initialization check at YABOB instance level
+     * - Called inside client.on('ready')
+     */
+    initializationCheck(): Promise<void>;
+    /**
      * Create a state for each guild if necessary
      * - Called inside joinGuild()
      * @param guild which guild to create state for
@@ -226,6 +231,9 @@ interface IQueueExtension {
  * - Add setting menu options in the settingsMainMenuOptions array
  */
 class BaseInteractionExtension implements IInteractionExtension {
+    initializationCheck(): Promise<void> {
+        return Promise.resolve();
+    }
     loadState(guild: Guild): Promise<void> {
         return Promise.resolve();
     }
