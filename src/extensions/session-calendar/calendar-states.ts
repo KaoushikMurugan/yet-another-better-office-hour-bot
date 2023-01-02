@@ -5,6 +5,7 @@ import LRU from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
     UpComingSessionViewModel,
+    getUpComingTutoringEventsForServer,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
@@ -18,20 +19,11 @@ import { CalendarServerExtension } from './calendar-server-extension.js';
  */
 interface CalendarConfigBackup {
     calendarId: string;
-    publicCalendarEmbedUrl: string;
     calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
+    publicCalendarEmbedUrl: string;
 }
 
 class CalendarExtensionState {
-    /**
-     * When was the upcomingSessions cache last updated
-     */
-    private lastUpdatedTimeStamp = new Date();
-    /**
-     * All upcoming sessions of this server
-     */
-    private upcomingSessions: UpComingSessionViewModel[] = [];
-
     /**
      * Firebase Backup Schema
      */
@@ -58,6 +50,10 @@ class CalendarExtensionState {
      */
     displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     /**
+     * When was the upcomingSessions cache last updated
+     */
+    lastUpdatedTimeStamp = new Date();
+    /**
      * Full url to the public calendar embed
      */
     publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
@@ -66,11 +62,23 @@ class CalendarExtensionState {
      * - key is queue name
      */
     queueExtensions: Collection<string, CalendarQueueExtension> = new Collection();
+    /**
+     * All upcoming sessions of this server
+     */
+    upcomingSessions: UpComingSessionViewModel[] = [];
 
     constructor(
         private readonly guild: Guild,
-        private serverExtension: CalendarServerExtension // unused, only here as an example
-    ) {}
+        private readonly serverExtension: CalendarServerExtension // unused, only here as an example
+    ) {
+        // sets up the refresh timer
+        setInterval(async () => {
+            await this.refreshCalendarEvents();
+            await Promise.all(
+                this.queueExtensions.map(queueExt => queueExt.onCalendarStateChange())
+            );
+        }, 15 * 60 * 1000);
+    }
 
     /**
      * Returns a new CalendarExtensionState for 1 server
@@ -84,11 +92,6 @@ class CalendarExtensionState {
     ): Promise<CalendarExtensionState> {
         const instance = new CalendarExtensionState(guild, serverExtension);
         CalendarExtensionState.states.set(guild.id, instance);
-        if (CalendarExtensionState.states.has(guild.id)) {
-            // avoid creating duplicates, existence already checked
-            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-            return CalendarExtensionState.states.get(guild.id)!;
-        }
         await instance.restoreFromBackup(guild.id);
         return instance;
     }
@@ -163,6 +166,14 @@ class CalendarExtensionState {
         await Promise.all(
             this.queueExtensions.map(listener => listener.onCalendarStateChange())
         );
+    }
+
+    /**
+     * Refreshes the upcomingSessions cache
+     */
+    async refreshCalendarEvents(): Promise<void> {
+        this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
+        this.lastUpdatedTimeStamp = new Date();
     }
 
     /**

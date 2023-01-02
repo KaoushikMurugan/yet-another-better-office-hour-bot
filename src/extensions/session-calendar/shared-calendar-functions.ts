@@ -337,8 +337,121 @@ function isServerCalendarInteraction<
     return [server, state, interaction as WithRequired<T, 'channel' | 'channelId'>];
 }
 
+/**
+ * Fetches 100 calendar events of a server
+ * @param serverId 
+ * @returns 
+ */
+async function getUpComingTutoringEventsForServer(
+    serverId: Snowflake
+): Promise<UpComingSessionViewModel[]> {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const calendarUrl = buildCalendarURL({
+        // defaults to empty to let the api call reject, then prompt user to fix the id
+        calendarId: CalendarExtensionState.states.get(serverId)?.calendarId ?? '',
+        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
+        timeMin: new Date(),
+        timeMax: nextWeek,
+        maxResults: 100
+    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedOut;
+        });
+    if (response.status !== 200) {
+        throw ExpectedCalendarErrors.inaccessibleCalendar;
+    }
+    const responseJSON = await response.data;
+    const rawEvents = (responseJSON as calendar_v3.Schema$Events)?.items;
+    if (!rawEvents || rawEvents.length === 0) {
+        return [];
+    }
+    const definedViewModels: UpComingSessionViewModel[] = [];
+    for (const rawEvent of rawEvents) {
+        const unpack = calendarDataSchema.safeParse(rawEvent);
+        if (!unpack.success) {
+            continue;
+        }
+        const parsedEvent = unpack.data;
+        const parsableCalendarString = parsedEvent.description
+            .substring(
+                parsedEvent.description.indexOf('YABOB_START') + 'YABOB_START'.length,
+                parsedEvent.description.indexOf('YABOB_END')
+            )
+            .trimStart()
+            .trimEnd();
+        // now build all the viewModels from this calendar string
+        const viewModels = composeViewModel2(
+            serverId,
+            rawEvent.summary ?? '',
+            parsableCalendarString,
+            new Date(parsedEvent.start.dateTime),
+            new Date(parsedEvent.end.dateTime),
+            rawEvent.location ?? undefined
+        );
+        definedViewModels.push(...viewModels);
+    }
+    return definedViewModels;
+}
+
+/**
+ * Parses the summary string and builds the view model for the current queue
+ * @param rawSummary unmodified calendar event summary
+ * @param parsingString string found the the calendar event description
+ * @param start start date of 1 session
+ * @param end end date of 1 session
+ * @param location where the help session will happen
+ * @returns array of successfully parsed view models
+ */
+function composeViewModel2(
+    serverId: string,
+    rawSummary: string,
+    parsingString: string,
+    start: Date,
+    end: Date,
+    location?: string
+): UpComingSessionViewModel[] {
+    // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
+    // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
+    const words = parsingString.split('-');
+    if (words.length !== 2) {
+        return [];
+    }
+    const punctuations = /[,]/g;
+    const tutorName = words[0]?.trim();
+    const eventQueueNames = words[1]
+        ?.trim()
+        .split(', ')
+        .map(eventQueue => eventQueue?.replace(punctuations, '').trim());
+    // eventQueues will be:
+    // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
+    if (!eventQueueNames || tutorName === undefined) {
+        return [];
+    }
+    return eventQueueNames?.map(queueName => ({
+        start: start,
+        end: end,
+        queueName: queueName,
+        eventSummary: rawSummary,
+        displayName: tutorName,
+        discordId: CalendarExtensionState.states
+            .get(serverId)
+            ?.displayNameDiscordIdMap.get(tutorName),
+        location:
+            location !== undefined && location.length > 25
+                ? location.substring(0, 25) + '...'
+                : location
+    }));
+}
+
 export {
     getUpComingTutoringEvents,
+    getUpComingTutoringEventsForServer,
     composeViewModel,
     buildCalendarURL,
     UpComingSessionViewModel,

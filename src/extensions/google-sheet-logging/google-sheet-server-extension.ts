@@ -105,8 +105,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
     /**
      * Start logging the {@link HelpSessionEntry} as soon as the student joins VC
      * @param server
-     * @param studentMember
-     * @param voiceChannel
+     * @param studentMember the student that joined the VC
+     * @param voiceChannel which VC the student joined
      */
     override async onStudentJoinVC(
         server: FrozenServer,
