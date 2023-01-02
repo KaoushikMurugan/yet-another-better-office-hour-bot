@@ -94,6 +94,13 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
     return modal;
 }
 
+/**
+ * Creates a modal for the user to set the help topic when joining a queue
+ * Has one paragraph text input:
+ * - Help topic
+ * @param serverId
+ * @returns
+ */
 function helpTopicPromptModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',

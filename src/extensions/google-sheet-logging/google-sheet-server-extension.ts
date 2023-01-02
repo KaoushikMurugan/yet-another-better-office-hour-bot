@@ -30,7 +30,7 @@ type HelpSessionEntry = {
     'Student Discord ID': string;
     'Helper Username': string;
     'Helper Discord ID': string;
-    'Session Start': Date; // time join VC
+    'Session Start': Date; // time join VC, also wait start
     'Session End'?: Date; // time leave VC
     'Wait Start': Date; // Helpee.waitStart
     'Queue Name': string;

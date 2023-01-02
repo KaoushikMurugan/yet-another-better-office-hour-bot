@@ -362,6 +362,13 @@ function combineMethodMaps(
     ];
 }
 
+/**
+ * Replies to the interaction with an error message
+ * Checks if the interaction has already been defered or replied to, and edits the reply if so
+ * @param interaction
+ * @param err
+ * @param pingRole
+ */
 async function replyErrorMsg(
     interaction:
         | ButtonInteraction

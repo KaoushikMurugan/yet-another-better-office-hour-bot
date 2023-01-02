@@ -21,6 +21,13 @@ const googleSheetCommandMap: CommandHandlerProps = {
 
 /**
  * The `/stats` command
+ * Prints out the following statistics for the server
+ * - Total number of help sessions
+ * - Total session time
+ * - Total number of students sessions helped
+ * - Number of unique students helped
+ * - Total number of returning students
+ * - Average Session Time
  */
 async function getStatistics(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -171,6 +178,12 @@ async function getStatistics(
 
 /**
  * The `/weekly_report` command
+ * Prints a report of the help sessions for the past 'n' weeks
+ * Weeks start on Monday
+ * Stats include:
+ * - Number of help sessions
+ * - Total session time
+ * - Number of students helped
  */
 async function getWeeklyReport(
     interaction: ChatInputCommandInteraction<'cached'>
