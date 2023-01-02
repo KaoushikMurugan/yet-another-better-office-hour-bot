@@ -39,12 +39,14 @@ async function studentJoinedQueue(
         isFromQueueChannelWithParent(interaction)
     ];
     const topic = interaction.fields.getTextInputValue('help_topic');
-    const student = interaction.user;
+    const student = interaction.member;
     const channel = interaction.channel;
     if (channel === null) {
         throw ExpectedParseErrors.nonExistentTextChannel;
     }
-    //await server.studentJoinedQueue(student, topic, channel);
+
+    await server.notifyHelpersStudentJoined(student, queueChannel, topic);
+
     await interaction.reply({
         ...SuccessMessages.joinedQueue(queueChannel.queueName),
         ephemeral: true

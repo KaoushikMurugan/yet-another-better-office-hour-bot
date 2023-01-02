@@ -534,6 +534,21 @@ class AttendingServerV2 {
     }
 
     /**
+     * Notify all helpers in the queue that a student has joined
+     * @param studentMember
+     * @param queueChannel
+     */
+    async notifyHelpersStudentJoined(
+        studentMember: GuildMember,
+        queueChannel: QueueChannel,
+        topic: string
+    ): Promise<void> {
+        await this._queues
+            .get(queueChannel.parentCategoryId)
+            ?.notifyHelpersStudentJoined(studentMember, topic);
+    }
+
+    /**
      * Dequeue the student that has been waiting for the longest
      * @param helperMember the helper that used /next.
      * @throws

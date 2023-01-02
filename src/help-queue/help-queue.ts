@@ -365,23 +365,35 @@ class HelpQueueV2 {
             queue: this
         };
         this._students.push(student);
-        // converted to use Array.map
-        const helperIdArray = [...this.activeHelperIds];
+
         await Promise.all([
-            ...helperIdArray.map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(
-                        SimpleEmbed(
-                            `Heads up! ${student.member.displayName} has joined '${this.queueName}'.`,
-                            EmbedColor.Neutral,
-                            `<@${student.member.user.id}>`
-                        )
-                    )
-            ),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
+    }
+
+    /**
+     * Notify all helpers that a student has joined the queue
+     * @param studentMember
+     */
+    async notifyHelpersStudentJoined(
+        studentMember: GuildMember,
+        topic: string
+    ): Promise<void> {
+        // converted to use Array.map
+        const helperIdArray = [...this.activeHelperIds];
+        helperIdArray.map(helperId =>
+            this.queueChannel.channelObj.members
+                .get(helperId)
+                ?.send(
+                    SimpleEmbed(
+                        `Heads up! ${studentMember.displayName} has joined '${this.queueName}'.`,
+                        EmbedColor.Neutral,
+                        `<@${studentMember.user.id}>` +
+                            (topic ? `\n\n **Topic:** ${topic}` : '')
+                    )
+                )
+        );
     }
 
     /**
