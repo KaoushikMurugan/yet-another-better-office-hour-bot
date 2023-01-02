@@ -9,7 +9,14 @@
  *  allowing the {@link getHandler} function to act like a function factory
  */
 
-import { Interaction, TextChannel } from 'discord.js';
+import {
+    ButtonInteraction,
+    ChatInputCommandInteraction,
+    Interaction,
+    ModalSubmitInteraction,
+    SelectMenuInteraction,
+    TextChannel
+} from 'discord.js';
 import {
     ButtonHandlerProps,
     CommandHandlerProps,
@@ -81,7 +88,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
         });
     }
     await handleCommand?.(interaction).catch((err: Error) =>
-        interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+        replyErrorMsg(interaction, err, server.botAdminRoleID)
     );
 }
 
@@ -110,13 +117,13 @@ async function processButton(interaction: Interaction): Promise<void> {
         logButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
         await handleModalSubmit?.(interaction).catch((err: Error) =>
-            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+            replyErrorMsg(interaction, err, server.botAdminRoleID)
         );
     } else {
         logDMButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
         await handleModalSubmit?.(interaction).catch((err: Error) =>
-            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+            replyErrorMsg(interaction, err, server.botAdminRoleID)
         );
     }
 }
@@ -150,13 +157,13 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         const handleModalSubmit =
             completeSelectMenuMap.guildMethodMap[type][selectMenuName];
         await handleModalSubmit?.(interaction).catch((err: Error) =>
-            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+            replyErrorMsg(interaction, err, server.botAdminRoleID)
         );
     } else {
         logDMSelectMenuSelection(interaction, selectMenuName);
         const handleModalSubmit = completeSelectMenuMap.dmMethodMap[selectMenuName];
         await handleModalSubmit?.(interaction).catch((err: Error) =>
-            interaction.editReply(ErrorEmbed(err, server.botAdminRoleID))
+            replyErrorMsg(interaction, err, server.botAdminRoleID)
         );
     }
 }
@@ -178,13 +185,13 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         logModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.guildMethodMap[type][modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
+            await replyErrorMsg(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await interaction.editReply(ErrorEmbed(err, server.botAdminRoleID));
+            await replyErrorMsg(interaction, err, server.botAdminRoleID);
         });
     }
 }
@@ -353,6 +360,25 @@ function combineMethodMaps(
         completeSelectMenuMap,
         completeModalMap
     ];
+}
+
+async function replyErrorMsg(
+    interaction:
+        | ButtonInteraction
+        | SelectMenuInteraction
+        | ChatInputCommandInteraction<'cached'>
+        | ModalSubmitInteraction,
+    err: Error,
+    pingRole: string
+): Promise<void> {
+    if (interaction.replied || interaction.deferred) {
+        await interaction.editReply(ErrorEmbed(err, pingRole));
+    } else {
+        await interaction.reply({
+            ...ErrorEmbed(err, pingRole),
+            ephemeral: true
+        });
+    }
 }
 
 export { getHandler, interactionExtensions };
