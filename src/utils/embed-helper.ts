@@ -24,7 +24,7 @@ enum EmbedColor {
     Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8,
-    Purple = 0xa6a5c4,
+    Purple = 0x5865f2,
     Pink = 0xffb7c5,
     Blue = 0x3498db
 }

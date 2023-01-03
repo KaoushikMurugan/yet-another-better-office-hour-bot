@@ -80,7 +80,7 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
     const server = isServerInteraction(interaction);
     const queueChannel = server.getQueueChannelById(interaction.channel.parent.id);
     if (!queueChannel) {
-        throw ExpectedParseErrors.noQueueTextChannel(interaction.channel.parent.name);
+        throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
     }
     return queueChannel;
 }

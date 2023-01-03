@@ -71,7 +71,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
      */
     private attendanceUpdateIsScheduled = false;
 
-    constructor(private guild: Guild) {
+    constructor(private readonly guild: Guild) {
         super();
     }
 
