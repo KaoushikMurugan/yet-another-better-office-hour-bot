@@ -23,7 +23,7 @@ import {
     checkCalendarConnection,
     isServerCalendarInteraction,
     restorePublicEmbedURL,
-    composeUpcomingSessionsEmbedBody2
+    composeUpcomingSessionsEmbedBody
 } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
@@ -107,7 +107,7 @@ async function listUpComingHours(
         .setTitle(`Upcoming Hours for ${title}`)
         .setColor(EmbedColor.Blue)
         .setDescription(
-            composeUpcomingSessionsEmbedBody2(
+            composeUpcomingSessionsEmbedBody(
                 viewModels,
                 title,
                 state.lastUpdatedTimeStamp,

@@ -121,52 +121,6 @@ function composeUpcomingSessionsEmbedBody(
     lastUpdatedTimeStamp: Date,
     returnCount: number | 'max' = 5
 ): string {
-    return (
-        (viewModels.length > 0
-            ? viewModels
-                  // take the first `returnCount` number of sessions
-                  .slice(0, returnCount === 'max' ? viewModels.length : returnCount)
-                  /**
-                   * The final string should look like
-                   * @TutorDiscordHandle | Event Summary
-                   * Start: <Relative Time> | End: <Relative Time> | Location: <Truncated location string if it exists>
-                   */
-                  .map(
-                      viewModel =>
-                          `**${
-                              viewModel.discordId !== undefined
-                                  ? `<@${viewModel.discordId}>`
-                                  : viewModel.displayName
-                          }**\t|\t` +
-                          `**${viewModel.eventSummary}**\n` +
-                          `Start: <t:${viewModel.start
-                              .getTime()
-                              .toString()
-                              .slice(0, -3)}:R>\t|\t` +
-                          `End: <t:${viewModel.end
-                              .getTime()
-                              .toString()
-                              .slice(0, -3)}:R>` +
-                          `${
-                              viewModel.location
-                                  ? `\t|\tLocation: ${viewModel.location}`
-                                  : ``
-                          }`
-                  )
-                  .join(`\n${'-'.repeat(30)}\n`)
-            : `**There are no upcoming sessions for ${title} in the next 7 days.**`) +
-        `\n${'-'.repeat(30)}\nLast updated: <t:${Math.floor(
-            lastUpdatedTimeStamp.getTime() / 1000
-        )}:R>`
-    );
-}
-
-function composeUpcomingSessionsEmbedBody2(
-    viewModels: UpComingSessionViewModel[],
-    title: string,
-    lastUpdatedTimeStamp: Date,
-    returnCount: number | 'max' = 5
-): string {
     const lastUpdatedTimeStampString = `\n${'-'.repeat(
         30
     )}\nLast updated: <t:${Math.floor(lastUpdatedTimeStamp.getTime() / 1000)}:R>`;
@@ -387,6 +341,5 @@ export {
     checkCalendarConnection,
     restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody,
-    composeUpcomingSessionsEmbedBody2,
     isServerCalendarInteraction
 };

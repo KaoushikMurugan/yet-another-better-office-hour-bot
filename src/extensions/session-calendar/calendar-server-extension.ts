@@ -41,6 +41,16 @@ class CalendarServerExtension extends BaseServerExtension {
     }
 
     /**
+     * Populate the upcoming sessions cache on serer create
+     * @param server
+     */
+    override async onServerInitSuccess(server: FrozenServer): Promise<void> {
+        const state = CalendarExtensionState.allStates.get(server.guild.id);
+        await state?.refreshCalendarEvents();
+        await state?.emitStateChangeEvent();
+    }
+
+    /**
      * If a server gets deleted, remove it from the calendar server map
      */
     override onServerDelete(server: FrozenServer): Promise<void> {
