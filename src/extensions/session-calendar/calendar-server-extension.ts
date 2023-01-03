@@ -9,14 +9,31 @@ import { blue } from '../../utils/command-line-colors.js';
  * - only handles memory clean up and creating the state object
  */
 class CalendarServerExtension extends BaseServerExtension {
+    /**
+     * Timer id of the setInterval call in the constructor
+     */
+    private timerId;
+
     constructor(public readonly guild: Guild) {
         super();
+        // sets up the refresh timer
+        this.timerId = setInterval(async () => {
+            const state = CalendarExtensionState.states.get(guild.id);
+            if (state) {
+                await state.refreshCalendarEvents();
+                await Promise.all(
+                    state.queueExtensions.map(queueExt =>
+                        queueExt.onCalendarStateChange()
+                    )
+                );
+            }
+        }, 15 * 60 * 1000);
     }
 
     /**
      * Creates the server extension & loads the server level state
-     * @param guild 
-     * @returns 
+     * @param guild
+     * @returns
      */
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);
@@ -31,6 +48,9 @@ class CalendarServerExtension extends BaseServerExtension {
      * If a server gets deleted, remove it from the calendar server map
      */
     override onServerDelete(server: FrozenServer): Promise<void> {
+        // timers must be cleared,
+        // otherwise the timer arrow func will still hold the reference to the deleted instance
+        clearInterval(this.timerId);
         CalendarExtensionState.states.delete(server.guild.id);
         return Promise.resolve();
     }

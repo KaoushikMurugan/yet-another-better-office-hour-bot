@@ -67,18 +67,14 @@ class CalendarExtensionState {
      */
     upcomingSessions: UpComingSessionViewModel[] = [];
 
+    /**
+     * @param guild
+     * @param serverExtension unused, only here as an example of initialization order
+     */
     constructor(
         private readonly guild: Guild,
-        private readonly serverExtension: CalendarServerExtension // unused, only here as an example
-    ) {
-        // sets up the refresh timer
-        setInterval(async () => {
-            await this.refreshCalendarEvents();
-            await Promise.all(
-                this.queueExtensions.map(queueExt => queueExt.onCalendarStateChange())
-            );
-        }, 15 * 60 * 1000);
-    }
+        private readonly serverExtension: CalendarServerExtension
+    ) {}
 
     /**
      * Returns a new CalendarExtensionState for 1 server
@@ -94,6 +90,14 @@ class CalendarExtensionState {
         CalendarExtensionState.states.set(guild.id, instance);
         await instance.restoreFromBackup(guild.id);
         return instance;
+    }
+
+    /**
+     * Refreshes the upcomingSessions cache
+     */
+    async refreshCalendarEvents(): Promise<void> {
+        this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
+        this.lastUpdatedTimeStamp = new Date();
     }
 
     /**
@@ -166,14 +170,6 @@ class CalendarExtensionState {
         await Promise.all(
             this.queueExtensions.map(listener => listener.onCalendarStateChange())
         );
-    }
-
-    /**
-     * Refreshes the upcomingSessions cache
-     */
-    async refreshCalendarEvents(): Promise<void> {
-        this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
-        this.lastUpdatedTimeStamp = new Date();
     }
 
     /**

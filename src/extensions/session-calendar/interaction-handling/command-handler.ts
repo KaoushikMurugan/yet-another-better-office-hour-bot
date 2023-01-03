@@ -17,7 +17,7 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     checkCalendarConnection,
     isServerCalendarInteraction,
-    getUpComingTutoringEvents,
+    getUpComingTutoringEventsForQueue,
     composeUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
 } from '../shared-calendar-functions.js';
@@ -83,15 +83,14 @@ async function unsetCalendarId(
 
 /**
  * The `/when_next` command
- *
  * Builds the embed for /when_next
  */
 async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const channel = hasValidQueueArgument(interaction);
-    const [server] = isServerCalendarInteraction(interaction);
-    const viewModels = await getUpComingTutoringEvents(
+    const server = isServerCalendarInteraction(interaction)[0];
+    const viewModels = await getUpComingTutoringEventsForQueue(
         server.guild.id,
         channel.queueName
     );
@@ -106,7 +105,6 @@ async function listUpComingHours(
 
 /**
  * The `/make_calendar_string` and `/make_calendar_string_all` commands
- *
  * Makes calendar titles for all approved queues
  * @param generateAll whether to generate string for all the queue roles
  */
@@ -179,8 +177,7 @@ async function makeParsableCalendarTitle(
 }
 
 /**
- * The `/set_public_embd_url` command
- *
+ * The `/set_public_embed_url` command
  * Sets the public embed url for the server's calendar
  * @param interaction
  */

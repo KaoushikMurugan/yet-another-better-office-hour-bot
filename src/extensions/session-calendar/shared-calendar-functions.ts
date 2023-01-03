@@ -4,19 +4,14 @@
  * This file contains the common validation / util functions
  *  used by the calendar extension
  */
-import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
+import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
 import { Optional, WithRequired } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
-import {
-    ChatInputCommandInteraction,
-    ButtonInteraction,
-    ModalSubmitInteraction,
-    Snowflake
-} from 'discord.js';
+import { Snowflake, Interaction } from 'discord.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
 import { FrozenServer } from '../extension-utils.js';
@@ -72,7 +67,7 @@ const calendarDataSchema = z.object({
  * @param serverId guild.id for calendarState.get()
  * @param queueName the name to look for in the calendar event
  */
-async function getUpComingTutoringEvents(
+async function getUpComingTutoringEventsForQueue(
     serverId: Snowflake,
     queueName: string
 ): Promise<UpComingSessionViewModel[]> {
@@ -116,7 +111,7 @@ async function getUpComingTutoringEvents(
             )
             .trimStart()
             .trimEnd();
-        const viewModel = composeViewModel(
+        const viewModel = composeViewModelForQueue(
             serverId,
             queueName,
             rawEvent.summary ?? '',
@@ -125,13 +120,6 @@ async function getUpComingTutoringEvents(
             new Date(parsedEvent.end.dateTime),
             rawEvent.location ?? undefined
         );
-        // trim to avoid overflow
-        if (viewModel?.location !== undefined) {
-            viewModel.location =
-                viewModel.location?.length > 25
-                    ? viewModel.location?.substring(0, 25) + '...'
-                    : viewModel.location;
-        }
         if (viewModel !== undefined) {
             definedViewModels.push(viewModel);
         }
@@ -141,7 +129,7 @@ async function getUpComingTutoringEvents(
 
 /**
  * Attempts to connect to the google calendar
- * @param newCalendarId
+ * @param newCalendarId id of the new calendar
  * @returns title of the calendar
  * @throws ExpectedCalendarErrors if
  * - API request fails
@@ -176,6 +164,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
 
 /**
  * Parses the summary string and builds the view model for the current queue
+ * - Filters the parsingString and only looks for queueName
  * @param rawSummary unmodified calendar event summary
  * @param parsingString string found the the calendar event description
  * @param start start date of 1 session
@@ -183,7 +172,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
  * @param location where the help session will happen
  * @returns undefined if any parsing failed, otherwise a complete view model
  */
-function composeViewModel(
+function composeViewModelForQueue(
     serverId: string,
     queueName: string,
     rawSummary: string,
@@ -222,13 +211,16 @@ function composeViewModel(
         discordId: CalendarExtensionState.states
             .get(serverId)
             ?.displayNameDiscordIdMap.get(tutorName),
-        location: location
+        location:
+            location !== undefined && location.length > 25
+                ? location.substring(0, 25) + '...'
+                : location // trim to avoid overflow
     };
 }
 
 /**
  * Builds the body message of the upcoming sessions embed
- * @param viewModels models from {@link getUpComingTutoringEvents}
+ * @param viewModels models from {@link getUpComingTutoringEventsForQueue}
  * @param queueChannel which queue channel to look for
  * @param returnCount the MAXIMUM number of events to render
  * @returns string that goes into the embed
@@ -313,14 +305,9 @@ function restorePublicEmbedURL(calendarId: string): string {
 /**
  * Checks if the calendar interaction is safe to execute
  * @param interaction
- * @returns server and state object tuple
+ * @returns server and state, and interaction 3-tuple
  */
-function isServerCalendarInteraction<
-    T extends
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>
->(
+function isServerCalendarInteraction<T extends Interaction<'cached'>>(
     interaction: T
 ): [
     server: FrozenServer,
@@ -339,8 +326,8 @@ function isServerCalendarInteraction<
 
 /**
  * Fetches 100 calendar events of a server
- * @param serverId 
- * @returns 
+ * @param serverId id of the server to fetch for
+ * @returns at most 100 UpComingSessionViewModels
  */
 async function getUpComingTutoringEventsForServer(
     serverId: Snowflake
@@ -386,7 +373,7 @@ async function getUpComingTutoringEventsForServer(
             .trimStart()
             .trimEnd();
         // now build all the viewModels from this calendar string
-        const viewModels = composeViewModel2(
+        const viewModels = composeViewModelsByString(
             serverId,
             rawEvent.summary ?? '',
             parsableCalendarString,
@@ -400,7 +387,7 @@ async function getUpComingTutoringEventsForServer(
 }
 
 /**
- * Parses the summary string and builds the view model for the current queue
+ * Parses the summary string and builds the view models for **all queues in the string**
  * @param rawSummary unmodified calendar event summary
  * @param parsingString string found the the calendar event description
  * @param start start date of 1 session
@@ -408,7 +395,7 @@ async function getUpComingTutoringEventsForServer(
  * @param location where the help session will happen
  * @returns array of successfully parsed view models
  */
-function composeViewModel2(
+function composeViewModelsByString(
     serverId: string,
     rawSummary: string,
     parsingString: string,
@@ -450,9 +437,9 @@ function composeViewModel2(
 }
 
 export {
-    getUpComingTutoringEvents,
+    getUpComingTutoringEventsForQueue,
     getUpComingTutoringEventsForServer,
-    composeViewModel,
+    composeViewModelForQueue,
     buildCalendarURL,
     UpComingSessionViewModel,
     checkCalendarConnection,

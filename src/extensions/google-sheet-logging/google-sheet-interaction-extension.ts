@@ -1,4 +1,3 @@
-import { Guild } from 'discord.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { red } from '../../utils/command-line-colors.js';
@@ -27,7 +26,7 @@ class GoogleSheetInteractionExtension
      * - the google sheet id is invalid
      * - the google sheet is not accessible
      */
-    override async loadState(guild: Guild): Promise<void> {
+    override async initializationCheck(): Promise<void> {
         if (environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0) {
             throw new ExtensionSetupError(
                 'No Google Sheet ID or Google Cloud credentials found.'
@@ -40,8 +39,7 @@ class GoogleSheetInteractionExtension
         await googleSheet.loadInfo().catch(() => {
             throw new ExtensionSetupError(
                 red(
-                    `Failed to load google sheet for ${guild.name}. ` +
-                        `Google sheets rejected our connection.`
+                    `Failed to load the default google sheet. Google sheets rejected our connection.`
                 )
             );
         });
