@@ -14,6 +14,7 @@ import { firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
+import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 
 class CalendarExtensionState {
     /**
@@ -30,6 +31,21 @@ class CalendarExtensionState {
      * - static, shared across all instances
      */
     static allStates = new Collection<GuildId, CalendarExtensionState>();
+
+    /**
+     * Gets a guild level state by id
+     * @param serverId
+     * @returns state object of the associated server
+     * @throws CommandParseError if the state object doesn't exist
+     */
+    static get(serverId: Snowflake): CalendarExtensionState {
+        const state = CalendarExtensionState.allStates.get(serverId);
+        if (!state) {
+            //TODO: throw a different error
+            throw ExpectedCalendarErrors.nonServerInteraction();
+        }
+        return state;
+    }
 
     /**
      * Which calendar to read from

@@ -134,7 +134,7 @@ async function sendCommandHelpChannelMessages(
         allHelpChannels.map(channel =>
             commandChannelConfigs
                 .find(val => val.channelName === channel.name)
-                ?.helpMessages?.filter(helpMessage => helpMessage.useInHelpChannel)
+                ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );

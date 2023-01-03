@@ -260,7 +260,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
                 headerValues: requiredHeaders
             }));
         if (
-            !attendanceSheet.headerValues || // doesn't have header
             attendanceSheet.headerValues.length !== requiredHeaders.length || // header count is different
             !attendanceSheet.headerValues.every(
                 header => requiredHeaders.includes(header) // finally check if all headers exist
@@ -353,7 +352,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
                 headerValues: requiredHeaders
             }));
         if (
-            helpSessionSheet.headerValues === undefined ||
             helpSessionSheet.headerValues.length !==
                 [...requiredHeaders, 'Session Time (ms)'].length ||
             !helpSessionSheet.headerValues.every(header =>

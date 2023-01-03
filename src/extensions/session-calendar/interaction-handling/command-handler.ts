@@ -215,7 +215,7 @@ async function setPublicEmbedUrl(
         await state.setPublicEmbedUrl(rawUrl);
         await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.updated);
     } else {
-        await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+        await state.setPublicEmbedUrl(restorePublicEmbedURL(state.calendarId));
         await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.backToDefault);
     }
 }

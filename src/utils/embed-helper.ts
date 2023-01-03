@@ -551,9 +551,12 @@ function SlashCommandLogEmbed(
                     switch (option.type) {
                         case ApplicationCommandOptionType.Channel:
                             return `**${option.name}**: <#${option.value}>`;
-                        case ApplicationCommandOptionType.User ||
-                            ApplicationCommandOptionType.Role ||
-                            ApplicationCommandOptionType.Mentionable:
+                        // fall through cases, allows User, Role, and Mentionable to be matched together
+                        // this is pretty error prone, so we generally avoid doing this
+                        // but in this case it's safe because we always return
+                        case ApplicationCommandOptionType.User:
+                        case ApplicationCommandOptionType.Role:
+                        case ApplicationCommandOptionType.Mentionable:
                             return `**${option.name}**: <@${option.value}>`;
                         default:
                             return `**${option.name}**: ${option.value}`;
@@ -621,9 +624,10 @@ function SlashCommandLogEmbed2(command: CommandInteraction): EmbedBuilder {
                     switch (option.type) {
                         case ApplicationCommandOptionType.Channel:
                             return `**${option.name}**: <#${option.value}>`;
-                        case ApplicationCommandOptionType.User ||
-                            ApplicationCommandOptionType.Role ||
-                            ApplicationCommandOptionType.Mentionable:
+                        // see the SlashCommandLogEmbed's comments
+                        case ApplicationCommandOptionType.User:
+                        case ApplicationCommandOptionType.Role:
+                        case ApplicationCommandOptionType.Mentionable:
                             return `**${option.name}**: <@${option.value}>`;
                         default:
                             return `**${option.name}**: ${option.value}`;

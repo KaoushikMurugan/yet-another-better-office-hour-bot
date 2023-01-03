@@ -246,7 +246,7 @@ async function getUpComingTutoringEventsForServer(
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
     const responseJSON = await response.data;
-    const rawEvents = (responseJSON as calendar_v3.Schema$Events)?.items;
+    const rawEvents = (responseJSON as calendar_v3.Schema$Events).items;
     if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
@@ -311,13 +311,13 @@ function composeViewModelsByString(
     const eventQueueNames = words[1]
         ?.trim()
         .split(', ')
-        .map(eventQueue => eventQueue?.replace(punctuations, '').trim());
+        .map(eventQueue => eventQueue.replace(punctuations, '').trim());
     // eventQueues will be:
     // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
     if (!eventQueueNames || tutorName === undefined) {
         return [];
     }
-    return eventQueueNames?.map(queueName => ({
+    return eventQueueNames.map(queueName => ({
         start: start,
         end: end,
         queueName: queueName,

@@ -1,9 +1,12 @@
 /** @module SessionCalendar */
 import { BaseQueueExtension } from '../extension-interface.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
 import { EmbedColor } from '../../utils/embed-helper.js';
-import { red } from '../../utils/command-line-colors.js';
-import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import {
+    EmbedBuilder,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+} from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     composeUpcomingSessionsEmbedBody,
@@ -47,27 +50,10 @@ class CalendarQueueExtension extends BaseQueueExtension {
         queueChannel: QueueChannel,
         display: FrozenDisplay
     ): Promise<CalendarQueueExtension> {
-        const state = CalendarExtensionState.allStates.get(queueChannel.channelObj.guild.id);
-        if (state === undefined) {
-            throw new ExtensionSetupError(
-                red('The interaction level extension is required.')
-            );
-        }
+        const state = CalendarExtensionState.get(queueChannel.channelObj.guild.id);
         const instance = new CalendarQueueExtension(renderIndex, queueChannel, display);
         state.queueExtensions.set(queueChannel.queueName, instance);
         return instance;
-    }
-
-    /**
-     * Removes `deletedQueue` from the listeners map
-     * @param deletedQueue
-     */
-    override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
-        CalendarExtensionState.allStates
-            .get(this.queueChannel.channelObj.guild.id)
-            ?.queueExtensions.delete(deletedQueue.queueName);
-        // now garbage collector should clean up this instance
-        // when server deletes the queue from queue collection
     }
 
     /**
@@ -78,16 +64,25 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
+     * Removes `deletedQueue` from the listeners map
+     * @param deletedQueue
+     */
+    override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
+        CalendarExtensionState.get(
+            this.queueChannel.channelObj.guild.id
+        ).queueExtensions.delete(deletedQueue.queueName);
+        // now garbage collector should clean up this instance
+        // when server deletes the queue from queue collection
+    }
+
+    /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(): Promise<void> {
-        const state = CalendarExtensionState.allStates.get(
+        const state = CalendarExtensionState.get(
             this.queueChannel.channelObj.guild.id
         );
-        if (!state) {
-            return;
-        }
         const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
