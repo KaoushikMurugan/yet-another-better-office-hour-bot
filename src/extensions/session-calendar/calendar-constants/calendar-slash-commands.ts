@@ -36,6 +36,14 @@ const whenNext = new SlashCommandBuilder()
             )
             .setRequired(false)
             .addChannelTypes(ChannelType.GuildCategory)
+    )
+    .addBooleanOption(option =>
+        option
+            .setName('show_all')
+            .setDescription(
+                'Whether to show ALL the upcoming help sessions of this server. If true, queue_name will be ignored.'
+            )
+            .setRequired(false)
     );
 
 // /make_calendar_string [calendar_name] [queue_name_1] (queue_name_2) ... (queue_name_n) (user)

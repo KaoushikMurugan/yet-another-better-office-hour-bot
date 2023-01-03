@@ -108,7 +108,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
                     state.upcomingSessions.filter(
                         viewModel => viewModel.queueName === queueName
                     ),
-                    this.queueChannel,
+                    this.queueChannel.queueName,
                     state.lastUpdatedTimeStamp
                 )
             )

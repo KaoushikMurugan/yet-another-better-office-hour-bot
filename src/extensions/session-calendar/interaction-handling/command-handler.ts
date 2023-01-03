@@ -17,7 +17,6 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     checkCalendarConnection,
     isServerCalendarInteraction,
-    getUpComingTutoringEventsForQueue,
     composeUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
 } from '../shared-calendar-functions.js';
@@ -82,23 +81,28 @@ async function unsetCalendarId(
 }
 
 /**
- * The `/when_next` command
- * Builds the embed for /when_next
+ * The `/when_next` command, builds the embed for /when_next
+ * @param interaction interaction object
+ * @param showAll whether to show all the upcoming sessions of this server
+ * - if false, show the sessions of the parent queue category
  */
 async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const channel = hasValidQueueArgument(interaction);
-    const [server] = isServerCalendarInteraction(interaction);
-    const viewModels = await getUpComingTutoringEventsForQueue(
-        server.guild.id,
-        channel.queueName
-    );
+    const [server, state] = isServerCalendarInteraction(interaction);
+    await state.refreshCalendarEvents();
+    const showAll = interaction.options.getBoolean('show_all');
+    const title = showAll // idk what to call this, but it's either the guild name or the target queue's queueName
+        ? server.guild.name
+        : hasValidQueueArgument(interaction).queueName;
+    const viewModels = showAll // if not showAll, filter out the view models that match the queue name
+        ? state.upcomingSessions
+        : state.upcomingSessions.filter(viewModel => viewModel.queueName === title);
     await interaction.editReply(
         SimpleEmbed(
-            `Upcoming Hours for ${channel.queueName}`,
+            `Upcoming Hours for ${title}`,
             EmbedColor.Blue,
-            composeUpcomingSessionsEmbedBody(viewModels, channel, new Date())
+            composeUpcomingSessionsEmbedBody(viewModels, title, new Date(), 'max')
         )
     );
 }

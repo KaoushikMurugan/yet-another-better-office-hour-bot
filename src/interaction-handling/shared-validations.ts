@@ -121,8 +121,8 @@ function isTriggeredByMemberWithRoles(
  * Checks if the queue_name argument is given,
  * If not, use the parent of the channel where the command was used
  * @param required
- * - If true, check if the COMMAND ARG is a valid queue category
- * - If false, check if the CURRENT channel's parent category is a valid queue category
+ * - If true, check if the **command argument** is a valid queue category
+ * - If false, check if the **current channel**'s parent category is a valid queue category
  * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
  * */
 function hasValidQueueArgument(
