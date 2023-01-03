@@ -59,18 +59,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
-     * Embeds the upcoming hours into the queue channel
-     */
-    override async onQueueRender(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        queue: FrozenQueue,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        display: FrozenDisplay
-    ): Promise<void> {
-        await this.renderCalendarEmbeds();
-    }
-
-    /**
      * Removes `deletedQueue` from the listeners map
      * @param deletedQueue
      */
