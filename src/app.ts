@@ -32,8 +32,9 @@ const failedInteractions: Array<{ username: string; interaction: Interaction }> 
  */
 client.on(Events.ClientReady, async () => {
     printTitleString();
-    // do the global initialization checks
+    // do the global initialization checks and collect static data
     await Promise.all(interactionExtensions.map(ext => ext.initializationCheck()));
+    collectInteractionExtensionStaticData();
     // completeGuilds is all the servers this YABOB instance has joined
     const completeGuilds = await Promise.all(
         client.guilds.cache.map(guild => guild.fetch())
@@ -47,7 +48,6 @@ client.on(Events.ClientReady, async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    collectInteractionExtensionStaticData();
     console.log(`\n${green('✅ Ready to go! ✅')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
