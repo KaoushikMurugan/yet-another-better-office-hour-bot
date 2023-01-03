@@ -1,8 +1,13 @@
-import { ChatInputCommandInteraction, CategoryChannel, Role } from 'discord.js';
+import {
+    ChatInputCommandInteraction,
+    CategoryChannel,
+    Role,
+    EmbedBuilder
+} from 'discord.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { red } from '../../../utils/command-line-colors.js';
-import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
+import { EmbedColor } from '../../../utils/embed-helper.js';
 import {
     getQueueRoles,
     isCategoryChannel,
@@ -17,8 +22,8 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     checkCalendarConnection,
     isServerCalendarInteraction,
-    composeUpcomingSessionsEmbedBody,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    composeUpcomingSessionsEmbedBody2
 } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
@@ -98,13 +103,21 @@ async function listUpComingHours(
     const viewModels = showAll // if not showAll, filter out the view models that match the queue name
         ? state.upcomingSessions
         : state.upcomingSessions.filter(viewModel => viewModel.queueName === title);
-    await interaction.editReply(
-        SimpleEmbed(
-            `Upcoming Hours for ${title}`,
-            EmbedColor.Blue,
-            composeUpcomingSessionsEmbedBody(viewModels, title, new Date(), 'max')
+    const embed = new EmbedBuilder()
+        .setTitle(`Upcoming Hours for ${title}`)
+        .setColor(EmbedColor.Blue)
+        .setDescription(
+            composeUpcomingSessionsEmbedBody2(
+                viewModels,
+                title,
+                state.lastUpdatedTimeStamp,
+                'max'
+            )
         )
-    );
+        .setFooter({
+            text: 'Due to the length limit, some help sessions might not be shown.'
+        });
+    await interaction.editReply({ embeds: [embed.data] });
 }
 
 /**

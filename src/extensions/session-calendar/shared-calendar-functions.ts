@@ -112,6 +112,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
  * @param title the queue name or the guild name
  * @param lastUpdatedTimeStamp when was the last time that the view models are updated
  * @param returnCount the MAXIMUM number of events to render
+ * - if the value is 'max', show as many sessions as possible
  * @returns string that goes into the embed
  */
 function composeUpcomingSessionsEmbedBody(
@@ -123,7 +124,7 @@ function composeUpcomingSessionsEmbedBody(
     return (
         (viewModels.length > 0
             ? viewModels
-                  // take the first 5 sessions
+                  // take the first `returnCount` number of sessions
                   .slice(0, returnCount === 'max' ? viewModels.length : returnCount)
                   /**
                    * The final string should look like
@@ -157,6 +158,53 @@ function composeUpcomingSessionsEmbedBody(
         `\n${'-'.repeat(30)}\nLast updated: <t:${Math.floor(
             lastUpdatedTimeStamp.getTime() / 1000
         )}:R>`
+    );
+}
+
+function composeUpcomingSessionsEmbedBody2(
+    viewModels: UpComingSessionViewModel[],
+    title: string,
+    lastUpdatedTimeStamp: Date,
+    returnCount: number | 'max' = 5
+): string {
+    const lastUpdatedTimeStampString = `\n${'-'.repeat(
+        30
+    )}\nLast updated: <t:${Math.floor(lastUpdatedTimeStamp.getTime() / 1000)}:R>`;
+    if (viewModels.length === 0) {
+        return `**There are no upcoming sessions for ${title} in the next 7 days.**${lastUpdatedTimeStampString}`;
+    }
+    const transformViewModelToString = (viewModel: UpComingSessionViewModel) =>
+        `**${
+            viewModel.discordId !== undefined
+                ? `<@${viewModel.discordId}>`
+                : viewModel.displayName
+        }**\t|\t` +
+        `**${viewModel.eventSummary}**\n` +
+        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
+        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+        `${viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``}`;
+    const divider = `\n${'-'.repeat(30)}\n`;
+    if (returnCount === 'max') {
+        let currLength = lastUpdatedTimeStampString.length; // current embed message length
+        const upcomingSessionStrings: string[] = [];
+        // take as many as possible within the discord embed length limit
+        for (const viewModel of viewModels) {
+            const transformedString = transformViewModelToString(viewModel);
+            if (currLength + transformedString.length + divider.length > 4096) {
+                break;
+            } else {
+                currLength += transformedString.length + divider.length;
+                upcomingSessionStrings.push(transformedString);
+            }
+        }
+        return upcomingSessionStrings.join(divider) + lastUpdatedTimeStampString;
+    }
+    return (
+        viewModels
+            // take the first `returnCount` number of sessions
+            .slice(0, returnCount)
+            .map(transformViewModelToString)
+            .join(divider) + lastUpdatedTimeStampString
     );
 }
 
@@ -339,5 +387,6 @@ export {
     checkCalendarConnection,
     restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody,
+    composeUpcomingSessionsEmbedBody2,
     isServerCalendarInteraction
 };
