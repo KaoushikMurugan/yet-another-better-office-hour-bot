@@ -540,12 +540,27 @@ class AttendingServerV2 {
      */
     async notifyHelpersStudentJoined(
         studentMember: GuildMember,
+        queueChannel: QueueChannel
+    ): Promise<void> {
+        await this._queues
+            .get(queueChannel.parentCategoryId)
+            ?.notifyHelpersStudentQueued(studentMember);
+    }
+
+    /**
+     * Notify all helpers of the topic that the student requires help with
+     * @param studentMember
+     * @param queueChannel
+     * @param topic
+     */
+    async notifyHelpersStudentHelpTopic(
+        studentMember: GuildMember,
         queueChannel: QueueChannel,
         topic: string
     ): Promise<void> {
         await this._queues
             .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersStudentJoined(studentMember, topic);
+            ?.notifyHelpersStudentHelpTopic(studentMember, topic);
     }
 
     /**

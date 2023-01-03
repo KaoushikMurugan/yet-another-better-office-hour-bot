@@ -88,8 +88,6 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     await server.enqueueStudent(interaction.member, queueChannel);
 
     await interaction.showModal(helpTopicPromptModal(server.guild.id));
-
-    //await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
 }
 
 /**

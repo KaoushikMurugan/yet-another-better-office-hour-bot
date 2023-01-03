@@ -45,7 +45,7 @@ async function studentJoinedQueue(
         throw ExpectedParseErrors.nonExistentTextChannel;
     }
 
-    await server.notifyHelpersStudentJoined(student, queueChannel, topic);
+    await server.notifyHelpersStudentHelpTopic(student, queueChannel, topic);
 
     await interaction.reply({
         ...SuccessMessages.joinedQueue(queueChannel.queueName),

@@ -367,6 +367,7 @@ class HelpQueueV2 {
         this._students.push(student);
 
         await Promise.all([
+            this.notifyHelpersStudentQueued(studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
@@ -376,7 +377,27 @@ class HelpQueueV2 {
      * Notify all helpers that a student has joined the queue
      * @param studentMember
      */
-    async notifyHelpersStudentJoined(
+    async notifyHelpersStudentQueued(studentMember: GuildMember): Promise<void> {
+        // converted to use Array.map
+        const helperIdArray = [...this.activeHelperIds];
+        helperIdArray.map(helperId =>
+            this.queueChannel.channelObj.members
+                .get(helperId)
+                ?.send(
+                    SimpleEmbed(
+                        `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
+                        EmbedColor.Neutral,
+                        `<@${studentMember.user.id}>`
+                    )
+                )
+        );
+    }
+
+    /**
+     * Notify all helpers of the topic that a student requires help with
+     * @param studentMember
+     */
+    async notifyHelpersStudentHelpTopic(
         studentMember: GuildMember,
         topic: string
     ): Promise<void> {
@@ -387,10 +408,10 @@ class HelpQueueV2 {
                 .get(helperId)
                 ?.send(
                     SimpleEmbed(
-                        `Heads up! ${studentMember.displayName} has joined '${this.queueName}'.`,
+                        `${studentMember.displayName} in '${this.queueName}' is requesting help for: .`,
                         EmbedColor.Neutral,
-                        `<@${studentMember.user.id}>` +
-                            (topic ? `\n\n **Topic:** ${topic}` : '')
+                        (topic ? `\n\n**${topic}**` : '') +
+                            `\n\n<@${studentMember.user.id}>`
                     )
                 )
         );
