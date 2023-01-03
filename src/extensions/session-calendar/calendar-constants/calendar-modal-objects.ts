@@ -17,7 +17,7 @@ import { CalendarModalNames } from './calendar-interaction-names.js';
  * @returns the settings modal
  */
 function calendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuilder {
-    const state = CalendarExtensionState.states.get(serverId);
+    const state = CalendarExtensionState.allStates.get(serverId);
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu

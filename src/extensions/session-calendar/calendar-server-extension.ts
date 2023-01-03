@@ -18,7 +18,7 @@ class CalendarServerExtension extends BaseServerExtension {
         super();
         // sets up the refresh timer
         this.timerId = setInterval(async () => {
-            const state = CalendarExtensionState.states.get(guild.id);
+            const state = CalendarExtensionState.allStates.get(guild.id);
             if (state) {
                 await state.refreshCalendarEvents();
                 await Promise.all(
@@ -51,7 +51,7 @@ class CalendarServerExtension extends BaseServerExtension {
         // timers must be cleared,
         // otherwise the timer arrow func will still hold the reference to the deleted instance
         clearInterval(this.timerId);
-        CalendarExtensionState.states.delete(server.guild.id);
+        CalendarExtensionState.allStates.delete(server.guild.id);
         return Promise.resolve();
     }
 }

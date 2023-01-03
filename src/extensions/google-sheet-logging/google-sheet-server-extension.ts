@@ -231,7 +231,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
 
     /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+        const googleSheet = GoogleSheetExtensionState.allStates.get(
             this.guild.id
         )?.googleSheet;
         if (this.attendanceEntries.length === 0 || !googleSheet) {
@@ -334,7 +334,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+        const googleSheet = GoogleSheetExtensionState.allStates.get(
             this.guild.id
         )?.googleSheet;
         if (entries[0] === undefined || !googleSheet) {

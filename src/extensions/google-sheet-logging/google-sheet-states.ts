@@ -32,11 +32,12 @@ class GoogleSheetExtensionState {
      * - static, so it's shared across all instances
      * - key is guild id, value is 1 google sheet extension state
      */
-    static guildLevelStates = new Collection<GuildId, GoogleSheetExtensionState>();
+    static allStates = new Collection<GuildId, GoogleSheetExtensionState>();
 
     /**
-     * Constructor
-     * @param serverExtension the corresponding server level extension
+     * @param guild
+     * @param serverExtension
+     * @param _googleSheet this cannot be directly initialized, so the restoreBackup method is static
      */
     protected constructor(
         readonly guild: Guild,
@@ -80,7 +81,7 @@ class GoogleSheetExtensionState {
             googleSheet
         );
         // add the new state to the static collection
-        GoogleSheetExtensionState.guildLevelStates.set(guild.id, instance);
+        GoogleSheetExtensionState.allStates.set(guild.id, instance);
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
                 `successfully loaded for '${yellow(guild.name)}'!\n` +

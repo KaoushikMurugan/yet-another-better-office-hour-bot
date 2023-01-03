@@ -47,7 +47,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         queueChannel: QueueChannel,
         display: FrozenDisplay
     ): Promise<CalendarQueueExtension> {
-        const state = CalendarExtensionState.states.get(queueChannel.channelObj.guild.id);
+        const state = CalendarExtensionState.allStates.get(queueChannel.channelObj.guild.id);
         if (state === undefined) {
             throw new ExtensionSetupError(
                 red('The interaction level extension is required.')
@@ -75,7 +75,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * @param deletedQueue
      */
     override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
-        CalendarExtensionState.states
+        CalendarExtensionState.allStates
             .get(this.queueChannel.channelObj.guild.id)
             ?.queueExtensions.delete(deletedQueue.queueName);
         // now garbage collector should clean up this instance
@@ -94,7 +94,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(): Promise<void> {
-        const state = CalendarExtensionState.states.get(
+        const state = CalendarExtensionState.allStates.get(
             this.queueChannel.channelObj.guild.id
         );
         if (!state) {

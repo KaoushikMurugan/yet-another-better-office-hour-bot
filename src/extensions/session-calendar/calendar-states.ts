@@ -37,7 +37,7 @@ class CalendarExtensionState {
      * Collection of all the created calendar states
      * - static, shared across all instances
      */
-    static states = new Collection<GuildId, CalendarExtensionState>();
+    static allStates = new Collection<GuildId, CalendarExtensionState>();
 
     /**
      * Which calendar to read from
@@ -87,7 +87,7 @@ class CalendarExtensionState {
         serverExtension: CalendarServerExtension
     ): Promise<CalendarExtensionState> {
         const instance = new CalendarExtensionState(guild, serverExtension);
-        CalendarExtensionState.states.set(guild.id, instance);
+        CalendarExtensionState.allStates.set(guild.id, instance);
         await instance.restoreFromBackup(guild.id);
         return instance;
     }

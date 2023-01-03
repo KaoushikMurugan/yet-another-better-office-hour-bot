@@ -75,7 +75,7 @@ async function getUpComingTutoringEventsForQueue(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: CalendarExtensionState.states.get(serverId)?.calendarId ?? '',
+        calendarId: CalendarExtensionState.allStates.get(serverId)?.calendarId ?? '',
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
@@ -208,7 +208,7 @@ function composeViewModelForQueue(
         queueName: targetQueue,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: CalendarExtensionState.states
+        discordId: CalendarExtensionState.allStates
             .get(serverId)
             ?.displayNameDiscordIdMap.get(tutorName),
         location:
@@ -315,7 +315,7 @@ function isServerCalendarInteraction<T extends Interaction<'cached'>>(
     interaction: WithRequired<T, 'channel' | 'channelId'>
 ] {
     const server = isServerInteraction(interaction);
-    const state = CalendarExtensionState.states.get(server.guild.id);
+    const state = CalendarExtensionState.allStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
     }
@@ -336,7 +336,7 @@ async function getUpComingTutoringEventsForServer(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: CalendarExtensionState.states.get(serverId)?.calendarId ?? '',
+        calendarId: CalendarExtensionState.allStates.get(serverId)?.calendarId ?? '',
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
@@ -426,7 +426,7 @@ function composeViewModelsByString(
         queueName: queueName,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: CalendarExtensionState.states
+        discordId: CalendarExtensionState.allStates
             .get(serverId)
             ?.displayNameDiscordIdMap.get(tutorName),
         location:

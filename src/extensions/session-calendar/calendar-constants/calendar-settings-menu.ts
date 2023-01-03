@@ -30,7 +30,7 @@ function CalendarSettingsConfigMenu(
     channelId: string,
     isDm: boolean
 ): YabobEmbed {
-    const state = CalendarExtensionState.states.get(server.guild.id);
+    const state = CalendarExtensionState.allStates.get(server.guild.id);
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
