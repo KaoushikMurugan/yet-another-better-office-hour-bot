@@ -26,14 +26,9 @@ interface IInteractionExtension {
     /**
      * Do an initialization check at YABOB instance level
      * - Called inside client.on('ready')
+     * - Errors thrown here will NOT be caught
      */
     initializationCheck(): Promise<void>;
-    /**
-     * Create a state for each guild if necessary
-     * - Called inside joinGuild()
-     * @param guild which guild to create state for
-     */
-    loadState(guild: Guild): Promise<void>; // TODO: Maybe move this to onServerCreate?
     /**
      * The command data json to post to the discord server
      */
@@ -232,9 +227,6 @@ interface IQueueExtension {
  */
 class BaseInteractionExtension implements IInteractionExtension {
     initializationCheck(): Promise<void> {
-        return Promise.resolve();
-    }
-    loadState(guild: Guild): Promise<void> {
         return Promise.resolve();
     }
     helpMessages: {

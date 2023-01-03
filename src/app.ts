@@ -200,9 +200,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
     // Extensions need to load their states first
     if (!environment.disableExtensions) {
-        await Promise.all(
-            interactionExtensions.map(extension => extension.loadState(guild))
-        );
         await postSlashCommands(
             guild,
             interactionExtensions.flatMap(ext => ext.slashCommandData)
