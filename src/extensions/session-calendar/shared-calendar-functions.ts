@@ -1,14 +1,13 @@
 /** @module SessionCalendar */
 /**
  * @packageDocumentation
- * This file contains the common validation / util functions
- *  used by the calendar extension
+ * This file contains the common validation & util functions used by the calendar extension
  */
 import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
-import { Optional, WithRequired } from '../../utils/type-aliases.js';
+import { GuildMemberId, Optional, WithRequired } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import { Snowflake, Interaction } from 'discord.js';
@@ -17,7 +16,9 @@ import { z } from 'zod';
 import { FrozenServer } from '../extension-utils.js';
 import { isServerInteraction } from '../../interaction-handling/shared-validations.js';
 
-// ViewModel for 1 tutor's upcoming session
+/**
+ * ViewModel for 1 tutor's upcoming session
+ */
 type UpComingSessionViewModel = {
     /**
      * start time
@@ -49,6 +50,12 @@ type UpComingSessionViewModel = {
     location?: string;
 };
 
+interface CalendarConfigBackup {
+    calendarId: string;
+    calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
+    publicCalendarEmbedUrl: string;
+}
+
 /**
  * Validation schema for data coming from the google api
  */
@@ -61,6 +68,8 @@ const calendarDataSchema = z.object({
     }),
     description: z.string()
 });
+
+// TODO: this function is really similar to getUpComingTutoringEventsForServer
 
 /**
  * Fetches the calendar and build the embed view model
@@ -210,7 +219,7 @@ function composeViewModelForQueue(
         displayName: tutorName,
         discordId: CalendarExtensionState.allStates
             .get(serverId)
-            ?.displayNameDiscordIdMap.get(tutorName),
+            ?.calendarNameDiscordIdMap.get(tutorName),
         location:
             location !== undefined && location.length > 25
                 ? location.substring(0, 25) + '...'
@@ -305,7 +314,7 @@ function restorePublicEmbedURL(calendarId: string): string {
 /**
  * Checks if the calendar interaction is safe to execute
  * @param interaction
- * @returns server and state, and interaction 3-tuple
+ * @returns server, state, and interaction 3-tuple
  */
 function isServerCalendarInteraction<T extends Interaction<'cached'>>(
     interaction: T
@@ -340,7 +349,7 @@ async function getUpComingTutoringEventsForServer(
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
-        maxResults: 100
+        maxResults: 100 // change this value to fetch more
     });
     const response = await axios.default
         .get(calendarUrl, {
@@ -388,6 +397,8 @@ async function getUpComingTutoringEventsForServer(
 
 /**
  * Parses the summary string and builds the view models for **all queues in the string**
+ * - There might be queueNames that are parsed, but those queues don't exist
+ * - queue extensions will look for its own name, so we can ignore these special cases
  * @param rawSummary unmodified calendar event summary
  * @param parsingString string found the the calendar event description
  * @param start start date of 1 session
@@ -428,7 +439,7 @@ function composeViewModelsByString(
         displayName: tutorName,
         discordId: CalendarExtensionState.allStates
             .get(serverId)
-            ?.displayNameDiscordIdMap.get(tutorName),
+            ?.calendarNameDiscordIdMap.get(tutorName),
         location:
             location !== undefined && location.length > 25
                 ? location.substring(0, 25) + '...'
@@ -437,11 +448,12 @@ function composeViewModelsByString(
 }
 
 export {
+    UpComingSessionViewModel,
+    CalendarConfigBackup,
     getUpComingTutoringEventsForQueue,
     getUpComingTutoringEventsForServer,
     composeViewModelForQueue,
     buildCalendarURL,
-    UpComingSessionViewModel,
     checkCalendarConnection,
     restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody,

@@ -222,7 +222,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the hieararchy roles to use for this server
+     * Sets the hierarchy roles to use for this server
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */

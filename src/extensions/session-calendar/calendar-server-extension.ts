@@ -6,11 +6,11 @@ import { blue } from '../../utils/command-line-colors.js';
 
 /**
  * Server extension of session calendar
- * - only handles memory clean up and creating the state object
+ * - only handles memory clean up, clearing the timer, and creating the state object
  */
 class CalendarServerExtension extends BaseServerExtension {
     /**
-     * Timer id of the setInterval call in the constructor
+     * Timer id of the setInterval call in the constructor, cleared on server delete
      */
     private timerId;
 
@@ -21,11 +21,7 @@ class CalendarServerExtension extends BaseServerExtension {
             const state = CalendarExtensionState.allStates.get(guild.id);
             if (state) {
                 await state.refreshCalendarEvents();
-                await Promise.all(
-                    state.queueExtensions.map(queueExt =>
-                        queueExt.onCalendarStateChange()
-                    )
-                );
+                await state.emitStateChangeEvent();
             }
         }, 15 * 60 * 1000);
     }
@@ -33,7 +29,7 @@ class CalendarServerExtension extends BaseServerExtension {
     /**
      * Creates the server extension & loads the server level state
      * @param guild
-     * @returns
+     * @returns the newly created extension
      */
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);

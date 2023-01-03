@@ -89,7 +89,7 @@ async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const channel = hasValidQueueArgument(interaction);
-    const server = isServerCalendarInteraction(interaction)[0];
+    const [server] = isServerCalendarInteraction(interaction);
     const viewModels = await getUpComingTutoringEventsForQueue(
         server.guild.id,
         channel.queueName

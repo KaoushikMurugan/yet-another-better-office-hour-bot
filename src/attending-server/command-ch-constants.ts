@@ -8,24 +8,28 @@ import { studentCommandHelpMessages } from '../../help-channel-messages/StudentC
 import { HierarchyRoles } from '../models/hierarchy-roles.js';
 import { HelpMessage } from '../utils/type-aliases.js';
 
-export const commandChConfigs: {
+/**
+ * An object that groups the help messages and the visibility together
+ * - Used when creating new help channels
+ */
+export const commandChannelConfigs: {
     channelName: string;
-    file: HelpMessage[];
+    helpMessages: HelpMessage[];
     visibility: (keyof HierarchyRoles)[];
 }[] = [
     {
         channelName: 'admin-commands',
-        file: adminCommandHelpMessages,
+        helpMessages: adminCommandHelpMessages,
         visibility: ['botAdmin']
     },
     {
         channelName: 'staff-commands',
-        file: helperCommandHelpMessages,
+        helpMessages: helperCommandHelpMessages,
         visibility: ['botAdmin', 'staff']
     },
     {
         channelName: 'student-commands',
-        file: studentCommandHelpMessages,
+        helpMessages: studentCommandHelpMessages,
         visibility: ['botAdmin', 'staff', 'student']
     }
 ];

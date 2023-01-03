@@ -4,6 +4,7 @@ import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
+    CalendarConfigBackup,
     UpComingSessionViewModel,
     getUpComingTutoringEventsForServer,
     restorePublicEmbedURL
@@ -13,15 +14,6 @@ import { firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
-
-/**
- * @module Backups
- */
-interface CalendarConfigBackup {
-    calendarId: string;
-    calendarNameDiscordIdMap: { [key: string]: GuildMemberId };
-    publicCalendarEmbedUrl: string;
-}
 
 class CalendarExtensionState {
     /**
@@ -48,7 +40,7 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    displayNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
+    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
     /**
      * When was the upcomingSessions cache last updated
      */
@@ -78,7 +70,7 @@ class CalendarExtensionState {
 
     /**
      * Returns a new CalendarExtensionState for 1 server
-     * Uses firebase backup to initialize the Calendar config if the server has a backup
+     * - firebase backup is loaded if it exists
      * @param guild which guild's state to load
      * @returns CalendarExtensionState
      */
@@ -87,13 +79,25 @@ class CalendarExtensionState {
         serverExtension: CalendarServerExtension
     ): Promise<CalendarExtensionState> {
         const instance = new CalendarExtensionState(guild, serverExtension);
-        CalendarExtensionState.allStates.set(guild.id, instance);
         await instance.restoreFromBackup(guild.id);
+        CalendarExtensionState.allStates.set(guild.id, instance);
         return instance;
     }
 
     /**
-     * Refreshes the upcomingSessions cache
+     * Emits the state change event to all the queues
+     * @param targetQueueName if specified, only this queue extension will be notified
+     */
+    async emitStateChangeEvent(targetQueueName?: string): Promise<void> {
+        await (targetQueueName
+            ? this.queueExtensions.get(targetQueueName)?.onCalendarStateChange()
+            : Promise.all(
+                  this.queueExtensions.map(listener => listener.onCalendarStateChange())
+              ));
+    }
+
+    /**
+     * Refreshes the upcomingSessions cache for the corresponding server
      */
     async refreshCalendarEvents(): Promise<void> {
         this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
@@ -102,7 +106,9 @@ class CalendarExtensionState {
 
     /**
      * Restores the calendar state from firebase
-     * @param serverId
+     * - This is an instance method because all properties can be initialized without backup
+     * - For other extensions it's easier to make this function static and return the backup data
+     * @param serverId server id of associated backup doc
      */
     async restoreFromBackup(serverId: Snowflake): Promise<void> {
         const backupDoc = await firebaseDB
@@ -123,7 +129,7 @@ class CalendarExtensionState {
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
         }
-        this.displayNameDiscordIdMap.load(
+        this.calendarNameDiscordIdMap.load(
             Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]
             )
@@ -139,9 +145,7 @@ class CalendarExtensionState {
         // fall back to default embed in case the user forgets to set up a new public embed
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         this.backupToFirebase();
-        await Promise.all(
-            this.queueExtensions.map(listener => listener.onCalendarStateChange())
-        );
+        await this.emitStateChangeEvent();
     }
 
     /**
@@ -151,9 +155,7 @@ class CalendarExtensionState {
     async setPublicEmbedUrl(validUrl: string): Promise<void> {
         this.publicCalendarEmbedUrl = validUrl;
         this.backupToFirebase();
-        await Promise.all(
-            this.queueExtensions.map(listener => listener.onCalendarStateChange())
-        );
+        await this.emitStateChangeEvent();
     }
 
     /**
@@ -165,11 +167,9 @@ class CalendarExtensionState {
         calendarName: string,
         discordId: Snowflake
     ): Promise<void> {
-        this.displayNameDiscordIdMap.set(calendarName, discordId);
+        this.calendarNameDiscordIdMap.set(calendarName, discordId);
         this.backupToFirebase();
-        await Promise.all(
-            this.queueExtensions.map(listener => listener.onCalendarStateChange())
-        );
+        await this.emitStateChangeEvent();
     }
 
     /**
@@ -181,7 +181,7 @@ class CalendarExtensionState {
             calendarId: this.calendarId,
             publicCalendarEmbedUrl: this.publicCalendarEmbedUrl,
             calendarNameDiscordIdMap: Object.fromEntries(
-                this.displayNameDiscordIdMap
+                this.calendarNameDiscordIdMap
                     .dump()
                     .map(([key, LRUEntry]) => [key, LRUEntry.value])
             )
