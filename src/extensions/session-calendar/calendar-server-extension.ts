@@ -41,6 +41,17 @@ class CalendarServerExtension extends BaseServerExtension {
     }
 
     /**
+     * If a server gets deleted, remove it from the calendar server map
+     */
+    override async onServerDelete(server: FrozenServer): Promise<void> {
+        // timers must be cleared,
+        // otherwise the timer arrow func will still hold the reference to the deleted instance
+        clearInterval(this.timerId);
+        CalendarExtensionState.allStates.delete(server.guild.id);
+        return Promise.resolve();
+    }
+
+    /**
      * Populate the upcoming sessions cache on serer create
      * @param server
      */
@@ -48,17 +59,6 @@ class CalendarServerExtension extends BaseServerExtension {
         const state = CalendarExtensionState.get(server.guild.id);
         await state.refreshCalendarEvents();
         await state.emitStateChangeEvent();
-    }
-
-    /**
-     * If a server gets deleted, remove it from the calendar server map
-     */
-    override onServerDelete(server: FrozenServer): Promise<void> {
-        // timers must be cleared,
-        // otherwise the timer arrow func will still hold the reference to the deleted instance
-        clearInterval(this.timerId);
-        CalendarExtensionState.allStates.delete(server.guild.id);
-        return Promise.resolve();
     }
 }
 

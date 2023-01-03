@@ -89,8 +89,8 @@ class HelpQueueV2 {
      * @param display The queue display that sends the embeds to the #queue channel
      */
     protected constructor(
-        private queueChannel: QueueChannel,
-        private queueExtensions: IQueueExtension[],
+        public readonly queueChannel: QueueChannel,
+        private readonly queueExtensions: IQueueExtension[],
         private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;

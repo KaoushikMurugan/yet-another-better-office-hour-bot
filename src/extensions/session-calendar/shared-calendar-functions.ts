@@ -196,6 +196,7 @@ function restorePublicEmbedURL(calendarId: string): string {
 
 /**
  * Checks if the calendar interaction is safe to execute
+ * @deprecated will be removed as the base isServerInteraction gets deprecated
  * @param interaction
  * @returns server, state, and interaction 3-tuple
  */

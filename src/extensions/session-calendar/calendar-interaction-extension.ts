@@ -32,6 +32,13 @@ class SessionCalendarInteractionExtension extends BaseInteractionExtension {
 
     override slashCommandData = calendarCommands;
 
+    /**
+     * performs initialization checks for the calendar extension
+     * - checks if the default calendar id exists and accessible
+     * - checks if the API key is valid
+     * @throws ExtensionSetupError if calendar id or api key is missing
+     * @throws CalendarConnectionError if the connection fails
+     */
     override async initializationCheck(): Promise<void> {
         if (
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||

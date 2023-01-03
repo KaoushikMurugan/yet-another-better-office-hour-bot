@@ -16,7 +16,7 @@ import {
     isQueueTextChannel,
     isTextChannel
 } from '../utils/util-functions.js';
-import { attendingServers } from '../global-states.js';
+import { attendingServers, client } from '../global-states.js';
 import { GuildId } from '../utils/type-aliases.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
@@ -27,6 +27,7 @@ import { decompressComponentId } from '../utils/component-id-factory.js';
 /**
  * Checks if the interaction is associated with a correctly initialized AttendingServerV2
  * - Extensions that wish to do additional checks can use this as a base
+ * @deprecated - will be migrated to a static getter on the AttendingServerV2 class soon
  * @returns the {@link AttendingServerV2} object
  */
 function isServerInteraction(
@@ -35,7 +36,9 @@ function isServerInteraction(
     if (typeof idOrInteraction === 'string') {
         const server = attendingServers.get(idOrInteraction);
         if (!server) {
-            throw ExpectedParseErrors.nonServerInteraction(idOrInteraction);
+            throw ExpectedParseErrors.nonServerInteraction(
+                client.guilds.cache.get(idOrInteraction)?.name
+            );
         }
         return server;
     } else {
@@ -66,17 +69,19 @@ function isValidDMInteraction(
     return server;
 }
 
-function isFromQueueChannelWithParent(
-    interaction: ButtonInteraction<'cached'> | ChatInputCommandInteraction<'cached'>
-): QueueChannel {
+/**
+ * Checks if the interaction came from channels in a queue category
+ * @returns a queue channel
+ */
+function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): QueueChannel {
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
-    const queueChannel: QueueChannel = {
-        channelObj: interaction.channel,
-        queueName: interaction.channel.parent.name,
-        parentCategoryId: interaction.channel.parent.id
-    };
+    const server = isServerInteraction(interaction);
+    const queueChannel = server.getQueueChannelById(interaction.channel.parent.id);
+    if (!queueChannel) {
+        throw ExpectedParseErrors.noQueueTextChannel(interaction.channel.parent.name);
+    }
     return queueChannel;
 }
 

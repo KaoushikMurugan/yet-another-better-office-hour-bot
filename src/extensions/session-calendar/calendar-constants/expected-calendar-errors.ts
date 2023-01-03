@@ -1,6 +1,6 @@
 /** @module ExpectedErrors */
 
-import { CommandParseError } from '../../../utils/error-types.js';
+import { CommandParseError, ServerError } from '../../../utils/error-types.js';
 
 class CalendarConnectionError extends Error {
     constructor(message: string) {
@@ -17,6 +17,12 @@ const ExpectedCalendarErrors = {
         defaultId: new CalendarConnectionError(`The default calendar id is not valid.`),
         newId: new CalendarConnectionError('This new calendar ID is not valid.')
     },
+    noState: (guildName?: string) =>
+        guildName
+            ? new ServerError(
+                  `Are you sure ${guildName} has a initialized YABOB with the calendar extension?`
+              )
+            : new ServerError("The state object doesn't exist"),
     nonServerInteraction: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(

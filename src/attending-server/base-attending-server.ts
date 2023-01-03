@@ -188,6 +188,10 @@ class AttendingServerV2 {
         }
     }
 
+    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
+        return this._queues.get(parentCategoryId)?.queueChannel;
+    }
+
     /**
      * Loads the server data from a backup
      * @param backup the data to load

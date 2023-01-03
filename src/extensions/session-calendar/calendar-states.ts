@@ -10,7 +10,7 @@ import {
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
-import { firebaseDB } from '../../global-states.js';
+import { client, firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
@@ -41,8 +41,7 @@ class CalendarExtensionState {
     static get(serverId: Snowflake): CalendarExtensionState {
         const state = CalendarExtensionState.allStates.get(serverId);
         if (!state) {
-            //TODO: throw a different error
-            throw ExpectedCalendarErrors.nonServerInteraction();
+            throw ExpectedCalendarErrors.noState(client.guilds.cache.get(serverId)?.name);
         }
         return state;
     }
