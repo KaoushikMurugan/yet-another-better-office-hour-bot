@@ -51,6 +51,7 @@ const interactionExtensions: ReadonlyArray<IInteractionExtension> =
     environment.disableExtensions
         ? []
         : [
+              // Do not use async creation methods here for now bc it conflicts with client login
               new SessionCalendarInteractionExtension(),
               new GoogleSheetInteractionExtension()
           ];

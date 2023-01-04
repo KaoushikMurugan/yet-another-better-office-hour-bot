@@ -1,8 +1,13 @@
-import { ChatInputCommandInteraction, CategoryChannel, Role } from 'discord.js';
+import {
+    ChatInputCommandInteraction,
+    CategoryChannel,
+    Role,
+    EmbedBuilder
+} from 'discord.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { red } from '../../../utils/command-line-colors.js';
-import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
+import { EmbedColor } from '../../../utils/embed-helper.js';
 import {
     getQueueRoles,
     isCategoryChannel,
@@ -17,9 +22,8 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     checkCalendarConnection,
     isServerCalendarInteraction,
-    getUpComingTutoringEvents,
-    composeUpcomingSessionsEmbedBody,
-    restorePublicEmbedURL
+    restorePublicEmbedURL,
+    composeUpcomingSessionsEmbedBody
 } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
@@ -82,31 +86,42 @@ async function unsetCalendarId(
 }
 
 /**
- * The `/when_next` command
- *
- * Builds the embed for /when_next
+ * The `/when_next` command, builds the embed for /when_next
+ * @param interaction interaction object
+ * @param showAll whether to show all the upcoming sessions of this server
+ * - if false, show the sessions of the parent queue category
  */
 async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const channel = hasValidQueueArgument(interaction);
-    const [server] = isServerCalendarInteraction(interaction);
-    const viewModels = await getUpComingTutoringEvents(
-        server.guild.id,
-        channel.queueName
-    );
-    await interaction.editReply(
-        SimpleEmbed(
-            `Upcoming Hours for ${channel.queueName}`,
-            EmbedColor.Blue,
-            composeUpcomingSessionsEmbedBody(viewModels, channel, new Date())
+    const [server, state] = isServerCalendarInteraction(interaction);
+    await state.refreshCalendarEvents();
+    const showAll = interaction.options.getBoolean('show_all');
+    const title = showAll // idk what to call this, but it's either the guild name or the target queue's queueName
+        ? server.guild.name
+        : hasValidQueueArgument(interaction).queueName;
+    const viewModels = showAll // if not showAll, filter out the view models that match the queue name
+        ? state.upcomingSessions
+        : state.upcomingSessions.filter(viewModel => viewModel.queueName === title);
+    const embed = new EmbedBuilder()
+        .setTitle(`Upcoming Hours for ${title}`)
+        .setColor(EmbedColor.Blue)
+        .setDescription(
+            composeUpcomingSessionsEmbedBody(
+                viewModels,
+                title,
+                state.lastUpdatedTimeStamp,
+                'max'
+            )
         )
-    );
+        .setFooter({
+            text: 'Due to the length limit, some help sessions might not be shown.'
+        });
+    await interaction.editReply({ embeds: [embed.data] });
 }
 
 /**
  * The `/make_calendar_string` and `/make_calendar_string_all` commands
- *
  * Makes calendar titles for all approved queues
  * @param generateAll whether to generate string for all the queue roles
  */
@@ -179,8 +194,7 @@ async function makeParsableCalendarTitle(
 }
 
 /**
- * The `/set_public_embd_url` command
- *
+ * The `/set_public_embed_url` command
  * Sets the public embed url for the server's calendar
  * @param interaction
  */
@@ -201,7 +215,7 @@ async function setPublicEmbedUrl(
         await state.setPublicEmbedUrl(rawUrl);
         await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.updated);
     } else {
-        await state.setPublicEmbedUrl(restorePublicEmbedURL(state?.calendarId));
+        await state.setPublicEmbedUrl(restorePublicEmbedURL(state.calendarId));
         await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.backToDefault);
     }
 }

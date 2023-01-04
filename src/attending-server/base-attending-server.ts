@@ -44,7 +44,7 @@ import {
     updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 
 /**
  * Wrapper for TextChannel
@@ -188,6 +188,10 @@ class AttendingServerV2 {
         }
     }
 
+    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
+        return this._queues.get(parentCategoryId)?.queueChannel;
+    }
+
     /**
      * Loads the server data from a backup
      * @param backup the data to load
@@ -222,7 +226,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the hieararchy roles to use for this server
+     * Sets the hierarchy roles to use for this server
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
@@ -272,7 +276,7 @@ class AttendingServerV2 {
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
                   new FirebaseServerBackupExtension(guild),
-                  CalendarExtensionState.load(guild)
+                  CalendarServerExtension.load(guild)
               ]);
         const server = new AttendingServerV2(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
@@ -1059,7 +1063,7 @@ class AttendingServerV2 {
         );
         console.log(
             `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue(' with their extensions')
+                environment.disableExtensions ? '' : blue('with their extensions')
             }!`
         );
         await Promise.all(

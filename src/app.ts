@@ -28,17 +28,19 @@ import { studentCommandHelpMessages } from '../help-channel-messages/StudentComm
 const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
 
 /**
- * After login startup seqence
+ * After login startup sequence
  */
 client.on(Events.ClientReady, async () => {
     printTitleString();
+    // do the global initialization checks and collect static data
+    await Promise.all(interactionExtensions.map(ext => ext.initializationCheck()));
+    collectInteractionExtensionStaticData();
     // completeGuilds is all the servers this YABOB instance has joined
     const completeGuilds = await Promise.all(
         client.guilds.cache.map(guild => guild.fetch())
     );
-    const setupResults = await Promise.allSettled(
-        completeGuilds.map(guild => joinGuild(guild))
-    );
+    // create all the AttendingServerV2 objects
+    const setupResults = await Promise.allSettled(completeGuilds.map(joinGuild));
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );
@@ -46,7 +48,6 @@ client.on(Events.ClientReady, async () => {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    collectInteractionExtensionStaticData();
     console.log(`\n${green('✅ Ready to go! ✅')}\n`);
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
@@ -168,6 +169,9 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
     }
 });
 
+/**
+ * Emit the on role delete event
+ */
 client.on(Events.GuildRoleDelete, async role => {
     attendingServers.get(role.guild.id)?.onRoleDelete(role);
 });
@@ -197,20 +201,14 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
-    // Extensions need to load their states first
-    if (!environment.disableExtensions) {
-        await Promise.all(
-            interactionExtensions.map(extension => extension.loadState(guild))
-        );
-        await postSlashCommands(
-            guild,
-            interactionExtensions.flatMap(ext => ext.slashCommandData)
-        );
-    }
+    const externalCommandData = environment.disableExtensions
+        ? []
+        : interactionExtensions.flatMap(ext => ext.slashCommandData);
+    await postSlashCommands(guild, externalCommandData);
+    await guild.commands.fetch(); // populate cache
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
-    await server.guild.commands.fetch(); // populate cache
     return server;
 }
 

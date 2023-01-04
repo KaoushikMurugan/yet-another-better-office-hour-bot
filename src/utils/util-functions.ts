@@ -159,13 +159,13 @@ function getInteractionName(interaction: Interaction): string {
         return interaction.commandName;
     }
     if (interaction.isButton()) {
-        return interaction.component?.label ?? interaction.customId;
+        return interaction.component.label ?? interaction.customId;
     }
     if (interaction.isModalSubmit()) {
         return interaction.customId;
     }
     if (interaction.isSelectMenu()) {
-        return interaction.component?.placeholder ?? interaction.customId;
+        return interaction.component.placeholder ?? interaction.customId;
     }
     return 'Unsupported Interaction Type';
 }

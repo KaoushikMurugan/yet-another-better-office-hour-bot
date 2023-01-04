@@ -10,6 +10,8 @@ const possibleEnvironments = ['development', 'production'] as const;
 const env = process.env.NODE_ENV as typeof possibleEnvironments[number]; // checked
 const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
 
+// this is necessary
+// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 if (env === undefined) {
     throw new Error(red('Environment not specified'));
 }

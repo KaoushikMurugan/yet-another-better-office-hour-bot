@@ -71,7 +71,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
      */
     private attendanceUpdateIsScheduled = false;
 
-    constructor(private guild: Guild) {
+    constructor(private readonly guild: Guild) {
         super();
     }
 
@@ -105,8 +105,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
     /**
      * Start logging the {@link HelpSessionEntry} as soon as the student joins VC
      * @param server
-     * @param studentMember
-     * @param voiceChannel
+     * @param studentMember the student that joined the VC
+     * @param voiceChannel which VC the student joined
      */
     override async onStudentJoinVC(
         server: FrozenServer,
@@ -231,7 +231,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
 
     /** Updates all the cached attendance entries */
     private async batchUpdateAttendance(): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+        const googleSheet = GoogleSheetExtensionState.allStates.get(
             this.guild.id
         )?.googleSheet;
         if (this.attendanceEntries.length === 0 || !googleSheet) {
@@ -260,7 +260,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
                 headerValues: requiredHeaders
             }));
         if (
-            !attendanceSheet.headerValues || // doesn't have header
             attendanceSheet.headerValues.length !== requiredHeaders.length || // header count is different
             !attendanceSheet.headerValues.every(
                 header => requiredHeaders.includes(header) // finally check if all headers exist
@@ -334,7 +333,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.guildLevelStates.get(
+        const googleSheet = GoogleSheetExtensionState.allStates.get(
             this.guild.id
         )?.googleSheet;
         if (entries[0] === undefined || !googleSheet) {
@@ -353,7 +352,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
                 headerValues: requiredHeaders
             }));
         if (
-            helpSessionSheet.headerValues === undefined ||
             helpSessionSheet.headerValues.length !==
                 [...requiredHeaders, 'Session Time (ms)'].length ||
             !helpSessionSheet.headerValues.every(header =>
