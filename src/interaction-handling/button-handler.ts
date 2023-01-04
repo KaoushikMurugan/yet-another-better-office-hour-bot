@@ -145,7 +145,15 @@ async function createServerRoles(
     const server = isServerInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
     await interaction.update(
-        RolesConfigMenu(server, interaction.channelId, false, false)
+        RolesConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            forceCreate
+                ? 'New roles have been created!'
+                : 'Role configurations have been updated!',
+            false
+        )
     );
 }
 
@@ -161,7 +169,17 @@ async function createServerRolesDM(
 ): Promise<void> {
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
-    await interaction.update(RolesConfigMenu(server, interaction.channelId, true, false));
+    await interaction.update(
+        RolesConfigMenu(
+            server,
+            interaction.channelId,
+            true,
+            forceCreate
+                ? 'New roles have been created!'
+                : 'Role configurations have been updated!',
+            false
+        )
+    );
 }
 
 /**
@@ -183,7 +201,12 @@ async function disableAfterSessionMessage(
     const server = isServerInteraction(interaction);
     await server.setAfterSessionMessage('');
     await interaction.update(
-        AfterSessionMessageConfigMenu(server, interaction.channelId, false)
+        AfterSessionMessageConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            'Successfully disabled after session message.'
+        )
     );
 }
 
@@ -206,7 +229,12 @@ async function disableQueueAutoClear(
     const server = isServerInteraction(interaction);
     await server.setQueueAutoClear(0, 0, false);
     await interaction.update(
-        QueueAutoClearConfigMenu(server, interaction.channelId, false)
+        QueueAutoClearConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            `Successfully disabled queue auto clear on ${server.guild.name}`
+        )
     );
 }
 
@@ -219,7 +247,12 @@ async function disableLoggingChannel(
     const server = isServerInteraction(interaction);
     await server.setLoggingChannel(undefined);
     await interaction.update(
-        LoggingChannelConfigMenu(server, interaction.channelId, false)
+        LoggingChannelConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            `Successfully disabled logging on ${server.guild.name}`
+        )
     );
 }
 
@@ -234,7 +267,14 @@ async function toggleAutoGiveStudentRole(
     const server = isServerInteraction(interaction);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
     await interaction.update(
-        AutoGiveStudentRoleConfigMenu(server, interaction.channelId, false)
+        AutoGiveStudentRoleConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            `Successfully turned ${
+                autoGiveStudentRole ? 'on' : 'off'
+            } auto give student role.`
+        )
     );
 }
 

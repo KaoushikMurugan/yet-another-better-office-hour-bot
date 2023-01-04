@@ -146,7 +146,7 @@ client.on(Events.GuildRoleUpdate, async role => {
                 )
             )
         ]);
-        await owner.send(RolesConfigMenu(server, owner.id, true, true));
+        await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
     }
 });
 

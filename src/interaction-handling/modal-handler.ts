@@ -40,7 +40,12 @@ async function setAfterSessionMessage(
     await server.setAfterSessionMessage(message);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              AfterSessionMessageConfigMenu(server, interaction.channelId, false)
+              AfterSessionMessageConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  'After session message has been updated!'
+              )
           )
         : interaction.reply(SuccessMessages.updatedAfterSessionMessage(message)));
 }
@@ -66,7 +71,12 @@ async function setQueueAutoClear(
     await server.setQueueAutoClear(hours, minutes, enable);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              QueueAutoClearConfigMenu(server, interaction.channelId, false)
+              QueueAutoClearConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  `Queue auto clear configuration has been updated!`
+              )
           )
         : interaction.reply(
               enable

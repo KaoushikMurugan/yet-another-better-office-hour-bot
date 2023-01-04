@@ -94,10 +94,14 @@ type HelpMessage = {
 
 // Used in interaction handlers
 
+/**
+ * @param server
+ */
 type SettingsMenuCallback = (
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage: Optional<string>,
 ) => BaseMessageOptions;
 
 /**

@@ -298,7 +298,7 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(RolesConfigMenu(server, owner.id, true, true));
+            await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
         }
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),

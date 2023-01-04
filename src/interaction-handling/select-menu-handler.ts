@@ -36,7 +36,9 @@ async function showSettingsSelectMenu(
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
-    await interaction.update(callbackMenu.subMenu(server, interaction.channelId, false));
+    await interaction.update(
+        callbackMenu.subMenu(server, interaction.channelId, false, undefined)
+    );
 }
 
 async function selectLoggingChannel(
@@ -55,7 +57,14 @@ async function selectLoggingChannel(
         throw new Error('Invalid option selected:');
     }
     await server.setLoggingChannel(loggingChannel);
-    await interaction.update(callbackMenu.subMenu(server, interaction.channelId, false));
+    await interaction.update(
+        callbackMenu.subMenu(
+            server,
+            interaction.channelId,
+            false,
+            'Logging channel has been updated!'
+        )
+    );
 }
 
 export { baseYabobSelectMenuMap };
