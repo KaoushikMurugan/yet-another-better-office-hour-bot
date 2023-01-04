@@ -12,7 +12,7 @@ class CalendarServerExtension extends BaseServerExtension {
     /**
      * Timer id of the setInterval call in the constructor, cleared on server delete
      */
-    private timerId;
+    private readonly timerId: NodeJS.Timer;
 
     constructor(public readonly guild: Guild) {
         super();
@@ -28,7 +28,6 @@ class CalendarServerExtension extends BaseServerExtension {
 
     /**
      * Creates the server extension & loads the server level state
-     * @param guild
      * @returns the newly created extension
      */
     static async load(guild: Guild): Promise<CalendarServerExtension> {
@@ -42,9 +41,10 @@ class CalendarServerExtension extends BaseServerExtension {
 
     /**
      * If a server gets deleted, remove it from the calendar server map
+     * @param server the deleted server
      */
     override async onServerDelete(server: FrozenServer): Promise<void> {
-        // timers must be cleared,
+        // typically interval timers that reference member methods must be cleared,
         // otherwise the timer arrow func will still hold the reference to the deleted instance
         clearInterval(this.timerId);
         CalendarExtensionState.allStates.delete(server.guild.id);
@@ -52,8 +52,8 @@ class CalendarServerExtension extends BaseServerExtension {
     }
 
     /**
-     * Populate the upcoming sessions cache on serer create
-     * @param server
+     * Populate the upcoming sessions cache on server create
+     * @param server the newly created server
      */
     override async onServerInitSuccess(server: FrozenServer): Promise<void> {
         const state = CalendarExtensionState.get(server.guild.id);

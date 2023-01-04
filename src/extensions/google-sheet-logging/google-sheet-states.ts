@@ -31,7 +31,7 @@ class GoogleSheetExtensionState {
      * - static, so it's shared across all instances
      * - key is guild id, value is 1 google sheet extension state
      */
-    static allStates = new Collection<GuildId, GoogleSheetExtensionState>();
+    static readonly allStates = new Collection<GuildId, GoogleSheetExtensionState>();
 
     /**
      * @param guild

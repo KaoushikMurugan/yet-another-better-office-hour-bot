@@ -119,42 +119,52 @@ class AttendingServerV2 {
         readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
 
+    /** List of queues on this server */
     get queues(): ReadonlyArray<HelpQueueV2> {
         return [...this._queues.values()];
     }
+    /** All the students that are currently in a queue */
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this.queues.flatMap(queue => queue.students);
     }
+    /** All the helpers on this server, both active and paused */
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;
     }
+    /** Auto clear values of a queue, undefined if not set */
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
     }
+    /** The after session message string. Empty string if not set */
     get afterSessionMessage(): string {
         return this.settings.afterSessionMessage;
     }
+    /** The logging channel on this server. undefined if not set */
     get loggingChannel(): Optional<TextChannel> {
         return this.settings.loggingChannel;
     }
+    /** bot admin role id */
     get botAdminRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
+    /** staff role id */
     get staffRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.staff;
     }
+    /** student role id, this is the everyone role if "@everyone is student" is selected */
     get studentRoleID(): Snowflake {
         return this.settings.hierarchyRoleIds.student;
     }
+    /** All the hierarchy role ids */
     get hierarchyRoleIds(): HierarchyRoles {
         return this.settings.hierarchyRoleIds;
     }
+    /** whether to automatically give new members the student role */
     get autoGiveStudentRole(): boolean {
         return this.settings.autoGiveStudentRole;
     }
     /**
-     * Returns an array of the roles for this server in decreasing order of hierarchy
-     * - Returns in the order [Bot Admin, Helper, Student]
+     * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
         key: keyof HierarchyRoles; // this can be used to index hierarchyRoleConfigs and HierarchyRoles
@@ -188,12 +198,18 @@ class AttendingServerV2 {
         }
     }
 
+    /**
+     * Gets a queue channel by the parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns queue channel object if it exists, undefined otherwise
+     */
     getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
         return this._queues.get(parentCategoryId)?.queueChannel;
     }
 
     /**
-     * Loads the server data from a backup
+     * Loads the server settings data from a backup
+     * - queue backups are passed to the queue constructors
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
