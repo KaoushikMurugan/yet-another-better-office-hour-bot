@@ -169,6 +169,9 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
     }
 });
 
+/**
+ * Emit the on role delete event
+ */
 client.on(Events.GuildRoleDelete, async role => {
     attendingServers.get(role.guild.id)?.onRoleDelete(role);
 });
@@ -198,17 +201,14 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     console.log(`Joining guild: ${yellow(guild.name)}`);
-    // Extensions need to load their states first
-    if (!environment.disableExtensions) {
-        await postSlashCommands(
-            guild,
-            interactionExtensions.flatMap(ext => ext.slashCommandData)
-        );
-    }
+    const externalCommandData = environment.disableExtensions
+        ? []
+        : interactionExtensions.flatMap(ext => ext.slashCommandData);
+    await postSlashCommands(guild, externalCommandData);
+    await guild.commands.fetch(); // populate cache
     // Extensions for server&queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
     attendingServers.set(guild.id, server);
-    await server.guild.commands.fetch(); // populate cache
     return server;
 }
 
