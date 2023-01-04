@@ -41,6 +41,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.resume]: resume,
         [CommandNames.leave]: leave,
         [CommandNames.clear]: clear,
+        [CommandNames.queue]: queue,
         [CommandNames.clear_all]: clearAll,
         [CommandNames.list_helpers]: listHelpers,
         [CommandNames.announce]: announce,
@@ -104,6 +105,42 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
     await interaction.editReply(
         SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
     );
+}
+
+/**
+ * The `/queue add` and `/queue remove` command
+ * @param interaction
+ * @returns success message
+ */
+async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(server, interaction.member, 'queue', 'staff');
+    const subcommand = interaction.options.getSubcommand();
+    switch (subcommand) {
+        case 'add': {
+            const queueName = interaction.options.getString('queue_name', true);
+            await server.createQueue(queueName);
+            await interaction.editReply(SuccessMessages.createdQueue(queueName));
+            break;
+        }
+        case 'remove': {
+            const targetQueue = hasValidQueueArgument(interaction, true);
+            if (!interaction.channel || interaction.channel.isDMBased()) {
+                throw ExpectedParseErrors.nonServerInteraction();
+            }
+            if (interaction.channel.parentId === targetQueue.parentCategoryId) {
+                throw ExpectedParseErrors.removeInsideQueue;
+            }
+            await server.deleteQueueById(targetQueue.parentCategoryId);
+            await interaction.editReply(
+                SuccessMessages.deletedQueue(targetQueue.queueName)
+            );
+            break;
+        }
+        default: {
+            throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
+        }
+    }
 }
 
 /**
