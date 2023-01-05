@@ -75,6 +75,8 @@ class CalendarQueueExtension extends BaseQueueExtension {
         // when server deletes the queue from queue collection
     }
 
+
+    // FIXME: New queues are missing the calendar embeds
     /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache

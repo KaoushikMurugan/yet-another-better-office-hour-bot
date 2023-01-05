@@ -100,7 +100,7 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
     // otherwise use dequeueGlobalFirst
     const dequeuedStudent =
         targetQueue || targetStudent
-            ? await server.dequeueWithArgs(helperMember, targetStudent, targetQueue)
+            ? await server.dequeueWithArguments(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
     await interaction.editReply(
         SuccessMessages.inviteSent(dequeuedStudent.member.displayName)

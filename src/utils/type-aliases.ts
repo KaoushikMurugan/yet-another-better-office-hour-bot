@@ -153,6 +153,7 @@ type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /**
  * Represents an optional role id that YABOB keeps track of
+ * - Snowflake or one of the SpecialRoleValues
  * - Be **very careful** with this type, it's just an alias for a string
  */
 type OptionalRoleId = Snowflake | SpecialRoleValues;

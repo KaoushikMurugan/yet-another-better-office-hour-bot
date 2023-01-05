@@ -16,6 +16,10 @@ import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 
+/**
+ * The state of the calendar extension
+ * - CalendarQueueExtension's behavior will purely depend on the data in the corresponding state instance
+ */
 class CalendarExtensionState {
     /**
      * Firebase Backup Schema
