@@ -95,13 +95,13 @@ type HelpMessage = {
 // Used in interaction handlers
 
 /**
- * @param server
+ * A function that builds the settings menu embed
  */
-type SettingsMenuCallback = (
+type SettingsMenuConstructor = (
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
-    updateMessage: Optional<string>,
+    updateMessage: Optional<string>
 ) => BaseMessageOptions;
 
 /**
@@ -180,7 +180,7 @@ type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
 /** Represents 1 option inside the main settings menu */
 type SettingsMenuOption = {
     optionData: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
+    subMenu: SettingsMenuConstructor;
 };
 
 export {
@@ -208,7 +208,7 @@ export {
     RenderIndex,
     TextBasedChannelId,
     /** Callback Types */
-    SettingsMenuCallback,
+    SettingsMenuConstructor as SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,
     ComponentLocation,

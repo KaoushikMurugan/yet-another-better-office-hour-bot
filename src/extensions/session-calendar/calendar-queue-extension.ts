@@ -1,12 +1,7 @@
 /** @module SessionCalendar */
 import { BaseQueueExtension } from '../extension-interface.js';
 import { EmbedColor } from '../../utils/embed-helper.js';
-import {
-    EmbedBuilder,
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-} from 'discord.js';
+import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     composeUpcomingSessionsEmbedBody,
@@ -75,16 +70,13 @@ class CalendarQueueExtension extends BaseQueueExtension {
         // when server deletes the queue from queue collection
     }
 
-
     // TODO: (bug) New queues are missing the calendar embeds
     /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private async renderCalendarEmbeds(): Promise<void> {
-        const state = CalendarExtensionState.get(
-            this.queueChannel.channelObj.guild.id
-        );
+        const state = CalendarExtensionState.get(this.queueChannel.channelObj.guild.id);
         const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
