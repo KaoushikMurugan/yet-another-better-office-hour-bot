@@ -76,7 +76,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
 
-    // FIXME: New queues are missing the calendar embeds
+    // TODO: (bug) New queues are missing the calendar embeds
     /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache

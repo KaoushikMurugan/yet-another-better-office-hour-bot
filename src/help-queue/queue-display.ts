@@ -22,7 +22,7 @@ import { ButtonNames } from '../interaction-handling/interaction-constants/inter
 type QueueChannelEmbed = {
     /** Actual embed content */
     contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
-    /** the order of the embed. @example renderindex = 1 is the 2nd embed */
+    /** the order of the embed. @example renderIndex = 1 is the 2nd embed */
     renderIndex: RenderIndex;
     /** whether it has already been rendered */
     stale: boolean;
@@ -37,7 +37,7 @@ const queueStateStyles: {
 } = {
     // colors are arbitrary, feel free to change these
     closed: {
-        color: EmbedColor.Purple,
+        color: EmbedColor.PastelPurple,
         statusText: {
             serious: '**CLOSED**',
             notSerious: '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
@@ -304,7 +304,7 @@ class QueueDisplayV2 {
                 .setHeading('Position', 'Student Name')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setAlign(2, AlignmentEnum.CENTER)
-                .setStyle('unicode-mix')
+                .setStyle('unicode-single')
                 .addRowMatrix([
                     ...viewModel.studentDisplayNames.map((name, idx) => [
                         viewModel.seriousModeEnabled
@@ -320,7 +320,7 @@ class QueueDisplayV2 {
             table
                 .addRow('This queue is empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
-                .setStyle('unicode-mix');
+                .setStyle('unicode-single');
             if (!viewModel.seriousModeEnabled) {
                 if (rand <= 0.1) {
                     table.addRow(`=^ Φ ω Φ ^=`);
@@ -329,7 +329,7 @@ class QueueDisplayV2 {
                 }
             }
         }
-        return '```' + table.toString() + '```';
+        return '```\n' + table.toString() + '\n```';
     }
 }
 

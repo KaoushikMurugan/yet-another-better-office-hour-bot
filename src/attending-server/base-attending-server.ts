@@ -934,7 +934,6 @@ class AttendingServerV2 {
         minutes: number,
         enable: boolean
     ): Promise<void> {
-        // TODO: Make the auto clear property static in the HelpQueue class
         this._queues.forEach(queue => queue.setAutoClear(hours, minutes, enable));
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))

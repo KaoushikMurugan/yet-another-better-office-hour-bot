@@ -17,16 +17,17 @@ type ExpectedError = QueueError | ServerError | CommandParseError;
 
 enum EmbedColor {
     Success = 0xa9dc76, // Green
-    Error = 0xff6188, // Red
+    Error = 0xf62e36, // Red
     UnexpectedError = 0xff0000, // pure red
-    KindaBad = 0xfc9867, // Orange
+    KindaBad = 0xff9500, // Orange
     Neutral = 0xffffff, // White
     Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8,
-    Purple = 0x5865f2,
+    DiscordPurple = 0x5865f2,
+    PastelPurple = 0x738adb, // old discord purple
     Pink = 0xffb7c5,
-    Blue = 0x3498db
+    Blue = 0x3084fe
 }
 
 const DEFAULT_PFP = 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;

@@ -60,7 +60,7 @@ function isValidCustomIdTuple(
     decompressedTuple: string[]
 ): decompressedTuple is CustomIdTuple<ComponentLocation> {
     const lengthMatch = decompressedTuple.length === ExpectedLength;
-    // TODO: Check for expected ComponentLocation here
+    // TODO: Check for expected ComponentLocation here and constraint return type
     const isValidType =
         !!decompressedTuple[0] && ['dm', 'queue', 'other'].includes(decompressedTuple[0]);
     const snowflakesAreValid = // snowflakes should only have numbers

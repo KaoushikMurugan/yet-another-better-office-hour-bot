@@ -107,6 +107,26 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
 }
 
 /**
+ * Transforms a upcoming session view model to this format:
+ * ```plaintext
+ * TutorName ┈ TutorName - 20, 36AB
+ * Start: in 13 hours ┈ End: in 15 hours ┈ Location: Virtual
+ * ```
+ * @param viewModel
+ * @returns the formatted string
+ */
+function transformViewModelToString(viewModel: UpComingSessionViewModel): string {
+    const spacer = '\u3000'; // ideographic space character, extra wide
+    return (
+        `**${
+            viewModel.discordId ? `<@${viewModel.discordId}>` : viewModel.displayName
+        }**${spacer}**${viewModel.eventSummary}**\n` +
+        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>${spacer}` +
+        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+        `${viewModel.location ? `${spacer}Location: ${viewModel.location}` : ''}`
+    );
+}
+/**
  * Builds the body message of the upcoming sessions embed
  * @param viewModels models from {@link getUpComingTutoringEventsForServer}
  * @param title the queue name or the guild name
@@ -121,23 +141,14 @@ function composeUpcomingSessionsEmbedBody(
     lastUpdatedTimeStamp: Date,
     returnCount: number | 'max' = 5
 ): string {
-    const lastUpdatedTimeStampString = `\n${'-'.repeat(
-        30
-    )}\nLast updated: <t:${Math.floor(lastUpdatedTimeStamp.getTime() / 1000)}:R>`;
+    // this divider character appears really long and really thin on discord
+    const divider = `\n${'┈'.repeat(25)}\n`;
+    const lastUpdatedTimeStampString = `${divider}Last updated: <t:${Math.floor(
+        lastUpdatedTimeStamp.getTime() / 1000
+    )}:R>`;
     if (viewModels.length === 0) {
         return `**There are no upcoming sessions for ${title} in the next 7 days.**${lastUpdatedTimeStampString}`;
     }
-    const transformViewModelToString = (viewModel: UpComingSessionViewModel) =>
-        `**${
-            viewModel.discordId !== undefined
-                ? `<@${viewModel.discordId}>`
-                : viewModel.displayName
-        }**\t|\t` +
-        `**${viewModel.eventSummary}**\n` +
-        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>\t|\t` +
-        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
-        `${viewModel.location ? `\t|\tLocation: ${viewModel.location}` : ``}`;
-    const divider = `\n${'-'.repeat(30)}\n`;
     if (returnCount === 'max') {
         let currLength = lastUpdatedTimeStampString.length; // current embed message length
         const upcomingSessionStrings: string[] = [];
