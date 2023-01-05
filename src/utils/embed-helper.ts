@@ -16,10 +16,10 @@ import { client } from '../global-states.js';
 type ExpectedError = QueueError | ServerError | CommandParseError;
 
 enum EmbedColor {
+    Error = 0xff6188, // Red
+    KindaBad = 0xfc9867, // Orange
     Success = 0xa9dc76, // Green
-    Error = 0xf62e36, // Red
     UnexpectedError = 0xff0000, // pure red
-    KindaBad = 0xff7420, // Orange
     Neutral = 0xffffff, // White
     Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
