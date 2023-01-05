@@ -26,8 +26,4 @@ enum CalendarModalNames {
     CalendarSettingsModalMenuVersion = 'CalendarSettingsModalMenuVersion'
 }
 
-export {
-    CalendarButtonNames,
-    CalendarCommandNames,
-    CalendarModalNames
-};
+export { CalendarButtonNames, CalendarCommandNames, CalendarModalNames };

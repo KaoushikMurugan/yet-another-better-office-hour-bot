@@ -16,6 +16,10 @@ import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 
+/**
+ * The state of the calendar extension
+ * - CalendarQueueExtension's behavior will purely depend on the data in the corresponding state instance
+ */
 class CalendarExtensionState {
     /**
      * Firebase Backup Schema
@@ -29,8 +33,10 @@ class CalendarExtensionState {
     /**
      * Collection of all the created calendar states
      * - static, shared across all instances
+     * - readonly doesn't prevent the map contents from being changed,
+     *  but it locks the reference so no new maps can be assigned to this variable
      */
-    static allStates = new Collection<GuildId, CalendarExtensionState>();
+    static readonly allStates = new Collection<GuildId, CalendarExtensionState>();
 
     /**
      * Gets a guild level state by id
@@ -41,7 +47,9 @@ class CalendarExtensionState {
     static get(serverId: Snowflake): CalendarExtensionState {
         const state = CalendarExtensionState.allStates.get(serverId);
         if (!state) {
-            throw ExpectedCalendarErrors.noState(client.guilds.cache.get(serverId)?.name);
+            throw ExpectedCalendarErrors.nonServerInteraction(
+                client.guilds.cache.get(serverId)?.name
+            );
         }
         return state;
     }

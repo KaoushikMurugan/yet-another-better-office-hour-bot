@@ -10,7 +10,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
-            [SelectMenuNames.ServerSettings]: showSettingsSelectMenu,
+            [SelectMenuNames.ServerSettings]: showSettingsSubMenu,
             [SelectMenuNames.SelectLoggingChannel]: selectLoggingChannel
         }
     },
@@ -22,21 +22,23 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
 };
 
 /**
- * Display the settings main menu
+ * Display the submenu of the selected option
  * @param interaction
  */
-async function showSettingsSelectMenu(
+async function showSettingsSubMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionData.value === selectedOption
-    );
+    )?.subMenu;
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
-    await interaction.update(callbackMenu.subMenu(server, interaction.channelId, false));
+    await interaction.update(
+        callbackMenu(server, interaction.channelId, false, undefined)
+    );
 }
 
 async function selectLoggingChannel(
@@ -55,7 +57,14 @@ async function selectLoggingChannel(
         throw new Error('Invalid option selected:');
     }
     await server.setLoggingChannel(loggingChannel);
-    await interaction.update(callbackMenu.subMenu(server, interaction.channelId, false));
+    await interaction.update(
+        callbackMenu.subMenu(
+            server,
+            interaction.channelId,
+            false,
+            'Logging channel has been updated!'
+        )
+    );
 }
 
 export { baseYabobSelectMenuMap };

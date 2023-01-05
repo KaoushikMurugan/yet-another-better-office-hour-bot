@@ -94,10 +94,14 @@ type HelpMessage = {
 
 // Used in interaction handlers
 
-type SettingsMenuCallback = (
+/**
+ * A function that builds the settings menu embed
+ */
+type SettingsMenuConstructor = (
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage: Optional<string>
 ) => BaseMessageOptions;
 
 /**
@@ -149,6 +153,7 @@ type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /**
  * Represents an optional role id that YABOB keeps track of
+ * - Snowflake or one of the SpecialRoleValues
  * - Be **very careful** with this type, it's just an alias for a string
  */
 type OptionalRoleId = Snowflake | SpecialRoleValues;
@@ -175,7 +180,7 @@ type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
 /** Represents 1 option inside the main settings menu */
 type SettingsMenuOption = {
     optionData: SelectMenuComponentOptionData;
-    subMenu: SettingsMenuCallback;
+    subMenu: SettingsMenuConstructor;
 };
 
 export {
@@ -203,7 +208,7 @@ export {
     RenderIndex,
     TextBasedChannelId,
     /** Callback Types */
-    SettingsMenuCallback,
+    SettingsMenuConstructor as SettingsMenuCallback,
     /** Component Types */
     YabobEmbed,
     ComponentLocation,
