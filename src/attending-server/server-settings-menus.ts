@@ -304,19 +304,18 @@ function AfterSessionMessageConfigMenu(
         .addFields({
             name: 'Documentation',
             value: `[Learn more about after session message here.](${documentationLinks.afterSessionMessage})`
-        })
-        .addFields({
-            name: 'Current After Session Message',
-            value: `${
-                server.afterSessionMessage === ''
-                    ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
-                    : `${server.afterSessionMessage
-                          .trim()
-                          .split('\n')
-                          .map(line => `> ${line}`)
-                          .join('\n')}` // show the existing message in a quote block
-            }`
         });
+    embed.addFields({
+        name: 'Current After Session Message',
+        value: `${
+            server.afterSessionMessage === ''
+                ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
+                : // each field only supports 1024 chars
+                  `${server.afterSessionMessage.slice(0, 1000)}${
+                      server.afterSessionMessage.length > 1000 ? '...(Truncated)' : ''
+                  }`
+        }`
+    });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
@@ -440,8 +439,8 @@ function LoggingChannelConfigMenu(
             value: `[Learn more about YABOB logging channels here](${documentationLinks.loggingChannel})`
         })
         .addFields({
-            name: 'ℹ️ Note: Select menu length limit',
-            value: `Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
+            name: 'Note: Select menu length limit',
+            value: `Discord only allows up to 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
                 setLoggingChannelCommandId
                     ? `</set_logging_channel:${setLoggingChannelCommandId}>`
                     : '`/set_logging_channel`'

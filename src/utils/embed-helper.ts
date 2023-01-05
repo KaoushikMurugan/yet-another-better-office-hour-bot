@@ -19,7 +19,7 @@ enum EmbedColor {
     Success = 0xa9dc76, // Green
     Error = 0xf62e36, // Red
     UnexpectedError = 0xff0000, // pure red
-    KindaBad = 0xff9500, // Orange
+    KindaBad = 0xff7420, // Orange
     Neutral = 0xffffff, // White
     Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
