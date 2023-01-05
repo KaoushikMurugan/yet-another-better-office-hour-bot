@@ -240,7 +240,10 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🔵 Use Existing Roles')
+                // this emoji string must be free of any other characters
+                // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
+                .setEmoji('🔵')
+                .setLabel('Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
@@ -248,7 +251,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🔵 Use Existing Roles (@everyone is student)')
+                .setEmoji('🔵')
+                .setLabel('Use Existing Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -258,7 +262,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🟠 Create New Roles')
+                .setEmoji('🟠')
+                .setLabel('Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
@@ -266,7 +271,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🟠 Create New Roles (@everyone is student)')
+                .setEmoji('🟠')
+                .setLabel('Create New Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         )
     ];

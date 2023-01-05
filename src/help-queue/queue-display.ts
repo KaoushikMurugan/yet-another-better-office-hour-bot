@@ -54,10 +54,10 @@ const queueStateStyles: {
         color: EmbedColor.Yellow,
         statusText: {
             serious: '**PAUSED**',
-            notSerious: '**PAUSED**' // TODO: Add Emoticon here
+            notSerious: '**PAUSED**\t(´∀｀)'
         }
     }
-} as const;
+};
 
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
