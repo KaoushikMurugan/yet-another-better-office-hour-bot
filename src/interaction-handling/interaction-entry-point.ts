@@ -29,6 +29,7 @@ import {
     logDMButtonPress,
     logDMModalSubmit,
     logDMSelectMenuSelection,
+    logExpectedErrors,
     logModalSubmit,
     logSelectMenuSelection,
     logSlashCommand
@@ -109,7 +110,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
         });
     }
     await handleCommand?.(interaction).catch(async (err: Error) => {
-        console.error(err);
+        logExpectedErrors(interaction, err);
         await replyWithError(interaction, err, server.botAdminRoleID);
     });
 }
@@ -139,14 +140,14 @@ async function processButton(interaction: Interaction): Promise<void> {
         logButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     }
@@ -181,14 +182,14 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         const handleSelectMenu =
             completeSelectMenuMap.guildMethodMap[type][selectMenuName];
         await handleSelectMenu?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMSelectMenuSelection(interaction, selectMenuName);
         const handleSelectMenu = completeSelectMenuMap.dmMethodMap[selectMenuName];
         await handleSelectMenu?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     }
@@ -211,14 +212,14 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         logModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.guildMethodMap[type][modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            console.error(err);
+            logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     }
