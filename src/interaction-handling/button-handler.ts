@@ -174,9 +174,11 @@ async function createServerRolesDM(
             server,
             interaction.channelId,
             true,
-            forceCreate
-                ? 'New roles have been created!'
-                : 'Role configurations have been updated!',
+            `${
+                forceCreate
+                    ? 'New roles have been created!'
+                    : 'Role configurations have been updated!'
+            } You can now go back to ${server.guild.name} and start creating queues!`,
             false
         )
     );

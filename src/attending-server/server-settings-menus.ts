@@ -33,6 +33,7 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         .setStyle(ButtonStyle.Primary)
 );
 
+/** This creates an empty embed field in embeds */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EmptyEmbedField = {
     name: '\u200b',
@@ -44,7 +45,6 @@ const EmptyEmbedField = {
 const trailingNewLine = '\n\u200b' as const;
 
 /** Use this string to force a leading new line in an embed field */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const leadingNewLine = '\u200b\n' as const;
 
 const documentationBaseUrl =
@@ -60,7 +60,7 @@ const documentationLinks = {
     loggingChannel: `${documentationBaseUrl}#logging-channel`,
     afterSessionMessage: `${documentationBaseUrl}#after-session-message`,
     autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`
-} as const;
+};
 
 /**
  * Options for the main menu of server settings
@@ -156,7 +156,7 @@ function SettingsMainMenu(
 /**
  * Composes the server roles configuration menu
  * @param server
- * @param channelId
+ * @param channelId id of the channel of the related interaction
  * @param isDm is it sent in dm?
  * @param forServerInit is the menu sent on joining a new server?
  * @returns
@@ -182,29 +182,33 @@ function RolesConfigMenu(
     )?.id;
     const embed = new EmbedBuilder()
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
-        .setColor(EmbedColor.Aqua)
-        // addFields accepts RestOrArray<T>,
-        // so they can be combined into a single addFields call, but prettier makes it ugly
-        .addFields({
-            name: 'Description',
-            value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
-        })
-        .addFields({
-            name: 'Documentation',
-            value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
-        })
-        .addFields({
-            name: 'Warning',
-            value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
-        })
-        .addFields({
-            name: 'Current Role Configuration',
-            value: `
+        .setColor(EmbedColor.Aqua);
+    // addFields accepts RestOrArray<T>,
+    // so they can be combined into a single addFields call, but prettier makes it ugly
+    if (!isDm) {
+        // TODO: Separate forServerInit version and server version
+        embed
+            .addFields({
+                name: 'Description',
+                value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
+            })
+            .addFields({
+                name: 'Documentation',
+                value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
+            })
+            .addFields({
+                name: 'Warning',
+                value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
+            });
+    }
+    embed.addFields({
+        name: 'Current Role Configuration',
+        value: `
             ${leadingNewLine}🤖 Bot Admin Role - ${
-                forServerInit
-                    ? `*Role that can manage the bot and its settings*\n`
-                    : generatePing(server.botAdminRoleID)
-            }
+            forServerInit
+                ? `*Role that can manage the bot and its settings*\n`
+                : generatePing(server.botAdminRoleID)
+        }
 
             📚 Staff Role - ${
                 forServerInit
@@ -217,20 +221,21 @@ function RolesConfigMenu(
                     ? `*Role that allows users to join office hour queues*\n`
                     : generatePing(server.studentRoleID)
             }`
-        });
+    });
     if (forServerInit) {
         embed.setDescription(
             `**Thanks for choosing YABOB for helping you with office hours!
             To start using YABOB, it requires the following roles: **\n`
         );
     }
-    if (!forServerInit && isDm) {
-        embed.setFooter({
-            text: `Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
-        });
-    }
     if (updateMessage.length > 0) {
-        embed.setFooter({ text: `✅ ${updateMessage}` });
+        embed.setFooter({
+            text: `✅ ${updateMessage}${
+                !forServerInit && isDm
+                    ? ` Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
+                    : ''
+            }`
+        });
     }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(

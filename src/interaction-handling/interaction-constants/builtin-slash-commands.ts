@@ -209,7 +209,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
-// /create_officies [category_name] [office_name] [number_of_offices]
+// /create_offices [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
     .setName(CommandNames.create_offices)
     .setDescription('Creates the a set number of voice channels in a new category')
