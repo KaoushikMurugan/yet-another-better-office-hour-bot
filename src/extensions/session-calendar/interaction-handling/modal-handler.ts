@@ -19,8 +19,8 @@ const calendarModalMap: ModalSubmitHandlerProps = {
         other: {
             [CalendarModalNames.CalendarSettingsModal]: interaction =>
                 updateCalendarSettings(interaction, false),
-            [CalendarModalNames.CalendarSettingsModal]: interaction =>
-                updateCalendarSettings(interaction, false)
+            [CalendarModalNames.CalendarSettingsModalMenuVersion]: interaction =>
+                updateCalendarSettings(interaction, true)
         }
     },
     dmMethodMap: {}

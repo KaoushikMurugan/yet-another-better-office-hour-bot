@@ -37,7 +37,7 @@ async function resetCalendarSettings(
 }
 
 /**
- * Refreshes the calendar emebed for the specified queue
+ * Refreshes the calendar embed for the specified queue
  * @param queueName
  * @param interaction
  */
@@ -46,7 +46,8 @@ async function requestCalendarRefresh(
 ): Promise<void> {
     const state = isServerCalendarInteraction(interaction)[1];
     const queueName = isFromQueueChannelWithParent(interaction).queueName;
-    const queueLevelExtension = state.listeners.get(queueName);
+    const queueLevelExtension = state.queueExtensions.get(queueName);
+    await state.refreshCalendarEvents();
     await queueLevelExtension?.onCalendarStateChange();
     await interaction.editReply(CalendarSuccessMessages.refreshSuccess(queueName));
 }

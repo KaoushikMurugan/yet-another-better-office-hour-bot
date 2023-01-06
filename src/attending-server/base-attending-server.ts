@@ -44,7 +44,7 @@ import {
     updateCommandHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarExtensionState } from '../extensions/session-calendar/calendar-states.js';
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 
 /**
  * Wrapper for TextChannel
@@ -100,6 +100,7 @@ class AttendingServerV2 {
     private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /**
      * Server settings. An firebase update is requested as soon as this changes
+     * - TODO: Use the Proxy class to abstract away the update logic
      */
     private settings: ServerSettings = {
         afterSessionMessage: '',
@@ -119,42 +120,52 @@ class AttendingServerV2 {
         readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
 
+    /** List of queues on this server */
     get queues(): ReadonlyArray<HelpQueueV2> {
         return [...this._queues.values()];
     }
+    /** All the students that are currently in a queue */
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
         return this.queues.flatMap(queue => queue.students);
     }
+    /** All the helpers on this server, both active and paused */
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;
     }
+    /** Auto clear values of a queue, undefined if not set */
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
     }
+    /** The after session message string. Empty string if not set */
     get afterSessionMessage(): string {
         return this.settings.afterSessionMessage;
     }
+    /** The logging channel on this server. undefined if not set */
     get loggingChannel(): Optional<TextChannel> {
         return this.settings.loggingChannel;
     }
-    get botAdminRoleID(): Snowflake {
+    /** bot admin role id */
+    get botAdminRoleID(): OptionalRoleId {
         return this.settings.hierarchyRoleIds.botAdmin;
     }
-    get staffRoleID(): Snowflake {
+    /** staff role id */
+    get staffRoleID(): OptionalRoleId {
         return this.settings.hierarchyRoleIds.staff;
     }
-    get studentRoleID(): Snowflake {
+    /** student role id, this is the everyone role if "@everyone is student" is selected */
+    get studentRoleID(): OptionalRoleId {
         return this.settings.hierarchyRoleIds.student;
     }
+    /** All the hierarchy role ids */
     get hierarchyRoleIds(): HierarchyRoles {
         return this.settings.hierarchyRoleIds;
     }
+    /** whether to automatically give new members the student role */
     get autoGiveStudentRole(): boolean {
         return this.settings.autoGiveStudentRole;
     }
     /**
-     * Returns an array of the roles for this server in decreasing order of hierarchy
-     * - Returns in the order [Bot Admin, Helper, Student]
+     * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
     get sortedHierarchyRoles(): ReadonlyArray<{
         key: keyof HierarchyRoles; // this can be used to index hierarchyRoleConfigs and HierarchyRoles
@@ -189,7 +200,17 @@ class AttendingServerV2 {
     }
 
     /**
-     * Loads the server data from a backup
+     * Gets a queue channel by the parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns queue channel object if it exists, undefined otherwise
+     */
+    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
+        return this._queues.get(parentCategoryId)?.queueChannel;
+    }
+
+    /**
+     * Loads the server settings data from a backup
+     * - queue backups are passed to the queue constructors
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
@@ -212,7 +233,7 @@ class AttendingServerV2 {
 
     /**
      * Sets the internal boolean value for autoGiveStudentRole
-     * @param autoGiveStudentRole
+     * @param autoGiveStudentRole on or off
      */
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this.settings.autoGiveStudentRole = autoGiveStudentRole;
@@ -222,7 +243,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Sets the hieararchy roles to use for this server
+     * Sets the hierarchy roles to use for this server
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
@@ -241,12 +262,12 @@ class AttendingServerV2 {
 
     /**
      * Sets the serious server flag, and updates the queues if seriousness is changed
-     * @param enableSeriousMode new value for seriousServer
+     * @param enableSeriousMode turn on or off serious mode
      * @returns True if triggered renders for all queues
      */
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const alreadySerious = this.queues[0]?.seriousModeEnabled ?? false;
-        if (alreadySerious === enableSeriousMode) {
+        const seriousState = this.queues[0]?.seriousModeEnabled ?? false;
+        if (seriousState === enableSeriousMode) {
             return false;
         }
         await Promise.all([
@@ -272,7 +293,7 @@ class AttendingServerV2 {
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
                   new FirebaseServerBackupExtension(guild),
-                  CalendarExtensionState.load(guild)
+                  CalendarServerExtension.load(guild)
               ]);
         const server = new AttendingServerV2(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
@@ -294,7 +315,7 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(RolesConfigMenu(server, owner.id, true, true));
+            await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
         }
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
@@ -481,22 +502,22 @@ class AttendingServerV2 {
 
     /**
      * Deletes a queue by categoryID
-     * @param queueCategoryID CategoryChannel.id of the target queue
+     * @param parentCategoryId CategoryChannel.id of the target queue
      * @throws ServerError if
      * - a discord API failure happened
      */
-    async deleteQueueById(queueCategoryID: string): Promise<void> {
-        const queue = this._queues.get(queueCategoryID);
+    async deleteQueueById(parentCategoryId: string): Promise<void> {
+        const queue = this._queues.get(parentCategoryId);
         if (queue === undefined) {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
         // delete queue data model no matter if the category was deleted by the user
         // now only the queue variable holds the queue channel
-        this._queues.delete(queueCategoryID);
+        this._queues.delete(parentCategoryId);
         const allChannels = await this.guild.channels.fetch();
         const parentCategory = allChannels.find(
             (channel): channel is CategoryChannel =>
-                isCategoryChannel(channel) && channel.id === queueCategoryID
+                isCategoryChannel(channel) && channel.id === parentCategoryId
         );
         if (!parentCategory) {
             // this shouldn't happen bc input type restriction on the command
@@ -520,8 +541,7 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
-     * @throws QueueError
-     * - if queue rejects
+     * @throws QueueError if queue refuses to enqueue
      */
     async enqueueStudent(
         studentMember: GuildMember,
@@ -564,7 +584,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Dequeue the student that has been waiting for the longest
+     * Dequeue the student that has been waiting for the longest globally
      * @param helperMember the helper that used /next.
      * @throws
      * - ServerError: if specificQueue is given but helper doesn't have the role
@@ -583,7 +603,8 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.notInVC;
         }
         const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
-        // check must happen before reduce, reduce on empty arrays will throw an error
+        // check must happen before reduce, reduce on empty arrays without initial value will throw an error
+        // in this case there's no valid initial value if there's no queue to dequeue from at all
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
         }
@@ -611,13 +632,14 @@ class AttendingServerV2 {
 
     /**
      * Handle /next with arguments
-     * @param specificQueue if specified, dequeue from this queue
      * @param targetStudentMember if specified, remove this student and override queue order
+     * @param targetQueue if specified, dequeue from this queue
+     * - If both are specified, only look for the targetStudentMember in specificQueue
      */
-    async dequeueWithArgs(
+    async dequeueWithArguments(
         helperMember: GuildMember,
         targetStudentMember?: GuildMember,
-        specificQueue?: QueueChannel
+        targetQueue?: QueueChannel
     ): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this._queues.filter(queue =>
             queue.hasHelper(helperMember.id)
@@ -632,9 +654,9 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.notInVC;
         }
         let student: Readonly<Helpee>;
-        if (specificQueue !== undefined) {
+        if (targetQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
-            const queueToDequeue = this._queues.get(specificQueue.parentCategoryId);
+            const queueToDequeue = this._queues.get(targetQueue.parentCategoryId);
             if (queueToDequeue === undefined) {
                 throw ExpectedServerErrors.queueDoesNotExist;
             }
@@ -673,6 +695,7 @@ class AttendingServerV2 {
     /**
      * Opens all the queue that the helper has permission to
      * @param helperMember helper that used /start
+     * @param notify whether to notify the students in queue
      * @throws ServerError
      * - If the helper doesn't have any class roles
      * - If the helper is already hosting
@@ -687,7 +710,7 @@ class AttendingServerV2 {
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
-            activeState: 'active',
+            activeState: 'active', // always start with active state
             member: helperMember
         };
         this._helpers.set(helperMember.id, helper);
@@ -711,8 +734,7 @@ class AttendingServerV2 {
     /**
      * Closes all the queue that the helper has permission to & logs the help time to console
      * @param helperMember helper that used /stop
-     * @throws ServerError if
-     * - the helper is not hosting
+     * @throws ServerError if the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._helpers.get(helperMember.id);
@@ -794,9 +816,9 @@ class AttendingServerV2 {
 
     /**
      * Removes a student from a given queue
-     * @param studentMember student that used /leave or the cleave button
+     * @param studentMember student that used /leave or the leave button
      * @param targetQueue the queue to leave from
-     * @throws QueueError: if @param targetQueue rejects
+     * @throws QueueError: if targetQueue rejects
      */
     async removeStudentFromQueue(
         studentMember: GuildMember,
@@ -863,7 +885,7 @@ class AttendingServerV2 {
     /**
      * Send an announcement to all the students in the helper's approved queues
      * @param helperMember helper that used /announce
-     * @param announcement announcement body
+     * @param announcement announcement message
      * @param targetQueue optional, specifies which queue to announce to
      */
     async announceToStudentsInQueue(
@@ -1044,8 +1066,11 @@ class AttendingServerV2 {
      * Creates roles for all the available queues if not already created
      */
     private async createQueueRoles(): Promise<void> {
+        // use a set to collect the unique queue names
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
-        const queueNames = (await this.getQueueChannels(false)).map(ch => ch.queueName);
+        const queueNames = (await this.getQueueChannels(false)).map(
+            channel => channel.queueName
+        );
         await Promise.all(
             queueNames.map(roleToCreate => {
                 !existingRoles.has(roleToCreate) &&
@@ -1061,7 +1086,7 @@ class AttendingServerV2 {
      * Creates all the office hour queues
      * @param queueBackups the queue data to load
      * @param hoursUntilAutoClear how long until the queues are cleared
-     * @param seriousModeEnabled show fun stuff in queues or not, sync with the server object
+     * @param seriousModeEnabled show fun stuff in queues or not, synced with the server object
      */
     private async initAllQueues(
         queueBackups?: QueueBackup[],
@@ -1089,7 +1114,7 @@ class AttendingServerV2 {
         );
         console.log(
             `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue(' with their extensions')
+                environment.disableExtensions ? '' : blue('with their extensions')
             }!`
         );
         await Promise.all(

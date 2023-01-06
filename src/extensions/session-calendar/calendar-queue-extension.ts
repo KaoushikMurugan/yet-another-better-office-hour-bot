@@ -1,36 +1,34 @@
 /** @module SessionCalendar */
-import { BaseQueueExtension, IQueueExtension } from '../extension-interface.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
+import { BaseQueueExtension } from '../extension-interface.js';
 import { EmbedColor } from '../../utils/embed-helper.js';
-import { red } from '../../utils/command-line-colors.js';
-import { calendarStates } from './calendar-states.js';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
     composeUpcomingSessionsEmbedBody,
-    getUpComingTutoringEvents,
-    restorePublicEmbedURL,
-    UpComingSessionViewModel
+    restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
 import { CalendarButtonNames } from './calendar-constants/calendar-interaction-names.js';
 import { RenderIndex } from '../../utils/type-aliases.js';
+import { CalendarExtensionState } from './calendar-states.js';
 
 /**
  * Calendar Extension for individual queues
  * ----
- * - All instances read from the calendar in serverIdStateMap.get(serverId)
- * - Each instance only looks for the class it's responsible for
+ * - All instances read from the calendar in CalendarExtensionStates.states
+ * - Each instance only looks for the queue it's responsible for
  */
-class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtension {
-    private upcomingSessions: UpComingSessionViewModel[] = [];
-    private display?: FrozenDisplay;
-    private lastUpdatedTimeStamp = new Date();
-
+class CalendarQueueExtension extends BaseQueueExtension {
+    /**
+     * @param renderIndex the order in the embed list, given by HelpQueue
+     * @param queueChannel the #queue text channel
+     * @param display same display object as the queue
+     */
     private constructor(
         private readonly renderIndex: RenderIndex,
-        private readonly queueChannel: QueueChannel
+        private readonly queueChannel: QueueChannel,
+        private readonly display: FrozenDisplay
     ) {
         super();
     }
@@ -39,45 +37,25 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * Initializes the calendar extension
      * @param renderIndex the index of the embed message given by the queue
      * @param queueChannel channel object
+     * @param display the display object,
+     *  **same reference** as the display in the HelpQueue that this extension belongs to
      */
     static async load(
         renderIndex: RenderIndex,
-        queueChannel: QueueChannel
+        queueChannel: QueueChannel,
+        display: FrozenDisplay
     ): Promise<CalendarQueueExtension> {
-        if (!calendarStates.has(queueChannel.channelObj.guild.id)) {
-            throw new ExtensionSetupError(
-                red('The command level extension is required.')
-            );
-        }
-        const instance = new CalendarQueueExtension(renderIndex, queueChannel);
-        calendarStates
-            .get(queueChannel.channelObj.guild.id)
-            ?.listeners.set(queueChannel.queueName, instance);
+        const state = CalendarExtensionState.get(queueChannel.channelObj.guild.id);
+        const instance = new CalendarQueueExtension(renderIndex, queueChannel, display);
+        state.queueExtensions.set(queueChannel.queueName, instance);
         return instance;
     }
 
     /**
-     * Every time queue emits onQueuePeriodicUpdate,
-     * fecth new events and update cached viewModel
+     * Event listener/subscriber for changes in calendarExtensionStates
      */
-    override async onQueuePeriodicUpdate(
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _queue: FrozenQueue,
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _isFirstCall: boolean
-    ): Promise<void> {
-        await this.renderCalendarEmbeds(true);
-    }
-
-    /**
-     * Embeds the upcoming hours into the queue channel
-     */
-    override async onQueueRender(
-        _queue: FrozenQueue,
-        display: FrozenDisplay
-    ): Promise<void> {
-        this.display = display;
-        await this.renderCalendarEmbeds(false);
+    async onCalendarStateChange(): Promise<void> {
+        await this.renderCalendarEmbeds();
     }
 
     /**
@@ -85,46 +63,30 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
      * @param deletedQueue
      */
     override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
-        calendarStates
-            .get(this.queueChannel.channelObj.guild.id)
-            ?.listeners.delete(deletedQueue.queueName);
+        CalendarExtensionState.get(
+            this.queueChannel.channelObj.guild.id
+        ).queueExtensions.delete(deletedQueue.queueName);
         // now garbage collector should clean up this instance
         // when server deletes the queue from queue collection
     }
 
-    /**
-     * Event listener/subscriber for changes in calendarExtensionStates
-     */
-    async onCalendarStateChange(): Promise<void> {
-        await this.renderCalendarEmbeds(true);
-    }
-
+    // TODO: (bug) New queues are missing the calendar embeds
     /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
-    private async renderCalendarEmbeds(refreshCache: boolean): Promise<void> {
-        const [serverId, queueName, state] = [
-            this.queueChannel.channelObj.guild.id,
-            this.queueChannel.queueName,
-            calendarStates.get(this.queueChannel.channelObj.guild.id)
-        ];
-        if (!state) {
-            return;
-        }
-        if (refreshCache) {
-            this.lastUpdatedTimeStamp = new Date();
-        }
-        this.upcomingSessions = refreshCache
-            ? await getUpComingTutoringEvents(serverId, queueName)
-            : this.upcomingSessions;
+    private async renderCalendarEmbeds(): Promise<void> {
+        const state = CalendarExtensionState.get(this.queueChannel.channelObj.guild.id);
+        const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
             .setDescription(
                 composeUpcomingSessionsEmbedBody(
-                    this.upcomingSessions,
-                    this.queueChannel,
-                    this.lastUpdatedTimeStamp
+                    state.upcomingSessions.filter(
+                        viewModel => viewModel.queueName === queueName
+                    ),
+                    this.queueChannel.queueName,
+                    state.lastUpdatedTimeStamp
                 )
             )
             .setColor(EmbedColor.Blue)
@@ -132,7 +94,7 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 text: 'This embed shows up to 5 most recent sessions and auto refreshes every hour. ',
                 iconURL: `https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Google_Calendar_icon_%282020%29.svg/2048px-Google_Calendar_icon_%282020%29.svg.png`
             });
-        const refreshButton = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             new ButtonBuilder()
                 .setURL(
                     state.publicCalendarEmbedUrl.length > 0
@@ -152,10 +114,10 @@ class CalendarQueueExtension extends BaseQueueExtension implements IQueueExtensi
                 .setLabel('Refresh Upcoming Sessions')
                 .setStyle(ButtonStyle.Secondary)
         );
-        this.display?.requestNonQueueEmbedRender(
+        this.display.requestNonQueueEmbedRender(
             {
                 embeds: [upcomingSessionsEmbed],
-                components: [refreshButton]
+                components: [buttons]
             },
             this.renderIndex
         );

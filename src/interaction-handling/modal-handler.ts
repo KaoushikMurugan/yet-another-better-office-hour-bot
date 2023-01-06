@@ -56,7 +56,6 @@ async function studentJoinedQueue(
 /**
  * Handles the modal submission from `/set_after_session_msg`
  * @param interaction
- * @returns
  */
 async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction<'cached'>,
@@ -64,10 +63,20 @@ async function setAfterSessionMessage(
 ): Promise<void> {
     const server = isServerInteraction(interaction);
     const message = interaction.fields.getTextInputValue('after_session_msg');
+    if (message.length >= 4096) {
+        throw ExpectedParseErrors.messageIsTooLong;
+    }
     await server.setAfterSessionMessage(message);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              AfterSessionMessageConfigMenu(server, interaction.channelId ?? '0', false)
+              AfterSessionMessageConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  message.length === 0
+                      ? 'Successfully disabled after session message.'
+                      : 'After session message has been updated!'
+              )
           )
         : interaction.reply(SuccessMessages.updatedAfterSessionMessage(message)));
 }
@@ -93,7 +102,14 @@ async function setQueueAutoClear(
     await server.setQueueAutoClear(hours, minutes, enable);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              QueueAutoClearConfigMenu(server, interaction.channelId ?? '0', false)
+              QueueAutoClearConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  enable
+                      ? 'Queue auto clear configuration has been updated!'
+                      : 'Successfully disabled queue auto clear.'
+              )
           )
         : interaction.reply(
               enable

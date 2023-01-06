@@ -24,11 +24,11 @@ import { CommandData } from '../interaction-handling/interaction-constants/built
 
 interface IInteractionExtension {
     /**
-     * Create a state for each guild if necessary
-     * - Called inside joinGuild()
-     * @param guild which guild to create state for
+     * Do an initialization check at YABOB instance level
+     * - Called inside client.on('ready')
+     * - Errors thrown here will NOT be caught
      */
-    loadState(guild: Guild): Promise<void>; // TODO: Maybe move this to onServerCreate?
+    initializationCheck(): Promise<void>;
     /**
      * The command data json to post to the discord server
      */
@@ -226,7 +226,7 @@ interface IQueueExtension {
  * - Add setting menu options in the settingsMainMenuOptions array
  */
 class BaseInteractionExtension implements IInteractionExtension {
-    loadState(guild: Guild): Promise<void> {
+    initializationCheck(): Promise<void> {
         return Promise.resolve();
     }
     helpMessages: {

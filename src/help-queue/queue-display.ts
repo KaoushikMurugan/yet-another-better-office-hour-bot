@@ -22,7 +22,7 @@ import { ButtonNames } from '../interaction-handling/interaction-constants/inter
 type QueueChannelEmbed = {
     /** Actual embed content */
     contents: Pick<BaseMessageOptions, 'embeds' | 'components'>;
-    /** the order of the embed. @example renderindex = 1 is the 2nd embed */
+    /** the order of the embed. @example renderIndex = 1 is the 2nd embed */
     renderIndex: RenderIndex;
     /** whether it has already been rendered */
     stale: boolean;
@@ -37,7 +37,7 @@ const queueStateStyles: {
 } = {
     // colors are arbitrary, feel free to change these
     closed: {
-        color: EmbedColor.Purple,
+        color: EmbedColor.PastelPurple,
         statusText: {
             serious: '**CLOSED**',
             notSerious: '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
@@ -54,10 +54,10 @@ const queueStateStyles: {
         color: EmbedColor.Yellow,
         statusText: {
             serious: '**PAUSED**',
-            notSerious: '**PAUSED**' // TODO: Add Emoticon here
+            notSerious: '**PAUSED**\t(´∀｀)'
         }
     }
-} as const;
+};
 
 /**
  * Class that handles the rendering of the queue, i.e. displaying and updating
@@ -66,7 +66,6 @@ const queueStateStyles: {
 class QueueDisplayV2 {
     /**
      * The collection of actual embeds. key is render index
-     * @remarks
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
      */
@@ -74,14 +73,12 @@ class QueueDisplayV2 {
         new Collection();
     /**
      * The collection of message ids that are safe to edit
-     * @remarks
      * - binds the render index with a specific message
      * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
      */
     private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
     /**
      * The mutex that locks the render method during render
-     * @remarks
      * - avoids the message.delete method from being called on a deleted message
      * - queue and extensions can still request render and write to queueChannelEmbeds
      */
@@ -92,7 +89,7 @@ class QueueDisplayV2 {
     readonly renderLoopTimerId: NodeJS.Timeout;
 
     constructor(private readonly queueChannel: QueueChannel) {
-        /** starts the render loop */
+        // starts the render loop
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
             // actually render if and only if we have to
@@ -307,7 +304,7 @@ class QueueDisplayV2 {
                 .setHeading('Position', 'Student Name')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setAlign(2, AlignmentEnum.CENTER)
-                .setStyle('unicode-mix')
+                .setStyle('unicode-single')
                 .addRowMatrix([
                     ...viewModel.studentDisplayNames.map((name, idx) => [
                         viewModel.seriousModeEnabled
@@ -323,7 +320,7 @@ class QueueDisplayV2 {
             table
                 .addRow('This queue is empty.')
                 .setAlign(1, AlignmentEnum.CENTER)
-                .setStyle('unicode-mix');
+                .setStyle('unicode-single');
             if (!viewModel.seriousModeEnabled) {
                 if (rand <= 0.1) {
                     table.addRow(`=^ Φ ω Φ ^=`);
@@ -332,7 +329,7 @@ class QueueDisplayV2 {
                 }
             }
         }
-        return '```' + table.toString() + '```';
+        return '```\n' + table.toString() + '\n```';
     }
 }
 

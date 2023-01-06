@@ -17,6 +17,7 @@ import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 import {
     ButtonNames,
+    CommandNames,
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 
@@ -156,14 +157,15 @@ function SettingsMainMenu(
  * Composes the server roles configuration menu
  * @param server
  * @param channelId
- * @param isDm
- * @param forServerInit
+ * @param isDm is it sent in dm?
+ * @param forServerInit is the menu sent on joining a new server?
  * @returns
  */
 function RolesConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
+    updateMessage = '',
     forServerInit = false
 ): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
@@ -176,7 +178,7 @@ function RolesConfigMenu(
             : `<@&${id}>`;
     };
     const setRolesCommandId = server.guild.commands.cache.find(
-        command => command.name === 'set_roles'
+        command => command.name === CommandNames.set_roles
     )?.id;
     const embed = new EmbedBuilder()
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
@@ -189,33 +191,32 @@ function RolesConfigMenu(
         })
         .addFields({
             name: 'Documentation',
-            value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles})`
+            value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
         })
         .addFields({
-            name: '⚠️ Warning',
-            value: `If you choose 🟠 Create New Roles, **duplicate** roles will be created if roles with the same names already exist.
-            For more granular control, use the </set_roles:${setRolesCommandId}> command.`
+            name: 'Warning',
+            value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
         })
         .addFields({
-            name: '🤖 Bot Admin Role',
-            value: forServerInit
-                ? `*Role that can manage the bot and its settings*\n`
-                : generatePing(server.botAdminRoleID),
-            inline: true
-        })
-        .addFields({
-            name: '📚 Staff Role',
-            value: forServerInit
-                ? `*Role that allows users to host office hours*\n`
-                : generatePing(server.staffRoleID),
-            inline: true
-        })
-        .addFields({
-            name: '🎓 Student Role',
-            value: forServerInit
-                ? `*Role that allows users to join office hour queues*\n`
-                : generatePing(server.studentRoleID),
-            inline: true
+            name: 'Current Role Configuration',
+            value: `
+            ${leadingNewLine}🤖 Bot Admin Role - ${
+                forServerInit
+                    ? `*Role that can manage the bot and its settings*\n`
+                    : generatePing(server.botAdminRoleID)
+            }
+
+            📚 Staff Role - ${
+                forServerInit
+                    ? `*Role that allows users to host office hours*\n`
+                    : generatePing(server.staffRoleID)
+            }
+
+            🎓 Student Role - ${
+                forServerInit
+                    ? `*Role that allows users to join office hour queues*\n`
+                    : generatePing(server.studentRoleID)
+            }`
         });
     if (forServerInit) {
         embed.setDescription(
@@ -228,6 +229,9 @@ function RolesConfigMenu(
             text: `Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
         });
     }
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
@@ -236,7 +240,10 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🔵 Use Existing Roles')
+                // this emoji string must be free of any other characters
+                // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
+                .setEmoji('🔵')
+                .setLabel('Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
@@ -244,7 +251,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🔵 Use Existing Roles (@everyone is student)')
+                .setEmoji('🔵')
+                .setLabel('Use Existing Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
@@ -254,7 +262,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🟠 Create New Roles')
+                .setEmoji('🟠')
+                .setLabel('Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 isDm ? 'dm' : 'other',
@@ -262,7 +271,8 @@ function RolesConfigMenu(
                 server.guild.id,
                 channelId
             ])
-                .setLabel('🟠 Create New Roles (@everyone is student)')
+                .setEmoji('🟠')
+                .setLabel('Create New Roles (@everyone is student)')
                 .setStyle(ButtonStyle.Secondary)
         )
     ];
@@ -282,7 +292,8 @@ function RolesConfigMenu(
 function AfterSessionMessageConfigMenu(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`📨 After Session Message Configuration for ${server.guild.name} 📨`)
@@ -293,19 +304,18 @@ function AfterSessionMessageConfigMenu(
         .addFields({
             name: 'Documentation',
             value: `[Learn more about after session message here.](${documentationLinks.afterSessionMessage})`
-        })
-        .addFields({
-            name: '» Current After Session Message',
-            value: `${
-                server.afterSessionMessage === ''
-                    ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
-                    : `${server.afterSessionMessage
-                          .trim()
-                          .split('\n')
-                          .map(line => `> ${line}`)
-                          .join('\n')}` // show the existing message in a quote block
-            }`
         });
+    embed.addFields({
+        name: 'Current After Session Message',
+        value: `${
+            server.afterSessionMessage === ''
+                ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
+                : // each field only supports 1024 chars
+                  `${server.afterSessionMessage.slice(0, 1000)}${
+                      server.afterSessionMessage.length > 1000 ? '...(Truncated)' : ''
+                  }`
+        }`
+    });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
@@ -326,6 +336,9 @@ function AfterSessionMessageConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     return { embeds: [embed.data], components: [buttons, mainMenuRow] };
 }
 
@@ -339,7 +352,8 @@ function AfterSessionMessageConfigMenu(
 function QueueAutoClearConfigMenu(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`⏳ Queue Auto Clear Configuration for ${server.guild.name} ⏳`)
@@ -353,13 +367,16 @@ function QueueAutoClearConfigMenu(
             value: `Learn more about queue auto clear [here](${documentationLinks.autoClear})`
         })
         .addFields({
-            name: '» Current Auto Clear Timeout',
+            name: 'Current Auto Clear Timeout',
             value:
                 server.queueAutoClearTimeout === undefined ||
                 server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
                     ? `**Disabled** - Queues will not be cleared automatically.`
                     : `**Enabled** - Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
         });
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
@@ -393,7 +410,8 @@ function QueueAutoClearConfigMenu(
 function LoggingChannelConfigMenu(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage = ''
 ): YabobEmbed {
     const setLoggingChannelCommandId = server.guild.commands.cache.find(
         command => command.name === 'set_logging_channel'
@@ -421,20 +439,23 @@ function LoggingChannelConfigMenu(
             value: `[Learn more about YABOB logging channels here](${documentationLinks.loggingChannel})`
         })
         .addFields({
-            name: 'ℹ️ Note: Select menu length limit',
-            value: `Discord only allows a maximum of 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
+            name: 'Note: Select menu length limit',
+            value: `Discord only allows up to 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
                 setLoggingChannelCommandId
                     ? `</set_logging_channel:${setLoggingChannelCommandId}>`
                     : '`/set_logging_channel`'
             } command to select any text channel on this server.`
         })
         .addFields({
-            name: '» Current Logging Channel',
+            name: 'Current Logging Channel',
             value:
                 server.loggingChannel === undefined
                     ? '**Disabled** - YABOB will not send logs to this server.'
                     : server.loggingChannel.toString()
         });
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     // Filter out the channels that are more likely to be logging channels
     // based on how many characters in the channel name matches with 'logs'
     const mostLikelyLoggingChannels = server.guild.channels.cache
@@ -477,7 +498,8 @@ function LoggingChannelConfigMenu(
 function AutoGiveStudentRoleConfigMenu(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🎓 Auto Give Student Role Configuration for ${server.guild.name} 🎓`)
@@ -491,11 +513,14 @@ function AutoGiveStudentRoleConfigMenu(
             value: `[Learn more about auto give student role here.](${documentationLinks.autoGiveStudentRole})`
         })
         .addFields({
-            name: '» Current Configuration',
+            name: 'Current Configuration',
             value: server.autoGiveStudentRole
                 ? `**Enabled** - New members will automatically become <@&${server.studentRoleID}>.`
                 : `**Disabled** - New members need to be manually assigned <@&${server.studentRoleID}>.`
         });
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',

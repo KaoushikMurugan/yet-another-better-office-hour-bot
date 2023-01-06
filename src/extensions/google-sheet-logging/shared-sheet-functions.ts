@@ -8,7 +8,7 @@ import { environment } from '../../environment/environment-manager.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
 
 function getServerGoogleSheet(server: AttendingServerV2): Optional<GoogleSpreadsheet> {
-    return GoogleSheetExtensionState.guildLevelStates.get(server.guild.id)?.googleSheet;
+    return GoogleSheetExtensionState.allStates.get(server.guild.id)?.googleSheet;
 }
 
 /**
@@ -19,7 +19,7 @@ function isServerGoogleSheetInteraction(
     interaction: Interaction<'cached'>
 ): [state: GoogleSheetExtensionState, server: AttendingServerV2] {
     const server = isServerInteraction(interaction);
-    const state = GoogleSheetExtensionState.guildLevelStates.get(server.guild.id);
+    const state = GoogleSheetExtensionState.allStates.get(server.guild.id);
     if (!state) {
         throw ExpectedSheetErrors.nonServerInteraction(server.guild.name);
     }

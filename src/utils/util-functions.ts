@@ -15,7 +15,7 @@ import {
     VoiceChannel,
     VoiceState
 } from 'discord.js';
-import { black, cyan, magenta, yellow } from './command-line-colors.js';
+import { black, cyan, magenta, red, yellow } from './command-line-colors.js';
 import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
@@ -159,13 +159,13 @@ function getInteractionName(interaction: Interaction): string {
         return interaction.commandName;
     }
     if (interaction.isButton()) {
-        return interaction.component?.label ?? interaction.customId;
+        return interaction.component.label ?? interaction.customId;
     }
     if (interaction.isModalSubmit()) {
         return interaction.customId;
     }
     if (interaction.isSelectMenu()) {
-        return interaction.component?.placeholder ?? interaction.customId;
+        return interaction.component.placeholder ?? interaction.customId;
     }
     return 'Unsupported Interaction Type';
 }
@@ -384,6 +384,27 @@ function logDMSelectMenuSelection(
             ` - In DM`
     );
 }
+
+/**
+ * Pretty prints an expected error to the console
+ * @param interaction
+ * @param error
+ */
+function logExpectedErrors(interaction: Interaction, error: Error): void {
+    console.log(
+        `[${cyan(
+            new Date().toLocaleString('en-US', {
+                timeZone: 'PST8PDT'
+            })
+        )} ` +
+            `${yellow(interaction.user.username)}]\n` +
+            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
+            ` - Related Server Id: ${interaction.guildId}\n` +
+            ` - ${red(`Error: ${error.name}`)}\n` +
+            ` - Error Message: ${error.message}`
+    );
+}
+
 // #endregion Loggers
 
 // #region Type Guards
@@ -506,5 +527,6 @@ export {
     logDMButtonPress,
     logDMModalSubmit,
     logModalSubmit,
-    logSelectMenuSelection
+    logSelectMenuSelection,
+    logExpectedErrors
 };

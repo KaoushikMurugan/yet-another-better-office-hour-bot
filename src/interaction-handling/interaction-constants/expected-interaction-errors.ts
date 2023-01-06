@@ -29,6 +29,10 @@ const ExpectedParseErrors = {
             : new CommandParseError(
                   `\`${categoryName}\` is not a valid queue category.\nPlease use this interaction inside a category that has the #queue channel.`
               ),
+    unrecognizedQueue: (categoryName?: string) =>
+        new CommandParseError(
+            `YABOB doesn't recognize a queue named \`${categoryName}\`.`
+        ),
     noQueueTextChannel: (categoryName: Optional<string>) =>
         new CommandParseError(
             `This category does not have a \`#queue\` text channel.\n` +

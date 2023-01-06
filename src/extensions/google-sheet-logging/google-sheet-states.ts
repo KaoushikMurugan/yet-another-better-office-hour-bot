@@ -4,7 +4,6 @@ import { GuildId } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { yellow, blue } from '../../utils/command-line-colors.js';
-import { ExtensionSetupError } from '../../utils/error-types.js';
 import { IServerExtension } from '../extension-interface.js';
 import { firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
@@ -32,11 +31,12 @@ class GoogleSheetExtensionState {
      * - static, so it's shared across all instances
      * - key is guild id, value is 1 google sheet extension state
      */
-    static guildLevelStates = new Collection<GuildId, GoogleSheetExtensionState>();
+    static readonly allStates = new Collection<GuildId, GoogleSheetExtensionState>();
 
     /**
-     * Constructor
-     * @param serverExtension the corresponding server level extension
+     * @param guild
+     * @param serverExtension
+     * @param _googleSheet this cannot be directly initialized, so the restoreBackup method is static
      */
     protected constructor(
         readonly guild: Guild,
@@ -63,15 +63,6 @@ class GoogleSheetExtensionState {
         guild: Guild,
         serverExtension: GoogleSheetServerExtension
     ): Promise<GoogleSheetExtensionState> {
-        if (
-            environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID.length === 0 ||
-            environment.googleCloudCredentials.client_email.length === 0 ||
-            environment.googleCloudCredentials.private_key.length === 0
-        ) {
-            throw new ExtensionSetupError(
-                'No default Google Sheet ID or Google Cloud credentials found.'
-            );
-        }
         const backupData = await GoogleSheetExtensionState.restoreFromBackup(guild.id);
         const googleSheet = await loadSheetById(backupData.sheetId);
         const instance = new GoogleSheetExtensionState(
@@ -80,7 +71,7 @@ class GoogleSheetExtensionState {
             googleSheet
         );
         // add the new state to the static collection
-        GoogleSheetExtensionState.guildLevelStates.set(guild.id, instance);
+        GoogleSheetExtensionState.allStates.set(guild.id, instance);
         console.log(
             `[${blue('Google Sheet Logging')}] ` +
                 `successfully loaded for '${yellow(guild.name)}'!\n` +

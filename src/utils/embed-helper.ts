@@ -16,17 +16,18 @@ import { client } from '../global-states.js';
 type ExpectedError = QueueError | ServerError | CommandParseError;
 
 enum EmbedColor {
-    Success = 0xa9dc76, // Green
     Error = 0xff6188, // Red
-    UnexpectedError = 0xff0000, // pure red
     KindaBad = 0xfc9867, // Orange
+    Success = 0xa9dc76, // Green
+    UnexpectedError = 0xff0000, // pure red
     Neutral = 0xffffff, // White
     Yellow = 0xffd866, // Yellow
     NoColor = 0x2f3137, // the embed background
     Aqua = 0x78dce8,
-    Purple = 0xa6a5c4,
+    DiscordPurple = 0x5865f2,
+    PastelPurple = 0x738adb, // old discord purple
     Pink = 0xffb7c5,
-    Blue = 0x3498db
+    Blue = 0x3084fe
 }
 
 const DEFAULT_PFP = 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;
@@ -551,9 +552,12 @@ function SlashCommandLogEmbed(
                     switch (option.type) {
                         case ApplicationCommandOptionType.Channel:
                             return `**${option.name}**: <#${option.value}>`;
-                        case ApplicationCommandOptionType.User ||
-                            ApplicationCommandOptionType.Role ||
-                            ApplicationCommandOptionType.Mentionable:
+                        // fall through cases, allows User, Role, and Mentionable to be matched together
+                        // this is pretty error prone, so we generally avoid doing this
+                        // but in this case it's safe because we always return
+                        case ApplicationCommandOptionType.User:
+                        case ApplicationCommandOptionType.Role:
+                        case ApplicationCommandOptionType.Mentionable:
                             return `**${option.name}**: <@${option.value}>`;
                         default:
                             return `**${option.name}**: ${option.value}`;
@@ -621,9 +625,10 @@ function SlashCommandLogEmbed2(command: CommandInteraction): EmbedBuilder {
                     switch (option.type) {
                         case ApplicationCommandOptionType.Channel:
                             return `**${option.name}**: <#${option.value}>`;
-                        case ApplicationCommandOptionType.User ||
-                            ApplicationCommandOptionType.Role ||
-                            ApplicationCommandOptionType.Mentionable:
+                        // see the SlashCommandLogEmbed's comments
+                        case ApplicationCommandOptionType.User:
+                        case ApplicationCommandOptionType.Role:
+                        case ApplicationCommandOptionType.Mentionable:
                             return `**${option.name}**: <@${option.value}>`;
                         default:
                             return `**${option.name}**: ${option.value}`;

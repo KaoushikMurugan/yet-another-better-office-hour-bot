@@ -1,37 +1,66 @@
 /** @module SessionCalendar */
 /**
  * @packageDocumentation
- * This file contains the common validation / util functions
- *  used by the calendar extension
+ * This file contains the common validation & util functions used by the calendar extension
  */
-import { calendar_v3 } from 'googleapis/build/src/apis/calendar';
-import { CalendarExtensionState, calendarStates } from './calendar-states.js';
+import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
+import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
-import { Optional, WithRequired } from '../../utils/type-aliases.js';
+import { GuildMemberId, WithRequired } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
-import { QueueChannel } from '../../attending-server/base-attending-server.js';
-import {
-    ChatInputCommandInteraction,
-    ButtonInteraction,
-    ModalSubmitInteraction
-} from 'discord.js';
+import { Snowflake, Interaction } from 'discord.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
 import { FrozenServer } from '../extension-utils.js';
 import { isServerInteraction } from '../../interaction-handling/shared-validations.js';
 
-// ViewModel for 1 tutor's upcoming session
+/**
+ * ViewModel for 1 tutor's upcoming session
+ */
 type UpComingSessionViewModel = {
+    /**
+     * start time
+     */
     start: Date;
+    /**
+     * end time
+     */
     end: Date;
+    /**
+     * raw summary of the event, found in the title
+     */
     eventSummary: string;
+    /**
+     * Display name of the tutor
+     */
     displayName: string;
-    eventQueue: string; // the queue that this event corrsponds to
+    /**
+     * Name of the queue that this event corresponds to
+     */
+    queueName: string;
+    /**
+     * Discord snowflake of the helper
+     */
     discordId?: string;
+    /**
+     * Location string found in the event, will be truncated to 25 characters
+     */
     location?: string;
 };
 
+/**
+ * Backup data model of calendar extension states
+ */
+interface CalendarConfigBackup {
+    calendarId: string;
+    calendarNameDiscordIdMap: { [calendarName: string]: GuildMemberId };
+    publicCalendarEmbedUrl: string;
+}
+
+/**
+ * Validation schema for data coming from the google api
+ */
 const calendarDataSchema = z.object({
     start: z.object({
         dateTime: z.string()
@@ -43,81 +72,9 @@ const calendarDataSchema = z.object({
 });
 
 /**
- * Fetches the calendar and build the embed view model
- * @param serverId guild.id for calendarState.get()
- * @param queueName the name to look for in the calendar event
- */
-async function getUpComingTutoringEvents(
-    serverId: string,
-    queueName: string
-): Promise<UpComingSessionViewModel[]> {
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    const calendarUrl = buildCalendarURL({
-        // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: calendarStates.get(serverId)?.calendarId ?? '',
-        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
-        timeMin: new Date(),
-        timeMax: nextWeek,
-        maxResults: 100
-    });
-    const response = await axios.default
-        .get(calendarUrl, {
-            timeout: 5000,
-            method: 'GET'
-        })
-        .catch(() => {
-            throw ExpectedCalendarErrors.refreshTimedout;
-        });
-    if (response.status !== 200) {
-        throw ExpectedCalendarErrors.inaccessibleCalendar;
-    }
-    const responseJSON = await response.data;
-    const rawEvents = (responseJSON as calendar_v3.Schema$Events)?.items;
-    if (!rawEvents || rawEvents.length === 0) {
-        return [];
-    }
-    const definedViewModels: UpComingSessionViewModel[] = [];
-    for (const rawEvent of rawEvents) {
-        const unpack = calendarDataSchema.safeParse(rawEvent);
-        if (!unpack.success) {
-            continue;
-        }
-        const parsedEvent = unpack.data;
-        const parsableCalendarString = parsedEvent.description
-            .substring(
-                parsedEvent.description.indexOf('YABOB_START') + 'YABOB_START'.length,
-                parsedEvent.description.indexOf('YABOB_END')
-            )
-            .trimStart()
-            .trimEnd();
-        const viewModel = composeViewModel(
-            serverId,
-            queueName,
-            rawEvent.summary ?? '',
-            parsableCalendarString ?? '',
-            new Date(parsedEvent.start.dateTime),
-            new Date(parsedEvent.end.dateTime),
-            rawEvent.location ?? undefined
-        );
-        // trim to avoid overflow
-        if (viewModel?.location !== undefined) {
-            viewModel.location =
-                viewModel.location?.length > 25
-                    ? viewModel.location?.substring(0, 25) + '...'
-                    : viewModel.location;
-        }
-        if (viewModel !== undefined) {
-            definedViewModels.push(viewModel);
-        }
-    }
-    return definedViewModels;
-}
-
-/**
  * Attempts to connect to the google calendar
- * @param newCalendarId
- * @returns data from the google calendar
+ * @param newCalendarId id of the new calendar
+ * @returns title of the calendar
  * @throws ExpectedCalendarErrors if
  * - API request fails
  * - API request times out
@@ -134,11 +91,11 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
     });
     const response = await axios.default
         .get(calendarUrl, {
-            timeout: 5000,
+            timeout: 5000, // 5 second timeout
             method: 'GET'
         })
         .catch(() => {
-            throw ExpectedCalendarErrors.refreshTimedout;
+            throw ExpectedCalendarErrors.refreshTimedOut;
         });
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.failedRequest;
@@ -150,99 +107,69 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
 }
 
 /**
- * Parses the summary string and builds the view model for the current queue
- * @param rawSummary unmodified calendar event summary
- * @param parsingString string found the the calendar event description
- * @param start start date of 1 session
- * @param end end date of 1 session
- * @param location where the help session will happen
- * @returns undefined if any parsing failed, otherwise a complete view model
+ * Transforms a upcoming session view model to this format:
+ * ```plaintext
+ * TutorName ┈ TutorName - 20, 36AB
+ * Start: in 13 hours ┈ End: in 15 hours ┈ Location: Virtual
+ * ```
+ * @param viewModel
+ * @returns the formatted string
  */
-function composeViewModel(
-    serverId: string,
-    queueName: string,
-    rawSummary: string,
-    parsingString: string,
-    start: Date,
-    end: Date,
-    location?: string
-): Optional<UpComingSessionViewModel> {
-    // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
-    // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
-    const words = parsingString.split('-');
-    if (words.length !== 2) {
-        return undefined;
-    }
-    const punctuations = /[,]/g;
-    const tutorName = words[0]?.trim();
-    const eventQueueNames = words[1]
-        ?.trim()
-        .split(', ')
-        .map(eventQueue => eventQueue?.replace(punctuations, '').trim());
-    // eventQueues will be:
-    // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
-    if (eventQueueNames?.length === 0 || tutorName === undefined) {
-        return undefined;
-    }
-    const targetQueue = eventQueueNames?.find(name => queueName === name);
-    if (targetQueue === undefined) {
-        return undefined;
-    }
-    return {
-        start: start,
-        end: end,
-        eventQueue: targetQueue,
-        eventSummary: rawSummary,
-        displayName: tutorName,
-        discordId: calendarStates.get(serverId)?.displayNameDiscordIdMap.get(tutorName),
-        location: location
-    };
+function transformViewModelToString(viewModel: UpComingSessionViewModel): string {
+    const spacer = '\u3000'; // ideographic space character, extra wide
+    return (
+        `**${
+            viewModel.discordId ? `<@${viewModel.discordId}>` : viewModel.displayName
+        }**${spacer}**${viewModel.eventSummary}**\n` +
+        `Start: <t:${viewModel.start.getTime().toString().slice(0, -3)}:R>${spacer}` +
+        `End: <t:${viewModel.end.getTime().toString().slice(0, -3)}:R>` +
+        `${viewModel.location ? `${spacer}Location: ${viewModel.location}` : ''}`
+    );
 }
-
 /**
  * Builds the body message of the upcoming sessions embed
- * @param viewModels models from {@link getUpComingTutoringEvents}
- * @param queueChannel which queue channel to look for
+ * @param viewModels models from {@link getUpComingTutoringEventsForServer}
+ * @param title the queue name or the guild name
+ * @param lastUpdatedTimeStamp when was the last time that the view models are updated
  * @param returnCount the MAXIMUM number of events to render
+ * - if the value is 'max', show as many sessions as possible
  * @returns string that goes into the embed
  */
 function composeUpcomingSessionsEmbedBody(
     viewModels: UpComingSessionViewModel[],
-    queueChannel: QueueChannel,
+    title: string,
     lastUpdatedTimeStamp: Date,
-    returnCount = 5
+    returnCount: number | 'max' = 5
 ): string {
+    // this divider character appears really long and really thin on discord
+    const divider = `\n${'┈'.repeat(25)}\n`;
+    const lastUpdatedTimeStampString = `${divider}Last updated: <t:${Math.floor(
+        lastUpdatedTimeStamp.getTime() / 1000
+    )}:R>`;
+    if (viewModels.length === 0) {
+        return `**There are no upcoming sessions for ${title} in the next 7 days.**${lastUpdatedTimeStampString}`;
+    }
+    if (returnCount === 'max') {
+        let currLength = lastUpdatedTimeStampString.length; // current embed message length
+        const upcomingSessionStrings: string[] = [];
+        // take as many as possible within the discord embed length limit
+        for (const viewModel of viewModels) {
+            const transformedString = transformViewModelToString(viewModel);
+            if (currLength + transformedString.length + divider.length > 4096) {
+                break;
+            } else {
+                currLength += transformedString.length + divider.length;
+                upcomingSessionStrings.push(transformedString);
+            }
+        }
+        return upcomingSessionStrings.join(divider) + lastUpdatedTimeStampString;
+    }
     return (
-        (viewModels.length > 0
-            ? viewModels
-                  .slice(0, returnCount) // take the first 10
-                  .map(
-                      viewModel =>
-                          `**${
-                              viewModel.discordId !== undefined
-                                  ? `<@${viewModel.discordId}>`
-                                  : viewModel.displayName
-                          }**\t|\t` +
-                          `**${viewModel.eventSummary}**\n` +
-                          `Start: <t:${viewModel.start
-                              .getTime()
-                              .toString()
-                              .slice(0, -3)}:R>\t|\t` +
-                          `End: <t:${viewModel.end
-                              .getTime()
-                              .toString()
-                              .slice(0, -3)}:R>` +
-                          `${
-                              viewModel.location
-                                  ? `\t|\tLocation: ${viewModel.location}`
-                                  : ``
-                          }`
-                  )
-                  .join(`\n${'-'.repeat(30)}\n`)
-            : `**There are no upcoming sessions for ${queueChannel.queueName} in the next 7 days.**`) +
-        `\n${'-'.repeat(30)}\nLast updated: <t:${Math.floor(
-            lastUpdatedTimeStamp.getTime() / 1000
-        )}:R>`
+        viewModels
+            // take the first `returnCount` number of sessions
+            .slice(0, returnCount)
+            .map(transformViewModelToString)
+            .join(divider) + lastUpdatedTimeStampString
     );
 }
 
@@ -279,16 +206,12 @@ function restorePublicEmbedURL(calendarId: string): string {
 }
 
 /**
- * Checks if the calendar interactoin is safe to execute
+ * Checks if the calendar interaction is safe to execute
+ * @deprecated will be removed as the base isServerInteraction gets deprecated
  * @param interaction
- * @returns server and state object tuple
+ * @returns server, state, and interaction 3-tuple
  */
-function isServerCalendarInteraction<
-    T extends
-        | ChatInputCommandInteraction<'cached'>
-        | ButtonInteraction<'cached'>
-        | ModalSubmitInteraction<'cached'>
->(
+function isServerCalendarInteraction<T extends Interaction<'cached'>>(
     interaction: T
 ): [
     server: FrozenServer,
@@ -296,7 +219,7 @@ function isServerCalendarInteraction<
     interaction: WithRequired<T, 'channel' | 'channelId'>
 ] {
     const server = isServerInteraction(interaction);
-    const state = calendarStates.get(server.guild.id);
+    const state = CalendarExtensionState.allStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
     }
@@ -305,11 +228,128 @@ function isServerCalendarInteraction<
     return [server, state, interaction as WithRequired<T, 'channel' | 'channelId'>];
 }
 
+/**
+ * Fetches 100 calendar events of a server
+ * @param serverId id of the server to fetch for
+ * @returns at most 100 UpComingSessionViewModels
+ */
+async function getUpComingTutoringEventsForServer(
+    serverId: Snowflake
+): Promise<UpComingSessionViewModel[]> {
+    const nextWeek = new Date();
+    nextWeek.setDate(nextWeek.getDate() + 7);
+    const calendarUrl = buildCalendarURL({
+        // defaults to empty to let the api call reject, then prompt user to fix the id
+        calendarId: CalendarExtensionState.allStates.get(serverId)?.calendarId ?? '',
+        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
+        timeMin: new Date(),
+        timeMax: nextWeek,
+        maxResults: 100 // change this value to fetch more
+    });
+    const response = await axios.default
+        .get(calendarUrl, {
+            timeout: 5000,
+            method: 'GET'
+        })
+        .catch(() => {
+            throw ExpectedCalendarErrors.refreshTimedOut;
+        });
+    if (response.status !== 200) {
+        throw ExpectedCalendarErrors.inaccessibleCalendar;
+    }
+    const responseJSON = await response.data;
+    const rawEvents = (responseJSON as calendar_v3.Schema$Events).items;
+    if (!rawEvents || rawEvents.length === 0) {
+        return [];
+    }
+    const viewModels: UpComingSessionViewModel[] = [];
+    for (const rawEvent of rawEvents) {
+        const unpack = calendarDataSchema.safeParse(rawEvent);
+        if (!unpack.success) {
+            continue;
+        }
+        const parsedEvent = unpack.data;
+        const parsableCalendarString = parsedEvent.description
+            .substring(
+                parsedEvent.description.indexOf('YABOB_START') + 'YABOB_START'.length,
+                parsedEvent.description.indexOf('YABOB_END')
+            )
+            .trimStart()
+            .trimEnd();
+        // now build all the viewModels from this calendar string
+        // Example: 'Tutor Name - ECS 20, ECS 36A' will return:
+        // {..., queueName: 'ECS 20' }, {..., queueName: 'ECS 36A' }, {..., queueName: '36B'}
+        viewModels.push(
+            ...composeViewModelsByString(
+                serverId,
+                rawEvent.summary ?? '',
+                parsableCalendarString,
+                new Date(parsedEvent.start.dateTime),
+                new Date(parsedEvent.end.dateTime),
+                rawEvent.location ?? undefined
+            )
+        );
+    }
+    return viewModels;
+}
+
+/**
+ * Parses the summary string and builds the view models for **all queues in the string**
+ * - There might be queueNames that are successfully parsed but no queue with such names exist
+ * - queue extensions will look for its own name, so we can safely ignore these special cases
+ * @param rawSummary unmodified calendar event summary
+ * @param parsingString string found the the calendar event description
+ * @param start start date of 1 session
+ * @param end end date of 1 session
+ * @param location where the help session will happen
+ * @returns array of successfully parsed view models
+ */
+function composeViewModelsByString(
+    serverId: string,
+    rawSummary: string,
+    parsingString: string,
+    start: Date,
+    end: Date,
+    location?: string
+): UpComingSessionViewModel[] {
+    // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
+    // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
+    const words = parsingString.split('-');
+    if (words.length !== 2) {
+        return [];
+    }
+    const punctuations = /[,]/g;
+    const tutorName = words[0]?.trim();
+    const eventQueueNames = words[1]
+        ?.trim()
+        .split(', ')
+        .map(eventQueue => eventQueue.replace(punctuations, '').trim());
+    // eventQueues will be:
+    // ['ECS 20', 'ECS 36A', 'ECS 36B', 'ECS 122A', 'ECS 122B']
+    if (!eventQueueNames || tutorName === undefined) {
+        return [];
+    }
+    return eventQueueNames.map(queueName => ({
+        start: start,
+        end: end,
+        queueName: queueName,
+        eventSummary: rawSummary,
+        displayName: tutorName,
+        discordId: CalendarExtensionState.allStates
+            .get(serverId)
+            ?.calendarNameDiscordIdMap.get(tutorName),
+        location:
+            location !== undefined && location.length > 25
+                ? location.substring(0, 25) + '...'
+                : location
+    }));
+}
+
 export {
-    getUpComingTutoringEvents,
-    composeViewModel,
-    buildCalendarURL,
     UpComingSessionViewModel,
+    CalendarConfigBackup,
+    getUpComingTutoringEventsForServer,
+    buildCalendarURL,
     checkCalendarConnection,
     restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody,

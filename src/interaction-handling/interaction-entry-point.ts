@@ -15,7 +15,7 @@ import {
     Interaction,
     ModalSubmitInteraction,
     SelectMenuInteraction,
-    TextChannel
+    Snowflake, TextChannel
 } from 'discord.js';
 import {
     ButtonHandlerProps,
@@ -36,6 +36,7 @@ import {
     logDMButtonPress,
     logDMModalSubmit,
     logDMSelectMenuSelection,
+    logExpectedErrors,
     logModalSubmit,
     logSelectMenuSelection,
     logSlashCommand
@@ -58,6 +59,7 @@ const interactionExtensions: ReadonlyArray<IInteractionExtension> =
     environment.disableExtensions
         ? []
         : [
+              // Do not use async creation methods here for now bc it conflicts with client login
               new SessionCalendarInteractionExtension(),
               new GoogleSheetInteractionExtension()
           ];
@@ -69,6 +71,28 @@ const [completeCommandMap, completeButtonMap, completeSelectMenuMap, completeMod
     combineMethodMaps(interactionExtensions);
 
 /**
+ * Determines how to reply the interaction with error
+ * - reply, editReply, or update?
+ * @param interaction
+ * @param error
+ */
+async function replyWithError(
+    interaction: Interaction,
+    error: Error,
+    botAdminRoleID: Snowflake
+): Promise<void> {
+    if (!interaction.isRepliable()) {
+        return;
+    }
+    interaction.replied
+        ? await interaction.editReply(ErrorEmbed(error, botAdminRoleID))
+        : await interaction.reply({
+              ...ErrorEmbed(error, botAdminRoleID),
+              ephemeral: true
+          });
+}
+
+/**
  * Process ChatInputCommandInteractions
  * @param interaction
  */
@@ -77,19 +101,25 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
         return;
     }
     const commandName = interaction.commandName;
+    const possibleSubcommands = interaction.options.getSubcommand(false);
     const server = isServerInteraction(interaction);
     const handleCommand = completeCommandMap.methodMap[commandName];
     logSlashCommand(interaction);
     server.sendLogMessage(SlashCommandLogEmbed(interaction));
     if (!completeCommandMap.skipProgressMessageCommands.has(commandName)) {
         await interaction.reply({
-            ...SimpleEmbed(`Processing command \`${commandName}\``),
+            ...SimpleEmbed(
+                `Processing command \`${commandName}${
+                    possibleSubcommands ? ` ${possibleSubcommands}` : ''
+                }\` ...`
+            ),
             ephemeral: true
         });
     }
-    await handleCommand?.(interaction).catch((err: Error) =>
-        replyErrorMsg(interaction, err, server.botAdminRoleID)
-    );
+    await handleCommand?.(interaction).catch(async (err: Error) => {
+        logExpectedErrors(interaction, err);
+        await replyWithError(interaction, err, server.botAdminRoleID);
+    });
 }
 
 /**
@@ -116,15 +146,17 @@ async function processButton(interaction: Interaction): Promise<void> {
     if (interaction.inCachedGuild() && type !== 'dm') {
         logButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
-        await handleModalSubmit?.(interaction).catch((err: Error) =>
-            replyErrorMsg(interaction, err, server.botAdminRoleID)
-        );
+        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
+        });
     } else {
         logDMButtonPress(interaction, buttonName);
         const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
-        await handleModalSubmit?.(interaction).catch((err: Error) =>
-            replyErrorMsg(interaction, err, server.botAdminRoleID)
-        );
+        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
+        });
     }
 }
 
@@ -154,17 +186,19 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
         logSelectMenuSelection(interaction, selectMenuName);
-        const handleModalSubmit =
+        const handleSelectMenu =
             completeSelectMenuMap.guildMethodMap[type][selectMenuName];
-        await handleModalSubmit?.(interaction).catch((err: Error) =>
-            replyErrorMsg(interaction, err, server.botAdminRoleID)
-        );
+        await handleSelectMenu?.(interaction).catch(async (err: Error) => {
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
+        });
     } else {
         logDMSelectMenuSelection(interaction, selectMenuName);
-        const handleModalSubmit = completeSelectMenuMap.dmMethodMap[selectMenuName];
-        await handleModalSubmit?.(interaction).catch((err: Error) =>
-            replyErrorMsg(interaction, err, server.botAdminRoleID)
-        );
+        const handleSelectMenu = completeSelectMenuMap.dmMethodMap[selectMenuName];
+        await handleSelectMenu?.(interaction).catch(async (err: Error) => {
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
+        });
     }
 }
 
@@ -185,13 +219,15 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         logModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.guildMethodMap[type][modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await replyErrorMsg(interaction, err, server.botAdminRoleID);
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.dmMethodMap[modalName];
         await handleModalSubmit?.(interaction).catch(async (err: Error) => {
-            await replyErrorMsg(interaction, err, server.botAdminRoleID);
+            logExpectedErrors(interaction, err);
+            await replyWithError(interaction, err, server.botAdminRoleID);
         });
     }
 }
