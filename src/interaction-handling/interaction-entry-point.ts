@@ -138,15 +138,15 @@ async function processButton(interaction: Interaction): Promise<void> {
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
         logButtonPress(interaction, buttonName);
-        const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+        const handleButton = completeButtonMap.guildMethodMap[type][buttonName];
+        await handleButton?.(interaction).catch(async (err: Error) => {
             logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMButtonPress(interaction, buttonName);
-        const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+        const handleButton = completeButtonMap.dmMethodMap[buttonName];
+        await handleButton?.(interaction).catch(async (err: Error) => {
             logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });

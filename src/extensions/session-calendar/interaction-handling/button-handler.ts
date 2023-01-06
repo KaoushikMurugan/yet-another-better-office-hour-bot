@@ -20,7 +20,10 @@ const calendarButtonMap: ButtonHandlerProps = {
         }
     },
     dmMethodMap: {},
-    skipProgressMessageButtons: new Set([CalendarButtonNames.ShowCalendarSettingsModal])
+    skipProgressMessageButtons: new Set([
+        CalendarButtonNames.ShowCalendarSettingsModal,
+        CalendarButtonNames.ResetCalendarSettings
+    ])
 };
 
 async function resetCalendarSettings(
@@ -32,7 +35,12 @@ async function resetCalendarSettings(
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
     ]);
     await interaction.update(
-        CalendarSettingsConfigMenu(server, interaction.channelId, false)
+        CalendarSettingsConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            'Successfully reset all calendar settings.'
+        )
     );
 }
 

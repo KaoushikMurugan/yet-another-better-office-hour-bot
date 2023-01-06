@@ -41,11 +41,18 @@ client.on(Events.ClientReady, async () => {
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );
-    if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
+    const successfullyCreatedServersCount = setupResults.filter(
+        result => result.status === 'fulfilled'
+    ).length;
+    if (successfullyCreatedServersCount === 0) {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    console.log(`\n${green('✅ Ready to go! ✅')}\n`);
+    console.log(
+        `\n${green(
+            `✅ Ready to go! (${successfullyCreatedServersCount} servers created) ✅`
+        )}\n`
+    );
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);

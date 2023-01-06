@@ -57,7 +57,12 @@ async function updateCalendarSettings(
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
-              CalendarSettingsConfigMenu(server, safeInteraction.channel.id, false)
+              CalendarSettingsConfigMenu(
+                  server,
+                  safeInteraction.channel.id,
+                  false,
+                  'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
+              )
           )
         : interaction.reply(
               CalendarSuccessMessages.updatedCalendarSettings(calendarId, publicEmbedUrl)

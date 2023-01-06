@@ -115,10 +115,10 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
 
 /**
  * Composes the server settings main menu
- * @param server
- * @param channelId
- * @param isDm
- * @returns
+ * @param server relevant server
+ * @param channelId interaction channel id
+ * @param isDm is it in dm?
+ * @returns the setting menu embed object
  */
 function SettingsMainMenu(
     server: AttendingServerV2,
@@ -476,7 +476,7 @@ function QueueAutoClearConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `Learn more about queue auto clear [here](${documentationLinks.autoClear})`
+                value: `[Learn more about queue auto clear here.](${documentationLinks.autoClear})`
             },
             {
                 name: 'Current Auto Clear Timeout',
@@ -550,7 +550,7 @@ function LoggingChannelConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about YABOB logging channels here](${documentationLinks.loggingChannel})`
+                value: `[Learn more about YABOB logging channels here.](${documentationLinks.loggingChannel})`
             },
             {
                 name: 'Note: Select menu length limit',
