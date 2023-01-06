@@ -109,7 +109,7 @@ const cleanupQueueHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Debug feature. Cleans up everything in #queue for the specified queue and resends new embeds.',
+                        value: 'Debug feature. Cleans up everything in #queue for the specified queue and re-sends new embeds.',
                         inline: false
                     },
                     {
@@ -143,7 +143,7 @@ const cleanupHelpChannelHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Debug feature. Cleans up all the bot help channels and resends new embeds'
+                        value: 'Debug feature. Cleans up all the bot help channels and re-sends new embeds'
                     },
                     {
                         name: 'Options',
@@ -211,7 +211,7 @@ const setAfterSessionsMsgHelp: HelpMessage = {
                     {
                         name: 'Description',
                         value: 'Prompts a modal (aka form) where you can enter a message \
-                        that is to be sent to the helpees after a session is over.',
+                        that is to be sent to the students after a session is over.',
                         inline: false
                     },
                     {

@@ -75,8 +75,8 @@ const stopHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Stops tracking hours for caller and marks them interally as not helping. Closes queues which no longer have an active helper\
-                        \n\nStudents that were in the queue before closing will still be regisitered for OH and be in the queue for the next OH.',
+                        value: 'Stops tracking hours for caller and marks them internally as not helping. Closes queues which no longer have an active helper\
+                        \n\nStudents that were in the queue before closing will still be registered for OH and be in the queue for the next OH.',
                         inline: false
                     },
                     {
@@ -144,12 +144,12 @@ const announceHelp: HelpMessage = {
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Sends a messeage to all helpees waiting in the queues that you are currently helping.',
+                        value: 'Sends a message to all the students waiting in the queues that you are currently helping.',
                         inline: false
                     },
                     {
                         name: 'Options',
-                        value: '`queue_name: Channel`\nSends the message to only those in a queue specficied in`queue_name`',
+                        value: '`queue_name: Channel`\nSends the message to only those in a queue specified in`queue_name`',
                         inline: true
                     },
                     {
@@ -197,13 +197,84 @@ const clearHelp: HelpMessage = {
     }
 };
 
+const pauseHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'pause',
+        value: 'pause'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/pause`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Marks a staff member as "paused helping". If all the helpers of a queue paused helping, that queue enters a "paused" state where students cannot enter the queue anymore, but can still be dequeued',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/pause`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const resumeHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'resume',
+        value: 'resume'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/resume`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Marks a staff member as "active" after they used `/pause`.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: 'None',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/resume`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const helperCommandHelpMessages: HelpMessage[] = [
     helperCommandsTileMessage,
     startHelp,
     stopHelp,
     nextHelp,
     announceHelp,
-    clearHelp
+    // ! Over choice limit
+    // clearHelp,
+    // pauseHelp,
+    // resumeHelp
 ];
 
 export { helperCommandHelpMessages };

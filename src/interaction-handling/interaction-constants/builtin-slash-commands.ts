@@ -307,6 +307,7 @@ function generateHelpCommand() {
                 .setDescription('The command to get help with')
                 .setRequired(true)
                 .addChoices(
+                    // TODO: Use autocomplete to dynamically generate choices here
                     ...adminCommandHelpMessages
                         .filter(helpMessage => helpMessage.useInHelpCommand)
                         .map(helpMessage => helpMessage.nameValuePair),
