@@ -58,7 +58,6 @@ class CalendarServerExtension extends BaseServerExtension {
     override async onServerInitSuccess(server: FrozenServer): Promise<void> {
         const state = CalendarExtensionState.get(server.guild.id);
         await state.refreshCalendarEvents();
-        await state.emitStateChangeEvent();
     }
 }
 

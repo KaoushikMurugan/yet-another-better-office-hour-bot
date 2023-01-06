@@ -59,6 +59,15 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
+     * Send the embed on queue create
+     * @param queue 
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override async onQueueCreate(queue: FrozenQueue): Promise<void> {
+        await this.renderCalendarEmbeds();
+    }
+
+    /**
      * Removes `deletedQueue` from the listeners map
      * @param deletedQueue
      */
