@@ -680,13 +680,6 @@ class AttendingServerV2 {
         if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
-        const helper: Helper = {
-            helpStart: new Date(),
-            helpedMembers: [],
-            activeState: 'active', // always start with active state
-            member: helperMember
-        };
-        this._helpers.set(helperMember.id, helper);
         const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
             helperRoles.includes(queue.queueName)
@@ -694,6 +687,13 @@ class AttendingServerV2 {
         if (openableQueues.size === 0) {
             throw ExpectedServerErrors.missingClassRole;
         }
+        const helper: Helper = {
+            helpStart: new Date(),
+            helpedMembers: [],
+            activeState: 'active', // always start with active state
+            member: helperMember
+        };
+        this._helpers.set(helperMember.id, helper);
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
         );
@@ -725,6 +725,8 @@ class AttendingServerV2 {
                     completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
+        // this filter does not rely on user roles anymore
+        // close all queues that has this user as a helper
         const closableQueues = this._queues.filter(queue =>
             queue.hasHelper(helperMember.id)
         );
