@@ -407,9 +407,9 @@ class HelpQueueV2 {
                 .get(helperId)
                 ?.send(
                     SimpleEmbed(
-                        `${studentMember.displayName} in '${this.queueName}' is requesting help for: .`,
+                        `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
                         EmbedColor.Neutral,
-                        (topic ? `\n\n**${topic}**` : '') +
+                        (topic ? `\n\n**${topic}**` : `N/A`) +
                             `\n\n<@${studentMember.user.id}>`
                     )
                 )

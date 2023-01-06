@@ -9,14 +9,7 @@
  *  allowing the {@link getHandler} function to act like a function factory
  */
 
-import {
-    ButtonInteraction,
-    ChatInputCommandInteraction,
-    Interaction,
-    ModalSubmitInteraction,
-    SelectMenuInteraction,
-    Snowflake, TextChannel
-} from 'discord.js';
+import { Interaction, Snowflake, TextChannel } from 'discord.js';
 import {
     ButtonHandlerProps,
     CommandHandlerProps,
@@ -396,32 +389,6 @@ function combineMethodMaps(
         completeSelectMenuMap,
         completeModalMap
     ];
-}
-
-/**
- * Replies to the interaction with an error message
- * Checks if the interaction has already been defered or replied to, and edits the reply if so
- * @param interaction
- * @param err
- * @param pingRole
- */
-async function replyErrorMsg(
-    interaction:
-        | ButtonInteraction
-        | SelectMenuInteraction
-        | ChatInputCommandInteraction<'cached'>
-        | ModalSubmitInteraction,
-    err: Error,
-    pingRole: string
-): Promise<void> {
-    if (interaction.replied || interaction.deferred) {
-        await interaction.editReply(ErrorEmbed(err, pingRole));
-    } else {
-        await interaction.reply({
-            ...ErrorEmbed(err, pingRole),
-            ephemeral: true
-        });
-    }
 }
 
 export { getHandler, interactionExtensions };
