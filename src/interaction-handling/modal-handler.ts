@@ -66,11 +66,14 @@ async function setQueueAutoClear(
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
-    const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
-    const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
+    let hours = hoursInput === '' ? 0 : parseInt(hoursInput);
+    let minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
     if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
+    // move the excess minutes into hours
+    hours += Math.floor(minutes / 60);
+    minutes %= 60;
     const enable = !(hours === 0 && minutes === 0);
     await server.setQueueAutoClear(hours, minutes, enable);
     await (useMenu && interaction.isFromMessage()
