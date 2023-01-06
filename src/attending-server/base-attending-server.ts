@@ -37,7 +37,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { RolesConfigMenu } from './server-settings-menus.js';
+import { RolesConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
@@ -45,6 +45,7 @@ import {
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
+import { UnknownId } from '../utils/component-id-factory.js';
 
 /**
  * Wrapper for TextChannel
@@ -311,7 +312,13 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
+            await owner.send(
+                RolesConfigMenuForServerInit(
+                    server,
+                    owner.dmChannel?.id ?? UnknownId,
+                    false
+                )
+            );
         }
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
