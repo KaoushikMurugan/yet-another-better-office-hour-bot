@@ -100,20 +100,16 @@ class AttendingServerV2 {
     private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /**
      * Server settings. An firebase update is requested as soon as this changes
-     * - TODO: Use the Proxy class to abstract away the update logic
      */
     private settings: ServerSettings = {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         hierarchyRoleIds: {
-            /** role id of the bot admin role */
             botAdmin: SpecialRoleValues.NotSet,
-            /** role id of the helper role */
             staff: SpecialRoleValues.NotSet,
-            /** role id of the student role */
             student: SpecialRoleValues.NotSet
         }
-    };
+    }; // TODO: Use the Proxy class to abstract away the update logic
 
     protected constructor(
         readonly guild: Guild,

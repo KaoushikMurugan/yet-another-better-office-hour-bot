@@ -218,12 +218,6 @@ class HelpQueueV2 {
                   )
               ]);
         const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueueCreate(queue))
-        );
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
-        );
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
@@ -255,6 +249,13 @@ class HelpQueueV2 {
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
+        // Emit events after queue is done creating
+        await Promise.all(
+            queueExtensions.map(extension => extension.onQueueCreate(queue))
+        );
+        await Promise.all(
+            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
+        );
         return queue;
     }
 
