@@ -568,7 +568,7 @@ async function setRoles(
             await interaction.editReply(SuccessMessages.setBotAdminRole(role.id));
             break;
         }
-        case 'helper': {
+        case 'staff': {
             await server.setHierarchyRoleId('staff', role.id);
             await interaction.editReply(SuccessMessages.setHelperRole(role.id));
             break;

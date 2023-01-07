@@ -254,7 +254,7 @@ const setRolesCommand = new SlashCommandBuilder()
             .setDescription('The name of the role')
             .setRequired(true)
             .addChoices(
-                { name: 'Helper', value: 'helper' },
+                { name: 'Staff', value: 'staff' },
                 { name: 'Bot Admin', value: 'bot_admin' },
                 { name: 'Student', value: 'student' }
             )

@@ -6,10 +6,7 @@ import { CalendarExtensionState } from '../calendar-states.js';
 import { mainMenuRow } from '../../../attending-server/server-settings-menus.js';
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
 import { FrozenServer } from '../../extension-utils.js';
-import {
-    CalendarButtonNames,
-    CalendarCommandNames
-} from './calendar-interaction-names.js';
+import { CalendarButtonNames } from './calendar-interaction-names.js';
 
 /**
  * Options for the server settings main menu
@@ -38,23 +35,13 @@ function CalendarSettingsConfigMenu(
     if (!state) {
         throw new Error('Calendar state for this server was not found');
     }
-    const makeCalendarStringCommandId = server.guild.commands.cache.find(
-        command => command.name === CalendarCommandNames.make_calendar_string
-    )?.id;
-    const makeCalendarStringAllCommandId = server.guild.commands.cache.find(
-        command => command.name === CalendarCommandNames.make_calendar_string_all
-    )?.id;
     const embed = new EmbedBuilder()
         .setTitle(`🗓 Calendar Configuration for ${server.guild.name} 🗓`)
         .setColor(EmbedColor.Aqua)
         .setFields(
             {
                 name: 'Description',
-                value: [
-                    `This setting controls which calendar this server will refer to for office hours events.`,
-                    `If the calendar event has the string created by </${CalendarCommandNames.make_calendar_string}:${makeCalendarStringCommandId}> or </${CalendarCommandNames.make_calendar_string_all}:${makeCalendarStringAllCommandId}>,`,
-                    `it will be displayed under the \`Upcoming Sessions\` embed in #queue channels`
-                ].join(' ')
+                value: 'This setting controls which calendar this server will refer to for office hours events.'
             },
             {
                 name: 'Documentation',
