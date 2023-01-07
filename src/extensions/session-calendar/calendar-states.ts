@@ -105,6 +105,7 @@ class CalendarExtensionState {
         const instance = new CalendarExtensionState(guild, serverExtension);
         await instance.restoreFromBackup(guild.id);
         CalendarExtensionState.allStates.set(guild.id, instance);
+        await instance.refreshCalendarEvents();
         return instance;
     }
 
@@ -199,14 +200,21 @@ class CalendarExtensionState {
 
     /**
      * Adds a new calendar_name -> discord_id mapping to displayNameDiscordIdMap
-     * @param calendarName display name on the calendar
+     * @param displayName display name on the calendar
      * @param discordId id of the user that used /make_calendar_string
      */
     async updateNameDiscordIdMap(
-        calendarName: string,
+        displayName: string,
         discordId: Snowflake
     ): Promise<void> {
-        this.calendarNameDiscordIdMap.set(calendarName, discordId);
+        this.calendarNameDiscordIdMap.set(displayName, discordId);
+        // update the values in the viewModels
+        // without doing another calendar refresh
+        for (const viewModel of this.upcomingSessions) {
+            if (viewModel.displayName === displayName) {
+                viewModel.discordId = discordId;
+            }
+        }
         this.backupToFirebase();
         await this.emitStateChangeEvent();
     }

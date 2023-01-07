@@ -23,7 +23,7 @@ class CalendarServerExtension extends BaseServerExtension {
                 await state.refreshCalendarEvents();
                 await state.emitStateChangeEvent();
             }
-        }, 15 * 60 * 1000);
+        }, 60 * 60 * 1000);
     }
 
     /**
@@ -32,8 +32,7 @@ class CalendarServerExtension extends BaseServerExtension {
      */
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);
-        const state = await CalendarExtensionState.load(guild, instance);
-        await state.refreshCalendarEvents();
+        await CalendarExtensionState.load(guild, instance);
         console.log(
             `[${blue('Session Calendar')}] successfully loaded for '${guild.name}'!`
         );
