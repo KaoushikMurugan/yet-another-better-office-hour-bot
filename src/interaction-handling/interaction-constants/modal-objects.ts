@@ -101,10 +101,10 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
  * @param serverId
  * @returns
  */
-function helpTopicPromptModal(serverId: Snowflake): ModalBuilder {
+function promptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
-        ModalNames.HelpTopicPromptModal,
+        ModalNames.PromptHelpTopicModal,
         serverId,
         UnknownId
     ])
@@ -122,4 +122,4 @@ function helpTopicPromptModal(serverId: Snowflake): ModalBuilder {
     return modal;
 }
 
-export { queueAutoClearModal, afterSessionMessageModal, helpTopicPromptModal };
+export { queueAutoClearModal, afterSessionMessageModal, promptHelpTopicModal };

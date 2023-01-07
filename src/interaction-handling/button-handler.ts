@@ -6,7 +6,9 @@ import {
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    RolesConfigMenuForServerInit
+    RolesConfigMenuForServerInit,
+    PromptHelpTopicConfigMenu,
+    SeriousModeConfigMenu
 } from '../attending-server/server-settings-menus.js';
 import { ButtonHandlerProps } from './handler-interface.js';
 import {
@@ -18,7 +20,7 @@ import { ButtonNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     afterSessionMessageModal,
-    helpTopicPromptModal,
+    promptHelpTopicModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
@@ -49,7 +51,15 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.AutoGiveStudentRoleConfig2]: interaction =>
                 toggleAutoGiveStudentRole(interaction, false),
             [ButtonNames.ShowAfterSessionMessageModal]: showAfterSessionMessageModal,
-            [ButtonNames.ShowQueueAutoClearModal]: showQueueAutoClearModal
+            [ButtonNames.ShowQueueAutoClearModal]: showQueueAutoClearModal,
+            [ButtonNames.PromptHelpTopicConfig1]: interaction =>
+                togglePromptHelpTopic(interaction, true),
+            [ButtonNames.PromptHelpTopicConfig2]: interaction =>
+                togglePromptHelpTopic(interaction, false),
+            [ButtonNames.SeriousModeConfig1]: interaction =>
+                toggleSeriousMode(interaction, true),
+            [ButtonNames.SeriousModeConfig2]: interaction =>
+                toggleSeriousMode(interaction, false)
         }
     },
     dmMethodMap: {
@@ -75,7 +85,11 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ShowQueueAutoClearModal,
         ButtonNames.DisableLoggingChannel,
         ButtonNames.AutoGiveStudentRoleConfig1,
-        ButtonNames.AutoGiveStudentRoleConfig2
+        ButtonNames.AutoGiveStudentRoleConfig2,
+        ButtonNames.PromptHelpTopicConfig1,
+        ButtonNames.PromptHelpTopicConfig2,
+        ButtonNames.SeriousModeConfig1,
+        ButtonNames.SeriousModeConfig2
     ])
 } as const;
 
@@ -95,7 +109,7 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     }
     await server.enqueueStudent(interaction.member, queueChannel);
     server.promptHelpTopic
-        ? await interaction.showModal(helpTopicPromptModal(server.guild.id))
+        ? await interaction.showModal(promptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
@@ -280,6 +294,45 @@ async function toggleAutoGiveStudentRole(
             `Successfully turned ${
                 autoGiveStudentRole ? 'on' : 'off'
             } auto give student role.`
+        )
+    );
+}
+
+/**
+ * Toggle whether to prompt for help topic when a student joins the queue
+ * @param interaction
+ * @param enablePromptHelpTopic
+ */
+async function togglePromptHelpTopic(
+    interaction: ButtonInteraction<'cached'>,
+    enablePromptHelpTopic: boolean
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    await server.setPromptHelpTopic(enablePromptHelpTopic);
+    await interaction.update(
+        PromptHelpTopicConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            `Successfully turned ${
+                enablePromptHelpTopic ? 'on' : 'off'
+            } help topic prompt.`
+        )
+    );
+}
+
+async function toggleSeriousMode(
+    interaction: ButtonInteraction<'cached'>,
+    enableSeriousMode: boolean
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    await server.setSeriousServer(enableSeriousMode);
+    await interaction.update(
+        SeriousModeConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            `Successfully turned ${enableSeriousMode ? 'on' : 'off'} serious mode.`
         )
     );
 }

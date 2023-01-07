@@ -276,6 +276,14 @@ class AttendingServerV2 {
     }
 
     /**
+     * Returns true if the server is in serious mode
+     * @returns
+     */
+    isSeriousServer(): boolean {
+        return this.queues[0]?.seriousModeEnabled ?? false;
+    }
+
+    /**
      * Sets the serious server flag, and updates the queues if seriousness is changed
      * @param enableSeriousMode turn on or off serious mode
      * @returns True if triggered renders for all queues

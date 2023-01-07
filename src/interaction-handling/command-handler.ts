@@ -22,7 +22,7 @@ import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import {
     afterSessionMessageModal,
-    helpTopicPromptModal,
+    promptHelpTopicModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
@@ -88,7 +88,7 @@ async function enqueue(
     }
     await server.enqueueStudent(interaction.member, queueChannel);
     server.promptHelpTopic
-        ? await interaction.showModal(helpTopicPromptModal(server.guild.id))
+        ? await interaction.showModal(promptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
