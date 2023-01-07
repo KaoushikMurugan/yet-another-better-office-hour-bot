@@ -562,6 +562,12 @@ async function setRoles(
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'botAdmin');
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
+    const roleIsBotRole = server.guild.roles.cache
+        .get(role.id)
+        ?.members.some(member => member.user.bot);
+    if (roleIsBotRole) {
+        throw ExpectedParseErrors.cannotUseBotRoleAsHierarchyRole;
+    }
     switch (roleType) {
         case 'bot_admin': {
             await server.setHierarchyRoleId('botAdmin', role.id);

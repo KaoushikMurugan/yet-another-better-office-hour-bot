@@ -91,6 +91,9 @@ const ExpectedParseErrors = {
     tooManyChannels: new CommandParseError(
         'Sorry, you have too many categories and channels on this server. YABOB cannot create another category for this new queue.'
     ),
+    cannotUseBotRoleAsHierarchyRole: new CommandParseError(
+        'Bot integration roles cannot be used because no human user can have them. Please specify a different role.'
+    ),
     invalidChannelName: (channelName: string) =>
         new CommandParseError(
             `${channelName} is an invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
