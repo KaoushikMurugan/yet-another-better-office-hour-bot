@@ -27,9 +27,13 @@ const ExpectedParseErrors = {
         lowestRequiredRoleName: Optional<string>,
         commandName: string
     ): CommandParseError =>
-        new CommandParseError(
-            `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command. You can ask the owner of this server to see which role is ${lowestRequiredRoleName}.`
-        ),
+        lowestRequiredRoleName
+            ? new CommandParseError(
+                  `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command. You can ask the owner of this server to see which role is ${lowestRequiredRoleName}.`
+              )
+            : new CommandParseError(
+                  `Some access level roles have not been set up on this server. Please ask the server owner to use /set_roles or the settings menu to set it up.`
+              ),
     invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
             ? new CommandParseError(

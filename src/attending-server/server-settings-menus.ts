@@ -45,6 +45,7 @@ const EmptyEmbedField = {
 const trailingNewLine = '\n\u200b' as const;
 
 /** Use this string to force a leading new line in an embed field */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const leadingNewLine = '\u200b\n' as const;
 
 const documentationBaseUrl =
@@ -202,27 +203,33 @@ function RolesConfigMenu(
             }
         );
     }
-    embed.addFields({
-        name: 'Current Role Configuration',
-        value: `
-            ${leadingNewLine}🤖 Bot Admin Role - ${
-            forServerInit
-                ? `*Role that can manage the bot and its settings*\n`
-                : generatePing(server.botAdminRoleID)
+    embed.addFields(
+        {
+            name: 'Current Role Configuration',
+            value: '┈'.repeat(25)
+        },
+        {
+            name: '🤖 Bot Admin Role',
+            value: forServerInit
+                ? `Role that can manage the bot and its settings`
+                : generatePing(server.botAdminRoleID),
+            inline: true
+        },
+        {
+            name: '📚 Staff Role',
+            value: forServerInit
+                ? `Role that allows users to host office hours`
+                : generatePing(server.staffRoleID),
+            inline: true
+        },
+        {
+            name: ' 🎓 Student Role',
+            value: forServerInit
+                ? `Role that allows users to join office hour queues`
+                : generatePing(server.studentRoleID),
+            inline: true
         }
-
-            📚 Staff Role - ${
-                forServerInit
-                    ? `*Role that allows users to host office hours*\n`
-                    : generatePing(server.staffRoleID)
-            }
-
-            🎓 Student Role - ${
-                forServerInit
-                    ? `*Role that allows users to join office hour queues*\n`
-                    : generatePing(server.studentRoleID)
-            }`
-    });
+    );
     if (forServerInit) {
         embed.setDescription(
             `**Thanks for choosing YABOB for helping you with office hours!
@@ -305,32 +312,39 @@ function RolesConfigMenuForServerInit(
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
         .setColor(EmbedColor.Aqua)
         .setDescription(
-            `**Thanks for choosing YABOB for helping you with office hours!
-            To start using YABOB, it requires the following roles: **\n`
+            `**Thanks for choosing YABOB for helping you with office hours! To start using YABOB, it requires the following roles: **\n`
         )
         .addFields(
             {
                 name: 'Documentation',
-                value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the /set_roles command in ${server.guild.name}.
-                If your server doesn't have any roles, use [Create New Roles] or [Create New Roles (@everyone is student)] for quick start.`
+                value:
+                    `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) ` +
+                    "If your server doesn't have any roles, use [Create New Roles] or [Create New Roles (@everyone is student)] for quick start."
             },
             {
                 name: 'Current Role Configuration',
-                value: `🤖 Bot Admin Role - ${
-                    completed
-                        ? `\`${generatePing(server.botAdminRoleID)}\``
-                        : `*Role that can manage the bot and its settings*\n`
-                }\n
-                📚 Staff Role - ${
-                    completed
-                        ? `\`${generatePing(server.staffRoleID)}\``
-                        : `*Role that can manage the bot and its settings*\n`
-                }\n
-                🎓 Student Role - ${
-                    completed
-                        ? `\`${generatePing(server.studentRoleID)}\``
-                        : `*Role that can manage the bot and its settings*\n`
-                }`
+                value: '┈'.repeat(25)
+            },
+            {
+                name: '🤖 Bot Admin Role',
+                value: completed
+                    ? `\`${generatePing(server.botAdminRoleID)}\``
+                    : `Role that can manage the bot and its settings`,
+                inline: true
+            },
+            {
+                name: '📚 Staff Role',
+                value: completed
+                    ? `\`${generatePing(server.staffRoleID)}\``
+                    : `Role that allows users to host office hours`,
+                inline: true
+            },
+            {
+                name: ' 🎓 Student Role',
+                value: completed
+                    ? `\`${generatePing(server.studentRoleID)}\``
+                    : `Role that allows users to join office hour queues`,
+                inline: true
             }
         );
     if (completed) {
@@ -414,19 +428,21 @@ function AfterSessionMessageConfigMenu(
             {
                 name: 'Documentation',
                 value: `[Learn more about after session message here.](${documentationLinks.afterSessionMessage})`
+            },
+            {
+                name: 'Current After Session Message',
+                value: `${
+                    server.afterSessionMessage === ''
+                        ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
+                        : // each field only supports 1024 chars
+                          `${server.afterSessionMessage.slice(0, 1000)}${
+                              server.afterSessionMessage.length > 1000
+                                  ? '...(Truncated)'
+                                  : ''
+                          }`
+                }`
             }
         );
-    embed.addFields({
-        name: 'Current After Session Message',
-        value: `${
-            server.afterSessionMessage === ''
-                ? '**Disabled** - YABOB will not send any message to students after they leave the voice channel.'
-                : // each field only supports 1024 chars
-                  `${server.afterSessionMessage.slice(0, 1000)}${
-                      server.afterSessionMessage.length > 1000 ? '...(Truncated)' : ''
-                  }`
-        }`
-    });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
