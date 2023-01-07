@@ -88,6 +88,11 @@ type ServerSettings = {
  */
 class AttendingServerV2 {
     /**
+     * Unique helpers (both active and paused)
+     * - Key is GuildMember.id
+     */
+    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
+    /**
      * All the queues of this server
      * - Key is CategoryChannel.id of the parent category of #queue
      */
@@ -96,11 +101,6 @@ class AttendingServerV2 {
      * Cached result of {@link getQueueChannels}
      */
     private queueChannelsCache: QueueChannel[] = [];
-    /**
-     * Unique helpers (both active and paused)
-     * - Key is GuildMember.id
-     */
-    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /**
      * Server settings. An firebase update is requested as soon as this changes
      */
@@ -113,61 +113,59 @@ class AttendingServerV2 {
             staff: SpecialRoleValues.NotSet,
             student: SpecialRoleValues.NotSet
         }
-    }; // TODO: Use the Proxy class to abstract away the update logic
+    };
 
+    // TODO: Use the Proxy class to abstract away the update logic
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
 
-    /** List of queues on this server */
-    get queues(): ReadonlyArray<HelpQueueV2> {
-        return [...this._queues.values()];
-    }
-    /** All the students that are currently in a queue */
-    get studentsInAllQueues(): ReadonlyArray<Helpee> {
-        return this.queues.flatMap(queue => queue.students);
-    }
-    /** All the helpers on this server, both active and paused */
-    get helpers(): ReadonlyMap<string, Helper> {
-        return this._helpers;
-    }
-    /** Auto clear values of a queue, undefined if not set */
-    get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
-        return this._queues.first()?.timeUntilAutoClear;
-    }
     /** The after session message string. Empty string if not set */
     get afterSessionMessage(): string {
         return this.settings.afterSessionMessage;
     }
-    /** The logging channel on this server. undefined if not set */
-    get loggingChannel(): Optional<TextChannel> {
-        return this.settings.loggingChannel;
-    }
-    /** bot admin role id */
-    get botAdminRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.botAdmin;
-    }
-    /** staff role id */
-    get staffRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.staff;
-    }
-    /** student role id, this is the everyone role if "@everyone is student" is selected */
-    get studentRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.student;
-    }
-    /** All the hierarchy role ids */
-    get hierarchyRoleIds(): HierarchyRoles {
-        return this.settings.hierarchyRoleIds;
-    }
+
     /** whether to automatically give new members the student role */
     get autoGiveStudentRole(): boolean {
         return this.settings.autoGiveStudentRole;
     }
+
+    /** bot admin role id */
+    get botAdminRoleID(): OptionalRoleId {
+        return this.settings.hierarchyRoleIds.botAdmin;
+    }
+
+    /** All the helpers on this server, both active and paused */
+    get helpers(): ReadonlyMap<string, Helper> {
+        return this._helpers;
+    }
+
+    /** All the hierarchy role ids */
+    get hierarchyRoleIds(): HierarchyRoles {
+        return this.settings.hierarchyRoleIds;
+    }
+
+    /** The logging channel on this server. undefined if not set */
+    get loggingChannel(): Optional<TextChannel> {
+        return this.settings.loggingChannel;
+    }
+
     /** whether to prompt modal asking for help topic when a user joins a queue */
     get promptHelpTopic(): boolean {
         return this.settings.promptHelpTopic;
     }
+
+    /** Auto clear values of a queue, undefined if not set */
+    get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
+        return this._queues.first()?.timeUntilAutoClear;
+    }
+
+    /** List of queues on this server */
+    get queues(): ReadonlyArray<HelpQueueV2> {
+        return [...this._queues.values()];
+    }
+
     /**
      * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
@@ -183,123 +181,19 @@ class AttendingServerV2 {
         }));
     }
 
-    /**
-     * Cleans up all the timers from setInterval
-     */
-    clearAllServerTimers(): void {
-        this._queues.forEach(queue => queue.clearAllQueueTimers());
+    /** staff role id */
+    get staffRoleID(): OptionalRoleId {
+        return this.settings.hierarchyRoleIds.staff;
     }
 
-    /**
-     * Sends the log message to the logging channel if it's set up
-     * @param message message to log
-     */
-    sendLogMessage(message: BaseMessageOptions | string): void {
-        if (this.loggingChannel) {
-            this.loggingChannel.send(message).catch(e => {
-                console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(e);
-            });
-        }
+    /** student role id, this is the everyone role if "@everyone is student" is selected */
+    get studentRoleID(): OptionalRoleId {
+        return this.settings.hierarchyRoleIds.student;
     }
 
-    /**
-     * Gets a queue channel by the parent category id
-     * @param parentCategoryId the associated parent category id
-     * @returns queue channel object if it exists, undefined otherwise
-     */
-    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
-        return this._queues.get(parentCategoryId)?.queueChannel;
-    }
-
-    /**
-     * Loads the server settings data from a backup
-     * - queue backups are passed to the queue constructors
-     * @param backup the data to load
-     */
-    private loadBackup(backup: ServerBackup): void {
-        console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
-        this.settings = {
-            ...backup,
-            hierarchyRoleIds: {
-                botAdmin: backup.botAdminRoleId,
-                staff: backup.staffRoleId,
-                student: backup.studentRoleId
-            }
-        };
-        const loggingChannelFromBackup = this.guild.channels.cache.get(
-            backup.loggingChannelId
-        );
-        if (isTextChannel(loggingChannelFromBackup)) {
-            this.settings.loggingChannel = loggingChannelFromBackup;
-        }
-    }
-
-    /**
-     * Sets the internal boolean value for autoGiveStudentRole
-     * @param autoGiveStudentRole on or off
-     */
-    async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
-        this.settings.autoGiveStudentRole = autoGiveStudentRole;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Sets the internal boolean value for promptHelpTopic
-     * @param promptHelpTopic
-     */
-    async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
-        this.settings.promptHelpTopic = promptHelpTopic;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Sets the hierarchy roles to use for this server
-     * @param role name of the role; botAdmin, staff, or student
-     * @param id the role id snowflake
-     */
-    async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
-        this.settings.hierarchyRoleIds[role] = id;
-        await Promise.all([
-            updateCommandHelpChannelVisibility(
-                this.guild,
-                this.settings.hierarchyRoleIds
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
-    }
-
-    /**
-     * Returns true if the server is in serious mode
-     * @returns
-     */
-    isSeriousServer(): boolean {
-        return this.queues[0]?.seriousModeEnabled ?? false;
-    }
-
-    /**
-     * Sets the serious server flag, and updates the queues if seriousness is changed
-     * @param enableSeriousMode turn on or off serious mode
-     * @returns True if triggered renders for all queues
-     */
-    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const seriousState = this.queues[0]?.seriousModeEnabled ?? false;
-        if (seriousState === enableSeriousMode) {
-            return false;
-        }
-        await Promise.all([
-            ...this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
-        return true;
+    /** All the students that are currently in a queue */
+    get studentsInAllQueues(): ReadonlyArray<Helpee> {
+        return this.queues.flatMap(queue => queue.students);
     }
 
     /**
@@ -362,137 +256,189 @@ class AttendingServerV2 {
     }
 
     /**
-     * Called when a member joins a voice channel
-     * - triggers onStudentJoinVC for all extensions if the member is a
-     * student and was just removed from the queue
-     * @param member the guild member that just joined a VC
-     * @param newVoiceState voice state object with a guaranteed non-null channel
+     * Adds a student to the notification group
+     * @param studentMember student to add
+     * @param targetQueue which notification group to add to
      */
-    async onMemberJoinVC(
-        member: GuildMember,
-        newVoiceState: WithRequired<VoiceState, 'channel'>
+    async addStudentToNotifGroup(
+        studentMember: GuildMember,
+        targetQueue: QueueChannel
     ): Promise<void> {
-        // temporary solution, stage channel is not currently supported
-        if (!isVoiceChannel(newVoiceState.channel)) {
+        await this._queues
+            .get(targetQueue.parentCategoryId)
+            ?.addToNotifGroup(studentMember);
+    }
+
+    /**
+     * Send an announcement to all the students in the helper's approved queues
+     * @param helperMember helper that used /announce
+     * @param announcement announcement message
+     * @param targetQueue optional, specifies which queue to announce to
+     */
+    async announceToStudentsInQueue(
+        helperMember: GuildMember,
+        announcement: string,
+        targetQueue?: QueueChannel
+    ): Promise<void> {
+        if (targetQueue !== undefined) {
+            const queueToAnnounce = this._queues.get(targetQueue.parentCategoryId);
+            const hasQueueRole = helperMember.roles.cache.some(
+                role =>
+                    role.name === targetQueue.queueName || role.id === this.botAdminRoleID
+            );
+            if (!queueToAnnounce || !hasQueueRole) {
+                throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
+            }
+            const announcementEmbed = SimpleEmbed(
+                `Staff member ${helperMember.displayName} announced:\n${announcement}`,
+                EmbedColor.Aqua,
+                `In queue: ${targetQueue.queueName}`
+            );
+            await Promise.all(
+                queueToAnnounce.students.map(student =>
+                    student.member.send(announcementEmbed)
+                )
+            );
             return;
         }
-        const vc = newVoiceState.channel;
-        const memberIsStudent = this._helpers.some(helper =>
-            helper.helpedMembers.some(
-                helpedMember => helpedMember.member.id === member.id
+        // from this.queues select queue where helper roles has queue name
+        const studentsToAnnounceTo = this.queues
+            .filter(queue =>
+                helperMember.roles.cache.some(role => role.name === queue.queueName)
             )
+            .flatMap(queueToAnnounce => queueToAnnounce.students);
+        if (studentsToAnnounceTo.length === 0) {
+            throw ExpectedServerErrors.noStudentToAnnounce(announcement);
+        }
+        const announcementEmbed = SimpleEmbed(
+            `Staff member ${helperMember.displayName} announced:`,
+            EmbedColor.Aqua,
+            announcement
         );
-        const memberIsHelper = this._helpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = newVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
-            );
-            await Promise.all([
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(this, member, vc)
-                ),
-                ...queuesToRerender.map(queue => queue.triggerRender())
-            ]);
-        }
-        if (memberIsHelper) {
-            await Promise.all(
-                this.queues.map(
-                    queue => queue.hasHelper(member.id) && queue.triggerRender()
-                )
-            );
-        }
+        await Promise.all(
+            studentsToAnnounceTo.map(student => student.member.send(announcementEmbed))
+        );
     }
 
     /**
-     * Called when a member leaves a voice channel
-     * - triggers onStudentLeaveVC for all extensions if the member is a
-     * student and was in a session
-     * @param member the guild member that just joined a VC
-     * @param oldVoiceState voice state object with a guaranteed non-null channel
+     * Cleans up the given queue and resend all embeds
+     * @param targetQueue the queue to clean
      */
-    async onMemberLeaveVC(
-        member: GuildMember,
-        oldVoiceState: WithRequired<VoiceState, 'channel'>
+    async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
+        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
+    }
+
+    /**
+     * Clear all queues of this server
+     * @remark separated from clear queue to avoid excessive backup calls
+     */
+    async clearAllQueues(): Promise<void> {
+        await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Cleans up all the timers from setInterval
+     */
+    clearAllServerTimers(): void {
+        this._queues.forEach(queue => queue.clearAllQueueTimers());
+    }
+
+    /**
+     * Clears the given queue
+     * @param targetQueue queue to clear
+     */
+    async clearQueue(targetQueue: QueueChannel): Promise<void> {
+        await this._queues.get(targetQueue.parentCategoryId)?.removeAllStudents();
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Closes all the queue that the helper has permission to & logs the help time to console
+     * @param helperMember helper that used /stop
+     * @throws ServerError if the helper is not hosting
+     */
+    async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
+        const helper = this._helpers.get(helperMember.id);
+        if (helper === undefined) {
+            throw ExpectedServerErrors.notHosting;
+        }
+        this._helpers.delete(helperMember.id);
+        const completeHelper: Required<Helper> = {
+            ...helper,
+            helpEnd: new Date()
+        };
+        console.log(
+            ` - Help time of ${helper.member.displayName} is ` +
+                `${convertMsToTime(
+                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
+                )}`
+        );
+        // this filter does not rely on user roles anymore
+        // close all queues that has this user as a helper
+        const closableQueues = this._queues.filter(queue =>
+            queue.hasHelper(helperMember.id)
+        );
+        await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onHelperStopHelping(this, completeHelper)
+            )
+        );
+        return completeHelper;
+    }
+
+    /**
+     * Creates all the command access hierarchy roles
+     * @param allowDuplicate if true, creates new roles even if they already exist
+     * - Duplicates will be created if roles with the same name already exist
+     * @param everyoneIsStudent whether to treat @ everyone as the student role
+     */
+    async createHierarchyRoles(
+        allowDuplicate: boolean,
+        everyoneIsStudent: boolean
     ): Promise<void> {
-        const memberIsStudent = this._helpers.some(helper =>
-            helper.helpedMembers.some(
-                helpedMember => helpedMember.member.id === member.id
-            )
-        );
-        const memberIsHelper = this._helpers.has(member.id);
-        if (memberIsStudent) {
-            const possibleHelpers = oldVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            ); // treat everyone that's not this student as a potential helper
-            const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
-            );
-            await Promise.all([
-                ...oldVoiceState.channel.permissionOverwrites.cache.map(
-                    overwrite => overwrite.id === member.id && overwrite.delete()
-                ), // delete the student permission overwrite
-                ...this.serverExtensions.map(extension =>
-                    extension.onStudentLeaveVC(this, member)
-                ),
-                this.afterSessionMessage !== '' &&
-                    member.send(SimpleEmbed(this.afterSessionMessage)),
-                ...queuesToRerender.map(queue => queue.triggerRender())
-            ]);
-        }
-        if (memberIsHelper) {
-            // the filter is removed because
-            // the overwrite will die in 15 minutes after the invite was sent
-            await Promise.all(
-                this.queues.map(
-                    queue => queue.hasHelper(member.id) && queue.triggerRender()
-                )
-            );
-        }
-    }
-
-    /**
-     * Gets all the queue channels on the server. SLOW
-     * if nothing is found, returns empty array
-     * @param useCache whether to read from existing cache, defaults to true
-     * - unless queues change often, prefer cache for fast response
-     */
-    async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
-        if (useCache && this.queueChannelsCache.length !== 0) {
-            return this.queueChannelsCache;
-        }
-        const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request, likely triggers GC
-        this.queueChannelsCache = [];
-        for (const categoryChannel of allChannels.values()) {
-            if (!isCategoryChannel(categoryChannel)) {
+        const allRoles = await this.guild.roles.fetch();
+        const everyoneRoleId = this.guild.roles.everyone.id;
+        const foundRoles = []; // sorted low to high
+        const createdRoles = []; // not typed bc we are only using it for logging
+        for (const role of this.sortedHierarchyRoles) {
+            // do the search if it's NotSet, Deleted, or @everyone
+            // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
+            const existingRole =
+                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
+                role.id === everyoneRoleId
+                    ? allRoles.find(serverRole => serverRole.name === role.displayName)
+                    : allRoles.get(role.id);
+            if (role.key === 'student' && everyoneIsStudent) {
+                this.hierarchyRoleIds.student = everyoneRoleId;
                 continue;
             }
-            const queueTextChannel: Optional<TextChannel> =
-                categoryChannel.children.cache.find(isQueueTextChannel);
-            if (!queueTextChannel) {
+            if (existingRole && !allowDuplicate) {
+                this.hierarchyRoleIds[role.key] = existingRole.id;
+                foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
-            this.queueChannelsCache.push({
-                channelObj: queueTextChannel,
-                queueName: categoryChannel.name,
-                parentCategoryId: categoryChannel.id
+            const newRole = await this.guild.roles.create({
+                ...hierarchyRoleConfigs[role.key],
+                name: hierarchyRoleConfigs[role.key].displayName
             });
+            this.hierarchyRoleIds[role.key] = newRole.id;
+            // set by indices that are larger than arr length is valid in JS
+            // ! do NOT do this with important arrays bc there will be 'empty items'
+            createdRoles[newRole.position] = newRole.name;
         }
-        const duplicateQueues = this.queueChannelsCache
-            .map(queue => queue.queueName)
-            .filter((item, index, arr) => arr.indexOf(item) !== index);
-        if (duplicateQueues.length > 0) {
-            console.warn(`Server['${this.guild.name}'] contains these duplicate queues:`);
-            console.warn(duplicateQueues);
-            console.warn(
-                `This might lead to unexpected behaviors.\n
-                Please update category names as soon as possible.`
-            );
-        }
-        return this.queueChannelsCache;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+        createdRoles.length > 0
+            ? console.log(blue('Created roles:'), createdRoles)
+            : console.log(green(`All required roles exist in ${this.guild.name}!`));
+        foundRoles.length > 0 && console.log('Found roles:', foundRoles);
     }
 
     /**
@@ -564,38 +510,6 @@ class AttendingServerV2 {
             queue.gracefulDelete()
         ]);
         await this.getQueueChannels(false);
-    }
-
-    /**
-     * Attempt to enqueue a student
-     * @param studentMember student member to enqueue
-     * @param queueChannel target queue
-     * @throws QueueError if queue refuses to enqueue
-     */
-    async enqueueStudent(
-        studentMember: GuildMember,
-        queueChannel: QueueChannel
-    ): Promise<void> {
-        await this._queues.get(queueChannel.parentCategoryId)?.enqueue(studentMember);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Notify all helpers of the topic that the student requires help with
-     * @param studentMember the student that just submitted the help topic modal
-     * @param queueChannel related queue channel
-     * @param topic the submitted help topic content
-     */
-    async notifyHelpersStudentHelpTopic(
-        studentMember: GuildMember,
-        queueChannel: QueueChannel,
-        topic: string
-    ): Promise<void> {
-        await this._queues
-            .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersOnStudentSubmitHelpTopic(studentMember, topic);
     }
 
     /**
@@ -708,6 +622,220 @@ class AttendingServerV2 {
     }
 
     /**
+     * Attempt to enqueue a student
+     * @param studentMember student member to enqueue
+     * @param queueChannel target queue
+     * @throws QueueError if queue refuses to enqueue
+     */
+    async enqueueStudent(
+        studentMember: GuildMember,
+        queueChannel: QueueChannel
+    ): Promise<void> {
+        await this._queues.get(queueChannel.parentCategoryId)?.enqueue(studentMember);
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Gets a queue channel by the parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns queue channel object if it exists, undefined otherwise
+     */
+    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
+        return this._queues.get(parentCategoryId)?.queueChannel;
+    }
+
+    /**
+     * Gets all the queue channels on the server. SLOW
+     * if nothing is found, returns empty array
+     * @param useCache whether to read from existing cache, defaults to true
+     * - unless queues change often, prefer cache for fast response
+     */
+    async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
+        if (useCache && this.queueChannelsCache.length !== 0) {
+            return this.queueChannelsCache;
+        }
+        const allChannels = await this.guild.channels.fetch();
+        // cache again on a fresh request, likely triggers GC
+        this.queueChannelsCache = [];
+        for (const categoryChannel of allChannels.values()) {
+            if (!isCategoryChannel(categoryChannel)) {
+                continue;
+            }
+            const queueTextChannel: Optional<TextChannel> =
+                categoryChannel.children.cache.find(isQueueTextChannel);
+            if (!queueTextChannel) {
+                continue;
+            }
+            this.queueChannelsCache.push({
+                channelObj: queueTextChannel,
+                queueName: categoryChannel.name,
+                parentCategoryId: categoryChannel.id
+            });
+        }
+        const duplicateQueues = this.queueChannelsCache
+            .map(queue => queue.queueName)
+            .filter((item, index, arr) => arr.indexOf(item) !== index);
+        if (duplicateQueues.length > 0) {
+            console.warn(`Server['${this.guild.name}'] contains these duplicate queues:`);
+            console.warn(duplicateQueues);
+            console.warn(
+                `This might lead to unexpected behaviors.\n
+                Please update category names as soon as possible.`
+            );
+        }
+        return this.queueChannelsCache;
+    }
+
+    /**
+     * Called when leaving a server
+     * - let all the extensions clean up their own memory first before deleting them
+     */
+    async gracefulDelete(): Promise<void> {
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerDelete(this))
+        );
+    }
+
+    /**
+     * Returns true if the server is in serious mode
+     * @returns
+     */
+    isSeriousServer(): boolean {
+        return this.queues[0]?.seriousModeEnabled ?? false;
+    }
+
+    /**
+     * Notify all helpers of the topic that the student requires help with
+     * @param studentMember the student that just submitted the help topic modal
+     * @param queueChannel related queue channel
+     * @param topic the submitted help topic content
+     */
+    async notifyHelpersStudentHelpTopic(
+        studentMember: GuildMember,
+        queueChannel: QueueChannel,
+        topic: string
+    ): Promise<void> {
+        await this._queues
+            .get(queueChannel.parentCategoryId)
+            ?.notifyHelpersOnStudentSubmitHelpTopic(studentMember, topic);
+    }
+
+    /**
+     * Called when a member joins a voice channel
+     * - triggers onStudentJoinVC for all extensions if the member is a
+     * student and was just removed from the queue
+     * @param member the guild member that just joined a VC
+     * @param newVoiceState voice state object with a guaranteed non-null channel
+     */
+    async onMemberJoinVC(
+        member: GuildMember,
+        newVoiceState: WithRequired<VoiceState, 'channel'>
+    ): Promise<void> {
+        // temporary solution, stage channel is not currently supported
+        if (!isVoiceChannel(newVoiceState.channel)) {
+            return;
+        }
+        const vc = newVoiceState.channel;
+        const memberIsStudent = this._helpers.some(helper =>
+            helper.helpedMembers.some(
+                helpedMember => helpedMember.member.id === member.id
+            )
+        );
+        const memberIsHelper = this._helpers.has(member.id);
+        if (memberIsStudent) {
+            const possibleHelpers = newVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            );
+            const queuesToRerender = this._queues.filter(queue =>
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+            );
+            await Promise.all([
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentJoinVC(this, member, vc)
+                ),
+                ...queuesToRerender.map(queue => queue.triggerRender())
+            ]);
+        }
+        if (memberIsHelper) {
+            await Promise.all(
+                this.queues.map(
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
+                )
+            );
+        }
+    }
+
+    /**
+     * Called when a member leaves a voice channel
+     * - triggers onStudentLeaveVC for all extensions if the member is a
+     * student and was in a session
+     * @param member the guild member that just joined a VC
+     * @param oldVoiceState voice state object with a guaranteed non-null channel
+     */
+    async onMemberLeaveVC(
+        member: GuildMember,
+        oldVoiceState: WithRequired<VoiceState, 'channel'>
+    ): Promise<void> {
+        const memberIsStudent = this._helpers.some(helper =>
+            helper.helpedMembers.some(
+                helpedMember => helpedMember.member.id === member.id
+            )
+        );
+        const memberIsHelper = this._helpers.has(member.id);
+        if (memberIsStudent) {
+            const possibleHelpers = oldVoiceState.channel.members.filter(
+                vcMember => vcMember.id !== member.id
+            ); // treat everyone that's not this student as a potential helper
+            const queuesToRerender = this.queues.filter(queue =>
+                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+            );
+            await Promise.all([
+                ...oldVoiceState.channel.permissionOverwrites.cache.map(
+                    overwrite => overwrite.id === member.id && overwrite.delete()
+                ), // delete the student permission overwrite
+                ...this.serverExtensions.map(extension =>
+                    extension.onStudentLeaveVC(this, member)
+                ),
+                this.afterSessionMessage !== '' &&
+                    member.send(SimpleEmbed(this.afterSessionMessage)),
+                ...queuesToRerender.map(queue => queue.triggerRender())
+            ]);
+        }
+        if (memberIsHelper) {
+            // the filter is removed because
+            // the overwrite will die in 15 minutes after the invite was sent
+            await Promise.all(
+                this.queues.map(
+                    queue => queue.hasHelper(member.id) && queue.triggerRender()
+                )
+            );
+        }
+    }
+
+    /**
+     * Checks the deleted `role` was a hierarchy role and if so, mark as deleted
+     * @param deletedRole the role that was deleted
+     */
+    async onRoleDelete(deletedRole: Role): Promise<void> {
+        let hierarchyRoleDeleted = false;
+        // shorthand syntax to take the properties of an object with the same name
+        for (const { key, id } of this.sortedHierarchyRoles) {
+            if (deletedRole.id === id) {
+                this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
+                hierarchyRoleDeleted = true;
+            }
+        }
+        if (!hierarchyRoleDeleted) {
+            return;
+        }
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
      * Opens all the queue that the helper has permission to
      * @param helperMember helper that used /start
      * @param notify whether to notify the students in queue
@@ -729,6 +857,7 @@ class AttendingServerV2 {
         if (openableQueues.size === 0) {
             throw ExpectedServerErrors.missingClassRole;
         }
+        // create this object after all checks have passed
         const helper: Helper = {
             helpStart: new Date(),
             helpedMembers: [],
@@ -744,41 +873,6 @@ class AttendingServerV2 {
                 extension.onHelperStartHelping(this, helper)
             )
         );
-    }
-
-    /**
-     * Closes all the queue that the helper has permission to & logs the help time to console
-     * @param helperMember helper that used /stop
-     * @throws ServerError if the helper is not hosting
-     */
-    async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
-        const helper = this._helpers.get(helperMember.id);
-        if (helper === undefined) {
-            throw ExpectedServerErrors.notHosting;
-        }
-        this._helpers.delete(helperMember.id);
-        const completeHelper: Required<Helper> = {
-            ...helper,
-            helpEnd: new Date()
-        };
-        console.log(
-            ` - Help time of ${helper.member.displayName} is ` +
-                `${convertMsToTime(
-                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
-                )}`
-        );
-        // this filter does not rely on user roles anymore
-        // close all queues that has this user as a helper
-        const closableQueues = this._queues.filter(queue =>
-            queue.hasHelper(helperMember.id)
-        );
-        await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onHelperStopHelping(this, completeHelper)
-            )
-        );
-        return completeHelper;
     }
 
     /**
@@ -811,24 +905,17 @@ class AttendingServerV2 {
     }
 
     /**
-     * Changes the helper state from paused to active
-     * @param helperMember a paused helper to resume helping
+     * Removes a student from the notification group
+     * @param studentMember student to add
+     * @param targetQueue which notification group to remove from
      */
-    async resumeHelping(helperMember: GuildMember): Promise<void> {
-        const helper = this._helpers.get(helperMember.id);
-        if (!helper) {
-            throw ExpectedServerErrors.notHosting;
-        }
-        if (helper.activeState === 'active') {
-            throw ExpectedServerErrors.alreadyActive;
-        }
-        helper.activeState = 'active';
-        const resumableQueues = this._queues.filter(queue =>
-            queue.pausedHelperIds.has(helperMember.id)
-        );
-        await Promise.all(
-            resumableQueues.map(queue => queue.markHelperAsActive(helperMember))
-        );
+    async removeStudentFromNotifGroup(
+        studentMember: GuildMember,
+        targetQueue: QueueChannel
+    ): Promise<void> {
+        await this._queues
+            .get(targetQueue.parentCategoryId)
+            ?.removeFromNotifGroup(studentMember);
     }
 
     /**
@@ -850,112 +937,37 @@ class AttendingServerV2 {
     }
 
     /**
-     * Clears the given queue
-     * @param targetQueue queue to clear
+     * Changes the helper state from paused to active
+     * @param helperMember a paused helper to resume helping
      */
-    async clearQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.removeAllStudents();
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Clear all queues of this server
-     * @remark separated from clear queue to avoid excessive backup calls
-     */
-    async clearAllQueues(): Promise<void> {
-        await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Adds a student to the notification group
-     * @param studentMember student to add
-     * @param targetQueue which notification group to add to
-     */
-    async addStudentToNotifGroup(
-        studentMember: GuildMember,
-        targetQueue: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(targetQueue.parentCategoryId)
-            ?.addToNotifGroup(studentMember);
-    }
-
-    /**
-     * Removes a student from the notification group
-     * @param studentMember student to add
-     * @param targetQueue which notification group to remove from
-     */
-    async removeStudentFromNotifGroup(
-        studentMember: GuildMember,
-        targetQueue: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(targetQueue.parentCategoryId)
-            ?.removeFromNotifGroup(studentMember);
-    }
-
-    /**
-     * Send an announcement to all the students in the helper's approved queues
-     * @param helperMember helper that used /announce
-     * @param announcement announcement message
-     * @param targetQueue optional, specifies which queue to announce to
-     */
-    async announceToStudentsInQueue(
-        helperMember: GuildMember,
-        announcement: string,
-        targetQueue?: QueueChannel
-    ): Promise<void> {
-        if (targetQueue !== undefined) {
-            const queueToAnnounce = this._queues.get(targetQueue.parentCategoryId);
-            const hasQueueRole = helperMember.roles.cache.some(
-                role =>
-                    role.name === targetQueue.queueName || role.id === this.botAdminRoleID
-            );
-            if (!queueToAnnounce || !hasQueueRole) {
-                throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
-            }
-            const announcementEmbed = SimpleEmbed(
-                `Staff member ${helperMember.displayName} announced:\n${announcement}`,
-                EmbedColor.Aqua,
-                `In queue: ${targetQueue.queueName}`
-            );
-            await Promise.all(
-                queueToAnnounce.students.map(student =>
-                    student.member.send(announcementEmbed)
-                )
-            );
-            return;
+    async resumeHelping(helperMember: GuildMember): Promise<void> {
+        const helper = this._helpers.get(helperMember.id);
+        if (!helper) {
+            throw ExpectedServerErrors.notHosting;
         }
-        // from this.queues select queue where helper roles has queue name
-        const studentsToAnnounceTo = this.queues
-            .filter(queue =>
-                helperMember.roles.cache.some(role => role.name === queue.queueName)
-            )
-            .flatMap(queueToAnnounce => queueToAnnounce.students);
-        if (studentsToAnnounceTo.length === 0) {
-            throw ExpectedServerErrors.noStudentToAnnounce(announcement);
+        if (helper.activeState === 'active') {
+            throw ExpectedServerErrors.alreadyActive;
         }
-        const announcementEmbed = SimpleEmbed(
-            `Staff member ${helperMember.displayName} announced:`,
-            EmbedColor.Aqua,
-            announcement
+        helper.activeState = 'active';
+        const resumableQueues = this._queues.filter(queue =>
+            queue.pausedHelperIds.has(helperMember.id)
         );
         await Promise.all(
-            studentsToAnnounceTo.map(student => student.member.send(announcementEmbed))
+            resumableQueues.map(queue => queue.markHelperAsActive(helperMember))
         );
     }
 
     /**
-     * Cleans up the given queue and resend all embeds
-     * @param targetQueue the queue to clean
+     * Sends the log message to the logging channel if it's set up
+     * @param message message to log
      */
-    async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
+    sendLogMessage(message: BaseMessageOptions | string): void {
+        if (this.loggingChannel) {
+            this.loggingChannel.send(message).catch(e => {
+                console.error(red(`Failed to send logs to ${this.guild.name}.`));
+                console.error(e);
+            });
+        }
     }
 
     /**
@@ -965,6 +977,58 @@ class AttendingServerV2 {
      */
     async setAfterSessionMessage(newMessage: string): Promise<void> {
         this.settings.afterSessionMessage = newMessage;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Sets the internal boolean value for autoGiveStudentRole
+     * @param autoGiveStudentRole on or off
+     */
+    async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
+        this.settings.autoGiveStudentRole = autoGiveStudentRole;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Sets the hierarchy roles to use for this server
+     * @param role name of the role; botAdmin, staff, or student
+     * @param id the role id snowflake
+     */
+    async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
+        this.settings.hierarchyRoleIds[role] = id;
+        await Promise.all([
+            updateCommandHelpChannelVisibility(
+                this.guild,
+                this.settings.hierarchyRoleIds
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
+    }
+
+    /**
+     * Sets the logging channel for this server
+     * @param loggingChannel the new logging channel.
+     * - If undefined, disables logging for this server
+     */
+    async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
+        this.settings.loggingChannel = loggingChannel;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Sets the internal boolean value for promptHelpTopic
+     * @param promptHelpTopic
+     */
+    async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
+        this.settings.promptHelpTopic = promptHelpTopic;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
@@ -988,95 +1052,22 @@ class AttendingServerV2 {
     }
 
     /**
-     * Called when leaving a server
-     * - let all the extensions clean up their own memory first before deleting them
+     * Sets the serious server flag, and updates the queues if seriousness is changed
+     * @param enableSeriousMode turn on or off serious mode
+     * @returns True if triggered renders for all queues
      */
-    async gracefulDelete(): Promise<void> {
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerDelete(this))
-        );
-    }
-
-    /**
-     * Sets the logging channel for this server
-     * @param loggingChannel the new logging channel.
-     * - If undefined, disables logging for this server
-     */
-    async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
-        this.settings.loggingChannel = loggingChannel;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
-     * Creates all the command access hierarchy roles
-     * @param allowDuplicate if true, creates new roles even if they already exist
-     * - Duplicates will be created if roles with the same name already exist
-     * @param everyoneIsStudent whether to treat @ everyone as the student role
-     */
-    async createHierarchyRoles(
-        allowDuplicate: boolean,
-        everyoneIsStudent: boolean
-    ): Promise<void> {
-        const allRoles = await this.guild.roles.fetch();
-        const everyoneRoleId = this.guild.roles.everyone.id;
-        const foundRoles = []; // sorted low to high
-        const createdRoles = []; // not typed bc we are only using it for logging
-        for (const role of this.sortedHierarchyRoles) {
-            // do the search if it's NotSet, Deleted, or @everyone
-            // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
-            const existingRole =
-                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
-                role.id === everyoneRoleId
-                    ? allRoles.find(serverRole => serverRole.name === role.displayName)
-                    : allRoles.get(role.id);
-            if (role.key === 'student' && everyoneIsStudent) {
-                this.hierarchyRoleIds.student = everyoneRoleId;
-                continue;
-            }
-            if (existingRole && !allowDuplicate) {
-                this.hierarchyRoleIds[role.key] = existingRole.id;
-                foundRoles[existingRole.position] = existingRole.name;
-                continue;
-            }
-            const newRole = await this.guild.roles.create({
-                ...hierarchyRoleConfigs[role.key],
-                name: hierarchyRoleConfigs[role.key].displayName
-            });
-            this.hierarchyRoleIds[role.key] = newRole.id;
-            // set by indices that are larger than arr length is valid in JS
-            // ! do NOT do this with important arrays bc there will be 'empty items'
-            createdRoles[newRole.position] = newRole.name;
+    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
+        const seriousState = this.queues[0]?.seriousModeEnabled ?? false;
+        if (seriousState === enableSeriousMode) {
+            return false;
         }
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-        createdRoles.length > 0
-            ? console.log(blue('Created roles:'), createdRoles)
-            : console.log(green(`All required roles exist in ${this.guild.name}!`));
-        foundRoles.length > 0 && console.log('Found roles:', foundRoles);
-    }
-
-    /**
-     * Checks the deleted `role` was a hierarchy role and if so, mark as deleted
-     * @param deletedRole the role that was deleted
-     */
-    async onRoleDelete(deletedRole: Role): Promise<void> {
-        let hierarchyRoleDeleted = false;
-        // shorthand syntax to take the properties of an object with the same name
-        for (const { key, id } of this.sortedHierarchyRoles) {
-            if (deletedRole.id === id) {
-                this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
-                hierarchyRoleDeleted = true;
-            }
-        }
-        if (!hierarchyRoleDeleted) {
-            return;
-        }
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        await Promise.all([
+            ...this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
+        return true;
     }
 
     /**
@@ -1139,6 +1130,29 @@ class AttendingServerV2 {
                 extension.onAllQueuesInit(this, this.queues)
             )
         );
+    }
+
+    /**
+     * Loads the server settings data from a backup
+     * - queue backups are passed to the queue constructors
+     * @param backup the data to load
+     */
+    private loadBackup(backup: ServerBackup): void {
+        console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
+        this.settings = {
+            ...backup,
+            hierarchyRoleIds: {
+                botAdmin: backup.botAdminRoleId,
+                staff: backup.staffRoleId,
+                student: backup.studentRoleId
+            }
+        };
+        const loggingChannelFromBackup = this.guild.channels.cache.get(
+            backup.loggingChannelId
+        );
+        if (isTextChannel(loggingChannelFromBackup)) {
+            this.settings.loggingChannel = loggingChannelFromBackup;
+        }
     }
 }
 
