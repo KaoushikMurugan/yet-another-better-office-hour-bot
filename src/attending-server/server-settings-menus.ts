@@ -205,8 +205,8 @@ function RolesConfigMenu(
     }
     embed.addFields(
         {
-            name: 'Current Role Configuration',
-            value: '┈'.repeat(25)
+            name: '┈'.repeat(25),
+            value: '**Current Role Configuration**'
         },
         {
             name: '🤖 Bot Admin Role',
@@ -322,8 +322,8 @@ function RolesConfigMenuForServerInit(
                     "If your server doesn't have any roles, use [Create New Roles] or [Create New Roles (@everyone is student)] for quick start."
             },
             {
-                name: 'Current Role Configuration',
-                value: '┈'.repeat(25)
+                name: '┈'.repeat(25),
+                value: '**Current Role Configuration**'
             },
             {
                 name: '🤖 Bot Admin Role',
