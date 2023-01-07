@@ -367,7 +367,7 @@ class HelpQueueV2 {
         this._students.push(student);
 
         await Promise.all([
-            this.notifyHelpersStudentQueued(studentMember),
+            this.notifyHelpersOnStudentJoin(studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
@@ -377,19 +377,19 @@ class HelpQueueV2 {
      * Notify all helpers that a student has joined the queue
      * @param studentMember
      */
-    async notifyHelpersStudentQueued(studentMember: GuildMember): Promise<void> {
-        // converted to use Array.map
-        const helperIdArray = [...this.activeHelperIds];
-        helperIdArray.map(helperId =>
-            this.queueChannel.channelObj.members
-                .get(helperId)
-                ?.send(
-                    SimpleEmbed(
-                        `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
-                        EmbedColor.Neutral,
-                        `<@${studentMember.user.id}>`
+    async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(
+                        SimpleEmbed(
+                            `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
+                            EmbedColor.Neutral,
+                            `<@${studentMember.user.id}>`
+                        )
                     )
-                )
+            )
         );
     }
 
@@ -397,23 +397,23 @@ class HelpQueueV2 {
      * Notify all helpers of the topic that a student requires help with
      * @param studentMember
      */
-    async notifyHelpersStudentHelpTopic(
+    async notifyHelpersOnStudentSubmitHelpTopic(
         studentMember: GuildMember,
         topic: string
     ): Promise<void> {
-        // converted to use Array.map
-        const helperIdArray = [...this.activeHelperIds];
-        helperIdArray.map(helperId =>
-            this.queueChannel.channelObj.members
-                .get(helperId)
-                ?.send(
-                    SimpleEmbed(
-                        `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
-                        EmbedColor.Neutral,
-                        (topic ? `\n\n**${topic}**` : `N/A`) +
-                            `\n\n<@${studentMember.user.id}>`
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(
+                        SimpleEmbed(
+                            `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
+                            EmbedColor.Neutral,
+                            (topic ? `\n\n**${topic}**` : `N/A`) +
+                                `\n\n<@${studentMember.user.id}>`
+                        )
                     )
-                )
+            )
         );
     }
 

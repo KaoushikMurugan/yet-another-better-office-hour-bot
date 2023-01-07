@@ -575,24 +575,10 @@ class AttendingServerV2 {
     }
 
     /**
-     * Notify all helpers in the queue that a student has joined
-     * @param studentMember
-     * @param queueChannel
-     */
-    async notifyHelpersStudentJoined(
-        studentMember: GuildMember,
-        queueChannel: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersStudentQueued(studentMember);
-    }
-
-    /**
      * Notify all helpers of the topic that the student requires help with
-     * @param studentMember
-     * @param queueChannel
-     * @param topic
+     * @param studentMember the student that just submitted the help topic modal
+     * @param queueChannel related queue channel
+     * @param topic the submitted help topic content
      */
     async notifyHelpersStudentHelpTopic(
         studentMember: GuildMember,
@@ -601,7 +587,7 @@ class AttendingServerV2 {
     ): Promise<void> {
         await this._queues
             .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersStudentHelpTopic(studentMember, topic);
+            ?.notifyHelpersOnStudentSubmitHelpTopic(studentMember, topic);
     }
 
     /**
