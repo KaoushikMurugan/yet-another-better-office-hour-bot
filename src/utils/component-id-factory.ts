@@ -4,7 +4,8 @@ import {
     ComponentLocation,
     Result,
     Err,
-    Ok
+    Ok,
+    Optional
 } from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
@@ -92,11 +93,20 @@ function decompressComponentId(compressedId: string): CustomIdTuple<ComponentLoc
  * Decompresses the component id and extract the component name
  * - this is kind of a duplicate of decompressComponentId but skips the validation step
  * @param compressedId compressed component custom id
+ * @param safeExtract if true, return undefined if decompression fails, if false, throw exception
  * @returns component name
  */
-function extractComponentName(compressedId: string): string {
+function extractComponentName(compressedId: string, safeExtract: true): Optional<string>;
+function extractComponentName(compressedId: string, safeExtract: false): string;
+function extractComponentName(
+    compressedId: string,
+    safeExtract: boolean
+): Optional<string> {
     const rawDecompressed = LZString.decompressFromUTF16(compressedId);
     if (!rawDecompressed) {
+        if (safeExtract) {
+            return undefined;
+        }
         throw new CommandParseError('Invalid Component ID');
     }
     const parsed = JSON.parse(rawDecompressed);
