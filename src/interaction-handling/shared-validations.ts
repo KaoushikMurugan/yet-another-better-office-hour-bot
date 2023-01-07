@@ -176,7 +176,9 @@ function isTriggeredByUserWithValidEmail(
 /**
  * Checks if there are enough channel count for new channels to be created
  * @param interaction
+ * @param numNewCategories number of new categories needed to create
  * @param numNewChannels number of new channels needed to create
+ * - if multiple types of channels are being created, add them together first before calling this function
  * @returns true
  */
 async function channelsAreUnderLimit(

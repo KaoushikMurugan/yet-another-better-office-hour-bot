@@ -120,6 +120,9 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
+            if (!isValidCategoryName(queueName)) {
+                throw ExpectedParseErrors.invalidCategoryName(queueName);
+            }
             await channelsAreUnderLimit(interaction, 1, 2);
             await server.createQueue(queueName);
             await interaction.editReply(SuccessMessages.createdQueue(queueName));
