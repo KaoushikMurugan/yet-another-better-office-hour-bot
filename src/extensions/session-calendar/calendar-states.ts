@@ -16,6 +16,7 @@ import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
+import { IServerExtension } from '../extension-interface.js';
 
 /**
  * The state of the calendar extension
@@ -89,7 +90,10 @@ class CalendarExtensionState {
      */
     constructor(
         private readonly guild: Guild,
-        private readonly serverExtension: CalendarServerExtension
+        private readonly serverExtension: Omit<
+            CalendarServerExtension,
+            keyof IServerExtension
+        >
     ) {}
 
     /**
@@ -100,7 +104,7 @@ class CalendarExtensionState {
      */
     static async load(
         guild: Guild,
-        serverExtension: CalendarServerExtension
+        serverExtension: Omit<CalendarServerExtension, keyof IServerExtension>
     ): Promise<CalendarExtensionState> {
         const instance = new CalendarExtensionState(guild, serverExtension);
         await instance.restoreFromBackup(guild.id);
