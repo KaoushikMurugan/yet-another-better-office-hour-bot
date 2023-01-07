@@ -240,8 +240,7 @@ async function getUpComingTutoringEventsForServer(
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
-        // defaults to empty to let the api call reject, then prompt user to fix the id
-        calendarId: CalendarExtensionState.allStates.get(serverId)?.calendarId ?? '',
+        calendarId: CalendarExtensionState.get(serverId).calendarId,
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
@@ -336,9 +335,8 @@ function composeViewModelsByString(
         queueName: queueName,
         eventSummary: rawSummary,
         displayName: tutorName,
-        discordId: CalendarExtensionState.allStates
-            .get(serverId)
-            ?.calendarNameDiscordIdMap.get(tutorName),
+        discordId:
+            CalendarExtensionState.get(serverId).calendarNameDiscordIdMap.get(tutorName),
         location:
             location !== undefined && location.length > 25
                 ? location.substring(0, 25) + '...'

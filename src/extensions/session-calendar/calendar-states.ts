@@ -109,6 +109,7 @@ class CalendarExtensionState {
         const instance = new CalendarExtensionState(guild, serverExtension);
         await instance.restoreFromBackup(guild.id);
         CalendarExtensionState.allStates.set(guild.id, instance);
+        // design limitation, refresh needs to happen after the instance is in allStates
         await instance.refreshCalendarEvents();
         return instance;
     }
@@ -127,6 +128,7 @@ class CalendarExtensionState {
 
     /**
      * Refreshes the upcomingSessions cache for the corresponding server
+     * - **Requires the allStates map to have this instance**
      */
     async refreshCalendarEvents(): Promise<void> {
         this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
