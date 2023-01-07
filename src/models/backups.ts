@@ -48,6 +48,8 @@ type ServerBackup = {
     studentRoleId: string;
     /** Whether to automatically give new members the student role */
     autoGiveStudentRole: boolean;
+    /** whether to prompt modal asking for help topic when a user joins a queue */
+    promptHelpTopic: boolean;
 };
 
 const firebaseTimestampSchema = z.object({
@@ -89,7 +91,8 @@ const serverBackupSchema = z.object({
     staffRoleId: z.optional(z.string()), // ! Migration code, replace helperRoleId with this
     studentRoleId: z.string(),
     // ! Migration code, make this non-optional in 4.4
-    autoGiveStudentRole: z.optional(z.boolean())
+    autoGiveStudentRole: z.optional(z.boolean()),
+    promptHelpTopic: z.optional(z.boolean())
 });
 
 export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };

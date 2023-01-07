@@ -30,6 +30,7 @@ enum CommandNames {
     set_roles = 'set_roles',
     settings = 'settings',
     auto_give_student_role = 'auto_give_student_role',
+    prompt_help_topic = 'prompt_help_topic',
     set_after_session_msg = 'set_after_session_msg',
     set_queue_auto_clear = 'set_queue_auto_clear'
 }
@@ -63,7 +64,8 @@ enum ModalNames {
     AfterSessionMessageModal = 'AfterSessionMessageModal',
     AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
     QueueAutoClearModal = 'QueueAutoClearModal',
-    QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion'
+    QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion',
+    HelpTopicPromptModal = 'HelpTopicPromptModal'
 }
 
 /** Known base yabob select menu names */

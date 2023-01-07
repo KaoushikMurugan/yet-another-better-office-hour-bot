@@ -365,23 +365,56 @@ class HelpQueueV2 {
             queue: this
         };
         this._students.push(student);
-        // converted to use Array.map
-        const helperIdArray = [...this.activeHelperIds];
+
         await Promise.all([
-            ...helperIdArray.map(helperId =>
+            this.notifyHelpersOnStudentJoin(studentMember),
+            ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
+            this.triggerRender()
+        ]);
+    }
+
+    /**
+     * Notify all helpers that a student has joined the queue
+     * @param studentMember
+     */
+    async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
                 this.queueChannel.channelObj.members
                     .get(helperId)
                     ?.send(
                         SimpleEmbed(
-                            `Heads up! ${student.member.displayName} has joined '${this.queueName}'.`,
+                            `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
                             EmbedColor.Neutral,
-                            `<@${student.member.user.id}>`
+                            `<@${studentMember.user.id}>`
                         )
                     )
-            ),
-            ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
-            this.triggerRender()
-        ]);
+            )
+        );
+    }
+
+    /**
+     * Notify all helpers of the topic that a student requires help with
+     * @param studentMember
+     */
+    async notifyHelpersOnStudentSubmitHelpTopic(
+        studentMember: GuildMember,
+        topic: string
+    ): Promise<void> {
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(
+                        SimpleEmbed(
+                            `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
+                            EmbedColor.Neutral,
+                            (topic ? `\n\n**${topic}**` : `N/A`) +
+                                `\n\n<@${studentMember.user.id}>`
+                        )
+                    )
+            )
+        );
     }
 
     /**

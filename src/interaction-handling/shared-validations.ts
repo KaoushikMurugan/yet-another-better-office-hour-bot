@@ -68,10 +68,10 @@ function isValidDMInteraction(
     }
     return server;
 }
-
 /**
- * Checks if the interaction came from channels in a queue category
- * @returns a queue channel
+ * Checks if the `interaction` is from a queue channel
+ * @param interaction
+ * @returns the {@link QueueChannel} object of the queue channel
  */
 function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): QueueChannel {
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {

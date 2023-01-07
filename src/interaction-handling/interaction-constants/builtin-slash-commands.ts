@@ -292,6 +292,18 @@ const resumeCommand = new SlashCommandBuilder()
     .setName(CommandNames.resume)
     .setDescription('Allow students to join the queue again after /pause was used.');
 
+const promptHelpTopicCommand = new SlashCommandBuilder()
+    .setName(CommandNames.prompt_help_topic)
+    .setDescription(
+        'Enable or disable the modal that prompts the student to enter what they need help with'
+    )
+    .addSubcommand(subcommand =>
+        subcommand.setName('on').setDescription('Turns on the prompt')
+    )
+    .addSubcommand(subcommand =>
+        subcommand.setName('off').setDescription('Turns off the prompt')
+    );
+
 // /help
 /**
  * Generates the help command based on adminCommandHelpMessages,
@@ -346,7 +358,8 @@ const commandData = [
     settingsCommand.toJSON(),
     autoGiveStudentRoleCommand.toJSON(),
     pauseCommand.toJSON(),
-    resumeCommand.toJSON()
+    resumeCommand.toJSON(),
+    promptHelpTopicCommand.toJSON()
 ];
 
 async function postSlashCommands(

@@ -22,6 +22,7 @@ import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import {
     afterSessionMessageModal,
+    helpTopicPromptModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
@@ -58,11 +59,13 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
         [CommandNames.auto_give_student_role]: setAutoGiveStudentRole,
-        [CommandNames.set_after_session_msg]: showAfterSessionMessageModal
+        [CommandNames.set_after_session_msg]: showAfterSessionMessageModal,
+        [CommandNames.prompt_help_topic]: setPromptHelpTopic
     },
     skipProgressMessageCommands: new Set([
         CommandNames.set_after_session_msg,
-        CommandNames.set_queue_auto_clear
+        CommandNames.set_queue_auto_clear,
+        CommandNames.enqueue
     ])
 };
 
@@ -77,8 +80,18 @@ async function enqueue(
         hasValidQueueArgument(interaction)
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
+    if (!server.promptHelpTopic) {
+        await interaction.reply({
+            ...SimpleEmbed(`Processing command \`/enqueue\` ...`),
+            ephemeral: true
+        });
+    }
     await server.enqueueStudent(interaction.member, queueChannel);
-    await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
+    server.promptHelpTopic
+        ? await interaction.showModal(helpTopicPromptModal(server.guild.id))
+        : await interaction.editReply(
+              SuccessMessages.joinedQueue(queueChannel.queueName)
+          );
 }
 
 /**
@@ -628,6 +641,28 @@ async function setAutoGiveStudentRole(
         await server.setAutoGiveStudentRole(false);
         await interaction.editReply(SuccessMessages.turnedOffAutoGiveStudentRole);
     }
+}
+
+/**
+ * The `/prompt_help_topic` command
+ */
+async function setPromptHelpTopic(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'set_prompt_help_topic',
+        'botAdmin'
+    );
+    const onOrOff = interaction.options.getSubcommand();
+    await server.setPromptHelpTopic(onOrOff === 'on');
+    await interaction.editReply(
+        onOrOff === 'on'
+            ? SuccessMessages.turnedOnPromptHelpTopic
+            : SuccessMessages.turnedOffPromptHelpTopic
+    );
 }
 
 export { baseYabobCommandMap };
