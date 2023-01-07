@@ -70,7 +70,8 @@ export const SuccessMessages = {
     updatedAfterSessionMessage: (message: string) =>
         message.length === 0
             ? SimpleEmbed(
-                  'Successfully disabled after session messages. YABOB will not send messages to students after they finish receiving help.'
+                  'Successfully disabled after session messages. YABOB will not send messages to students after they finish receiving help.',
+                  EmbedColor.Success
               )
             : SimpleEmbed(
                   'The following message will be sent to the student after they finish receiving help:',
@@ -93,14 +94,19 @@ export const SuccessMessages = {
     cleanedUp: {
         queue: (queueName: string) =>
             SimpleEmbed(`Queue ${queueName} has been cleaned up.`, EmbedColor.Success),
-        allQueues: SimpleEmbed('All queues have been cleaned up.'),
+        allQueues: SimpleEmbed('All queues have been cleaned up.', EmbedColor.Success),
         helpChannels: SimpleEmbed(
-            "Successfully cleaned up everything under 'Bot Commands Help'."
+            "Successfully cleaned up everything under 'Bot Commands Help'.",
+            EmbedColor.Success
         )
     },
-    turnedOnSeriousMode: SimpleEmbed(`Serious mode has been turned on.`),
+    turnedOnSeriousMode: SimpleEmbed(
+        `Serious mode has been turned on.`,
+        EmbedColor.Success
+    ),
     turnedOffSeriousMode: SimpleEmbed(
-        `Serious mode has been turned off.\nThere's no need to be so serious!`
+        `Serious mode has been turned off.\nThere's no need to be so serious!`,
+        EmbedColor.Success
     ),
     createdOffices: (numOffices: number) =>
         SimpleEmbed(
@@ -123,15 +129,19 @@ export const SuccessMessages = {
             EmbedColor.Success
         ),
     turnedOnAutoGiveStudentRole: SimpleEmbed(
-        `Successfully turned on auto give student role. The student role will be given to all new members who join the server`
+        `Successfully turned on auto give student role. The student role will be given to all new members who join the server`,
+        EmbedColor.Success
     ),
     turnedOffAutoGiveStudentRole: SimpleEmbed(
-        `Successfully turned off auto give student role. The student role will no longer be given to new members who join the server`
+        `Successfully turned off auto give student role. The student role will no longer be given to new members who join the server`,
+        EmbedColor.Success
     ),
     turnedOnPromptHelpTopic: SimpleEmbed(
-        `Successfully turned on prompt help topic. YABOB will prompt students to select a help topic when they join a queue.`
+        `Successfully turned on prompt help topic. YABOB will prompt students to select a help topic when they join a queue.`,
+        EmbedColor.Success
     ),
     turnedOffPromptHelpTopic: SimpleEmbed(
-        `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`
+        `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
+        EmbedColor.Success
     )
 } as const;

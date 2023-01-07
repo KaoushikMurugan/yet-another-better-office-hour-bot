@@ -657,13 +657,12 @@ async function setPromptHelpTopic(
         'botAdmin'
     );
     const onOrOff = interaction.options.getSubcommand();
-    if (onOrOff === 'on') {
-        await server.setPromptHelpTopic(true);
-        await interaction.editReply(SuccessMessages.turnedOnPromptHelpTopic);
-    } else {
-        await server.setPromptHelpTopic(false);
-        await interaction.editReply(SuccessMessages.turnedOffPromptHelpTopic);
-    }
+    await server.setPromptHelpTopic(onOrOff === 'on');
+    await interaction.editReply(
+        onOrOff === 'on'
+            ? SuccessMessages.turnedOnPromptHelpTopic
+            : SuccessMessages.turnedOffPromptHelpTopic
+    );
 }
 
 export { baseYabobCommandMap };
