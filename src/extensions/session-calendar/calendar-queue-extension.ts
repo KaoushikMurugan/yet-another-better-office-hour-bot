@@ -54,8 +54,8 @@ class CalendarQueueExtension extends BaseQueueExtension {
     /**
      * Event listener/subscriber for changes in calendarExtensionStates
      */
-    async onCalendarStateChange(): Promise<void> {
-        await this.renderCalendarEmbeds();
+    onCalendarStateChange(): void {
+        this.renderCalendarEmbeds();
     }
 
     /**
@@ -63,7 +63,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      */
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     override async onQueueCreate(queue: FrozenQueue): Promise<void> {
-        await this.renderCalendarEmbeds();
+        this.renderCalendarEmbeds();
     }
 
     /**
@@ -82,7 +82,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
-    private async renderCalendarEmbeds(): Promise<void> {
+    private renderCalendarEmbeds(): void {
         const state = CalendarExtensionState.get(this.queueChannel.channelObj.guild.id);
         const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
