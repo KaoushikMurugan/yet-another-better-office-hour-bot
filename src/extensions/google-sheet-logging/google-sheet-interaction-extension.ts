@@ -5,6 +5,7 @@ import {
     BaseInteractionExtension,
     IInteractionExtension
 } from '../extension-interface.js';
+import { googleSheetSettingsMainMenuOptions } from './google-sheet-constants/google-sheet-settings-menu.js';
 import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slash-commands.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
 import { loadSheetById } from './shared-sheet-functions.js';
@@ -48,6 +49,8 @@ class GoogleSheetInteractionExtension
     override slashCommandData = googleSheetsCommands;
 
     override commandMap = googleSheetCommandMap;
+
+    override settingsMainMenuOptions = googleSheetSettingsMainMenuOptions;
 }
 
 export { GoogleSheetInteractionExtension };
