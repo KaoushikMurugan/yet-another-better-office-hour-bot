@@ -42,10 +42,10 @@ async function getStatistics(
         );
     }
 
-    const attendanceSheetTitle = `${server.guild.name.replace(/:/g, ' ')} Attendance`.replace(
-        /\s{2,}/g,
+    const attendanceSheetTitle = `${server.guild.name.replace(
+        /:/g,
         ' '
-    );
+    )} Attendance`.replace(/\s{2,}/g, ' ');
 
     const attendanceSheet = googleSheet.sheetsByTitle[attendanceSheetTitle];
 
@@ -117,12 +117,11 @@ async function getStatistics(
     const helperSessionCount = filteredAttendanceRows.length;
 
     const totalAvailableTime = filteredAttendanceRows
-    .map(row => {
+        .map(row => {
             return parseInt(row['Session Time (ms)']);
         })
         .filter((time: number) => !isNaN(time))
         .reduce((a, b) => a + b, 0);
-
 
     const totalAvailableTimeHours = Math.trunc(totalAvailableTime / (1000 * 60 * 60));
     const totalAvailableTimeMinutes = Math.trunc(totalAvailableTime / (1000 * 60)) % 60;
@@ -159,11 +158,10 @@ async function getStatistics(
     //   Reading Help Session Sheet
     //   --------------------------
 
-    
-    const helpSessionSheetTitle = `${server.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
-        /\s{2,}/g,
+    const helpSessionSheetTitle = `${server.guild.name.replace(
+        /:/g,
         ' '
-    );
+    )} Help Sessions`.replace(/\s{2,}/g, ' ');
 
     const helpSessionSheet = googleSheet.sheetsByTitle[helpSessionSheetTitle];
 
@@ -215,7 +213,6 @@ async function getStatistics(
         })
         .filter((time: number) => !isNaN(time))
         .reduce((a, b) => a + b, 0);
-
 
     const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
     const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60)) % 60;
