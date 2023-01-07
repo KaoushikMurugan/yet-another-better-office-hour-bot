@@ -61,7 +61,7 @@ class GoogleSheetExtensionState {
      */
     static async load(
         guild: Guild,
-        serverExtension: GoogleSheetServerExtension
+        serverExtension: Omit<GoogleSheetServerExtension, keyof IServerExtension>
     ): Promise<GoogleSheetExtensionState> {
         const backupData = await GoogleSheetExtensionState.restoreFromBackup(guild.id);
         const googleSheet = await loadSheetById(backupData.sheetId);

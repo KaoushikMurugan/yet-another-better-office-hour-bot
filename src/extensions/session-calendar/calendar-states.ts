@@ -6,6 +6,7 @@ import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
+    checkCalendarConnection,
     getUpComingTutoringEventsForServer,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
@@ -15,6 +16,7 @@ import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
+import { IServerExtension } from '../extension-interface.js';
 
 /**
  * The state of the calendar extension
@@ -88,7 +90,10 @@ class CalendarExtensionState {
      */
     constructor(
         private readonly guild: Guild,
-        private readonly serverExtension: CalendarServerExtension
+        private readonly serverExtension: Omit<
+            CalendarServerExtension,
+            keyof IServerExtension
+        >
     ) {}
 
     /**
@@ -99,11 +104,13 @@ class CalendarExtensionState {
      */
     static async load(
         guild: Guild,
-        serverExtension: CalendarServerExtension
+        serverExtension: Omit<CalendarServerExtension, keyof IServerExtension>
     ): Promise<CalendarExtensionState> {
         const instance = new CalendarExtensionState(guild, serverExtension);
         await instance.restoreFromBackup(guild.id);
         CalendarExtensionState.allStates.set(guild.id, instance);
+        // design limitation, refresh needs to happen after the instance is in allStates
+        await instance.refreshCalendarEvents();
         return instance;
     }
 
@@ -121,6 +128,7 @@ class CalendarExtensionState {
 
     /**
      * Refreshes the upcomingSessions cache for the corresponding server
+     * - **Requires the allStates map to have this instance**
      */
     async refreshCalendarEvents(): Promise<void> {
         this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
@@ -147,7 +155,21 @@ class CalendarExtensionState {
         if (!calendarBackup.success) {
             return;
         }
-        this.calendarId = calendarBackup.data.calendarId;
+        if (
+            calendarBackup.data.calendarId !==
+            environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
+        ) {
+            // check if bob still has access to the backup calendarId
+            // we can only guarantee that the default id works
+            await checkCalendarConnection(calendarBackup.data.calendarId)
+                .then(() => {
+                    this.calendarId = calendarBackup.data.calendarId;
+                })
+                .catch(() => {
+                    this.calendarId =
+                        environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+                });
+        }
         this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
@@ -168,6 +190,7 @@ class CalendarExtensionState {
         // fall back to default embed in case the user forgets to set up a new public embed
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         this.backupToFirebase();
+        await this.refreshCalendarEvents();
         await this.emitStateChangeEvent();
     }
 
@@ -183,14 +206,21 @@ class CalendarExtensionState {
 
     /**
      * Adds a new calendar_name -> discord_id mapping to displayNameDiscordIdMap
-     * @param calendarName display name on the calendar
+     * @param displayName display name on the calendar
      * @param discordId id of the user that used /make_calendar_string
      */
     async updateNameDiscordIdMap(
-        calendarName: string,
+        displayName: string,
         discordId: Snowflake
     ): Promise<void> {
-        this.calendarNameDiscordIdMap.set(calendarName, discordId);
+        this.calendarNameDiscordIdMap.set(displayName, discordId);
+        // update the values in the viewModels
+        // without doing another calendar refresh
+        for (const viewModel of this.upcomingSessions) {
+            if (viewModel.displayName === displayName) {
+                viewModel.discordId = discordId;
+            }
+        }
         this.backupToFirebase();
         await this.emitStateChangeEvent();
     }

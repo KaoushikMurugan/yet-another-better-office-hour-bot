@@ -37,12 +37,12 @@ const ExpectedQueueErrors = {
         new QueueError(`${studentName} is not in the queue.`, queueName),
     alreadyInNotifGroup: (queueName: string) =>
         new QueueError(
-            `You are already in the notification squad for ${queueName}.`,
+            `You are already in the notification group for ${queueName}.`,
             queueName
         ),
     notInNotifGroup: (queueName: string) =>
         new QueueError(
-            `You are not in the notification squad for ${queueName}.`,
+            `You are not in the notification group for ${queueName}.`,
             queueName
         )
 } as const;

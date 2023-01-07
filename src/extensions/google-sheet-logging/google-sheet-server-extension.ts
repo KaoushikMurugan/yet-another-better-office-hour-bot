@@ -45,21 +45,10 @@ type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 // Credit of all the update logic goes to Kaoushik
 class GoogleSheetServerExtension extends BaseServerExtension implements IServerExtension {
     /**
-     * Students that just got dequeued but haven't joined the VC yet
-     * - Key is student member.id, value is corresponding helpee object
-     */
-    private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
-    /**
      * Used to compose the final attendance entry.
      * - Key is helper member.id, value is entry for this helper
      */
     private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
-    /**
-     * Current active help session entries of each student
-     * - key is student member.id, value is an array of entries to handle multiple helpers
-     */
-    private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
-        new Collection();
     /**
      * These are the attendance entries that are complete but haven't been sent to google sheets yet
      * - Cleared immediately after google sheet has been successfully updated
@@ -70,6 +59,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
      * - If true, writing to the attendanceEntries will not create another setTimeout
      */
     private attendanceUpdateIsScheduled = false;
+    /**
+     * Current active help session entries of each student
+     * - key is student member.id, value is an array of entries to handle multiple helpers
+     */
+    private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
+        new Collection();
+    /**
+     * Students that just got dequeued but haven't joined the VC yet
+     * - Key is student member.id, value is corresponding helpee object
+     */
+    private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
 
     constructor(private readonly guild: Guild) {
         super();
@@ -100,6 +100,61 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
         dequeuedStudent: Readonly<Helpee>
     ): Promise<void> {
         this.studentsJustDequeued.set(dequeuedStudent.member.id, dequeuedStudent);
+    }
+
+    /**
+     * Start logging the session time as soon as the helper joins VC
+     * @param _server unused
+     * @param helper
+     */
+    override async onHelperStartHelping(
+        _server: FrozenServer,
+        helper: Readonly<Omit<Helper, 'helpEnd'>>
+    ): Promise<void> {
+        const entry: ActiveTime = {
+            latestStudentJoinTimeStamp: undefined,
+            activeTimeMs: 0
+        };
+        this.activeTimeEntries.set(helper.member.id, entry);
+    }
+
+    /**
+     * Sends the {@link AttendanceEntry} to google sheets after student leave VC
+     * @param _server
+     * @param helper
+     */
+    override async onHelperStopHelping(
+        _server: FrozenServer,
+        helper: Readonly<Required<Helper>>
+    ): Promise<void> {
+        const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
+        if (activeTimeEntry === undefined) {
+            throw ExpectedSheetErrors.unknownEntry;
+        }
+        for (const student of helper.helpedMembers) {
+            this.studentsJustDequeued.delete(student.member.id);
+        }
+        this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
+        if (!this.attendanceUpdateIsScheduled) {
+            // if nothing is scheduled, start a timer
+            // otherwise the existing timer will update this entry
+            // so no need to schedule another one
+            this.attendanceUpdateIsScheduled = true;
+            setTimeout(async () => {
+                this.attendanceUpdateIsScheduled = false;
+                await this.batchUpdateAttendance();
+            }, 60 * 1000);
+        }
+        this.activeTimeEntries.delete(helper.member.id);
+    }
+
+    /**
+     * Delete the state object on server delete
+     * - technically not necessary since we don't have timers, but it's good to be explicit
+     * @param server the deleted server
+     */
+    override async onServerDelete(server: FrozenServer): Promise<void> {
+        GoogleSheetExtensionState.allStates.delete(server.guild.id);
     }
 
     /**
@@ -181,52 +236,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements IServerE
             .catch((err: Error) =>
                 console.error(red('Cannot update help sessions.'), err.name, err.message)
             );
-    }
-
-    /**
-     * Start logging the session time as soon as the helper joins VC
-     * @param _server unused
-     * @param helper
-     */
-    override async onHelperStartHelping(
-        _server: FrozenServer,
-        helper: Readonly<Omit<Helper, 'helpEnd'>>
-    ): Promise<void> {
-        const entry: ActiveTime = {
-            latestStudentJoinTimeStamp: undefined,
-            activeTimeMs: 0
-        };
-        this.activeTimeEntries.set(helper.member.id, entry);
-    }
-
-    /**
-     * Sends the {@link AttendanceEntry} to google sheets after student leave VC
-     * @param _server
-     * @param helper
-     */
-    override async onHelperStopHelping(
-        _server: FrozenServer,
-        helper: Readonly<Required<Helper>>
-    ): Promise<void> {
-        const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
-        if (activeTimeEntry === undefined) {
-            throw ExpectedSheetErrors.unknownEntry;
-        }
-        for (const student of helper.helpedMembers) {
-            this.studentsJustDequeued.delete(student.member.id);
-        }
-        this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
-        if (!this.attendanceUpdateIsScheduled) {
-            // if nothing is scheduled, start a timer
-            // otherwise the existing timer will update this entry
-            // so no need to schedule another one
-            this.attendanceUpdateIsScheduled = true;
-            setTimeout(async () => {
-                this.attendanceUpdateIsScheduled = false;
-                await this.batchUpdateAttendance();
-            }, 60 * 1000);
-        }
-        this.activeTimeEntries.delete(helper.member.id);
     }
 
     /** Updates all the cached attendance entries */

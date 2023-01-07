@@ -54,7 +54,7 @@ const queueStateStyles: {
         color: EmbedColor.Yellow,
         statusText: {
             serious: '**PAUSED**',
-            notSerious: '**PAUSED**\t(´∀｀)'
+            notSerious: '**PAUSED**\t(´∀` )'
         }
     }
 };

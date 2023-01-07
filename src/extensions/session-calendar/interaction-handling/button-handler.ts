@@ -20,7 +20,10 @@ const calendarButtonMap: ButtonHandlerProps = {
         }
     },
     dmMethodMap: {},
-    skipProgressMessageButtons: new Set([CalendarButtonNames.ShowCalendarSettingsModal])
+    skipProgressMessageButtons: new Set([
+        CalendarButtonNames.ShowCalendarSettingsModal,
+        CalendarButtonNames.ResetCalendarSettings
+    ])
 };
 
 async function resetCalendarSettings(
@@ -32,7 +35,12 @@ async function resetCalendarSettings(
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
     ]);
     await interaction.update(
-        CalendarSettingsConfigMenu(server, interaction.channelId, false)
+        CalendarSettingsConfigMenu(
+            server,
+            interaction.channelId,
+            false,
+            'Successfully reset all calendar settings.'
+        )
     );
 }
 
@@ -46,9 +54,8 @@ async function requestCalendarRefresh(
 ): Promise<void> {
     const state = isServerCalendarInteraction(interaction)[1];
     const queueName = isFromQueueChannelWithParent(interaction).queueName;
-    const queueLevelExtension = state.queueExtensions.get(queueName);
     await state.refreshCalendarEvents();
-    await queueLevelExtension?.onCalendarStateChange();
+    await state.emitStateChangeEvent(queueName);
     await interaction.editReply(CalendarSuccessMessages.refreshSuccess(queueName));
 }
 

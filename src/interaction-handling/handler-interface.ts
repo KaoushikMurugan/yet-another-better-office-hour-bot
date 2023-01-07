@@ -32,7 +32,11 @@ type DMModalSubmitHandler = (interaction: ModalSubmitInteraction) => Promise<voi
 interface CommandHandlerProps {
     /** All the commands */
     methodMap: { readonly [commandName: string]: CommandHandler };
-    /** Commands that will REPLY/UPDATE inside the function body */
+    /**
+     * Commands that will REPLY/UPDATE inside the function body
+     * - If a handler reply/updates in the function body but doesn't have its name here,
+     *  it will cause the InteractionAlreadyReplied Error
+     */
     skipProgressMessageCommands: Set<string>;
 }
 
@@ -47,7 +51,11 @@ interface ButtonHandlerProps {
     };
     /** All the DM buttons */
     dmMethodMap: { readonly [buttonName: string]: DMButtonHandler };
-    /** Buttons that will REPLY/UPDATE inside the function body */
+    /**
+     * Buttons that will REPLY/UPDATE inside the function body
+     * - If a handler reply/updates in the function body but doesn't have its name here,
+     *  it will cause the InteractionAlreadyReplied Error
+     */
     skipProgressMessageButtons: Set<string>;
 }
 
@@ -62,7 +70,11 @@ interface SelectMenuHandlerProps {
     };
     /** All the DM select menus */
     dmMethodMap: { readonly [selectMenuName: string]: DMSelectMenuHandler };
-    /** Select menus that will REPLY/UPDATE inside the function body */
+    /**
+     * Select menus that will REPLY/UPDATE inside the function body
+     * - If a handler reply/updates in the function body but doesn't have its name here,
+     *  it will cause the InteractionAlreadyReplied Error
+     */
     skipProgressMessageSelectMenus: Set<string>;
 }
 
