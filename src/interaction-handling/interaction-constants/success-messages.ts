@@ -123,9 +123,15 @@ export const SuccessMessages = {
             EmbedColor.Success
         ),
     turnedOnAutoGiveStudentRole: SimpleEmbed(
-        `Successfully turned on auto give student role.`
+        `Successfully turned on auto give student role. The student role will be given to all new members who join the server`
     ),
     turnedOffAutoGiveStudentRole: SimpleEmbed(
-        `Successfully turned off auto give student role.`
-    )
+        `Successfully turned off auto give student role. The student role will no longer be given to new members who join the server`
+    ),
+    turnedOnPromptHelpTopic: SimpleEmbed(
+        `Successfully turned on prompt help topic. YABOB will prompt students to select a help topic when they join a queue.`
+    ),
+    turnedOffPromptHelpTopic: SimpleEmbed(
+        `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`
+    ),
 } as const;

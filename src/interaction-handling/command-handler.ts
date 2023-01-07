@@ -58,7 +58,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
         [CommandNames.auto_give_student_role]: setAutoGiveStudentRole,
-        [CommandNames.set_after_session_msg]: showAfterSessionMessageModal
+        [CommandNames.set_after_session_msg]: showAfterSessionMessageModal,
+        [CommandNames.prompt_help_topic]: setPromptHelpTopic,
     },
     skipProgressMessageCommands: new Set([
         CommandNames.set_after_session_msg,
@@ -614,5 +615,30 @@ async function setAutoGiveStudentRole(
         await interaction.editReply(SuccessMessages.turnedOffAutoGiveStudentRole);
     }
 }
+
+/**
+ * The `/prompt_help_topic` command
+ */
+async function setPromptHelpTopic(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = isServerInteraction(interaction);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        'set_prompt_help_topic',
+        'botAdmin'
+    );
+    const onOrOff = interaction.options.getSubcommand();
+    if (onOrOff === 'on') {
+        await server.setPromptHelpTopic(true);
+        await interaction.editReply(SuccessMessages.turnedOnPromptHelpTopic);
+    } else {
+        await server.setPromptHelpTopic(false);
+        await interaction.editReply(SuccessMessages.turnedOffPromptHelpTopic);
+    }
+}
+
+
 
 export { baseYabobCommandMap };

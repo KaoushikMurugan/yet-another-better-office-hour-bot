@@ -66,6 +66,8 @@ type ServerSettings = {
     loggingChannel?: TextChannel;
     /** automatically give new members the student role */
     autoGiveStudentRole: boolean;
+    /** prompt modal asking for help topic when a user joins a queue */
+    promptHelpTopic: boolean;
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
@@ -105,6 +107,7 @@ class AttendingServerV2 {
     private settings: ServerSettings = {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
+        promptHelpTopic: true,
         hierarchyRoleIds: {
             /** role id of the bot admin role */
             botAdmin: SpecialRoleValues.NotSet,
@@ -163,6 +166,10 @@ class AttendingServerV2 {
     /** whether to automatically give new members the student role */
     get autoGiveStudentRole(): boolean {
         return this.settings.autoGiveStudentRole;
+    }
+    /** whether to prompt modal asking for help topic when a user joins a queue */
+    get promptHelpTopic(): boolean {
+        return this.settings.promptHelpTopic;
     }
     /**
      * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
@@ -237,6 +244,17 @@ class AttendingServerV2 {
      */
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this.settings.autoGiveStudentRole = autoGiveStudentRole;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        );
+    }
+
+    /**
+     * Sets the internal boolean value for promptHelpTopic
+     * @param promptHelpTopic on or off
+     */
+    async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
+        this.settings.promptHelpTopic = promptHelpTopic;
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );

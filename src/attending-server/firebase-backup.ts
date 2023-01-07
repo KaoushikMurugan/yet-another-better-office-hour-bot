@@ -61,6 +61,7 @@ class FirebaseServerBackupExtension
             })),
             timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
             autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
+            promptHelpTopic: unpack.data.promptHelpTopic ?? false,
             staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
         };
         return backupData;
@@ -101,7 +102,8 @@ class FirebaseServerBackupExtension
             botAdminRoleId: server.botAdminRoleID,
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
-            autoGiveStudentRole: server.autoGiveStudentRole
+            autoGiveStudentRole: server.autoGiveStudentRole,
+            promptHelpTopic: server.promptHelpTopic,
         };
         firebaseDB
             .collection('serverBackups')
