@@ -9,6 +9,7 @@ import {
     isServerGoogleSheetInteraction
 } from '../shared-sheet-functions.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
+import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -135,7 +136,7 @@ async function getStatistics(
 
     const studentsList: string[] = [];
 
-    // each cell in the 'Helped Student' is an arry of json strings, where the json is of the form
+    // each cell in the 'Helped Student' is an array of json strings, where the json is of the form
     // {displayName: string, username: string, id: string}
     filteredAttendanceRows.forEach(row => {
         const students = row['Helped Students'];
@@ -322,23 +323,35 @@ async function getWeeklyReport(
         startTime.getDate() - (startTime.getDay() % 7) + startOfWeek - 7 * numWeeks
     );
 
-    filteredRows = filteredRows.filter(row => {
-        // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-        const returnDate = row['Time In'].split(',')[0];
-        const returnTime = row['Time In'].split(',')[1];
-        const returnDateParts = returnDate.split('/');
-        const returnTimeParts = returnTime.split(':');
-        const returnDateObj = new Date(
-            parseInt(returnDateParts[2]),
-            parseInt(returnDateParts[0]) - 1,
-            parseInt(returnDateParts[1]),
-            parseInt(returnTimeParts[0]),
-            parseInt(returnTimeParts[1]),
-            parseInt(returnTimeParts[2].split(' ')[0])
-        );
-
-        return returnDateObj >= startTime;
-    });
+    try {
+        filteredRows = filteredRows.filter(row => {
+            // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
+            // TODO: add validation to indexing rows
+            const returnDate = row['Time In'].split(',')[0]; // this could be undefined invoking split on undefined will throw exception
+            const returnTime = row['Time In'].split(',')[1]; // this could be undefined
+            const returnDateParts = returnDate.split('/');
+            const returnTimeParts = returnTime.split(':');
+            const returnDateObj = new Date(
+                // FIXME: all of this could be NaN
+                parseInt(returnDateParts[2]),
+                parseInt(returnDateParts[0]) - 1,
+                parseInt(returnDateParts[1]),
+                parseInt(returnTimeParts[0]),
+                parseInt(returnTimeParts[1]),
+                parseInt(returnTimeParts[2].split(' ')[0])
+            );
+            // Date constructor never throws exception, but returns the "Invalid Date" string instead
+            // need to be manually checked, TS design limitation here
+            if (!(returnDateObj instanceof Date)) {
+                // TODO: Temporary solution, if any parsing fails, throw this error instead
+                throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+            }
+            return returnDateObj >= startTime;
+        });
+    } catch {
+        // TODO: Temporary solution, if any parsing fails, throw this error instead
+        throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+    }
 
     if (filteredRows.length === 0) {
         await interaction.editReply(
@@ -365,14 +378,15 @@ async function getWeeklyReport(
 
         const weekEndTime = new Date(startTime);
         weekEndTime.setDate(weekEndTime.getDate() + 7 * (i + 1));
-
         const weekRows = filteredRows.filter(row => {
             // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-            const returnDate = row['Time In'].split(',')[0];
-            const returnTime = row['Time In'].split(',')[1];
-            const returnDateParts = returnDate.split('/');
-            const returnTimeParts = returnTime.split(':');
+            // TODO: remove excessive optional chaining
+            const returnDate = row['Time In']?.split(',')[0];
+            const returnTime = row['Time In']?.split(',')[1];
+            const returnDateParts = returnDate?.split('/');
+            const returnTimeParts = returnTime?.split(':');
             const returnDateObj = new Date(
+                // FIXME: All of this could be NaN
                 parseInt(returnDateParts[2]),
                 parseInt(returnDateParts[0]) - 1,
                 parseInt(returnDateParts[1]),
@@ -381,9 +395,13 @@ async function getWeeklyReport(
                 parseInt(returnTimeParts[2].split(' ')[0])
             ); //TODO: remove manual parsing
 
+            // need to be manually checked
+            if (!(returnDateObj instanceof Date)) {
+                throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+            }
+
             return returnDateObj >= weekStartTime && returnDateObj <= weekEndTime;
         });
-
         const weekSessions = weekRows.length;
 
         const weekTime = weekRows

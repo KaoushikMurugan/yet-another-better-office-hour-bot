@@ -60,7 +60,9 @@ const documentationLinks = {
     autoClear: `${documentationBaseUrl}#queue-auto-clear`,
     loggingChannel: `${documentationBaseUrl}#logging-channel`,
     afterSessionMessage: `${documentationBaseUrl}#after-session-message`,
-    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`
+    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`,
+    promptHelpTopic: `${documentationBaseUrl}#help-topic-prompt`,
+    seriousMode: `${documentationBaseUrl}#serious-mode`
 };
 
 /**
@@ -119,7 +121,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
-        subMenu: promptHelpTopicConfigMenu
+        subMenu: PromptHelpTopicConfigMenu
     },
     {
         optionData: {
@@ -711,7 +713,7 @@ function AutoGiveStudentRoleConfigMenu(
  * @param updateMessage
  * @returns
  */
-function promptHelpTopicConfigMenu(
+function PromptHelpTopicConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     isDm: boolean,
@@ -727,13 +729,13 @@ function promptHelpTopicConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about help topic prompts here.]()` //TODO: Add documentation link
+                value: `[Learn more about help topic prompts here.](${documentationLinks.promptHelpTopic})` //TODO: Add documentation link
             },
             {
                 name: 'Current Configuration',
                 value: server.promptHelpTopic
-                    ? `**Enabled** - Students will be prompted to select a help topic when they join the queue.`
-                    : `**Disabled** - Students will not be prompted to select a help topic when they join the queue.`
+                    ? `**Enabled** - Students will be prompted to enter a help topic when they join the queue.`
+                    : `**Disabled** - Students will not be prompted when they join the queue.`
             }
         );
     if (updateMessage.length > 0) {
@@ -787,7 +789,7 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about serious mode here.]()` //TODO: Add documentation link
+                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})` //TODO: Add documentation link
             },
             {
                 name: 'Current Configuration',
@@ -830,7 +832,7 @@ export {
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    promptHelpTopicConfigMenu as PromptHelpTopicConfigMenu,
+    PromptHelpTopicConfigMenu as PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
     serverSettingsMainMenuOptions

@@ -32,11 +32,9 @@ function GoogleSheetSettingsConfigMenu(
     if (!state) {
         throw new Error('Google Sheet Logging state for this server was not found');
     }
-
     const setGoogleSheetCommandID = server.guild.commands.cache.find(
         command => command.name === 'set_google_sheet'
     )?.id;
-
     const embed = new EmbedBuilder()
         .setTitle(`📊 Google Sheet Logging Configuration for ${server.guild.name} 📊`)
         .setColor(EmbedColor.Aqua)
@@ -47,19 +45,22 @@ function GoogleSheetSettingsConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about Google Sheet Logging settings here.]()` //TODO: Add link to documentation
+                value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)` //TODO: Add link to documentation
             },
             {
                 name: 'Current Google Sheet',
                 value:
-                    `[Google Sheet](${state}) \n ` +
+                    `[Google Sheet](${state.googleSheetURL}) \n ` +
                     `To change the Google Sheet, please use the ${
                         setGoogleSheetCommandID
                             ? `</set_google_sheet:${setGoogleSheetCommandID}>`
                             : '`/set_google_sheet`'
-                    } command.`
+                    } command. A select menu will be added in v4.3.1`
             }
         );
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
     return {
         embeds: [embed],
         components: [mainMenuRow]

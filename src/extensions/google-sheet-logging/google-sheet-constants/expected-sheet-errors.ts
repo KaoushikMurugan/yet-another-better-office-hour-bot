@@ -37,6 +37,7 @@ const ExpectedSheetErrors = {
     badGoogleSheetId: new GoogleSheetConnectionError(
         `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
     ),
+    unparsableDateString: (sheetName:string) => new CommandParseError(`Hmmm...YABOB cannot parse the data stored in ${sheetName}. Is the data format altered?`),
     nonServerInteraction: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(

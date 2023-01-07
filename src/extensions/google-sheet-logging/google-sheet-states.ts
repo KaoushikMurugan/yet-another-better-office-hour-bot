@@ -50,6 +50,12 @@ class GoogleSheetExtensionState {
     get googleSheet(): GoogleSpreadsheet {
         return this._googleSheet;
     }
+    /**
+     * The public url of the google sheet document
+     */
+    get googleSheetURL(): string {
+        return `https://docs.google.com/spreadsheets/d/${this.googleSheet.spreadsheetId}`;
+    }
 
     /**
      * Loads the extension states for 1 guild
