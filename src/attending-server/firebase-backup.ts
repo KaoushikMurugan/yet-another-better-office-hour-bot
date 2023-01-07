@@ -103,7 +103,7 @@ class FirebaseServerBackupExtension
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
             autoGiveStudentRole: server.autoGiveStudentRole,
-            promptHelpTopic: server.promptHelpTopic,
+            promptHelpTopic: server.promptHelpTopic
         };
         firebaseDB
             .collection('serverBackups')

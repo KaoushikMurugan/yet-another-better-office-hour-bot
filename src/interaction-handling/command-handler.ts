@@ -59,7 +59,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.settings]: settingsMenu,
         [CommandNames.auto_give_student_role]: setAutoGiveStudentRole,
         [CommandNames.set_after_session_msg]: showAfterSessionMessageModal,
-        [CommandNames.prompt_help_topic]: setPromptHelpTopic,
+        [CommandNames.prompt_help_topic]: setPromptHelpTopic
     },
     skipProgressMessageCommands: new Set([
         CommandNames.set_after_session_msg,
@@ -79,9 +79,18 @@ async function enqueue(
         hasValidQueueArgument(interaction)
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
+    if (!server.promptHelpTopic) {
+        await interaction.reply({
+            ...SimpleEmbed(`Processing command \`/enqueue\` ...`),
+            ephemeral: true
+        });
+    }
     await server.enqueueStudent(interaction.member, queueChannel);
-    await interaction.showModal(helpTopicPromptModal(server.guild.id));
-    //await interaction.editReply(SuccessMessages.joinedQueue(queueChannel.queueName));
+    server.promptHelpTopic
+        ? await interaction.showModal(helpTopicPromptModal(server.guild.id))
+        : await interaction.editReply(
+              SuccessMessages.joinedQueue(queueChannel.queueName)
+          );
 }
 
 /**
@@ -638,7 +647,5 @@ async function setPromptHelpTopic(
         await interaction.editReply(SuccessMessages.turnedOffPromptHelpTopic);
     }
 }
-
-
 
 export { baseYabobCommandMap };

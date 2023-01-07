@@ -251,7 +251,7 @@ class AttendingServerV2 {
 
     /**
      * Sets the internal boolean value for promptHelpTopic
-     * @param promptHelpTopic on or off
+     * @param promptHelpTopic
      */
     async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
         this.settings.promptHelpTopic = promptHelpTopic;

@@ -20,6 +20,7 @@ import {
     helpTopicPromptModal,
     queueAutoClearModal
 } from './interaction-constants/modal-objects.js';
+import { SimpleEmbed } from '../utils/embed-helper.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -85,9 +86,18 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
         isServerInteraction(interaction),
         isFromQueueChannelWithParent(interaction)
     ];
+    if (!server.promptHelpTopic) {
+        await interaction.reply({
+            ...SimpleEmbed(`Processing button \`Join\` ...`),
+            ephemeral: true
+        });
+    }
     await server.enqueueStudent(interaction.member, queueChannel);
-
-    await interaction.showModal(helpTopicPromptModal(server.guild.id));
+    server.promptHelpTopic
+        ? await interaction.showModal(helpTopicPromptModal(server.guild.id))
+        : await interaction.editReply(
+              SuccessMessages.joinedQueue(queueChannel.queueName)
+          );
 }
 
 /**

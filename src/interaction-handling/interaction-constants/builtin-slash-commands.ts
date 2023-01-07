@@ -294,15 +294,15 @@ const resumeCommand = new SlashCommandBuilder()
 
 const promptHelpTopicCommand = new SlashCommandBuilder()
     .setName(CommandNames.prompt_help_topic)
-    .setDescription('Enable or disable the modal that prompts the student to enter what they need help with')
+    .setDescription(
+        'Enable or disable the modal that prompts the student to enter what they need help with'
+    )
     .addSubcommand(subcommand =>
         subcommand.setName('on').setDescription('Turns on the prompt')
     )
     .addSubcommand(subcommand =>
         subcommand.setName('off').setDescription('Turns off the prompt')
     );
-    
-        
 
 // /help
 /**
@@ -358,7 +358,7 @@ const commandData = [
     autoGiveStudentRoleCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
-    promptHelpTopicCommand.toJSON(),
+    promptHelpTopicCommand.toJSON()
 ];
 
 async function postSlashCommands(
