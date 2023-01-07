@@ -270,7 +270,7 @@ const helperCommandHelpMessages: HelpMessage[] = [
     startHelp,
     stopHelp,
     nextHelp,
-    announceHelp,
+    announceHelp
     // ! Over choice limit
     // clearHelp,
     // pauseHelp,
