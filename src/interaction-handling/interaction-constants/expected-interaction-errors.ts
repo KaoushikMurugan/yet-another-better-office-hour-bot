@@ -5,8 +5,17 @@ import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { CommandParseError } from '../../utils/error-types.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { getInteractionName } from '../../utils/util-functions.js';
+import { HierarchyRoles, hierarchyRoleConfigs } from '../../models/hierarchy-roles.js';
 
 const ExpectedParseErrors = {
+    hierarchyRoleDoesNotExist: (
+        missingRoleNames: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'][]
+    ) =>
+        new CommandParseError(
+            `The roles ${missingRoleNames.join(
+                ', '
+            )} does not exist on this server or have not been set up. You can use \`/settings\` -> Server Roles to configure roles.`
+        ),
     missingHierarchyRoles: (
         lowestRequiredRoleID: Snowflake,
         commandName: string
@@ -78,6 +87,9 @@ const ExpectedParseErrors = {
     ),
     messageIsTooLong: new CommandParseError(
         'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
+    ),
+    tooManyChannels: new CommandParseError(
+        'Sorry, you have too many categories and channels on this server. YABOB cannot create another category for this new queue.'
     ),
     invalidChannelName: (channelName: string) =>
         new CommandParseError(

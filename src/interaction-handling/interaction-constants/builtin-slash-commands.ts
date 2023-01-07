@@ -222,7 +222,7 @@ const createOfficesCommand = new SlashCommandBuilder()
     .addStringOption(option =>
         option
             .setName('office_name')
-            .setDescription('The name of the office')
+            .setDescription('The prefix of each office')
             .setRequired(true)
     )
     .addIntegerOption(option =>

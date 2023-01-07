@@ -28,7 +28,8 @@ import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     isServerInteraction,
     hasValidQueueArgument,
-    isTriggeredByMemberWithRoles
+    isTriggeredByMemberWithRoles,
+    channelsAreUnderLimit
 } from './shared-validations.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
@@ -119,6 +120,7 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
+            await channelsAreUnderLimit(interaction, 1, 2);
             await server.createQueue(queueName);
             await interaction.editReply(SuccessMessages.createdQueue(queueName));
             break;
@@ -531,6 +533,13 @@ async function createOffices(
     if (!isValidChannelName(officeName)) {
         throw ExpectedParseErrors.invalidChannelName(officeName);
     }
+    if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
+        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Bot Admin']);
+    }
+    if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
+        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Staff']);
+    }
+    await channelsAreUnderLimit(interaction, 1, numOffices);
     await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
         server.botAdminRoleID,
         server.staffRoleID
