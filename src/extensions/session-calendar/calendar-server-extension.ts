@@ -32,7 +32,8 @@ class CalendarServerExtension extends BaseServerExtension {
      */
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);
-        await CalendarExtensionState.load(guild, instance);
+        const state = await CalendarExtensionState.load(guild, instance);
+        await state.refreshCalendarEvents();
         console.log(
             `[${blue('Session Calendar')}] successfully loaded for '${guild.name}'!`
         );
@@ -49,15 +50,6 @@ class CalendarServerExtension extends BaseServerExtension {
         clearInterval(this.timerId);
         CalendarExtensionState.allStates.delete(server.guild.id);
         return Promise.resolve();
-    }
-
-    /**
-     * Populate the upcoming sessions cache on server create
-     * @param server the newly created server
-     */
-    override async onServerInitSuccess(server: FrozenServer): Promise<void> {
-        const state = CalendarExtensionState.get(server.guild.id);
-        await state.refreshCalendarEvents();
     }
 }
 

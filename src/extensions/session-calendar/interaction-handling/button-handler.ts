@@ -54,9 +54,8 @@ async function requestCalendarRefresh(
 ): Promise<void> {
     const state = isServerCalendarInteraction(interaction)[1];
     const queueName = isFromQueueChannelWithParent(interaction).queueName;
-    const queueLevelExtension = state.queueExtensions.get(queueName);
     await state.refreshCalendarEvents();
-    await queueLevelExtension?.onCalendarStateChange();
+    state.queueExtensions.get(queueName)?.onCalendarStateChange();
     await interaction.editReply(CalendarSuccessMessages.refreshSuccess(queueName));
 }
 

@@ -6,6 +6,7 @@ import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
+    checkCalendarConnection,
     getUpComingTutoringEventsForServer,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
@@ -147,7 +148,21 @@ class CalendarExtensionState {
         if (!calendarBackup.success) {
             return;
         }
-        this.calendarId = calendarBackup.data.calendarId;
+        if (
+            calendarBackup.data.calendarId !==
+            environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
+        ) {
+            // check if bob still has access to the backup calendarId
+            // we can only guarantee that the default id works
+            await checkCalendarConnection(calendarBackup.data.calendarId)
+                .then(() => {
+                    this.calendarId = calendarBackup.data.calendarId;
+                })
+                .catch(() => {
+                    this.calendarId =
+                        environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+                });
+        }
         this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
@@ -168,6 +183,7 @@ class CalendarExtensionState {
         // fall back to default embed in case the user forgets to set up a new public embed
         this.publicCalendarEmbedUrl = restorePublicEmbedURL(validNewId);
         this.backupToFirebase();
+        await this.refreshCalendarEvents();
         await this.emitStateChangeEvent();
     }
 
