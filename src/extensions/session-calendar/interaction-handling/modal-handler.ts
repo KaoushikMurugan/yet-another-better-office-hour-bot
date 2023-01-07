@@ -64,9 +64,13 @@ async function updateCalendarSettings(
                   'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
               )
           )
-        : interaction.reply(
-              CalendarSuccessMessages.updatedCalendarSettings(calendarId, publicEmbedUrl)
-          ));
+        : interaction.reply({
+              ...CalendarSuccessMessages.updatedCalendarSettings(
+                  calendarId,
+                  publicEmbedUrl
+              ),
+              ephemeral: true
+          }));
 }
 
 export { calendarModalMap };

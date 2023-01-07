@@ -231,9 +231,10 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
  */
 async function unsupportedInteraction(interaction: Interaction): Promise<void> {
     if (interaction.isRepliable()) {
-        await interaction.reply(
-            SimpleEmbed('This interaction is currently not supported')
-        );
+        await interaction.reply({
+            ...SimpleEmbed('This interaction is currently not supported'),
+            ephemeral: true
+        });
     }
 }
 

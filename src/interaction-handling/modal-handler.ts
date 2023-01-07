@@ -51,7 +51,10 @@ async function setAfterSessionMessage(
                       : 'After session message has been updated!'
               )
           )
-        : interaction.reply(SuccessMessages.updatedAfterSessionMessage(message)));
+        : interaction.reply({
+              ...SuccessMessages.updatedAfterSessionMessage(message),
+              ephemeral: true
+          }));
 }
 
 /**
@@ -87,11 +90,12 @@ async function setQueueAutoClear(
                       : 'Successfully disabled queue auto clear.'
               )
           )
-        : interaction.reply(
-              enable
+        : interaction.reply({
+              ...(enable
                   ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
-                  : SuccessMessages.queueAutoClear.disabled
-          ));
+                  : SuccessMessages.queueAutoClear.disabled),
+              ephemeral: true
+          }));
 }
 
 export { baseYabobModalMap };
