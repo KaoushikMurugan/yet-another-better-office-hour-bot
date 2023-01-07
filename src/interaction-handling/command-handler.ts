@@ -28,7 +28,8 @@ import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     isServerInteraction,
     hasValidQueueArgument,
-    isTriggeredByMemberWithRoles
+    isTriggeredByMemberWithRoles,
+    channelsAreUnderLimit
 } from './shared-validations.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
@@ -119,6 +120,10 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
+            if (!isValidCategoryName(queueName)) {
+                throw ExpectedParseErrors.invalidCategoryName(queueName);
+            }
+            await channelsAreUnderLimit(interaction, 1, 2);
             await server.createQueue(queueName);
             await interaction.editReply(SuccessMessages.createdQueue(queueName));
             break;
@@ -531,6 +536,13 @@ async function createOffices(
     if (!isValidChannelName(officeName)) {
         throw ExpectedParseErrors.invalidChannelName(officeName);
     }
+    if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
+        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Bot Admin']);
+    }
+    if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
+        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Staff']);
+    }
+    await channelsAreUnderLimit(interaction, 1, numOffices);
     await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
         server.botAdminRoleID,
         server.staffRoleID
@@ -550,13 +562,19 @@ async function setRoles(
     isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'botAdmin');
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
+    const roleIsBotRole = server.guild.roles.cache
+        .get(role.id)
+        ?.members.some(member => member.user.bot);
+    if (roleIsBotRole) {
+        throw ExpectedParseErrors.cannotUseBotRoleAsHierarchyRole;
+    }
     switch (roleType) {
         case 'bot_admin': {
             await server.setHierarchyRoleId('botAdmin', role.id);
             await interaction.editReply(SuccessMessages.setBotAdminRole(role.id));
             break;
         }
-        case 'helper': {
+        case 'staff': {
             await server.setHierarchyRoleId('staff', role.id);
             await interaction.editReply(SuccessMessages.setHelperRole(role.id));
             break;

@@ -59,6 +59,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
     }
 
     /**
+     * Send the embed on queue create
+     */
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    override async onQueueCreate(queue: FrozenQueue): Promise<void> {
+        await this.renderCalendarEmbeds();
+    }
+
+    /**
      * Removes `deletedQueue` from the listeners map
      * @param deletedQueue
      */
@@ -70,7 +78,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
         // when server deletes the queue from queue collection
     }
 
-    // TODO: (bug) New queues are missing the calendar embeds
     /**
      * Composes the calendar embed and sends a render request to the display
      * @param refreshCache whether to refresh the upcomingSessions cache

@@ -37,7 +37,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { RolesConfigMenu } from './server-settings-menus.js';
+import { RolesConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
@@ -45,6 +45,7 @@ import {
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
+import { UnknownId } from '../utils/component-id-factory.js';
 
 /**
  * Wrapper for TextChannel
@@ -100,20 +101,16 @@ class AttendingServerV2 {
     private _helpers: Collection<GuildMemberId, Helper> = new Collection();
     /**
      * Server settings. An firebase update is requested as soon as this changes
-     * - TODO: Use the Proxy class to abstract away the update logic
      */
     private settings: ServerSettings = {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         hierarchyRoleIds: {
-            /** role id of the bot admin role */
             botAdmin: SpecialRoleValues.NotSet,
-            /** role id of the helper role */
             staff: SpecialRoleValues.NotSet,
-            /** role id of the student role */
             student: SpecialRoleValues.NotSet
         }
-    };
+    }; // TODO: Use the Proxy class to abstract away the update logic
 
     protected constructor(
         readonly guild: Guild,
@@ -315,7 +312,13 @@ class AttendingServerV2 {
         );
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
-            await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
+            await owner.send(
+                RolesConfigMenuForServerInit(
+                    server,
+                    owner.dmChannel?.id ?? UnknownId,
+                    false
+                )
+            );
         }
         await Promise.all([
             server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
@@ -677,13 +680,6 @@ class AttendingServerV2 {
         if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
-        const helper: Helper = {
-            helpStart: new Date(),
-            helpedMembers: [],
-            activeState: 'active', // always start with active state
-            member: helperMember
-        };
-        this._helpers.set(helperMember.id, helper);
         const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
             helperRoles.includes(queue.queueName)
@@ -691,6 +687,13 @@ class AttendingServerV2 {
         if (openableQueues.size === 0) {
             throw ExpectedServerErrors.missingClassRole;
         }
+        const helper: Helper = {
+            helpStart: new Date(),
+            helpedMembers: [],
+            activeState: 'active', // always start with active state
+            member: helperMember
+        };
+        this._helpers.set(helperMember.id, helper);
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
         );
@@ -722,6 +725,8 @@ class AttendingServerV2 {
                     completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
                 )}`
         );
+        // this filter does not rely on user roles anymore
+        // close all queues that has this user as a helper
         const closableQueues = this._queues.filter(queue =>
             queue.hasHelper(helperMember.id)
         );

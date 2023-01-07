@@ -173,11 +173,39 @@ function isTriggeredByUserWithValidEmail(
     return interaction.member;
 }
 
+/**
+ * Checks if there are enough channel count for new channels to be created
+ * @param interaction
+ * @param numNewCategories number of new categories needed to create
+ * @param numNewChannels number of new channels needed to create
+ * - if multiple types of channels are being created, add them together first before calling this function
+ * @returns true
+ */
+async function channelsAreUnderLimit(
+    interaction: Interaction<'cached'>,
+    numNewCategories: number,
+    numNewChannels: number
+): Promise<boolean> {
+    const numCategoryChannels = (await interaction.guild.channels.fetch()).filter(
+        isCategoryChannel
+    ).size;
+    // max number of category channels is 50
+    // max number of guild channels is 500
+    if (
+        numCategoryChannels >= 50 - numNewCategories ||
+        interaction.guild.channels.cache.size >= 500 - numNewChannels
+    ) {
+        throw ExpectedParseErrors.tooManyChannels;
+    }
+    return true;
+}
+
 export {
     isServerInteraction,
     isFromQueueChannelWithParent,
     isValidDMInteraction,
     isTriggeredByMemberWithRoles,
     hasValidQueueArgument,
+    channelsAreUnderLimit,
     isTriggeredByUserWithValidEmail
 };

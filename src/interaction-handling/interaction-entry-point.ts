@@ -138,15 +138,15 @@ async function processButton(interaction: Interaction): Promise<void> {
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
         logButtonPress(interaction, buttonName);
-        const handleModalSubmit = completeButtonMap.guildMethodMap[type][buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+        const handleButton = completeButtonMap.guildMethodMap[type][buttonName];
+        await handleButton?.(interaction).catch(async (err: Error) => {
             logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
     } else {
         logDMButtonPress(interaction, buttonName);
-        const handleModalSubmit = completeButtonMap.dmMethodMap[buttonName];
-        await handleModalSubmit?.(interaction).catch(async (err: Error) => {
+        const handleButton = completeButtonMap.dmMethodMap[buttonName];
+        await handleButton?.(interaction).catch(async (err: Error) => {
             logExpectedErrors(interaction, err);
             await replyWithError(interaction, err, server.botAdminRoleID);
         });
@@ -231,9 +231,10 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
  */
 async function unsupportedInteraction(interaction: Interaction): Promise<void> {
     if (interaction.isRepliable()) {
-        await interaction.reply(
-            SimpleEmbed('This interaction is currently not supported')
-        );
+        await interaction.reply({
+            ...SimpleEmbed('This interaction is currently not supported'),
+            ephemeral: true
+        });
     }
 }
 

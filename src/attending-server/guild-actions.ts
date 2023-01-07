@@ -41,7 +41,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
         await owner.send(
             SimpleEmbed(
                 `It seems like I'm joining a server with existing roles. ` +
-                    `Please go to server settings -> Roles and change ${client.user.username} ` +
+                    `Please go to ${guild.name}'s Server settings → Roles and change ${client.user.username} ` +
                     `to the highest role.\n`,
                 EmbedColor.Error
             )

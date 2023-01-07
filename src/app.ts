@@ -15,10 +15,7 @@ import {
     isLeaveVC,
     isJoinVC
 } from './utils/util-functions.js';
-import {
-    RolesConfigMenu,
-    serverSettingsMainMenuOptions
-} from './attending-server/server-settings-menus.js';
+import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
 import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
@@ -44,11 +41,18 @@ client.on(Events.ClientReady, async () => {
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );
-    if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
+    const successfullyCreatedServersCount = setupResults.filter(
+        result => result.status === 'fulfilled'
+    ).length;
+    if (successfullyCreatedServersCount === 0) {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    console.log(`\n${green('✅ Ready to go! ✅')}\n`);
+    console.log(
+        `\n${green(
+            `✅ Ready to go! (${successfullyCreatedServersCount} servers created) ✅`
+        )}\n`
+    );
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
@@ -136,17 +140,15 @@ client.on(Events.GuildRoleUpdate, async role => {
     ) {
         console.log(cyan('Got the highest Role! Starting server initialization'));
         const owner = await role.guild.fetchOwner();
-        const [server] = await Promise.all([
+        await Promise.all([
             joinGuild(role.guild),
             owner.send(
                 SimpleEmbed(
-                    `Got the highest Role!` +
-                        ` Starting server initialization for ${role.guild.name}`,
+                    `Got the highest Role! Starting server initialization for ${role.guild.name}`,
                     EmbedColor.Success
                 )
             )
         ]);
-        await owner.send(RolesConfigMenu(server, owner.id, true, '', true));
     }
 });
 

@@ -167,6 +167,7 @@ function composeUpcomingSessionsEmbedBody(
     return (
         viewModels
             // take the first `returnCount` number of sessions
+            // TODO: add length validation here
             .slice(0, returnCount)
             .map(transformViewModelToString)
             .join(divider) + lastUpdatedTimeStampString

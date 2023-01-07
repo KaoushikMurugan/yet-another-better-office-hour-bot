@@ -51,7 +51,10 @@ async function setAfterSessionMessage(
                       : 'After session message has been updated!'
               )
           )
-        : interaction.reply(SuccessMessages.updatedAfterSessionMessage(message)));
+        : interaction.reply({
+              ...SuccessMessages.updatedAfterSessionMessage(message),
+              ephemeral: true
+          }));
 }
 
 /**
@@ -66,11 +69,14 @@ async function setQueueAutoClear(
     const server = isServerInteraction(interaction);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
-    const hours = hoursInput === '' ? 0 : parseInt(hoursInput);
-    const minutes = minutesInput === '' ? 0 : parseInt(minutesInput);
+    let hours = hoursInput === '' ? 0 : parseInt(hoursInput, 10); // only accept base 10 inputs
+    let minutes = minutesInput === '' ? 0 : parseInt(minutesInput, 10);
     if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
+    // move the excess minutes into hours
+    hours += Math.floor(minutes / 60);
+    minutes %= 60;
     const enable = !(hours === 0 && minutes === 0);
     await server.setQueueAutoClear(hours, minutes, enable);
     await (useMenu && interaction.isFromMessage()
@@ -84,11 +90,12 @@ async function setQueueAutoClear(
                       : 'Successfully disabled queue auto clear.'
               )
           )
-        : interaction.reply(
-              enable
+        : interaction.reply({
+              ...(enable
                   ? SuccessMessages.queueAutoClear.enabled(hours, minutes)
-                  : SuccessMessages.queueAutoClear.disabled
-          ));
+                  : SuccessMessages.queueAutoClear.disabled),
+              ephemeral: true
+          }));
 }
 
 export { baseYabobModalMap };
