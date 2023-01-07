@@ -5,8 +5,17 @@ import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { CommandParseError } from '../../utils/error-types.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { getInteractionName } from '../../utils/util-functions.js';
+import { HierarchyRoles, hierarchyRoleConfigs } from '../../models/hierarchy-roles.js';
 
 const ExpectedParseErrors = {
+    hierarchyRoleDoesNotExist: (
+        missingRoleNames: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'][]
+    ) =>
+        new CommandParseError(
+            `The roles ${missingRoleNames.join(
+                ', '
+            )} does not exist on this server or have not been set up. You can use \`/settings\` -> Server Roles to configure roles.`
+        ),
     missingHierarchyRoles: (
         lowestRequiredRoleID: Snowflake,
         commandName: string
@@ -18,9 +27,13 @@ const ExpectedParseErrors = {
         lowestRequiredRoleName: Optional<string>,
         commandName: string
     ): CommandParseError =>
-        new CommandParseError(
-            `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command.`
-        ),
+        lowestRequiredRoleName
+            ? new CommandParseError(
+                  `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command. You can ask the owner of this server to see which role is ${lowestRequiredRoleName}.`
+              )
+            : new CommandParseError(
+                  `Some access level roles have not been set up on this server. Please ask the server owner to use /set_roles or the settings menu to set it up.`
+              ),
     invalidQueueCategory: (categoryName?: string) =>
         categoryName === undefined
             ? new CommandParseError(
@@ -78,6 +91,12 @@ const ExpectedParseErrors = {
     ),
     messageIsTooLong: new CommandParseError(
         'Sorry, Discord only allows messages shorter than 4096 characters. Please revise your message to be shorter.'
+    ),
+    tooManyChannels: new CommandParseError(
+        'Sorry, you have too many categories and channels on this server. YABOB cannot create another category for this new queue.'
+    ),
+    cannotUseBotRoleAsHierarchyRole: new CommandParseError(
+        'Bot integration roles cannot be used because no human user can have them. Please specify a different role.'
     ),
     invalidChannelName: (channelName: string) =>
         new CommandParseError(

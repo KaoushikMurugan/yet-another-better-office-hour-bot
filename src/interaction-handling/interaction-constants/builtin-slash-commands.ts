@@ -209,7 +209,7 @@ const activateSeriousModeCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off serious mode')
     );
 
-// /create_officies [category_name] [office_name] [number_of_offices]
+// /create_offices [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
     .setName(CommandNames.create_offices)
     .setDescription('Creates the a set number of voice channels in a new category')
@@ -222,7 +222,7 @@ const createOfficesCommand = new SlashCommandBuilder()
     .addStringOption(option =>
         option
             .setName('office_name')
-            .setDescription('The name of the office')
+            .setDescription('The prefix of each office')
             .setRequired(true)
     )
     .addIntegerOption(option =>
@@ -254,7 +254,7 @@ const setRolesCommand = new SlashCommandBuilder()
             .setDescription('The name of the role')
             .setRequired(true)
             .addChoices(
-                { name: 'Helper', value: 'helper' },
+                { name: 'Staff', value: 'staff' },
                 { name: 'Bot Admin', value: 'bot_admin' },
                 { name: 'Student', value: 'student' }
             )
@@ -319,6 +319,7 @@ function generateHelpCommand() {
                 .setDescription('The command to get help with')
                 .setRequired(true)
                 .addChoices(
+                    // TODO: Use autocomplete to dynamically generate choices here
                     ...adminCommandHelpMessages
                         .filter(helpMessage => helpMessage.useInHelpCommand)
                         .map(helpMessage => helpMessage.nameValuePair),

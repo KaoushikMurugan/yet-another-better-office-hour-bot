@@ -19,6 +19,7 @@ import { black, cyan, magenta, red, yellow } from './command-line-colors.js';
 import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
+import { extractComponentName } from './component-id-factory.js';
 
 // #region Util Functions
 
@@ -159,13 +160,21 @@ function getInteractionName(interaction: Interaction): string {
         return interaction.commandName;
     }
     if (interaction.isButton()) {
-        return interaction.component.label ?? interaction.customId;
+        return (
+            interaction.component.label ??
+            extractComponentName(interaction.customId, true) ??
+            'Button'
+        );
     }
     if (interaction.isModalSubmit()) {
-        return interaction.customId;
+        return extractComponentName(interaction.customId, true) ?? 'Modal Submit';
     }
     if (interaction.isSelectMenu()) {
-        return interaction.component.placeholder ?? interaction.customId;
+        return (
+            extractComponentName(interaction.customId, true) ??
+            interaction.component.placeholder ??
+            'Select Menu'
+        );
     }
     return 'Unsupported Interaction Type';
 }

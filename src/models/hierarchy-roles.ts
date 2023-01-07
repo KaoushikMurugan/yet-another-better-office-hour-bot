@@ -5,8 +5,11 @@ import { OptionalRoleId } from '../utils/type-aliases.js';
  * The role ids of each hierarchy role
  */
 type HierarchyRoles = {
+    /** role id of the bot admin role */
     botAdmin: OptionalRoleId;
+    /** role id of the staff role */
     staff: OptionalRoleId;
+    /** role id of the student role */
     student: OptionalRoleId;
 };
 

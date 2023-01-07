@@ -114,7 +114,7 @@ export const SuccessMessages = {
         ),
     setHelperRole: (roleID: string) =>
         SimpleEmbed(
-            `Successfully set the helper role to <@${roleID}>.`,
+            `Successfully set the staff role to <@${roleID}>.`,
             EmbedColor.Success
         ),
     setStudentRole: (roleID: string) =>

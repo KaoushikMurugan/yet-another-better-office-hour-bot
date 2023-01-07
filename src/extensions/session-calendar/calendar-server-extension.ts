@@ -23,7 +23,7 @@ class CalendarServerExtension extends BaseServerExtension {
                 await state.refreshCalendarEvents();
                 await state.emitStateChangeEvent();
             }
-        }, 15 * 60 * 1000);
+        }, 60 * 60 * 1000);
     }
 
     /**
@@ -49,16 +49,6 @@ class CalendarServerExtension extends BaseServerExtension {
         clearInterval(this.timerId);
         CalendarExtensionState.allStates.delete(server.guild.id);
         return Promise.resolve();
-    }
-
-    /**
-     * Populate the upcoming sessions cache on server create
-     * @param server the newly created server
-     */
-    override async onServerInitSuccess(server: FrozenServer): Promise<void> {
-        const state = CalendarExtensionState.get(server.guild.id);
-        await state.refreshCalendarEvents();
-        await state.emitStateChangeEvent();
     }
 }
 

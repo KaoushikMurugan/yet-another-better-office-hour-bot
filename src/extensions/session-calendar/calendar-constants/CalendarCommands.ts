@@ -196,7 +196,8 @@ const whenNextHelp: HelpMessage = {
                     {
                         name: 'Options',
                         value: '`queue_name: string`\n Specifies a queue to list upcoming help sessions for. \
-                        \nIf not specified, defauts to current queue if used in a valid queue.',
+                        \nIf not specified, defaults to current queue if used in a valid queue. \
+                        \n`show_all: boolean\n If true, show as many help sessions as discord embed allows.`',
                         inline: false
                     },
                     {

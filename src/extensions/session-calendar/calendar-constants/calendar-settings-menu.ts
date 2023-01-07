@@ -28,7 +28,8 @@ const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
 function CalendarSettingsConfigMenu(
     server: FrozenServer,
     channelId: string,
-    isDm: boolean
+    isDm: boolean,
+    updateMessage = ''
 ): YabobEmbed {
     const state = CalendarExtensionState.allStates.get(server.guild.id);
     if (!state) {
@@ -37,21 +38,28 @@ function CalendarSettingsConfigMenu(
     const embed = new EmbedBuilder()
         .setTitle(`🗓 Calendar Configuration for ${server.guild.name} 🗓`)
         .setColor(EmbedColor.Aqua)
-        .setDescription(
-            'This is the calendar that this server refers to for office hours events'
-        )
         .setFields(
             {
-                name: 'Office Hours Calendar',
+                name: 'Description',
+                value: 'This setting controls which calendar this server will refer to for office hours events.'
+            },
+            {
+                name: 'Documentation',
+                value: `[Learn more about calendar settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#calendar-settings)`
+            },
+            {
+                name: 'Current Office Hours Calendar',
                 value: `[Google Calendar](${restorePublicEmbedURL(state.calendarId)})`
             },
             {
-                name: 'Office Hours Calendar Embed URL',
+                name: 'Current Office Hours Calendar Embed URL',
                 value: `[Embed Override](${state.publicCalendarEmbedUrl})`
             }
         )
         .setFooter({
-            text: 'Note: If you change the calendar, the embed url will be reset to the default embed url for the new calendar.'
+            text: updateMessage
+                ? `✅ ${updateMessage}`
+                : 'Note: If you change the calendar, the embed url will be reset to the default embed url for the new calendar.'
         });
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [

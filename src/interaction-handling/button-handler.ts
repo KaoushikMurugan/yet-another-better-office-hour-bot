@@ -5,7 +5,8 @@ import {
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
-    AutoGiveStudentRoleConfigMenu
+    AutoGiveStudentRoleConfigMenu,
+    RolesConfigMenuForServerInit
 } from '../attending-server/server-settings-menus.js';
 import { ButtonHandlerProps } from './handler-interface.js';
 import {
@@ -171,8 +172,8 @@ async function createServerRoles(
 }
 
 /**
- * Creates roles for the server
- * Version for DM Button Interactions
+ * Creates roles for the server in dm channels
+ * - This is explicitly used for server initialization
  * @param forceCreate if true, will create new roles even if they already exist
  */
 async function createServerRolesDM(
@@ -183,15 +184,7 @@ async function createServerRolesDM(
     const server = isValidDMInteraction(interaction);
     await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
-        RolesConfigMenu(
-            server,
-            interaction.channelId,
-            true,
-            forceCreate
-                ? 'New roles have been created!'
-                : 'Role configurations have been updated!',
-            false
-        )
+        RolesConfigMenuForServerInit(server, interaction.channelId, true)
     );
 }
 
