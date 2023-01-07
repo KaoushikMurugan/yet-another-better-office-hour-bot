@@ -60,7 +60,9 @@ const documentationLinks = {
     autoClear: `${documentationBaseUrl}#queue-auto-clear`,
     loggingChannel: `${documentationBaseUrl}#logging-channel`,
     afterSessionMessage: `${documentationBaseUrl}#after-session-message`,
-    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`
+    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`,
+    promptHelpTopic: `${documentationBaseUrl}#help-topic-prompt`,
+    seriousMode: `${documentationBaseUrl}#serious-mode`
 };
 
 /**
@@ -111,6 +113,24 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             value: 'auto-give-student-role'
         },
         subMenu: AutoGiveStudentRoleConfigMenu
+    },
+    {
+        optionData: {
+            emoji: '🙋',
+            label: 'Help Topic Prompt',
+            description: 'Configure the help topic prompt',
+            value: 'help-topic-prompt'
+        },
+        subMenu: PromptHelpTopicConfigMenu
+    },
+    {
+        optionData: {
+            emoji: '🧐',
+            label: 'Serious Mode',
+            description: 'Configure the serious mode',
+            value: 'serious-mode'
+        },
+        subMenu: SeriousModeConfigMenu
     }
 ];
 
@@ -626,6 +646,14 @@ function LoggingChannelConfigMenu(
     };
 }
 
+/**
+ * Composes the auto give student role configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @param updateMessage
+ * @returns
+ */
 function AutoGiveStudentRoleConfigMenu(
     server: AttendingServerV2,
     channelId: string,
@@ -677,6 +705,125 @@ function AutoGiveStudentRoleConfigMenu(
     return { embeds: [embed.data], components: [buttons, mainMenuRow] };
 }
 
+/**
+ * Composes the help topic prompt configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @param updateMessage
+ * @returns
+ */
+function PromptHelpTopicConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean,
+    updateMessage = ''
+): YabobEmbed {
+    const embed = new EmbedBuilder()
+        .setTitle(`🙋 Help Topic Prompt Configuration for ${server.guild.name} 🙋`)
+        .setColor(EmbedColor.Aqua)
+        .addFields(
+            {
+                name: 'Description',
+                value: `Whether to prompt students to select a help topic when they join the queue.`
+            },
+            {
+                name: 'Documentation',
+                value: `[Learn more about help topic prompts here.](${documentationLinks.promptHelpTopic})` //TODO: Add documentation link
+            },
+            {
+                name: 'Current Configuration',
+                value: server.promptHelpTopic
+                    ? `**Enabled** - Students will be prompted to enter a help topic when they join the queue.`
+                    : `**Disabled** - Students will not be prompted when they join the queue.`
+            }
+        );
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            ButtonNames.PromptHelpTopicConfig1,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔓')
+            .setLabel('Enable')
+            .setStyle(ButtonStyle.Secondary),
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            ButtonNames.PromptHelpTopicConfig2,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
+    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+}
+
+/**
+ * Composes the serious mode configuration menu
+ * @param server
+ * @param channelId
+ * @param isDm
+ * @param updateMessage
+ * @returns
+ */
+function SeriousModeConfigMenu(
+    server: AttendingServerV2,
+    channelId: string,
+    isDm: boolean,
+    updateMessage = ''
+): YabobEmbed {
+    const embed = new EmbedBuilder()
+        .setTitle(`🧐 Serious Mode Configuration for ${server.guild.name} 🧐`)
+        .setColor(EmbedColor.Aqua)
+        .addFields(
+            {
+                name: 'Description',
+                value: `When serious mode is enabled, YABOB will not use emojis or emoticons for fun purposes (e.g. Sleeping emoticon when queue is closed). This will also disable any commands that\
+                are not related to queue management`
+            },
+            {
+                name: 'Documentation',
+                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})` //TODO: Add documentation link
+            },
+            {
+                name: 'Current Configuration',
+                value: server.isSeriousServer()
+                    ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
+                    : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`
+            }
+        );
+    if (updateMessage.length > 0) {
+        embed.setFooter({ text: `✅ ${updateMessage}` });
+    }
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            ButtonNames.SeriousModeConfig1,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔓')
+            .setLabel('Enable')
+            .setStyle(ButtonStyle.Secondary),
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            ButtonNames.SeriousModeConfig2,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
+    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+}
+
 export {
     SettingsMainMenu,
     RolesConfigMenu,
@@ -685,6 +832,8 @@ export {
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
+    PromptHelpTopicConfigMenu as PromptHelpTopicConfigMenu,
+    SeriousModeConfigMenu,
     mainMenuRow,
     serverSettingsMainMenuOptions
 };

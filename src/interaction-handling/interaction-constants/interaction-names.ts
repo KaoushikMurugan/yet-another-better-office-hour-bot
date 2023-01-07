@@ -54,7 +54,11 @@ enum ButtonNames {
     AutoGiveStudentRoleConfig1 = 'AutoGiveStudentRoleConfig1',
     AutoGiveStudentRoleConfig2 = 'AutoGiveStudentRoleConfig2',
     ShowAfterSessionMessageModal = 'ShowAfterSessionMessageModal',
-    ShowQueueAutoClearModal = 'ShowQueueAutoClearModal'
+    ShowQueueAutoClearModal = 'ShowQueueAutoClearModal',
+    PromptHelpTopicConfig1 = 'PromptHelpTopicConfig1',
+    PromptHelpTopicConfig2 = 'PromptHelpTopicConfig2',
+    SeriousModeConfig1 = 'SeriousModeConfig1',
+    SeriousModeConfig2 = 'SeriousModeConfig2'
 }
 
 /**
@@ -65,7 +69,7 @@ enum ModalNames {
     AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
     QueueAutoClearModal = 'QueueAutoClearModal',
     QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion',
-    HelpTopicPromptModal = 'HelpTopicPromptModal'
+    PromptHelpTopicModal = 'PromptHelpTopicModal'
 }
 
 /** Known base yabob select menu names */

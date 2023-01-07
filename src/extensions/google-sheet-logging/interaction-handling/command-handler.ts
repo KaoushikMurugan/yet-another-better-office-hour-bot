@@ -9,6 +9,7 @@ import {
     isServerGoogleSheetInteraction
 } from '../shared-sheet-functions.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
+import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -38,21 +39,21 @@ async function getStatistics(
     if (!googleSheet) {
         throw new Error(
             `No google sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id in the environment?`
+                `Did you forget to set the google sheet id?`
         );
     }
 
-    const sheetTitle = `${server.guild.name.replace(/:/g, ' ')} Attendance`.replace(
-        /\s{2,}/g,
+    const attendanceSheetTitle = `${server.guild.name.replace(
+        /:/g,
         ' '
-    );
+    )} Attendance`.replace(/\s{2,}/g, ' ');
 
-    const attendanceSheet = googleSheet.sheetsByTitle[sheetTitle];
+    const attendanceSheet = googleSheet.sheetsByTitle[attendanceSheetTitle];
 
     if (!attendanceSheet) {
         throw new Error(
-            `No help session sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id in the environment?`
+            `No attendance sheet found for server ${server.guild.name}. ` +
+                `Did you forget to set the google sheet id`
         );
     }
 
@@ -70,9 +71,9 @@ async function getStatistics(
 
     const timeFrame = interaction.options.getString('time_frame') ?? 'all-time';
 
-    const rows = await attendanceSheet.getRows();
+    const attendanceRows = await attendanceSheet.getRows();
 
-    let filteredRows = rows.filter(row => {
+    let filteredAttendanceRows = attendanceRows.filter(row => {
         return user ? row['Discord ID'] === user.id : true;
     });
 
@@ -87,7 +88,7 @@ async function getStatistics(
         startTime.setTime(0);
     }
 
-    filteredRows = filteredRows.filter(row => {
+    filteredAttendanceRows = filteredAttendanceRows.filter(row => {
         // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
         const returnDate = row['Time In'].split(',')[0];
         const returnTime = row['Time In'].split(',')[1];
@@ -105,7 +106,7 @@ async function getStatistics(
         return returnDateObj >= startTime;
     });
 
-    if (filteredRows.length === 0) {
+    if (filteredAttendanceRows.length === 0) {
         await interaction.editReply(
             SimpleEmbed(
                 `No help sessions found for ${user?.username ?? server.guild.name}`,
@@ -114,24 +115,19 @@ async function getStatistics(
         );
     }
 
-    const helpSessionCount = filteredRows.length;
+    const helperSessionCount = filteredAttendanceRows.length;
 
-    const totalSessionTime = filteredRows
+    const totalAvailableTime = filteredAttendanceRows
         .map(row => {
             return parseInt(row['Session Time (ms)']);
         })
         .filter((time: number) => !isNaN(time))
         .reduce((a, b) => a + b, 0);
 
-    const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
-    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60)) % 60;
+    const totalAvailableTimeHours = Math.trunc(totalAvailableTime / (1000 * 60 * 60));
+    const totalAvailableTimeMinutes = Math.trunc(totalAvailableTime / (1000 * 60)) % 60;
 
-    const averageSessionTime = totalSessionTime / helpSessionCount;
-
-    const averageSessionTimeHours = Math.trunc(averageSessionTime / (1000 * 60 * 60));
-    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60)) % 60;
-
-    const numberOfStudents = filteredRows
+    const numberOfStudents = filteredAttendanceRows
         .map(row => {
             return parseInt(row['Number of Students Helped']);
         })
@@ -140,9 +136,9 @@ async function getStatistics(
 
     const studentsList: string[] = [];
 
-    // each cell in the 'Helped Student' is an arry of json strings, where the json is of the form
+    // each cell in the 'Helped Student' is an array of json strings, where the json is of the form
     // {displayName: string, username: string, id: string}
-    filteredRows.forEach(row => {
+    filteredAttendanceRows.forEach(row => {
         const students = row['Helped Students'];
         if (students) {
             const studentArray = JSON.parse(students);
@@ -159,19 +155,105 @@ async function getStatistics(
         studentsList.filter((student, index) => studentsList.indexOf(student) !== index)
     );
 
+    //   --------------------------
+    //   Reading Help Session Sheet
+    //   --------------------------
+
+    const helpSessionSheetTitle = `${server.guild.name.replace(
+        /:/g,
+        ' '
+    )} Help Sessions`.replace(/\s{2,}/g, ' ');
+
+    const helpSessionSheet = googleSheet.sheetsByTitle[helpSessionSheetTitle];
+
+    if (!helpSessionSheet) {
+        throw new Error(
+            `No help session sheet found for server ${server.guild.name}. ` +
+                `Did you forget to set the google sheet id?`
+        );
+    }
+
+    const helpSessionRows = await helpSessionSheet.getRows();
+
+    let filteredHelpSessionRows = helpSessionRows.filter(row => {
+        return user ? row['Helper Discord ID'] === user.id : true;
+    });
+
+    filteredHelpSessionRows = filteredHelpSessionRows.filter(row => {
+        // the row 'Session Start' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
+        const returnDate = row['Session Start'].split(',')[0];
+        const returnTime = row['Session Start'].split(',')[1];
+        const returnDateParts = returnDate.split('/');
+        const returnTimeParts = returnTime.split(':');
+        const returnDateObj = new Date(
+            parseInt(returnDateParts[2]),
+            parseInt(returnDateParts[0]) - 1,
+            parseInt(returnDateParts[1]),
+            parseInt(returnTimeParts[0]),
+            parseInt(returnTimeParts[1]),
+            parseInt(returnTimeParts[2].split(' ')[0])
+        );
+
+        return returnDateObj >= startTime;
+    });
+
+    if (filteredAttendanceRows.length === 0) {
+        await interaction.editReply(
+            SimpleEmbed(
+                `No help sessions found for ${user?.username ?? server.guild.name}`,
+                EmbedColor.Neutral
+            )
+        );
+    }
+
+    const helpSessionCount = filteredHelpSessionRows.length;
+
+    const totalSessionTime = filteredHelpSessionRows
+        .map(row => {
+            return parseInt(row['Session Time (ms)']);
+        })
+        .filter((time: number) => !isNaN(time))
+        .reduce((a, b) => a + b, 0);
+
+    const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
+    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60)) % 60;
+
+    const averageSessionTime = totalSessionTime / helpSessionCount;
+
+    const averageSessionTimeHours = Math.trunc(averageSessionTime / (1000 * 60 * 60));
+    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60)) % 60;
+
+    const totalWaitTime = filteredHelpSessionRows
+        .map(row => {
+            return parseInt(row['Wait Time (ms)']);
+        })
+        .filter((time: number) => !isNaN(time))
+        .reduce((a, b) => a + b, 0);
+
+    const averageWaitTime = totalWaitTime / helpSessionCount;
+
+    const averageWaitTimeHours = Math.trunc(averageWaitTime / (1000 * 60 * 60));
+    const averageWaitTimeMinutes = Math.trunc(averageWaitTime / (1000 * 60)) % 60;
+
     const result = SimpleEmbed(
         `Help session statistics for ` + `${user ? user.username : server.guild.name}`,
         EmbedColor.Neutral,
-        `Help sessions: **${helpSessionCount}**\n` +
-            `Total session time: **${
+        `Help sessions: **${helperSessionCount}**\n` +
+            `Total available time: **${
+                totalAvailableTimeHours > 0 ? `${totalAvailableTimeHours} h ` : ''
+            }${totalAvailableTimeMinutes} min**\n` +
+            `Total helping time: **${
                 totalSessionTimeHours > 0 ? `${totalSessionTimeHours} h ` : ''
-            }${totalSessionTimeMinutes} min**\n` +
-            `Number of students sessions: **${numberOfStudents}**\n` +
+            }${totalSessionTimeMinutes} min**\n\n` +
+            `Number of student sessions: **${numberOfStudents}**\n` +
             `Unique students helped: **${uniqueStudents.size}**\n` +
-            `Returning students: **${returningStudents.size}**\n` +
+            `Returning students: **${returningStudents.size}**\n\n` +
             `Average session time: **${
                 averageSessionTimeHours > 0 ? `${averageSessionTimeHours} h ` : ''
-            }${averageSessionTimeMinutes} min**\n`
+            }${averageSessionTimeMinutes} min**\n` +
+            `Average wait time: **${
+                averageWaitTimeHours > 0 ? `${averageWaitTimeHours} h ` : ''
+            }${averageWaitTimeMinutes} min**\n`
     );
     await interaction.editReply(result);
 }
@@ -241,23 +323,35 @@ async function getWeeklyReport(
         startTime.getDate() - (startTime.getDay() % 7) + startOfWeek - 7 * numWeeks
     );
 
-    filteredRows = filteredRows.filter(row => {
-        // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-        const returnDate = row['Time In'].split(',')[0];
-        const returnTime = row['Time In'].split(',')[1];
-        const returnDateParts = returnDate.split('/');
-        const returnTimeParts = returnTime.split(':');
-        const returnDateObj = new Date(
-            parseInt(returnDateParts[2]),
-            parseInt(returnDateParts[0]) - 1,
-            parseInt(returnDateParts[1]),
-            parseInt(returnTimeParts[0]),
-            parseInt(returnTimeParts[1]),
-            parseInt(returnTimeParts[2].split(' ')[0])
-        );
-
-        return returnDateObj >= startTime;
-    });
+    try {
+        filteredRows = filteredRows.filter(row => {
+            // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
+            // TODO: add validation to indexing rows
+            const returnDate = row['Time In'].split(',')[0]; // this could be undefined invoking split on undefined will throw exception
+            const returnTime = row['Time In'].split(',')[1]; // this could be undefined
+            const returnDateParts = returnDate.split('/');
+            const returnTimeParts = returnTime.split(':');
+            const returnDateObj = new Date(
+                // FIXME: all of this could be NaN
+                parseInt(returnDateParts[2]),
+                parseInt(returnDateParts[0]) - 1,
+                parseInt(returnDateParts[1]),
+                parseInt(returnTimeParts[0]),
+                parseInt(returnTimeParts[1]),
+                parseInt(returnTimeParts[2].split(' ')[0])
+            );
+            // Date constructor never throws exception, but returns the "Invalid Date" string instead
+            // need to be manually checked, TS design limitation here
+            if (!(returnDateObj instanceof Date)) {
+                // TODO: Temporary solution, if any parsing fails, throw this error instead
+                throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+            }
+            return returnDateObj >= startTime;
+        });
+    } catch {
+        // TODO: Temporary solution, if any parsing fails, throw this error instead
+        throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+    }
 
     if (filteredRows.length === 0) {
         await interaction.editReply(
@@ -284,14 +378,15 @@ async function getWeeklyReport(
 
         const weekEndTime = new Date(startTime);
         weekEndTime.setDate(weekEndTime.getDate() + 7 * (i + 1));
-
         const weekRows = filteredRows.filter(row => {
             // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-            const returnDate = row['Time In'].split(',')[0];
-            const returnTime = row['Time In'].split(',')[1];
-            const returnDateParts = returnDate.split('/');
-            const returnTimeParts = returnTime.split(':');
+            // TODO: remove excessive optional chaining
+            const returnDate = row['Time In']?.split(',')[0];
+            const returnTime = row['Time In']?.split(',')[1];
+            const returnDateParts = returnDate?.split('/');
+            const returnTimeParts = returnTime?.split(':');
             const returnDateObj = new Date(
+                // FIXME: All of this could be NaN
                 parseInt(returnDateParts[2]),
                 parseInt(returnDateParts[0]) - 1,
                 parseInt(returnDateParts[1]),
@@ -300,9 +395,13 @@ async function getWeeklyReport(
                 parseInt(returnTimeParts[2].split(' ')[0])
             ); //TODO: remove manual parsing
 
+            // need to be manually checked
+            if (!(returnDateObj instanceof Date)) {
+                throw ExpectedSheetErrors.unparsableDateString(attendanceSheet.title);
+            }
+
             return returnDateObj >= weekStartTime && returnDateObj <= weekEndTime;
         });
-
         const weekSessions = weekRows.length;
 
         const weekTime = weekRows
