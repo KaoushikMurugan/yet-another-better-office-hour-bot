@@ -63,9 +63,10 @@ client.on(Events.ClientReady, async () => {
  */
 client.on(Events.GuildCreate, async guild => {
     console.log(`${magenta('Got invited to:')} '${guild.name}'!`);
-    await joinGuild(guild).catch(() =>
-        console.error(`${red('Please give me the highest role in:')} '${guild.name}'.`)
-    );
+    await joinGuild(guild).catch(err => {
+        console.error(err);
+        console.error(`${red('Please give me the highest role in:')} '${guild.name}'.`);
+    });
 });
 
 /**
@@ -217,6 +218,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
 /**
  * Combines all the extension help messages and settings menu options
  * - if we have more static data in interaction level extensions, collect them here
+ * - extensions only need to specify the corresponding properties
  */
 function collectInteractionExtensionStaticData(): void {
     adminCommandHelpMessages.push(

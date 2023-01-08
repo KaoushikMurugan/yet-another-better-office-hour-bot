@@ -963,9 +963,9 @@ class AttendingServerV2 {
      */
     sendLogMessage(message: BaseMessageOptions | string): void {
         if (this.loggingChannel) {
-            this.loggingChannel.send(message).catch(e => {
+            this.loggingChannel.send(message).catch(err => {
                 console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(e);
+                console.error(err);
             });
         }
     }
@@ -1138,7 +1138,7 @@ class AttendingServerV2 {
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
-        console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
+        console.log(cyan(`Restoring external backup for ${this.guild.name}.`));
         this.settings = {
             ...backup,
             hierarchyRoleIds: {

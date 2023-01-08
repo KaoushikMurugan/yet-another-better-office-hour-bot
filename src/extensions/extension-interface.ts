@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { GuildMember, VoiceChannel, Guild } from 'discord.js';
+import { GuildMember, VoiceChannel } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
@@ -20,7 +20,7 @@ import {
     ModalSubmitHandlerProps,
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
-import { CommandData } from '../interaction-handling/interaction-constants/builtin-slash-commands.js';
+import { CommandData } from '../utils/type-aliases.js';
 
 interface IInteractionExtension {
     /**
@@ -42,7 +42,7 @@ interface IInteractionExtension {
         student: ReadonlyArray<HelpMessage>;
     };
     /**
-     *
+     * These options appear in the select menu of the main menu of /settings
      */
     settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption>;
     /**

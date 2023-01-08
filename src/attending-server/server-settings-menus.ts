@@ -789,7 +789,7 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})` //TODO: Add documentation link
+                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})`
             },
             {
                 name: 'Current Configuration',
