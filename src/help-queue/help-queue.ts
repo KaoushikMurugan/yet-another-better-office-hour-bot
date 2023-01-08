@@ -225,7 +225,7 @@ class HelpQueueV2 {
                 CreatePublicThreads: false,
                 AddReactions: false
             }),
-            queue.triggerRender()
+            queue.triggerForceRender() // do a fresh render on create
         ]);
         queue.timers.set(
             'QUEUE_PERIODIC_UPDATE',
