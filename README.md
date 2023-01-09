@@ -2,9 +2,11 @@
 <div align="center">
       <div>
       
-<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/210763246-f20c4ca0-61e6-4ba8-bd88-7beb1efba489.svg"/>
+<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/211232336-e36c52ee-d74f-470d-ac82-48089e5860ed.svg"/>
       </div>
 </div>
+
+
 
 <div align = "center">
 <a href='https://www.gnu.org/licenses/gpl-3.0.en.html' target="_blank"><img alt='' src='https://img.shields.io/badge/GPL_V3-100000?style=for-the-badge&logo=&logoColor=white&labelColor=007acc&color=FE6F6E'/></a>&nbsp&nbsp<a href='https://www.typescriptlang.org/' target="_blank"><img alt='Typescript' src='https://img.shields.io/badge/Typescript-100000?style=for-the-badge&logo=Typescript&logoColor=white&labelColor=007acc&color=007acc'/></a>&nbsp&nbsp<a href='https://nodejs.org/en/' target="_blank"><img alt='Node.js' src='https://img.shields.io/badge/Node.JS_ LTS-100000?style=for-the-badge&logo=Node.js&logoColor=white&labelColor=339933&color=339933'/></a>&nbsp&nbsp<a href='https://discord.gg/p7HS92mHsG' target="_blank"><img alt='Discord' src='https://img.shields.io/badge/Join_our discord-100000?style=for-the-badge&logo=Discord&logoColor=white&labelColor=5865F2&color=5865F2'/></a>
