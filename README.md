@@ -52,7 +52,7 @@ Apart from basic queue operations, some of YABOB's other useful features are:
 -   Notifying students for the queues they're interested in
 -   Automatically clear queues after a specified amount of inactive time
 
-If you would like to host your own YABOB instance, see the [Setup Guide](https://github.com/KaoushikMurugan/YABOB/wiki/Setup-Guide) to get started with running the bot.
+If you would like to host your own YABOB instance, see the [Development Setup Guide](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Development-Setup-Guide) to get started with running the bot.
 
 # Server Roles
 
