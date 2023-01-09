@@ -19,9 +19,9 @@ import {
 import { ButtonNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
-    afterSessionMessageModal,
-    promptHelpTopicModal,
-    queueAutoClearModal
+    AfterSessionMessageModal,
+    PromptHelpTopicModal,
+    QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
 
@@ -109,7 +109,7 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     }
     await server.enqueueStudent(interaction.member, queueChannel);
     server.promptHelpTopic
-        ? await interaction.showModal(promptHelpTopicModal(server.guild.id))
+        ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
@@ -211,7 +211,7 @@ async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await interaction.showModal(afterSessionMessageModal(server.guild.id, true));
+    await interaction.showModal(AfterSessionMessageModal(server.guild.id, true));
 }
 
 /**
@@ -239,7 +239,7 @@ async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await interaction.showModal(queueAutoClearModal(server.guild.id, true));
+    await interaction.showModal(QueueAutoClearModal(server.guild.id, true));
 }
 
 /**

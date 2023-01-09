@@ -19,7 +19,7 @@ import { ModalNames } from './interaction-names.js';
  * @param useMenu whether to return the menu version of queue auto clear modal
  * @returns
  */
-function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
+function QueueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
@@ -70,7 +70,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBuilder {
+function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu
@@ -101,7 +101,7 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
  * @param serverId
  * @returns
  */
-function promptHelpTopicModal(serverId: Snowflake): ModalBuilder {
+function PromptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.PromptHelpTopicModal,
@@ -122,4 +122,4 @@ function promptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     return modal;
 }
 
-export { queueAutoClearModal, afterSessionMessageModal, promptHelpTopicModal };
+export { QueueAutoClearModal, AfterSessionMessageModal, PromptHelpTopicModal };

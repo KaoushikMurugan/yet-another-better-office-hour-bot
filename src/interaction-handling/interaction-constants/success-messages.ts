@@ -2,6 +2,10 @@ import { Helper } from '../../models/member-states.js';
 import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { convertMsToTime } from '../../utils/util-functions.js';
 
+/**
+ * All possible success messages of base yabob
+ * - **Some messages are functions**, they need to be invoked before returning
+ */
 export const SuccessMessages = {
     createdQueue: (queueName: string) =>
         SimpleEmbed(

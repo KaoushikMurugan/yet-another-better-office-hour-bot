@@ -21,9 +21,9 @@ import {
 import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import {
-    afterSessionMessageModal,
-    promptHelpTopicModal,
-    queueAutoClearModal
+    AfterSessionMessageModal,
+    PromptHelpTopicModal,
+    QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
@@ -93,7 +93,7 @@ async function enqueue(
     }
     await server.enqueueStudent(interaction.member, queueChannel);
     server.promptHelpTopic
-        ? await interaction.showModal(promptHelpTopicModal(server.guild.id))
+        ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
@@ -446,7 +446,7 @@ async function showAfterSessionMessageModal(
         CommandNames.set_after_session_msg,
         'botAdmin'
     );
-    await interaction.showModal(afterSessionMessageModal(server.guild.id));
+    await interaction.showModal(AfterSessionMessageModal(server.guild.id));
 }
 
 /**
@@ -511,7 +511,7 @@ async function showQueueAutoClearModal(
         CommandNames.set_queue_auto_clear,
         'botAdmin'
     );
-    await interaction.showModal(queueAutoClearModal(server.guild.id));
+    await interaction.showModal(QueueAutoClearModal(server.guild.id));
 }
 
 /**
