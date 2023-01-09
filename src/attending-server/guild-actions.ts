@@ -18,7 +18,7 @@ import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
 import { commandChannelConfigs } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { AccessLevelRoleIds } from '../models/access-level-roles.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -53,10 +53,12 @@ async function initializationCheck(guild: Guild): Promise<void> {
 /**
  * Updates the help channel messages
  * Removes all messages in the help channel and posts new ones
+ * @param guild
+ * @param accessLevelRoleIds the access level role ids used to configure visibility
  */
 async function updateCommandHelpChannels(
     guild: Guild,
-    hierarchyRoleIds: HierarchyRoles
+    accessLevelRoleIds: AccessLevelRoleIds
 ): Promise<void> {
     const allChannels = await guild.channels.fetch();
     const existingHelpCategory = allChannels.find(
@@ -86,8 +88,8 @@ async function updateCommandHelpChannels(
                     }
                 );
                 const rolesWithViewPermission = roleConfig.visibility
-                    // elements of visibility are keys of hierarchyRoleIds
-                    .map(key => hierarchyRoleIds[key])
+                    // elements of visibility are keys of access level role ids
+                    .map(key => accessLevelRoleIds[key])
                     // now get role by id
                     .map(id => guild.roles.cache.get(id));
                 await Promise.all(
@@ -142,20 +144,20 @@ async function sendCommandHelpChannelMessages(
 }
 
 /**
- * Updates the command help channel visibility when hierarchy roles get updated
+ * Updates the command help channel visibility when access level roles get updated
  * @param guild
- * @param hierarchyRoleIds the newly updated hierarchy role ids
+ * @param accessLevelRoleIds the newly updated access level role ids
  */
 async function updateCommandHelpChannelVisibility(
     guild: Guild,
-    hierarchyRoleIds: HierarchyRoles
+    accessLevelRoleIds: AccessLevelRoleIds
 ): Promise<void> {
     const helpCategory = guild.channels.cache.find(
         (channel): channel is CategoryChannel =>
             isCategoryChannel(channel) && channel.name === 'Bot Commands Help'
     );
     if (!helpCategory) {
-        await updateCommandHelpChannels(guild, hierarchyRoleIds);
+        await updateCommandHelpChannels(guild, accessLevelRoleIds);
         return;
     }
     const helpChannels = (await helpCategory.fetch()).children.cache.filter(
@@ -174,7 +176,7 @@ async function updateCommandHelpChannelVisibility(
         helpChannels.map(channel =>
             commandChannelConfigs
                 .find(channelConfig => channelConfig.channelName === channel.name)
-                ?.visibility.map(key => hierarchyRoleIds[key])
+                ?.visibility.map(key => accessLevelRoleIds[key])
                 ?.map(roleId =>
                     channel.permissionOverwrites.create(roleId, {
                         ViewChannel: true

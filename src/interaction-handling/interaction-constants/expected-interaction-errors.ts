@@ -5,7 +5,7 @@ import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { CommandParseError } from '../../utils/error-types.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { getInteractionName } from '../../utils/util-functions.js';
-import { HierarchyRoles, hierarchyRoleConfigs } from '../../models/hierarchy-roles.js';
+import { AccessLevelRoleIds, accessLevelRoleConfigs } from '../../models/access-level-roles.js';
 
 /**
  * All the errors expected to happen at the parsing stage
@@ -13,22 +13,22 @@ import { HierarchyRoles, hierarchyRoleConfigs } from '../../models/hierarchy-rol
  * - `throw`ing a function is valid in JS, so we have to be really careful
  */
 const ExpectedParseErrors = {
-    hierarchyRoleDoesNotExist: (
-        missingRoleNames: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'][]
+    accessLevelRoleDoesNotExist: (
+        missingRoleNames: typeof accessLevelRoleConfigs[keyof AccessLevelRoleIds]['displayName'][]
     ) =>
         new CommandParseError(
             `The roles ${missingRoleNames.join(
                 ', '
             )} does not exist on this server or have not been set up. You can use \`/settings\` -> Server Roles to configure roles.`
         ),
-    missingHierarchyRoles: (
+    missingAccessLevelRoles: (
         lowestRequiredRoleID: Snowflake,
         commandName: string
     ): CommandParseError =>
         new CommandParseError(
             `You need to have the role <@&${lowestRequiredRoleID}> or higher to use the \`${commandName}\` command.`
         ),
-    missingHierarchyRolesNameVariant: (
+    missingAccessLevelRolesVariant: (
         lowestRequiredRoleName: Optional<string>,
         commandName: string
     ): CommandParseError =>
@@ -100,7 +100,7 @@ const ExpectedParseErrors = {
     tooManyChannels: new CommandParseError(
         'Sorry, you have too many categories and channels on this server. YABOB cannot create another category for this new queue.'
     ),
-    cannotUseBotRoleAsHierarchyRole: new CommandParseError(
+    cannotUseBotRoleAsAccessLevelRole: new CommandParseError(
         'Bot integration roles cannot be used because no human user can have them. Please specify a different role.'
     ),
     cannotUseQueueChannelForLogging: new CommandParseError(

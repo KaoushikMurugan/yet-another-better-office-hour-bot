@@ -70,7 +70,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
 };
 
 /**
- * The `/enqueue command`
+ * The `/enqueue` command
  */
 async function enqueue(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -159,9 +159,6 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
                 SuccessMessages.deletedQueue(targetQueue.queueName)
             );
             break;
-        }
-        default: {
-            throw new CommandParseError(`Invalid /queue subcommand ${subcommand}.`);
         }
     }
 }
@@ -317,6 +314,7 @@ async function listHelpers(
         .setAlign(4, AlignmentEnum.CENTER)
         .setStyle('unicode-mix')
         .addRowMatrix(
+            // map each helper to a 4-tuple
             [...helpers.values()].map(helper => [
                 `${helper.member.displayName} ${
                     helper.activeState === 'paused' ? '(paused)' : ''
@@ -431,7 +429,7 @@ async function cleanupHelpChannel(
         CommandNames.cleanup_help_channels,
         'botAdmin'
     );
-    await updateCommandHelpChannels(server.guild, server.hierarchyRoleIds);
+    await updateCommandHelpChannels(server.guild, server.accessLevelRoleIds);
     await interaction.editReply(SuccessMessages.cleanedUp.helpChannels);
 }
 
@@ -583,10 +581,10 @@ async function createOffices(
         throw ExpectedParseErrors.invalidChannelName(officeName);
     }
     if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
-        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Bot Admin']);
+        throw ExpectedParseErrors.accessLevelRoleDoesNotExist(['Bot Admin']);
     }
     if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
-        throw ExpectedParseErrors.hierarchyRoleDoesNotExist(['Staff']);
+        throw ExpectedParseErrors.accessLevelRoleDoesNotExist(['Staff']);
     }
     await channelsAreUnderLimit(interaction, 1, numOffices);
     await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
@@ -617,21 +615,21 @@ async function setRoles(
         .get(role.id)
         ?.members.some(member => member.user.bot);
     if (roleIsBotRole) {
-        throw ExpectedParseErrors.cannotUseBotRoleAsHierarchyRole;
+        throw ExpectedParseErrors.cannotUseBotRoleAsAccessLevelRole;
     }
     switch (roleType) {
         case 'bot_admin': {
-            await server.setHierarchyRoleId('botAdmin', role.id);
+            await server.setAccessLevelRoleId('botAdmin', role.id);
             await interaction.editReply(SuccessMessages.setBotAdminRole(role.id));
             break;
         }
         case 'staff': {
-            await server.setHierarchyRoleId('staff', role.id);
+            await server.setAccessLevelRoleId('staff', role.id);
             await interaction.editReply(SuccessMessages.setHelperRole(role.id));
             break;
         }
         case 'student': {
-            await server.setHierarchyRoleId('student', role.id);
+            await server.setAccessLevelRoleId('student', role.id);
             await interaction.editReply(SuccessMessages.setStudentRole(role.id));
             break;
         }

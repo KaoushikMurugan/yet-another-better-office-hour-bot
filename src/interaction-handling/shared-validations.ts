@@ -20,7 +20,7 @@ import { attendingServers, client } from '../global-states.js';
 import { GuildId } from '../utils/type-aliases.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
-import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 
@@ -98,26 +98,26 @@ function isTriggeredByMemberWithRoles(
     server: FrozenServer,
     member: GuildMember,
     commandName: string,
-    lowestRequiredRole: keyof HierarchyRoles
+    lowestRequiredRole: AccessLevelRole
 ): GuildMember {
     if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         return member;
     }
     const memberRoleIds = member.roles.cache.map(role => role.id);
-    for (const hierarchyRole of server.sortedHierarchyRoles) {
+    for (const role of server.sortedAccessLevelRoles) {
         // if memberRoleIds.some returns true, then exit early
         // if the lowestRequiredRole is hit first, then break and throw
-        if (memberRoleIds.some(memberRoleId => memberRoleId === hierarchyRole.id)) {
+        if (memberRoleIds.some(memberRoleId => memberRoleId === role.id)) {
             return member;
         }
-        if (hierarchyRole.key === lowestRequiredRole) {
+        if (role.key === lowestRequiredRole) {
             break;
         }
     }
     // the for loop should directly return if the lowestRequiredRole is satisfied
     // otherwise if the loop breaks then we must throw
-    throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
-        server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])?.name,
+    throw ExpectedParseErrors.missingAccessLevelRolesVariant(
+        server.guild.roles.cache.get(server.accessLevelRoleIds[lowestRequiredRole])?.name,
         commandName
     );
 }

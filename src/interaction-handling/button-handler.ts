@@ -36,13 +36,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         other: {
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
             [ButtonNames.ServerRoleConfig1]: interaction =>
-                createServerRoles(interaction, false, false),
+                createAccessLevelRoles(interaction, false, false),
             [ButtonNames.ServerRoleConfig1a]: interaction =>
-                createServerRoles(interaction, false, true),
+                createAccessLevelRoles(interaction, false, true),
             [ButtonNames.ServerRoleConfig2]: interaction =>
-                createServerRoles(interaction, true, false),
+                createAccessLevelRoles(interaction, true, false),
             [ButtonNames.ServerRoleConfig2a]: interaction =>
-                createServerRoles(interaction, true, true),
+                createAccessLevelRoles(interaction, true, true),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
             [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
@@ -64,13 +64,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     dmMethodMap: {
         [ButtonNames.ServerRoleConfig1]: interaction =>
-            createServerRolesDM(false, false, interaction),
+            createServerRolesDM(interaction, false, false),
         [ButtonNames.ServerRoleConfig1a]: interaction =>
-            createServerRolesDM(false, true, interaction),
+            createServerRolesDM(interaction, false, true),
         [ButtonNames.ServerRoleConfig2]: interaction =>
-            createServerRolesDM(true, false, interaction),
+            createServerRolesDM(interaction, true, false),
         [ButtonNames.ServerRoleConfig2a]: interaction =>
-            createServerRolesDM(true, true, interaction)
+            createServerRolesDM(interaction, true, true)
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
@@ -162,16 +162,17 @@ async function showSettingsMainMenu(
 }
 
 /**
- * Creates roles for the server
+ * Creates the access level roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
+ * @param everyoneIsStudent whether to use @everyone as @Student
  */
-async function createServerRoles(
+async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
     forceCreate: boolean,
-    defaultStudentIsEveryone: boolean
+    everyoneIsStudent: boolean
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
+    await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         RolesConfigMenu(
             server,
@@ -189,14 +190,15 @@ async function createServerRoles(
  * Creates roles for the server in dm channels
  * - This is explicitly used for server initialization
  * @param forceCreate if true, will create new roles even if they already exist
+ * @param defaultStudentIsEveryone whether to use @everyone as @Student
  */
 async function createServerRolesDM(
+    interaction: ButtonInteraction,
     forceCreate: boolean,
-    everyoneIsStudent: boolean,
-    interaction: ButtonInteraction
+    everyoneIsStudent: boolean
 ): Promise<void> {
     const server = isValidDMInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
+    await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         RolesConfigMenuForServerInit(server, interaction.channelId, true)
     );
