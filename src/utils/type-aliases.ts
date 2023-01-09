@@ -186,5 +186,5 @@ export {
     SettingsMenuConstructor,
     /** Component Types */
     YabobEmbed,
-    ComponentLocation,
+    ComponentLocation
 };

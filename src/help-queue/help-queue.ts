@@ -6,7 +6,6 @@ import { IQueueExtension } from '../extensions/extension-interface.js';
 import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { PeriodicUpdateError } from '../utils/error-types.js';
 import { QueueDisplayV2 } from './queue-display.js';
 import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
@@ -227,34 +226,12 @@ class HelpQueueV2 {
             }),
             queue.triggerRender()
         ]);
-        queue.timers.set(
-            'QUEUE_PERIODIC_UPDATE',
-            setInterval(
-                () =>
-                    Promise.all(
-                        queueExtensions.map(extension =>
-                            extension.onQueuePeriodicUpdate(queue, false)
-                        )
-                    ).catch((err: Error) =>
-                        console.error(
-                            new PeriodicUpdateError(
-                                `${err.name}: ${err.message}`,
-                                'Queue'
-                            )
-                        )
-                    ), // Random 0~2min offset to avoid spamming the APIs
-                1000 * 60 * 60 + Math.floor(Math.random() * 1000 * 60 * 2)
-            )
-        );
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
         // Emit events after queue is done creating
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
-        );
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
         );
         return queue;
     }

@@ -2,6 +2,10 @@
 
 import { QueueError } from '../utils/error-types.js';
 
+/**
+ * All the queue level errors that we expect to happen
+ * - **Some of the errors are functions and must be called before throwing**
+ */
 const ExpectedQueueErrors = {
     alreadyOpen: (queueName: string) =>
         new QueueError('Queue is already open.', queueName),

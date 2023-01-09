@@ -70,24 +70,10 @@ class ExtensionSetupError extends Error {
     }
 }
 
-/**
- * Error thrown during periodic updates
- */
-class PeriodicUpdateError extends Error {
-    constructor(message: string, public level: 'Server' | 'Queue') {
-        super(message);
-        this.name = 'PeriodicUpdateError';
-    }
-    briefErrorString(): string {
-        return `**${this.name}**: ${this.message}`;
-    }
-}
-
 export {
     CommandParseError,
     ServerError,
     QueueError,
     CommandNotImplementedError,
-    ExtensionSetupError,
-    PeriodicUpdateError
+    ExtensionSetupError
 };

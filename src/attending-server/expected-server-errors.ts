@@ -1,6 +1,10 @@
 /** @module ExpectedErrors */
 import { ServerError } from '../utils/error-types.js';
 
+/**
+ * All the server level errors that we expect to happen
+ * - **Some of the errors are functions and must be called before throwing**
+ */
 const ExpectedServerErrors = {
     queueDoesNotExist: new ServerError('This queue does not exist.'),
     noOneToHelp: new ServerError(

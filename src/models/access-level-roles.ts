@@ -6,6 +6,8 @@ type AccessLevelRole = 'botAdmin' | 'staff' | 'student';
 /**
  * The role ids of each access level role
  */
+// This syntax is called mapped types
+// https://www.typescriptlang.org/docs/handbook/2/mapped-types.html
 type AccessLevelRoleIds = { [K in AccessLevelRole]: OptionalRoleId };
 
 /**

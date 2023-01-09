@@ -203,13 +203,6 @@ interface IQueueExtension {
      */
     onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**
-     * Called every hour
-     * @param queue queue that triggered the call
-     * @param isFirstCall whether this is called inside HelpQueueV2.create
-     * @deprecated will likely be removed in the future, extensions should manage their own timers
-     */
-    onQueuePeriodicUpdate: (queue: FrozenQueue, isFirstCall: boolean) => Promise<void>;
-    /**
      * When a queue is deleted with `/queue remove` or YABOB getting kicked from a server
      * @param deletedQueue the queue that just got deleted
      * @remark Extensions should override this method to do any necessary clean up
@@ -338,9 +331,6 @@ class BaseQueueExtension implements IQueueExtension {
         return Promise.resolve();
     }
     onQueueRender(queue: FrozenQueue, display: FrozenDisplay): Promise<void> {
-        return Promise.resolve();
-    }
-    onQueuePeriodicUpdate(queue: FrozenQueue, isFirstCall: boolean): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: FrozenQueue): Promise<void> {
