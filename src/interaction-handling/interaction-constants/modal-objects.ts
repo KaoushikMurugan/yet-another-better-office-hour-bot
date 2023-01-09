@@ -34,7 +34,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_hours')
-                    .setLabel('Hours (0 to disable)')
+                    .setLabel('Hours (set both to 0 to disable)')
                     .setPlaceholder('Enter hours (0~24)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
@@ -48,7 +48,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_minutes')
-                    .setLabel('Minutes (0 to disable)')
+                    .setLabel('Minutes (set both to 0 to disable)')
                     .setPlaceholder('Enter minutes (0~59)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
