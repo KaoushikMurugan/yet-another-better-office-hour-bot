@@ -254,7 +254,7 @@ class AttendingServerV2 {
             );
         }
         await Promise.all([
-            server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
+            server.initializeAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
@@ -1104,7 +1104,7 @@ class AttendingServerV2 {
      * @param hoursUntilAutoClear how long until the queues are cleared
      * @param seriousModeEnabled show fun stuff in queues or not, synced with the server object
      */
-    private async initAllQueues(
+    private async initializeAllQueues(
         queueBackups?: QueueBackup[],
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
