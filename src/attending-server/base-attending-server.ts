@@ -105,6 +105,7 @@ class AttendingServerV2 {
      * Server settings. An firebase update is requested as soon as this changes
      */
     private settings: ServerSettings = {
+        // TODO: Use the Proxy class to abstract away the update logic
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
@@ -115,7 +116,6 @@ class AttendingServerV2 {
         }
     };
 
-    // TODO: Use the Proxy class to abstract away the update logic
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<IServerExtension>
@@ -144,6 +144,14 @@ class AttendingServerV2 {
     /** All the hierarchy role ids */
     get hierarchyRoleIds(): HierarchyRoles {
         return this.settings.hierarchyRoleIds;
+    }
+
+    /**
+     * Returns true if the server is in serious mode
+     * @returns boolean, defaults to false if no queues exist on this server
+     */
+    get isSerious(): boolean {
+        return this.queues[0]?.seriousModeEnabled ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -699,20 +707,12 @@ class AttendingServerV2 {
     }
 
     /**
-     * Returns true if the server is in serious mode
-     * @returns
-     */
-    isSeriousServer(): boolean {
-        return this.queues[0]?.seriousModeEnabled ?? false;
-    }
-
-    /**
      * Notify all helpers of the topic that the student requires help with
      * @param studentMember the student that just submitted the help topic modal
      * @param queueChannel related queue channel
      * @param topic the submitted help topic content
      */
-    async notifyHelpersStudentHelpTopic(
+    async notifyHelpersOnStudentSubmitHelpTopic(
         studentMember: GuildMember,
         queueChannel: QueueChannel,
         topic: string
@@ -737,7 +737,7 @@ class AttendingServerV2 {
         if (!isVoiceChannel(newVoiceState.channel)) {
             return;
         }
-        const vc = newVoiceState.channel;
+        const voiceChannel = newVoiceState.channel;
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -753,7 +753,7 @@ class AttendingServerV2 {
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(this, member, vc)
+                    extension.onStudentJoinVC(this, member, voiceChannel)
                 ),
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);

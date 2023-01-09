@@ -17,7 +17,7 @@ const baseYabobModalMap: ModalSubmitHandlerProps = {
         queue: {},
         other: {
             [ModalNames.PromptHelpTopicModal]: interaction =>
-                studentJoinedQueue(interaction),
+                submitHelpTopic(interaction),
             [ModalNames.AfterSessionMessageModal]: interaction =>
                 setAfterSessionMessage(interaction, false),
             [ModalNames.AfterSessionMessageModalMenuVersion]: interaction =>
@@ -31,7 +31,11 @@ const baseYabobModalMap: ModalSubmitHandlerProps = {
     dmMethodMap: {}
 };
 
-async function studentJoinedQueue(
+/**
+ * Handles help topic modal submit. This modal is shown when student enqueues
+ * @param interaction
+ */
+async function submitHelpTopic(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
     const [server, queueChannel] = [
@@ -40,13 +44,7 @@ async function studentJoinedQueue(
     ];
     const topic = interaction.fields.getTextInputValue('help_topic');
     const student = interaction.member;
-    const channel = interaction.channel;
-    if (channel === null) {
-        throw ExpectedParseErrors.nonExistentTextChannel;
-    }
-
-    await server.notifyHelpersStudentHelpTopic(student, queueChannel, topic);
-
+    await server.notifyHelpersOnStudentSubmitHelpTopic(student, queueChannel, topic);
     await interaction.reply({
         ...SuccessMessages.joinedQueue(queueChannel.queueName),
         ephemeral: true

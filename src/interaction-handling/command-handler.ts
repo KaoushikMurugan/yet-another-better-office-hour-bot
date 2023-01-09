@@ -79,7 +79,12 @@ async function enqueue(
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.enqueue,
+        'student'
+    );
     if (!server.promptHelpTopic) {
         await interaction.reply({
             ...SimpleEmbed(`Processing command \`/enqueue\` ...`),
@@ -102,7 +107,7 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
     const helperMember = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'next',
+        CommandNames.next,
         'staff'
     );
     const targetQueue =
@@ -128,7 +133,7 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
  */
 async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'queue', 'staff');
+    isTriggeredByMemberWithRoles(server, interaction.member, CommandNames.queue, 'staff');
     const subcommand = interaction.options.getSubcommand();
     switch (subcommand) {
         case 'add': {
@@ -169,7 +174,7 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'start',
+        CommandNames.start,
         'staff'
     );
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
@@ -185,7 +190,7 @@ async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'stop',
+        CommandNames.stop,
         'staff'
     );
     const helpTimeEntry = await server.closeAllClosableQueues(member);
@@ -200,7 +205,7 @@ async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'pause',
+        CommandNames.pause,
         'staff'
     );
     const existOtherActiveHelpers = await server.pauseHelping(member);
@@ -215,7 +220,7 @@ async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promi
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'pause',
+        CommandNames.resume,
         'staff'
     );
     await server.resumeHelping(member);
@@ -230,7 +235,12 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'student');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.leave,
+        'student'
+    );
     await server.removeStudentFromQueue(interaction.member, queue);
     await interaction.editReply(SuccessMessages.leftQueue(queue.queueName));
 }
@@ -246,7 +256,7 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'clear',
+        CommandNames.clear,
         'staff'
     );
     // if they are not admin or doesn't have the queue role, reject
@@ -268,7 +278,12 @@ async function clearAll(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'clear_all', 'botAdmin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.clear_all,
+        'botAdmin'
+    );
     const allQueues = await server.getQueueChannels();
     if (allQueues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
@@ -348,7 +363,7 @@ async function announce(
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'announce',
+        CommandNames.announce,
         'staff'
     );
     const announcement = interaction.options.getString('message', true);
@@ -375,7 +390,12 @@ async function cleanup(
         isServerInteraction(interaction),
         hasValidQueueArgument(interaction, true)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.cleanup_queue,
+        'botAdmin'
+    );
     await server.cleanUpQueue(queue);
     await interaction.editReply(SuccessMessages.cleanedUp.queue(queue.queueName));
 }
@@ -387,7 +407,12 @@ async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'cleanup', 'botAdmin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.cleanup_all,
+        'botAdmin'
+    );
     const allQueues = await server.getQueueChannels();
     await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
     await interaction.editReply(SuccessMessages.cleanedUp.allQueues);
@@ -403,7 +428,7 @@ async function cleanupHelpChannel(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'cleanup_help_channel',
+        CommandNames.cleanup_help_channels,
         'botAdmin'
     );
     await updateCommandHelpChannels(server.guild, server.hierarchyRoleIds);
@@ -420,7 +445,7 @@ async function showAfterSessionMessageModal(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'set_after_session_msg',
+        CommandNames.set_after_session_msg,
         'botAdmin'
     );
     await interaction.showModal(afterSessionMessageModal(server.guild.id));
@@ -458,12 +483,15 @@ async function setLoggingChannel(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'set_logging_channel',
+        CommandNames.set_logging_channel,
         'botAdmin'
     );
     const loggingChannel = interaction.options.getChannel('channel', true);
     if (!isTextChannel(loggingChannel)) {
-        throw new CommandParseError(`${loggingChannel.name} is not a text channel.`);
+        throw ExpectedParseErrors.notTextChannel(loggingChannel.name);
+    }
+    if (loggingChannel.name === 'queue') {
+        throw ExpectedParseErrors.cannotUseQueueChannelForLogging;
     }
     await server.setLoggingChannel(loggingChannel);
     await interaction.editReply(
@@ -482,7 +510,7 @@ async function showQueueAutoClearModal(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'set_queue_auto_clear',
+        CommandNames.set_queue_auto_clear,
         'botAdmin'
     );
     await interaction.showModal(queueAutoClearModal(server.guild.id));
@@ -496,7 +524,12 @@ async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'stop_logging', 'botAdmin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.stop_logging,
+        'botAdmin'
+    );
     await server.setLoggingChannel(undefined);
     await interaction.editReply(SuccessMessages.stoppedLogging);
 }
@@ -512,7 +545,7 @@ async function setSeriousMode(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'activate_serious_mode',
+        CommandNames.serious_mode,
         'botAdmin'
     );
     const onOrOff = interaction.options.getSubcommand();
@@ -537,7 +570,7 @@ async function createOffices(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'create_offices',
+        CommandNames.create_offices,
         'botAdmin'
     );
     const categoryName = interaction.options.getString('category_name', true);
@@ -572,7 +605,12 @@ async function setRoles(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = isServerInteraction(interaction);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_roles', 'botAdmin');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.set_roles,
+        'botAdmin'
+    );
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
     const roleIsBotRole = server.guild.roles.cache
@@ -614,7 +652,7 @@ async function settingsMenu(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'setup_server_config',
+        CommandNames.settings,
         'botAdmin'
     );
     await interaction.editReply(SettingsMainMenu(server, interaction.channelId, false));
@@ -630,17 +668,16 @@ async function setAutoGiveStudentRole(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'set_auto_give_student_role',
+        CommandNames.auto_give_student_role,
         'botAdmin'
     );
     const onOrOff = interaction.options.getSubcommand();
-    if (onOrOff === 'on') {
-        await server.setAutoGiveStudentRole(true);
-        await interaction.editReply(SuccessMessages.turnedOnAutoGiveStudentRole);
-    } else {
-        await server.setAutoGiveStudentRole(false);
-        await interaction.editReply(SuccessMessages.turnedOffAutoGiveStudentRole);
-    }
+    await server.setAutoGiveStudentRole(onOrOff === 'on');
+    await interaction.editReply(
+        onOrOff === 'on'
+            ? SuccessMessages.turnedOnAutoGiveStudentRole
+            : SuccessMessages.turnedOffAutoGiveStudentRole
+    );
 }
 
 /**
@@ -653,7 +690,7 @@ async function setPromptHelpTopic(
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'set_prompt_help_topic',
+        CommandNames.prompt_help_topic,
         'botAdmin'
     );
     const onOrOff = interaction.options.getSubcommand();

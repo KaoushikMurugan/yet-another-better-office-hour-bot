@@ -67,7 +67,8 @@ const [completeCommandMap, completeButtonMap, completeSelectMenuMap, completeMod
  * Determines how to reply the interaction with error
  * - reply, editReply, or update?
  * @param interaction
- * @param error
+ * @param error the error to report
+ * @param botAdminRoleID the id snowflake of bot admin on this server
  */
 async function replyWithError(
     interaction: Interaction,

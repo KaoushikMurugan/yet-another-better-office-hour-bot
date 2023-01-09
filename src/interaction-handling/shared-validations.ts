@@ -179,13 +179,13 @@ function isTriggeredByUserWithValidEmail(
  * @param numNewCategories number of new categories needed to create
  * @param numNewChannels number of new channels needed to create
  * - if multiple types of channels are being created, add them together first before calling this function
- * @returns true
+ * @returns true, otherwise throws error
  */
 async function channelsAreUnderLimit(
     interaction: Interaction<'cached'>,
     numNewCategories: number,
     numNewChannels: number
-): Promise<boolean> {
+): Promise<true> {
     const numCategoryChannels = (await interaction.guild.channels.fetch()).filter(
         isCategoryChannel
     ).size;

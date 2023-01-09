@@ -91,7 +91,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.SeriousModeConfig1,
         ButtonNames.SeriousModeConfig2
     ])
-} as const;
+};
 
 /**
  * Join a queue through button press

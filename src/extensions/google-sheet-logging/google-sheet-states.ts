@@ -5,10 +5,11 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { yellow, blue } from '../../utils/command-line-colors.js';
 import { IServerExtension } from '../extension-interface.js';
-import { firebaseDB } from '../../global-states.js';
+import { client, firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { loadSheetById } from './shared-sheet-functions.js';
+import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 
 /**
  * Backup type
@@ -22,20 +23,19 @@ type GoogleSheetBackup = {
  */
 class GoogleSheetExtensionState {
     /**
-     * Firebase backup schema
-     */
-    static readonly backupSchema = z.object({ sheetId: z.string() });
-
-    /**
      * Collection of all the state objects
      * - static, so it's shared across all instances
      * - key is guild id, value is 1 google sheet extension state
      */
     static readonly allStates = new Collection<GuildId, GoogleSheetExtensionState>();
+    /**
+     * Firebase backup schema
+     */
+    static readonly backupSchema = z.object({ sheetId: z.string() });
 
     /**
      * @param guild
-     * @param serverExtension
+     * @param serverExtension the corresponding server extension for the same guild
      * @param _googleSheet this cannot be directly initialized, so the restoreBackup method is static
      */
     protected constructor(
@@ -50,11 +50,25 @@ class GoogleSheetExtensionState {
     get googleSheet(): GoogleSpreadsheet {
         return this._googleSheet;
     }
+
     /**
      * The public url of the google sheet document
      */
     get googleSheetURL(): string {
         return `https://docs.google.com/spreadsheets/d/${this.googleSheet.spreadsheetId}`;
+    }
+
+    /**
+     * Gets the state object for this server id
+     */
+    static get(serverId: Snowflake): GoogleSheetExtensionState {
+        const state = GoogleSheetExtensionState.allStates.get(serverId);
+        if (!state) {
+            throw ExpectedSheetErrors.nonServerInteraction(
+                client.guilds.cache.get(serverId)?.name
+            );
+        }
+        return state;
     }
 
     /**

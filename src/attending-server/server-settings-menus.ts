@@ -793,7 +793,7 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Current Configuration',
-                value: server.isSeriousServer()
+                value: server.isSerious
                     ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
                     : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`
             }

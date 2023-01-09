@@ -7,6 +7,11 @@ import { Optional } from '../../utils/type-aliases.js';
 import { getInteractionName } from '../../utils/util-functions.js';
 import { HierarchyRoles, hierarchyRoleConfigs } from '../../models/hierarchy-roles.js';
 
+/**
+ * All the errors expected to happen at the parsing stage
+ * - **Be careful** that some of the errors are functions and they must be called first
+ * - `throw`ing a function is valid in JS, so we have to be really careful
+ */
 const ExpectedParseErrors = {
     hierarchyRoleDoesNotExist: (
         missingRoleNames: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'][]
@@ -98,6 +103,11 @@ const ExpectedParseErrors = {
     cannotUseBotRoleAsHierarchyRole: new CommandParseError(
         'Bot integration roles cannot be used because no human user can have them. Please specify a different role.'
     ),
+    cannotUseQueueChannelForLogging: new CommandParseError(
+        '#queue channels cannot be used for logging. Please specify a different text channel.'
+    ),
+    notTextChannel: (channelName: string) =>
+        new CommandParseError(`${channelName} is not a text channel.`),
     invalidChannelName: (channelName: string) =>
         new CommandParseError(
             `${channelName} is an invalid channel name. Please use a name that is between 1 and 100 characters (inclusive) long and \
