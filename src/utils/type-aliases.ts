@@ -85,9 +85,9 @@ type HelpMessage = {
      * Structure: {name: string, value: string}
      */
     nameValuePair: APIApplicationCommandOptionChoice<string>;
-    /** Used to determine if the message should be displayed in the help channel */
+    /** if the message should be displayed in the help channel */
     useInHelpChannel: boolean;
-    /** Used to determine if the message can be displayed in the help command */
+    /** if the message can be displayed in the help command */
     useInHelpCommand: boolean;
     /** The actual message to be displayed */
     message: BaseMessageOptions;

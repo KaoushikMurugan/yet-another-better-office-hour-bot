@@ -153,7 +153,7 @@ class QueueDisplayV2 {
             });
         }
         if (viewModel.state === 'paused') {
-            // this is optional, if the embed takes up too much screen remove this first
+            // this message is optional, if the queue embed takes up too much screen remove this first
             embedTableMsg.addFields({
                 name: 'Paused Queue',
                 value: `All helpers of this queue have paused new students from joining.
@@ -203,6 +203,7 @@ class QueueDisplayV2 {
         );
         const embedList = [embedTableMsg];
         const getVcStatus = (id: Snowflake) => {
+            const spacer = '\u3000'; // ideographic space character, extra wide
             const voiceChannel =
                 this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
             const vcStatus = voiceChannel
@@ -210,7 +211,7 @@ class QueueDisplayV2 {
                     ? `Busy in [${voiceChannel.name}]`
                     : `Idling in [${voiceChannel.name}]`
                 : 'Not in voice channel.';
-            return `<@${id}>\t**|\t${vcStatus}**`;
+            return `<@${id}>${spacer}**${vcStatus}**`;
         };
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();

@@ -5,6 +5,7 @@ import {
     BaseInteractionExtension,
     IInteractionExtension
 } from '../extension-interface.js';
+import { googleSheetAdminHelpMessages } from './google-sheet-constants/GoogleSheetCommands.js';
 import { googleSheetSettingsMainMenuOptions } from './google-sheet-constants/google-sheet-settings-menu.js';
 import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slash-commands.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
@@ -17,6 +18,12 @@ class GoogleSheetInteractionExtension
     constructor() {
         super();
     }
+
+    override helpMessages = {
+        botAdmin: googleSheetAdminHelpMessages,
+        staff: [],
+        student: []
+    };
 
     /**
      * Checks if the default google sheet is accessible
