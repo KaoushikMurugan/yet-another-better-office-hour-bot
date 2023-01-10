@@ -151,7 +151,7 @@ type SettingsMenuOption = {
      */
     optionData: SelectMenuComponentOptionData;
     /** A function that returns an embed of the actual menu */
-    subMenu: SettingsMenuConstructor;
+    menu: SettingsMenuConstructor;
 };
 
 /** Type alias for interaction extensions */
@@ -166,7 +166,7 @@ export {
     NoMethod,
     ConstNoMethod,
     Result,
-    Ok, // these 2 arrow functions comes withe the Result<T,E> types so they are placed here
+    Ok, // these 2 arrow functions comes with the Result<T,E> types so they are placed here
     Err,
     ServerResult,
     QueueResult,

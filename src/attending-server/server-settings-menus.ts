@@ -42,7 +42,9 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
  * @param currentMenu The name of the sub-Menu from which the settings menu is being called
  * @returns
  */
-function settingsOptionsSelectMenu(currentMenu: Function): ActionRowBuilder<SelectMenuBuilder> {
+function settingsOptionsSelectMenu(
+    currentMenu: Function
+): ActionRowBuilder<SelectMenuBuilder> {
     return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
             'other',
@@ -50,10 +52,10 @@ function settingsOptionsSelectMenu(currentMenu: Function): ActionRowBuilder<Sele
             UnknownId,
             UnknownId
         ])
-            .setPlaceholder('Select an option')
+            .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
             .addOptions(
                 serverSettingsMenuOptions
-                    .filter(menuOption => menuOption.subMenu !== currentMenu)
+                    .filter(menuOption => menuOption.menu !== currentMenu)
                     .map(option => option.optionData)
             )
     );
@@ -102,7 +104,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Return to the main menu',
             value: 'main-menu'
         },
-        subMenu: SettingsMainMenu
+        menu: SettingsMainMenu
     },
     {
         optionData: {
@@ -111,7 +113,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the server roles',
             value: 'server-roles'
         },
-        subMenu: RolesConfigMenu
+        menu: RolesConfigMenu
     },
     {
         optionData: {
@@ -120,7 +122,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
-        subMenu: AfterSessionMessageConfigMenu
+        menu: AfterSessionMessageConfigMenu
     },
     {
         optionData: {
@@ -129,7 +131,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
-        subMenu: QueueAutoClearConfigMenu
+        menu: QueueAutoClearConfigMenu
     },
     {
         optionData: {
@@ -138,7 +140,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
-        subMenu: LoggingChannelConfigMenu
+        menu: LoggingChannelConfigMenu
     },
     {
         optionData: {
@@ -147,7 +149,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
-        subMenu: AutoGiveStudentRoleConfigMenu
+        menu: AutoGiveStudentRoleConfigMenu
     },
     {
         optionData: {
@@ -156,7 +158,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
-        subMenu: PromptHelpTopicConfigMenu
+        menu: PromptHelpTopicConfigMenu
     },
     {
         optionData: {
@@ -165,7 +167,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the serious mode',
             value: 'serious-mode'
         },
-        subMenu: SeriousModeConfigMenu
+        menu: SeriousModeConfigMenu
     }
 ];
 
@@ -196,7 +198,10 @@ function SettingsMainMenu(
                 'Your settings are always automatically saved as soon as you make a change. ' +
                 'You can dismiss this message at any time to finish configuring YABOB.'
         });
-    return { embeds: [embed.data], components: [settingsOptionsSelectMenu(SettingsMainMenu)] };
+    return {
+        embeds: [embed.data],
+        components: [settingsOptionsSelectMenu(SettingsMainMenu)]
+    };
 }
 
 /**
@@ -336,7 +341,9 @@ function RolesConfigMenu(
     ];
     return {
         embeds: [embed.data],
-        components: isDm ? buttons : [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
+        components: isDm
+            ? buttons
+            : [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
     };
 }
 

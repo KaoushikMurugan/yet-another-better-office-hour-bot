@@ -17,7 +17,7 @@ const googleSheetSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the Google Sheet Logging settings',
             value: 'google-sheet-settings'
         },
-        subMenu: GoogleSheetSettingsConfigMenu
+        menu: GoogleSheetSettingsConfigMenu
     }
 ];
 

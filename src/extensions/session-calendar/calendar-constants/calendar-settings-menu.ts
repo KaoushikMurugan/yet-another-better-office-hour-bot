@@ -20,7 +20,7 @@ const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the calendar settings',
             value: 'calendar-settings'
         },
-        subMenu: CalendarSettingsConfigMenu
+        menu: CalendarSettingsConfigMenu
     }
 ];
 
