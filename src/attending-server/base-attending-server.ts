@@ -33,9 +33,12 @@ import {
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
+    Err,
     GuildMemberId,
+    Ok,
     Optional,
     OptionalRoleId,
+    Result,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -50,6 +53,7 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
+import type { ServerError } from '../utils/error-types.js';
 
 /**
  * Wrapper for TextChannel
@@ -120,10 +124,23 @@ class AttendingServerV2 {
         }
     };
 
+    /**
+     * All the servers that YABOB is managing
+     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+     * without passing through a interaction handler first
+     * - equivalent to the old attendingServers global object
+     */
+    static allServers: Collection<Snowflake, AttendingServerV2> = new Collection();
+
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<IServerExtension>
     ) {}
+
+    /** All the access level role ids */
+    get accessLevelRoleIds(): AccessLevelRoleIds {
+        return this.settings.accessLevelRoleIds;
+    }
 
     /** The after session message string. Empty string if not set */
     get afterSessionMessage(): string {
@@ -143,11 +160,6 @@ class AttendingServerV2 {
     /** All the helpers on this server, both active and paused */
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;
-    }
-
-    /** All the access level role ids */
-    get accessLevelRoleIds(): AccessLevelRoleIds {
-        return this.settings.accessLevelRoleIds;
     }
 
     /**
@@ -254,7 +266,10 @@ class AttendingServerV2 {
             );
         }
         await Promise.all([
-            server.initializeAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
+            server.initializeAllQueues(
+                validBackup?.queues,
+                validBackup?.hoursUntilAutoClear
+            ),
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
@@ -266,6 +281,32 @@ class AttendingServerV2 {
         );
         console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
+    }
+
+    /**
+     * Gets a AttendingServerV2 object by Id
+     * @param serverId guild Id
+     * @returns the corresponding server object
+     */
+    static get(serverId: Snowflake): AttendingServerV2 {
+        const server = AttendingServerV2.allServers.get(serverId);
+        if (!server) {
+            throw ExpectedServerErrors.notInitialized;
+        }
+        return server;
+    }
+
+    /**
+     * Non exception based version of `AttendingServerV2.get`
+     * @param serverId guild id
+     * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
+     */
+    static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
+        const server = AttendingServerV2.allServers.get(serverId);
+        if (!server) {
+            return Err(ExpectedServerErrors.notInitialized);
+        }
+        return Ok(server);
     }
 
     /**
@@ -976,6 +1017,24 @@ class AttendingServerV2 {
     }
 
     /**
+     * Sets the access level roles to use for this server
+     * @param role name of the role; botAdmin, staff, or student
+     * @param id the role id snowflake
+     */
+    async setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): Promise<void> {
+        this.settings.accessLevelRoleIds[role] = id;
+        await Promise.all([
+            updateCommandHelpChannelVisibility(
+                this.guild,
+                this.settings.accessLevelRoleIds
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
+    }
+
+    /**
      * Sets the after session message for this server
      * @param newMessage after session message to set
      * - Side Effect: Triggers a firebase backup
@@ -996,27 +1055,6 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Sets the access level roles to use for this server
-     * @param role name of the role; botAdmin, staff, or student
-     * @param id the role id snowflake
-     */
-    async setAccessLevelRoleId(
-        role: AccessLevelRole,
-        id: Snowflake
-    ): Promise<void> {
-        this.settings.accessLevelRoleIds[role] = id;
-        await Promise.all([
-            updateCommandHelpChannelVisibility(
-                this.guild,
-                this.settings.accessLevelRoleIds
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
     }
 
     /**

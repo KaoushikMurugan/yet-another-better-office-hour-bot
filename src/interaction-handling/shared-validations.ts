@@ -16,39 +16,11 @@ import {
     isQueueTextChannel,
     isTextChannel
 } from '../utils/util-functions.js';
-import { attendingServers, client } from '../global-states.js';
-import { GuildId } from '../utils/type-aliases.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
-
-/**
- * Checks if the interaction is associated with a correctly initialized AttendingServerV2
- * - Extensions that wish to do additional checks can use this as a base
- * @deprecated - will be migrated to a static getter on the AttendingServerV2 class soon
- * @returns the {@link AttendingServerV2} object
- */
-function isServerInteraction(
-    idOrInteraction: Interaction<'cached'> | GuildId
-): AttendingServerV2 {
-    if (typeof idOrInteraction === 'string') {
-        const server = attendingServers.get(idOrInteraction);
-        if (!server) {
-            throw ExpectedParseErrors.nonServerInteraction(
-                client.guilds.cache.get(idOrInteraction)?.name
-            );
-        }
-        return server;
-    } else {
-        const server = attendingServers.get(idOrInteraction.guild.id);
-        if (!server) {
-            throw ExpectedParseErrors.nonServerInteraction(idOrInteraction.guild.name);
-        }
-        return server;
-    }
-}
 
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
@@ -62,10 +34,7 @@ function isValidDMInteraction(
     if (type !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
-    const server = attendingServers.get(serverId);
-    if (!server) {
-        throw ExpectedParseErrors.nonServerInteraction(serverId);
-    }
+    const server = AttendingServerV2.get(serverId);
     return server;
 }
 /**
@@ -77,7 +46,7 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const queueChannel = server.getQueueChannelById(interaction.channel.parent.id);
     if (!queueChannel) {
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
@@ -201,7 +170,6 @@ async function channelsAreUnderLimit(
 }
 
 export {
-    isServerInteraction,
     isFromQueueChannelWithParent,
     isValidDMInteraction,
     isTriggeredByMemberWithRoles,

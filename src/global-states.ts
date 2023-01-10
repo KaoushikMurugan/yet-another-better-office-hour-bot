@@ -66,13 +66,6 @@ const client: Client<true> = new Client({
     })
 });
 
-/**
- * All the servers that YABOB is managing
- * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
- * without passing through a interaction handler first
- */
-const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
-
 /** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
@@ -82,4 +75,4 @@ await client
         throw err;
     });
 
-export { attendingServers, client, firebaseDB };
+export { client, firebaseDB };

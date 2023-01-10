@@ -6,7 +6,7 @@ import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { client, attendingServers } from './global-states.js';
+import { client } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import {
@@ -75,11 +75,12 @@ client.on(Events.GuildCreate, async guild => {
  * - Deletes server from server map
  */
 client.on(Events.GuildDelete, async guild => {
-    const server = attendingServers.get(guild.id);
-    if (server !== undefined) {
+    const getResult = AttendingServerV2.safeGet(guild.id);
+    if (getResult.ok) {
+        const server = getResult.value;
         server.clearAllServerTimers();
         await server.gracefulDelete();
-        attendingServers.delete(guild.id);
+        AttendingServerV2.allServers.delete(guild.id);
         console.log(
             red(`Leaving ${guild.name}. Backups will be saved by the extensions.`)
         );
@@ -110,8 +111,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
  * Gives the Student role to new members
  */
 client.on(Events.GuildMemberAdd, async member => {
-    const server =
-        attendingServers.get(member.guild.id) ?? (await joinGuild(member.guild));
+    const server = AttendingServerV2.get(member.guild.id);
     if (!server.autoGiveStudentRole) {
         return;
     }
@@ -132,7 +132,7 @@ client.on(Events.GuildMemberAdd, async member => {
  * Once YABOB has the highest role, start the initialization call
  */
 client.on(Events.GuildRoleUpdate, async role => {
-    if (attendingServers.has(role.guild.id)) {
+    if (AttendingServerV2.allServers.has(role.guild.id)) {
         return;
     }
     if (
@@ -162,11 +162,11 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
     }
     const serverId = oldVoiceState.guild.id;
     if (isLeaveVC(oldVoiceState, newVoiceState)) {
-        await attendingServers
+        await AttendingServerV2.allServers
             .get(serverId)
             ?.onMemberLeaveVC(newVoiceState.member, oldVoiceState);
     } else if (isJoinVC(oldVoiceState, newVoiceState)) {
-        await attendingServers
+        await AttendingServerV2.allServers
             .get(serverId)
             ?.onMemberJoinVC(newVoiceState.member, newVoiceState);
     }
@@ -176,7 +176,7 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
  * Emit the on role delete event
  */
 client.on(Events.GuildRoleDelete, async role => {
-    attendingServers.get(role.guild.id)?.onRoleDelete(role);
+    await AttendingServerV2.allServers.get(role.guild.id)?.onRoleDelete(role);
 });
 
 /**
@@ -209,9 +209,9 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
         : interactionExtensions.flatMap(ext => ext.slashCommandData);
     await postSlashCommands(guild, externalCommandData);
     await guild.commands.fetch(); // populate cache
-    // Extensions for server&queue are loaded inside the create method
+    // Extensions for server & queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
-    attendingServers.set(guild.id, server);
+    AttendingServerV2.allServers.set(guild.id, server);
     return server;
 }
 

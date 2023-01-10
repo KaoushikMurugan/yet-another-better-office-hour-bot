@@ -39,10 +39,10 @@ import { baseYabobCommandMap } from './command-handler.js';
 import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { IInteractionExtension } from '../extensions/extension-interface.js';
-import { isServerInteraction } from './shared-validations.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
 import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 /**
  * Create the interaction extension instances here
@@ -96,7 +96,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
     }
     const commandName = interaction.commandName;
     const possibleSubcommands = interaction.options.getSubcommand(false);
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const handleCommand = completeCommandMap.methodMap[commandName];
     logSlashCommand(interaction);
     server.sendLogMessage(SlashCommandLogEmbed(interaction));
@@ -127,7 +127,7 @@ async function processButton(interaction: Interaction): Promise<void> {
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
     // serverId might be unknown
     // TODO: Maybe require all buildComponent calls to accept only valid server id's
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
@@ -163,7 +163,7 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
@@ -205,7 +205,7 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, modalName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
     );
