@@ -4,7 +4,7 @@ import { GuildId } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { yellow, blue } from '../../utils/command-line-colors.js';
-import { IServerExtension } from '../extension-interface.js';
+import { ServerExtension } from '../extension-interface.js';
 import { client, firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
@@ -40,7 +40,7 @@ class GoogleSheetExtensionState {
      */
     protected constructor(
         readonly guild: Guild,
-        private serverExtension: Omit<GoogleSheetServerExtension, keyof IServerExtension>,
+        private serverExtension: Omit<GoogleSheetServerExtension, keyof ServerExtension>,
         private _googleSheet: GoogleSpreadsheet
     ) {}
 
@@ -81,7 +81,7 @@ class GoogleSheetExtensionState {
      */
     static async load(
         guild: Guild,
-        serverExtension: Omit<GoogleSheetServerExtension, keyof IServerExtension>
+        serverExtension: Omit<GoogleSheetServerExtension, keyof ServerExtension>
     ): Promise<GoogleSheetExtensionState> {
         const backupData = await GoogleSheetExtensionState.restoreFromBackup(guild.id);
         const googleSheet = await loadSheetById(backupData.sheetId);

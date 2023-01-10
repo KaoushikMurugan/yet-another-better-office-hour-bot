@@ -22,7 +22,7 @@ import {
 } from '../interaction-handling/handler-interface.js';
 import { CommandData } from '../utils/type-aliases.js';
 
-interface IInteractionExtension {
+interface InteractionExtension {
     /**
      * Do an initialization check at YABOB instance level
      * - Called inside client.on('ready')
@@ -64,7 +64,7 @@ interface IInteractionExtension {
 }
 
 /** Server Level Extension */
-interface IServerExtension {
+interface ServerExtension {
     /**
      * When a server instance is successfully created
      * @param server the newly created server
@@ -152,7 +152,7 @@ interface IServerExtension {
 }
 
 /** Extensions for individual queues */
-interface IQueueExtension {
+interface QueueExtension {
     /**
      * When a single queue is created
      * @param queue the newly created queue
@@ -218,7 +218,7 @@ interface IQueueExtension {
  * - Add help messages in the helpMessages array
  * - Add setting menu options in the settingsMainMenuOptions array
  */
-class BaseInteractionExtension implements IInteractionExtension {
+class BaseInteractionExtension implements InteractionExtension {
     initializationCheck(): Promise<void> {
         return Promise.resolve();
     }
@@ -268,7 +268,7 @@ class BaseInteractionExtension implements IInteractionExtension {
  * - Any SERVER extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseServerExtension implements IServerExtension {
+class BaseServerExtension implements ServerExtension {
     onServerInitSuccess(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
@@ -326,7 +326,7 @@ class BaseServerExtension implements IServerExtension {
  * - Any QUEUE extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseQueueExtension implements IQueueExtension {
+class BaseQueueExtension implements QueueExtension {
     onQueueCreate(queue: FrozenQueue): Promise<void> {
         return Promise.resolve();
     }
@@ -360,9 +360,9 @@ class BaseQueueExtension implements IQueueExtension {
 }
 
 export {
-    IInteractionExtension,
-    IServerExtension,
-    IQueueExtension,
+    InteractionExtension,
+    ServerExtension,
+    QueueExtension,
     BaseInteractionExtension,
     BaseServerExtension,
     BaseQueueExtension

@@ -19,7 +19,7 @@ import {
     AccessLevelRoleIds
 } from '../models/access-level-roles.js';
 import { Helpee, Helper } from '../models/member-states.js';
-import { IServerExtension } from '../extensions/extension-interface.js';
+import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
@@ -134,7 +134,7 @@ class AttendingServerV2 {
 
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: ReadonlyArray<IServerExtension>
+        readonly serverExtensions: ReadonlyArray<ServerExtension>
     ) {}
 
     /** All the access level role ids */
@@ -230,7 +230,7 @@ class AttendingServerV2 {
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
         // Load ServerExtensions here
-        const serverExtensions: IServerExtension[] = environment.disableExtensions
+        const serverExtensions: ServerExtension[] = environment.disableExtensions
             ? [] // TODO: Should we always load the firebase extension?
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),

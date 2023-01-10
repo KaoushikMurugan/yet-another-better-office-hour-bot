@@ -38,7 +38,7 @@ import { baseYabobButtonMethodMap } from './button-handler.js';
 import { baseYabobCommandMap } from './command-handler.js';
 import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
-import { IInteractionExtension } from '../extensions/extension-interface.js';
+import { InteractionExtension } from '../extensions/extension-interface.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
 import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
@@ -48,7 +48,7 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server.js'
  * Create the interaction extension instances here
  * - states are loaded in joinGuild() in app.ts
  */
-const interactionExtensions: ReadonlyArray<IInteractionExtension> =
+const interactionExtensions: ReadonlyArray<InteractionExtension> =
     environment.disableExtensions
         ? []
         : [
@@ -268,7 +268,7 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
  * @returns 4-tuple of command, button, select menu, and modal maps
  */
 function combineMethodMaps(
-    interactionExtensions: ReadonlyArray<IInteractionExtension>
+    interactionExtensions: ReadonlyArray<InteractionExtension>
 ): [
     CommandHandlerProps,
     ButtonHandlerProps,

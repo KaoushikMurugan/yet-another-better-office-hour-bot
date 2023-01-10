@@ -2,7 +2,7 @@
 
 import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { IQueueExtension } from '../extensions/extension-interface.js';
+import { QueueExtension } from '../extensions/extension-interface.js';
 import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
@@ -89,7 +89,7 @@ class HelpQueueV2 {
      */
     protected constructor(
         public readonly queueChannel: QueueChannel,
-        private readonly queueExtensions: IQueueExtension[],
+        private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
@@ -186,7 +186,7 @@ class HelpQueueV2 {
     ): Promise<HelpQueueV2> {
         const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
         const display = new QueueDisplayV2(queueChannel);
-        const queueExtensions: IQueueExtension[] = environment.disableExtensions
+        const queueExtensions: QueueExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                   CalendarQueueExtension.load(
