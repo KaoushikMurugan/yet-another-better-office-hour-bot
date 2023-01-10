@@ -21,6 +21,10 @@ import {
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 
+/**
+ * A button that returns to the main menu
+ * @deprecated
+ */
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
         'other',
@@ -32,6 +36,28 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
 );
+
+/**
+ * Composes the server settings main menu, excluding the option for the current menu
+ * @param currentMenu The name of the sub-Menu from which the settings menu is being called
+ * @returns
+ */
+function settingsOptionsSelectMenu(currentMenu: Function): ActionRowBuilder<SelectMenuBuilder> {
+    return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+        buildComponent(new SelectMenuBuilder(), [
+            'other',
+            SelectMenuNames.ServerSettings,
+            UnknownId,
+            UnknownId
+        ])
+            .setPlaceholder('Select an option')
+            .addOptions(
+                serverSettingsMenuOptions
+                    .filter(menuOption => menuOption.subMenu !== currentMenu)
+                    .map(option => option.optionData)
+            )
+    );
+}
 
 /** This creates an empty embed field in embeds */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,7 +94,16 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
+const serverSettingsMenuOptions: SettingsMenuOption[] = [
+    {
+        optionData: {
+            emoji: '🏠',
+            label: 'Main Menu',
+            description: 'Return to the main menu',
+            value: 'main-menu'
+        },
+        subMenu: SettingsMainMenu
+    },
     {
         optionData: {
             emoji: '📝',
@@ -161,17 +196,7 @@ function SettingsMainMenu(
                 'Your settings are always automatically saved as soon as you make a change. ' +
                 'You can dismiss this message at any time to finish configuring YABOB.'
         });
-    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
-            isDm ? 'dm' : 'other',
-            SelectMenuNames.ServerSettings,
-            server.guild.id,
-            channelId
-        ])
-            .setPlaceholder('Select an option')
-            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionData))
-    );
-    return { embeds: [embed.data], components: [selectMenu] };
+    return { embeds: [embed.data], components: [settingsOptionsSelectMenu(SettingsMainMenu)] };
 }
 
 /**
@@ -311,7 +336,7 @@ function RolesConfigMenu(
     ];
     return {
         embeds: [embed.data],
-        components: isDm ? buttons : [...buttons, mainMenuRow]
+        components: isDm ? buttons : [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
     };
 }
 
@@ -486,7 +511,10 @@ function AfterSessionMessageConfigMenu(
     if (updateMessage.length > 0) {
         embed.setFooter({ text: `✅ ${updateMessage}` });
     }
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AfterSessionMessageConfigMenu)]
+    };
 }
 
 /**
@@ -520,7 +548,9 @@ function QueueAutoClearConfigMenu(
                     server.queueAutoClearTimeout === undefined ||
                     server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
                         ? `**Disabled** - Queues will not be cleared automatically.`
-                        : `**Enabled** - Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
+                        : `**Enabled** - Queues will automatically be cleared in \
+                        **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** \
+                        after it closes.`
             }
         );
     if (updateMessage.length > 0) {
@@ -546,7 +576,10 @@ function QueueAutoClearConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(QueueAutoClearConfigMenu)]
+    };
 }
 
 /**
@@ -642,7 +675,11 @@ function LoggingChannelConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [channelsSelectMenu, buttons, mainMenuRow]
+        components: [
+            channelsSelectMenu,
+            buttons,
+            settingsOptionsSelectMenu(LoggingChannelConfigMenu)
+        ]
     };
 }
 
@@ -702,7 +739,10 @@ function AutoGiveStudentRoleConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AutoGiveStudentRoleConfigMenu)]
+    };
 }
 
 /**
@@ -761,7 +801,10 @@ function PromptHelpTopicConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(PromptHelpTopicConfigMenu)]
+    };
 }
 
 /**
@@ -821,7 +864,10 @@ function SeriousModeConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(SeriousModeConfigMenu)]
+    };
 }
 
 export {
@@ -835,5 +881,6 @@ export {
     PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
-    serverSettingsMainMenuOptions
+    settingsOptionsSelectMenu,
+    serverSettingsMenuOptions as serverSettingsMainMenuOptions
 };
