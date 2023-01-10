@@ -2,9 +2,9 @@ import { client } from '../src/global-states.js';
 import { EmbedColor } from '../src/utils/embed-helper.js';
 import { HelpMessage } from '../src/utils/type-aliases.js';
 
-const helperCommandsTileMessage: HelpMessage = {
+const helperCommandsTitleMessage: HelpMessage = {
     nameValuePair: {
-        name: 'Helper Commands Title',
+        name: 'Staff Commands Title',
         value: 'helper-commands-title'
     },
     useInHelpChannel: true,
@@ -13,7 +13,7 @@ const helperCommandsTileMessage: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.Neutral,
-                title: 'Bot Admin & Helper Only Commands',
+                title: 'Bot Admin & Staff Only Commands',
                 timestamp: new Date().toISOString(),
                 author: {
                     name: 'YABOB V4.',
@@ -169,7 +169,7 @@ const clearHelp: HelpMessage = {
         value: 'clear'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -203,7 +203,7 @@ const pauseHelp: HelpMessage = {
         value: 'pause'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -237,7 +237,7 @@ const resumeHelp: HelpMessage = {
         value: 'resume'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -266,15 +266,15 @@ const resumeHelp: HelpMessage = {
 };
 
 const helperCommandHelpMessages: HelpMessage[] = [
-    helperCommandsTileMessage,
+    helperCommandsTitleMessage,
     startHelp,
     stopHelp,
     nextHelp,
-    announceHelp
+    announceHelp,
     // ! Over choice limit
-    // clearHelp,
-    // pauseHelp,
-    // resumeHelp
+    clearHelp,
+    pauseHelp,
+    resumeHelp
 ];
 
 export { helperCommandHelpMessages };

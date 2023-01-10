@@ -5,7 +5,7 @@
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMessage } from '../utils/type-aliases.js';
 
 /**
@@ -13,9 +13,12 @@ import { HelpMessage } from '../utils/type-aliases.js';
  * - Used when creating new help channels
  */
 export const commandChannelConfigs: {
+    /** The name of the created channel  */
     channelName: string;
+    /** Help message content */
     helpMessages: HelpMessage[];
-    visibility: (keyof HierarchyRoles)[];
+    /** which access level role can see this channel */
+    visibility: AccessLevelRole[];
 }[] = [
     {
         channelName: 'admin-commands',

@@ -13,7 +13,7 @@ import { Snowflake, Interaction } from 'discord.js';
 import { isTextChannel } from '../../utils/util-functions.js';
 import { z } from 'zod';
 import { FrozenServer } from '../extension-utils.js';
-import { isServerInteraction } from '../../interaction-handling/shared-validations.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * ViewModel for 1 tutor's upcoming session
@@ -219,7 +219,7 @@ function isServerCalendarInteraction<T extends Interaction<'cached'>>(
     state: CalendarExtensionState,
     interaction: WithRequired<T, 'channel' | 'channelId'>
 ] {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const state = CalendarExtensionState.allStates.get(server.guild.id);
     if (!state || !isTextChannel(interaction.channel)) {
         throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);

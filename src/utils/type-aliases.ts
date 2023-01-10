@@ -3,6 +3,7 @@
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
+    RESTPostAPIApplicationCommandsJSONBody,
     SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
@@ -61,7 +62,7 @@ type GuildId = Snowflake;
 type GuildMemberId = Snowflake;
 /** string */
 type CategoryChannelId = Snowflake;
-/** str */
+/** string */
 type TextBasedChannelId = Snowflake;
 /** string */
 type MessageId = Snowflake;
@@ -84,9 +85,9 @@ type HelpMessage = {
      * Structure: {name: string, value: string}
      */
     nameValuePair: APIApplicationCommandOptionChoice<string>;
-    /** Used to determine if the message should be displayed in the help channel */
+    /** if the message should be displayed in the help channel */
     useInHelpChannel: boolean;
-    /** Used to determine if the message can be displayed in the help command */
+    /** if the message can be displayed in the help command */
     useInHelpCommand: boolean;
     /** The actual message to be displayed */
     message: BaseMessageOptions;
@@ -116,40 +117,6 @@ type YabobEmbed = BaseMessageOptions;
  * 'other' - component is in a non-queue guild channel
  */
 type ComponentLocation = 'dm' | 'queue' | 'other';
-/**
- * Actionable Component id format
- * Max length must be 100
- * Max length allowed for name is 58
- *
- * @example
- * {
- *  n: 'Join', // name of the actionable component
- *  t: 'queue', // type of actionable component, either 'dm', 'queue', or 'other'
- *  s: '12345678901234567890', // server id. if in dm, to find which server it relates to
- *  c: '12345678901234567890', // channel id. if in dm, equivalent to userId
- * }
- */
-type YabobComponentId<T extends ComponentLocation> = {
-    /** name of the button */
-    name: string;
-    /** type of button, either 'dm', 'queue', or 'other' */
-    type: T; // max length 5
-    /** server id. if in dm, to find which server it relates to */
-    sid: T extends 'dm' ? GuildId : undefined; // max length 20, 8-9 after compression
-    /** channel id. if in dm, equivalent to userId */
-    cid: T extends 'other' ? undefined : CategoryChannelId; // max length 20, 8-9 after compression
-};
-
-// type alias for better readability
-
-/** Yabob Button id format */
-type YabobButtonId<T extends ComponentLocation> = YabobComponentId<T>;
-
-/** Yabob Modal id format */
-type YabobModalId<T extends ComponentLocation> = YabobComponentId<T>;
-
-/** Yabob Select Menu id format */
-type YabobSelectMenuId<T extends ComponentLocation> = YabobComponentId<T>;
 
 /**
  * Represents an optional role id that YABOB keeps track of
@@ -187,6 +154,9 @@ type SettingsMenuOption = {
     subMenu: SettingsMenuConstructor;
 };
 
+/** Type alias for interaction extensions */
+type CommandData = ReadonlyArray<RESTPostAPIApplicationCommandsJSONBody>;
+
 export {
     /** Types */
     WithRequired,
@@ -204,6 +174,7 @@ export {
     Entries,
     EnsureCorrectEnum,
     SettingsMenuOption,
+    CommandData,
     /** Aliases */
     GuildId,
     GuildMemberId,
@@ -212,12 +183,8 @@ export {
     RenderIndex,
     TextBasedChannelId,
     /** Callback Types */
-    SettingsMenuConstructor as SettingsMenuCallback,
+    SettingsMenuConstructor,
     /** Component Types */
     YabobEmbed,
-    ComponentLocation,
-    YabobComponentId,
-    YabobButtonId,
-    YabobModalId,
-    YabobSelectMenuId
+    ComponentLocation
 };

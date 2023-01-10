@@ -13,9 +13,13 @@ import {
 } from 'discord.js';
 import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { hierarchyRoleConfigs, HierarchyRoles } from '../models/hierarchy-roles.js';
+import {
+    AccessLevelRole,
+    accessLevelRoleConfigs,
+    AccessLevelRoleIds
+} from '../models/access-level-roles.js';
 import { Helpee, Helper } from '../models/member-states.js';
-import { IServerExtension } from '../extensions/extension-interface.js';
+import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import { FirebaseServerBackupExtension } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
@@ -29,9 +33,12 @@ import {
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
+    Err,
     GuildMemberId,
+    Ok,
     Optional,
     OptionalRoleId,
+    Result,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -46,6 +53,7 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
+import type { ServerError } from '../utils/error-types.js';
 
 /**
  * Wrapper for TextChannel
@@ -61,13 +69,13 @@ type QueueChannel = {
  * The possible settings of each server
  */
 type ServerSettings = {
-    /** message sent to students after they leave */
+    /** Message sent to students after they leave */
     afterSessionMessage: string;
-    /** optional, channel where yabob will log message. if undefined, don't log on the server */
+    /** Optional, channel where yabob will log message. if undefined, don't log on the server */
     loggingChannel?: TextChannel;
-    /** automatically give new members the student role */
+    /** Automatically give new members the student role */
     autoGiveStudentRole: boolean;
-    /** prompt modal asking for help topic when a user joins a queue */
+    /** Prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
@@ -77,7 +85,7 @@ type ServerSettings = {
      * - 'Not Set' means that the role is not set
      * - 'Deleted' means that the role was deleted
      */
-    hierarchyRoleIds: HierarchyRoles;
+    accessLevelRoleIds: AccessLevelRoleIds;
 };
 
 /**
@@ -105,21 +113,34 @@ class AttendingServerV2 {
      * Server settings. An firebase update is requested as soon as this changes
      */
     private settings: ServerSettings = {
+        // TODO: Use the Proxy class to abstract away the update logic
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
-        hierarchyRoleIds: {
+        accessLevelRoleIds: {
             botAdmin: SpecialRoleValues.NotSet,
             staff: SpecialRoleValues.NotSet,
             student: SpecialRoleValues.NotSet
         }
     };
 
-    // TODO: Use the Proxy class to abstract away the update logic
+    /**
+     * All the servers that YABOB is managing
+     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+     * without passing through a interaction handler first
+     * - equivalent to the old attendingServers global object
+     */
+    static allServers: Collection<Snowflake, AttendingServerV2> = new Collection();
+
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: ReadonlyArray<IServerExtension>
+        readonly serverExtensions: ReadonlyArray<ServerExtension>
     ) {}
+
+    /** All the access level role ids */
+    get accessLevelRoleIds(): AccessLevelRoleIds {
+        return this.settings.accessLevelRoleIds;
+    }
 
     /** The after session message string. Empty string if not set */
     get afterSessionMessage(): string {
@@ -133,7 +154,7 @@ class AttendingServerV2 {
 
     /** bot admin role id */
     get botAdminRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.botAdmin;
+        return this.settings.accessLevelRoleIds.botAdmin;
     }
 
     /** All the helpers on this server, both active and paused */
@@ -141,9 +162,12 @@ class AttendingServerV2 {
         return this._helpers;
     }
 
-    /** All the hierarchy role ids */
-    get hierarchyRoleIds(): HierarchyRoles {
-        return this.settings.hierarchyRoleIds;
+    /**
+     * Returns true if the server is in serious mode
+     * @returns boolean, defaults to false if no queues exist on this server
+     */
+    get isSerious(): boolean {
+        return this.queues[0]?.seriousModeEnabled ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -169,26 +193,27 @@ class AttendingServerV2 {
     /**
      * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
-    get sortedHierarchyRoles(): ReadonlyArray<{
-        key: keyof HierarchyRoles; // this can be used to index hierarchyRoleConfigs and HierarchyRoles
-        displayName: typeof hierarchyRoleConfigs[keyof HierarchyRoles]['displayName'];
+    get sortedAccessLevelRoles(): ReadonlyArray<{
+        key: AccessLevelRole; // this can be used to index accessLevelRoleConfigs and AccessLevelRoleIds
+        displayName: typeof accessLevelRoleConfigs[keyof AccessLevelRoleIds]['displayName'];
         id: OptionalRoleId;
     }> {
-        return Object.entries(this.settings.hierarchyRoleIds).map(([name, id]) => ({
-            key: name as keyof HierarchyRoles, // guaranteed to be the key
-            displayName: hierarchyRoleConfigs[name as keyof HierarchyRoles].displayName,
+        return Object.entries(this.settings.accessLevelRoleIds).map(([name, id]) => ({
+            key: name as AccessLevelRole, // guaranteed to be the key
+            displayName:
+                accessLevelRoleConfigs[name as keyof AccessLevelRoleIds].displayName,
             id: id
         }));
     }
 
     /** staff role id */
     get staffRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.staff;
+        return this.settings.accessLevelRoleIds.staff;
     }
 
     /** student role id, this is the everyone role if "@everyone is student" is selected */
     get studentRoleID(): OptionalRoleId {
-        return this.settings.hierarchyRoleIds.student;
+        return this.settings.accessLevelRoleIds.student;
     }
 
     /** All the students that are currently in a queue */
@@ -205,7 +230,7 @@ class AttendingServerV2 {
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
         // Load ServerExtensions here
-        const serverExtensions: IServerExtension[] = environment.disableExtensions
+        const serverExtensions: ServerExtension[] = environment.disableExtensions
             ? [] // TODO: Should we always load the firebase extension?
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
@@ -224,7 +249,7 @@ class AttendingServerV2 {
         if (validBackup !== undefined) {
             server.loadBackup(validBackup);
         }
-        const missingRoles = server.sortedHierarchyRoles.filter(
+        const missingRoles = server.sortedAccessLevelRoles.filter(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
                 role.id === SpecialRoleValues.Deleted ||
@@ -241,9 +266,12 @@ class AttendingServerV2 {
             );
         }
         await Promise.all([
-            server.initAllQueues(validBackup?.queues, validBackup?.hoursUntilAutoClear),
+            server.initializeAllQueues(
+                validBackup?.queues,
+                validBackup?.hoursUntilAutoClear
+            ),
             server.createQueueRoles(),
-            updateCommandHelpChannels(guild, server.hierarchyRoleIds)
+            updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
             console.error(err);
             throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
@@ -253,6 +281,32 @@ class AttendingServerV2 {
         );
         console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
+    }
+
+    /**
+     * Gets a AttendingServerV2 object by Id
+     * @param serverId guild Id
+     * @returns the corresponding server object
+     */
+    static get(serverId: Snowflake): AttendingServerV2 {
+        const server = AttendingServerV2.allServers.get(serverId);
+        if (!server) {
+            throw ExpectedServerErrors.notInitialized;
+        }
+        return server;
+    }
+
+    /**
+     * Non exception based version of `AttendingServerV2.get`
+     * @param serverId guild id
+     * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
+     */
+    static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
+        const server = AttendingServerV2.allServers.get(serverId);
+        if (!server) {
+            return Err(ExpectedServerErrors.notInitialized);
+        }
+        return Ok(server);
     }
 
     /**
@@ -393,12 +447,12 @@ class AttendingServerV2 {
     }
 
     /**
-     * Creates all the command access hierarchy roles
+     * Creates all the command access level roles
      * @param allowDuplicate if true, creates new roles even if they already exist
      * - Duplicates will be created if roles with the same name already exist
      * @param everyoneIsStudent whether to treat @ everyone as the student role
      */
-    async createHierarchyRoles(
+    async createAccessLevelRoles(
         allowDuplicate: boolean,
         everyoneIsStudent: boolean
     ): Promise<void> {
@@ -406,7 +460,7 @@ class AttendingServerV2 {
         const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
-        for (const role of this.sortedHierarchyRoles) {
+        for (const role of this.sortedAccessLevelRoles) {
             // do the search if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
@@ -415,19 +469,19 @@ class AttendingServerV2 {
                     ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
-                this.hierarchyRoleIds.student = everyoneRoleId;
+                this.accessLevelRoleIds.student = everyoneRoleId;
                 continue;
             }
             if (existingRole && !allowDuplicate) {
-                this.hierarchyRoleIds[role.key] = existingRole.id;
+                this.accessLevelRoleIds[role.key] = existingRole.id;
                 foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
             const newRole = await this.guild.roles.create({
-                ...hierarchyRoleConfigs[role.key],
-                name: hierarchyRoleConfigs[role.key].displayName
+                ...accessLevelRoleConfigs[role.key],
+                name: accessLevelRoleConfigs[role.key].displayName
             });
-            this.hierarchyRoleIds[role.key] = newRole.id;
+            this.accessLevelRoleIds[role.key] = newRole.id;
             // set by indices that are larger than arr length is valid in JS
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
@@ -699,20 +753,12 @@ class AttendingServerV2 {
     }
 
     /**
-     * Returns true if the server is in serious mode
-     * @returns
-     */
-    isSeriousServer(): boolean {
-        return this.queues[0]?.seriousModeEnabled ?? false;
-    }
-
-    /**
      * Notify all helpers of the topic that the student requires help with
      * @param studentMember the student that just submitted the help topic modal
      * @param queueChannel related queue channel
      * @param topic the submitted help topic content
      */
-    async notifyHelpersStudentHelpTopic(
+    async notifyHelpersOnStudentSubmitHelpTopic(
         studentMember: GuildMember,
         queueChannel: QueueChannel,
         topic: string
@@ -737,7 +783,7 @@ class AttendingServerV2 {
         if (!isVoiceChannel(newVoiceState.channel)) {
             return;
         }
-        const vc = newVoiceState.channel;
+        const voiceChannel = newVoiceState.channel;
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -753,7 +799,7 @@ class AttendingServerV2 {
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(this, member, vc)
+                    extension.onStudentJoinVC(this, member, voiceChannel)
                 ),
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
@@ -815,19 +861,19 @@ class AttendingServerV2 {
     }
 
     /**
-     * Checks the deleted `role` was a hierarchy role and if so, mark as deleted
+     * Checks the deleted `role` was a access level role and if so, mark as deleted
      * @param deletedRole the role that was deleted
      */
     async onRoleDelete(deletedRole: Role): Promise<void> {
-        let hierarchyRoleDeleted = false;
+        let accessLevelRoleDeleted = false;
         // shorthand syntax to take the properties of an object with the same name
-        for (const { key, id } of this.sortedHierarchyRoles) {
+        for (const { key, id } of this.sortedAccessLevelRoles) {
             if (deletedRole.id === id) {
-                this.hierarchyRoleIds[key] = SpecialRoleValues.Deleted;
-                hierarchyRoleDeleted = true;
+                this.accessLevelRoleIds[key] = SpecialRoleValues.Deleted;
+                accessLevelRoleDeleted = true;
             }
         }
-        if (!hierarchyRoleDeleted) {
+        if (!accessLevelRoleDeleted) {
             return;
         }
         await Promise.all(
@@ -963,11 +1009,29 @@ class AttendingServerV2 {
      */
     sendLogMessage(message: BaseMessageOptions | string): void {
         if (this.loggingChannel) {
-            this.loggingChannel.send(message).catch(e => {
+            this.loggingChannel.send(message).catch(err => {
                 console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(e);
+                console.error(err);
             });
         }
+    }
+
+    /**
+     * Sets the access level roles to use for this server
+     * @param role name of the role; botAdmin, staff, or student
+     * @param id the role id snowflake
+     */
+    async setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): Promise<void> {
+        this.settings.accessLevelRoleIds[role] = id;
+        await Promise.all([
+            updateCommandHelpChannelVisibility(
+                this.guild,
+                this.settings.accessLevelRoleIds
+            ),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
     }
 
     /**
@@ -991,24 +1055,6 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Sets the hierarchy roles to use for this server
-     * @param role name of the role; botAdmin, staff, or student
-     * @param id the role id snowflake
-     */
-    async setHierarchyRoleId(role: keyof HierarchyRoles, id: Snowflake): Promise<void> {
-        this.settings.hierarchyRoleIds[role] = id;
-        await Promise.all([
-            updateCommandHelpChannelVisibility(
-                this.guild,
-                this.settings.hierarchyRoleIds
-            ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
     }
 
     /**
@@ -1096,7 +1142,7 @@ class AttendingServerV2 {
      * @param hoursUntilAutoClear how long until the queues are cleared
      * @param seriousModeEnabled show fun stuff in queues or not, synced with the server object
      */
-    private async initAllQueues(
+    private async initializeAllQueues(
         queueBackups?: QueueBackup[],
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
@@ -1138,10 +1184,10 @@ class AttendingServerV2 {
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
-        console.log(cyan(`Found external backup for ${this.guild.name}. Restoring.`));
+        console.log(cyan(`Restoring external backup for ${this.guild.name}.`));
         this.settings = {
             ...backup,
-            hierarchyRoleIds: {
+            accessLevelRoleIds: {
                 botAdmin: backup.botAdminRoleId,
                 staff: backup.staffRoleId,
                 student: backup.studentRoleId

@@ -789,11 +789,11 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})` //TODO: Add documentation link
+                value: `[Learn more about serious mode here.](${documentationLinks.seriousMode})`
             },
             {
                 name: 'Current Configuration',
-                value: server.isSeriousServer()
+                value: server.isSerious
                     ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
                     : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`
             }
@@ -832,7 +832,7 @@ export {
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    PromptHelpTopicConfigMenu as PromptHelpTopicConfigMenu,
+    PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
     serverSettingsMainMenuOptions

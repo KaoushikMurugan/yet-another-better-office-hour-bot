@@ -2,11 +2,10 @@
 
 import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { IQueueExtension } from '../extensions/extension-interface.js';
+import { QueueExtension } from '../extensions/extension-interface.js';
 import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { PeriodicUpdateError } from '../utils/error-types.js';
 import { QueueDisplayV2 } from './queue-display.js';
 import { GuildMemberId, Optional } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
@@ -48,16 +47,6 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  */
 class HelpQueueV2 {
     /**
-     * Keeps track of all the setTimeout / setIntervals we started
-     * - Timers can be from setInterval or setTimeout
-     */
-    private timers: Collection<QueueTimerType, NodeJS.Timer> = new Collection();
-    /**
-     * Why so serious?
-     * - if true, no emoticons will be shown
-     */
-    private _seriousModeEnabled = false;
-    /**
      * Set of active helpers' ids
      * - This is synchronized with the helpers that are marked 'active' in AttendingServerV2
      */
@@ -68,18 +57,28 @@ class HelpQueueV2 {
      */
     private _pausedHelperIds: Set<Snowflake> = new Set();
     /**
+     * Why so serious?
+     * - if true, no emoticons will be shown
+     */
+    private _seriousModeEnabled = false;
+    /**
      * The actual queue of students
      */
     private _students: Helpee[] = [];
+    /**
+     * When to automatically remove everyone
+     */
+    private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
     /**
      * The set of students to notify when queue opens
      * - Key is GuildMember.id
      */
     private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
     /**
-     * When to automatically remove everyone
+     * Keeps track of all the setTimeout / setIntervals we started
+     * - Timers can be from setInterval or setTimeout
      */
-    private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
+    private timers: Collection<QueueTimerType, NodeJS.Timer> = new Collection();
 
     /**
      * Help queue constructor
@@ -90,7 +89,7 @@ class HelpQueueV2 {
      */
     protected constructor(
         public readonly queueChannel: QueueChannel,
-        private readonly queueExtensions: IQueueExtension[],
+        private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplayV2,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
@@ -118,80 +117,59 @@ class HelpQueueV2 {
         }
     }
 
-    /** number of students */
-    get length(): number {
-        return this._students.length;
-    }
-    /** name of corresponding queue */
-    get queueName(): string {
-        return this.queueChannel.queueName;
-    }
-    /** #queue text channel object */
-    get channelObj(): Readonly<TextChannel> {
-        return this.queueChannel.channelObj;
-    }
-    /** ChannelId of the parent category */
-    get parentCategoryId(): string {
-        return this.queueChannel.parentCategoryId;
-    }
-    /** First student; undefined if no one is here */
-    get first(): Optional<Helpee> {
-        return this._students[0];
-    }
-    /** All students */
-    get students(): ReadonlyArray<Helpee> {
-        return this._students;
-    }
-    /** set of helper IDs. Enforce readonly */
+    /** Set of helper IDs. Enforce readonly */
     get activeHelperIds(): ReadonlySet<Snowflake> {
         return this._activeHelperIds;
     }
-    /** set of paused helper ids */
-    get pausedHelperIds(): ReadonlySet<Snowflake> {
-        return this._pausedHelperIds;
-    }
-    /** Time until auto clear happens */
-    get timeUntilAutoClear(): AutoClearTimeout {
-        return this._timeUntilAutoClear;
-    }
-    /** The seriousness of the queue */
-    get seriousModeEnabled(): boolean {
-        return this._seriousModeEnabled;
-    }
-    /** all the helpers for this queue, both active and paused */
+
+    /** All the helpers for this queue, both active and paused */
     get allHelpers(): Snowflake[] {
         return [...this._activeHelperIds, ...this._pausedHelperIds];
     }
 
-    /**
-     * Computes the state of the queue
-     * **This is the single source of truth for queue state**
-     * - Don't turn this into a getter.
-     * - TS treats getters as static properties which conflicts with some of the checks
-     */
-    getQueueState(): QueueState {
-        return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
-            ? 'closed' // queue is Closed if 0 helpers is here
-            : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
-            ? 'paused' // paused if everyone paused
-            : 'open'; // open if at least 1 helper is active
+    /** #queue text channel object */
+    get channelObj(): Readonly<TextChannel> {
+        return this.queueChannel.channelObj;
     }
 
-    /**
-     * Check if a helper is helping, whether they are active or paused
-     * @param helperId id of the helper guild member
-     */
-    hasHelper(helperId: GuildMemberId): boolean {
-        return this._activeHelperIds.has(helperId) || this._pausedHelperIds.has(helperId);
+    /** First student; undefined if no one is here */
+    get first(): Optional<Helpee> {
+        return this._students[0];
     }
 
-    /**
-     * Used for queue delete and server delete. Remove all timers spawned by this queue.
-     */
-    clearAllQueueTimers(): void {
-        clearInterval(this.display.renderLoopTimerId);
-        this.timers.forEach(clearInterval);
-        this.timers.clear();
+    /** Number of students */
+    get length(): number {
+        return this._students.length;
+    }
+
+    /** ChannelId of the parent category */
+    get parentCategoryId(): string {
+        return this.queueChannel.parentCategoryId;
+    }
+
+    /** Set of paused helper ids */
+    get pausedHelperIds(): ReadonlySet<Snowflake> {
+        return this._pausedHelperIds;
+    }
+
+    /** Name of corresponding queue */
+    get queueName(): string {
+        return this.queueChannel.queueName;
+    }
+
+    /** The seriousness of the queue */
+    get seriousModeEnabled(): boolean {
+        return this._seriousModeEnabled;
+    }
+
+    /** All students */
+    get students(): ReadonlyArray<Helpee> {
+        return this._students;
+    }
+
+    /** Time until auto clear happens */
+    get timeUntilAutoClear(): AutoClearTimeout {
+        return this._timeUntilAutoClear;
     }
 
     /**
@@ -208,7 +186,7 @@ class HelpQueueV2 {
     ): Promise<HelpQueueV2> {
         const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
         const display = new QueueDisplayV2(queueChannel);
-        const queueExtensions: IQueueExtension[] = environment.disableExtensions
+        const queueExtensions: QueueExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                   CalendarQueueExtension.load(
@@ -227,25 +205,6 @@ class HelpQueueV2 {
             }),
             queue.triggerRender()
         ]);
-        queue.timers.set(
-            'QUEUE_PERIODIC_UPDATE',
-            setInterval(
-                () =>
-                    Promise.all(
-                        queueExtensions.map(extension =>
-                            extension.onQueuePeriodicUpdate(queue, false)
-                        )
-                    ).catch((err: Error) =>
-                        console.error(
-                            new PeriodicUpdateError(
-                                `${err.name}: ${err.message}`,
-                                'Queue'
-                            )
-                        )
-                    ), // Random 0~2min offset to avoid spamming the APIs
-                1000 * 60 * 60 + Math.floor(Math.random() * 1000 * 60 * 2)
-            )
-        );
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
@@ -253,38 +212,28 @@ class HelpQueueV2 {
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
         );
-        await Promise.all(
-            queueExtensions.map(extension => extension.onQueuePeriodicUpdate(queue, true))
-        );
         return queue;
     }
 
     /**
-     * Open a queue with a helper
-     * @param helperMember member with Staff/Admin that used /start
-     * @param notify whether to notify everyone in the notif group
-     * @throws QueueError: do nothing if helperMember is already helping
+     * Adds a student to the notification group. Used for JoinNotif button
+     * @throws QueueError
+     * - if student is already in the notif group
      */
-    async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
-        if (this.hasHelper(helperMember.id)) {
-            throw ExpectedQueueErrors.alreadyOpen(this.queueName);
+    async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
+        if (this.notifGroup.has(targetStudent.id)) {
+            throw ExpectedQueueErrors.alreadyInNotifGroup(this.queueName);
         }
-        // default the helper to 'active state'
-        this._activeHelperIds.add(helperMember.id);
-        await Promise.all([
-            ...this.notifGroup.map(
-                notifMember =>
-                    notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.hasHelper(notifMember.id) && // don't notify helpers
-                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
-            ),
-            ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
-            this.triggerRender()
-        ]);
-        if (notify) {
-            // clear AFTER the message is successfully sent to avoid race conditions
-            this.notifGroup.clear();
-        }
+        this.notifGroup.set(targetStudent.id, targetStudent);
+    }
+
+    /**
+     * Used for queue delete and server delete. Remove all timers spawned by this queue.
+     */
+    clearAllQueueTimers(): void {
+        clearInterval(this.display.renderLoopTimerId);
+        this.timers.forEach(clearInterval);
+        this.timers.clear();
     }
 
     /**
@@ -309,112 +258,6 @@ class HelpQueueV2 {
             ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
         ]);
-    }
-
-    /**
-     * Marks a helper with the 'paused' state
-     *  and moves the id from active helper id to paused helper id
-     * @param helperMember the currently 'active' helper
-     */
-    async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
-        if (this.pausedHelperIds.has(helperMember.id)) {
-            throw ExpectedQueueErrors.alreadyPaused(this.queueName);
-        }
-        this._activeHelperIds.delete(helperMember.id);
-        this._pausedHelperIds.add(helperMember.id);
-        await this.triggerRender();
-        // TODO: Maybe emit a extension event here
-    }
-
-    /**
-     * Marks a helper with the 'active' state
-     *  and moves the id from paused helper id to active helper id
-     * - very similar to markHelperAsPaused, combine if necessary
-     * @param helperMember the currently 'paused' helper
-     */
-    async markHelperAsActive(helperMember: GuildMember): Promise<void> {
-        if (this.activeHelperIds.has(helperMember.id)) {
-            throw ExpectedQueueErrors.alreadyActive(this.queueName);
-        }
-        this._pausedHelperIds.delete(helperMember.id);
-        this._activeHelperIds.add(helperMember.id);
-        await this.triggerRender();
-    }
-
-    /**
-     * Enqueue a student
-     * @param studentMember member to enqueue
-     * @throws QueueError if
-     * - queue is not open
-     * - student is already in the queue
-     * - studentMember is a helper
-     */
-    async enqueue(studentMember: GuildMember): Promise<void> {
-        if (this.getQueueState() !== 'open') {
-            throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
-        }
-        if (this._students.some(student => student.member.id === studentMember.id)) {
-            throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
-        }
-        if (this.hasHelper(studentMember.id)) {
-            throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
-        }
-        const student: Helpee = {
-            waitStart: new Date(),
-            member: studentMember,
-            queue: this
-        };
-        this._students.push(student);
-
-        await Promise.all([
-            this.notifyHelpersOnStudentJoin(studentMember),
-            ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
-            this.triggerRender()
-        ]);
-    }
-
-    /**
-     * Notify all helpers that a student has joined the queue
-     * @param studentMember
-     */
-    async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
-        await Promise.all(
-            [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(
-                        SimpleEmbed(
-                            `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
-                            EmbedColor.Neutral,
-                            `<@${studentMember.user.id}>`
-                        )
-                    )
-            )
-        );
-    }
-
-    /**
-     * Notify all helpers of the topic that a student requires help with
-     * @param studentMember
-     */
-    async notifyHelpersOnStudentSubmitHelpTopic(
-        studentMember: GuildMember,
-        topic: string
-    ): Promise<void> {
-        await Promise.all(
-            [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(
-                        SimpleEmbed(
-                            `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
-                            EmbedColor.Neutral,
-                            (topic ? `\n\n**${topic}**` : `N/A`) +
-                                `\n\n<@${studentMember.user.id}>`
-                        )
-                    )
-            )
-        );
     }
 
     /**
@@ -475,10 +318,205 @@ class HelpQueueV2 {
     }
 
     /**
+     * Enqueue a student
+     * @param studentMember member to enqueue
+     * @throws QueueError if
+     * - queue is not open
+     * - student is already in the queue
+     * - studentMember is a helper
+     */
+    async enqueue(studentMember: GuildMember): Promise<void> {
+        if (this.getQueueState() !== 'open') {
+            throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
+        }
+        if (this._students.some(student => student.member.id === studentMember.id)) {
+            throw ExpectedQueueErrors.alreadyInQueue(this.queueName);
+        }
+        if (this.hasHelper(studentMember.id)) {
+            throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
+        }
+        const student: Helpee = {
+            waitStart: new Date(),
+            member: studentMember,
+            queue: this
+        };
+        this._students.push(student);
+
+        await Promise.all([
+            this.notifyHelpersOnStudentJoin(studentMember),
+            ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
+            this.triggerRender()
+        ]);
+    }
+
+    /**
+     * Computes the state of the queue
+     * **This is the single source of truth for queue state**
+     * - Don't turn this into a getter.
+     * - TS treats getters as static properties which conflicts with some of the checks
+     */
+    getQueueState(): QueueState {
+        return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
+            ? 'closed' // queue is Closed if 0 helpers is here
+            : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
+            ? 'paused' // paused if everyone paused
+            : 'open'; // open if at least 1 helper is active
+    }
+
+    /**
+     * Queue delete procedure, let the extension process first before getting deleted
+     */
+    async gracefulDelete(): Promise<void> {
+        await Promise.all(
+            this.queueExtensions.map(extension => extension.onQueueDelete(this))
+        );
+        this.clearAllQueueTimers();
+    }
+
+    /**
+     * Check if a helper is helping, whether they are active or paused
+     * @param helperId id of the helper guild member
+     */
+    hasHelper(helperId: GuildMemberId): boolean {
+        return this._activeHelperIds.has(helperId) || this._pausedHelperIds.has(helperId);
+    }
+
+    /**
+     * Marks a helper with the 'active' state
+     *  and moves the id from paused helper id to active helper id
+     * - very similar to markHelperAsPaused, combine if necessary
+     * @param helperMember the currently 'paused' helper
+     */
+    async markHelperAsActive(helperMember: GuildMember): Promise<void> {
+        if (this.activeHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyActive(this.queueName);
+        }
+        this._pausedHelperIds.delete(helperMember.id);
+        this._activeHelperIds.add(helperMember.id);
+        await this.triggerRender();
+    }
+
+    /**
+     * Marks a helper with the 'paused' state
+     *  and moves the id from active helper id to paused helper id
+     * @param helperMember the currently 'active' helper
+     */
+    async markHelperAsPaused(helperMember: GuildMember): Promise<void> {
+        if (this.pausedHelperIds.has(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyPaused(this.queueName);
+        }
+        this._activeHelperIds.delete(helperMember.id);
+        this._pausedHelperIds.add(helperMember.id);
+        await this.triggerRender();
+        // TODO: Maybe emit a extension event here
+    }
+
+    /**
+     * Notify all helpers that a student has joined the queue
+     * @param studentMember
+     */
+    async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(
+                        SimpleEmbed(
+                            `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
+                            EmbedColor.Neutral,
+                            `<@${studentMember.user.id}>`
+                        )
+                    )
+            )
+        );
+    }
+
+    /**
+     * Notify all helpers of the topic that a student requires help with
+     * @param studentMember
+     */
+    async notifyHelpersOnStudentSubmitHelpTopic(
+        studentMember: GuildMember,
+        topic: string
+    ): Promise<void> {
+        await Promise.all(
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(
+                        SimpleEmbed(
+                            `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
+                            EmbedColor.Neutral,
+                            (topic ? `\n\n**${topic}**` : `N/A`) +
+                                `\n\n<@${studentMember.user.id}>`
+                        )
+                    )
+            )
+        );
+    }
+
+    /**
+     * Open a queue with a helper
+     * @param helperMember member with Staff/Admin that used /start
+     * @param notify whether to notify everyone in the notif group
+     * @throws QueueError: do nothing if helperMember is already helping
+     */
+    async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
+        if (this.hasHelper(helperMember.id)) {
+            throw ExpectedQueueErrors.alreadyOpen(this.queueName);
+        }
+        // default the helper to 'active state'
+        this._activeHelperIds.add(helperMember.id);
+        await Promise.all([
+            ...this.notifGroup.map(
+                notifMember =>
+                    notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
+                    !this.hasHelper(notifMember.id) && // don't notify helpers
+                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
+            ),
+            ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
+            this.triggerRender()
+        ]);
+        if (notify) {
+            // clear AFTER the message is successfully sent to avoid race conditions
+            this.notifGroup.clear();
+        }
+    }
+
+    /**
+     * Remove all students from the queue. Used for /clear_all
+     * @noexcept - This will never throw an error even if there's no one to remove
+     */
+    async removeAllStudents(): Promise<void> {
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                extension.onRemoveAllStudents(this, this._students)
+            )
+        );
+        if (this._students.length !== 0) {
+            // avoid unnecessary render
+            this._students = [];
+            await this.triggerRender();
+        }
+    }
+
+    /**
+     * Adds a student to the notification group. Used for RemoveNotif button
+     * @throws QueueError
+     * - if student is already in the notif group
+     */
+    async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
+        if (!this.notifGroup.has(targetStudent.id)) {
+            throw ExpectedQueueErrors.notInNotifGroup(this.queueName);
+        }
+        this.notifGroup.delete(targetStudent.id);
+    }
+
+    /**
      * Removes a student from the queue. Used for /leave
      * @param targetStudent the student to remove
-     * @throws QueueError if
-     * - the student is not in the queue
+     * @throws QueueError
+     * - if the student is not in the queue
      */
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
@@ -504,54 +542,42 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove all students from the queue. Used for /clear_all
-     * @noexcept - This will never throw an error even if there's no one to remove
+     * Sets up auto clear parameters
+     * - The timer won't start until startAutoClearTimer is called
+     * @param hours clear queue after this many hours
+     * @param minutes clear queue after this many minutes
+     * @param enable whether to enable auto clear, overrides @param hours and @param minutes
      */
-    async removeAllStudents(): Promise<void> {
-        await Promise.all(
-            this.queueExtensions.map(extension =>
-                extension.onRemoveAllStudents(this, this._students)
-            )
-        );
-        if (this._students.length !== 0) {
-            // avoid unnecessary render
-            this._students = [];
+    async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
+        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
+        existingTimerId && clearInterval(existingTimerId);
+        if (enable) {
+            this._timeUntilAutoClear = {
+                hours: hours,
+                minutes: minutes
+            };
+            await this.startAutoClearTimer();
+        } else {
+            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this.timers.delete('QUEUE_AUTO_CLEAR');
             await this.triggerRender();
         }
     }
 
     /**
-     * Adds a student to the notification group. Used for JoinNotif button
-     * @throws QueueError
-     * - if student is already in the notif group
+     * Changes seriousness of the queue, synced with the server
+     * @param seriousMode on or off
      */
-    async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
-        if (this.notifGroup.has(targetStudent.id)) {
-            throw ExpectedQueueErrors.alreadyInNotifGroup(this.queueName);
-        }
-        this.notifGroup.set(targetStudent.id, targetStudent);
+    async setSeriousMode(seriousMode: boolean): Promise<void> {
+        this._seriousModeEnabled = seriousMode;
+        await this.triggerRender();
     }
 
     /**
-     * Adds a student to the notification group. Used for RemoveNotif button
-     * @throws QueueError
-     * - if student is already in the notif group
+     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
      */
-    async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
-        if (!this.notifGroup.has(targetStudent.id)) {
-            throw ExpectedQueueErrors.notInNotifGroup(this.queueName);
-        }
-        this.notifGroup.delete(targetStudent.id);
-    }
-
-    /**
-     * Queue delete procedure, let the extension process first before getting deleted
-     */
-    async gracefulDelete(): Promise<void> {
-        await Promise.all(
-            this.queueExtensions.map(extension => extension.onQueueDelete(this))
-        );
-        this.clearAllQueueTimers();
+    async triggerForceRender(): Promise<void> {
+        await this.display.requestForceRender();
     }
 
     /**
@@ -584,41 +610,6 @@ class HelpQueueV2 {
                 extension.onQueueRender(this, this.display)
             )
         );
-    }
-
-    /**
-     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
-     */
-    async triggerForceRender(): Promise<void> {
-        await this.display.requestForceRender();
-    }
-
-    async setSeriousMode(seriousMode: boolean): Promise<void> {
-        this._seriousModeEnabled = seriousMode;
-        await this.triggerRender();
-    }
-
-    /**
-     * Sets up auto clear parameters
-     * - The timer won't start until startAutoClearTimer is called
-     * @param hours clear queue after this many hours
-     * @param minutes clear queue after this many minutes
-     * @param enable whether to enable auto clear, overrides @param hours and @param minutes
-     */
-    async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
-        const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
-        existingTimerId && clearInterval(existingTimerId);
-        if (enable) {
-            this._timeUntilAutoClear = {
-                hours: hours,
-                minutes: minutes
-            };
-            await this.startAutoClearTimer();
-        } else {
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
-            this.timers.delete('QUEUE_AUTO_CLEAR');
-            await this.triggerRender();
-        }
     }
 
     /**

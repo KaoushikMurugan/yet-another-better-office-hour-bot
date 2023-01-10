@@ -2,7 +2,7 @@ import { client } from '../src/global-states.js';
 import { EmbedColor } from '../src/utils/embed-helper.js';
 import { HelpMessage } from '../src/utils/type-aliases.js';
 
-const adminCommandsTileMessage: HelpMessage = {
+const adminCommandsTitleMessage: HelpMessage = {
     nameValuePair: {
         name: 'Admin Commands Title',
         value: 'admin-commands-title'
@@ -339,7 +339,7 @@ const seriousModeHelp: HelpMessage = {
         value: 'serious_mode'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -374,7 +374,7 @@ const settingsHelp: HelpMessage = {
         value: 'settings'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -409,7 +409,7 @@ const setAutoGiveStudentRoleHelp: HelpMessage = {
         value: 'set_auto_give_student_role'
     },
     useInHelpChannel: true,
-    useInHelpCommand: true,
+    useInHelpCommand: false,
     message: {
         embeds: [
             {
@@ -439,7 +439,7 @@ const setAutoGiveStudentRoleHelp: HelpMessage = {
 };
 
 const adminCommandHelpMessages: HelpMessage[] = [
-    adminCommandsTileMessage,
+    adminCommandsTitleMessage,
     queueAddHelp,
     queueRemoveHelp,
     cleanupQueueHelp,
@@ -449,10 +449,10 @@ const adminCommandHelpMessages: HelpMessage[] = [
     setLoggingChannelHelp,
     stopLoggingHelp,
     setQueueAutoClearHelp,
-    seriousModeHelp
-    // ! Temporarily removed since it causes the /help command to fail generation as it get too many fields
-    //settingsHelp,
-    //setAutoGiveStudentRoleHelp
+    seriousModeHelp,
+    // ! Temporarily have useInHelpCommand=false since it causes the /help command to fail generation as it get too many fields
+    settingsHelp,
+    setAutoGiveStudentRoleHelp
 ];
 
 export { adminCommandHelpMessages };

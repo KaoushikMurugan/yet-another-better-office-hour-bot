@@ -86,7 +86,7 @@ function SimpleEmbed2(
     message: string,
     color = EmbedColor.Neutral,
     description = ''
-): EmbedBuilder {
+): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
         .setColor(color)
@@ -103,7 +103,7 @@ function SimpleEmbed2(
             embed.setDescription(description.slice(0, 4096));
         }
     }
-    return embed;
+    return { embeds: [embed.data] };
 }
 
 /**
@@ -112,60 +112,14 @@ function SimpleEmbed2(
  * @param pingForHelp role id of the person to ping for help
  * @returns A message object that only contains the requested embed
  */
-function ErrorEmbed(
-    err: Error,
+function ErrorEmbed2(
+    err: ExpectedError | Error,
     pingForHelp?: Snowflake
 ): Pick<BaseMessageOptions, 'embeds'> {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
-    let color = EmbedColor.KindaBad;
-    const embedFields = [
-        {
-            name: 'Error Type',
-            value: err.name,
-            inline: true
-        }
-    ];
-    if (err instanceof QueueError) {
-        color = EmbedColor.Aqua;
-        embedFields.push({
-            name: 'In Queue',
-            value: err.queueName,
-            inline: true
-        });
-    }
-    if (err instanceof ServerError) {
-        color = EmbedColor.Error;
-    }
-    return {
-        embeds: [
-            {
-                color: color,
-                title: err.message.length <= 256 ? err.message : err.name,
-                timestamp: new Date().toISOString(),
-                description: (
-                    (err.message.length > 256 ? err.message : '') +
-                    `If you need help or think this is a mistake, ` +
-                    `please post a screenshot of this message in the #help channel ` +
-                    `(or equivalent) and ping ` +
-                    (pingForHelp === undefined
-                        ? `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`
-                        : `<@&${pingForHelp}>.`)
-                ).slice(0, 1024),
-                fields: embedFields,
-                author: {
-                    name: 'YABOB',
-                    icon_url: YABOB_PFP_URL
-                }
-            }
-        ]
-    };
-}
-
-function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: Snowflake): EmbedBuilder {
-    const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder();
     let color: EmbedColor;
-    // use discriminated union to avoid the instanceof check
+    // use tagged union to avoid the instanceof check
     if ('type' in err) {
         switch (err.type) {
             case 'ServerError':
@@ -186,7 +140,7 @@ function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: Snowflake): Embed
     } else {
         color = EmbedColor.UnexpectedError;
     }
-    return embed
+    embed
         .setTitle(err.message.length <= 256 ? err.message : err.name)
         .setTimestamp(new Date())
         .setAuthor({ name: 'YABOB', iconURL: YABOB_PFP_URL })
@@ -195,11 +149,12 @@ function ErrorEmbed2(err: ExpectedError | Error, pingForHelp?: Snowflake): Embed
                 `If you need help or think this is a mistake, ` +
                 `please post a screenshot of this message in the #help channel ` +
                 `(or equivalent) and ping ` +
-                pingForHelp
-                ? `<@&${pingForHelp}>.`
-                : `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`
+                (pingForHelp
+                    ? `<@&${pingForHelp}>.`
+                    : `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`)
         )
         .setColor(color);
+    return { embeds: [embed.data] };
 }
 
 /**
@@ -691,7 +646,6 @@ export {
     SimpleEmbed2,
     SimpleLogEmbed,
     SimpleLogEmbed2,
-    ErrorEmbed,
     ErrorEmbed2,
     ErrorLogEmbed,
     ErrorLogEmbed2,

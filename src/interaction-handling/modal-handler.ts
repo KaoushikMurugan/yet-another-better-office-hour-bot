@@ -7,17 +7,15 @@ import { ModalSubmitHandlerProps } from './handler-interface.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { ModalNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
-import {
-    isFromQueueChannelWithParent,
-    isServerInteraction
-} from './shared-validations.js';
+import { isFromQueueChannelWithParent } from './shared-validations.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 const baseYabobModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
             [ModalNames.PromptHelpTopicModal]: interaction =>
-                studentJoinedQueue(interaction),
+                submitHelpTopic(interaction),
             [ModalNames.AfterSessionMessageModal]: interaction =>
                 setAfterSessionMessage(interaction, false),
             [ModalNames.AfterSessionMessageModalMenuVersion]: interaction =>
@@ -31,22 +29,20 @@ const baseYabobModalMap: ModalSubmitHandlerProps = {
     dmMethodMap: {}
 };
 
-async function studentJoinedQueue(
+/**
+ * Handles help topic modal submit. This modal is shown when student enqueues
+ * @param interaction
+ */
+async function submitHelpTopic(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
     const [server, queueChannel] = [
-        isServerInteraction(interaction),
+        AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     const topic = interaction.fields.getTextInputValue('help_topic');
     const student = interaction.member;
-    const channel = interaction.channel;
-    if (channel === null) {
-        throw ExpectedParseErrors.nonExistentTextChannel;
-    }
-
-    await server.notifyHelpersStudentHelpTopic(student, queueChannel, topic);
-
+    await server.notifyHelpersOnStudentSubmitHelpTopic(student, queueChannel, topic);
     await interaction.reply({
         ...SuccessMessages.joinedQueue(queueChannel.queueName),
         ephemeral: true
@@ -61,7 +57,7 @@ async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const message = interaction.fields.getTextInputValue('after_session_msg');
     if (message.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
@@ -93,7 +89,7 @@ async function setQueueAutoClear(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
     let hours = hoursInput === '' ? 0 : parseInt(hoursInput, 10); // only accept base 10 inputs

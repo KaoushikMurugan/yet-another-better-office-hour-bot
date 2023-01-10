@@ -7,9 +7,9 @@ import {
     TextInputStyle,
     Snowflake
 } from 'discord.js';
-import { attendingServers } from '../../global-states.js';
 import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
 import { ModalNames } from './interaction-names.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * Creates a modal for the user to set the queue auto clear time.
@@ -19,8 +19,8 @@ import { ModalNames } from './interaction-names.js';
  * @param useMenu whether to return the menu version of queue auto clear modal
  * @returns
  */
-function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
-    const oldTimeout = attendingServers.get(serverId)?.queueAutoClearTimeout;
+function QueueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
+    const oldTimeout = AttendingServerV2.get(serverId).queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu
@@ -34,7 +34,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_hours')
-                    .setLabel('Hours (0 to disable)')
+                    .setLabel('Hours (set both to 0 to disable)')
                     .setPlaceholder('Enter hours (0~24)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
@@ -48,7 +48,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
             new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
                 new TextInputBuilder()
                     .setCustomId('auto_clear_minutes')
-                    .setLabel('Minutes (0 to disable)')
+                    .setLabel('Minutes (set both to 0 to disable)')
                     .setPlaceholder('Enter minutes (0~59)')
                     .setMaxLength(2)
                     .setStyle(TextInputStyle.Short)
@@ -70,7 +70,7 @@ function queueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
  * @param serverId
  * @returns
  */
-function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBuilder {
+function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu
@@ -86,7 +86,7 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
                     .setCustomId('after_session_msg')
                     .setLabel('Leave blank to disable') // There is a character limit for labels
                     .setPlaceholder('Enter your message here')
-                    .setValue(attendingServers.get(serverId)?.afterSessionMessage ?? '')
+                    .setValue(AttendingServerV2.get(serverId).afterSessionMessage)
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false)
             )
@@ -101,7 +101,7 @@ function afterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
  * @param serverId
  * @returns
  */
-function promptHelpTopicModal(serverId: Snowflake): ModalBuilder {
+function PromptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.PromptHelpTopicModal,
@@ -122,4 +122,4 @@ function promptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     return modal;
 }
 
-export { queueAutoClearModal, afterSessionMessageModal, promptHelpTopicModal };
+export { QueueAutoClearModal, AfterSessionMessageModal, PromptHelpTopicModal };
