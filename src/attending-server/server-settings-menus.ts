@@ -832,7 +832,7 @@ export {
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    PromptHelpTopicConfigMenu as PromptHelpTopicConfigMenu,
+    PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
     serverSettingsMainMenuOptions
