@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
+    SettingsMenuConstructor,
     SettingsMenuOption,
     SpecialRoleValues,
     YabobEmbed
@@ -43,7 +44,7 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
  * @returns
  */
 function settingsOptionsSelectMenu(
-    currentMenu: Function
+    currentMenu: SettingsMenuConstructor
 ): ActionRowBuilder<SelectMenuBuilder> {
     return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
         buildComponent(new SelectMenuBuilder(), [
