@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { GuildMember, VoiceChannel, Guild } from 'discord.js';
+import { GuildMember, VoiceChannel } from 'discord.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
@@ -20,9 +20,9 @@ import {
     ModalSubmitHandlerProps,
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
-import { CommandData } from '../interaction-handling/interaction-constants/builtin-slash-commands.js';
+import { CommandData } from '../utils/type-aliases.js';
 
-interface IInteractionExtension {
+interface InteractionExtension {
     /**
      * Do an initialization check at YABOB instance level
      * - Called inside client.on('ready')
@@ -42,7 +42,7 @@ interface IInteractionExtension {
         student: ReadonlyArray<HelpMessage>;
     };
     /**
-     *
+     * These options appear in the select menu of the main menu of /settings
      */
     settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption>;
     /**
@@ -64,7 +64,7 @@ interface IInteractionExtension {
 }
 
 /** Server Level Extension */
-interface IServerExtension {
+interface ServerExtension {
     /**
      * When a server instance is successfully created
      * @param server the newly created server
@@ -152,7 +152,7 @@ interface IServerExtension {
 }
 
 /** Extensions for individual queues */
-interface IQueueExtension {
+interface QueueExtension {
     /**
      * When a single queue is created
      * @param queue the newly created queue
@@ -203,13 +203,6 @@ interface IQueueExtension {
      */
     onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**
-     * Called every hour
-     * @param queue queue that triggered the call
-     * @param isFirstCall whether this is called inside HelpQueueV2.create
-     * @deprecated will likely be removed in the future, extensions should manage their own timers
-     */
-    onQueuePeriodicUpdate: (queue: FrozenQueue, isFirstCall: boolean) => Promise<void>;
-    /**
      * When a queue is deleted with `/queue remove` or YABOB getting kicked from a server
      * @param deletedQueue the queue that just got deleted
      * @remark Extensions should override this method to do any necessary clean up
@@ -225,7 +218,7 @@ interface IQueueExtension {
  * - Add help messages in the helpMessages array
  * - Add setting menu options in the settingsMainMenuOptions array
  */
-class BaseInteractionExtension implements IInteractionExtension {
+class BaseInteractionExtension implements InteractionExtension {
     initializationCheck(): Promise<void> {
         return Promise.resolve();
     }
@@ -275,7 +268,7 @@ class BaseInteractionExtension implements IInteractionExtension {
  * - Any SERVER extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseServerExtension implements IServerExtension {
+class BaseServerExtension implements ServerExtension {
     onServerInitSuccess(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
@@ -333,14 +326,11 @@ class BaseServerExtension implements IServerExtension {
  * - Any QUEUE extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseQueueExtension implements IQueueExtension {
+class BaseQueueExtension implements QueueExtension {
     onQueueCreate(queue: FrozenQueue): Promise<void> {
         return Promise.resolve();
     }
     onQueueRender(queue: FrozenQueue, display: FrozenDisplay): Promise<void> {
-        return Promise.resolve();
-    }
-    onQueuePeriodicUpdate(queue: FrozenQueue, isFirstCall: boolean): Promise<void> {
         return Promise.resolve();
     }
     onQueueClose(queue: FrozenQueue): Promise<void> {
@@ -370,9 +360,9 @@ class BaseQueueExtension implements IQueueExtension {
 }
 
 export {
-    IInteractionExtension,
-    IServerExtension,
-    IQueueExtension,
+    InteractionExtension,
+    ServerExtension,
+    QueueExtension,
     BaseInteractionExtension,
     BaseServerExtension,
     BaseQueueExtension

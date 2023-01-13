@@ -18,7 +18,7 @@ import {
 } from './handler-interface.js';
 import {
     ButtonLogEmbed,
-    ErrorEmbed,
+    ErrorEmbed2,
     SelectMenuLogEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
@@ -38,17 +38,17 @@ import { baseYabobButtonMethodMap } from './button-handler.js';
 import { baseYabobCommandMap } from './command-handler.js';
 import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
-import { IInteractionExtension } from '../extensions/extension-interface.js';
-import { isServerInteraction } from './shared-validations.js';
+import { InteractionExtension } from '../extensions/extension-interface.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
 import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 /**
  * Create the interaction extension instances here
  * - states are loaded in joinGuild() in app.ts
  */
-const interactionExtensions: ReadonlyArray<IInteractionExtension> =
+const interactionExtensions: ReadonlyArray<InteractionExtension> =
     environment.disableExtensions
         ? []
         : [
@@ -67,7 +67,8 @@ const [completeCommandMap, completeButtonMap, completeSelectMenuMap, completeMod
  * Determines how to reply the interaction with error
  * - reply, editReply, or update?
  * @param interaction
- * @param error
+ * @param error the error to report
+ * @param botAdminRoleID the id snowflake of bot admin on this server
  */
 async function replyWithError(
     interaction: Interaction,
@@ -78,9 +79,9 @@ async function replyWithError(
         return;
     }
     interaction.replied
-        ? await interaction.editReply(ErrorEmbed(error, botAdminRoleID))
+        ? await interaction.editReply(ErrorEmbed2(error, botAdminRoleID))
         : await interaction.reply({
-              ...ErrorEmbed(error, botAdminRoleID),
+              ...ErrorEmbed2(error, botAdminRoleID),
               ephemeral: true
           });
 }
@@ -95,7 +96,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
     }
     const commandName = interaction.commandName;
     const possibleSubcommands = interaction.options.getSubcommand(false);
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const handleCommand = completeCommandMap.methodMap[commandName];
     logSlashCommand(interaction);
     server.sendLogMessage(SlashCommandLogEmbed(interaction));
@@ -126,7 +127,7 @@ async function processButton(interaction: Interaction): Promise<void> {
     const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
     // serverId might be unknown
     // TODO: Maybe require all buildComponent calls to accept only valid server id's
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
@@ -162,7 +163,7 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
@@ -204,7 +205,7 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
         return;
     }
     const [type, modalName, serverId] = decompressComponentId(interaction.customId);
-    const server = isServerInteraction(interaction.guildId ?? serverId);
+    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
     );
@@ -267,7 +268,7 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
  * @returns 4-tuple of command, button, select menu, and modal maps
  */
 function combineMethodMaps(
-    interactionExtensions: ReadonlyArray<IInteractionExtension>
+    interactionExtensions: ReadonlyArray<InteractionExtension>
 ): [
     CommandHandlerProps,
     ButtonHandlerProps,

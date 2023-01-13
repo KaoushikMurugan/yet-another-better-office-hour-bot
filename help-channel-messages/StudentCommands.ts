@@ -2,7 +2,7 @@ import { client } from '../src/global-states.js';
 import { EmbedColor } from '../src/utils/embed-helper.js';
 import { HelpMessage } from '../src/utils/type-aliases.js';
 
-const studentCommandsTileMessage: HelpMessage = {
+const studentCommandsTitleMessage: HelpMessage = {
     nameValuePair: {
         name: 'Student Commands Title',
         value: 'student-commands-title'
@@ -164,7 +164,7 @@ const helpHelp: HelpMessage = {
 };
 
 const studentCommandHelpMessages: HelpMessage[] = [
-    studentCommandsTileMessage,
+    studentCommandsTitleMessage,
     enqueueHelp,
     leaveHelp,
     listHelpersHelp,

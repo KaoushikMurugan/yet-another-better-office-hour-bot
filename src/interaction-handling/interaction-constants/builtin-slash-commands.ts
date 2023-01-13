@@ -17,6 +17,7 @@ import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCo
 import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
 import { CommandNames } from './interaction-names.js';
+import { CommandData } from '../../utils/type-aliases.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -392,7 +393,4 @@ async function postSlashCommands(
     console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
 }
 
-/** Type alias for interaction extensions */
-type CommandData = typeof commandData;
-
-export { postSlashCommands, CommandData };
+export { postSlashCommands };

@@ -1,6 +1,5 @@
 import { ChatInputCommandInteraction, User } from 'discord.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
-import { isServerInteraction } from '../../../interaction-handling/shared-validations.js';
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { Optional } from '../../../utils/type-aliases.js';
 import { GoogleSheetCommands } from '../google-sheet-constants/google-sheet-interaction-names.js';
@@ -10,6 +9,7 @@ import {
 } from '../shared-sheet-functions.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
+import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -34,7 +34,7 @@ async function getStatistics(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     // get the doc for this server
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const googleSheet = getServerGoogleSheet(server);
     if (!googleSheet) {
         throw new Error(
@@ -271,7 +271,7 @@ async function getWeeklyReport(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     // get the doc for this server
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const googleSheet = getServerGoogleSheet(server);
     if (!googleSheet) {
         throw new Error(

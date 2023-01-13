@@ -65,13 +65,6 @@ const queueStateStyles: {
  */
 class QueueDisplayV2 {
     /**
-     * The collection of actual embeds. key is render index
-     * - queue has render index 0
-     * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
-     */
-    private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
-        new Collection();
-    /**
      * The collection of message ids that are safe to edit
      * - binds the render index with a specific message
      * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
@@ -83,6 +76,14 @@ class QueueDisplayV2 {
      * - queue and extensions can still request render and write to queueChannelEmbeds
      */
     private isRendering = false;
+    /**
+     * The collection of actual embeds. key is render index
+     * - queue has render index 0
+     * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
+     */
+    private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
+        new Collection();
+
     /**
      * Saved for queue delete. Stop the timer when a queue is deleted.
      */
@@ -103,6 +104,26 @@ class QueueDisplayV2 {
         }, 1000);
     }
 
+    async requestForceRender(): Promise<void> {
+        await this.render(true);
+    }
+
+    /**
+     * Request a render of a non-queue (not the main queue list) embed
+     * @param embedElements
+     * @param renderIndex
+     */
+    requestNonQueueEmbedRender(
+        embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
+        renderIndex: number
+    ): void {
+        this.queueChannelEmbeds.set(renderIndex, {
+            contents: embedElements,
+            renderIndex: renderIndex,
+            stale: false
+        });
+    }
+
     /**
      * Request a render of the main queue embed (queue list + active helper list)
      * @param viewModel
@@ -111,7 +132,7 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚${viewModel.queueName}〛is ${
+                `Queue for〚 ${viewModel.queueName} 〛is ${
                     queueStateStyles[viewModel.state].statusText[
                         viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
                     ]
@@ -132,7 +153,7 @@ class QueueDisplayV2 {
             });
         }
         if (viewModel.state === 'paused') {
-            // this is optional, if the embed takes up too much screen remove this first
+            // this message is optional, if the queue embed takes up too much screen remove this first
             embedTableMsg.addFields({
                 name: 'Paused Queue',
                 value: `All helpers of this queue have paused new students from joining.
@@ -181,15 +202,20 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        const getVcStatus = (id: Snowflake) => {
+        const getVcStatus = (helperId: Snowflake) => {
+            const spacer = '\u3000'; // ideographic space character, extra wide
             const voiceChannel =
-                this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
+                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                    helperId
+                )?.channel;
+            // using # gives the same effect as if we use the id
+            // bc students can't see the channel ping if they don't have permission
             const vcStatus = voiceChannel
                 ? voiceChannel.members.size > 1
-                    ? `Busy in [${voiceChannel.name}]`
-                    : `Idling in [${voiceChannel.name}]`
+                    ? `Busy in #${voiceChannel.name}`
+                    : `Idling in #${voiceChannel.name}`
                 : 'Not in voice channel.';
-            return `<@${id}>\t**|\t${vcStatus}**`;
+            return `<@${helperId}>${spacer}${vcStatus}`;
         };
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
@@ -221,23 +247,43 @@ class QueueDisplayV2 {
     }
 
     /**
-     * Request a render of a non-queue (not the main queue list) embed
-     * @param embedElements
-     * @param renderIndex
+     * Create an ascii table of the queue
+     * @param viewModel the data to put into the table
+     * @returns the ascii table as a `string` in a code block
      */
-    requestNonQueueEmbedRender(
-        embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
-        renderIndex: number
-    ): void {
-        this.queueChannelEmbeds.set(renderIndex, {
-            contents: embedElements,
-            renderIndex: renderIndex,
-            stale: false
-        });
-    }
-
-    async requestForceRender(): Promise<void> {
-        await this.render(true);
+    private composeQueueAsciiTable(viewModel: QueueViewModel): string {
+        const table = new AsciiTable3();
+        if (viewModel.studentDisplayNames.length > 0) {
+            table
+                .setHeading('Position', 'Student Name')
+                .setAlign(1, AlignmentEnum.CENTER)
+                .setAlign(2, AlignmentEnum.CENTER)
+                .setStyle('unicode-single')
+                .addRowMatrix([
+                    ...viewModel.studentDisplayNames.map((name, idx) => [
+                        idx === 0
+                            ? viewModel.seriousModeEnabled
+                                ? '1 (Up Next)'
+                                : '(☞°∀°)☞ Up Next!'
+                            : idx + 1,
+                        name
+                    ])
+                ]);
+        } else {
+            const rand = Math.random();
+            table
+                .addRow('This queue is empty.')
+                .setAlign(1, AlignmentEnum.CENTER)
+                .setStyle('unicode-single');
+            if (!viewModel.seriousModeEnabled) {
+                if (rand <= 0.1) {
+                    table.addRow('=^ Φ ω Φ ^=');
+                } else if (rand <= 0.3 && rand >= 0.11) {
+                    table.addRow('Did you find the cat?');
+                }
+            }
+        }
+        return '```\n' + table.toString() + '\n```';
     }
 
     /**
@@ -290,46 +336,6 @@ class QueueDisplayV2 {
             );
         }
         this.isRendering = false;
-    }
-
-    /**
-     * Create an ascii table of the queue
-     * @param viewModel
-     * @returns the ascii table as a `string` in a code block
-     */
-    private composeQueueAsciiTable(viewModel: QueueViewModel): string {
-        const table = new AsciiTable3();
-        if (viewModel.studentDisplayNames.length > 0) {
-            table
-                .setHeading('Position', 'Student Name')
-                .setAlign(1, AlignmentEnum.CENTER)
-                .setAlign(2, AlignmentEnum.CENTER)
-                .setStyle('unicode-single')
-                .addRowMatrix([
-                    ...viewModel.studentDisplayNames.map((name, idx) => [
-                        viewModel.seriousModeEnabled
-                            ? idx + 1
-                            : idx === 0
-                            ? `(☞°∀°)☞ 1`
-                            : `${idx + 1}`,
-                        name
-                    ])
-                ]);
-        } else {
-            const rand = Math.random();
-            table
-                .addRow('This queue is empty.')
-                .setAlign(1, AlignmentEnum.CENTER)
-                .setStyle('unicode-single');
-            if (!viewModel.seriousModeEnabled) {
-                if (rand <= 0.1) {
-                    table.addRow(`=^ Φ ω Φ ^=`);
-                } else if (rand <= 0.3 && rand >= 0.11) {
-                    table.addRow(`Did you find the cat?`);
-                }
-            }
-        }
-        return '```\n' + table.toString() + '\n```';
     }
 }
 

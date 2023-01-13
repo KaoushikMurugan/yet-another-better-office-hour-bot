@@ -1,6 +1,6 @@
 /** @module GoogleSheetLogging */
 import { Helpee, Helper } from '../../models/member-states.js';
-import { BaseServerExtension, IServerExtension } from '../extension-interface.js';
+import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
@@ -43,7 +43,7 @@ type HelpSessionEntry = {
 type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
-class GoogleSheetServerExtension extends BaseServerExtension implements IServerExtension {
+class GoogleSheetServerExtension extends BaseServerExtension implements ServerExtension {
     /**
      * Used to compose the final attendance entry.
      * - Key is helper member.id, value is entry for this helper

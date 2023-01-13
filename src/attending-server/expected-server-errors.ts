@@ -1,7 +1,12 @@
 /** @module ExpectedErrors */
 import { ServerError } from '../utils/error-types.js';
 
+/**
+ * All the server level errors that we expect to happen
+ * - **Some of the errors are functions and must be called before throwing**
+ */
 const ExpectedServerErrors = {
+    notInitialized: new ServerError('This server does not have a correctly initialized YABOB'),
     queueDoesNotExist: new ServerError('This queue does not exist.'),
     noOneToHelp: new ServerError(
         `There's no one left to help. You should get some coffee!`

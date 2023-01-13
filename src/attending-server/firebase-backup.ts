@@ -1,7 +1,7 @@
 /** @module FirebaseServerBackup */
 import {
     BaseServerExtension,
-    IServerExtension
+    ServerExtension
 } from '../extensions/extension-interface.js';
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
 import { blue, red } from '../utils/command-line-colors.js';
@@ -17,7 +17,7 @@ import { logWithTimeStamp } from '../utils/util-functions.js';
  */
 class FirebaseServerBackupExtension
     extends BaseServerExtension
-    implements IServerExtension
+    implements ServerExtension
 {
     constructor(private readonly guild: Guild) {
         super();

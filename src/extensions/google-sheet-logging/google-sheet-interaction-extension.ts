@@ -3,8 +3,9 @@ import { blue, yellow } from '../../utils/command-line-colors.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import {
     BaseInteractionExtension,
-    IInteractionExtension
+    InteractionExtension
 } from '../extension-interface.js';
+import { googleSheetAdminHelpMessages } from './google-sheet-constants/GoogleSheetCommands.js';
 import { googleSheetSettingsMainMenuOptions } from './google-sheet-constants/google-sheet-settings-menu.js';
 import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slash-commands.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
@@ -12,11 +13,17 @@ import { loadSheetById } from './shared-sheet-functions.js';
 
 class GoogleSheetInteractionExtension
     extends BaseInteractionExtension
-    implements IInteractionExtension
+    implements InteractionExtension
 {
     constructor() {
         super();
     }
+
+    override helpMessages = {
+        botAdmin: googleSheetAdminHelpMessages,
+        staff: [],
+        student: []
+    };
 
     /**
      * Checks if the default google sheet is accessible

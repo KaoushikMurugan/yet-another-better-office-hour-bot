@@ -1,7 +1,5 @@
-import { AttendingServerV2 } from './attending-server/base-attending-server.js';
-import { GuildId } from './utils/type-aliases.js';
 import { environment } from './environment/environment-manager.js';
-import { Collection, Client, GatewayIntentBits, Options } from 'discord.js';
+import { Client, GatewayIntentBits, Options } from 'discord.js';
 import { yellow, black, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
@@ -66,13 +64,6 @@ const client: Client<true> = new Client({
     })
 });
 
-/**
- * All the servers that YABOB is managing
- * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
- * without passing through a interaction handler first
- */
-const attendingServers: Collection<GuildId, AttendingServerV2> = new Collection();
-
 /** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
@@ -82,4 +73,4 @@ await client
         throw err;
     });
 
-export { attendingServers, client, firebaseDB };
+export { client, firebaseDB };

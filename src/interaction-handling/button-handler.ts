@@ -13,17 +13,17 @@ import {
 import { ButtonHandlerProps } from './handler-interface.js';
 import {
     isFromQueueChannelWithParent,
-    isServerInteraction,
     isValidDMInteraction
 } from './shared-validations.js';
 import { ButtonNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
-    afterSessionMessageModal,
-    promptHelpTopicModal,
-    queueAutoClearModal
+    AfterSessionMessageModal,
+    PromptHelpTopicModal,
+    QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -36,13 +36,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         other: {
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
             [ButtonNames.ServerRoleConfig1]: interaction =>
-                createServerRoles(interaction, false, false),
+                createAccessLevelRoles(interaction, false, false),
             [ButtonNames.ServerRoleConfig1a]: interaction =>
-                createServerRoles(interaction, false, true),
+                createAccessLevelRoles(interaction, false, true),
             [ButtonNames.ServerRoleConfig2]: interaction =>
-                createServerRoles(interaction, true, false),
+                createAccessLevelRoles(interaction, true, false),
             [ButtonNames.ServerRoleConfig2a]: interaction =>
-                createServerRoles(interaction, true, true),
+                createAccessLevelRoles(interaction, true, true),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
             [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
@@ -64,13 +64,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     dmMethodMap: {
         [ButtonNames.ServerRoleConfig1]: interaction =>
-            createServerRolesDM(false, false, interaction),
+            createServerRolesDM(interaction, false, false),
         [ButtonNames.ServerRoleConfig1a]: interaction =>
-            createServerRolesDM(false, true, interaction),
+            createServerRolesDM(interaction, false, true),
         [ButtonNames.ServerRoleConfig2]: interaction =>
-            createServerRolesDM(true, false, interaction),
+            createServerRolesDM(interaction, true, false),
         [ButtonNames.ServerRoleConfig2a]: interaction =>
-            createServerRolesDM(true, true, interaction)
+            createServerRolesDM(interaction, true, true)
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
@@ -91,14 +91,14 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.SeriousModeConfig1,
         ButtonNames.SeriousModeConfig2
     ])
-} as const;
+};
 
 /**
  * Join a queue through button press
  */
 async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        isServerInteraction(interaction),
+        AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     if (!server.promptHelpTopic) {
@@ -109,7 +109,7 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     }
     await server.enqueueStudent(interaction.member, queueChannel);
     server.promptHelpTopic
-        ? await interaction.showModal(promptHelpTopicModal(server.guild.id))
+        ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
@@ -120,7 +120,7 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
  */
 async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        isServerInteraction(interaction),
+        AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     await server.removeStudentFromQueue(interaction.member, queueChannel);
@@ -132,7 +132,7 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
  */
 async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        isServerInteraction(interaction),
+        AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     await server.addStudentToNotifGroup(interaction.member, queueChannel);
@@ -144,7 +144,7 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
  */
 async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        isServerInteraction(interaction),
+        AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
@@ -157,21 +157,22 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
 async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await interaction.update(SettingsMainMenu(server, interaction.channelId, false));
 }
 
 /**
- * Creates roles for the server
+ * Creates the access level roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
+ * @param everyoneIsStudent whether to use @everyone as @Student
  */
-async function createServerRoles(
+async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
     forceCreate: boolean,
-    defaultStudentIsEveryone: boolean
+    everyoneIsStudent: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, defaultStudentIsEveryone);
+    const server = AttendingServerV2.get(interaction.guildId);
+    await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         RolesConfigMenu(
             server,
@@ -189,14 +190,15 @@ async function createServerRoles(
  * Creates roles for the server in dm channels
  * - This is explicitly used for server initialization
  * @param forceCreate if true, will create new roles even if they already exist
+ * @param defaultStudentIsEveryone whether to use @everyone as @Student
  */
 async function createServerRolesDM(
+    interaction: ButtonInteraction,
     forceCreate: boolean,
-    everyoneIsStudent: boolean,
-    interaction: ButtonInteraction
+    everyoneIsStudent: boolean
 ): Promise<void> {
     const server = isValidDMInteraction(interaction);
-    await server.createHierarchyRoles(forceCreate, everyoneIsStudent);
+    await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         RolesConfigMenuForServerInit(server, interaction.channelId, true)
     );
@@ -208,8 +210,8 @@ async function createServerRolesDM(
 async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
-    await interaction.showModal(afterSessionMessageModal(server.guild.id, true));
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.showModal(AfterSessionMessageModal(server.guild.id, true));
 }
 
 /**
@@ -218,7 +220,7 @@ async function showAfterSessionMessageModal(
 async function disableAfterSessionMessage(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setAfterSessionMessage('');
     await interaction.update(
         AfterSessionMessageConfigMenu(
@@ -236,8 +238,8 @@ async function disableAfterSessionMessage(
 async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
-    await interaction.showModal(queueAutoClearModal(server.guild.id, true));
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.showModal(QueueAutoClearModal(server.guild.id, true));
 }
 
 /**
@@ -246,7 +248,7 @@ async function showQueueAutoClearModal(
 async function disableQueueAutoClear(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setQueueAutoClear(0, 0, false);
     await interaction.update(
         QueueAutoClearConfigMenu(
@@ -264,7 +266,7 @@ async function disableQueueAutoClear(
 async function disableLoggingChannel(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setLoggingChannel(undefined);
     await interaction.update(
         LoggingChannelConfigMenu(
@@ -284,7 +286,7 @@ async function toggleAutoGiveStudentRole(
     interaction: ButtonInteraction<'cached'>,
     autoGiveStudentRole: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
     await interaction.update(
         AutoGiveStudentRoleConfigMenu(
@@ -307,7 +309,7 @@ async function togglePromptHelpTopic(
     interaction: ButtonInteraction<'cached'>,
     enablePromptHelpTopic: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setPromptHelpTopic(enablePromptHelpTopic);
     await interaction.update(
         PromptHelpTopicConfigMenu(
@@ -325,7 +327,7 @@ async function toggleSeriousMode(
     interaction: ButtonInteraction<'cached'>,
     enableSeriousMode: boolean
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     await server.setSeriousServer(enableSeriousMode);
     await interaction.update(
         SeriousModeConfigMenu(

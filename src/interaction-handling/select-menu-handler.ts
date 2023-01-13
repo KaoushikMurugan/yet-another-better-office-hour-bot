@@ -4,7 +4,7 @@ import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { SelectMenuNames } from './interaction-constants/interaction-names.js';
-import { isServerInteraction } from './shared-validations.js';
+import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
 const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
     guildMethodMap: {
@@ -28,7 +28,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
 async function showSettingsSubMenu(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionData.value === selectedOption
@@ -44,7 +44,7 @@ async function showSettingsSubMenu(
 async function selectLoggingChannel(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const channelId = interaction.values[0];
     const loggingChannel = server.guild.channels.cache.get(channelId ?? '');
     const callbackMenu = serverSettingsMainMenuOptions.find(

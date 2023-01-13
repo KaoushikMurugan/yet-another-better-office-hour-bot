@@ -16,39 +16,11 @@ import {
     isQueueTextChannel,
     isTextChannel
 } from '../utils/util-functions.js';
-import { attendingServers, client } from '../global-states.js';
-import { GuildId } from '../utils/type-aliases.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
-import { HierarchyRoles } from '../models/hierarchy-roles.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
-
-/**
- * Checks if the interaction is associated with a correctly initialized AttendingServerV2
- * - Extensions that wish to do additional checks can use this as a base
- * @deprecated - will be migrated to a static getter on the AttendingServerV2 class soon
- * @returns the {@link AttendingServerV2} object
- */
-function isServerInteraction(
-    idOrInteraction: Interaction<'cached'> | GuildId
-): AttendingServerV2 {
-    if (typeof idOrInteraction === 'string') {
-        const server = attendingServers.get(idOrInteraction);
-        if (!server) {
-            throw ExpectedParseErrors.nonServerInteraction(
-                client.guilds.cache.get(idOrInteraction)?.name
-            );
-        }
-        return server;
-    } else {
-        const server = attendingServers.get(idOrInteraction.guild.id);
-        if (!server) {
-            throw ExpectedParseErrors.nonServerInteraction(idOrInteraction.guild.name);
-        }
-        return server;
-    }
-}
 
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
@@ -62,10 +34,7 @@ function isValidDMInteraction(
     if (type !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
-    const server = attendingServers.get(serverId);
-    if (!server) {
-        throw ExpectedParseErrors.nonServerInteraction(serverId);
-    }
+    const server = AttendingServerV2.get(serverId);
     return server;
 }
 /**
@@ -77,7 +46,7 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
-    const server = isServerInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
     const queueChannel = server.getQueueChannelById(interaction.channel.parent.id);
     if (!queueChannel) {
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
@@ -98,26 +67,26 @@ function isTriggeredByMemberWithRoles(
     server: FrozenServer,
     member: GuildMember,
     commandName: string,
-    lowestRequiredRole: keyof HierarchyRoles
+    lowestRequiredRole: AccessLevelRole
 ): GuildMember {
     if (member.permissions.has(PermissionsBitField.Flags.Administrator)) {
         return member;
     }
     const memberRoleIds = member.roles.cache.map(role => role.id);
-    for (const hierarchyRole of server.sortedHierarchyRoles) {
+    for (const role of server.sortedAccessLevelRoles) {
         // if memberRoleIds.some returns true, then exit early
         // if the lowestRequiredRole is hit first, then break and throw
-        if (memberRoleIds.some(memberRoleId => memberRoleId === hierarchyRole.id)) {
+        if (memberRoleIds.some(memberRoleId => memberRoleId === role.id)) {
             return member;
         }
-        if (hierarchyRole.key === lowestRequiredRole) {
+        if (role.key === lowestRequiredRole) {
             break;
         }
     }
     // the for loop should directly return if the lowestRequiredRole is satisfied
     // otherwise if the loop breaks then we must throw
-    throw ExpectedParseErrors.missingHierarchyRolesNameVariant(
-        server.guild.roles.cache.get(server.hierarchyRoleIds[lowestRequiredRole])?.name,
+    throw ExpectedParseErrors.missingAccessLevelRolesVariant(
+        server.guild.roles.cache.get(server.accessLevelRoleIds[lowestRequiredRole])?.name,
         commandName
     );
 }
@@ -179,13 +148,13 @@ function isTriggeredByUserWithValidEmail(
  * @param numNewCategories number of new categories needed to create
  * @param numNewChannels number of new channels needed to create
  * - if multiple types of channels are being created, add them together first before calling this function
- * @returns true
+ * @returns true, otherwise throws error
  */
 async function channelsAreUnderLimit(
     interaction: Interaction<'cached'>,
     numNewCategories: number,
     numNewChannels: number
-): Promise<boolean> {
+): Promise<true> {
     const numCategoryChannels = (await interaction.guild.channels.fetch()).filter(
         isCategoryChannel
     ).size;
@@ -201,7 +170,6 @@ async function channelsAreUnderLimit(
 }
 
 export {
-    isServerInteraction,
     isFromQueueChannelWithParent,
     isValidDMInteraction,
     isTriggeredByMemberWithRoles,

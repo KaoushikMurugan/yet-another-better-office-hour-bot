@@ -45,7 +45,7 @@ function GoogleSheetSettingsConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)` //TODO: Add link to documentation
+                value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)`
             },
             {
                 name: 'Current Google Sheet',
