@@ -132,7 +132,7 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚${viewModel.queueName}〛is ${
+                `Queue for〚 ${viewModel.queueName} 〛is ${
                     queueStateStyles[viewModel.state].statusText[
                         viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
                     ]
@@ -202,16 +202,20 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        const getVcStatus = (id: Snowflake) => {
+        const getVcStatus = (helperId: Snowflake) => {
             const spacer = '\u3000'; // ideographic space character, extra wide
             const voiceChannel =
-                this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
+                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                    helperId
+                )?.channel;
+            // using # gives the same effect as if we use the id
+            // bc students can't see the channel ping if they don't have permission
             const vcStatus = voiceChannel
                 ? voiceChannel.members.size > 1
-                    ? `Busy in [${voiceChannel.name}]`
-                    : `Idling in [${voiceChannel.name}]`
+                    ? `Busy in #${voiceChannel.name}`
+                    : `Idling in #${voiceChannel.name}`
                 : 'Not in voice channel.';
-            return `<@${id}>${spacer}**${vcStatus}**`;
+            return `<@${helperId}>${spacer}${vcStatus}`;
         };
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
