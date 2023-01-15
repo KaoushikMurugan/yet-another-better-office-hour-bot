@@ -217,8 +217,7 @@ class HelpQueueV2 {
 
     /**
      * Adds a student to the notification group. Used for JoinNotif button
-     * @throws QueueError
-     * - if student is already in the notif group
+     * @throws {QueueError} if student is already in the notif group
      */
     async addToNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (this.notifGroup.has(targetStudent.id)) {
@@ -239,7 +238,7 @@ class HelpQueueV2 {
     /**
      * Close a queue with a helper
      * @param helperMember member with Staff/Admin that used /stop
-     * @throws QueueError: do nothing if queue is closed
+     * @throws {QueueError} if queue is already closed or helper member doesn't exist
      */
     async closeQueue(helperMember: GuildMember): Promise<void> {
         // These will be caught and show 'You are not currently helping'
@@ -264,7 +263,7 @@ class HelpQueueV2 {
      * Dequeue this particular queue with a helper
      * @param helperMember the member that triggered dequeue
      * @param targetStudentMember the student to look for if specified
-     * @throws QueueError when
+     * @throws {QueueError} when
      * - Queue is not open
      * - No student is here
      * - helperMember is not one of the helpers
@@ -320,7 +319,7 @@ class HelpQueueV2 {
     /**
      * Enqueue a student
      * @param studentMember member to enqueue
-     * @throws QueueError if
+     * @throws {QueueError} when
      * - queue is not open
      * - student is already in the queue
      * - studentMember is a helper
@@ -341,7 +340,6 @@ class HelpQueueV2 {
             queue: this
         };
         this._students.push(student);
-
         await Promise.all([
             this.notifyHelpersOnStudentJoin(studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
@@ -351,6 +349,8 @@ class HelpQueueV2 {
 
     /**
      * Computes the state of the queue
+     * @returns the current state based on the 2 helper sets
+     *
      * **This is the single source of truth for queue state**
      * - Don't turn this into a getter.
      * - TS treats getters as static properties which conflicts with some of the checks
@@ -384,7 +384,6 @@ class HelpQueueV2 {
     /**
      * Marks a helper with the 'active' state
      *  and moves the id from paused helper id to active helper id
-     * - very similar to markHelperAsPaused, combine if necessary
      * @param helperMember the currently 'paused' helper
      */
     async markHelperAsActive(helperMember: GuildMember): Promise<void> {
@@ -394,6 +393,7 @@ class HelpQueueV2 {
         this._pausedHelperIds.delete(helperMember.id);
         this._activeHelperIds.add(helperMember.id);
         await this.triggerRender();
+        // TODO: Maybe emit a extension event here
     }
 
     /**
@@ -413,7 +413,7 @@ class HelpQueueV2 {
 
     /**
      * Notify all helpers that a student has joined the queue
-     * @param studentMember
+     * @param studentMember the student that just joined
      */
     async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
         await Promise.all(
@@ -433,7 +433,7 @@ class HelpQueueV2 {
 
     /**
      * Notify all helpers of the topic that a student requires help with
-     * @param studentMember
+     * @param studentMember the student that just submitted help topic
      */
     async notifyHelpersOnStudentSubmitHelpTopic(
         studentMember: GuildMember,
@@ -459,7 +459,7 @@ class HelpQueueV2 {
      * Open a queue with a helper
      * @param helperMember member with Staff/Admin that used /start
      * @param notify whether to notify everyone in the notif group
-     * @throws QueueError: do nothing if helperMember is already helping
+     * @throws {QueueError} if helperMember is already helping
      */
     async openQueue(helperMember: GuildMember, notify: boolean): Promise<void> {
         if (this.hasHelper(helperMember.id)) {
@@ -502,8 +502,7 @@ class HelpQueueV2 {
 
     /**
      * Adds a student to the notification group. Used for RemoveNotif button
-     * @throws QueueError
-     * - if student is already in the notif group
+     * @throws {QueueError} if student is already in the notif group
      */
     async removeFromNotifGroup(targetStudent: GuildMember): Promise<void> {
         if (!this.notifGroup.has(targetStudent.id)) {
@@ -515,8 +514,7 @@ class HelpQueueV2 {
     /**
      * Removes a student from the queue. Used for /leave
      * @param targetStudent the student to remove
-     * @throws QueueError
-     * - if the student is not in the queue
+     * @throws {QueueError} if the student is not in the queue
      */
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const idx = this._students.findIndex(
@@ -546,7 +544,7 @@ class HelpQueueV2 {
      * - The timer won't start until startAutoClearTimer is called
      * @param hours clear queue after this many hours
      * @param minutes clear queue after this many minutes
-     * @param enable whether to enable auto clear, overrides @param hours and @param minutes
+     * @param enable whether to enable auto clear, overrides hours and minutes
      */
     async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
         const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');

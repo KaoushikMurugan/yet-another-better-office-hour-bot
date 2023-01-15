@@ -225,7 +225,7 @@ class AttendingServerV2 {
      * Asynchronously creates a YABOB instance for 1 server
      * @param guild the server for YABOB to join
      * @returns a created instance of YABOB
-     * @throws Uncaught Error if any setup functions fail
+     * @throws {Error} if any setup functions fail (uncaught)
      */
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
@@ -287,6 +287,7 @@ class AttendingServerV2 {
      * Gets a AttendingServerV2 object by Id
      * @param serverId guild Id
      * @returns the corresponding server object
+     * @throws {ServerError} if no server with this server id exists
      */
     static get(serverId: Snowflake): AttendingServerV2 {
         const server = AttendingServerV2.allServers.get(serverId);
@@ -299,7 +300,7 @@ class AttendingServerV2 {
     /**
      * Non exception based version of `AttendingServerV2.get`
      * @param serverId guild id
-     * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
+     * @returns {ServerError} if no such AttendingServerV2 exists, otherwise the server object
      */
     static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
         const server = AttendingServerV2.allServers.get(serverId);
@@ -328,6 +329,8 @@ class AttendingServerV2 {
      * @param helperMember helper that used /announce
      * @param announcement announcement message
      * @param targetQueue optional, specifies which queue to announce to
+     * @throws {ServerError} if the helper doesn't have the queue role of targetQueue if specified
+     * - if there's no one to announce to in any of the queues
      */
     async announceToStudentsInQueue(
         helperMember: GuildMember,
@@ -384,7 +387,7 @@ class AttendingServerV2 {
 
     /**
      * Clear all queues of this server
-     * @remark separated from clear queue to avoid excessive backup calls
+     * @remark separated from {@link clearQueue} to avoid excessive backup calls
      */
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
@@ -414,7 +417,7 @@ class AttendingServerV2 {
     /**
      * Closes all the queue that the helper has permission to & logs the help time to console
      * @param helperMember helper that used /stop
-     * @throws ServerError if the helper is not hosting
+     * @throws {ServerError} if the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._helpers.get(helperMember.id);
@@ -427,10 +430,9 @@ class AttendingServerV2 {
             helpEnd: new Date()
         };
         console.log(
-            ` - Help time of ${helper.member.displayName} is ` +
-                `${convertMsToTime(
-                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
-                )}`
+            ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
+                completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
+            )}`
         );
         // this filter does not rely on user roles anymore
         // close all queues that has this user as a helper
@@ -461,7 +463,7 @@ class AttendingServerV2 {
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
         for (const role of this.sortedAccessLevelRoles) {
-            // do the search if it's NotSet, Deleted, or @everyone
+            // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
                 (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
@@ -498,8 +500,7 @@ class AttendingServerV2 {
     /**
      * Creates a new office hour queue
      * @param newQueueName name for this queue
-     * @throws ServerError if
-     * - a queue with the same name already exists
+     * @throws {ServerError} if a queue with the same name already exists
      */
     async createQueue(newQueueName: string): Promise<void> {
         const queueWithSameName = this._queues.find(
@@ -532,8 +533,8 @@ class AttendingServerV2 {
     /**
      * Deletes a queue by categoryID
      * @param parentCategoryId CategoryChannel.id of the target queue
-     * @throws ServerError if
-     * - a discord API failure happened
+     * @throws {ServerError} if no queue with ths parentCategoryId exists
+     *  or the category itself doesn't exist
      */
     async deleteQueueById(parentCategoryId: string): Promise<void> {
         const queue = this._queues.get(parentCategoryId);
@@ -569,9 +570,8 @@ class AttendingServerV2 {
     /**
      * Dequeue the student that has been waiting for the longest globally
      * @param helperMember the helper that used /next.
-     * @throws
-     * - ServerError: if specificQueue is given but helper doesn't have the role
-     * - QueueError: if the queue to dequeue from rejects
+     * @returns the dequeued student
+     * @throws {ServerError} if helper is not hosting, not in a voice channel, or all queues are empty
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this._queues.filter(queue =>
@@ -615,9 +615,15 @@ class AttendingServerV2 {
 
     /**
      * Handle /next with arguments
+     * @param helperMember the helper that used /next
      * @param targetStudentMember if specified, remove this student and override queue order
      * @param targetQueue if specified, dequeue from this queue
      * - If both are specified, only look for the targetStudentMember in specificQueue
+     * @returns the dequeued student
+     * @throws {ServerError}
+     * - for the same reasons as {@link dequeueGlobalFirst}
+     * - if targetQueue is specified and it doesn't exist
+     * - if targetStudentMember is specified but not present in any queue
      */
     async dequeueWithArguments(
         helperMember: GuildMember,
@@ -679,7 +685,6 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
-     * @throws QueueError if queue refuses to enqueue
      */
     async enqueueStudent(
         studentMember: GuildMember,
