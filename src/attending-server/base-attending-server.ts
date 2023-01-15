@@ -770,7 +770,7 @@ class AttendingServerV2 {
     ): Promise<void> {
         await this._queues
             .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersOnStudentSubmitHelpTopic(studentMember, topic);
+            ?.notifyHelpersOn('submitHelpTopic', studentMember, topic);
     }
 
     /**

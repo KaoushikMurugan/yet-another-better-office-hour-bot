@@ -7,7 +7,7 @@ import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
-import { GuildMemberId, Optional } from '../utils/type-aliases.js';
+import { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -341,7 +341,7 @@ class HelpQueueV2 {
         };
         this._students.push(student);
         await Promise.all([
-            this.notifyHelpersOnStudentJoin(studentMember),
+            this.notifyHelpersOn('joinQueue', studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
@@ -351,7 +351,7 @@ class HelpQueueV2 {
      * Computes the state of the queue
      * @returns the current state based on the 2 helper sets
      *
-     * **This is the single source of truth for queue state**
+     * **This is the single source of truth for queue state**Ï
      * - Don't turn this into a getter.
      * - TS treats getters as static properties which conflicts with some of the checks
      */
@@ -412,45 +412,47 @@ class HelpQueueV2 {
     }
 
     /**
-     * Notify all helpers that a student has joined the queue
+     * Notifies all helpers of this queue that a student just joined the queue
+     * @param event the join queue event
      * @param studentMember the student that just joined
      */
-    async notifyHelpersOnStudentJoin(studentMember: GuildMember): Promise<void> {
-        await Promise.all(
-            [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(
-                        SimpleEmbed(
-                            `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
-                            EmbedColor.Neutral,
-                            `<@${studentMember.user.id}>`
-                        )
-                    )
-            )
-        );
-    }
-
+    async notifyHelpersOn(event: 'joinQueue', studentMember: GuildMember): Promise<void>;
     /**
-     * Notify all helpers of the topic that a student requires help with
-     * @param studentMember the student that just submitted help topic
+     * Notifies all helpers of this queue that a student submitted the help topic modal
+     * @param event the help topic modal submit event
+     * @param studentMember the student that just submitted the modal
+     * @param helpTopic the content of the modal
      */
-    async notifyHelpersOnStudentSubmitHelpTopic(
+    async notifyHelpersOn(
+        event: 'submitHelpTopic',
         studentMember: GuildMember,
-        topic: string
+        helpTopic: string
+    ): Promise<void>;
+    async notifyHelpersOn<EventType extends 'submitHelpTopic' | 'joinQueue'>(
+        event: EventType,
+        studentMember: GuildMember,
+        helpTopic?: string
     ): Promise<void> {
+        let embed: YabobEmbed;
+        // this would look really pretty if pattern matching exists in JS
+        switch (event) {
+            case 'joinQueue':
+                embed = SimpleEmbed(
+                    `${studentMember.displayName} in '${this.queueName}' has joined the queue.`,
+                    EmbedColor.Neutral,
+                    `<@${studentMember.user.id}>`
+                );
+                break;
+            case 'submitHelpTopic':
+                embed = SimpleEmbed(
+                    `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
+                    EmbedColor.Neutral,
+                    `\n\n${helpTopic}\n\n<@${studentMember.user.id}>`
+                );
+        }
         await Promise.all(
             [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(
-                        SimpleEmbed(
-                            `${studentMember.displayName} in '${this.queueName}' is requesting help for:`,
-                            EmbedColor.Neutral,
-                            (topic ? `\n\n**${topic}**` : `N/A`) +
-                                `\n\n<@${studentMember.user.id}>`
-                        )
-                    )
+                this.queueChannel.channelObj.members.get(helperId)?.send(embed)
             )
         );
     }
