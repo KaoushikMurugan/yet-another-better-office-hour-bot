@@ -298,7 +298,7 @@ class AttendingServerV2 {
     /**
      * Non exception based version of `AttendingServerV2.get`
      * @param serverId guild id
-     * @returns {ServerError} if no such AttendingServerV2 exists, otherwise the server object
+     * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
      */
     static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
         const server = AttendingServerV2.allServers.get(serverId);
@@ -1087,7 +1087,7 @@ class AttendingServerV2 {
      * Sets up queue auto clear for this server
      * @param hours the number of hours to wait before clearing the queue
      * @param minutes the number of minutes to wait before clearing the queue
-     * @param enable whether to disable auto clear, overrides 'hours'
+     * @param enable whether to disable auto clear, overrides hours` and `minutes`
      */
     async setQueueAutoClear(
         hours: number,

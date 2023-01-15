@@ -180,8 +180,7 @@ async function createAccessLevelRoles(
             false,
             forceCreate
                 ? 'New roles have been created!'
-                : 'Role configurations have been updated!',
-            false
+                : 'Role configurations have been updated!'
         )
     );
 }
