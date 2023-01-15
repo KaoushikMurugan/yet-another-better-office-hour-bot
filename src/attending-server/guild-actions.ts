@@ -15,7 +15,7 @@ import {
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
 import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
-import { commandChannelConfigs } from './command-ch-constants.js';
+import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
@@ -76,7 +76,7 @@ async function updateCommandHelpChannels(
         });
         // Change the config object and add more functions here if needed
         await Promise.all(
-            commandChannelConfigs.map(async roleConfig => {
+            helpChannelConfigurations.map(async roleConfig => {
                 const commandHelpChannel = await helpCategory.children.create({
                     name: roleConfig.channelName
                 });
@@ -134,7 +134,7 @@ async function sendCommandHelpChannelMessages(
     // send new ones
     await Promise.all(
         allHelpChannels.map(channel =>
-            commandChannelConfigs
+            helpChannelConfigurations
                 .find(val => val.channelName === channel.name)
                 ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
                 .map(helpMessage => channel.send(helpMessage.message))
@@ -174,7 +174,7 @@ async function updateCommandHelpChannelVisibility(
     );
     await Promise.all(
         helpChannels.map(channel =>
-            commandChannelConfigs
+            helpChannelConfigurations
                 .find(channelConfig => channelConfig.channelName === channel.name)
                 ?.visibility.map(key => accessLevelRoleIds[key])
                 ?.map(roleId =>

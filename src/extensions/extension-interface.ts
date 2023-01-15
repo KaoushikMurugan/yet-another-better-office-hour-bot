@@ -199,7 +199,6 @@ interface QueueExtension {
      * When a queue re-render happens
      * @param queue queue that just requested a render
      * @param display the QueueDisplayV2 object that handles the rendering
-     * @remark Extensions with custom embeds should override this method to get the display object
      */
     onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**

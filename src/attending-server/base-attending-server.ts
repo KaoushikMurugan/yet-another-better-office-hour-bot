@@ -80,8 +80,7 @@ type ServerSettings = {
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
-     *
-     * Special values for role IDs:
+     * @remark Special values for role IDs:
      * - 'Not Set' means that the role is not set
      * - 'Deleted' means that the role was deleted
      */
@@ -89,8 +88,7 @@ type ServerSettings = {
 };
 
 /**
- * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
- * ----
+ * Represents 1 server that this YABOB is a member of.
  * - Public functions can be accessed by the command handler
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
@@ -167,7 +165,7 @@ class AttendingServerV2 {
      * @returns boolean, defaults to false if no queues exist on this server
      */
     get isSerious(): boolean {
-        return this.queues[0]?.seriousModeEnabled ?? false;
+        return this.queues[0]?.isSerious ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -706,7 +704,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Gets all the queue channels on the server. SLOW
+     * Gets all the queue channels on the server.
      * if nothing is found, returns empty array
      * @param useCache whether to read from existing cache, defaults to true
      * - unless queues change often, prefer cache for fast response
@@ -1108,7 +1106,7 @@ class AttendingServerV2 {
      * @returns True if triggered renders for all queues
      */
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const seriousState = this.queues[0]?.seriousModeEnabled ?? false;
+        const seriousState = this.queues[0]?.isSerious ?? false;
         if (seriousState === enableSeriousMode) {
             return false;
         }

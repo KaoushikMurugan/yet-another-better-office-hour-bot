@@ -43,7 +43,9 @@ type QueueState = 'closed' | 'open' | 'paused';
 type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLED';
 
 /**
- * Class that manages the queue for a specific category
+ * Represents a queue inside a server that YABOB manages
+ * - Each queue must be inside a category where the name is the queue's name
+ * - Each queue category must have only 1 #queue text channel where all embed will be sent
  */
 class HelpQueueV2 {
     /**
@@ -81,11 +83,10 @@ class HelpQueueV2 {
     private timers: Collection<QueueTimerType, NodeJS.Timer> = new Collection();
 
     /**
-     * Help queue constructor
      * @param queueChannel the #queue text channel to manage
      * @param queueExtensions individual queue extensions to inject
-     * @param backupData If defined, use this data to restore the students array
-     * @param display The queue display that sends the embeds to the #queue channel
+     * @param display the queue display that sends the embeds to the #queue channel
+     * @param backupData if defined, use this data to restore the students array
      */
     protected constructor(
         public readonly queueChannel: QueueChannel,
@@ -128,7 +129,7 @@ class HelpQueueV2 {
     }
 
     /** #queue text channel object */
-    get channelObj(): Readonly<TextChannel> {
+    get channelObject(): Readonly<TextChannel> {
         return this.queueChannel.channelObj;
     }
 
@@ -157,8 +158,8 @@ class HelpQueueV2 {
         return this.queueChannel.queueName;
     }
 
-    /** The seriousness of the queue */
-    get seriousModeEnabled(): boolean {
+    /** The seriousness of the queue, synced with the enclosing AttendingServer */
+    get isSerious(): boolean {
         return this._seriousModeEnabled;
     }
 
@@ -173,7 +174,7 @@ class HelpQueueV2 {
     }
 
     /**
-     * Asynchronously creates a clean queue
+     * Asynchronously creates a new queue
      * @param queueChannel the corresponding text channel and its name
      * @param backupData backup queue data directly passed to the constructor
      */
@@ -192,7 +193,7 @@ class HelpQueueV2 {
                   CalendarQueueExtension.load(
                       1, // renderIndex
                       queueChannel,
-                      display
+                      display // let extensions also have the reference
                   )
               ]);
         const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
@@ -263,7 +264,7 @@ class HelpQueueV2 {
      * Dequeue this particular queue with a helper
      * @param helperMember the member that triggered dequeue
      * @param targetStudentMember the student to look for if specified
-     * @throws {QueueError} when
+     * @throws {QueueError}
      * - Queue is not open
      * - No student is here
      * - helperMember is not one of the helpers
@@ -319,7 +320,7 @@ class HelpQueueV2 {
     /**
      * Enqueue a student
      * @param studentMember member to enqueue
-     * @throws {QueueError} when
+     * @throws {QueueError}
      * - queue is not open
      * - student is already in the queue
      * - studentMember is a helper
@@ -349,11 +350,10 @@ class HelpQueueV2 {
 
     /**
      * Computes the state of the queue
-     * @returns the current state based on the 2 helper sets
-     *
-     * **This is the single source of truth for queue state**Ï
+     * **This is the single source of truth for queue state**
      * - Don't turn this into a getter.
      * - TS treats getters as static properties which conflicts with some of the checks
+     * @returns the current state based on the 2 helper sets
      */
     getQueueState(): QueueState {
         return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
@@ -428,6 +428,12 @@ class HelpQueueV2 {
         studentMember: GuildMember,
         helpTopic: string
     ): Promise<void>;
+    /**
+     * Implements overload signatures for notifyHelpersOn of different events
+     * @param event the type of the event TODO: extract to separate type
+     * @param studentMember the student that emitted the event
+     * @param helpTopic if event is 'submitHelpTopic', this param is specified, see the above overload
+     */
     async notifyHelpersOn<EventType extends 'submitHelpTopic' | 'joinQueue'>(
         event: EventType,
         studentMember: GuildMember,
@@ -467,7 +473,7 @@ class HelpQueueV2 {
         if (this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
-        // default the helper to 'active state'
+        // default the helper to 'active' state
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.notifGroup.map(
@@ -519,10 +525,10 @@ class HelpQueueV2 {
      * @throws {QueueError} if the student is not in the queue
      */
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
-        const idx = this._students.findIndex(
+        const index = this._students.findIndex(
             student => student.member.id === targetStudent.id
         );
-        if (idx === -1) {
+        if (index === -1) {
             throw ExpectedQueueErrors.studentNotInQueue(
                 targetStudent.displayName,
                 this.queueName
@@ -530,8 +536,8 @@ class HelpQueueV2 {
         }
         // we checked for idx === -1, so it will not be null
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        const removedStudent = this._students[idx]!;
-        this._students.splice(idx, 1);
+        const removedStudent = this._students[index]!;
+        this._students.splice(index, 1);
         await Promise.all([
             ...this.queueExtensions.map(extension =>
                 extension.onStudentRemove(this, removedStudent)
@@ -578,6 +584,7 @@ class HelpQueueV2 {
      */
     async triggerForceRender(): Promise<void> {
         await this.display.requestForceRender();
+        // TODO: emit the onQueueRender here?
     }
 
     /**

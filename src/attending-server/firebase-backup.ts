@@ -98,7 +98,7 @@ class FirebaseServerBackupExtension
             loggingChannelId: server.loggingChannel?.id ?? '',
             hoursUntilAutoClear:
                 server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
-            seriousServer: server.queues[0]?.seriousModeEnabled ?? false,
+            seriousServer: server.queues[0]?.isSerious ?? false,
             botAdminRoleId: server.botAdminRoleID,
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
