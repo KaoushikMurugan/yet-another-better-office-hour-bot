@@ -29,9 +29,9 @@ type Optional<T> = T | undefined;
  */
 type NoMethod<T> = Pick<
     T,
-    // disabling this warning is safe because we are removing all functions
-    // eslint-disable-next-line @typescript-eslint/ban-types
-    { [K in keyof T]: T[K] extends Function ? never : K }[keyof T]
+    {
+        [K in keyof T]: T[K] extends (...params: unknown[]) => unknown ? never : K;
+    }[keyof T]
 >;
 
 type ConstNoMethod<T> = Readonly<NoMethod<T>>;
@@ -58,30 +58,28 @@ const Err = <E extends Error>(err: E): { ok: false; error: E } => ({
 
 /** string */
 type GuildId = Snowflake;
+
 /** string */
 type GuildMemberId = Snowflake;
+
 /** string */
 type CategoryChannelId = Snowflake;
+
 /** string */
 type TextBasedChannelId = Snowflake;
+
 /** string */
 type MessageId = Snowflake;
+
 /** number */
 type RenderIndex = number;
 
 /**
- * Help message type
- * @remark
- * - This is used to store help messages in the help channel
- * - It is also used to store help messages in the help command
- * - The `nameValuePair` property is utilized by the help command to display the subcommands
- * - The `useInHelpChannel` property is used to determine if the message should be displayed in the help channel
- * - The `useInHelpCommand` property is used to determine if the message can be displayed in the help command
- * - The `message` property is the actual message to be displayed
+ * Represents a help message that can be displayed in the help channels or through the /help command
  */
 type HelpMessage = {
     /**
-     * Utilized by the help command to display the subcommands.
+     * Data directly passed to the SlashCommandBuilder of /help
      * Structure: {name: string, value: string}
      */
     nameValuePair: APIApplicationCommandOptionChoice<string>;
@@ -111,7 +109,7 @@ type SettingsMenuConstructor = (
 type YabobEmbed = BaseMessageOptions;
 
 /**
- * Location of the Actionable Component (i.e. button, modal, select menu)
+ * Location of a MessageComponent (i.e. button, modal, select menu)
  * 'dm' - component is in a DM
  * 'queue' - component is in a queue channel
  * 'other' - component is in a non-queue guild channel
@@ -126,7 +124,7 @@ type ComponentLocation = 'dm' | 'queue' | 'other';
 type OptionalRoleId = Snowflake | SpecialRoleValues;
 
 enum SpecialRoleValues {
-    NotSet = 'Not Set',
+    NotSet = 'NotSet',
     Deleted = 'Deleted'
 }
 
@@ -166,7 +164,7 @@ export {
     NoMethod,
     ConstNoMethod,
     Result,
-    Ok, // these 2 arrow functions comes withe the Result<T,E> types so they are placed here
+    Ok, // these 2 arrow functions comes withe the Result<T, E> types so they are placed here
     Err,
     ServerResult,
     QueueResult,
