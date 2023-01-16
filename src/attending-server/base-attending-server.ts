@@ -33,12 +33,9 @@ import {
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
-    Err,
     GuildMemberId,
-    Ok,
     Optional,
     OptionalRoleId,
-    Result,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -53,7 +50,6 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
-import type { ServerError } from '../utils/error-types.js';
 
 /**
  * Wrapper for TextChannel
@@ -300,12 +296,8 @@ class AttendingServerV2 {
      * @param serverId guild id
      * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
      */
-    static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
-        const server = AttendingServerV2.allServers.get(serverId);
-        if (!server) {
-            return Err(ExpectedServerErrors.notInitialized);
-        }
-        return Ok(server);
+    static safeGet(serverId: Snowflake): Optional<AttendingServerV2> {
+        return AttendingServerV2.allServers.get(serverId);
     }
 
     /**
