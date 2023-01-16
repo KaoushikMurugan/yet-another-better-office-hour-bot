@@ -794,11 +794,10 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
-            const possibleHelpers = newVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+            const queuesToRerender = this.queues.filter(queue =>
+                newVoiceState.channel.members.some(vcMember =>
+                    queue.hasHelper(vcMember.id)
+                )
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
@@ -834,11 +833,11 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
-            const possibleHelpers = oldVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            ); // treat everyone that's not this student as a potential helper
+            // filter queues where some member of that voice channel is a helper of that queue
             const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+                oldVoiceState.channel.members.some(vcMember =>
+                    queue.hasHelper(vcMember.id)
+                )
             );
             await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
@@ -1123,11 +1122,12 @@ class AttendingServerV2 {
      * Creates roles for all the available queues if not already created
      */
     private async createQueueRoles(): Promise<void> {
-        // use a set to collect the unique queue names
+        // use a set to collect the unique role names
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
         const queueNames = (await this.getQueueChannels(false)).map(
             channel => channel.queueName
         );
+        // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
             queueNames.map(roleToCreate => {
                 !existingRoles.has(roleToCreate) &&
