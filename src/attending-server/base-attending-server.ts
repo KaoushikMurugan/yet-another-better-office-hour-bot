@@ -95,7 +95,7 @@ class AttendingServerV2 {
      * without passing through a interaction handler first
      * - equivalent to the old attendingServers global object
      */
-    private static allServers: Collection<Snowflake, AttendingServerV2> =
+    private static readonly allServers: Collection<Snowflake, AttendingServerV2> =
         new Collection();
 
     /**
