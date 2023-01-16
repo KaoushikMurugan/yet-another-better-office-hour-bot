@@ -90,6 +90,15 @@ type ServerSettings = {
  */
 class AttendingServerV2 {
     /**
+     * All the servers that YABOB is managing
+     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+     * without passing through a interaction handler first
+     * - equivalent to the old attendingServers global object
+     */
+    private static allServers: Collection<Snowflake, AttendingServerV2> =
+        new Collection();
+
+    /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
      */
@@ -117,15 +126,6 @@ class AttendingServerV2 {
             student: SpecialRoleValues.NotSet
         }
     };
-
-    /**
-     * All the servers that YABOB is managing
-     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
-     * without passing through a interaction handler first
-     * - equivalent to the old attendingServers global object
-     */
-    private static allServers: Collection<Snowflake, AttendingServerV2> =
-        new Collection();
 
     protected constructor(
         readonly guild: Guild,
@@ -386,13 +386,6 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Cleans up all the timers from setInterval
-     */
-    clearAllServerTimers(): void {
-        this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
     /**
@@ -740,11 +733,12 @@ class AttendingServerV2 {
     }
 
     /**
-     * Called when leaving a server.
+     * Called when leaving a server. **This is the only way to delete an AttendingServer**
      * - let all the extensions clean up their own memory first before deleting them
-     * @returns  true if this server existed and has been removed, or false if the element does not exist.
+     * @returns true if this server existed and has been removed, or false if the element does not exist.
      */
     async gracefulDelete(): Promise<boolean> {
+        this.clearAllServerTimers();
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
@@ -1112,6 +1106,13 @@ class AttendingServerV2 {
             )
         ]);
         return true;
+    }
+
+    /**
+     * Cleans up all the timers from setInterval
+     */
+    private clearAllServerTimers(): void {
+        this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
     /**

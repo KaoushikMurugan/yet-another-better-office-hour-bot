@@ -79,7 +79,6 @@ client.on(Events.GuildDelete, async guild => {
     if (!server) {
         return;
     }
-    server.clearAllServerTimers();
     await server.gracefulDelete();
     console.log(red(`Leaving ${guild.name}. Backups will be saved by the extensions.`));
 });
