@@ -81,7 +81,6 @@ client.on(Events.GuildDelete, async guild => {
     }
     server.clearAllServerTimers();
     await server.gracefulDelete();
-    AttendingServerV2.allServers.delete(guild.id);
     console.log(red(`Leaving ${guild.name}. Backups will be saved by the extensions.`));
 });
 
@@ -140,7 +139,7 @@ client.on(Events.GuildMemberAdd, async member => {
  */
 client.on(Events.GuildRoleUpdate, async role => {
     // if id exists
-    if (AttendingServerV2.allServers.has(role.guild.id)) {
+    if (AttendingServerV2.safeGet(role.guild.id)) {
         return;
     }
     if (
@@ -216,7 +215,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     await guild.commands.fetch(); // populate cache
     // Extensions for server & queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
-    AttendingServerV2.allServers.set(guild.id, server);
     return server;
 }
 

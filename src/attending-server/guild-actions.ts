@@ -14,7 +14,7 @@ import {
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client } from '../global-states.js';
-import { cyan, yellow, magenta } from '../utils/command-line-colors.js';
+import { cyan, yellow, magenta, red } from '../utils/command-line-colors.js';
 import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
@@ -34,7 +34,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
             )
         );
         await guild.leave();
-        throw Error("YABOB doesn't have admin permission.");
+        throw Error(red("YABOB doesn't have admin permission."));
     }
     if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
         const owner = await guild.fetchOwner();
@@ -46,7 +46,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
                 EmbedColor.Error
             )
         );
-        throw Error("YABOB doesn't have highest role.");
+        throw Error(red("YABOB doesn't have highest role."));
     }
 }
 

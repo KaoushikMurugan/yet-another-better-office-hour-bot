@@ -124,7 +124,8 @@ class AttendingServerV2 {
      * without passing through a interaction handler first
      * - equivalent to the old attendingServers global object
      */
-    static allServers: Collection<Snowflake, AttendingServerV2> = new Collection();
+    private static allServers: Collection<Snowflake, AttendingServerV2> =
+        new Collection();
 
     protected constructor(
         readonly guild: Guild,
@@ -273,6 +274,7 @@ class AttendingServerV2 {
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
+        AttendingServerV2.allServers.set(guild.id, server);
         console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
@@ -738,13 +740,15 @@ class AttendingServerV2 {
     }
 
     /**
-     * Called when leaving a server
+     * Called when leaving a server.
      * - let all the extensions clean up their own memory first before deleting them
+     * @returns  true if this server existed and has been removed, or false if the element does not exist.
      */
-    async gracefulDelete(): Promise<void> {
+    async gracefulDelete(): Promise<boolean> {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
+        return AttendingServerV2.allServers.delete(this.guild.id);
     }
 
     /**
