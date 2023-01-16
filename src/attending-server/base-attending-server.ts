@@ -132,6 +132,13 @@ class AttendingServerV2 {
         readonly serverExtensions: ReadonlyArray<ServerExtension>
     ) {}
 
+    /**
+     * Number of correctly initialized AttendingServers
+     */
+    static get activeServersCount(): number {
+        return AttendingServerV2.allServers.size;
+    }
+
     /** All the access level role ids */
     get accessLevelRoleIds(): AccessLevelRoleIds {
         return this.settings.accessLevelRoleIds;
