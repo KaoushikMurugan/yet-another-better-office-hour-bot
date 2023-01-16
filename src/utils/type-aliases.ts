@@ -123,6 +123,12 @@ type ComponentLocation = 'dm' | 'queue' | 'other';
  */
 type OptionalRoleId = Snowflake | SpecialRoleValues;
 
+/**
+ * Special role values to represent missing access level roles
+ * - NotSet: the role was never configured
+ * - Deleted: the role was deleted through Events.GuildRoleDelete
+ * The values are also keys, so we can use the `in` operator to test if a string is NotSet or Deleted
+ */
 enum SpecialRoleValues {
     NotSet = 'NotSet',
     Deleted = 'Deleted'

@@ -77,7 +77,7 @@ type ServerSettings = {
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
      * @remark Special values for role IDs:
-     * - 'Not Set' means that the role is not set
+     * - 'NotSet' means that the role is not set
      * - 'Deleted' means that the role was deleted
      */
     accessLevelRoleIds: AccessLevelRoleIds;
@@ -458,8 +458,7 @@ class AttendingServerV2 {
             // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
-                role.id === everyoneRoleId
+                role.id in SpecialRoleValues || role.id === everyoneRoleId
                     ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
