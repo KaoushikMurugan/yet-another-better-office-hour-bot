@@ -59,14 +59,14 @@ const csMemesPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: 'Faster than Internet Explorer' },
     { type: ActivityType.Playing,   name: 'Changing the TV input' },
     { type: ActivityType.Playing,   name: 'Never sudo rm -rf /' },
-    { type: ActivityType.Playing,   name: 'crtl + C, ctrl + V' },
+    { type: ActivityType.Playing,   name: 'ctrl + C, ctrl + V' },
     { type: ActivityType.Playing,   name: 'cmd + C, cmd + V' },
     { type: ActivityType.Watching,  name: 'vim or emacs?' },
     { type: ActivityType.Playing,   name: 'git commit -m "fix"' },
     { type: ActivityType.Playing,   name: '#define true (rand() > 10)' },
     { type: ActivityType.Playing,   name: 'did you mean "XOR" or "OR"?' },
     { type: ActivityType.Playing,   name: "Don't use whitespace in C challenge" },
-    { type: ActivityType.Playing,   name: '5!=120' },
+    { type: ActivityType.Playing,   name: '5 != 120' },
     { type: ActivityType.Playing,   name: '1 + 1 = 10' },
     { type: ActivityType.Playing,   name: "It's not a bug, it's a feature" },
     { type: ActivityType.Playing,   name: 'You probably need a <br>' },
@@ -88,7 +88,7 @@ const helloWorldPresenceList: StaticBotPresence[] = [
     { type: ActivityType.Playing,   name: 'System.out.println("Hello World");' }, // java
     { type: ActivityType.Playing,   name: 'print("Hello World")' }, // python
     { type: ActivityType.Playing,   name: 'puts "Hello World"' }, // ruby
-    { type: ActivityType.Playing,   name: 'cout << "Hello World";' }, // c++
+    { type: ActivityType.Playing,   name: 'std::cout << "Hello World";' }, // c++
     { type: ActivityType.Playing,   name: 'console.log("Hello World");' }, // javascript
     { type: ActivityType.Playing,   name: 'fmt.Println("Hello World");' }, // go
     { type: ActivityType.Playing,   name: 'println!("Hello World");' }, // rust
@@ -105,9 +105,7 @@ const helloWorldPresenceList: StaticBotPresence[] = [
 ];
 
 /**
- * These presences might depend on the client object
- * so they need to be dynamically created
- * @remark client object should not be referenced as the top level yet before branch 38
+ * These presences change over time, so they need to be dynamically created
  */
 const dynamicPresenceList: Array<() => StaticBotPresence> = [
     // Number of servers, numGuilds: number
@@ -149,7 +147,7 @@ function updatePresence(): void {
         selectedPresenceList = helloWorldPresenceList;
     } else {
         // 5% chance of dynamic presence
-        selectedPresenceList = dynamicPresenceList.map(presenceFunc => presenceFunc());
+        selectedPresenceList = dynamicPresenceList.map(createPresence => createPresence());
     }
     const newPresence = selectedPresenceList.filter(
         botPresence => botPresence !== previousPresence

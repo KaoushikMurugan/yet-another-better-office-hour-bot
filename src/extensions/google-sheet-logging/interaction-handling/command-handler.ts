@@ -3,13 +3,10 @@ import { CommandHandlerProps } from '../../../interaction-handling/handler-inter
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { Optional } from '../../../utils/type-aliases.js';
 import { GoogleSheetCommands } from '../google-sheet-constants/google-sheet-interaction-names.js';
-import {
-    getServerGoogleSheet,
-    isServerGoogleSheetInteraction
-} from '../shared-sheet-functions.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -35,14 +32,9 @@ async function getStatistics(
 ): Promise<void> {
     // get the doc for this server
     const server = AttendingServerV2.get(interaction.guildId);
-    const googleSheet = getServerGoogleSheet(server);
-    if (!googleSheet) {
-        throw new Error(
-            `No google sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id?`
-        );
-    }
+    const googleSheet = GoogleSheetExtensionState.get(interaction.guildId).googleSheet;
 
+    // FIXME: This is technically guaranteed so maybe we don't need to do the transformation
     const attendanceSheetTitle = `${server.guild.name.replace(
         /:/g,
         ' '
@@ -272,14 +264,9 @@ async function getWeeklyReport(
 ): Promise<void> {
     // get the doc for this server
     const server = AttendingServerV2.get(interaction.guildId);
-    const googleSheet = getServerGoogleSheet(server);
-    if (!googleSheet) {
-        throw new Error(
-            `No google sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id in the environment?`
-        );
-    }
+    const googleSheet = GoogleSheetExtensionState.get(interaction.guildId).googleSheet;
 
+    // see the comment in getStatistics
     const sheetTitle = `${server.guild.name.replace(/:/g, ' ')} Attendance`.replace(
         /\s{2,}/g,
         ' '
@@ -455,7 +442,7 @@ async function getWeeklyReport(
 async function setGoogleSheet(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const [state] = isServerGoogleSheetInteraction(interaction);
+    const state = GoogleSheetExtensionState.get(interaction.guildId);
     const sheetId = interaction.options.getString('sheet_id', true).trim();
     await state.setGoogleSheet(sheetId);
     await interaction.editReply(

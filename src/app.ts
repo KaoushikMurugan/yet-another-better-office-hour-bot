@@ -41,16 +41,13 @@ client.on(Events.ClientReady, async () => {
     setupResults.forEach(
         result => result.status === 'rejected' && console.log(`${result.reason}`)
     );
-    const successfullyCreatedServersCount = setupResults.filter(
-        result => result.status === 'fulfilled'
-    ).length;
-    if (successfullyCreatedServersCount === 0) {
+    if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
         console.error('All server setups failed. Aborting.');
         process.exit(1);
     }
     console.log(
         `\n${green(
-            `✅ Ready to go! (${successfullyCreatedServersCount} servers created) ✅`
+            `✅ Ready to go! (${AttendingServerV2.activeServersCount} servers created) ✅`
         )}\n`
     );
     console.log(`${centered('-------- Begin Server Logs --------')}\n`);
@@ -75,16 +72,12 @@ client.on(Events.GuildCreate, async guild => {
  * - Deletes server from server map
  */
 client.on(Events.GuildDelete, async guild => {
-    const getResult = AttendingServerV2.safeGet(guild.id);
-    if (getResult.ok) {
-        const server = getResult.value;
-        server.clearAllServerTimers();
-        await server.gracefulDelete();
-        AttendingServerV2.allServers.delete(guild.id);
-        console.log(
-            red(`Leaving ${guild.name}. Backups will be saved by the extensions.`)
-        );
+    const server = AttendingServerV2.safeGet(guild.id);
+    if (!server) {
+        return;
     }
+    await server.gracefulDelete();
+    console.log(red(`Leaving ${guild.name}. Backups will be saved by the extensions.`));
 });
 
 /**
@@ -111,8 +104,8 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
  * Gives the Student role to new members
  */
 client.on(Events.GuildMemberAdd, async member => {
-    const server = AttendingServerV2.get(member.guild.id);
-    if (!server.autoGiveStudentRole) {
+    const server = AttendingServerV2.safeGet(member.guild.id);
+    if (!server || !server.autoGiveStudentRole) {
         return;
     }
     const studentRole = server.guild.roles.cache.find(
@@ -123,7 +116,16 @@ client.on(Events.GuildMemberAdd, async member => {
         !member.user.bot &&
         studentRole.id !== server.guild.roles.everyone.id
     ) {
-        await member.roles.add(studentRole);
+        member.roles.add(studentRole).catch(err => {
+            console.error('Failed to add student role', err);
+            member
+                .send(
+                    SimpleEmbed(
+                        `I can't give you the ${studentRole.name} at the moment. Please contact the server admin to manually give you ${studentRole.name}.`
+                    )
+                )
+                .catch(err => console.error('Failed to send member Dm', err));
+        });
     }
 });
 
@@ -132,7 +134,8 @@ client.on(Events.GuildMemberAdd, async member => {
  * Once YABOB has the highest role, start the initialization call
  */
 client.on(Events.GuildRoleUpdate, async role => {
-    if (AttendingServerV2.allServers.has(role.guild.id)) {
+    // if id exists
+    if (AttendingServerV2.safeGet(role.guild.id)) {
         return;
     }
     if (
@@ -157,18 +160,15 @@ client.on(Events.GuildRoleUpdate, async role => {
  * Track when members join or leave a voice channel
  */
 client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
-    if (newVoiceState.member === null) {
-        throw new Error('Received VC event in a server without initialized YABOB.');
+    const server = AttendingServerV2.safeGet(oldVoiceState.guild.id);
+    if (newVoiceState.member === null || !server) {
+        // don't throw error here, just ignore it, otherwise it's uncaught
+        return;
     }
-    const serverId = oldVoiceState.guild.id;
     if (isLeaveVC(oldVoiceState, newVoiceState)) {
-        await AttendingServerV2.allServers
-            .get(serverId)
-            ?.onMemberLeaveVC(newVoiceState.member, oldVoiceState);
+        await server.onMemberLeaveVC(newVoiceState.member, oldVoiceState);
     } else if (isJoinVC(oldVoiceState, newVoiceState)) {
-        await AttendingServerV2.allServers
-            .get(serverId)
-            ?.onMemberJoinVC(newVoiceState.member, newVoiceState);
+        await server.onMemberJoinVC(newVoiceState.member, newVoiceState);
     }
 });
 
@@ -176,7 +176,7 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
  * Emit the on role delete event
  */
 client.on(Events.GuildRoleDelete, async role => {
-    await AttendingServerV2.allServers.get(role.guild.id)?.onRoleDelete(role);
+    await AttendingServerV2.safeGet(role.guild.id)?.onRoleDelete(role);
 });
 
 /**
@@ -211,7 +211,6 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     await guild.commands.fetch(); // populate cache
     // Extensions for server & queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
-    AttendingServerV2.allServers.set(guild.id, server);
     return server;
 }
 
