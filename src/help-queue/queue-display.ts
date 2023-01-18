@@ -17,6 +17,7 @@ import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
 import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
+import { red } from '../utils/command-line-colors.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -60,8 +61,8 @@ const queueStateStyles: {
 };
 
 /**
- * Class that handles the rendering of the queue, i.e. displaying and updating
- * the queue embeds
+ * Class that handles the rendering of the queue
+ * i.e. displaying and updating the queue embeds
  */
 class QueueDisplayV2 {
     /**
@@ -98,8 +99,19 @@ class QueueDisplayV2 {
                 this.queueChannelEmbeds.filter(embed => !embed.stale).size !== 0 &&
                 !this.isRendering
             ) {
-                await this.render();
-                this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
+                this.render()
+                    .then(() => {
+                        this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
+                    })
+                    .catch(err => {
+                        // don't change embed.stale so we can try again after 1 second
+                        console.error(
+                            red(`Failed to render in ${this.queueChannel.queueName}`),
+                            err
+                        );
+                        // this line is technically not necessary but it's nice and symmetric
+                        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+                    });
             }
         }, 1000);
     }
