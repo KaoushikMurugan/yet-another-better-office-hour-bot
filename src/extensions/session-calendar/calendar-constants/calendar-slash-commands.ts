@@ -64,18 +64,15 @@ const makeCalendarStringCommand: Omit<
                 .setDescription('Your display name on the calendar')
                 .setRequired(true)
         );
-    Array(20)
-        .fill(undefined)
-        .forEach(
-            (_, idx) =>
-                command.addChannelOption(option =>
-                    option
-                        .setName(`queue_name_${idx + 1}`)
-                        .setDescription('The courses you tutor for')
-                        .setRequired(idx === 0)
-                        .addChannelTypes(ChannelType.GuildCategory)
-                ) // make the first one required
+    for (let index = 0; index < 20; index++) {
+        command.addChannelOption(option =>
+            option
+                .setName(`queue_name_${index + 1}`)
+                .setDescription('The courses you tutor for')
+                .setRequired(index === 0) // make the first one required
+                .addChannelTypes(ChannelType.GuildCategory)
         );
+    }
     command.addUserOption(option =>
         option
             .setName('user')

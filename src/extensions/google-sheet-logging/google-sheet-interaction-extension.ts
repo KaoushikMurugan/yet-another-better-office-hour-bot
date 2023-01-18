@@ -5,7 +5,10 @@ import {
     BaseInteractionExtension,
     InteractionExtension
 } from '../extension-interface.js';
-import { googleSheetAdminHelpMessages } from './google-sheet-constants/GoogleSheetCommands.js';
+import {
+    googleSheetAdminHelpMessages,
+    googleSheetStaffHelpMessages
+} from './google-sheet-constants/GoogleSheetCommands.js';
 import { googleSheetSettingsMainMenuOptions } from './google-sheet-constants/google-sheet-settings-menu.js';
 import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slash-commands.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
@@ -21,7 +24,7 @@ class GoogleSheetInteractionExtension
 
     override helpMessages = {
         botAdmin: googleSheetAdminHelpMessages,
-        staff: [],
+        staff: googleSheetStaffHelpMessages,
         student: []
     };
 

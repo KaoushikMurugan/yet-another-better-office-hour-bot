@@ -23,7 +23,7 @@ class ServerError extends Error {
     readonly type = 'ServerError' as const;
     constructor(message: string) {
         super(message);
-        this.name = 'ExpectedServerError';
+        this.name = 'ServerError';
     }
     briefErrorString(): string {
         return `**${this.name}**: ${this.message}`;
@@ -37,7 +37,7 @@ class QueueError extends Error {
     readonly type = 'QueueError' as const;
     constructor(message: string, public queueName: string) {
         super(message);
-        this.name = 'ExpectedQueueError';
+        this.name = 'QueueError';
     }
     briefErrorString(): string {
         return `**${this.name}** at ${this.queueName}: ${this.message}`;

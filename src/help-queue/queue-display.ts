@@ -17,6 +17,7 @@ import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { client } from '../global-states.js';
 import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
+import { red } from '../utils/command-line-colors.js';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -60,8 +61,8 @@ const queueStateStyles: {
 };
 
 /**
- * Class that handles the rendering of the queue, i.e. displaying and updating
- * the queue embeds
+ * Class that handles the rendering of the queue
+ * i.e. displaying and updating the queue embeds
  */
 class QueueDisplayV2 {
     /**
@@ -93,14 +94,25 @@ class QueueDisplayV2 {
         // starts the render loop
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
-            // actually render if and only if we have to
+            // if there's nothing new or a render is already happening, stop
             if (
-                this.queueChannelEmbeds.filter(embed => !embed.stale).size !== 0 &&
-                !this.isRendering
+                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0 ||
+                this.isRendering
             ) {
-                await this.render();
-                this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
+                return;
             }
+            this.render()
+                .then(() => {
+                    this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
+                })
+                .catch(err => {
+                    console.error(
+                        red(`Failed to render in ${this.queueChannel.queueName}`),
+                        err
+                    ); // don't change embed.stale to true so we can try again after 1 second
+                    // this line is technically not necessary but it's nice and symmetric
+                    this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+                });
         }, 1000);
     }
 
@@ -132,7 +144,7 @@ class QueueDisplayV2 {
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚${viewModel.queueName}〛is ${
+                `Queue for〚 ${viewModel.queueName} 〛is ${
                     queueStateStyles[viewModel.state].statusText[
                         viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
                     ]
@@ -202,16 +214,20 @@ class QueueDisplayV2 {
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        const getVcStatus = (id: Snowflake) => {
+        const getVcStatus = (helperId: Snowflake) => {
             const spacer = '\u3000'; // ideographic space character, extra wide
             const voiceChannel =
-                this.queueChannel.channelObj.guild.voiceStates.cache.get(id)?.channel;
+                this.queueChannel.channelObj.guild.voiceStates.cache.get(
+                    helperId
+                )?.channel;
+            // using # gives the same effect as if we use the id
+            // bc students can't see the channel ping if they don't have permission
             const vcStatus = voiceChannel
                 ? voiceChannel.members.size > 1
-                    ? `Busy in [${voiceChannel.name}]`
-                    : `Idling in [${voiceChannel.name}]`
+                    ? `Busy in #${voiceChannel.name}`
+                    : `Idling in #${voiceChannel.name}`
                 : 'Not in voice channel.';
-            return `<@${id}>${spacer}**${vcStatus}**`;
+            return `<@${helperId}>${spacer}${vcStatus}`;
         };
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
@@ -257,11 +273,11 @@ class QueueDisplayV2 {
                 .setStyle('unicode-single')
                 .addRowMatrix([
                     ...viewModel.studentDisplayNames.map((name, idx) => [
-                        viewModel.seriousModeEnabled
-                            ? idx + 1
-                            : idx === 0
-                            ? '(☞°∀°)☞ 1'
-                            : `${idx + 1}`,
+                        idx === 0
+                            ? viewModel.seriousModeEnabled
+                                ? '1 (Up Next)'
+                                : '(☞°∀°)☞ Up Next!'
+                            : idx + 1,
                         name
                     ])
                 ]);

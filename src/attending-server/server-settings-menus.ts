@@ -114,7 +114,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the server roles',
             value: 'server-roles'
         },
-        menu: RolesConfigMenu
+        menu: RolesConfigMenuInGuild
     },
     {
         optionData: {
@@ -213,20 +213,17 @@ function SettingsMainMenu(
  * @param forServerInit is the menu sent on joining a new server?
  * @returns
  */
-function RolesConfigMenu(
+function RolesConfigMenuInGuild(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean,
-    updateMessage = '',
-    forServerInit = false
+    _isDm: boolean, // not used
+    updateMessage = ''
 ): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
             : id === SpecialRoleValues.Deleted
             ? '@deleted-role'
-            : isDm // role pings shows up as '@deleted-role' in dm even if it exists
-            ? server.guild.roles.cache.get(id)?.name ?? '@deleted-role'
             : `<@&${id}>`;
     };
     const setRolesCommandId = server.guild.commands.cache.find(
@@ -237,69 +234,50 @@ function RolesConfigMenu(
         .setColor(EmbedColor.Aqua);
     // addFields accepts RestOrArray<T>,
     // so they can be combined into a single addFields call, but prettier makes it ugly
-    if (!isDm) {
-        // TODO: Separate forServerInit version and server version
-        embed.addFields(
-            {
-                name: 'Description',
-                value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
-            },
-            {
-                name: 'Documentation',
-                value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
-            },
-            {
-                name: 'Warning',
-                value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
-            }
-        );
-    }
+
+    // TODO: Separate forServerInit version and server version
     embed.addFields(
+        {
+            name: 'Description',
+            value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
+        },
+        {
+            name: 'Documentation',
+            value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
+        },
+        {
+            name: 'Warning',
+            value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
+        },
         {
             name: '┈'.repeat(25),
             value: '**Current Role Configuration**'
         },
         {
             name: '🤖 Bot Admin Role',
-            value: forServerInit
-                ? `Role that can manage the bot and its settings`
-                : generatePing(server.botAdminRoleID),
+            value: generatePing(server.botAdminRoleID),
             inline: true
         },
         {
             name: '📚 Staff Role',
-            value: forServerInit
-                ? `Role that allows users to host office hours`
-                : generatePing(server.staffRoleID),
+            value: generatePing(server.staffRoleID),
             inline: true
         },
         {
             name: ' 🎓 Student Role',
-            value: forServerInit
-                ? `Role that allows users to join office hour queues`
-                : generatePing(server.studentRoleID),
+            value: generatePing(server.studentRoleID),
             inline: true
         }
     );
-    if (forServerInit) {
-        embed.setDescription(
-            `**Thanks for choosing YABOB for helping you with office hours!
-            To start using YABOB, it requires the following roles: **\n`
-        );
-    }
     if (updateMessage.length > 0) {
         embed.setFooter({
-            text: `✅ ${updateMessage}${
-                !forServerInit && isDm
-                    ? ` Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
-                    : ''
-            }`
+            text: `✅ ${updateMessage}`
         });
     }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig1,
                 server.guild.id,
                 channelId
@@ -310,7 +288,7 @@ function RolesConfigMenu(
                 .setLabel('Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig1a,
                 server.guild.id,
                 channelId
@@ -321,7 +299,7 @@ function RolesConfigMenu(
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig2,
                 server.guild.id,
                 channelId
@@ -330,7 +308,7 @@ function RolesConfigMenu(
                 .setLabel('Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig2a,
                 server.guild.id,
                 channelId
@@ -342,9 +320,7 @@ function RolesConfigMenu(
     ];
     return {
         embeds: [embed.data],
-        components: isDm
-            ? buttons
-            : [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
+        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
     };
 }
 
@@ -880,7 +856,7 @@ function SeriousModeConfigMenu(
 
 export {
     SettingsMainMenu,
-    RolesConfigMenu,
+    RolesConfigMenuInGuild as RolesConfigMenu,
     RolesConfigMenuForServerInit,
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
