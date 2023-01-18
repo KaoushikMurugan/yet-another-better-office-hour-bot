@@ -94,25 +94,25 @@ class QueueDisplayV2 {
         // starts the render loop
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
-            // actually render if and only if we have to
+            // if there's nothing new or a render is already happening, stop
             if (
-                this.queueChannelEmbeds.filter(embed => !embed.stale).size !== 0 &&
-                !this.isRendering
+                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0 ||
+                this.isRendering
             ) {
-                this.render()
-                    .then(() => {
-                        this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
-                    })
-                    .catch(err => {
-                        // don't change embed.stale so we can try again after 1 second
-                        console.error(
-                            red(`Failed to render in ${this.queueChannel.queueName}`),
-                            err
-                        );
-                        // this line is technically not necessary but it's nice and symmetric
-                        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
-                    });
+                return;
             }
+            this.render()
+                .then(() => {
+                    this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
+                })
+                .catch(err => {
+                    console.error(
+                        red(`Failed to render in ${this.queueChannel.queueName}`),
+                        err
+                    ); // don't change embed.stale to true so we can try again after 1 second
+                    // this line is technically not necessary but it's nice and symmetric
+                    this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+                });
         }, 1000);
     }
 
