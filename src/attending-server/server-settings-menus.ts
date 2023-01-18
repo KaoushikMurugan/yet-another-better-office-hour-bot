@@ -186,7 +186,7 @@ function RolesConfigMenuInGuild(
     server: AttendingServerV2,
     channelId: string,
     _isDm: boolean, // not used
-    updateMessage = '',
+    updateMessage = ''
 ): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
         return id === SpecialRoleValues.NotSet
@@ -234,7 +234,7 @@ function RolesConfigMenuInGuild(
         },
         {
             name: ' 🎓 Student Role',
-            value:  generatePing(server.studentRoleID),
+            value: generatePing(server.studentRoleID),
             inline: true
         }
     );
