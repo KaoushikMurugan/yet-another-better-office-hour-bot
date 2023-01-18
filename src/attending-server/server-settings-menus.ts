@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
+    SettingsMenuConstructor,
     SettingsMenuOption,
     SpecialRoleValues,
     YabobEmbed
@@ -21,6 +22,10 @@ import {
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 
+/**
+ * A button that returns to the main menu
+ * @deprecated
+ */
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
         'other',
@@ -32,6 +37,30 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
 );
+
+/**
+ * Composes the server settings main menu, excluding the option for the current menu
+ * @param currentMenu The name of the sub-Menu from which the settings menu is being called
+ * @returns
+ */
+function settingsOptionsSelectMenu(
+    currentMenu: SettingsMenuConstructor
+): ActionRowBuilder<SelectMenuBuilder> {
+    return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+        buildComponent(new SelectMenuBuilder(), [
+            'other',
+            SelectMenuNames.ServerSettings,
+            UnknownId,
+            UnknownId
+        ])
+            .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
+            .addOptions(
+                serverSettingsMenuOptions
+                    .filter(menuOption => menuOption.menu !== currentMenu)
+                    .map(option => option.optionData)
+            )
+    );
+}
 
 /** This creates an empty embed field in embeds */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,7 +97,16 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
+const serverSettingsMenuOptions: SettingsMenuOption[] = [
+    {
+        optionData: {
+            emoji: '🏠',
+            label: 'Main Menu',
+            description: 'Return to the main menu',
+            value: 'main-menu'
+        },
+        menu: SettingsMainMenu
+    },
     {
         optionData: {
             emoji: '📝',
@@ -76,7 +114,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the server roles',
             value: 'server-roles'
         },
-        subMenu: RolesConfigMenuInGuild
+        menu: RolesConfigMenuInGuild
     },
     {
         optionData: {
@@ -85,7 +123,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
-        subMenu: AfterSessionMessageConfigMenu
+        menu: AfterSessionMessageConfigMenu
     },
     {
         optionData: {
@@ -94,7 +132,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
-        subMenu: QueueAutoClearConfigMenu
+        menu: QueueAutoClearConfigMenu
     },
     {
         optionData: {
@@ -103,7 +141,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
-        subMenu: LoggingChannelConfigMenu
+        menu: LoggingChannelConfigMenu
     },
     {
         optionData: {
@@ -112,7 +150,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
-        subMenu: AutoGiveStudentRoleConfigMenu
+        menu: AutoGiveStudentRoleConfigMenu
     },
     {
         optionData: {
@@ -121,7 +159,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
-        subMenu: PromptHelpTopicConfigMenu
+        menu: PromptHelpTopicConfigMenu
     },
     {
         optionData: {
@@ -130,7 +168,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the serious mode',
             value: 'serious-mode'
         },
-        subMenu: SeriousModeConfigMenu
+        menu: SeriousModeConfigMenu
     }
 ];
 
@@ -142,9 +180,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
  * @returns the setting menu embed object
  */
 function SettingsMainMenu(
-    server: AttendingServerV2,
-    channelId: string,
-    isDm: boolean
+    server: AttendingServerV2
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
@@ -161,17 +197,10 @@ function SettingsMainMenu(
                 'Your settings are always automatically saved as soon as you make a change. ' +
                 'You can dismiss this message at any time to finish configuring YABOB.'
         });
-    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
-            isDm ? 'dm' : 'other',
-            SelectMenuNames.ServerSettings,
-            server.guild.id,
-            channelId
-        ])
-            .setPlaceholder('Select an option')
-            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionData))
-    );
-    return { embeds: [embed.data], components: [selectMenu] };
+    return {
+        embeds: [embed.data],
+        components: [settingsOptionsSelectMenu(SettingsMainMenu)]
+    };
 }
 
 /**
@@ -289,7 +318,7 @@ function RolesConfigMenuInGuild(
     ];
     return {
         embeds: [embed.data],
-        components: [...buttons, mainMenuRow]
+        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenuInGuild)]
     };
 }
 
@@ -464,7 +493,10 @@ function AfterSessionMessageConfigMenu(
     if (updateMessage.length > 0) {
         embed.setFooter({ text: `✅ ${updateMessage}` });
     }
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AfterSessionMessageConfigMenu)]
+    };
 }
 
 /**
@@ -498,7 +530,9 @@ function QueueAutoClearConfigMenu(
                     server.queueAutoClearTimeout === undefined ||
                     server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
                         ? `**Disabled** - Queues will not be cleared automatically.`
-                        : `**Enabled** - Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
+                        : `**Enabled** - Queues will automatically be cleared in \
+                        **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** \
+                        after it closes.`
             }
         );
     if (updateMessage.length > 0) {
@@ -524,7 +558,10 @@ function QueueAutoClearConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(QueueAutoClearConfigMenu)]
+    };
 }
 
 /**
@@ -620,7 +657,11 @@ function LoggingChannelConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [channelsSelectMenu, buttons, mainMenuRow]
+        components: [
+            channelsSelectMenu,
+            buttons,
+            settingsOptionsSelectMenu(LoggingChannelConfigMenu)
+        ]
     };
 }
 
@@ -680,7 +721,10 @@ function AutoGiveStudentRoleConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AutoGiveStudentRoleConfigMenu)]
+    };
 }
 
 /**
@@ -739,7 +783,10 @@ function PromptHelpTopicConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(PromptHelpTopicConfigMenu)]
+    };
 }
 
 /**
@@ -799,7 +846,10 @@ function SeriousModeConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(SeriousModeConfigMenu)]
+    };
 }
 
 export {
@@ -813,5 +863,6 @@ export {
     PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
-    serverSettingsMainMenuOptions
+    settingsOptionsSelectMenu,
+    serverSettingsMenuOptions as serverSettingsMainMenuOptions
 };

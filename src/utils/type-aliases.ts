@@ -155,7 +155,7 @@ type SettingsMenuOption = {
      */
     optionData: SelectMenuComponentOptionData;
     /** A function that returns an embed of the actual menu */
-    subMenu: SettingsMenuConstructor;
+    menu: SettingsMenuConstructor;
 };
 
 /** Type alias for interaction extensions */
