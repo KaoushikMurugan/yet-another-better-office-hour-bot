@@ -32,7 +32,7 @@ async function showSettingsSubMenu(
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.optionData.value === selectedOption
-    )?.subMenu;
+    )?.menu;
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
@@ -58,7 +58,7 @@ async function selectLoggingChannel(
     }
     await server.setLoggingChannel(loggingChannel);
     await interaction.update(
-        callbackMenu.subMenu(
+        callbackMenu.menu(
             server,
             interaction.channelId,
             false,

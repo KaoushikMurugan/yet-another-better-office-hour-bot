@@ -654,7 +654,7 @@ async function settingsMenu(
         CommandNames.settings,
         'botAdmin'
     );
-    await interaction.editReply(SettingsMainMenu(server, interaction.channelId, false));
+    await interaction.editReply(SettingsMainMenu(server));
 }
 
 /**
