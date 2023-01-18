@@ -23,12 +23,14 @@ const CalendarSuccessMessages = {
     ),
     completedCalendarString: (calendarDisplayName: string, validQueueNames: string[]) =>
         SimpleEmbed(
-            'Copy and paste the following into the calendar **description**:\n\n' +
+            "Copy and paste the following into your calendar event's __description__ field:",
+            EmbedColor.Success,
+            '```\n' +
                 'YABOB_START ' +
                 `${calendarDisplayName} - ` +
-                `${validQueueNames.join(', ')} ` +
-                'YABOB_END\n',
-            EmbedColor.Success
+                `${validQueueNames.join(', ')}` +
+                ' YABOB_END' +
+                '\n```'
         ),
     publicEmbedUrl: {
         updated: SimpleEmbed(
