@@ -147,7 +147,9 @@ function updatePresence(): void {
         selectedPresenceList = helloWorldPresenceList;
     } else {
         // 5% chance of dynamic presence
-        selectedPresenceList = dynamicPresenceList.map(createPresence => createPresence());
+        selectedPresenceList = dynamicPresenceList.map(createPresence =>
+            createPresence()
+        );
     }
     const newPresence = selectedPresenceList.filter(
         botPresence => botPresence !== previousPresence
