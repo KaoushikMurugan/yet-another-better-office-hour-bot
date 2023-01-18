@@ -180,9 +180,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
  * @returns the setting menu embed object
  */
 function SettingsMainMenu(
-    server: AttendingServerV2,
-    channelId: string,
-    isDm: boolean
+    server: AttendingServerV2
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
@@ -320,7 +318,7 @@ function RolesConfigMenuInGuild(
     ];
     return {
         embeds: [embed.data],
-        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenu)]
+        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenuInGuild)]
     };
 }
 
