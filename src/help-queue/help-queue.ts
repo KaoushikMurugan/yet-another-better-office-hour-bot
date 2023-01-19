@@ -204,7 +204,7 @@ class HelpQueueV2 {
                 CreatePublicThreads: false,
                 AddReactions: false
             }),
-            queue.triggerForceRender() // do a fresh render on create
+            queue.triggerForceRender()
         ]);
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
@@ -583,8 +583,10 @@ class HelpQueueV2 {
      * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
      */
     async triggerForceRender(): Promise<void> {
+        // temporary fix, write to display memory first
+        await this.triggerRender(); 
+        // then request the force render
         await this.display.requestForceRender();
-        // TODO: emit the onQueueRender here?
     }
 
     /**
