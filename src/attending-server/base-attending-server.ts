@@ -33,12 +33,9 @@ import {
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
-    Err,
     GuildMemberId,
-    Ok,
     Optional,
     OptionalRoleId,
-    Result,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -53,7 +50,6 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
-import type { ServerError } from '../utils/error-types.js';
 
 /**
  * Wrapper for TextChannel
@@ -80,21 +76,28 @@ type ServerSettings = {
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
-     *
-     * Special values for role IDs:
-     * - 'Not Set' means that the role is not set
+     * @remark Special values for role IDs:
+     * - 'NotSet' means that the role is not set
      * - 'Deleted' means that the role was deleted
      */
     accessLevelRoleIds: AccessLevelRoleIds;
 };
 
 /**
- * V2 of AttendingServer. Represents 1 server that this YABOB is a member of
- * ----
+ * Represents 1 server that this YABOB is a member of.
  * - Public functions can be accessed by the command handler
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
 class AttendingServerV2 {
+    /**
+     * All the servers that YABOB is managing
+     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+     * without passing through a interaction handler first
+     * - equivalent to the old attendingServers global object
+     */
+    private static readonly allServers: Collection<Snowflake, AttendingServerV2> =
+        new Collection();
+
     /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
@@ -124,18 +127,17 @@ class AttendingServerV2 {
         }
     };
 
-    /**
-     * All the servers that YABOB is managing
-     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
-     * without passing through a interaction handler first
-     * - equivalent to the old attendingServers global object
-     */
-    static allServers: Collection<Snowflake, AttendingServerV2> = new Collection();
-
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<ServerExtension>
     ) {}
+
+    /**
+     * Number of correctly initialized AttendingServers
+     */
+    static get activeServersCount(): number {
+        return AttendingServerV2.allServers.size;
+    }
 
     /** All the access level role ids */
     get accessLevelRoleIds(): AccessLevelRoleIds {
@@ -167,7 +169,7 @@ class AttendingServerV2 {
      * @returns boolean, defaults to false if no queues exist on this server
      */
     get isSerious(): boolean {
-        return this.queues[0]?.seriousModeEnabled ?? false;
+        return this.queues[0]?.isSerious ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -225,7 +227,7 @@ class AttendingServerV2 {
      * Asynchronously creates a YABOB instance for 1 server
      * @param guild the server for YABOB to join
      * @returns a created instance of YABOB
-     * @throws Uncaught Error if any setup functions fail
+     * @throws {Error} if any setup functions fail (uncaught)
      */
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
@@ -279,6 +281,7 @@ class AttendingServerV2 {
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
+        AttendingServerV2.allServers.set(guild.id, server);
         console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
@@ -287,6 +290,7 @@ class AttendingServerV2 {
      * Gets a AttendingServerV2 object by Id
      * @param serverId guild Id
      * @returns the corresponding server object
+     * @throws {ServerError} if no server with this server id exists
      */
     static get(serverId: Snowflake): AttendingServerV2 {
         const server = AttendingServerV2.allServers.get(serverId);
@@ -301,12 +305,8 @@ class AttendingServerV2 {
      * @param serverId guild id
      * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
      */
-    static safeGet(serverId: Snowflake): Result<AttendingServerV2, ServerError> {
-        const server = AttendingServerV2.allServers.get(serverId);
-        if (!server) {
-            return Err(ExpectedServerErrors.notInitialized);
-        }
-        return Ok(server);
+    static safeGet(serverId: Snowflake): Optional<AttendingServerV2> {
+        return AttendingServerV2.allServers.get(serverId);
     }
 
     /**
@@ -328,6 +328,8 @@ class AttendingServerV2 {
      * @param helperMember helper that used /announce
      * @param announcement announcement message
      * @param targetQueue optional, specifies which queue to announce to
+     * @throws {ServerError} if the helper doesn't have the queue role of targetQueue if specified
+     * - if there's no one to announce to in any of the queues
      */
     async announceToStudentsInQueue(
         helperMember: GuildMember,
@@ -384,20 +386,13 @@ class AttendingServerV2 {
 
     /**
      * Clear all queues of this server
-     * @remark separated from clear queue to avoid excessive backup calls
+     * @remark separated from {@link clearQueue} to avoid excessive backup calls
      */
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
         );
-    }
-
-    /**
-     * Cleans up all the timers from setInterval
-     */
-    clearAllServerTimers(): void {
-        this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
     /**
@@ -414,7 +409,7 @@ class AttendingServerV2 {
     /**
      * Closes all the queue that the helper has permission to & logs the help time to console
      * @param helperMember helper that used /stop
-     * @throws ServerError if the helper is not hosting
+     * @throws {ServerError} if the helper is not hosting
      */
     async closeAllClosableQueues(helperMember: GuildMember): Promise<Required<Helper>> {
         const helper = this._helpers.get(helperMember.id);
@@ -427,10 +422,9 @@ class AttendingServerV2 {
             helpEnd: new Date()
         };
         console.log(
-            ` - Help time of ${helper.member.displayName} is ` +
-                `${convertMsToTime(
-                    completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
-                )}`
+            ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
+                completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
+            )}`
         );
         // this filter does not rely on user roles anymore
         // close all queues that has this user as a helper
@@ -461,11 +455,10 @@ class AttendingServerV2 {
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
         for (const role of this.sortedAccessLevelRoles) {
-            // do the search if it's NotSet, Deleted, or @everyone
+            // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                (Object.values(SpecialRoleValues) as string[]).includes(role.id) ||
-                role.id === everyoneRoleId
+                role.id in SpecialRoleValues || role.id === everyoneRoleId
                     ? allRoles.find(serverRole => serverRole.name === role.displayName)
                     : allRoles.get(role.id);
             if (role.key === 'student' && everyoneIsStudent) {
@@ -498,8 +491,7 @@ class AttendingServerV2 {
     /**
      * Creates a new office hour queue
      * @param newQueueName name for this queue
-     * @throws ServerError if
-     * - a queue with the same name already exists
+     * @throws {ServerError} if a queue with the same name already exists
      */
     async createQueue(newQueueName: string): Promise<void> {
         const queueWithSameName = this._queues.find(
@@ -532,8 +524,8 @@ class AttendingServerV2 {
     /**
      * Deletes a queue by categoryID
      * @param parentCategoryId CategoryChannel.id of the target queue
-     * @throws ServerError if
-     * - a discord API failure happened
+     * @throws {ServerError} if no queue with ths parentCategoryId exists
+     *  or the category itself doesn't exist
      */
     async deleteQueueById(parentCategoryId: string): Promise<void> {
         const queue = this._queues.get(parentCategoryId);
@@ -569,9 +561,8 @@ class AttendingServerV2 {
     /**
      * Dequeue the student that has been waiting for the longest globally
      * @param helperMember the helper that used /next.
-     * @throws
-     * - ServerError: if specificQueue is given but helper doesn't have the role
-     * - QueueError: if the queue to dequeue from rejects
+     * @returns the dequeued student
+     * @throws {ServerError} if helper is not hosting, not in a voice channel, or all queues are empty
      */
     async dequeueGlobalFirst(helperMember: GuildMember): Promise<Readonly<Helpee>> {
         const currentlyHelpingQueues = this._queues.filter(queue =>
@@ -615,9 +606,15 @@ class AttendingServerV2 {
 
     /**
      * Handle /next with arguments
+     * @param helperMember the helper that used /next
      * @param targetStudentMember if specified, remove this student and override queue order
      * @param targetQueue if specified, dequeue from this queue
      * - If both are specified, only look for the targetStudentMember in specificQueue
+     * @returns the dequeued student
+     * @throws {ServerError}
+     * - for the same reasons as {@link dequeueGlobalFirst}
+     * - if targetQueue is specified and it doesn't exist
+     * - if targetStudentMember is specified but not present in any queue
      */
     async dequeueWithArguments(
         helperMember: GuildMember,
@@ -679,7 +676,6 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
-     * @throws QueueError if queue refuses to enqueue
      */
     async enqueueStudent(
         studentMember: GuildMember,
@@ -701,7 +697,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Gets all the queue channels on the server. SLOW
+     * Gets all the queue channels on the server.
      * if nothing is found, returns empty array
      * @param useCache whether to read from existing cache, defaults to true
      * - unless queues change often, prefer cache for fast response
@@ -743,13 +739,16 @@ class AttendingServerV2 {
     }
 
     /**
-     * Called when leaving a server
+     * Called when leaving a server. **This is the only way to delete an AttendingServer**
      * - let all the extensions clean up their own memory first before deleting them
+     * @returns true if this server existed and has been removed, or false if the element does not exist.
      */
-    async gracefulDelete(): Promise<void> {
+    async gracefulDelete(): Promise<boolean> {
+        this.clearAllServerTimers();
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
+        return AttendingServerV2.allServers.delete(this.guild.id);
     }
 
     /**
@@ -765,7 +764,7 @@ class AttendingServerV2 {
     ): Promise<void> {
         await this._queues
             .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersOnStudentSubmitHelpTopic(studentMember, topic);
+            ?.notifyHelpersOn('submitHelpTopic', studentMember, topic);
     }
 
     /**
@@ -791,11 +790,10 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
-            const possibleHelpers = newVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            );
-            const queuesToRerender = this._queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+            const queuesToRerender = this.queues.filter(queue =>
+                newVoiceState.channel.members.some(vcMember =>
+                    queue.hasHelper(vcMember.id)
+                )
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
@@ -831,11 +829,11 @@ class AttendingServerV2 {
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
-            const possibleHelpers = oldVoiceState.channel.members.filter(
-                vcMember => vcMember.id !== member.id
-            ); // treat everyone that's not this student as a potential helper
+            // filter queues where some member of that voice channel is a helper of that queue
             const queuesToRerender = this.queues.filter(queue =>
-                possibleHelpers.some(possibleHelper => queue.hasHelper(possibleHelper.id))
+                oldVoiceState.channel.members.some(vcMember =>
+                    queue.hasHelper(vcMember.id)
+                )
             );
             await Promise.all([
                 ...oldVoiceState.channel.permissionOverwrites.cache.map(
@@ -1084,7 +1082,7 @@ class AttendingServerV2 {
      * Sets up queue auto clear for this server
      * @param hours the number of hours to wait before clearing the queue
      * @param minutes the number of minutes to wait before clearing the queue
-     * @param enable whether to disable auto clear, overrides 'hours'
+     * @param enable whether to disable auto clear, overrides hours` and `minutes`
      */
     async setQueueAutoClear(
         hours: number,
@@ -1103,7 +1101,7 @@ class AttendingServerV2 {
      * @returns True if triggered renders for all queues
      */
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const seriousState = this.queues[0]?.seriousModeEnabled ?? false;
+        const seriousState = this.queues[0]?.isSerious ?? false;
         if (seriousState === enableSeriousMode) {
             return false;
         }
@@ -1117,14 +1115,22 @@ class AttendingServerV2 {
     }
 
     /**
+     * Cleans up all the timers from setInterval
+     */
+    private clearAllServerTimers(): void {
+        this._queues.forEach(queue => queue.clearAllQueueTimers());
+    }
+
+    /**
      * Creates roles for all the available queues if not already created
      */
     private async createQueueRoles(): Promise<void> {
-        // use a set to collect the unique queue names
+        // use a set to collect the unique role names
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
         const queueNames = (await this.getQueueChannels(false)).map(
             channel => channel.queueName
         );
+        // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
             queueNames.map(roleToCreate => {
                 !existingRoles.has(roleToCreate) &&

@@ -158,7 +158,7 @@ async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    await interaction.update(SettingsMainMenu(server, interaction.channelId, false));
+    await interaction.update(SettingsMainMenu(server));
 }
 
 /**
@@ -180,8 +180,7 @@ async function createAccessLevelRoles(
             false,
             forceCreate
                 ? 'New roles have been created!'
-                : 'Role configurations have been updated!',
-            false
+                : 'Role configurations have been updated!'
         )
     );
 }

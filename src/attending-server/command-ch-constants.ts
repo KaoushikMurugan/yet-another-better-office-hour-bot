@@ -12,8 +12,8 @@ import { HelpMessage } from '../utils/type-aliases.js';
  * An object that groups the help messages and the visibility together
  * - Used when creating new help channels
  */
-export const commandChannelConfigs: {
-    /** The name of the created channel  */
+export const helpChannelConfigurations: {
+    /** The name of the created help channel  */
     channelName: string;
     /** Help message content */
     helpMessages: HelpMessage[];

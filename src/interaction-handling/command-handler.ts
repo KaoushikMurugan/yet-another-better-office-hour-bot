@@ -298,7 +298,8 @@ async function listHelpers(
     const server = AttendingServerV2.get(interaction.guildId);
     const helpers = server.helpers;
     if (helpers.size === 0) {
-        SimpleEmbed('No one is currently helping.');
+        await interaction.editReply(SimpleEmbed('No one is currently helping.'));
+        return;
     }
     const allQueues = await server.getQueueChannels();
     const table = new AsciiTable3()
@@ -653,7 +654,7 @@ async function settingsMenu(
         CommandNames.settings,
         'botAdmin'
     );
-    await interaction.editReply(SettingsMainMenu(server, interaction.channelId, false));
+    await interaction.editReply(SettingsMainMenu(server));
 }
 
 /**

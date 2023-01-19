@@ -7,13 +7,16 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder,
-    Snowflake
+    EmbedBuilder
 } from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
+import { OptionalRoleId, SpecialRoleValues } from './type-aliases.js';
 
 type ExpectedError = QueueError | ServerError | CommandParseError;
+
+/** Shorthand type for the embed field data */
+type EmbedData = Pick<BaseMessageOptions, 'embeds'>;
 
 enum EmbedColor {
     Error = 0xff6188, // Red
@@ -46,7 +49,7 @@ function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
     description = ''
-): Pick<BaseMessageOptions, 'embeds'> {
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     if (message.length <= 256) {
         return {
@@ -86,7 +89,7 @@ function SimpleEmbed2(
     message: string,
     color = EmbedColor.Neutral,
     description = ''
-): Pick<BaseMessageOptions, 'embeds'> {
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
         .setColor(color)
@@ -109,17 +112,20 @@ function SimpleEmbed2(
 /**
  * Creates an embed that displays an error message
  * @param err The error to display in the embed
- * @param pingForHelp role id of the person to ping for help
- * @returns A message object that only contains the requested embed
+ * @param pingForHelp role id of the person to ping for help. **Could be NotSet or Deleted**
+ * @param descriptionOverride a string that provides additional help message. If not specified, the default message will be used.
+ * @returns The embed with formatted error message
  */
 function ErrorEmbed2(
     err: ExpectedError | Error,
-    pingForHelp?: Snowflake
-): Pick<BaseMessageOptions, 'embeds'> {
+    pingForHelp: OptionalRoleId,
+    descriptionOverride?: string
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder();
     let color: EmbedColor;
-    // use tagged union to avoid the instanceof check
+    // use tagged union to avoid the expensive instanceof check
+    // @see https://mariusschulz.com/blog/tagged-union-types-in-typescript
     if ('type' in err) {
         switch (err.type) {
             case 'ServerError':
@@ -140,19 +146,20 @@ function ErrorEmbed2(
     } else {
         color = EmbedColor.UnexpectedError;
     }
+    const defaultErrorDescription = [
+        err.message.length > 256 ? `${err.message}\n` : '',
+        `If you need help or think this is a mistake, `,
+        `please post a screenshot of this message in the #help channel (or equivalent) and `,
+        pingForHelp in SpecialRoleValues
+            ? `show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`
+            : `contact <@&${pingForHelp}>.`
+    ].join('');
     embed
+        // Temporary solution, if message is too long, show the error name in the title
         .setTitle(err.message.length <= 256 ? err.message : err.name)
         .setTimestamp(new Date())
         .setAuthor({ name: 'YABOB', iconURL: YABOB_PFP_URL })
-        .setDescription(
-            (err.message.length > 256 ? `${err.message}\n` : '') +
-                `If you need help or think this is a mistake, ` +
-                `please post a screenshot of this message in the #help channel ` +
-                `(or equivalent) and ping ` +
-                (pingForHelp
-                    ? `<@&${pingForHelp}>.`
-                    : `Please show this message to a Bot Admin by pinging @Bot Admin (or equivalent).`)
-        )
+        .setDescription(descriptionOverride?.slice(0, 4096) ?? defaultErrorDescription)
         .setColor(color);
     return { embeds: [embed.data] };
 }
@@ -163,12 +170,8 @@ function ErrorEmbed2(
  * @param interaction The interaction that triggered the error
  * @returns A message object that only contains the requested embed
  */
-function ErrorLogEmbed(
-    err: Error,
-    interaction: Interaction
-): Pick<BaseMessageOptions, 'embeds'> {
+function ErrorLogEmbed(err: Error, interaction: Interaction): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
-    let color = EmbedColor.KindaBad;
     const embedFields = [
         {
             name: 'User',
@@ -181,6 +184,7 @@ function ErrorLogEmbed(
             inline: true
         }
     ];
+    let color = EmbedColor.KindaBad;
     if (err instanceof QueueError) {
         color = EmbedColor.Aqua;
         embedFields.push({
@@ -216,10 +220,7 @@ function ErrorLogEmbed(
     };
 }
 
-function ErrorLogEmbed2(
-    err: ExpectedError | Error,
-    interaction: Interaction
-): EmbedBuilder {
+function ErrorLogEmbed2(err: ExpectedError | Error, interaction: Interaction): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const fields = [
         {
@@ -233,7 +234,7 @@ function ErrorLogEmbed2(
             inline: true
         }
     ];
-    let color: EmbedColor;
+    let color: EmbedColor = EmbedColor.UnexpectedError;
     if ('type' in err) {
         switch (err.type) {
             case 'ServerError':
@@ -251,10 +252,8 @@ function ErrorLogEmbed2(
                 color = EmbedColor.KindaBad;
                 break;
         }
-    } else {
-        color = EmbedColor.UnexpectedError;
     }
-    return new EmbedBuilder()
+    const embed = new EmbedBuilder()
         .setTitle(
             `Error occurred at <t:${new Date().getTime().toString().slice(0, -3)}:F> `
         )
@@ -265,6 +264,7 @@ function ErrorLogEmbed2(
             text: 'YABOB',
             iconURL: YABOB_PFP_URL
         });
+    return { embeds: [embed.data] };
 }
 
 /**
@@ -272,7 +272,7 @@ function ErrorLogEmbed2(
  * @param message The message to display in the embed
  * @returns A message object that only contains the requested embed
  */
-function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
+function SimpleLogEmbed(message: string): EmbedData {
     const timeStampString = `\nat <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     if (message.length <= 256) {
@@ -307,7 +307,7 @@ function SimpleLogEmbed(message: string): Pick<BaseMessageOptions, 'embeds'> {
     }
 }
 
-function SimpleLogEmbed2(message: string): EmbedBuilder {
+function SimpleLogEmbed2(message: string): EmbedData {
     const timeStampString = `at <t:${new Date().getTime().toString().slice(0, -3)}:F>`;
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
@@ -324,7 +324,7 @@ function SimpleLogEmbed2(message: string): EmbedBuilder {
     message.length >= 256
         ? embed.setDescription(`${message.slice(0, 4096)}\n${timeStampString}`)
         : embed.setTitle(message);
-    return embed;
+    return { embeds: [embed.data] };
 }
 
 /**
@@ -338,7 +338,7 @@ function ButtonLogEmbed(
     user: User,
     buttonName: string,
     channel: TextBasedChannel
-): Pick<BaseMessageOptions, 'embeds'> {
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     return {
         embeds: [
@@ -379,9 +379,9 @@ function ButtonLogEmbed2(
     user: User,
     buttonName: string,
     channel: TextBasedChannel
-): EmbedBuilder {
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
-    return new EmbedBuilder()
+    const embed = new EmbedBuilder()
         .setTitle(
             `Button Pressed at <t:${new Date().getTime().toString().slice(0, -3)}:F>`
         )
@@ -408,6 +408,7 @@ function ButtonLogEmbed2(
             text: 'YABOB',
             iconURL: YABOB_PFP_URL
         });
+    return { embeds: [embed.data] };
 }
 
 /**
@@ -423,7 +424,7 @@ function SelectMenuLogEmbed(
     selectMenuName: string,
     optionSelected: string[],
     channel: TextBasedChannel
-): Pick<BaseMessageOptions, 'embeds'> {
+): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     return {
         embeds: [
@@ -470,9 +471,7 @@ function SelectMenuLogEmbed(
  * @param commandInteraction The interaction to create the log embed for
  * @returns A message object that only contains the log embed
  */
-function SlashCommandLogEmbed(
-    commandInteraction: CommandInteraction
-): Pick<BaseMessageOptions, 'embeds'> {
+function SlashCommandLogEmbed(commandInteraction: CommandInteraction): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     let commandName = commandInteraction.commandName;
     let optionsData = commandInteraction.options.data;

@@ -8,6 +8,7 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import {
+    SettingsMenuConstructor,
     SettingsMenuOption,
     SpecialRoleValues,
     YabobEmbed
@@ -21,6 +22,10 @@ import {
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 
+/**
+ * A button that returns to the main menu
+ * @deprecated
+ */
 const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     buildComponent(new ButtonBuilder(), [
         'other',
@@ -32,6 +37,30 @@ const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
         .setLabel('Return to Main Menu')
         .setStyle(ButtonStyle.Primary)
 );
+
+/**
+ * Composes the server settings main menu, excluding the option for the current menu
+ * @param currentMenu The name of the sub-Menu from which the settings menu is being called
+ * @returns
+ */
+function settingsOptionsSelectMenu(
+    currentMenu: SettingsMenuConstructor
+): ActionRowBuilder<SelectMenuBuilder> {
+    return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
+        buildComponent(new SelectMenuBuilder(), [
+            'other',
+            SelectMenuNames.ServerSettings,
+            UnknownId,
+            UnknownId
+        ])
+            .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
+            .addOptions(
+                serverSettingsMenuOptions
+                    .filter(menuOption => menuOption.menu !== currentMenu)
+                    .map(option => option.optionData)
+            )
+    );
+}
 
 /** This creates an empty embed field in embeds */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -68,7 +97,16 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
+const serverSettingsMenuOptions: SettingsMenuOption[] = [
+    {
+        optionData: {
+            emoji: '🏠',
+            label: 'Main Menu',
+            description: 'Return to the main menu',
+            value: 'main-menu'
+        },
+        menu: SettingsMainMenu
+    },
     {
         optionData: {
             emoji: '📝',
@@ -76,7 +114,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the server roles',
             value: 'server-roles'
         },
-        subMenu: RolesConfigMenu
+        menu: RolesConfigMenuInGuild
     },
     {
         optionData: {
@@ -85,7 +123,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
-        subMenu: AfterSessionMessageConfigMenu
+        menu: AfterSessionMessageConfigMenu
     },
     {
         optionData: {
@@ -94,7 +132,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
-        subMenu: QueueAutoClearConfigMenu
+        menu: QueueAutoClearConfigMenu
     },
     {
         optionData: {
@@ -103,7 +141,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
-        subMenu: LoggingChannelConfigMenu
+        menu: LoggingChannelConfigMenu
     },
     {
         optionData: {
@@ -112,7 +150,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
-        subMenu: AutoGiveStudentRoleConfigMenu
+        menu: AutoGiveStudentRoleConfigMenu
     },
     {
         optionData: {
@@ -121,7 +159,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
-        subMenu: PromptHelpTopicConfigMenu
+        menu: PromptHelpTopicConfigMenu
     },
     {
         optionData: {
@@ -130,7 +168,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             description: 'Configure the serious mode',
             value: 'serious-mode'
         },
-        subMenu: SeriousModeConfigMenu
+        menu: SeriousModeConfigMenu
     }
 ];
 
@@ -142,9 +180,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
  * @returns the setting menu embed object
  */
 function SettingsMainMenu(
-    server: AttendingServerV2,
-    channelId: string,
-    isDm: boolean
+    server: AttendingServerV2
 ): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
@@ -161,17 +197,10 @@ function SettingsMainMenu(
                 'Your settings are always automatically saved as soon as you make a change. ' +
                 'You can dismiss this message at any time to finish configuring YABOB.'
         });
-    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
-            isDm ? 'dm' : 'other',
-            SelectMenuNames.ServerSettings,
-            server.guild.id,
-            channelId
-        ])
-            .setPlaceholder('Select an option')
-            .addOptions(serverSettingsMainMenuOptions.map(option => option.optionData))
-    );
-    return { embeds: [embed.data], components: [selectMenu] };
+    return {
+        embeds: [embed.data],
+        components: [settingsOptionsSelectMenu(SettingsMainMenu)]
+    };
 }
 
 /**
@@ -182,20 +211,17 @@ function SettingsMainMenu(
  * @param forServerInit is the menu sent on joining a new server?
  * @returns
  */
-function RolesConfigMenu(
+function RolesConfigMenuInGuild(
     server: AttendingServerV2,
     channelId: string,
-    isDm: boolean,
-    updateMessage = '',
-    forServerInit = false
+    _isDm: boolean, // not used
+    updateMessage = ''
 ): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
             : id === SpecialRoleValues.Deleted
             ? '@deleted-role'
-            : isDm // role pings shows up as '@deleted-role' in dm even if it exists
-            ? server.guild.roles.cache.get(id)?.name ?? '@deleted-role'
             : `<@&${id}>`;
     };
     const setRolesCommandId = server.guild.commands.cache.find(
@@ -206,69 +232,50 @@ function RolesConfigMenu(
         .setColor(EmbedColor.Aqua);
     // addFields accepts RestOrArray<T>,
     // so they can be combined into a single addFields call, but prettier makes it ugly
-    if (!isDm) {
-        // TODO: Separate forServerInit version and server version
-        embed.addFields(
-            {
-                name: 'Description',
-                value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
-            },
-            {
-                name: 'Documentation',
-                value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
-            },
-            {
-                name: 'Warning',
-                value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
-            }
-        );
-    }
+
+    // TODO: Separate forServerInit version and server version
     embed.addFields(
+        {
+            name: 'Description',
+            value: 'Configures which roles should YABOB interpret as Bot Admin, Staff, and Student.'
+        },
+        {
+            name: 'Documentation',
+            value: `[Learn more about YABOB roles here.](${documentationLinks.serverRoles}) For more granular control, use the </set_roles:${setRolesCommandId}> command.`
+        },
+        {
+            name: 'Warning',
+            value: 'If roles named Bot Admin, Staff, or Student already exist, duplicate roles will be created when using [Create new Roles].'
+        },
         {
             name: '┈'.repeat(25),
             value: '**Current Role Configuration**'
         },
         {
             name: '🤖 Bot Admin Role',
-            value: forServerInit
-                ? `Role that can manage the bot and its settings`
-                : generatePing(server.botAdminRoleID),
+            value: generatePing(server.botAdminRoleID),
             inline: true
         },
         {
             name: '📚 Staff Role',
-            value: forServerInit
-                ? `Role that allows users to host office hours`
-                : generatePing(server.staffRoleID),
+            value: generatePing(server.staffRoleID),
             inline: true
         },
         {
             name: ' 🎓 Student Role',
-            value: forServerInit
-                ? `Role that allows users to join office hour queues`
-                : generatePing(server.studentRoleID),
+            value: generatePing(server.studentRoleID),
             inline: true
         }
     );
-    if (forServerInit) {
-        embed.setDescription(
-            `**Thanks for choosing YABOB for helping you with office hours!
-            To start using YABOB, it requires the following roles: **\n`
-        );
-    }
     if (updateMessage.length > 0) {
         embed.setFooter({
-            text: `✅ ${updateMessage}${
-                !forServerInit && isDm
-                    ? ` Discord does not render server roles in DM channels. Please go to ${server.guild.name} to see the newly created roles.`
-                    : ''
-            }`
+            text: `✅ ${updateMessage}`
         });
     }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig1,
                 server.guild.id,
                 channelId
@@ -279,7 +286,7 @@ function RolesConfigMenu(
                 .setLabel('Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig1a,
                 server.guild.id,
                 channelId
@@ -290,7 +297,7 @@ function RolesConfigMenu(
         ),
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig2,
                 server.guild.id,
                 channelId
@@ -299,7 +306,7 @@ function RolesConfigMenu(
                 .setLabel('Create New Roles')
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
-                isDm ? 'dm' : 'other',
+                'other',
                 ButtonNames.ServerRoleConfig2a,
                 server.guild.id,
                 channelId
@@ -311,7 +318,7 @@ function RolesConfigMenu(
     ];
     return {
         embeds: [embed.data],
-        components: isDm ? buttons : [...buttons, mainMenuRow]
+        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenuInGuild)]
     };
 }
 
@@ -486,7 +493,10 @@ function AfterSessionMessageConfigMenu(
     if (updateMessage.length > 0) {
         embed.setFooter({ text: `✅ ${updateMessage}` });
     }
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AfterSessionMessageConfigMenu)]
+    };
 }
 
 /**
@@ -520,7 +530,9 @@ function QueueAutoClearConfigMenu(
                     server.queueAutoClearTimeout === undefined ||
                     server.queueAutoClearTimeout === 'AUTO_CLEAR_DISABLED'
                         ? `**Disabled** - Queues will not be cleared automatically.`
-                        : `**Enabled** - Queues will automatically be cleared in **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** after it closes.`
+                        : `**Enabled** - Queues will automatically be cleared in \
+                        **${`${server.queueAutoClearTimeout.hours}h ${server.queueAutoClearTimeout.minutes}min`}** \
+                        after it closes.`
             }
         );
     if (updateMessage.length > 0) {
@@ -546,7 +558,10 @@ function QueueAutoClearConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(QueueAutoClearConfigMenu)]
+    };
 }
 
 /**
@@ -642,7 +657,11 @@ function LoggingChannelConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [channelsSelectMenu, buttons, mainMenuRow]
+        components: [
+            channelsSelectMenu,
+            buttons,
+            settingsOptionsSelectMenu(LoggingChannelConfigMenu)
+        ]
     };
 }
 
@@ -702,7 +721,10 @@ function AutoGiveStudentRoleConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(AutoGiveStudentRoleConfigMenu)]
+    };
 }
 
 /**
@@ -761,7 +783,10 @@ function PromptHelpTopicConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(PromptHelpTopicConfigMenu)]
+    };
 }
 
 /**
@@ -821,12 +846,15 @@ function SeriousModeConfigMenu(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-    return { embeds: [embed.data], components: [buttons, mainMenuRow] };
+    return {
+        embeds: [embed.data],
+        components: [buttons, settingsOptionsSelectMenu(SeriousModeConfigMenu)]
+    };
 }
 
 export {
     SettingsMainMenu,
-    RolesConfigMenu,
+    RolesConfigMenuInGuild as RolesConfigMenu,
     RolesConfigMenuForServerInit,
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
@@ -835,5 +863,6 @@ export {
     PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
     mainMenuRow,
-    serverSettingsMainMenuOptions
+    settingsOptionsSelectMenu,
+    serverSettingsMenuOptions as serverSettingsMainMenuOptions
 };

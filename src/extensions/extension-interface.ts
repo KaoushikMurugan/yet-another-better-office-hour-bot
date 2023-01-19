@@ -199,7 +199,6 @@ interface QueueExtension {
      * When a queue re-render happens
      * @param queue queue that just requested a render
      * @param display the QueueDisplayV2 object that handles the rendering
-     * @remark Extensions with custom embeds should override this method to get the display object
      */
     onQueueRender: (queue: FrozenQueue, display: FrozenDisplay) => Promise<void>;
     /**
@@ -218,7 +217,7 @@ interface QueueExtension {
  * - Add help messages in the helpMessages array
  * - Add setting menu options in the settingsMainMenuOptions array
  */
-class BaseInteractionExtension implements InteractionExtension {
+abstract class BaseInteractionExtension implements InteractionExtension {
     initializationCheck(): Promise<void> {
         return Promise.resolve();
     }
@@ -268,7 +267,7 @@ class BaseInteractionExtension implements InteractionExtension {
  * - Any SERVER extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseServerExtension implements ServerExtension {
+abstract class BaseServerExtension implements ServerExtension {
     onServerInitSuccess(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
@@ -326,7 +325,7 @@ class BaseServerExtension implements ServerExtension {
  * - Any QUEUE extension must inherit from here
  * - Override the events that you want to trigger
  */
-class BaseQueueExtension implements QueueExtension {
+abstract class BaseQueueExtension implements QueueExtension {
     onQueueCreate(queue: FrozenQueue): Promise<void> {
         return Promise.resolve();
     }
