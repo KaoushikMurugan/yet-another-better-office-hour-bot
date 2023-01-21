@@ -61,7 +61,7 @@ export const SuccessMessages = {
         ),
     clearedQueue: (queueName: string) =>
         SimpleEmbed(`Everyone in  queue ${queueName} was removed.`, EmbedColor.Success),
-    clearedAllQueues: (serverName = 'unknown server') =>
+    clearedAllQueues: (serverName: string) =>
         SimpleEmbed(`All queues on ${serverName} was cleared.`, EmbedColor.Success),
     announced: (announcement: string) =>
         SimpleEmbed(`Your announcement has been sent!`, EmbedColor.Success, announcement),
@@ -114,7 +114,9 @@ export const SuccessMessages = {
     ),
     createdOffices: (numOffices: number) =>
         SimpleEmbed(
-            `Successfully created ${numOffices} office${numOffices === 1 ? '' : 's'}.`,
+            `Successfully created ${numOffices} office${
+                numOffices === 1 ? '' : 's'
+            }. It should be at the end of your channels list.`,
             EmbedColor.Success
         ),
     setBotAdminRole: (roleID: string) =>

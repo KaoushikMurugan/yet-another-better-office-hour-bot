@@ -45,7 +45,7 @@ import { RolesConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
-    updateCommandHelpChannelVisibility,
+    setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
@@ -1022,7 +1022,7 @@ class AttendingServerV2 {
     async setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): Promise<void> {
         this.settings.accessLevelRoleIds[role] = id;
         await Promise.all([
-            updateCommandHelpChannelVisibility(
+            setHelpChannelVisibility(
                 this.guild,
                 this.settings.accessLevelRoleIds
             ),
