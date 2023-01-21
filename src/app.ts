@@ -88,20 +88,27 @@ client.on(Events.GuildDelete, async guild => {
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     getHandler(interaction)(interaction).catch((err: Error) => {
-        console.error(err);
+        console.error(red('Uncaught Error: '), err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(() =>
+            .catch(() => {
                 failedInteractions.push({
                     username: interaction.user.username,
                     interaction: interaction
-                })
-            );
+                });
+                if (failedInteractions.length > 5) {
+                    console.log(
+                        `These ${failedInteractions.length} interactions completely failed:`
+                    );
+                    console.log(failedInteractions);
+                    failedInteractions.slice(0, failedInteractions.length);
+                }
+            });
     });
 });
 
 /**
- * Gives the Student role to new members
+ * Gives the student role to new members if auto_give_student_role is set to true
  */
 client.on(Events.GuildMemberAdd, async member => {
     const server = AttendingServerV2.safeGet(member.guild.id);
@@ -117,7 +124,7 @@ client.on(Events.GuildMemberAdd, async member => {
         studentRole.id !== server.guild.roles.everyone.id
     ) {
         member.roles.add(studentRole).catch(err => {
-            console.error('Failed to add student role', err);
+            console.error(red('Failed to add student role'), err);
             member
                 .send(
                     SimpleEmbed(
@@ -134,7 +141,7 @@ client.on(Events.GuildMemberAdd, async member => {
  * Once YABOB has the highest role, start the initialization call
  */
 client.on(Events.GuildRoleUpdate, async role => {
-    // if id exists
+    // if id exists, then we ignore
     if (AttendingServerV2.safeGet(role.guild.id)) {
         return;
     }
@@ -220,14 +227,34 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * - extensions only need to specify the corresponding properties
  */
 function collectInteractionExtensionStaticData(): void {
+    const documentationLink = {
+        nameValuePair: {
+            name: 'Documentation Link',
+            value: 'documentation-link'
+        },
+        useInHelpChannel: true,
+        useInHelpCommand: false,
+        message: {
+            embeds: [
+                {
+                    color: EmbedColor.Neutral,
+                    title: 'Documentation Link',
+                    url: 'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Built-in-Commands'
+                }
+            ]
+        }
+    };
     adminCommandHelpMessages.push(
-        ...interactionExtensions.flatMap(ext => ext.helpMessages.botAdmin)
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.botAdmin),
+        documentationLink
     );
     helperCommandHelpMessages.push(
-        ...interactionExtensions.flatMap(ext => ext.helpMessages.staff)
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.staff),
+        documentationLink
     );
     studentCommandHelpMessages.push(
-        ...interactionExtensions.flatMap(ext => ext.helpMessages.student)
+        ...interactionExtensions.flatMap(ext => ext.helpMessages.student),
+        documentationLink
     );
     serverSettingsMainMenuOptions.push(
         ...interactionExtensions.flatMap(ext => ext.settingsMainMenuOptions)

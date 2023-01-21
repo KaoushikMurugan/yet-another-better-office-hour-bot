@@ -500,7 +500,6 @@ async function setLoggingChannel(
 
 /**
  * The `/set_queue_auto_clear` command
-
  */
 async function showQueueAutoClearModal(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -517,7 +516,6 @@ async function showQueueAutoClearModal(
 
 /**
  * The `/stop_logging` command
-
  */
 async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -559,8 +557,6 @@ async function setSeriousMode(
 
 /**
  * The `/create_offices` command
-
- * @s
  */
 async function createOffices(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -597,8 +593,6 @@ async function createOffices(
 
 /**
  * The `/set_roles` command
-
- * @s
  */
 async function setRoles(
     interaction: ChatInputCommandInteraction<'cached'>
@@ -620,17 +614,17 @@ async function setRoles(
     }
     switch (roleType) {
         case 'bot_admin': {
-            await server.setAccessLevelRoleId('botAdmin', role.id);
+            server.setAccessLevelRoleId('botAdmin', role.id);
             await interaction.editReply(SuccessMessages.setBotAdminRole(role.id));
             break;
         }
         case 'staff': {
-            await server.setAccessLevelRoleId('staff', role.id);
+            server.setAccessLevelRoleId('staff', role.id);
             await interaction.editReply(SuccessMessages.setHelperRole(role.id));
             break;
         }
         case 'student': {
-            await server.setAccessLevelRoleId('student', role.id);
+            server.setAccessLevelRoleId('student', role.id);
             await interaction.editReply(SuccessMessages.setStudentRole(role.id));
             break;
         }
@@ -658,7 +652,7 @@ async function settingsMenu(
 }
 
 /**
- * The `/auto_give_role` command
+ * The `/auto_give_student_role` command
  */
 async function setAutoGiveStudentRole(
     interaction: ChatInputCommandInteraction<'cached'>
