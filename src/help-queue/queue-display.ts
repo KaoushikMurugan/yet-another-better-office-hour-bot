@@ -84,6 +84,10 @@ class QueueDisplayV2 {
      */
     private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
         new Collection();
+    /**
+     * Whether the display has temporarily paused rendering
+     */
+    private writeOnlyMode = false;
 
     /**
      * Saved for queue delete. Stop the timer when a queue is deleted.
@@ -96,8 +100,9 @@ class QueueDisplayV2 {
             // every second, check if there are any fresh embeds
             // if there's nothing new or a render is already happening, stop
             if (
-                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0 ||
-                this.isRendering
+                this.isRendering ||
+                this.writeOnlyMode ||
+                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0
             ) {
                 return;
             }
@@ -134,6 +139,22 @@ class QueueDisplayV2 {
             renderIndex: renderIndex,
             stale: false
         });
+    }
+
+    /**
+     * Lets the display enter write only mode.
+     * When enabled, the render loop will not skip rendering
+     */
+    enterWriteOnlyMode(): void {
+        this.writeOnlyMode = true;
+    }
+
+    /**
+     *
+     */
+    exitWriteOnlyMode(): void {
+        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+        this.writeOnlyMode = false;
     }
 
     /**

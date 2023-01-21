@@ -583,15 +583,14 @@ class HelpQueueV2 {
      * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
      */
     async triggerForceRender(): Promise<void> {
-        await this.display.requestForceRender();
-        // TODO: emit the onQueueRender here?
+        await this.triggerRender(true);
     }
 
     /**
      * Re-renders the queue message.
      * Composes the queue view model, then sends it to QueueDisplay
      */
-    async triggerRender(): Promise<void> {
+    async triggerRender(force = false): Promise<void> {
         // build viewModel, then call display.render()
         const viewModel: QueueViewModel = {
             queueName: this.queueName,
@@ -611,12 +610,24 @@ class HelpQueueV2 {
                           this.timeUntilAutoClear.minutes
                       )
         };
-        this.display.requestQueueEmbedRender(viewModel);
-        await Promise.all(
-            this.queueExtensions.map(extension =>
-                extension.onQueueRender(this, this.display)
-            )
-        );
+        if (force) {
+            this.display.enterWriteOnlyMode();
+            this.display.requestQueueEmbedRender(viewModel);
+            await Promise.all(
+                this.queueExtensions.map(extension =>
+                    extension.onQueueRender(this, this.display)
+                )
+            );
+            this.display.exitWriteOnlyMode();
+            await this.display.requestForceRender();
+        } else {
+            this.display.requestQueueEmbedRender(viewModel);
+            await Promise.all(
+                this.queueExtensions.map(extension =>
+                    extension.onQueueRender(this, this.display)
+                )
+            );
+        }
     }
 
     /**
