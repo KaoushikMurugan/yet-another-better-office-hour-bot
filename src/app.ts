@@ -88,20 +88,27 @@ client.on(Events.GuildDelete, async guild => {
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     getHandler(interaction)(interaction).catch((err: Error) => {
-        console.error(err);
+        console.error(red('Uncaught Error: '), err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(() =>
+            .catch(() => {
                 failedInteractions.push({
                     username: interaction.user.username,
                     interaction: interaction
-                })
-            );
+                });
+                if (failedInteractions.length > 5) {
+                    console.log(
+                        `These ${failedInteractions.length} interactions completely failed:`
+                    );
+                    console.log(failedInteractions);
+                    failedInteractions.slice(0, failedInteractions.length);
+                }
+            });
     });
 });
 
 /**
- * Gives the Student role to new members
+ * Gives the student role to new members if auto_give_student_role is set to true
  */
 client.on(Events.GuildMemberAdd, async member => {
     const server = AttendingServerV2.safeGet(member.guild.id);
@@ -117,7 +124,7 @@ client.on(Events.GuildMemberAdd, async member => {
         studentRole.id !== server.guild.roles.everyone.id
     ) {
         member.roles.add(studentRole).catch(err => {
-            console.error('Failed to add student role', err);
+            console.error(red('Failed to add student role'), err);
             member
                 .send(
                     SimpleEmbed(
