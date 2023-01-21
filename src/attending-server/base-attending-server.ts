@@ -1007,10 +1007,11 @@ class AttendingServerV2 {
      */
     sendLogMessage(message: BaseMessageOptions | string): void {
         if (this.loggingChannel) {
-            this.loggingChannel.send(message).catch(err => {
-                console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(err);
-            });
+            this.loggingChannel
+                .send(message)
+                .catch(err =>
+                    console.error(red(`Failed to send logs to ${this.guild.name}.`), err)
+                );
         }
     }
 
@@ -1019,17 +1020,17 @@ class AttendingServerV2 {
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
-    async setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): Promise<void> {
+    setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): void {
         this.settings.accessLevelRoleIds[role] = id;
-        await Promise.all([
-            setHelpChannelVisibility(
-                this.guild,
-                this.settings.accessLevelRoleIds
-            ),
+        Promise.all([
+            setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds),
             ...this.serverExtensions.map(extension =>
                 extension.onServerRequestBackup(this)
             )
-        ]);
+        ]).catch(err => {
+            console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+            this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
+        });
     }
 
     /**
