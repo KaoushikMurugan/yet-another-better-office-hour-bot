@@ -160,6 +160,14 @@ async function setHelpChannelVisibility(
             )
             .flat()
     );
+    // make the channel invisible to @everyone first
+    await Promise.all(
+        helpChannels.map(channel =>
+            channel.permissionOverwrites.create(guild.roles.everyone, {
+                ViewChannel: false
+            })
+        )
+    );
     await Promise.all(
         helpChannels.map(channel =>
             helpChannelConfigurations
@@ -170,13 +178,6 @@ async function setHelpChannelVisibility(
                         ViewChannel: true
                     })
                 )
-        )
-    );
-    await Promise.all(
-        helpChannels.map(channel =>
-            channel.permissionOverwrites.create(guild.roles.everyone, {
-                ViewChannel: false
-            })
         )
     );
 }
@@ -198,7 +199,7 @@ async function createOfficeVoiceChannels(
     categoryName: string,
     officeNamePrefix: string,
     numberOfOffices: number,
-    permittedRoleIds: Snowflake[]
+    permittedRoleIds: [Snowflake, Snowflake]
 ): Promise<void> {
     const allChannels = await guild.channels.fetch();
     // Find if a category with the same name exists
@@ -216,7 +217,6 @@ async function createOfficeVoiceChannels(
         name: categoryName,
         type: ChannelType.GuildCategory
     });
-    // Change the config object and add more functions here if needed
     await Promise.all(
         Array(numberOfOffices)
             .fill(undefined)
@@ -224,6 +224,7 @@ async function createOfficeVoiceChannels(
                 officeCategory.children.create({
                     name: `${officeNamePrefix} ${officeNumber + 1}`,
                     type: ChannelType.GuildVoice,
+                    // create the permission overwrites along with the channel itself
                     permissionOverwrites: [
                         {
                             deny: PermissionFlagsBits.SendMessages,

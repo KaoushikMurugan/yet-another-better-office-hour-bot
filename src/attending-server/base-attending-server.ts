@@ -479,9 +479,10 @@ class AttendingServerV2 {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        await Promise.all([
+            setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
+            ...this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+        ]);
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)
             : console.log(green(`All required roles exist in ${this.guild.name}!`));
@@ -713,7 +714,7 @@ class AttendingServerV2 {
             if (!isCategoryChannel(categoryChannel)) {
                 continue;
             }
-            const queueTextChannel: Optional<TextChannel> =
+            const queueTextChannel =
                 categoryChannel.children.cache.find(isQueueTextChannel);
             if (!queueTextChannel) {
                 continue;
@@ -1027,10 +1028,12 @@ class AttendingServerV2 {
             ...this.serverExtensions.map(extension =>
                 extension.onServerRequestBackup(this)
             )
-        ]).catch(err => {
-            console.error(red(`Failed to set roles in ${this.guild.name}`), err);
-            this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
-        });
+        ])
+            .then(() => console.log('updated channel visibility'))
+            .catch(err => {
+                console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+                this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
+            });
     }
 
     /**

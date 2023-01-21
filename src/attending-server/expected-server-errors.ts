@@ -30,23 +30,20 @@ const ExpectedServerErrors = {
     queueAlreadyExists: (name: string) => new ServerError(`Queue ${name} already exists`),
     categoryAlreadyExists: (name: string) =>
         new ServerError(`Category '${name}' already exists`),
-    apiFail: (err: Error) => new ServerError(`API Failure: ${err.name}\n${err.message}`),
     studentNotFound: (studentName: string) =>
         new ServerError(`The student ${studentName} is not in any of the queues.`),
     noAnnouncePerm: (queueName: string) =>
         new ServerError(
-            `You don't have permission to announce in ${queueName}. ` +
-                `You can only announce to queues that you have a role of.`
+            `You don't have permission to announce in ${queueName}. You can only announce to queues that you have a role of.`
         ),
     noStudentToAnnounce: (announcement: string) =>
         new ServerError(
             'There are no students in the queue to send your announcement to. ' +
                 "Here's your announcement if you would like to save it for later: " +
-                `\`\`\`${announcement}\`\`\``
+                `\`\`\`\n${announcement}\n\`\`\``
         ),
-    badDequeueArguments: new ServerError(
-        'Either student or the queue should be specified.' +
-            ' Did you mean to use `/next` without options?'
+    badDequeueArguments: new ServerError( // this should not happen
+        'Either student or the queue should be specified. Did you mean to use `/next` without options?'
     ),
     roleNotSet: (roleName: string) =>
         new ServerError(
