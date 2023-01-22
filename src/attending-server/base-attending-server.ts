@@ -381,7 +381,7 @@ class AttendingServerV2 {
      * @param targetQueue the queue to clean
      */
     async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
+        await this._queues.get(targetQueue.parentCategoryId)?.triggerRender(true);
     }
 
     /**
@@ -481,7 +481,9 @@ class AttendingServerV2 {
         }
         await Promise.all([
             setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
-            ...this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
         ]);
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)

@@ -121,6 +121,22 @@ class QueueDisplayV2 {
         }, 1000);
     }
 
+    /**
+     * Lets the display enter write only mode.
+     * When enabled, the render loop will skip rendering even if non-stale embeds exist
+     */
+    enterWriteOnlyMode(): void {
+        this.writeOnlyMode = true;
+    }
+
+    /**
+     * Exits the write only mode. 
+     */
+    exitWriteOnlyMode(): void {
+        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+        this.writeOnlyMode = false;
+    }
+
     async requestForceRender(): Promise<void> {
         await this.render(true);
     }
@@ -139,22 +155,6 @@ class QueueDisplayV2 {
             renderIndex: renderIndex,
             stale: false
         });
-    }
-
-    /**
-     * Lets the display enter write only mode.
-     * When enabled, the render loop will not skip rendering
-     */
-    enterWriteOnlyMode(): void {
-        this.writeOnlyMode = true;
-    }
-
-    /**
-     *
-     */
-    exitWriteOnlyMode(): void {
-        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
-        this.writeOnlyMode = false;
     }
 
     /**

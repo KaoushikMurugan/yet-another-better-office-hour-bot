@@ -580,15 +580,9 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
-     */
-    async triggerForceRender(): Promise<void> {
-        await this.triggerRender(true);
-    }
-
-    /**
      * Re-renders the queue message.
      * Composes the queue view model, then sends it to QueueDisplay
+     * @param force whether to trigger a force render, equivalent to the old triggerForceRender() method
      */
     async triggerRender(force = false): Promise<void> {
         // build viewModel, then call display.render()
