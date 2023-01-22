@@ -599,13 +599,11 @@ class HelpQueueV2 {
     }
 
     /**
-     * Re-renders the queue message.
-     * Composes the queue view model, then sends it to QueueDisplay
-     * @param force whether to trigger a force render, equivalent to the old triggerForceRender() method
+     * Returns the view model of the current state of the queue
+     * @returns QueueViewModel
      */
-    async triggerRender(force = false): Promise<void> {
-        // build viewModel, then call display.render()
-        const viewModel: QueueViewModel = {
+    computeCurrentViewModel(): QueueViewModel {
+        return {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],
@@ -623,24 +621,32 @@ class HelpQueueV2 {
                           this.timeUntilAutoClear.minutes
                       )
         };
-        if (force) {
-            this.display.enterWriteOnlyMode();
-            this.display.requestQueueEmbedRender(viewModel);
-            await Promise.all(
-                this.queueExtensions.map(extension =>
-                    extension.onQueueRender(this, this.display)
-                )
-            );
-            this.display.exitWriteOnlyMode();
-            await this.display.requestForceRender();
-        } else {
-            this.display.requestQueueEmbedRender(viewModel);
-            await Promise.all(
-                this.queueExtensions.map(extension =>
-                    extension.onQueueRender(this, this.display)
-                )
-            );
-        }
+    }
+
+    async triggerForceRender(): Promise<void> {
+        this.display.enterWriteOnlyMode();
+        this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                extension.onQueueRender(this, this.display)
+            )
+        );
+        this.display.exitWriteOnlyMode();
+        await this.display.requestForceRender();
+    }
+
+    /**
+     * Re-renders the queue message.
+     * Composes the queue view model, then sends it to QueueDisplay
+     * @param force whether to trigger a force render, equivalent to the old triggerForceRender() method
+     */
+    async triggerRender(): Promise<void> {
+        this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                extension.onQueueRender(this, this.display)
+            )
+        );
     }
 
     /**
