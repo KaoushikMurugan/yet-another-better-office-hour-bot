@@ -48,6 +48,12 @@ const ExpectedQueueErrors = {
         new QueueError(
             `You are not in the notification group for ${queueName}.`,
             queueName
+        ),
+    staffBlockedDm: (queueName: string, studentActionText: string) =>
+        new QueueError(
+            `One or more staff members did not allow YABOB to notify them that you ${studentActionText}.\n` +
+                `You can go to the 'Current Active Helpers' embed and contact them through their discord id.`,
+            queueName
         )
 } as const;
 

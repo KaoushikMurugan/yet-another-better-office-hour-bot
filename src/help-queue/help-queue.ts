@@ -7,7 +7,11 @@ import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
-import { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import {
+    GuildMemberId,
+    Optional,
+    YabobEmbed
+} from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -434,13 +438,14 @@ class HelpQueueV2 {
      * @param studentMember the student that emitted the event
      * @param helpTopic if event is 'submitHelpTopic', this param is specified, see the above overload
      */
-    async notifyHelpersOn<EventType extends 'submitHelpTopic' | 'joinQueue'>(
-        event: EventType,
+    async notifyHelpersOn(
+        event: 'submitHelpTopic' | 'joinQueue',
         studentMember: GuildMember,
         helpTopic?: string
     ): Promise<void> {
+        // a string describing what the event is, used only for the error message
+        let studentAction: string;
         let embed: YabobEmbed;
-        // this would look really pretty if pattern matching exists in JS
         switch (event) {
             case 'joinQueue':
                 embed = SimpleEmbed(
@@ -448,6 +453,7 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `<@${studentMember.user.id}>`
                 );
+                studentAction = `joined ${this.queueName}`;
                 break;
             case 'submitHelpTopic':
                 embed = SimpleEmbed(
@@ -455,12 +461,17 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `\n\n${helpTopic}\n\n<@${studentMember.user.id}>`
                 );
+                studentAction = 'submitted what you need help with';
+                break;
         }
-        await Promise.all(
+        const results = await Promise.allSettled(
             [...this.activeHelperIds].map(helperId =>
                 this.queueChannel.channelObj.members.get(helperId)?.send(embed)
             )
         );
+        if (results.some(result => result.status === 'rejected')) {
+            throw ExpectedQueueErrors.staffBlockedDm(this.queueName, studentAction);
+        }
     }
 
     /**
