@@ -7,11 +7,7 @@ import { QueueBackup } from '../models/backups.js';
 import { Helpee } from '../models/member-states.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
-import {
-    GuildMemberId,
-    Optional,
-    YabobEmbed
-} from '../utils/type-aliases.js';
+import { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -464,13 +460,25 @@ class HelpQueueV2 {
                 studentAction = 'submitted what you need help with';
                 break;
         }
-        const results = await Promise.allSettled(
+        // this assumes that if an error comes back when we call send, it's because the helper closed dm
+        const helpersThatClosedDM: Snowflake[] = [];
+        await Promise.all(
             [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members.get(helperId)?.send(embed)
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(embed)
+                    .catch(() => {
+                        helpersThatClosedDM.push(helperId);
+                    })
             )
         );
-        if (results.some(result => result.status === 'rejected')) {
-            throw ExpectedQueueErrors.staffBlockedDm(this.queueName, studentAction);
+        console.log(helpersThatClosedDM);
+        if (helpersThatClosedDM.length > 0) {
+            throw ExpectedQueueErrors.staffBlockedDm(
+                this.queueName,
+                studentAction,
+                helpersThatClosedDM
+            );
         }
     }
 

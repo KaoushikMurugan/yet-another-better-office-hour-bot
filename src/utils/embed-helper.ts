@@ -116,14 +116,10 @@ function SimpleEmbed2(
  * @param descriptionOverride a string that provides additional help message. If not specified, the default message will be used.
  * @returns The embed with formatted error message
  */
-function ErrorEmbed2(
-    err: ExpectedError | Error,
-    pingForHelp: OptionalRoleId,
-    descriptionOverride?: string
-): EmbedData {
+function ErrorEmbed(err: ExpectedError | Error, pingForHelp: OptionalRoleId): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder();
-    let color: EmbedColor;
+    let color = EmbedColor.UnexpectedError;
     // use tagged union to avoid the expensive instanceof check
     // @see https://mariusschulz.com/blog/tagged-union-types-in-typescript
     if ('type' in err) {
@@ -143,8 +139,6 @@ function ErrorEmbed2(
                 color = EmbedColor.KindaBad;
                 break;
         }
-    } else {
-        color = EmbedColor.UnexpectedError;
     }
     const defaultErrorDescription = [
         err.message.length > 256 ? `${err.message}\n` : '',
@@ -159,7 +153,11 @@ function ErrorEmbed2(
         .setTitle(err.message.length <= 256 ? err.message : err.name)
         .setTimestamp(new Date())
         .setAuthor({ name: 'YABOB', iconURL: YABOB_PFP_URL })
-        .setDescription(descriptionOverride?.slice(0, 4096) ?? defaultErrorDescription)
+        .setDescription(
+            'description' in err
+                ? err.description?.slice(0, 4096) ?? defaultErrorDescription
+                : defaultErrorDescription
+        )
         .setColor(color);
     return { embeds: [embed.data] };
 }
@@ -645,7 +643,7 @@ export {
     SimpleEmbed2,
     SimpleLogEmbed,
     SimpleLogEmbed2,
-    ErrorEmbed2,
+    ErrorEmbed,
     ErrorLogEmbed,
     ErrorLogEmbed2,
     ButtonLogEmbed,
