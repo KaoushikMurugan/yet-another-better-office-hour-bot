@@ -263,12 +263,6 @@ async function sendInvite(
             Connect: true
         })
     ]);
-    await student.send(
-        SimpleEmbed(
-            `It's your turn! Join the call: ${invite.toString()}`,
-            EmbedColor.Success
-        )
-    );
     // remove the overwrite when the link dies
     setTimeout(() => {
         helperVoiceChannel.permissionOverwrites.cache
@@ -278,6 +272,16 @@ async function sendInvite(
                 console.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
+    await student
+        .send(
+            SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
+            )
+        )
+        .catch(() => {
+            throw ExpectedServerErrors.studentBlockedDm(student.id);
+        });
 }
 
 export {

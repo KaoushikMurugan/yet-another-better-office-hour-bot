@@ -1,4 +1,5 @@
 /** @module ExpectedErrors */
+import { Snowflake } from 'discord.js';
 import { ServerError } from '../utils/error-types.js';
 
 /**
@@ -49,6 +50,11 @@ const ExpectedServerErrors = {
         new ServerError(
             `The command can not be used without the role ${roleName} being set. ` +
                 `Please ask a server moderator to use \`/role set ${roleName} <roleID>\` to set it.`
+        ),
+    studentBlockedDm: (studentThatClosedDm: Snowflake) =>
+        new ServerError(
+            "The student you just dequeued did not allow YABOB to send them the invite to your voice channel. Don't worry, they have been successfully dequeued.",
+            `ID of the unreachable student: <@${studentThatClosedDm}>`
         )
 } as const;
 

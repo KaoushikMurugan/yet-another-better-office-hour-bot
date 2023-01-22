@@ -56,8 +56,7 @@ const ExpectedQueueErrors = {
         helpersThatClosedDm: Snowflake[]
     ) =>
         new QueueError(
-            `One or more staff members did not allow YABOB to notify them that you ${studentActionText}.\n` +
-                `You can go to the 'Current Active Helpers' embed and contact them through their discord id.`,
+            `One or more staff members did not allow YABOB to notify them that you ${studentActionText}. Don't worry, you have been successfully added to the queue.`,
             queueName,
             `The following helpers are unreachable: ${helpersThatClosedDm
                 .map(id => `<@${id}>`)
