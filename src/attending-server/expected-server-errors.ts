@@ -17,8 +17,8 @@ const ExpectedServerErrors = {
     notHosting: new ServerError('You are not currently hosting.'),
     notInVC: new ServerError(`You need to be in a voice channel first.`),
     alreadyHosting: new ServerError('You are already hosting.'),
-    missingClassRole: new ServerError(
-        `It seems like you don't have any class roles.\n` +
+    noQueueRole: new ServerError(
+        `It seems like you don't have any queue roles.\n` +
             `This might be a human error. ` +
             `In the meantime, you can help students by directly messaging them.`
     ),

@@ -472,7 +472,6 @@ class HelpQueueV2 {
                     })
             )
         );
-        console.log(helpersThatClosedDM);
         if (helpersThatClosedDM.length > 0) {
             throw ExpectedQueueErrors.staffBlockedDm(
                 this.queueName,

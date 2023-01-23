@@ -902,7 +902,7 @@ class AttendingServerV2 {
             helperRoles.includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            throw ExpectedServerErrors.missingClassRole;
+            throw ExpectedServerErrors.noQueueRole;
         }
         // create this object after all checks have passed
         const helper: Helper = {
