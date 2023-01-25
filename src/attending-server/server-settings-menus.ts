@@ -23,27 +23,12 @@ import {
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 
 /**
- * A button that returns to the main menu
- * @deprecated
+ * Composes the select menu that allows user to jump between different settings menus
+ * @param currentMenu The builder function of the sub-Menu from which the settings menu is being called
+ * - This menu is skipped. @example if the current menu is SeriousModeConfigMenu, then it won't be in the select menu dropdown
+ * @returns the select menu object
  */
-const mainMenuRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-    buildComponent(new ButtonBuilder(), [
-        'other',
-        ButtonNames.ReturnToMainMenu,
-        UnknownId,
-        UnknownId
-    ])
-        .setEmoji('🏠')
-        .setLabel('Return to Main Menu')
-        .setStyle(ButtonStyle.Primary)
-);
-
-/**
- * Composes the server settings main menu, excluding the option for the current menu
- * @param currentMenu The name of the sub-Menu from which the settings menu is being called
- * @returns
- */
-function settingsOptionsSelectMenu(
+function SettingsSwitcher(
     currentMenu: SettingsMenuConstructor
 ): ActionRowBuilder<SelectMenuBuilder> {
     return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
@@ -55,7 +40,7 @@ function settingsOptionsSelectMenu(
         ])
             .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
             .addOptions(
-                serverSettingsMenuOptions
+                serverSettingsMainMenuOptions
                     .filter(menuOption => menuOption.menu !== currentMenu)
                     .map(option => option.optionData)
             )
@@ -97,7 +82,7 @@ const documentationLinks = {
 /**
  * Options for the main menu of server settings
  */
-const serverSettingsMenuOptions: SettingsMenuOption[] = [
+const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
         optionData: {
             emoji: '🏠',
@@ -179,9 +164,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
  * @param isDm is it in dm?
  * @returns the setting menu embed object
  */
-function SettingsMainMenu(
-    server: AttendingServerV2
-): YabobEmbed {
+function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
         .setColor(EmbedColor.Aqua)
@@ -199,16 +182,14 @@ function SettingsMainMenu(
         });
     return {
         embeds: [embed.data],
-        components: [settingsOptionsSelectMenu(SettingsMainMenu)]
+        components: [SettingsSwitcher(SettingsMainMenu)]
     };
 }
 
 /**
  * Composes the server roles configuration menu
- * @param server
+ * @param server related server
  * @param channelId id of the channel of the related interaction
- * @param isDm is it sent in dm?
- * @param forServerInit is the menu sent on joining a new server?
  * @returns
  */
 function RolesConfigMenuInGuild(
@@ -230,10 +211,7 @@ function RolesConfigMenuInGuild(
     const embed = new EmbedBuilder()
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
         .setColor(EmbedColor.Aqua);
-    // addFields accepts RestOrArray<T>,
-    // so they can be combined into a single addFields call, but prettier makes it ugly
-
-    // TODO: Separate forServerInit version and server version
+    // addFields accepts RestOrArray<T>, so they can be combined into a single addFields call
     embed.addFields(
         {
             name: 'Description',
@@ -318,7 +296,7 @@ function RolesConfigMenuInGuild(
     ];
     return {
         embeds: [embed.data],
-        components: [...buttons, settingsOptionsSelectMenu(RolesConfigMenuInGuild)]
+        components: [...buttons, SettingsSwitcher(RolesConfigMenuInGuild)]
     };
 }
 
@@ -339,7 +317,7 @@ function RolesConfigMenuForServerInit(
         .setTitle(`📝 Server Roles Configuration for ${server.guild.name} 📝`)
         .setColor(EmbedColor.Aqua)
         .setDescription(
-            `**Thanks for choosing YABOB for helping you with office hours! To start using YABOB, it requires the following roles: **\n`
+            '**Thanks for choosing YABOB for helping you with office hours! To start using YABOB, it requires the following roles: **\n'
         )
         .addFields(
             {
@@ -495,7 +473,7 @@ function AfterSessionMessageConfigMenu(
     }
     return {
         embeds: [embed.data],
-        components: [buttons, settingsOptionsSelectMenu(AfterSessionMessageConfigMenu)]
+        components: [buttons, SettingsSwitcher(AfterSessionMessageConfigMenu)]
     };
 }
 
@@ -560,7 +538,7 @@ function QueueAutoClearConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [buttons, settingsOptionsSelectMenu(QueueAutoClearConfigMenu)]
+        components: [buttons, SettingsSwitcher(QueueAutoClearConfigMenu)]
     };
 }
 
@@ -660,7 +638,7 @@ function LoggingChannelConfigMenu(
         components: [
             channelsSelectMenu,
             buttons,
-            settingsOptionsSelectMenu(LoggingChannelConfigMenu)
+            SettingsSwitcher(LoggingChannelConfigMenu)
         ]
     };
 }
@@ -723,7 +701,7 @@ function AutoGiveStudentRoleConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [buttons, settingsOptionsSelectMenu(AutoGiveStudentRoleConfigMenu)]
+        components: [buttons, SettingsSwitcher(AutoGiveStudentRoleConfigMenu)]
     };
 }
 
@@ -785,7 +763,7 @@ function PromptHelpTopicConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [buttons, settingsOptionsSelectMenu(PromptHelpTopicConfigMenu)]
+        components: [buttons, SettingsSwitcher(PromptHelpTopicConfigMenu)]
     };
 }
 
@@ -848,7 +826,7 @@ function SeriousModeConfigMenu(
     );
     return {
         embeds: [embed.data],
-        components: [buttons, settingsOptionsSelectMenu(SeriousModeConfigMenu)]
+        components: [buttons, SettingsSwitcher(SeriousModeConfigMenu)]
     };
 }
 
@@ -862,7 +840,6 @@ export {
     AutoGiveStudentRoleConfigMenu,
     PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu,
-    mainMenuRow,
-    settingsOptionsSelectMenu,
-    serverSettingsMenuOptions as serverSettingsMainMenuOptions
+    SettingsSwitcher,
+    serverSettingsMainMenuOptions
 };

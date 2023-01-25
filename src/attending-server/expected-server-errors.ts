@@ -1,4 +1,5 @@
 /** @module ExpectedErrors */
+import { Snowflake } from 'discord.js';
 import { ServerError } from '../utils/error-types.js';
 
 /**
@@ -16,8 +17,8 @@ const ExpectedServerErrors = {
     notHosting: new ServerError('You are not currently hosting.'),
     notInVC: new ServerError(`You need to be in a voice channel first.`),
     alreadyHosting: new ServerError('You are already hosting.'),
-    missingClassRole: new ServerError(
-        `It seems like you don't have any class roles.\n` +
+    noQueueRole: new ServerError(
+        `It seems like you don't have any queue roles.\n` +
             `This might be a human error. ` +
             `In the meantime, you can help students by directly messaging them.`
     ),
@@ -30,28 +31,30 @@ const ExpectedServerErrors = {
     queueAlreadyExists: (name: string) => new ServerError(`Queue ${name} already exists`),
     categoryAlreadyExists: (name: string) =>
         new ServerError(`Category '${name}' already exists`),
-    apiFail: (err: Error) => new ServerError(`API Failure: ${err.name}\n${err.message}`),
     studentNotFound: (studentName: string) =>
         new ServerError(`The student ${studentName} is not in any of the queues.`),
     noAnnouncePerm: (queueName: string) =>
         new ServerError(
-            `You don't have permission to announce in ${queueName}. ` +
-                `You can only announce to queues that you have a role of.`
+            `You don't have permission to announce in ${queueName}. You can only announce to queues that you have a role of.`
         ),
     noStudentToAnnounce: (announcement: string) =>
         new ServerError(
-            'There are no students in the queue to send your announcement to. ' +
-                "Here's your announcement if you would like to save it for later: " +
-                `\`\`\`${announcement}\`\`\``
+            'There are no students in the queue to send your announcement to.',
+            "Here's your announcement if you would like to save it for later: " +
+                `\`\`\`\n${announcement}\n\`\`\``
         ),
-    badDequeueArguments: new ServerError(
-        'Either student or the queue should be specified.' +
-            ' Did you mean to use `/next` without options?'
+    badDequeueArguments: new ServerError( // this should not happen
+        'Either student or the queue should be specified. Did you mean to use `/next` without options?'
     ),
     roleNotSet: (roleName: string) =>
         new ServerError(
             `The command can not be used without the role ${roleName} being set. ` +
                 `Please ask a server moderator to use \`/role set ${roleName} <roleID>\` to set it.`
+        ),
+    studentBlockedDm: (studentThatClosedDm: Snowflake) =>
+        new ServerError(
+            "The student you just dequeued did not allow YABOB to send them the invite to your voice channel. Don't worry, they have been successfully dequeued.",
+            `ID of the unreachable student: <@${studentThatClosedDm}>`
         )
 } as const;
 

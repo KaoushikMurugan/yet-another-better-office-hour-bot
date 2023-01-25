@@ -434,13 +434,14 @@ class HelpQueueV2 {
      * @param studentMember the student that emitted the event
      * @param helpTopic if event is 'submitHelpTopic', this param is specified, see the above overload
      */
-    async notifyHelpersOn<EventType extends 'submitHelpTopic' | 'joinQueue'>(
-        event: EventType,
+    async notifyHelpersOn(
+        event: 'submitHelpTopic' | 'joinQueue',
         studentMember: GuildMember,
         helpTopic?: string
     ): Promise<void> {
+        // a string describing what the event is, used only for the error message
+        let studentAction: string;
         let embed: YabobEmbed;
-        // this would look really pretty if pattern matching exists in JS
         switch (event) {
             case 'joinQueue':
                 embed = SimpleEmbed(
@@ -448,6 +449,7 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `<@${studentMember.user.id}>`
                 );
+                studentAction = `joined ${this.queueName}`;
                 break;
             case 'submitHelpTopic':
                 embed = SimpleEmbed(
@@ -455,12 +457,28 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `\n\n${helpTopic}\n\n<@${studentMember.user.id}>`
                 );
+                studentAction = 'submitted what you need help with';
+                break;
         }
+        // this assumes that if an error comes back when we call send, it's because the helper closed dm
+        const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
             [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members.get(helperId)?.send(embed)
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(embed)
+                    .catch(() => {
+                        helpersThatClosedDM.push(helperId);
+                    })
             )
         );
+        if (helpersThatClosedDM.length > 0) {
+            throw ExpectedQueueErrors.staffBlockedDm(
+                this.queueName,
+                studentAction,
+                helpersThatClosedDM
+            );
+        }
     }
 
     /**
@@ -580,20 +598,11 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
+     * Returns the view model of the current state of the queue
+     * @returns QueueViewModel
      */
-    async triggerForceRender(): Promise<void> {
-        await this.display.requestForceRender();
-        // TODO: emit the onQueueRender here?
-    }
-
-    /**
-     * Re-renders the queue message.
-     * Composes the queue view model, then sends it to QueueDisplay
-     */
-    async triggerRender(): Promise<void> {
-        // build viewModel, then call display.render()
-        const viewModel: QueueViewModel = {
+    computeCurrentViewModel(): QueueViewModel {
+        return {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],
@@ -611,7 +620,31 @@ class HelpQueueV2 {
                           this.timeUntilAutoClear.minutes
                       )
         };
-        this.display.requestQueueEmbedRender(viewModel);
+    }
+
+    /**
+     * Force renders all embeds in a queue
+     */
+    async triggerForceRender(): Promise<void> {
+        this.display.enterWriteOnlyMode();
+        this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                // TODO: temporary solution
+                // this assumes extensions will make a render request onQueueRender
+                extension.onQueueRender(this, this.display)
+            )
+        );
+        this.display.exitWriteOnlyMode();
+        await this.display.requestForceRender();
+    }
+
+    /**
+     * Re-renders the queue message.
+     * Composes the queue view model, then sends it to QueueDisplay
+     */
+    async triggerRender(): Promise<void> {
+        this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)

@@ -96,9 +96,8 @@ class FirebaseServerBackupExtension
             timeStamp: new Date(),
             afterSessionMessage: server.afterSessionMessage,
             loggingChannelId: server.loggingChannel?.id ?? '',
-            hoursUntilAutoClear:
-                server.queues[0]?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED',
-            seriousServer: server.queues[0]?.isSerious ?? false,
+            hoursUntilAutoClear: server.queueAutoClearTimeout ?? 'AUTO_CLEAR_DISABLED',
+            seriousServer: server.isSerious,
             botAdminRoleId: server.botAdminRoleID,
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
