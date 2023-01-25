@@ -1031,7 +1031,6 @@ class AttendingServerV2 {
                 extension.onServerRequestBackup(this)
             )
         ])
-            .then(() => console.log('updated channel visibility'))
             .catch(err => {
                 console.error(red(`Failed to set roles in ${this.guild.name}`), err);
                 this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);

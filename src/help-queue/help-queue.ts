@@ -622,11 +622,16 @@ class HelpQueueV2 {
         };
     }
 
+    /**
+     * Force renders all embeds in a queue
+     */
     async triggerForceRender(): Promise<void> {
         this.display.enterWriteOnlyMode();
         this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
+                // TODO: temporary solution
+                // this assumes extensions will make a render request onQueueRender
                 extension.onQueueRender(this, this.display)
             )
         );
@@ -637,7 +642,6 @@ class HelpQueueV2 {
     /**
      * Re-renders the queue message.
      * Composes the queue view model, then sends it to QueueDisplay
-     * @param force whether to trigger a force render, equivalent to the old triggerForceRender() method
      */
     async triggerRender(): Promise<void> {
         this.display.requestQueueEmbedRender(this.computeCurrentViewModel());
