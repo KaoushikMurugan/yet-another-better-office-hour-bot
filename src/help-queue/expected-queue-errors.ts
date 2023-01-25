@@ -58,7 +58,7 @@ const ExpectedQueueErrors = {
         new QueueError(
             `One or more staff members did not allow YABOB to notify them that you ${studentActionText}. Don't worry, you have been successfully added to the queue.`,
             queueName,
-            `The following helpers are unreachable: ${helpersThatClosedDm
+            `ID of unreachable helpers: ${helpersThatClosedDm
                 .map(id => `<@${id}>`)
                 .join(' ')}.`
         )

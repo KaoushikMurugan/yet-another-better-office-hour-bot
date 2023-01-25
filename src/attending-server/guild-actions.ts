@@ -280,6 +280,7 @@ async function sendInvite(
             )
         )
         .catch(() => {
+            // TODO: this assumes the error is always because of student blocking the dm
             throw ExpectedServerErrors.studentBlockedDm(student.id);
         });
 }

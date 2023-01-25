@@ -39,8 +39,8 @@ const ExpectedServerErrors = {
         ),
     noStudentToAnnounce: (announcement: string) =>
         new ServerError(
-            'There are no students in the queue to send your announcement to. ' +
-                "Here's your announcement if you would like to save it for later: " +
+            'There are no students in the queue to send your announcement to.',
+            "Here's your announcement if you would like to save it for later: " +
                 `\`\`\`\n${announcement}\n\`\`\``
         ),
     badDequeueArguments: new ServerError( // this should not happen

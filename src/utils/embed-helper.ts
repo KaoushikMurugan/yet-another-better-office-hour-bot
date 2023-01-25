@@ -139,6 +139,10 @@ function ErrorEmbed(err: ExpectedError | Error, pingForHelp: OptionalRoleId): Em
                 color = EmbedColor.KindaBad;
                 break;
         }
+        embed.addFields({
+            name: 'Error Type',
+            value: err.type
+        });
     }
     const defaultErrorDescription = [
         err.message.length > 256 ? `${err.message}\n` : '',
