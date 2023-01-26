@@ -179,9 +179,7 @@ const serverSettingsMenuOptions: SettingsMenuOption[] = [
  * @param isDm is it in dm?
  * @returns the setting menu embed object
  */
-function SettingsMainMenu(
-    server: AttendingServerV2
-): YabobEmbed {
+function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
         .setColor(EmbedColor.Aqua)

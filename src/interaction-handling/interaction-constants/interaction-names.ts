@@ -23,6 +23,7 @@ enum CommandNames {
     resume = 'resume',
     stop = 'stop',
     help = 'help',
+    queue_notify = 'queue_notify',
     set_logging_channel = 'set_logging_channel',
     stop_logging = 'stop_logging',
     serious_mode = 'serious_mode',

@@ -60,7 +60,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.settings]: settingsMenu,
         [CommandNames.auto_give_student_role]: setAutoGiveStudentRole,
         [CommandNames.set_after_session_msg]: showAfterSessionMessageModal,
-        [CommandNames.prompt_help_topic]: setPromptHelpTopic
+        [CommandNames.prompt_help_topic]: setPromptHelpTopic,
+        [CommandNames.queue_notify]: joinQueueNotify
     },
     skipProgressMessageCommands: new Set([
         CommandNames.set_after_session_msg,
@@ -693,6 +694,36 @@ async function setPromptHelpTopic(
             ? SuccessMessages.turnedOnPromptHelpTopic
             : SuccessMessages.turnedOffPromptHelpTopic
     );
+}
+
+/**
+ * The `/queue_notify` command
+ */
+async function joinQueueNotify(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const [server, queue] = [
+        AttendingServerV2.get(interaction.guildId),
+        hasValidQueueArgument(interaction)
+    ];
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.queue_notify,
+        'botAdmin'
+    );
+
+    const onOrOff = interaction.options.getSubcommand(true);
+
+    if (onOrOff === 'on') {
+        await server.addStudentToNotifGroup(interaction.member, queue);
+        await interaction.editReply(SuccessMessages.joinedNotif(queue.queueName));
+    } else if (onOrOff === 'off') {
+        await server.removeStudentFromNotifGroup(interaction.member, queue);
+        await interaction.editReply(SuccessMessages.removedNotif(queue.queueName));
+    } else {
+        throw new CommandParseError('Invalid subcommand.');
+    }
 }
 
 export { baseYabobCommandMap };

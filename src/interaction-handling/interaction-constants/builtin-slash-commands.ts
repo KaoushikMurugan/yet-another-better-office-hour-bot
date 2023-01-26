@@ -121,6 +121,35 @@ const clearAllCommand = new SlashCommandBuilder()
     .setName(CommandNames.clear_all)
     .setDescription('Admin only. Clears all the queues on this server');
 
+// /queue_notify [queue_name] [on | off]
+const queueNotifyCommand = new SlashCommandBuilder()
+    .setName(CommandNames.queue_notify)
+    .setDescription('Toggle whether you want to be pinged when you are next in line')
+    .addSubcommand(subcommand =>
+        subcommand // /queue_notify on [queue_name]
+            .setName('on')
+            .setDescription('Turn on notifications for a queue')
+            .addChannelOption(option =>
+                option
+                    .setName('queue_name')
+                    .setDescription('The queue to turn on notifications for')
+                    .setRequired(true)
+                    .addChannelTypes(ChannelType.GuildCategory)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand // /queue_notify off [queue_name]
+            .setName('off')
+            .setDescription('Turn off notifications for a queue')
+            .addChannelOption(option =>
+                option
+                    .setName('queue_name')
+                    .setDescription('The queue to turn off notifications for')
+                    .setRequired(true)
+                    .addChannelTypes(ChannelType.GuildCategory)
+            )
+    );
+
 // /announce [message] (queue_name)
 const announceCommand = new SlashCommandBuilder()
     .setName(CommandNames.announce)
@@ -283,16 +312,19 @@ const autoGiveStudentRoleCommand = new SlashCommandBuilder()
         subcommand.setName('off').setDescription('Turns off auto giving student role')
     );
 
+// /pause
 const pauseCommand = new SlashCommandBuilder()
     .setName(CommandNames.pause)
     .setDescription(
         'Prevents students from joining the queue, but allows the helper to dequeue.'
     );
 
+// /resume
 const resumeCommand = new SlashCommandBuilder()
     .setName(CommandNames.resume)
     .setDescription('Allow students to join the queue again after /pause was used.');
 
+// /prompt_help_topic {on|off}
 const promptHelpTopicCommand = new SlashCommandBuilder()
     .setName(CommandNames.prompt_help_topic)
     .setDescription(
@@ -344,6 +376,7 @@ const commandData = [
     leaveCommand.toJSON(),
     clearCommand.toJSON(),
     clearAllCommand.toJSON(),
+    queueNotifyCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
     cleanupQueue.toJSON(),
