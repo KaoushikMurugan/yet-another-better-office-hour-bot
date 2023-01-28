@@ -90,7 +90,8 @@ function isTriggeredByMemberWithRoles(
     // otherwise if the loop breaks then we must throw
     throw ExpectedParseErrors.missingAccessLevelRolesVariant(
         server.guild.roles.cache.get(server.accessLevelRoleIds[lowestRequiredRole])?.name,
-        commandName
+        commandName,
+        server.accessLevelRoleIds[lowestRequiredRole]
     );
 }
 
