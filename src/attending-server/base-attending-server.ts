@@ -45,7 +45,7 @@ import { RolesConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
-    updateCommandHelpChannelVisibility,
+    setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
@@ -479,9 +479,12 @@ class AttendingServerV2 {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        await Promise.all([
+            setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
+            ...this.serverExtensions.map(extension =>
+                extension.onServerRequestBackup(this)
+            )
+        ]);
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)
             : console.log(green(`All required roles exist in ${this.guild.name}!`));
@@ -713,7 +716,7 @@ class AttendingServerV2 {
             if (!isCategoryChannel(categoryChannel)) {
                 continue;
             }
-            const queueTextChannel: Optional<TextChannel> =
+            const queueTextChannel =
                 categoryChannel.children.cache.find(isQueueTextChannel);
             if (!queueTextChannel) {
                 continue;
@@ -899,7 +902,7 @@ class AttendingServerV2 {
             helperRoles.includes(queue.queueName)
         );
         if (openableQueues.size === 0) {
-            throw ExpectedServerErrors.missingClassRole;
+            throw ExpectedServerErrors.noQueueRole;
         }
         // create this object after all checks have passed
         const helper: Helper = {
@@ -1007,10 +1010,11 @@ class AttendingServerV2 {
      */
     sendLogMessage(message: BaseMessageOptions | string): void {
         if (this.loggingChannel) {
-            this.loggingChannel.send(message).catch(err => {
-                console.error(red(`Failed to send logs to ${this.guild.name}.`));
-                console.error(err);
-            });
+            this.loggingChannel
+                .send(message)
+                .catch(err =>
+                    console.error(red(`Failed to send logs to ${this.guild.name}.`), err)
+                );
         }
     }
 
@@ -1019,17 +1023,18 @@ class AttendingServerV2 {
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
-    async setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): Promise<void> {
+    setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): void {
         this.settings.accessLevelRoleIds[role] = id;
-        await Promise.all([
-            updateCommandHelpChannelVisibility(
-                this.guild,
-                this.settings.accessLevelRoleIds
-            ),
+        Promise.all([
+            setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds),
             ...this.serverExtensions.map(extension =>
                 extension.onServerRequestBackup(this)
             )
-        ]);
+        ])
+            .catch(err => {
+                console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+                this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
+            });
     }
 
     /**

@@ -9,6 +9,7 @@ import {
     ChannelType,
     Guild,
     GuildMember,
+    PermissionFlagsBits,
     Snowflake,
     VoiceBasedChannel
 } from 'discord.js';
@@ -74,42 +75,29 @@ async function updateCommandHelpChannels(
             name: 'Bot Commands Help',
             type: ChannelType.GuildCategory
         });
-        // Change the config object and add more functions here if needed
+        // Only create the channels, let setHelpChannelVisibility control the permissions
         await Promise.all(
-            helpChannelConfigurations.map(async roleConfig => {
-                const commandHelpChannel = await helpCategory.children.create({
-                    name: roleConfig.channelName
-                });
-                await commandHelpChannel.permissionOverwrites.create(
-                    guild.roles.everyone,
-                    {
-                        SendMessages: false,
-                        ViewChannel: false
-                    }
-                );
-                const rolesWithViewPermission = roleConfig.visibility
-                    // elements of visibility are keys of access level role ids
-                    .map(key => accessLevelRoleIds[key])
-                    // now get role by id
-                    .map(id => guild.roles.cache.get(id));
-                await Promise.all(
-                    rolesWithViewPermission.map(role => {
-                        role &&
-                            commandHelpChannel.permissionOverwrites.create(role, {
-                                ViewChannel: true
-                            });
-                    })
-                );
-            })
+            helpChannelConfigurations.map(helpChannelConfig =>
+                helpCategory.children.create({
+                    name: helpChannelConfig.channelName
+                })
+            )
         );
-        await sendCommandHelpChannelMessages(helpCategory);
+        // console.log(helpCategory.children.cache.map(c => c.permissionOverwrites.cache.map(h => h.deny)));
+        await Promise.all([
+            sendHelpChannelMessages(helpCategory),
+            setHelpChannelVisibility(guild, accessLevelRoleIds)
+        ]);
     } else {
         console.log(
             `Found existing help channels in ${yellow(
                 guild.name
             )}, updating command help files`
         );
-        await sendCommandHelpChannelMessages(existingHelpCategory);
+        await Promise.all([
+            sendHelpChannelMessages(existingHelpCategory),
+            setHelpChannelVisibility(guild, accessLevelRoleIds)
+        ]);
     }
     console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`));
 }
@@ -118,20 +106,16 @@ async function updateCommandHelpChannels(
  * Overwrites the existing command help channel and send new help messages
  * @param helpCategory the category named 'Bot Commands Help'
  */
-async function sendCommandHelpChannelMessages(
-    helpCategory: CategoryChannel
-): Promise<void> {
+async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<void> {
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
-        allHelpChannels
-            .map(channel =>
-                channel.messages
-                    .fetch()
-                    .then(messages => messages.map(msg => msg.delete()))
-            )
-            .flat()
+        allHelpChannels.map(async channel => {
+            // have to fetch here, otherwise the cache is empty
+            const messageCount = (await channel.messages.fetch()).size;
+            await channel.bulkDelete(messageCount);
+        })
     );
-    // send new ones
+    // send the messages we want to show in the help channels
     await Promise.all(
         allHelpChannels.map(channel =>
             helpChannelConfigurations
@@ -140,15 +124,20 @@ async function sendCommandHelpChannelMessages(
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );
-    console.log(`Successfully updated help messages in ${yellow(helpCategory.name)}!`);
+    console.log(
+        `Successfully updated help messages in ${yellow(helpCategory.name)} in ${yellow(
+            helpCategory.guild.name
+        )}!`
+    );
 }
 
 /**
- * Updates the command help channel visibility when access level roles get updated
+ * Sets the command help channel visibility with the given role ids;
+ *  Delete all existing permission overwrites, then create new ones
  * @param guild
  * @param accessLevelRoleIds the newly updated access level role ids
  */
-async function updateCommandHelpChannelVisibility(
+async function setHelpChannelVisibility(
     guild: Guild,
     accessLevelRoleIds: AccessLevelRoleIds
 ): Promise<void> {
@@ -157,7 +146,6 @@ async function updateCommandHelpChannelVisibility(
             isCategoryChannel(channel) && channel.name === 'Bot Commands Help'
     );
     if (!helpCategory) {
-        await updateCommandHelpChannels(guild, accessLevelRoleIds);
         return;
     }
     const helpChannels = (await helpCategory.fetch()).children.cache.filter(
@@ -171,6 +159,14 @@ async function updateCommandHelpChannelVisibility(
                 )
             )
             .flat()
+    );
+    // make the channel invisible to @everyone first
+    await Promise.all(
+        helpChannels.map(channel =>
+            channel.permissionOverwrites.create(guild.roles.everyone, {
+                ViewChannel: false
+            })
+        )
     );
     await Promise.all(
         helpChannels.map(channel =>
@@ -189,7 +185,13 @@ async function updateCommandHelpChannelVisibility(
 /**
  * Creates a new category with `categoryName` and creates `numOfChannels` voice channels
  * with the name `channelName` within the category
- * @remark createOfficeCategory('Office Hours', 'Office', 3)  will create a
+ * @param guild
+ * @param categoryName the name of the category containing the voice channels
+ * @param officeNamePrefix prefix of each voice channel
+ * @param numberOfOffices number of offices to create
+ * @param permittedRoleIds the Snowflakes of Bot Admin and Staff
+ * @example
+ * createOfficeCategory('Office Hours', 'Office', 3)  will create a
  * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
  */
 async function createOfficeVoiceChannels(
@@ -197,7 +199,7 @@ async function createOfficeVoiceChannels(
     categoryName: string,
     officeNamePrefix: string,
     numberOfOffices: number,
-    permittedRoles: Snowflake[]
+    permittedRoleIds: [Snowflake, Snowflake]
 ): Promise<void> {
     const allChannels = await guild.channels.fetch();
     // Find if a category with the same name exists
@@ -215,27 +217,30 @@ async function createOfficeVoiceChannels(
         name: categoryName,
         type: ChannelType.GuildCategory
     });
-    // Change the config object and add more functions here if needed
     await Promise.all(
         Array(numberOfOffices)
             .fill(undefined)
-            .map(async (_, officeNumber) => {
-                const officeCh = await officeCategory.children.create({
+            .map((_, officeNumber) =>
+                officeCategory.children.create({
                     name: `${officeNamePrefix} ${officeNumber + 1}`,
-                    type: ChannelType.GuildVoice
-                });
-                await officeCh.permissionOverwrites.create(guild.roles.everyone, {
-                    SendMessages: false,
-                    ViewChannel: false
-                });
-                await Promise.all(
-                    permittedRoles.map(permittedRole =>
-                        officeCh.permissionOverwrites.create(permittedRole, {
-                            ViewChannel: true
-                        })
-                    )
-                );
-            })
+                    type: ChannelType.GuildVoice,
+                    // create the permission overwrites along with the channel itself
+                    permissionOverwrites: [
+                        {
+                            deny: PermissionFlagsBits.SendMessages,
+                            id: guild.roles.everyone
+                        },
+                        {
+                            deny: PermissionFlagsBits.ViewChannel,
+                            id: guild.roles.everyone
+                        },
+                        ...permittedRoleIds.map(id => ({
+                            allow: PermissionFlagsBits.ViewChannel,
+                            id: id
+                        }))
+                    ]
+                })
+            )
     );
 }
 
@@ -258,12 +263,6 @@ async function sendInvite(
             Connect: true
         })
     ]);
-    await student.send(
-        SimpleEmbed(
-            `It's your turn! Join the call: ${invite.toString()}`,
-            EmbedColor.Success
-        )
-    );
     // remove the overwrite when the link dies
     setTimeout(() => {
         helperVoiceChannel.permissionOverwrites.cache
@@ -273,12 +272,23 @@ async function sendInvite(
                 console.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
+    await student
+        .send(
+            SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
+            )
+        )
+        .catch(() => {
+            // TODO: this assumes the error is always because of student blocking the dm
+            throw ExpectedServerErrors.studentBlockedDm(student.id);
+        });
 }
 
 export {
     initializationCheck,
     updateCommandHelpChannels,
-    updateCommandHelpChannelVisibility,
+    setHelpChannelVisibility,
     createOfficeVoiceChannels,
     sendInvite
 };

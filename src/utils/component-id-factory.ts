@@ -81,14 +81,14 @@ function isValidCustomIdTuple(
 function decompressComponentId(compressedId: string): CustomIdTuple<ComponentLocation> {
     const rawDecompressed = LZString.decompressFromUTF16(compressedId);
     if (!rawDecompressed) {
-        throw new CommandParseError('Invalid Component ID');
+        throw new CommandParseError('Cannot decompress this component id.');
     }
     const parsed = JSON.parse(rawDecompressed);
     if (!isValidCustomIdTuple(parsed)) {
-        throw new CommandParseError('Invalid Component ID');
+        throw new CommandParseError('Decompressed id is not a valid custom id tuple.');
     }
-    return parsed; // returns CustomIdTuple<'queue'>, CustomIdTuple<'other'>, or CustomIdTuple<'dm'>
-    // needs to be manually checked
+    // returns CustomIdTuple<'queue'>, CustomIdTuple<'other'>, or CustomIdTuple<'dm'>
+    return parsed;
 }
 
 /**
@@ -109,7 +109,7 @@ function extractComponentName(
         if (safeExtract) {
             return undefined;
         }
-        throw new CommandParseError('Invalid Component ID');
+        throw new CommandParseError('Cannot decompress this component id.');
     }
     const parsed = JSON.parse(rawDecompressed);
     return parsed[1];

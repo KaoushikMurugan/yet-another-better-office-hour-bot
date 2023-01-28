@@ -1,5 +1,6 @@
 /** @module ExpectedErrors */
 
+import { Snowflake } from 'discord.js';
 import { QueueError } from '../utils/error-types.js';
 
 /**
@@ -48,6 +49,18 @@ const ExpectedQueueErrors = {
         new QueueError(
             `You are not in the notification group for ${queueName}.`,
             queueName
+        ),
+    staffBlockedDm: (
+        queueName: string,
+        studentActionText: string,
+        helpersThatClosedDm: Snowflake[]
+    ) =>
+        new QueueError(
+            `One or more staff members did not allow YABOB to notify them that you ${studentActionText}. Don't worry, you have been successfully added to the queue.`,
+            queueName,
+            `ID of unreachable helpers: ${helpersThatClosedDm
+                .map(id => `<@${id}>`)
+                .join(' ')}.`
         )
 } as const;
 
