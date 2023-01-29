@@ -84,7 +84,7 @@ function backupServerSettings(server: FrozenServer): void {
 
 /**
  * Runs the backup for 1 queue only
- * @param queue
+ * @param queue the queue to backup
  */
 function backupQueueData(queue: HelpQueueV2): void {
     const queueBackup: QueueBackup = {

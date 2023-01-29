@@ -373,15 +373,6 @@ class AttendingServerV2 {
     }
 
     /**
-     * Clears the given queue
-     * @param targetQueue queue to clear
-     */
-    @useFullBackup
-    async clearQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.removeAllStudents();
-    }
-
-    /**
      * Closes all the queue that the helper has permission to & logs the help time to console
      * @param helperMember helper that used /stop
      * @throws {ServerError} if the helper is not hosting
@@ -567,6 +558,8 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         await Promise.all([
+            // this is technically bad, we are making changes even though we expect this function to throw
+            // TODO: use a different solution
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
@@ -641,15 +634,6 @@ class AttendingServerV2 {
     }
 
     /**
-     * Gets a queue channel by the parent category id
-     * @param parentCategoryId the associated parent category id
-     * @returns queue channel object if it exists, undefined otherwise
-     */
-    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
-        return this._queues.get(parentCategoryId)?.queueChannel;
-    }
-
-    /**
      * Gets a help queue by parent category id
      * @param parentCategoryId the associated parent category id
      * @returns the queue object
@@ -661,6 +645,15 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
         return queue;
+    }
+
+    /**
+     * Gets a queue channel by the parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns queue channel object if it exists, undefined otherwise
+     */
+    getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
+        return this._queues.get(parentCategoryId)?.queueChannel;
     }
 
     /**
@@ -941,7 +934,7 @@ class AttendingServerV2 {
     setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): void {
         this.settings.accessLevelRoleIds[role] = id;
         Promise.all([
-            setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds),
+            setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds)
         ]).catch(err => {
             console.error(red(`Failed to set roles in ${this.guild.name}`), err);
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);

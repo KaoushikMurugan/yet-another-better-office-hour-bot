@@ -264,7 +264,7 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
     ) {
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
     }
-    await server.clearQueue(queue);
+    await server.getQueueById(queue.parentCategoryId).removeAllStudents();
     await interaction.editReply(SuccessMessages.clearedQueue(queue.queueName));
 }
 

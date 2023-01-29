@@ -517,6 +517,7 @@ class HelpQueueV2 {
      * Remove all students from the queue. Used for /clear_all
      * @noexcept - This will never throw an error even if there's no one to remove
      */
+    @useQueueBackup
     async removeAllStudents(): Promise<void> {
         await Promise.all(
             this.queueExtensions.map(extension =>
