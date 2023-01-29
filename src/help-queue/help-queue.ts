@@ -12,7 +12,8 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
-import { backupQueue } from '../attending-server/firebase-backup.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useQueueBackup } from '../attending-server/firebase-backup.js';
 
 /**
  * Render props for the queue display.
@@ -271,6 +272,7 @@ class HelpQueueV2 {
      * - helperMember is not one of the helpers
      * - targetStudentMember specified but not in queue
      */
+    @useQueueBackup
     async dequeueWithHelper(
         helperMember: GuildMember,
         targetStudentMember?: GuildMember
@@ -326,6 +328,7 @@ class HelpQueueV2 {
      * - student is already in the queue
      * - studentMember is a helper
      */
+    @useQueueBackup
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (this.getQueueState() !== 'open') {
             throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
@@ -346,7 +349,6 @@ class HelpQueueV2 {
             this.notifyHelpersOn('joinQueue', studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender(),
-            backupQueue(this)
         ]);
     }
 
@@ -544,6 +546,7 @@ class HelpQueueV2 {
      * @param targetStudent the student to remove
      * @throws {QueueError} if the student is not in the queue
      */
+    @useQueueBackup
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const index = this._students.findIndex(
             student => student.member.id === targetStudent.id

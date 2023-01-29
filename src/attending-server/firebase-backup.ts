@@ -12,6 +12,7 @@ import { firebaseDB } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { logWithTimeStamp } from '../utils/util-functions.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
+import { AttendingServerV2 } from './base-attending-server.js';
 
 /**
  * Built in backup extension
@@ -129,7 +130,7 @@ class FirebaseServerBackupExtension
  * - Backs up ALL the queues and server settings
  * @param server the server object to backup
  */
-function fullBackup(server: FrozenServer): void {
+function fullServerBackup(server: FrozenServer): void {
     const queueBackups: QueueBackup[] = server.queues.map(queue => ({
         studentsInQueue: queue.students.map(student => ({
             waitStart: student.waitStart,
@@ -172,7 +173,7 @@ function fullBackup(server: FrozenServer): void {
  * Runs the backup for server settings only
  * @param server
  */
-function backupSettings(server: FrozenServer): void {
+function backupServerSettings(server: FrozenServer): void {
     firebaseDB
         .collection('serverBackups')
         .doc(server.guild.id)
@@ -201,7 +202,7 @@ function backupSettings(server: FrozenServer): void {
  * Runs the backup for 1 queue only
  * @param queue
  */
-function backupQueue(queue: HelpQueueV2): void {
+function backupQueueData(queue: HelpQueueV2): void {
     const queueBackup: QueueBackup = {
         studentsInQueue: queue.students.map(student => ({
             waitStart: student.waitStart,
@@ -217,6 +218,7 @@ function backupQueue(queue: HelpQueueV2): void {
     firebaseDoc
         .get()
         .then(response => {
+            // grab the full document, modify the queues array, then update
             const data = response.data() as ServerBackup;
             const index = data.queues.findIndex(
                 queueData => queueData.parentCategoryId === queue.parentCategoryId
@@ -240,4 +242,48 @@ function backupQueue(queue: HelpQueueV2): void {
         .catch(console.error);
 }
 
-export { FirebaseServerBackupExtension, fullBackup, backupSettings, backupQueue };
+function useFullBackup( // eslint-disable-next-line @typescript-eslint/ban-types
+    target: Object, // no way around it until TS 5.0
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+): PropertyDescriptor {
+    const original = descriptor.value;
+    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+        original.apply(this, args);
+        fullServerBackup(this);
+    };
+    return descriptor;
+}
+
+/**
+ * The decorator inside AttendingServerV2 that executes a settings backup
+ * @returns
+ */
+function backupSettings(
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    target: Object, // no way around it until TS 5.0
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+): PropertyDescriptor {
+    const original = descriptor.value;
+    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+        original.apply(this, args);
+        backupServerSettings(this);
+    };
+    return descriptor;
+}
+
+function useQueueBackup(
+    target: HelpQueueV2,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+): PropertyDescriptor {
+    const original = descriptor.value;
+    descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
+        original.apply(this, args);
+        backupQueueData(this);
+    };
+    return descriptor;
+}
+
+export { FirebaseServerBackupExtension, backupSettings, useQueueBackup, useFullBackup };

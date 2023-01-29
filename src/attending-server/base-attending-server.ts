@@ -23,8 +23,10 @@ import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import {
     FirebaseServerBackupExtension,
+    // it is used idk why it complains
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars 
     backupSettings,
-    fullBackup
+    useFullBackup
 } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';
@@ -392,20 +394,18 @@ class AttendingServerV2 {
      * Clear all queues of this server
      * @remark separated from {@link clearQueue} to avoid excessive backup calls
      */
+    @useFullBackup
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
-        fullBackup(this);
     }
 
     /**
      * Clears the given queue
      * @param targetQueue queue to clear
      */
+    @useFullBackup
     async clearQueue(targetQueue: QueueChannel): Promise<void> {
         await this._queues.get(targetQueue.parentCategoryId)?.removeAllStudents();
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
     }
 
     /**
@@ -448,6 +448,7 @@ class AttendingServerV2 {
      * - Duplicates will be created if roles with the same name already exist
      * @param everyoneIsStudent whether to treat @ everyone as the student role
      */
+    @backupSettings
     async createAccessLevelRoles(
         allowDuplicate: boolean,
         everyoneIsStudent: boolean
@@ -481,8 +482,7 @@ class AttendingServerV2 {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
-        await setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
-            backupSettings(this);
+        await setHelpChannelVisibility(this.guild, this.accessLevelRoleIds);
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)
             : console.log(green(`All required roles exist in ${this.guild.name}!`));
@@ -598,9 +598,6 @@ class AttendingServerV2 {
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
         ]);
         return student;
     }
@@ -666,9 +663,6 @@ class AttendingServerV2 {
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             ),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
         ]);
         return student;
     }
@@ -677,6 +671,7 @@ class AttendingServerV2 {
      * Attempt to enqueue a student
      * @param studentMember student member to enqueue
      * @param queueChannel target queue
+     * @deprecated
      */
     async enqueueStudent(
         studentMember: GuildMember,
@@ -759,7 +754,7 @@ class AttendingServerV2 {
      * @returns true if this server existed and has been removed, or false if the element does not exist.
      */
     async gracefulDelete(): Promise<boolean> {
-        this.clearAllServerTimers();
+        this._queues.forEach(queue => queue.clearAllQueueTimers());
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
@@ -877,6 +872,7 @@ class AttendingServerV2 {
      * Checks the deleted `role` was a access level role and if so, mark as deleted
      * @param deletedRole the role that was deleted
      */
+    @backupSettings
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let accessLevelRoleDeleted = false;
         // shorthand syntax to take the properties of an object with the same name
@@ -889,7 +885,6 @@ class AttendingServerV2 {
         if (!accessLevelRoleDeleted) {
             return;
         }
-        backupSettings(this);
     }
 
     /**
@@ -980,6 +975,7 @@ class AttendingServerV2 {
      * @param studentMember student that used /leave or the leave button
      * @param targetQueue the queue to leave from
      * @throws QueueError: if targetQueue rejects
+     * @deprecated
      */
     async removeStudentFromQueue(
         studentMember: GuildMember,
@@ -1033,6 +1029,7 @@ class AttendingServerV2 {
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
+    @backupSettings
     setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): void {
         this.settings.accessLevelRoleIds[role] = id;
         Promise.all([
@@ -1044,7 +1041,6 @@ class AttendingServerV2 {
             console.error(red(`Failed to set roles in ${this.guild.name}`), err);
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
         });
-        backupSettings(this);
     }
 
     /**
@@ -1052,18 +1048,18 @@ class AttendingServerV2 {
      * @param newMessage after session message to set
      * - Side Effect: Triggers a firebase backup
      */
+    @backupSettings
     async setAfterSessionMessage(newMessage: string): Promise<void> {
         this.settings.afterSessionMessage = newMessage;
-        backupSettings(this);
     }
 
     /**
      * Sets the internal boolean value for autoGiveStudentRole
      * @param autoGiveStudentRole on or off
      */
+    @backupSettings
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this.settings.autoGiveStudentRole = autoGiveStudentRole;
-        backupSettings(this);
     }
 
     /**
@@ -1071,18 +1067,18 @@ class AttendingServerV2 {
      * @param loggingChannel the new logging channel.
      * - If undefined, disables logging for this server
      */
+    @backupSettings
     async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
         this.settings.loggingChannel = loggingChannel;
-        backupSettings(this);
     }
 
     /**
      * Sets the internal boolean value for promptHelpTopic
      * @param promptHelpTopic
      */
+    @backupSettings
     async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
         this.settings.promptHelpTopic = promptHelpTopic;
-        backupSettings(this);
     }
 
     /**
@@ -1091,13 +1087,13 @@ class AttendingServerV2 {
      * @param minutes the number of minutes to wait before clearing the queue
      * @param enable whether to disable auto clear, overrides hours` and `minutes`
      */
+    @backupSettings
     async setQueueAutoClear(
         hours: number,
         minutes: number,
         enable: boolean
     ): Promise<void> {
         this._queues.forEach(queue => queue.setAutoClear(hours, minutes, enable));
-        backupSettings(this);
     }
 
     /**
@@ -1105,6 +1101,7 @@ class AttendingServerV2 {
      * @param enableSeriousMode turn on or off serious mode
      * @returns True if triggered renders for all queues
      */
+    @backupSettings
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
         const seriousState = this.queues[0]?.isSerious ?? false;
         if (seriousState === enableSeriousMode) {
@@ -1113,15 +1110,7 @@ class AttendingServerV2 {
         await Promise.all(
             this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
         );
-        backupSettings(this);
         return true;
-    }
-
-    /**
-     * Cleans up all the timers from setInterval
-     */
-    private clearAllServerTimers(): void {
-        this._queues.forEach(queue => queue.clearAllQueueTimers());
     }
 
     /**
