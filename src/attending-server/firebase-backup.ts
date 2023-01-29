@@ -80,6 +80,9 @@ function backupServerSettings(server: FrozenServer): void {
         .catch((err: Error) =>
             console.error('Firebase server backup failed.', err.message)
         );
+    server.sendLogMessage(
+        SimpleLogEmbed('Settings for this server backed-up in firebase')
+    );
 }
 
 /**
@@ -123,8 +126,13 @@ function backupQueueData(queue: HelpQueueV2): void {
                     console.error('Firebase queue backup failed.', err.message)
                 );
         })
-        .catch(console.error);
+        .catch((err: Error) =>
+            console.error('Failed to fetch firebase document.', err.message)
+        );
 }
+
+// The following functions are method decorators
+// https://www.typescriptlang.org/docs/handbook/decorators.html
 
 /**
  * The method decorator inside AttendingServerV2 that executes a full backup
@@ -132,7 +140,7 @@ function backupQueueData(queue: HelpQueueV2): void {
  */
 function useFullBackup(
     // eslint-disable-next-line @typescript-eslint/ban-types
-    target: Object, // no way around it until TS 5.0
+    target: Object, // no way around this type until TS 5.0
     propertyKey: string,
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
@@ -179,6 +187,11 @@ function useQueueBackup(
     return descriptor;
 }
 
+/**
+ * Loads the backup data in firebase given a server id
+ * @param serverId associated server id, this is also used as document key
+ * @returns ServerBackup if a document with this id exists, otherwise undefined
+ */
 async function loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {
     const backupDocument = await firebaseDB
         .collection('serverBackups')
