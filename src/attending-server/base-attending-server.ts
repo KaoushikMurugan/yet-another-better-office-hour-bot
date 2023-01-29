@@ -24,7 +24,7 @@ import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/g
 import {
     // it is used idk why it complains
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    backupSettings,
+    useSettingsBackup,
     loadExternalServerData,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     useFullBackup
@@ -412,7 +412,7 @@ class AttendingServerV2 {
      * - Duplicates will be created if roles with the same name already exist
      * @param everyoneIsStudent whether to treat @ everyone as the student role
      */
-    @backupSettings
+    @useSettingsBackup
     async createAccessLevelRoles(
         allowDuplicate: boolean,
         everyoneIsStudent: boolean
@@ -806,7 +806,7 @@ class AttendingServerV2 {
      * Checks the deleted `role` was a access level role and if so, mark as deleted
      * @param deletedRole the role that was deleted
      */
-    @backupSettings
+    @useSettingsBackup
     async onRoleDelete(deletedRole: Role): Promise<void> {
         let accessLevelRoleDeleted = false;
         // shorthand syntax to take the properties of an object with the same name
@@ -930,7 +930,7 @@ class AttendingServerV2 {
      * @param role name of the role; botAdmin, staff, or student
      * @param id the role id snowflake
      */
-    @backupSettings
+    @useSettingsBackup
     setAccessLevelRoleId(role: AccessLevelRole, id: Snowflake): void {
         this.settings.accessLevelRoleIds[role] = id;
         Promise.all([
@@ -946,7 +946,7 @@ class AttendingServerV2 {
      * @param newMessage after session message to set
      * - Side Effect: Triggers a firebase backup
      */
-    @backupSettings
+    @useSettingsBackup
     async setAfterSessionMessage(newMessage: string): Promise<void> {
         this.settings.afterSessionMessage = newMessage;
     }
@@ -955,7 +955,7 @@ class AttendingServerV2 {
      * Sets the internal boolean value for autoGiveStudentRole
      * @param autoGiveStudentRole on or off
      */
-    @backupSettings
+    @useSettingsBackup
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this.settings.autoGiveStudentRole = autoGiveStudentRole;
     }
@@ -965,7 +965,7 @@ class AttendingServerV2 {
      * @param loggingChannel the new logging channel.
      * - If undefined, disables logging for this server
      */
-    @backupSettings
+    @useSettingsBackup
     async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
         this.settings.loggingChannel = loggingChannel;
     }
@@ -974,7 +974,7 @@ class AttendingServerV2 {
      * Sets the internal boolean value for promptHelpTopic
      * @param promptHelpTopic
      */
-    @backupSettings
+    @useSettingsBackup
     async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
         this.settings.promptHelpTopic = promptHelpTopic;
     }
@@ -985,7 +985,7 @@ class AttendingServerV2 {
      * @param minutes the number of minutes to wait before clearing the queue
      * @param enable whether to disable auto clear, overrides hours` and `minutes`
      */
-    @backupSettings
+    @useSettingsBackup
     async setQueueAutoClear(
         hours: number,
         minutes: number,
@@ -999,7 +999,7 @@ class AttendingServerV2 {
      * @param enableSeriousMode turn on or off serious mode
      * @returns True if triggered renders for all queues
      */
-    @backupSettings
+    @useSettingsBackup
     async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
         const seriousState = this.queues[0]?.isSerious ?? false;
         if (seriousState === enableSeriousMode) {

@@ -126,7 +126,12 @@ function backupQueueData(queue: HelpQueueV2): void {
         .catch(console.error);
 }
 
-function useFullBackup( // eslint-disable-next-line @typescript-eslint/ban-types
+/**
+ * The method decorator inside AttendingServerV2 that executes a full backup
+ * @returns the decorated method
+ */
+function useFullBackup(
+    // eslint-disable-next-line @typescript-eslint/ban-types
     target: Object, // no way around it until TS 5.0
     propertyKey: string,
     descriptor: PropertyDescriptor
@@ -140,10 +145,10 @@ function useFullBackup( // eslint-disable-next-line @typescript-eslint/ban-types
 }
 
 /**
- * The decorator inside AttendingServerV2 that executes a settings backup
- * @returns
+ * The method decorator inside AttendingServerV2 that executes a settings backup
+ * @returns the decorated method
  */
-function backupSettings(
+function useSettingsBackup(
     // eslint-disable-next-line @typescript-eslint/ban-types
     target: Object, // no way around it until TS 5.0
     propertyKey: string,
@@ -157,6 +162,10 @@ function backupSettings(
     return descriptor;
 }
 
+/**
+ * The method decorator inside HelpQueue that executes a queue backup
+ * @returns the decorated method
+ */
 function useQueueBackup(
     target: HelpQueueV2,
     propertyKey: string,
@@ -205,4 +214,4 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
     return backupData;
 }
 
-export { loadExternalServerData, backupSettings, useQueueBackup, useFullBackup };
+export { loadExternalServerData, useSettingsBackup, useQueueBackup, useFullBackup };
