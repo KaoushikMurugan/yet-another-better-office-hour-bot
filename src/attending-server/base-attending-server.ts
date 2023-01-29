@@ -21,7 +21,11 @@ import {
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
-import { FirebaseServerBackupExtension } from './firebase-backup.js';
+import {
+    FirebaseServerBackupExtension,
+    backupSettings,
+    fullBackup
+} from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';
 import {
@@ -390,9 +394,7 @@ class AttendingServerV2 {
      */
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        fullBackup(this);
     }
 
     /**
@@ -479,12 +481,8 @@ class AttendingServerV2 {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
-        await Promise.all([
-            setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
+        await setHelpChannelVisibility(this.guild, this.accessLevelRoleIds),
+            backupSettings(this);
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)
             : console.log(green(`All required roles exist in ${this.guild.name}!`));
@@ -700,6 +698,20 @@ class AttendingServerV2 {
     }
 
     /**
+     * Gets a help queue by parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns the queue object
+     * @throws {ServerError} if no such queue
+     */
+    getQueueById(parentCategoryId: Snowflake): HelpQueueV2 {
+        const queue = this._queues.get(parentCategoryId);
+        if (!queue) {
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        return queue;
+    }
+
+    /**
      * Gets all the queue channels on the server.
      * if nothing is found, returns empty array
      * @param useCache whether to read from existing cache, defaults to true
@@ -877,9 +889,7 @@ class AttendingServerV2 {
         if (!accessLevelRoleDeleted) {
             return;
         }
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1030,11 +1040,11 @@ class AttendingServerV2 {
             ...this.serverExtensions.map(extension =>
                 extension.onServerRequestBackup(this)
             )
-        ])
-            .catch(err => {
-                console.error(red(`Failed to set roles in ${this.guild.name}`), err);
-                this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
-            });
+        ]).catch(err => {
+            console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+            this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
+        });
+        backupSettings(this);
     }
 
     /**
@@ -1044,9 +1054,7 @@ class AttendingServerV2 {
      */
     async setAfterSessionMessage(newMessage: string): Promise<void> {
         this.settings.afterSessionMessage = newMessage;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1055,9 +1063,7 @@ class AttendingServerV2 {
      */
     async setAutoGiveStudentRole(autoGiveStudentRole: boolean): Promise<void> {
         this.settings.autoGiveStudentRole = autoGiveStudentRole;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1067,9 +1073,7 @@ class AttendingServerV2 {
      */
     async setLoggingChannel(loggingChannel?: TextChannel): Promise<void> {
         this.settings.loggingChannel = loggingChannel;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1078,9 +1082,7 @@ class AttendingServerV2 {
      */
     async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
         this.settings.promptHelpTopic = promptHelpTopic;
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1095,9 +1097,7 @@ class AttendingServerV2 {
         enable: boolean
     ): Promise<void> {
         this._queues.forEach(queue => queue.setAutoClear(hours, minutes, enable));
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
+        backupSettings(this);
     }
 
     /**
@@ -1110,12 +1110,10 @@ class AttendingServerV2 {
         if (seriousState === enableSeriousMode) {
             return false;
         }
-        await Promise.all([
-            ...this._queues.map(queue => queue.setSeriousMode(enableSeriousMode)),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
-        ]);
+        await Promise.all(
+            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
+        );
+        backupSettings(this);
         return true;
     }
 

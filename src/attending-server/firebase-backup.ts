@@ -11,6 +11,7 @@ import { Guild } from 'discord.js';
 import { firebaseDB } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { logWithTimeStamp } from '../utils/util-functions.js';
+import { HelpQueueV2 } from '../help-queue/help-queue.js';
 
 /**
  * Built in backup extension
@@ -123,4 +124,120 @@ class FirebaseServerBackupExtension
     }
 }
 
-export { FirebaseServerBackupExtension };
+/**
+ * Runs a complete backup to firebase for base yabob
+ * - Backs up ALL the queues and server settings
+ * @param server the server object to backup
+ */
+function fullBackup(server: FrozenServer): void {
+    const queueBackups: QueueBackup[] = server.queues.map(queue => ({
+        studentsInQueue: queue.students.map(student => ({
+            waitStart: student.waitStart,
+            displayName: student.member.displayName,
+            memberId: student.member.id
+        })),
+        name: queue.queueName,
+        parentCategoryId: queue.parentCategoryId
+    }));
+    const serverBackup: ServerBackup = {
+        serverName: server.guild.name,
+        queues: queueBackups,
+        timeStamp: new Date(),
+        afterSessionMessage: server.afterSessionMessage,
+        loggingChannelId: server.loggingChannel?.id ?? '',
+        hoursUntilAutoClear: server.queueAutoClearTimeout ?? 'AUTO_CLEAR_DISABLED',
+        seriousServer: server.isSerious,
+        botAdminRoleId: server.botAdminRoleID,
+        staffRoleId: server.staffRoleID,
+        studentRoleId: server.studentRoleID,
+        autoGiveStudentRole: server.autoGiveStudentRole,
+        promptHelpTopic: server.promptHelpTopic
+    };
+    firebaseDB
+        .collection('serverBackups')
+        .doc(server.guild.id)
+        .set(serverBackup)
+        .then(() =>
+            logWithTimeStamp(server.guild.name, '- Server & queue data backup successful')
+        )
+        .catch((err: Error) =>
+            console.error('Firebase server backup failed.', err.message)
+        );
+    server.sendLogMessage(
+        SimpleLogEmbed(`All Server Data and Queues Backed-up to Firebase`)
+    );
+}
+
+/**
+ * Runs the backup for server settings only
+ * @param server
+ */
+function backupSettings(server: FrozenServer): void {
+    firebaseDB
+        .collection('serverBackups')
+        .doc(server.guild.id)
+        .update({
+            serverName: server.guild.name,
+            timeStamp: new Date(),
+            afterSessionMessage: server.afterSessionMessage,
+            loggingChannelId: server.loggingChannel?.id ?? '',
+            hoursUntilAutoClear: server.queueAutoClearTimeout ?? 'AUTO_CLEAR_DISABLED',
+            seriousServer: server.isSerious,
+            botAdminRoleId: server.botAdminRoleID,
+            staffRoleId: server.staffRoleID,
+            studentRoleId: server.studentRoleID,
+            autoGiveStudentRole: server.autoGiveStudentRole,
+            promptHelpTopic: server.promptHelpTopic
+        })
+        .then(() =>
+            logWithTimeStamp(server.guild.name, '- Server settings backup successful')
+        )
+        .catch((err: Error) =>
+            console.error('Firebase server backup failed.', err.message)
+        );
+}
+
+/**
+ * Runs the backup for 1 queue only
+ * @param queue
+ */
+function backupQueue(queue: HelpQueueV2): void {
+    const queueBackup: QueueBackup = {
+        studentsInQueue: queue.students.map(student => ({
+            waitStart: student.waitStart,
+            displayName: student.member.displayName,
+            memberId: student.member.id
+        })),
+        name: queue.queueName,
+        parentCategoryId: queue.parentCategoryId
+    };
+    const firebaseDoc = firebaseDB
+        .collection('serverBackups')
+        .doc(queue.queueChannel.channelObj.guild.id);
+    firebaseDoc
+        .get()
+        .then(response => {
+            const data = response.data() as ServerBackup;
+            const index = data.queues.findIndex(
+                queueData => queueData.parentCategoryId === queue.parentCategoryId
+            );
+            data.queues.splice(index, 1);
+            data.queues.push(queueBackup);
+            firebaseDoc
+                .update({
+                    queues: data.queues
+                })
+                .then(() =>
+                    logWithTimeStamp(
+                        queue.channelObject.guild.name,
+                        '- Queue backup successful'
+                    )
+                )
+                .catch((err: Error) =>
+                    console.error('Firebase queue backup failed.', err.message)
+                );
+        })
+        .catch(console.error);
+}
+
+export { FirebaseServerBackupExtension, fullBackup, backupSettings, backupQueue };

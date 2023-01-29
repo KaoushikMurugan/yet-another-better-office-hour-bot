@@ -109,7 +109,8 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
             ephemeral: true
         });
     }
-    await server.enqueueStudent(interaction.member, queueChannel);
+    // await server.enqueueStudent(interaction.member, queueChannel);
+    await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
@@ -125,7 +126,12 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.Leave, 'student');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Leave,
+        'student'
+    );
     await server.removeStudentFromQueue(interaction.member, queueChannel);
     await interaction.editReply(SuccessMessages.leftQueue(queueChannel.queueName));
 }
@@ -138,7 +144,12 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.Notif, 'student');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Notif,
+        'student'
+    );
     await server.addStudentToNotifGroup(interaction.member, queueChannel);
     await interaction.editReply(SuccessMessages.joinedNotif(queueChannel.queueName));
 }
@@ -151,7 +162,12 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.RemoveNotif, 'student');
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.RemoveNotif,
+        'student'
+    );
     await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
     await interaction.editReply(SuccessMessages.removedNotif(queueChannel.queueName));
 }

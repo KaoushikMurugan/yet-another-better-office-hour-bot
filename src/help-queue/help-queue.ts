@@ -12,6 +12,7 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
+import { backupQueue } from '../attending-server/firebase-backup.js';
 
 /**
  * Render props for the queue display.
@@ -344,7 +345,8 @@ class HelpQueueV2 {
         await Promise.all([
             this.notifyHelpersOn('joinQueue', studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
-            this.triggerRender()
+            this.triggerRender(),
+            backupQueue(this)
         ]);
     }
 
