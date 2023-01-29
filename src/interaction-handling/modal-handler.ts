@@ -42,7 +42,9 @@ async function submitHelpTopic(
     ];
     const topic = interaction.fields.getTextInputValue('help_topic');
     const student = interaction.member;
-    await server.notifyHelpersOnStudentSubmitHelpTopic(student, queueChannel, topic);
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .notifyHelpersOn('submitHelpTopic', student, topic);
     await interaction.reply({
         ...SuccessMessages.joinedQueue(queueChannel.queueName),
         ephemeral: true

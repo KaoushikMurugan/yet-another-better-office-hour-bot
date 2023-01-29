@@ -22,10 +22,11 @@ import { Helpee, Helper } from '../models/member-states.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import {
-    FirebaseServerBackupExtension,
     // it is used idk why it complains
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars 
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     backupSettings,
+    loadExternalServerData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     useFullBackup
 } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
@@ -239,23 +240,17 @@ class AttendingServerV2 {
         await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: ServerExtension[] = environment.disableExtensions
-            ? [] // TODO: Should we always load the firebase extension?
+            ? []
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
-                  new FirebaseServerBackupExtension(guild),
                   CalendarServerExtension.load(guild)
               ]);
         const server = new AttendingServerV2(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
             ? undefined
-            : await Promise.all(
-                  serverExtensions.map(extension =>
-                      extension.loadExternalServerData(guild.id)
-                  )
-              );
-        const validBackup = externalBackup?.find(backup => backup !== undefined);
-        if (validBackup !== undefined) {
-            server.loadBackup(validBackup);
+            : await loadExternalServerData(guild.id);
+        if (externalBackup !== undefined) {
+            server.loadBackup(externalBackup);
         }
         const missingRoles = server.sortedAccessLevelRoles.filter(
             role =>
@@ -275,8 +270,8 @@ class AttendingServerV2 {
         }
         await Promise.all([
             server.initializeAllQueues(
-                validBackup?.queues,
-                validBackup?.hoursUntilAutoClear
+                externalBackup?.queues,
+                externalBackup?.hoursUntilAutoClear
             ),
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
@@ -313,20 +308,6 @@ class AttendingServerV2 {
      */
     static safeGet(serverId: Snowflake): Optional<AttendingServerV2> {
         return AttendingServerV2.allServers.get(serverId);
-    }
-
-    /**
-     * Adds a student to the notification group
-     * @param studentMember student to add
-     * @param targetQueue which notification group to add to
-     */
-    async addStudentToNotifGroup(
-        studentMember: GuildMember,
-        targetQueue: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(targetQueue.parentCategoryId)
-            ?.addToNotifGroup(studentMember);
     }
 
     /**
@@ -380,14 +361,6 @@ class AttendingServerV2 {
         await Promise.all(
             studentsToAnnounceTo.map(student => student.member.send(announcementEmbed))
         );
-    }
-
-    /**
-     * Cleans up the given queue and resend all embeds
-     * @param targetQueue the queue to clean
-     */
-    async cleanUpQueue(targetQueue: QueueChannel): Promise<void> {
-        await this._queues.get(targetQueue.parentCategoryId)?.triggerForceRender();
     }
 
     /**
@@ -597,7 +570,7 @@ class AttendingServerV2 {
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
-            ),
+            )
         ]);
         return student;
     }
@@ -662,25 +635,9 @@ class AttendingServerV2 {
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
-            ),
+            )
         ]);
         return student;
-    }
-
-    /**
-     * Attempt to enqueue a student
-     * @param studentMember student member to enqueue
-     * @param queueChannel target queue
-     * @deprecated
-     */
-    async enqueueStudent(
-        studentMember: GuildMember,
-        queueChannel: QueueChannel
-    ): Promise<void> {
-        await this._queues.get(queueChannel.parentCategoryId)?.enqueue(studentMember);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
     }
 
     /**
@@ -759,22 +716,6 @@ class AttendingServerV2 {
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
         return AttendingServerV2.allServers.delete(this.guild.id);
-    }
-
-    /**
-     * Notify all helpers of the topic that the student requires help with
-     * @param studentMember the student that just submitted the help topic modal
-     * @param queueChannel related queue channel
-     * @param topic the submitted help topic content
-     */
-    async notifyHelpersOnStudentSubmitHelpTopic(
-        studentMember: GuildMember,
-        queueChannel: QueueChannel,
-        topic: string
-    ): Promise<void> {
-        await this._queues
-            .get(queueChannel.parentCategoryId)
-            ?.notifyHelpersOn('submitHelpTopic', studentMember, topic);
     }
 
     /**
@@ -957,39 +898,6 @@ class AttendingServerV2 {
     }
 
     /**
-     * Removes a student from the notification group
-     * @param studentMember student to add
-     * @param targetQueue which notification group to remove from
-     */
-    async removeStudentFromNotifGroup(
-        studentMember: GuildMember,
-        targetQueue: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(targetQueue.parentCategoryId)
-            ?.removeFromNotifGroup(studentMember);
-    }
-
-    /**
-     * Removes a student from a given queue
-     * @param studentMember student that used /leave or the leave button
-     * @param targetQueue the queue to leave from
-     * @throws QueueError: if targetQueue rejects
-     * @deprecated
-     */
-    async removeStudentFromQueue(
-        studentMember: GuildMember,
-        targetQueue: QueueChannel
-    ): Promise<void> {
-        await this._queues
-            .get(targetQueue.parentCategoryId)
-            ?.removeStudent(studentMember);
-        await Promise.all(
-            this.serverExtensions.map(extension => extension.onServerRequestBackup(this))
-        );
-    }
-
-    /**
      * Changes the helper state from paused to active
      * @param helperMember a paused helper to resume helping
      */
@@ -1034,9 +942,6 @@ class AttendingServerV2 {
         this.settings.accessLevelRoleIds[role] = id;
         Promise.all([
             setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds),
-            ...this.serverExtensions.map(extension =>
-                extension.onServerRequestBackup(this)
-            )
         ]).catch(err => {
             console.error(red(`Failed to set roles in ${this.guild.name}`), err);
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);

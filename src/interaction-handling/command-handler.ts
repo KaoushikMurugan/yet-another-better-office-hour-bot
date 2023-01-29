@@ -91,7 +91,7 @@ async function enqueue(
             ephemeral: true
         });
     }
-    await server.enqueueStudent(interaction.member, queueChannel);
+    await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
@@ -238,7 +238,7 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
         CommandNames.leave,
         'student'
     );
-    await server.removeStudentFromQueue(interaction.member, queue);
+    await server.getQueueById(queue.parentCategoryId).removeStudent(interaction.member);
     await interaction.editReply(SuccessMessages.leftQueue(queue.queueName));
 }
 
@@ -395,7 +395,7 @@ async function cleanup(
         CommandNames.cleanup_queue,
         'botAdmin'
     );
-    await server.cleanUpQueue(queue);
+    await server.getQueueById(queue.parentCategoryId).triggerForceRender();
     await interaction.editReply(SuccessMessages.cleanedUp.queue(queue.queueName));
 }
 
@@ -413,7 +413,11 @@ async function cleanupAllQueues(
         'botAdmin'
     );
     const allQueues = await server.getQueueChannels();
-    await Promise.all(allQueues.map(queueChannel => server.cleanUpQueue(queueChannel)));
+    await Promise.all(
+        allQueues.map(queueChannel =>
+            server.getQueueById(queueChannel.parentCategoryId).triggerForceRender()
+        )
+    );
     await interaction.editReply(SuccessMessages.cleanedUp.allQueues);
 }
 

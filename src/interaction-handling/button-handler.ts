@@ -132,7 +132,9 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
         ButtonNames.Leave,
         'student'
     );
-    await server.removeStudentFromQueue(interaction.member, queueChannel);
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .removeStudent(interaction.member);
     await interaction.editReply(SuccessMessages.leftQueue(queueChannel.queueName));
 }
 
@@ -150,7 +152,9 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
         ButtonNames.Notif,
         'student'
     );
-    await server.addStudentToNotifGroup(interaction.member, queueChannel);
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .addToNotifGroup(interaction.member);
     await interaction.editReply(SuccessMessages.joinedNotif(queueChannel.queueName));
 }
 
@@ -168,7 +172,9 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
         ButtonNames.RemoveNotif,
         'student'
     );
-    await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .removeFromNotifGroup(interaction.member);
     await interaction.editReply(SuccessMessages.removedNotif(queueChannel.queueName));
 }
 
