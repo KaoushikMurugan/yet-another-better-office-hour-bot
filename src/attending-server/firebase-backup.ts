@@ -10,6 +10,46 @@ import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 
 /**
+ * Loads the backup data in firebase given a server id
+ * @param serverId associated server id, this is also used as document key
+ * @returns ServerBackup if a document with this id exists, otherwise undefined
+ */
+async function loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {
+    const backupDocument = await firebaseDB
+        .collection('serverBackups')
+        .doc(serverId)
+        .get();
+    const unpack = serverBackupSchema.safeParse(backupDocument.data());
+    if (!unpack.success) {
+        console.warn(
+            red(
+                `External backups were found for ${
+                    client.guilds.cache.get(serverId)?.name
+                } but contains invalid data. ` + `Creating new instance.`
+            )
+        );
+        return undefined;
+    }
+    const backupData: ServerBackup = {
+        ...unpack.data,
+        queues: unpack.data.queues.map(queue => ({
+            ...queue,
+            studentsInQueue: queue.studentsInQueue
+                .map(student => ({
+                    ...student,
+                    waitStart: new Date(student.waitStart._seconds * 1000)
+                }))
+                .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
+        })),
+        timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
+        autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
+        promptHelpTopic: unpack.data.promptHelpTopic ?? false,
+        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
+    };
+    return backupData;
+}
+
+/**
  * Runs a complete backup to firebase for base yabob
  * - Backs up ALL the queues and server settings
  * @param server the server object to backup
@@ -145,7 +185,9 @@ function useFullBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
+    // this parameter specifies the context of the decorator
     descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+        // .apply accepts 'this' as the first parameter to specify the context of the function call
         original.apply(this, args);
         fullServerBackup(this);
     };
@@ -158,7 +200,7 @@ function useFullBackup(
  */
 function useSettingsBackup(
     // eslint-disable-next-line @typescript-eslint/ban-types
-    target: Object, // no way around it until TS 5.0
+    target: Object,
     propertyKey: string,
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
@@ -175,7 +217,8 @@ function useSettingsBackup(
  * @returns the decorated method
  */
 function useQueueBackup(
-    target: HelpQueueV2,
+    // eslint-disable-next-line @typescript-eslint/ban-types
+    target: Object,
     propertyKey: string,
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
@@ -187,44 +230,4 @@ function useQueueBackup(
     return descriptor;
 }
 
-/**
- * Loads the backup data in firebase given a server id
- * @param serverId associated server id, this is also used as document key
- * @returns ServerBackup if a document with this id exists, otherwise undefined
- */
-async function loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {
-    const backupDocument = await firebaseDB
-        .collection('serverBackups')
-        .doc(serverId)
-        .get();
-    const unpack = serverBackupSchema.safeParse(backupDocument.data());
-    if (!unpack.success) {
-        console.warn(
-            red(
-                `External backups were found for ${
-                    client.guilds.cache.get(serverId)?.name
-                } but contains invalid data. ` + `Creating new instance.`
-            )
-        );
-        return undefined;
-    }
-    const backupData: ServerBackup = {
-        ...unpack.data,
-        queues: unpack.data.queues.map(queue => ({
-            ...queue,
-            studentsInQueue: queue.studentsInQueue
-                .map(student => ({
-                    ...student,
-                    waitStart: new Date(student.waitStart._seconds * 1000)
-                }))
-                .sort((a, b) => a.waitStart.getTime() - b.waitStart.getTime())
-        })),
-        timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
-        autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
-        promptHelpTopic: unpack.data.promptHelpTopic ?? false,
-        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
-    };
-    return backupData;
-}
-
-export { loadExternalServerData, useSettingsBackup, useQueueBackup, useFullBackup };
+export { loadExternalServerData, useSettingsBackup, useQueueBackup, useFullBackup, backupQueueData };

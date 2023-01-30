@@ -130,21 +130,24 @@ class QueueDisplayV2 {
     }
 
     /**
-     * Exits the write only mode. 
+     * Exits the write only mode.
      */
     exitWriteOnlyMode(): void {
         this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
         this.writeOnlyMode = false;
     }
 
+    /**
+     * Requests a force render of all embeds
+     */
     async requestForceRender(): Promise<void> {
         await this.render(true);
     }
 
     /**
      * Request a render of a non-queue (not the main queue list) embed
-     * @param embedElements
-     * @param renderIndex
+     * @param embedElements the embeds to render
+     * @param renderIndex the index given by HelpQueueV2
      */
     requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
@@ -333,11 +336,10 @@ class QueueDisplayV2 {
             this.isRendering = false;
             return;
         }
-        const queueMessages = this.queueChannel.channelObj.messages.cache;
-        const [yabobMessages, nonYabobMessages] = queueMessages.partition(
-            msg => msg.author.id === client.user.id
-        );
-        // TODO: This filter is probably not necessary
+        const [yabobMessages, nonYabobMessages] =
+            this.queueChannel.channelObj.messages.cache.partition(
+                msg => msg.author.id === client.user.id
+            );
         const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );

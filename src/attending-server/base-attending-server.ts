@@ -27,7 +27,8 @@ import {
     useSettingsBackup,
     loadExternalServerData,
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    useFullBackup
+    useFullBackup,
+    backupQueueData
 } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
 import { blue, cyan, green, red } from '../utils/command-line-colors.js';
@@ -365,11 +366,21 @@ class AttendingServerV2 {
 
     /**
      * Clear all queues of this server
-     * @remark separated from {@link clearQueue} to avoid excessive backup calls
+     * @remark separated from {@link clearQueueById} to avoid excessive backup calls
      */
     @useFullBackup
     async clearAllQueues(): Promise<void> {
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
+    }
+
+    /**
+     * Clears a given queue by its id
+     * @param parentCategoryId
+     */
+    async clearQueueById(parentCategoryId: CategoryChannelId): Promise<void> {
+        await this.getQueueById(parentCategoryId).removeAllStudents();
+        // temporary solution, regular clear_queue needs to be separated from clear all to avoid excessive backups
+        backupQueueData(this.getQueueById(parentCategoryId));
     }
 
     /**
@@ -558,7 +569,7 @@ class AttendingServerV2 {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         await Promise.all([
-            // this is technically bad, we are making changes even though we expect this function to throw
+            // ! this is technically bad, we are making changes even though we expect this function to throw
             // TODO: use a different solution
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>

@@ -257,14 +257,13 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
         'staff'
     );
     // if they are not admin or doesn't have the queue role, reject
-    if (
-        !member.roles.cache.some(
-            role => role.name === queue.queueName || role.id === server.botAdminRoleID
-        )
-    ) {
+    const hasPermission = member.roles.cache.some(
+        role => role.name === queue.queueName || role.id === server.botAdminRoleID
+    );
+    if (!hasPermission) {
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
     }
-    await server.getQueueById(queue.parentCategoryId).removeAllStudents();
+    await server.clearQueueById(queue.parentCategoryId);
     await interaction.editReply(SuccessMessages.clearedQueue(queue.queueName));
 }
 
