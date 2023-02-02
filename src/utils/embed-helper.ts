@@ -7,11 +7,11 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder
-} from 'discord.js';
+    EmbedBuilder} from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
 import { OptionalRoleId, SpecialRoleValues } from './type-aliases.js';
+
 
 type ExpectedError = QueueError | ServerError | CommandParseError;
 
@@ -25,7 +25,7 @@ enum EmbedColor {
     UnexpectedError = 0xff0000, // pure red
     Neutral = 0xffffff, // White
     Yellow = 0xffd866, // Yellow
-    NoColor = 0x2f3137, // the embed background
+    NoColor = 0x2f3137, // the embed background (dark mode)
     Aqua = 0x78dce8,
     DiscordPurple = 0x5865f2,
     PastelPurple = 0x738adb, // old discord purple
@@ -655,5 +655,5 @@ export {
     SlashCommandLogEmbed,
     SlashCommandLogEmbed2,
     SelectMenuLogEmbed,
-    SelectMenuLogEmbed2
+    SelectMenuLogEmbed2,
 };
