@@ -14,8 +14,7 @@ const baseYabobModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
-            [ModalNames.PromptHelpTopicModal]: interaction =>
-                submitHelpTopic(interaction),
+            [ModalNames.PromptHelpTopicModal]: submitHelpTopic,
             [ModalNames.AfterSessionMessageModal]: interaction =>
                 setAfterSessionMessage(interaction, false),
             [ModalNames.AfterSessionMessageModalMenuVersion]: interaction =>
