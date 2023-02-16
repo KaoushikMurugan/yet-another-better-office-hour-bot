@@ -202,7 +202,7 @@ const whenNextHelp: HelpMessage = {
                     },
                     {
                         name: 'Example Usage',
-                        value: '`/when_next`\n `/when_next ECS 140A`',
+                        value: '`/when_next`\n `/when_next showAll=True`',
                         inline: true
                     }
                 ]
