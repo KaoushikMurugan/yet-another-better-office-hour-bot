@@ -111,8 +111,8 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
     await Promise.all(
         allHelpChannels.map(async channel => {
             // have to fetch here, otherwise the cache is empty
-            const messageCount = (await channel.messages.fetch()).size;
-            await channel.bulkDelete(messageCount);
+            await channel.messages.fetch();
+            await Promise.all(channel.messages.cache.map(message => message.delete()));
         })
     );
     // send the messages we want to show in the help channels
