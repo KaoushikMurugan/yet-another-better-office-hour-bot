@@ -523,19 +523,23 @@ class HelpQueueV2 {
         // default the helper to 'active' state
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
-            ...this.notifGroup.map(
-                notifMember =>
-                    notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.hasHelper(notifMember.id) && // don't notify helpers
-                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
-            ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
-        if (notify) {
-            // clear AFTER the message is successfully sent to avoid race conditions
-            this.notifGroup.clear();
+        if (!notify) {
+            return;
         }
+        // now notify is true
+        // Synchronously notify everyone in the notif group
+        // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
+        void Promise.allSettled(
+            this.notifGroup.map(
+                notifMember =>
+                    !this.hasHelper(notifMember.id) && // don't notify helpers
+                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
+            )
+        ).then(() => this.notifGroup.clear());
+        // clear AFTER the message promise settles to avoid race conditions
     }
 
     /**
