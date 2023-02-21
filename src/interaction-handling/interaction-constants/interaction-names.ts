@@ -58,7 +58,10 @@ enum ButtonNames {
     PromptHelpTopicConfig1 = 'PromptHelpTopicConfig1',
     PromptHelpTopicConfig2 = 'PromptHelpTopicConfig2',
     SeriousModeConfig1 = 'SeriousModeConfig1',
-    SeriousModeConfig2 = 'SeriousModeConfig2'
+    SeriousModeConfig2 = 'SeriousModeConfig2',
+    HelpMenuLeft = 'HelpMenuLeft',
+    HelpMenuRight = 'HelpMenuRight',
+    ReturnToHelpMenu = 'ReturnToHelpMenu'
 }
 
 /**
@@ -75,7 +78,8 @@ enum ModalNames {
 /** Known base yabob select menu names */
 enum SelectMenuNames {
     ServerSettings = 'ServerSettings',
-    SelectLoggingChannel = 'SelectLoggingChannel'
+    SelectLoggingChannel = 'SelectLoggingChannel',
+    HelpMenu = 'HelpMenu'
 }
 
 export { CommandNames, ButtonNames, ModalNames, SelectMenuNames };

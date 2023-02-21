@@ -169,7 +169,7 @@ const clearHelp: HelpMessage = {
         value: 'clear'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -203,7 +203,7 @@ const pauseHelp: HelpMessage = {
         value: 'pause'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -237,7 +237,7 @@ const resumeHelp: HelpMessage = {
         value: 'resume'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {

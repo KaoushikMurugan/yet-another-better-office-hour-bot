@@ -339,7 +339,7 @@ const seriousModeHelp: HelpMessage = {
         value: 'serious_mode'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -374,7 +374,7 @@ const settingsHelp: HelpMessage = {
         value: 'settings'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -405,16 +405,16 @@ const settingsHelp: HelpMessage = {
 
 const setAutoGiveStudentRoleHelp: HelpMessage = {
     nameValuePair: {
-        name: 'set_auto_give_student_role',
-        value: 'set_auto_give_student_role'
+        name: 'auto_give_student_role',
+        value: 'auto_give_student_role'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/set_auto_give_student_role`',
+                title: 'Command: `/auto_give_student_role`',
                 fields: [
                     {
                         name: 'Description',
@@ -450,7 +450,6 @@ const adminCommandHelpMessages: HelpMessage[] = [
     stopLoggingHelp,
     setQueueAutoClearHelp,
     seriousModeHelp,
-    // ! Temporarily have useInHelpCommand=false since it causes the /help command to fail generation as it get too many fields
     settingsHelp,
     setAutoGiveStudentRoleHelp
 ];

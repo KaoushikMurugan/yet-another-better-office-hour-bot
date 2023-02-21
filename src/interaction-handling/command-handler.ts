@@ -455,7 +455,8 @@ async function showAfterSessionMessageModal(
  * The `/help` command
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    await interaction.editReply(HelpMenuEmbed(0));
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.editReply(HelpMenuEmbed(server, 0));
 }
 
 /**

@@ -1,4 +1,4 @@
-import { ButtonInteraction } from 'discord.js';
+import { APIEmbed, ButtonInteraction, JSONEncodable } from 'discord.js';
 import {
     SettingsMainMenu,
     RolesConfigMenu,
@@ -25,6 +25,7 @@ import {
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { HelpMenuEmbed } from './shared-interaciton-functions.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -60,7 +61,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.SeriousModeConfig1]: interaction =>
                 toggleSeriousMode(interaction, true),
             [ButtonNames.SeriousModeConfig2]: interaction =>
-                toggleSeriousMode(interaction, false)
+                toggleSeriousMode(interaction, false),
+            [ButtonNames.HelpMenuLeft]: interaction =>
+                switchHelpMenuPage(interaction, 'left'),
+            [ButtonNames.HelpMenuRight]: interaction =>
+                switchHelpMenuPage(interaction, 'right'),
+            [ButtonNames.ReturnToHelpMenu]: interaction =>
+                returnToHelpMenu(interaction)
         }
     },
     dmMethodMap: {
@@ -90,7 +97,10 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.PromptHelpTopicConfig1,
         ButtonNames.PromptHelpTopicConfig2,
         ButtonNames.SeriousModeConfig1,
-        ButtonNames.SeriousModeConfig2
+        ButtonNames.SeriousModeConfig2,
+        ButtonNames.HelpMenuLeft,
+        ButtonNames.HelpMenuRight,
+        ButtonNames.ReturnToHelpMenu
     ])
 };
 
@@ -191,7 +201,7 @@ async function showSettingsMainMenu(
 /**
  * Creates the access level roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
- * @param everyoneIsStudent whether to use @everyone as @Student
+ * @param everyoneIsStudent whether to use \@everyone as \@Student
  */
 async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
@@ -216,7 +226,7 @@ async function createAccessLevelRoles(
  * Creates roles for the server in dm channels
  * - This is explicitly used for server initialization
  * @param forceCreate if true, will create new roles even if they already exist
- * @param defaultStudentIsEveryone whether to use @everyone as @Student
+ * @param defaultStudentIsEveryone whether to use \@everyone as \@Student
  */
 async function createServerRolesDM(
     interaction: ButtonInteraction,
@@ -349,6 +359,11 @@ async function togglePromptHelpTopic(
     );
 }
 
+/**
+ * Toggle serious mode for the server
+ * @param interaction 
+ * @param enableSeriousMode 
+ */
 async function toggleSeriousMode(
     interaction: ButtonInteraction<'cached'>,
     enableSeriousMode: boolean
@@ -363,6 +378,48 @@ async function toggleSeriousMode(
             `Successfully turned ${enableSeriousMode ? 'on' : 'off'} serious mode.`
         )
     );
+}
+
+/**
+ * Switch the help menu page forward or backwards (right or left)
+ * @param interaction 
+ * @param leftOrRight direction to switch the page
+ * @returns 
+ */
+async function switchHelpMenuPage(
+    interaction: ButtonInteraction<'cached'>,
+    leftOrRight: 'left' | 'right'
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const oldEmbed = interaction.message.embeds[0];
+    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const oldPage = Number(footerText?.split('/')[0]);
+    const maxPage = Number(footerText?.split('/')[1]);
+    // invalid parse check
+    if (isNaN(oldPage) || isNaN(maxPage)) return;
+    // bounds check
+    if (
+        (leftOrRight === 'left' && oldPage <= 1) ||
+        (leftOrRight === 'right' && oldPage === maxPage)
+    ) {
+        return;
+    }
+    const helpmenu = HelpMenuEmbed(
+        server,
+        leftOrRight === 'left' ? oldPage - 2 : oldPage
+    );
+    if (helpmenu.embeds && helpmenu.embeds[0]) {
+        const asdf = helpmenu.embeds[0] as JSONEncodable<APIEmbed>;
+        console.log(asdf.toJSON());
+    }
+    await interaction.update(helpmenu);
+}
+
+async function returnToHelpMenu(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.update(HelpMenuEmbed(server, 0));
 }
 
 export { baseYabobButtonMethodMap };
