@@ -719,10 +719,14 @@ async function joinQueueNotify(
     const onOrOff = interaction.options.getSubcommand(true);
 
     if (onOrOff === 'on') {
-        await server.addStudentToNotifGroup(interaction.member, queue);
+        await server
+            .getQueueById(queue.parentCategoryId)
+            .addToNotifGroup(interaction.member);
         await interaction.editReply(SuccessMessages.joinedNotif(queue.queueName));
     } else if (onOrOff === 'off') {
-        await server.removeStudentFromNotifGroup(interaction.member, queue);
+        await server
+            .getQueueById(queue.parentCategoryId)
+            .removeFromNotifGroup(interaction.member);
         await interaction.editReply(SuccessMessages.removedNotif(queue.queueName));
     } else {
         throw new CommandParseError('Invalid subcommand.');
