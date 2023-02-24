@@ -12,6 +12,8 @@ import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import { useQueueBackup } from '../attending-server/firebase-backup.js';
 
 /**
  * Render props for the queue display.
@@ -138,6 +140,11 @@ class HelpQueueV2 {
         return this._students[0];
     }
 
+    /** The seriousness of the queue, synced with the enclosing AttendingServer */
+    get isSerious(): boolean {
+        return this._seriousModeEnabled;
+    }
+
     /** Number of students */
     get length(): number {
         return this._students.length;
@@ -156,11 +163,6 @@ class HelpQueueV2 {
     /** Name of corresponding queue */
     get queueName(): string {
         return this.queueChannel.queueName;
-    }
-
-    /** The seriousness of the queue, synced with the enclosing AttendingServer */
-    get isSerious(): boolean {
-        return this._seriousModeEnabled;
     }
 
     /** All students */
@@ -270,6 +272,7 @@ class HelpQueueV2 {
      * - helperMember is not one of the helpers
      * - targetStudentMember specified but not in queue
      */
+    @useQueueBackup
     async dequeueWithHelper(
         helperMember: GuildMember,
         targetStudentMember?: GuildMember
@@ -325,6 +328,7 @@ class HelpQueueV2 {
      * - student is already in the queue
      * - studentMember is a helper
      */
+    @useQueueBackup
     async enqueue(studentMember: GuildMember): Promise<void> {
         if (this.getQueueState() !== 'open') {
             throw ExpectedQueueErrors.enqueueNotAllowed(this.queueName);
@@ -346,6 +350,31 @@ class HelpQueueV2 {
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
+    }
+
+    /**
+     * Returns the view model of the current state of the queue
+     * @returns QueueViewModel
+     */
+    getCurrentViewModel(): QueueViewModel {
+        return {
+            queueName: this.queueName,
+            activeHelperIDs: [...this.activeHelperIds],
+            pausedHelperIDs: [...this.pausedHelperIds],
+            studentDisplayNames: this._students.map(
+                student => student.member.displayName
+            ),
+            state: this.getQueueState(),
+            seriousModeEnabled: this._seriousModeEnabled,
+            timeUntilAutoClear:
+                this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
+                    ? 'AUTO_CLEAR_DISABLED'
+                    : addTimeOffset(
+                          new Date(),
+                          this.timeUntilAutoClear.hours,
+                          this.timeUntilAutoClear.minutes
+                      )
+        };
     }
 
     /**
@@ -434,13 +463,14 @@ class HelpQueueV2 {
      * @param studentMember the student that emitted the event
      * @param helpTopic if event is 'submitHelpTopic', this param is specified, see the above overload
      */
-    async notifyHelpersOn<EventType extends 'submitHelpTopic' | 'joinQueue'>(
-        event: EventType,
+    async notifyHelpersOn(
+        event: 'submitHelpTopic' | 'joinQueue',
         studentMember: GuildMember,
         helpTopic?: string
     ): Promise<void> {
+        // a string describing what the event is, used only for the error message
+        let studentAction: string;
         let embed: YabobEmbed;
-        // this would look really pretty if pattern matching exists in JS
         switch (event) {
             case 'joinQueue':
                 embed = SimpleEmbed(
@@ -448,6 +478,7 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `<@${studentMember.user.id}>`
                 );
+                studentAction = `joined ${this.queueName}`;
                 break;
             case 'submitHelpTopic':
                 embed = SimpleEmbed(
@@ -455,12 +486,28 @@ class HelpQueueV2 {
                     EmbedColor.Neutral,
                     `\n\n${helpTopic}\n\n<@${studentMember.user.id}>`
                 );
+                studentAction = 'submitted what you need help with';
+                break;
         }
+        // this assumes that if an error comes back when we call send, it's because the helper closed dm
+        const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
             [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members.get(helperId)?.send(embed)
+                this.queueChannel.channelObj.members
+                    .get(helperId)
+                    ?.send(embed)
+                    .catch(() => {
+                        helpersThatClosedDM.push(helperId);
+                    })
             )
         );
+        if (helpersThatClosedDM.length > 0) {
+            throw ExpectedQueueErrors.staffBlockedDm(
+                this.queueName,
+                studentAction,
+                helpersThatClosedDM
+            );
+        }
     }
 
     /**
@@ -476,19 +523,23 @@ class HelpQueueV2 {
         // default the helper to 'active' state
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
-            ...this.notifGroup.map(
-                notifMember =>
-                    notify && // shorthand syntax, the RHS of && will be invoked if LHS is true
-                    !this.hasHelper(notifMember.id) && // don't notify helpers
-                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
-            ),
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
-        if (notify) {
-            // clear AFTER the message is successfully sent to avoid race conditions
-            this.notifGroup.clear();
+        if (!notify) {
+            return;
         }
+        // now notify is true
+        // Synchronously notify everyone in the notif group
+        // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
+        void Promise.allSettled(
+            this.notifGroup.map(
+                notifMember =>
+                    !this.hasHelper(notifMember.id) && // don't notify helpers
+                    notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
+            )
+        ).then(() => this.notifGroup.clear());
+        // clear AFTER the message promise settles to avoid race conditions
     }
 
     /**
@@ -496,6 +547,8 @@ class HelpQueueV2 {
      * @noexcept - This will never throw an error even if there's no one to remove
      */
     async removeAllStudents(): Promise<void> {
+        // don't decorate with @useQueueBackup here, let the server do the backup
+        // otherwise there will be a ton of backup calls
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onRemoveAllStudents(this, this._students)
@@ -524,6 +577,7 @@ class HelpQueueV2 {
      * @param targetStudent the student to remove
      * @throws {QueueError} if the student is not in the queue
      */
+    @useQueueBackup
     async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
         const index = this._students.findIndex(
             student => student.member.id === targetStudent.id
@@ -556,7 +610,9 @@ class HelpQueueV2 {
      */
     async setAutoClear(hours: number, minutes: number, enable: boolean): Promise<void> {
         const existingTimerId = this.timers.get('QUEUE_AUTO_CLEAR');
-        existingTimerId && clearInterval(existingTimerId);
+        if (existingTimerId !== undefined) {
+            clearInterval(existingTimerId);
+        }
         if (enable) {
             this._timeUntilAutoClear = {
                 hours: hours,
@@ -580,11 +636,20 @@ class HelpQueueV2 {
     }
 
     /**
-     * Remove all embeds in the #queue channel and send fresh embeds. Used for /cleanup_queue
+     * Force renders all embeds in a queue
      */
     async triggerForceRender(): Promise<void> {
+        this.display.enterWriteOnlyMode();
+        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                // TODO: temporary solution
+                // this assumes extensions will make a render request onQueueRender
+                extension.onQueueRender(this, this.display)
+            )
+        );
+        this.display.exitWriteOnlyMode();
         await this.display.requestForceRender();
-        // TODO: emit the onQueueRender here?
     }
 
     /**
@@ -592,26 +657,7 @@ class HelpQueueV2 {
      * Composes the queue view model, then sends it to QueueDisplay
      */
     async triggerRender(): Promise<void> {
-        // build viewModel, then call display.render()
-        const viewModel: QueueViewModel = {
-            queueName: this.queueName,
-            activeHelperIDs: [...this.activeHelperIds],
-            pausedHelperIDs: [...this.pausedHelperIds],
-            studentDisplayNames: this._students.map(
-                student => student.member.displayName
-            ),
-            state: this.getQueueState(),
-            seriousModeEnabled: this._seriousModeEnabled,
-            timeUntilAutoClear:
-                this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
-                    ? 'AUTO_CLEAR_DISABLED'
-                    : addTimeOffset(
-                          new Date(),
-                          this.timeUntilAutoClear.hours,
-                          this.timeUntilAutoClear.minutes
-                      )
-        };
-        this.display.requestQueueEmbedRender(viewModel);
+        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)

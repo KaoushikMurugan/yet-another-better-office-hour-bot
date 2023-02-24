@@ -111,8 +111,8 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
     await Promise.all(
         allHelpChannels.map(async channel => {
             // have to fetch here, otherwise the cache is empty
-            const messageCount = (await channel.messages.fetch()).size;
-            await channel.bulkDelete(messageCount);
+            await channel.messages.fetch();
+            await Promise.all(channel.messages.cache.map(msg => msg.delete()));
         })
     );
     // send the messages we want to show in the help channels
@@ -160,6 +160,14 @@ async function setHelpChannelVisibility(
             )
             .flat()
     );
+    // make the channel invisible to @everyone first
+    await Promise.all(
+        helpChannels.map(channel =>
+            channel.permissionOverwrites.create(guild.roles.everyone, {
+                ViewChannel: false
+            })
+        )
+    );
     await Promise.all(
         helpChannels.map(channel =>
             helpChannelConfigurations
@@ -170,13 +178,6 @@ async function setHelpChannelVisibility(
                         ViewChannel: true
                     })
                 )
-        )
-    );
-    await Promise.all(
-        helpChannels.map(channel =>
-            channel.permissionOverwrites.create(guild.roles.everyone, {
-                ViewChannel: false
-            })
         )
     );
 }
@@ -198,7 +199,7 @@ async function createOfficeVoiceChannels(
     categoryName: string,
     officeNamePrefix: string,
     numberOfOffices: number,
-    permittedRoleIds: Snowflake[]
+    permittedRoleIds: [Snowflake, Snowflake]
 ): Promise<void> {
     const allChannels = await guild.channels.fetch();
     // Find if a category with the same name exists
@@ -216,7 +217,6 @@ async function createOfficeVoiceChannels(
         name: categoryName,
         type: ChannelType.GuildCategory
     });
-    // Change the config object and add more functions here if needed
     await Promise.all(
         Array(numberOfOffices)
             .fill(undefined)
@@ -224,6 +224,7 @@ async function createOfficeVoiceChannels(
                 officeCategory.children.create({
                     name: `${officeNamePrefix} ${officeNumber + 1}`,
                     type: ChannelType.GuildVoice,
+                    // create the permission overwrites along with the channel itself
                     permissionOverwrites: [
                         {
                             deny: PermissionFlagsBits.SendMessages,
@@ -262,12 +263,6 @@ async function sendInvite(
             Connect: true
         })
     ]);
-    await student.send(
-        SimpleEmbed(
-            `It's your turn! Join the call: ${invite.toString()}`,
-            EmbedColor.Success
-        )
-    );
     // remove the overwrite when the link dies
     setTimeout(() => {
         helperVoiceChannel.permissionOverwrites.cache
@@ -277,6 +272,17 @@ async function sendInvite(
                 console.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
+    await student
+        .send(
+            SimpleEmbed(
+                `It's your turn! Join the call: ${invite.toString()}`,
+                EmbedColor.Success
+            )
+        )
+        .catch(() => {
+            // TODO: this assumes the error is always because of student blocking the dm
+            throw ExpectedServerErrors.studentBlockedDm(student.id);
+        });
 }
 
 export {

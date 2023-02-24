@@ -84,6 +84,10 @@ class QueueDisplayV2 {
      */
     private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
         new Collection();
+    /**
+     * Whether the display has temporarily paused rendering
+     */
+    private writeOnlyMode = false;
 
     /**
      * Saved for queue delete. Stop the timer when a queue is deleted.
@@ -96,8 +100,9 @@ class QueueDisplayV2 {
             // every second, check if there are any fresh embeds
             // if there's nothing new or a render is already happening, stop
             if (
-                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0 ||
-                this.isRendering
+                this.isRendering ||
+                this.writeOnlyMode ||
+                this.queueChannelEmbeds.filter(embed => !embed.stale).size === 0
             ) {
                 return;
             }
@@ -116,14 +121,33 @@ class QueueDisplayV2 {
         }, 1000);
     }
 
+    /**
+     * Lets the display enter write only mode.
+     * When enabled, the render loop will skip rendering even if non-stale embeds exist
+     */
+    enterWriteOnlyMode(): void {
+        this.writeOnlyMode = true;
+    }
+
+    /**
+     * Exits the write only mode.
+     */
+    exitWriteOnlyMode(): void {
+        this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
+        this.writeOnlyMode = false;
+    }
+
+    /**
+     * Requests a force render of all embeds
+     */
     async requestForceRender(): Promise<void> {
         await this.render(true);
     }
 
     /**
      * Request a render of a non-queue (not the main queue list) embed
-     * @param embedElements
-     * @param renderIndex
+     * @param embedElements the embeds to render
+     * @param renderIndex the index given by HelpQueueV2
      */
     requestNonQueueEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
@@ -312,11 +336,10 @@ class QueueDisplayV2 {
             this.isRendering = false;
             return;
         }
-        const queueMessages = this.queueChannel.channelObj.messages.cache;
-        const [yabobMessages, nonYabobMessages] = queueMessages.partition(
-            msg => msg.author.id === client.user.id
-        );
-        // TODO: This filter is probably not necessary
+        const [yabobMessages, nonYabobMessages] =
+            this.queueChannel.channelObj.messages.cache.partition(
+                msg => msg.author.id === client.user.id
+            );
         const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );

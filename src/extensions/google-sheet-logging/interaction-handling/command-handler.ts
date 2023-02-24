@@ -56,7 +56,7 @@ async function getStatistics(
     if (commandType === 'server') {
         // do nothing
     } else if (commandType === 'helper') {
-        user = interaction.options.getUser('helper') ?? interaction.user;
+        user = interaction.options.getUser('user') ?? interaction.user;
     } else {
         throw new Error(`Invalid command type ${commandType}`);
     }
@@ -290,7 +290,7 @@ async function getWeeklyReport(
     if (commandType === 'server') {
         // do nothing
     } else if (commandType === 'helper') {
-        user = interaction.options.getUser('helper') ?? interaction.user;
+        user = interaction.options.getUser('user') ?? interaction.user;
     } else {
         throw new Error(`Invalid command type ${commandType}`);
     }

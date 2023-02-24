@@ -3,7 +3,7 @@ import { EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
-import { settingsOptionsSelectMenu } from '../../../attending-server/server-settings-menus.js';
+import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
 
 /**
  * Options for the server settings main menu
@@ -63,7 +63,7 @@ function GoogleSheetSettingsConfigMenu(
     }
     return {
         embeds: [embed],
-        components: [settingsOptionsSelectMenu(GoogleSheetSettingsConfigMenu)]
+        components: [SettingsSwitcher(GoogleSheetSettingsConfigMenu)]
     };
 }
 

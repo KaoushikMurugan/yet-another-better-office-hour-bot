@@ -22,6 +22,7 @@ import { AccessLevelRole } from '../models/access-level-roles.js';
 import { CommandParseError } from '../utils/error-types.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 import { yellow } from '../utils/command-line-colors.js';
+import { CategoryChannelId } from '../utils/type-aliases.js';
 
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
@@ -58,6 +59,24 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
 }
 
 /**
+ * Variant of {@link isFromQueueChannelWithParent} that returns only the parentCategoryId
+ * @param interaction
+ * @returns parentCategoryId
+ */
+function isFromQueueChannelWithParentIdOnly(
+    interaction: Interaction<'cached'>
+): CategoryChannelId {
+    if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
+        throw ExpectedParseErrors.queueHasNoParent;
+    }
+    const server = AttendingServerV2.get(interaction.guildId);
+    if (!server.getQueueChannelById(interaction.channel.parent.id)) {
+        throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
+    }
+    return interaction.channel.parent.id;
+}
+
+/**
  * Checks if the trigger-er has the any role above or equal to the `lowestRequiredRole`.
  * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
@@ -90,7 +109,8 @@ function isTriggeredByMemberWithRoles(
     // otherwise if the loop breaks then we must throw
     throw ExpectedParseErrors.missingAccessLevelRolesVariant(
         server.guild.roles.cache.get(server.accessLevelRoleIds[lowestRequiredRole])?.name,
-        commandName
+        commandName,
+        server.accessLevelRoleIds[lowestRequiredRole]
     );
 }
 
@@ -101,7 +121,7 @@ function isTriggeredByMemberWithRoles(
  * - If true, check if the **command argument** is a valid queue category
  * - If false, check if the **current channel**'s parent category is a valid queue category
  * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
- * */
+ */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction<'cached'>,
     required = false
@@ -125,6 +145,32 @@ function hasValidQueueArgument(
         parentCategoryId: parentCategory.id
     };
     return queueChannel;
+}
+
+/**
+ * Variant of {@link hasValidQueueArgument} that returns only the category channel id
+ * @param interaction
+ * @param required
+ * @returns the parentCategoryId if the queue channel is valid
+ */
+function hasValidQueueArgumentIdOnly(
+    interaction: ChatInputCommandInteraction<'cached'>,
+    required = false
+): CategoryChannelId {
+    if (!interaction.channel || !('parent' in interaction.channel)) {
+        throw ExpectedParseErrors.invalidQueueCategory();
+    }
+    const parentCategory =
+        interaction.options.getChannel('queue_name', required) ??
+        interaction.channel.parent;
+    if (!isCategoryChannel(parentCategory)) {
+        throw ExpectedParseErrors.invalidQueueCategory(parentCategory?.name);
+    }
+    const queueTextChannel = parentCategory.children.cache.find(isQueueTextChannel);
+    if (queueTextChannel === undefined) {
+        throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
+    }
+    return parentCategory.id;
 }
 
 /**
@@ -174,9 +220,11 @@ async function channelsAreUnderLimit(
 
 export {
     isFromQueueChannelWithParent,
+    isFromQueueChannelWithParentIdOnly,
     isValidDMInteraction,
     isTriggeredByMemberWithRoles,
     hasValidQueueArgument,
+    hasValidQueueArgumentIdOnly,
     channelsAreUnderLimit,
     isTriggeredByUserWithValidEmail
 };

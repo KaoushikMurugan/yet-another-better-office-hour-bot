@@ -18,7 +18,7 @@ import {
 } from './handler-interface.js';
 import {
     ButtonLogEmbed,
-    ErrorEmbed2,
+    ErrorEmbed,
     SelectMenuLogEmbed,
     SimpleEmbed,
     SlashCommandLogEmbed
@@ -79,9 +79,9 @@ async function replyWithError(
         return;
     }
     interaction.replied
-        ? await interaction.editReply(ErrorEmbed2(error, botAdminRoleID))
+        ? await interaction.editReply(ErrorEmbed(error, botAdminRoleID))
         : await interaction.reply({
-              ...ErrorEmbed2(error, botAdminRoleID),
+              ...ErrorEmbed(error, botAdminRoleID),
               ephemeral: true
           });
 }

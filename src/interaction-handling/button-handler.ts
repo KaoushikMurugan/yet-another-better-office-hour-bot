@@ -13,6 +13,7 @@ import {
 import { ButtonHandlerProps } from './handler-interface.js';
 import {
     isFromQueueChannelWithParent,
+    isTriggeredByMemberWithRoles,
     isValidDMInteraction
 } from './shared-validations.js';
 import { ButtonNames } from './interaction-constants/interaction-names.js';
@@ -101,13 +102,15 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
+    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.Join, 'student');
     if (!server.promptHelpTopic) {
         await interaction.reply({
             ...SimpleEmbed(`Processing button \`Join\` ...`),
             ephemeral: true
         });
     }
-    await server.enqueueStudent(interaction.member, queueChannel);
+    // await server.enqueueStudent(interaction.member, queueChannel);
+    await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
         : await interaction.editReply(
@@ -123,7 +126,15 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    await server.removeStudentFromQueue(interaction.member, queueChannel);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Leave,
+        'student'
+    );
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .removeStudent(interaction.member);
     await interaction.editReply(SuccessMessages.leftQueue(queueChannel.queueName));
 }
 
@@ -135,7 +146,15 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    await server.addStudentToNotifGroup(interaction.member, queueChannel);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Notif,
+        'student'
+    );
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .addToNotifGroup(interaction.member);
     await interaction.editReply(SuccessMessages.joinedNotif(queueChannel.queueName));
 }
 
@@ -147,7 +166,15 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
         AttendingServerV2.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
-    await server.removeStudentFromNotifGroup(interaction.member, queueChannel);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.RemoveNotif,
+        'student'
+    );
+    await server
+        .getQueueById(queueChannel.parentCategoryId)
+        .removeFromNotifGroup(interaction.member);
     await interaction.editReply(SuccessMessages.removedNotif(queueChannel.queueName));
 }
 
