@@ -148,4 +148,27 @@ const UnexpectedParseErrors = {
         )
 } as const;
 
-export { ExpectedParseErrors, UnexpectedParseErrors };
+const ExpectedParseWarnings = {
+    missingRoles: (missingRoleNames: string[]): string =>
+        `This command works for you due to admin permission override` +
+        `The roles ${missingRoleNames.join(', ')}` +
+        ` does not exist on this server or have not been set up. You can use \`/settings\` -> Server Roles to configure roles.`,
+    missingAccessLevelRoles: (
+        lowestRequiredRoleID: Snowflake,
+        commandName: string
+    ): string =>
+        `You need to have the role <@&${lowestRequiredRoleID}> or higher to use the \`${commandName}\` command.`,
+    missingAccessLevelRolesVariant: (
+        lowestRequiredRoleName: Optional<string>,
+        commandName: string,
+        lowestRequiredRoleID: Snowflake
+    ): string =>
+        lowestRequiredRoleName
+            ? `You need to have the role \`${lowestRequiredRoleName}\` or higher to use the \`${commandName}\` command. ` +
+              `The ${lowestRequiredRoleName} role on this server is <@&${lowestRequiredRoleID}>`
+            : `Some access level roles have not been set up on this server. Please ask the server owner to use /set_roles or the settings menu to set it up.`,
+    noQueuesInServer: (): string =>
+        `This command doesn't have any effect since server doesn't have any queues. `
+} as const;
+
+export { ExpectedParseErrors, UnexpectedParseErrors, ExpectedParseWarnings };

@@ -1,4 +1,4 @@
-import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
+import { SimpleEmbed, EmbedColor, BetterEmbed } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
     convertMsToShortTime,
@@ -10,7 +10,7 @@ import { CommandHandlerProps } from './handler-interface.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { CommandNames } from './interaction-constants/interaction-names.js';
-import { ChatInputCommandInteraction } from 'discord.js';
+import { BaseMessageOptions, ChatInputCommandInteraction, EmbedData } from 'discord.js';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
@@ -19,7 +19,10 @@ import {
     createOfficeVoiceChannels
 } from '../attending-server/guild-actions.js';
 import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
-import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import {
+    ExpectedParseErrors,
+    ExpectedParseWarnings
+} from './interaction-constants/expected-interaction-errors.js';
 import {
     AfterSessionMessageModal,
     PromptHelpTopicModal,
@@ -550,12 +553,14 @@ async function setSeriousMode(
         'botAdmin'
     );
     const onOrOff = interaction.options.getSubcommand();
+    const warningMessage =
+        server.queues.length < 0 ? ExpectedParseWarnings.noQueuesInServer() : '';
     if (onOrOff === 'on') {
         await server.setSeriousServer(true);
-        await interaction.editReply(SuccessMessages.turnedOnSeriousMode);
+        await interaction.editReply(SuccessMessages.turnedOnSeriousMode(warningMessage));
     } else {
         await server.setSeriousServer(false);
-        await interaction.editReply(SuccessMessages.turnedOffSeriousMode);
+        await interaction.editReply(SuccessMessages.turnedOffSeriousMode(warningMessage));
     }
 }
 
