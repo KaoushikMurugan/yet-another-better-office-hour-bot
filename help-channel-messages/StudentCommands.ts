@@ -57,7 +57,8 @@ const enqueueHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '➕'
 };
 
 const leaveHelp: HelpMessage = {
@@ -91,7 +92,8 @@ const leaveHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '❌'
 };
 
 const listHelpersHelp: HelpMessage = {
@@ -125,7 +127,8 @@ const listHelpersHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '👨‍🏫'
 };
 
 const helpHelp: HelpMessage = {
@@ -160,7 +163,8 @@ const helpHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '❓'
 };
 
 const studentCommandHelpMessages: HelpMessage[] = [

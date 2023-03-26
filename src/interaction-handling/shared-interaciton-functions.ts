@@ -51,7 +51,7 @@ function HelpMenuEmbed(server: AttendingServerV2, page: number): YabobEmbed {
             UnknownId
         ])
             .setStyle(ButtonStyle.Primary)
-            .setLabel('Nect Page')
+            .setLabel('Next Page')
             .setEmoji('➡️')
             .setDisabled(page === Math.floor(allHelpMessages.length / 25))
     );
@@ -99,6 +99,7 @@ function HelpMenuSelectMenu(
                 return {
                     label: helpMessage.nameValuePair.name,
                     value: helpMessage.nameValuePair.value,
+                    emoji: helpMessage.emoji,
                     default: false
                 };
             })

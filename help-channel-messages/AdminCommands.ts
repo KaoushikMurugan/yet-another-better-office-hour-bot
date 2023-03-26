@@ -57,7 +57,8 @@ const queueAddHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📝'
 };
 
 const queueRemoveHelp: HelpMessage = {
@@ -91,7 +92,8 @@ const queueRemoveHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🗑️'
 };
 
 const cleanupQueueHelp: HelpMessage = {
@@ -125,7 +127,8 @@ const cleanupQueueHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🧹'
 };
 
 const cleanupHelpChannelHelp: HelpMessage = {
@@ -158,7 +161,8 @@ const cleanupHelpChannelHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🧹'
 };
 
 const clearAllHelp: HelpMessage = {
@@ -192,7 +196,8 @@ const clearAllHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🧹'
 };
 
 const setAfterSessionsMsgHelp: HelpMessage = {
@@ -227,7 +232,8 @@ const setAfterSessionsMsgHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📝'
 };
 
 const setLoggingChannelHelp: HelpMessage = {
@@ -261,7 +267,8 @@ const setLoggingChannelHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🪵'
 };
 
 const stopLoggingHelp: HelpMessage = {
@@ -295,7 +302,8 @@ const stopLoggingHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🪵'
 };
 
 const setQueueAutoClearHelp: HelpMessage = {
@@ -330,7 +338,8 @@ const setQueueAutoClearHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🕐'
 };
 
 const seriousModeHelp: HelpMessage = {
@@ -365,7 +374,8 @@ const seriousModeHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🧐'
 };
 
 const settingsHelp: HelpMessage = {
@@ -400,7 +410,8 @@ const settingsHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '⚙️'
 };
 
 const setAutoGiveStudentRoleHelp: HelpMessage = {
@@ -435,7 +446,8 @@ const setAutoGiveStudentRoleHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '👨‍🎓'
 };
 
 const adminCommandHelpMessages: HelpMessage[] = [

@@ -89,6 +89,8 @@ type HelpMessage = {
     useInHelpCommand: boolean;
     /** The actual message to be displayed */
     message: BaseMessageOptions;
+    /** Emoji corresponding to the commmand. Used in select menus */
+    emoji?: string;
 };
 
 // Used in interaction handlers

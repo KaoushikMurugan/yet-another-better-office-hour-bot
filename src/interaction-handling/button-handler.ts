@@ -408,10 +408,6 @@ async function switchHelpMenuPage(
         server,
         leftOrRight === 'left' ? oldPage - 2 : oldPage
     );
-    if (helpmenu.embeds && helpmenu.embeds[0]) {
-        const asdf = helpmenu.embeds[0] as JSONEncodable<APIEmbed>;
-        console.log(asdf.toJSON());
-    }
     await interaction.update(helpmenu);
 }
 
