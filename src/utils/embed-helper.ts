@@ -7,14 +7,7 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder,
-    ActionRowComponentOptions,
-    MessageActionRowComponentData,
-    ActionRowData,
-    MessageActionRowComponentBuilder,
-    Attachment,
-    AttachmentBuilder,
-    AttachmentPayload
+    EmbedBuilder
 } from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
@@ -24,107 +17,6 @@ type ExpectedError = QueueError | ServerError | CommandParseError;
 
 /** Shorthand type for the embed field data */
 type EmbedData = Pick<BaseMessageOptions, 'embeds'>;
-
-class BetterEmbed implements BaseMessageOptions {
-    embeds: EmbedBuilder[] = [];
-    files?: (
-        | Attachment
-        | AttachmentBuilder
-        | AttachmentPayload
-    )[];
-    content?: string;
-    components?: ActionRowData<MessageActionRowComponentData | MessageActionRowComponentBuilder>[];
-    constructor() {
-        this.embeds = [];
-    }
-    addFields(fields: { name: string; value: string; inline?: boolean }[]): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].addFields(fields);
-        return this;
-    }
-    addDescription(description: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setDescription(description);
-        return this;
-    }
-    addFooter(text: string, iconURL?: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setFooter({
-                text: text,
-                iconURL: iconURL
-        });
-        return this;
-    }
-    addTimestamp(): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setTimestamp();
-        return this;
-    }
-    addAuthor(name: string, iconURL?: string, url?: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setAuthor({
-                name: name,
-                iconURL: iconURL,
-                url: url
-        });
-        return this;
-    }
-    setColor(color: number): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setColor(color);
-        return this;
-    }
-    setTitle(title: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setTitle(title);
-        return this;
-    }
-    setImage(url: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setImage(url);
-        return this;
-    }
-    setThumbnail(url: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setThumbnail(url);
-        return this;
-    }
-    setURL(url: string): BetterEmbed {
-        if(!this.embeds[0]) throw new Error('No embeds to add field to'); 
-        this.embeds[0].setURL(url);
-        return this;
-    }
-    addFile(file: Attachment | AttachmentBuilder | AttachmentPayload): BetterEmbed {
-        this.files = this.files ?? [];
-        this.files.push(file);
-        return this;
-    }
-    addFiles(files: (Attachment | AttachmentBuilder | AttachmentPayload)[]): BetterEmbed {
-        this.files = this.files ?? [];
-        this.files.push(...files);
-        return this;
-    }
-    setContent(content: string): BetterEmbed {
-        this.content = content;
-        return this;
-    }
-    addComponents(components: ActionRowData<MessageActionRowComponentData | MessageActionRowComponentBuilder>[]): BetterEmbed {
-        this.components = components;
-        return this;
-    }
-    getFields(): { name: string; value: string; inline?: boolean }[] {
-        if(!this.embeds[0]) throw new Error('Embed doesn\'t exist'); 
-        const embedDataFields = this.embeds[0].data.fields;
-        return embedDataFields?.map(
-            field => { return {
-                name: field.name,
-                value: field.value,
-                inline: field.inline
-            };
-        }) ?? [];
-    }
-    
-}
 
 enum EmbedColor {
     Error = 0xff6188, // Red
@@ -229,9 +121,6 @@ function SimpleEmbed2(
 
     return embed;
 }
-
-let asdf = SimpleEmbed2('asdf', EmbedColor.Neutral, 'asdf', 'asdf');
-interaction.reply(asdf.data);
 
 /**
  * Creates an embed that displays an error message
@@ -767,7 +656,6 @@ function SelectMenuLogEmbed2(
 
 export {
     EmbedColor,
-    BetterEmbed,
     SimpleEmbed,
     SimpleEmbed2,
     SimpleLogEmbed,
