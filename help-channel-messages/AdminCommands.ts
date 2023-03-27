@@ -438,6 +438,75 @@ const setAutoGiveStudentRoleHelp: HelpMessage = {
     }
 };
 
+const createOfficesHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'create_offices',
+        value: 'create_offices'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: false,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/create_offices`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Creates the office hours channels for the server. This command will create \
+                        the voice channels and set the appropriate permissions.',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`category_name: string` The name of the category to create the voice channels in. \n\
+                        `office_names: string` The name of the voice channels to create. Will be created as office_name-1, office_name-2 etc. \n\
+                        `number_of_offices: number` The number of offices to create.',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/create_offices "Office Hours" "Office" 3`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    }
+};
+
+const setRoleHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_role',
+        value: 'set_role'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: false,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_role`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the role(s) for the server to use for `Bot Admin`, `Helper` and `Student` roles.'
+                    },
+                    {
+                        name: 'Options',
+                        value: '`role_name: [Bot Admin | Staff | Studnet]`: The name of the role to set. \n\
+                        `role: Role`: The role to set the chosen role to.'
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_role Bot Admin @Moderator`'
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTitleMessage,
     queueAddHelp,
@@ -452,7 +521,9 @@ const adminCommandHelpMessages: HelpMessage[] = [
     seriousModeHelp,
     // ! Temporarily have useInHelpCommand=false since it causes the /help command to fail generation as it get too many fields
     settingsHelp,
-    setAutoGiveStudentRoleHelp
+    setAutoGiveStudentRoleHelp,
+    createOfficesHelp,
+    setRoleHelp
 ];
 
 export { adminCommandHelpMessages };
