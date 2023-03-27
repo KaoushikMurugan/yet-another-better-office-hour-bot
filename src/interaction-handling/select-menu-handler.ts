@@ -50,7 +50,7 @@ async function showSettingsSubMenu(
 
 /**
  * Set the logging channel to the selected channel from the select menu
- * @param interaction 
+ * @param interaction
  */
 async function selectLoggingChannel(
     interaction: SelectMenuInteraction<'cached'>
@@ -80,7 +80,7 @@ async function selectLoggingChannel(
 
 /**
  * Display the help message for the selected option
- * @param interaction 
+ * @param interaction
  */
 async function selectHelpCommand(
     interaction: SelectMenuInteraction<'cached'>

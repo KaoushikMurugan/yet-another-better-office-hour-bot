@@ -119,7 +119,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ReturnToHelpMainMenu,
         ButtonNames.ReturnToHelpAdminSubMenu,
         ButtonNames.ReturnToHelpStaffSubMenu,
-        ButtonNames.ReturnToHelpStudentSubMenu,
+        ButtonNames.ReturnToHelpStudentSubMenu
     ])
 };
 
@@ -380,8 +380,8 @@ async function togglePromptHelpTopic(
 
 /**
  * Toggle serious mode for the server
- * @param interaction 
- * @param enableSeriousMode 
+ * @param interaction
+ * @param enableSeriousMode
  */
 async function toggleSeriousMode(
     interaction: ButtonInteraction<'cached'>,
@@ -401,9 +401,9 @@ async function toggleSeriousMode(
 
 /**
  * Switch the help menu page forward or backwards (right or left)
- * @param interaction 
+ * @param interaction
  * @param leftOrRight direction to switch the page
- * @returns 
+ * @returns
  */
 async function switchHelpMenuPage(
     interaction: ButtonInteraction<'cached'>,

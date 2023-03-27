@@ -67,7 +67,7 @@ enum ButtonNames {
     ReturnToHelpMainMenu = 'ReturnToHelpMainMenu',
     ReturnToHelpAdminSubMenu = 'ReturnToHelpAdminSubMenu',
     ReturnToHelpStaffSubMenu = 'ReturnToHelpStaffSubMenu',
-    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu',
+    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu'
 }
 
 /**

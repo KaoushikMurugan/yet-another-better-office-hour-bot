@@ -456,7 +456,8 @@ async function showAfterSessionMessageModal(
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    const accessLevel = await server.getHighestAccessLevelRole(interaction.member) ?? 'student';
+    const accessLevel =
+        (await server.getHighestAccessLevelRole(interaction.member)) ?? 'student';
     await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
 

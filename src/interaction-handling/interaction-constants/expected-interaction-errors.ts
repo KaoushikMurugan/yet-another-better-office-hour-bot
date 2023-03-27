@@ -34,7 +34,7 @@ const ExpectedParseErrors = {
     missingAccessLevelRolesVariant: (
         lowestRequiredRoleName: Optional<string>,
         commandName: string,
-        lowestRequiredRoleID: Snowflake,
+        lowestRequiredRoleID: Snowflake
     ): CommandParseError =>
         lowestRequiredRoleName
             ? new CommandParseError(

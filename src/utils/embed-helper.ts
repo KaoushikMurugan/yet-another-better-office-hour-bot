@@ -7,11 +7,11 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder} from 'discord.js';
+    EmbedBuilder
+} from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
 import { OptionalRoleId, SpecialRoleValues } from './type-aliases.js';
-
 
 type ExpectedError = QueueError | ServerError | CommandParseError;
 
@@ -655,5 +655,5 @@ export {
     SlashCommandLogEmbed,
     SlashCommandLogEmbed2,
     SelectMenuLogEmbed,
-    SelectMenuLogEmbed2,
+    SelectMenuLogEmbed2
 };

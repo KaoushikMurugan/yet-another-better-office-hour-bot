@@ -231,7 +231,9 @@ class AttendingServerV2 {
         return this.queues.flatMap(queue => queue.students);
     }
 
-    async getHighestAccessLevelRole(member: GuildMember): Promise<Optional<AccessLevelRole>> {
+    async getHighestAccessLevelRole(
+        member: GuildMember
+    ): Promise<Optional<AccessLevelRole>> {
         const roles = member.roles.cache;
         const roleIds = this.sortedAccessLevelRoles.map(role => role.id);
         //searchin gusing roleIds
