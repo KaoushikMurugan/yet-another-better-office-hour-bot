@@ -1,4 +1,4 @@
-import { APIEmbed, ButtonInteraction, JSONEncodable } from 'discord.js';
+import { ButtonInteraction } from 'discord.js';
 import {
     SettingsMainMenu,
     RolesConfigMenu,
@@ -25,7 +25,8 @@ import {
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
-import { HelpMenuEmbed } from './shared-interaciton-functions.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
+import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -66,8 +67,20 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
                 switchHelpMenuPage(interaction, 'left'),
             [ButtonNames.HelpMenuRight]: interaction =>
                 switchHelpMenuPage(interaction, 'right'),
-            [ButtonNames.ReturnToHelpMenu]: interaction =>
-                returnToHelpMenu(interaction)
+            [ButtonNames.HelpMenuBotAdmin]: interaction =>
+                showHelpSubMenu(interaction, 'botAdmin'),
+            [ButtonNames.HelpMenuStaff]: interaction =>
+                showHelpSubMenu(interaction, 'staff'),
+            [ButtonNames.HelpMenuStudent]: interaction =>
+                showHelpSubMenu(interaction, 'student'),
+            [ButtonNames.ReturnToHelpMainMenu]: interaction =>
+                returnToHelpMainMenu(interaction),
+            [ButtonNames.ReturnToHelpAdminSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'botAdmin'),
+            [ButtonNames.ReturnToHelpStaffSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'staff'),
+            [ButtonNames.ReturnToHelpStudentSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'student')
         }
     },
     dmMethodMap: {
@@ -100,7 +113,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.SeriousModeConfig2,
         ButtonNames.HelpMenuLeft,
         ButtonNames.HelpMenuRight,
-        ButtonNames.ReturnToHelpMenu
+        ButtonNames.HelpMenuBotAdmin,
+        ButtonNames.HelpMenuStaff,
+        ButtonNames.HelpMenuStudent,
+        ButtonNames.ReturnToHelpMainMenu,
+        ButtonNames.ReturnToHelpAdminSubMenu,
+        ButtonNames.ReturnToHelpStaffSubMenu,
+        ButtonNames.ReturnToHelpStudentSubMenu,
     ])
 };
 
@@ -404,18 +423,35 @@ async function switchHelpMenuPage(
     ) {
         return;
     }
-    const helpmenu = HelpMenuEmbed(
+    const helpmenu = HelpSubMenuEmbed(
         server,
         leftOrRight === 'left' ? oldPage - 2 : oldPage
     );
     await interaction.update(helpmenu);
 }
 
-async function returnToHelpMenu(
+async function showHelpSubMenu(
+    interaction: ButtonInteraction<'cached'>,
+    viewMode: AccessLevelRole
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
+}
+
+async function returnToHelpMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    await interaction.update(HelpMenuEmbed(server, 0));
+    const viewMode = await server.getHighestAccessLevelRole(interaction.member);
+    await interaction.update(HelpMainMenuEmbed(server, viewMode));
+}
+
+async function returnToHelpSubMenu(
+    interaction: ButtonInteraction<'cached'>,
+    viewMode: AccessLevelRole
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
 }
 
 export { baseYabobButtonMethodMap };

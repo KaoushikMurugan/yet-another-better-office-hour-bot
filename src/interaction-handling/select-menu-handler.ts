@@ -8,7 +8,8 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server.js'
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import { ReturnToHelpMenuButton } from './shared-interaciton-functions.js';
+import { ReturnToHelpMainAndSubMenuButton } from './shared-interaction-functions.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
 
 const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
     guildMethodMap: {
@@ -16,7 +17,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
         other: {
             [SelectMenuNames.ServerSettings]: showSettingsSubMenu,
             [SelectMenuNames.SelectLoggingChannel]: selectLoggingChannel,
-            [SelectMenuNames.HelpMenu]: selectMenuCommand
+            [SelectMenuNames.HelpMenu]: selectHelpCommand
         }
     },
     dmMethodMap: {},
@@ -81,7 +82,7 @@ async function selectLoggingChannel(
  * Display the help message for the selected option
  * @param interaction 
  */
-async function selectMenuCommand(
+async function selectHelpCommand(
     interaction: SelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
@@ -99,9 +100,21 @@ async function selectMenuCommand(
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
 
+    // Long way for now since I'm not sure where to store what submenu you came from
+
+    let subMenu: AccessLevelRole = 'student';
+
+    if (adminCommandHelpMessages.includes(helpMessage)) {
+        subMenu = 'botAdmin';
+    } else if (helperCommandHelpMessages.includes(helpMessage)) {
+        subMenu = 'staff';
+    } else if (studentCommandHelpMessages.includes(helpMessage)) {
+        subMenu = 'student';
+    }
+
     await interaction.update({
         embeds: helpMessage.message.embeds,
-        components: [ReturnToHelpMenuButton(server)]
+        components: [ReturnToHelpMainAndSubMenuButton(server, subMenu)]
     });
 }
 

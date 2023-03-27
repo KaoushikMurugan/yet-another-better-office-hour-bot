@@ -61,7 +61,13 @@ enum ButtonNames {
     SeriousModeConfig2 = 'SeriousModeConfig2',
     HelpMenuLeft = 'HelpMenuLeft',
     HelpMenuRight = 'HelpMenuRight',
-    ReturnToHelpMenu = 'ReturnToHelpMenu'
+    HelpMenuBotAdmin = 'HelpMenuBotAdmin',
+    HelpMenuStaff = 'HelpMenuStaff',
+    HelpMenuStudent = 'HelpMenuStudent',
+    ReturnToHelpMainMenu = 'ReturnToHelpMainMenu',
+    ReturnToHelpAdminSubMenu = 'ReturnToHelpAdminSubMenu',
+    ReturnToHelpStaffSubMenu = 'ReturnToHelpStaffSubMenu',
+    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu',
 }
 
 /**

@@ -29,7 +29,7 @@ import {
     channelsAreUnderLimit
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
-import { HelpMenuEmbed } from './shared-interaciton-functions.js';
+import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -456,7 +456,8 @@ async function showAfterSessionMessageModal(
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    await interaction.editReply(HelpMenuEmbed(server, 0));
+    const accessLevel = await server.getHighestAccessLevelRole(interaction.member) ?? 'student';
+    await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
 
 /**
