@@ -11,9 +11,6 @@ import { CommandHandlerProps } from './handler-interface.js';
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { CommandNames } from './interaction-constants/interaction-names.js';
 import { ChatInputCommandInteraction } from 'discord.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
 import {
     updateCommandHelpChannels,
     createOfficeVoiceChannels
@@ -32,6 +29,7 @@ import {
     channelsAreUnderLimit
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -457,22 +455,10 @@ async function showAfterSessionMessageModal(
  * The `/help` command
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const commandName = interaction.options.getString('command', true);
-    const helpMessage =
-        adminCommandHelpMessages.find(
-            message => message.nameValuePair.name === commandName
-        ) ??
-        helperCommandHelpMessages.find(
-            message => message.nameValuePair.name === commandName
-        ) ??
-        studentCommandHelpMessages.find(
-            message => message.nameValuePair.name === commandName
-        );
-    if (helpMessage !== undefined) {
-        await interaction.editReply(helpMessage.message);
-    } else {
-        throw new CommandParseError('Command not found.');
-    }
+    const server = AttendingServerV2.get(interaction.guildId);
+    const accessLevel =
+        (await server.getHighestAccessLevelRole(interaction.member)) ?? 'student';
+    await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
 
 /**

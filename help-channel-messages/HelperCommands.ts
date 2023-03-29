@@ -57,7 +57,8 @@ const startHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🟢'
 };
 
 const stopHelp: HelpMessage = {
@@ -92,7 +93,8 @@ const stopHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🔴'
 };
 
 const nextHelp: HelpMessage = {
@@ -126,7 +128,8 @@ const nextHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '⏭️'
 };
 
 const announceHelp: HelpMessage = {
@@ -160,7 +163,8 @@ const announceHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📢'
 };
 
 const clearHelp: HelpMessage = {
@@ -169,7 +173,7 @@ const clearHelp: HelpMessage = {
         value: 'clear'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -194,7 +198,8 @@ const clearHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🧹'
 };
 
 const pauseHelp: HelpMessage = {
@@ -203,7 +208,7 @@ const pauseHelp: HelpMessage = {
         value: 'pause'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -228,7 +233,8 @@ const pauseHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '⏸️'
 };
 
 const resumeHelp: HelpMessage = {
@@ -237,7 +243,7 @@ const resumeHelp: HelpMessage = {
         value: 'resume'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -262,7 +268,8 @@ const resumeHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '▶️'
 };
 
 const helperCommandHelpMessages: HelpMessage[] = [
@@ -271,7 +278,6 @@ const helperCommandHelpMessages: HelpMessage[] = [
     stopHelp,
     nextHelp,
     announceHelp,
-    // ! Over choice limit
     clearHelp,
     pauseHelp,
     resumeHelp

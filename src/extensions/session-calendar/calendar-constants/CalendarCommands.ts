@@ -35,7 +35,8 @@ const setCalendarHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const unsetCalendarHelp: HelpMessage = {
@@ -64,7 +65,8 @@ const unsetCalendarHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const makeCalendarStringHelp: HelpMessage = {
@@ -101,7 +103,8 @@ const makeCalendarStringHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const makeCalendarStringAllHelp: HelpMessage = {
@@ -137,7 +140,8 @@ const makeCalendarStringAllHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const setPublicEmbedUrlHelp: HelpMessage = {
@@ -172,7 +176,8 @@ const setPublicEmbedUrlHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const whenNextHelp: HelpMessage = {
@@ -208,7 +213,8 @@ const whenNextHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📅'
 };
 
 const calendarAdminHelpMessages = [

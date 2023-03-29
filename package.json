@@ -42,7 +42,7 @@
         "discord-api-types": "^0.37.11",
         "discord.js": "^14.5.0",
         "dotenv": "^10.0.0",
-        "firebase-admin": "^10.2.0",
+        "firebase-admin": "^11.5.0",
         "google-spreadsheet": "^3.3.0",
         "googleapis": "^100.0.0",
         "lru-cache": "^7.14.0",
