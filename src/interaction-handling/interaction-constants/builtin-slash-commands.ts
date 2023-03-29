@@ -278,7 +278,7 @@ function generateSettingsCommand() {
         .setDescription('Sets up the server config for the bot')
         .addStringOption(option =>
             option
-                .setName('sub_menu')
+                .setName('sub_menu_jump')
                 .setDescription('The sub menu to jump to')
                 .setRequired(false)
                 .addChoices(

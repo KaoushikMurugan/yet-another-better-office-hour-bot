@@ -15,7 +15,10 @@ import {
     updateCommandHelpChannels,
     createOfficeVoiceChannels
 } from '../attending-server/guild-actions.js';
-import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
+import {
+    SettingsMainMenu,
+    serverSettingsMainMenuOptions
+} from '../attending-server/server-settings-menus.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { PromptHelpTopicModal } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
@@ -569,7 +572,26 @@ async function settingsMenu(
         CommandNames.settings,
         'botAdmin'
     );
-    await interaction.editReply(SettingsMainMenu(server));
+
+    const subMenuJump = interaction.options.getString('sub_menu_jump', false);
+
+    if (subMenuJump === null) {
+        await interaction.editReply(SettingsMainMenu(server));
+        return;
+    }
+
+    // use serverSettingsMainMenuOptions to check if the subMenuJump is valid
+    const subMenuOptions = serverSettingsMainMenuOptions.find(
+        option => option.selectMenuOptionData.value === subMenuJump
+    );
+
+    if (subMenuOptions === undefined) {
+        throw new CommandParseError('Invalid sub menu jump.');
+    }
+
+    await interaction.editReply(
+        subMenuOptions.menu(server, interaction.channelId, false, undefined)
+    );
 }
 
 /**
