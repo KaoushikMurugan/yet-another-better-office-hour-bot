@@ -95,25 +95,6 @@ const weeklyReport = new SlashCommandBuilder()
             )
     );
 
-// // `/set_google_sheet`
-// const setGoogleSheet = new SlashCommandBuilder()
-//     .setName(GoogleSheetCommands.set_google_sheet)
-//     .setDescription(
-//         'Changes which google sheet to use when logging attendance statistics.'
-//     )
-//     .addStringOption(option =>
-//         option
-//             .setName('sheet_id')
-//             .setDescription(
-//                 'The id of the new google sheet. See the user manual for how to find this id.'
-//             )
-//             .setRequired(true)
-//     );
-
-const googleSheetsCommands = [
-    getStatistics.toJSON(),
-    weeklyReport.toJSON()
-    // setGoogleSheet.toJSON()
-];
+const googleSheetsCommands = [getStatistics.toJSON(), weeklyReport.toJSON()];
 
 export { googleSheetsCommands };
