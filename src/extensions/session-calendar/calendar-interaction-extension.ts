@@ -4,7 +4,6 @@ import { calendarButtonMap } from './interaction-handling/button-handler.js';
 import { calendarCommandMap } from './interaction-handling/command-handler.js';
 import { calendarModalMap } from './interaction-handling/modal-handler.js';
 import {
-    calendarAdminHelpMessages,
     calendarHelperHelpMessages,
     calendarStudentHelpMessages
 } from './calendar-constants/CalendarCommands.js';
@@ -21,7 +20,7 @@ class SessionCalendarInteractionExtension extends BaseInteractionExtension {
     override commandMap = calendarCommandMap;
 
     override helpMessages = {
-        botAdmin: calendarAdminHelpMessages,
+        botAdmin: [],
         staff: calendarHelperHelpMessages,
         student: calendarStudentHelpMessages
     };
