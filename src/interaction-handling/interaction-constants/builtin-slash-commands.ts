@@ -13,9 +13,6 @@ import { Routes } from 'discord-api-types/v9';
 import { ChannelType, Guild } from 'discord.js';
 import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
-import { adminCommandHelpMessages } from '../../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../../help-channel-messages/StudentCommands.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 
@@ -345,25 +342,7 @@ const promptHelpTopicCommand = new SlashCommandBuilder()
 function generateHelpCommand() {
     return new SlashCommandBuilder()
         .setName(CommandNames.help)
-        .setDescription('Get help with the bot')
-        .addStringOption(option =>
-            option
-                .setName('command')
-                .setDescription('The command to get help with')
-                .setRequired(true)
-                .addChoices(
-                    // TODO: Use autocomplete to dynamically generate choices here
-                    ...adminCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand)
-                        .map(helpMessage => helpMessage.nameValuePair),
-                    ...helperCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand)
-                        .map(helpMessage => helpMessage.nameValuePair),
-                    ...studentCommandHelpMessages
-                        .filter(helpMessage => helpMessage.useInHelpCommand)
-                        .map(helpMessage => helpMessage.nameValuePair)
-                )
-        );
+        .setDescription('Get help with the bot');
 }
 
 /** The raw data that can be sent to Discord */

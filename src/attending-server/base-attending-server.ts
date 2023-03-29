@@ -231,6 +231,19 @@ class AttendingServerV2 {
         return this.queues.flatMap(queue => queue.students);
     }
 
+    async getHighestAccessLevelRole(
+        member: GuildMember
+    ): Promise<Optional<AccessLevelRole>> {
+        const roles = member.roles.cache;
+        const roleIds = this.sortedAccessLevelRoles.map(role => role.id);
+        //searchin gusing roleIds
+        const highestrole = roleIds.filter(roleId => roles.has(roleId)).at(0);
+        if (highestrole === undefined) {
+            return undefined;
+        }
+        return this.sortedAccessLevelRoles.find(role => role.id === highestrole)?.key;
+    }
+
     /**
      * Asynchronously creates a YABOB instance for 1 server
      * @param guild the server for YABOB to join

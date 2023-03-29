@@ -25,6 +25,8 @@ import {
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AccessLevelRole } from '../models/access-level-roles.js';
+import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -60,7 +62,25 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.SeriousModeConfig1]: interaction =>
                 toggleSeriousMode(interaction, true),
             [ButtonNames.SeriousModeConfig2]: interaction =>
-                toggleSeriousMode(interaction, false)
+                toggleSeriousMode(interaction, false),
+            [ButtonNames.HelpMenuLeft]: interaction =>
+                switchHelpMenuPage(interaction, 'left'),
+            [ButtonNames.HelpMenuRight]: interaction =>
+                switchHelpMenuPage(interaction, 'right'),
+            [ButtonNames.HelpMenuBotAdmin]: interaction =>
+                showHelpSubMenu(interaction, 'botAdmin'),
+            [ButtonNames.HelpMenuStaff]: interaction =>
+                showHelpSubMenu(interaction, 'staff'),
+            [ButtonNames.HelpMenuStudent]: interaction =>
+                showHelpSubMenu(interaction, 'student'),
+            [ButtonNames.ReturnToHelpMainMenu]: interaction =>
+                returnToHelpMainMenu(interaction),
+            [ButtonNames.ReturnToHelpAdminSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'botAdmin'),
+            [ButtonNames.ReturnToHelpStaffSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'staff'),
+            [ButtonNames.ReturnToHelpStudentSubMenu]: interaction =>
+                returnToHelpSubMenu(interaction, 'student')
         }
     },
     dmMethodMap: {
@@ -90,7 +110,16 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.PromptHelpTopicConfig1,
         ButtonNames.PromptHelpTopicConfig2,
         ButtonNames.SeriousModeConfig1,
-        ButtonNames.SeriousModeConfig2
+        ButtonNames.SeriousModeConfig2,
+        ButtonNames.HelpMenuLeft,
+        ButtonNames.HelpMenuRight,
+        ButtonNames.HelpMenuBotAdmin,
+        ButtonNames.HelpMenuStaff,
+        ButtonNames.HelpMenuStudent,
+        ButtonNames.ReturnToHelpMainMenu,
+        ButtonNames.ReturnToHelpAdminSubMenu,
+        ButtonNames.ReturnToHelpStaffSubMenu,
+        ButtonNames.ReturnToHelpStudentSubMenu
     ])
 };
 
@@ -191,7 +220,7 @@ async function showSettingsMainMenu(
 /**
  * Creates the access level roles for the server
  * @param forceCreate if true, will create new roles even if they already exist
- * @param everyoneIsStudent whether to use @everyone as @Student
+ * @param everyoneIsStudent whether to use \@everyone as \@Student
  */
 async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
@@ -216,7 +245,7 @@ async function createAccessLevelRoles(
  * Creates roles for the server in dm channels
  * - This is explicitly used for server initialization
  * @param forceCreate if true, will create new roles even if they already exist
- * @param defaultStudentIsEveryone whether to use @everyone as @Student
+ * @param defaultStudentIsEveryone whether to use \@everyone as \@Student
  */
 async function createServerRolesDM(
     interaction: ButtonInteraction,
@@ -349,6 +378,11 @@ async function togglePromptHelpTopic(
     );
 }
 
+/**
+ * Toggle serious mode for the server
+ * @param interaction
+ * @param enableSeriousMode
+ */
 async function toggleSeriousMode(
     interaction: ButtonInteraction<'cached'>,
     enableSeriousMode: boolean
@@ -363,6 +397,61 @@ async function toggleSeriousMode(
             `Successfully turned ${enableSeriousMode ? 'on' : 'off'} serious mode.`
         )
     );
+}
+
+/**
+ * Switch the help menu page forward or backwards (right or left)
+ * @param interaction
+ * @param leftOrRight direction to switch the page
+ * @returns
+ */
+async function switchHelpMenuPage(
+    interaction: ButtonInteraction<'cached'>,
+    leftOrRight: 'left' | 'right'
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const oldEmbed = interaction.message.embeds[0];
+    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const oldPage = Number(footerText?.split('/')[0]);
+    const maxPage = Number(footerText?.split('/')[1]);
+    // invalid parse check
+    if (isNaN(oldPage) || isNaN(maxPage)) return;
+    // bounds check
+    if (
+        (leftOrRight === 'left' && oldPage <= 1) ||
+        (leftOrRight === 'right' && oldPage === maxPage)
+    ) {
+        return;
+    }
+    const helpmenu = HelpSubMenuEmbed(
+        server,
+        leftOrRight === 'left' ? oldPage - 2 : oldPage
+    );
+    await interaction.update(helpmenu);
+}
+
+async function showHelpSubMenu(
+    interaction: ButtonInteraction<'cached'>,
+    viewMode: AccessLevelRole
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
+}
+
+async function returnToHelpMainMenu(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const viewMode = await server.getHighestAccessLevelRole(interaction.member);
+    await interaction.update(HelpMainMenuEmbed(server, viewMode));
+}
+
+async function returnToHelpSubMenu(
+    interaction: ButtonInteraction<'cached'>,
+    viewMode: AccessLevelRole
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
 }
 
 export { baseYabobButtonMethodMap };

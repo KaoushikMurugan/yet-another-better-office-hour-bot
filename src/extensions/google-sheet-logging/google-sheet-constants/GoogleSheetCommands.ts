@@ -32,7 +32,8 @@ const setGoogleSheetHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📝'
 };
 
 const statsHelperHelp: HelpMessage = {
@@ -66,7 +67,8 @@ const statsHelperHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📊'
 };
 
 const statsServerHelp: HelpMessage = {
@@ -100,7 +102,8 @@ const statsServerHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📊'
 };
 
 const weeklyReportHelperHelp: HelpMessage = {
@@ -134,7 +137,8 @@ const weeklyReportHelperHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📊'
 };
 
 const weeklyReportServerHelp: HelpMessage = {
@@ -168,7 +172,8 @@ const weeklyReportServerHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '📊'
 };
 
 const googleSheetAdminHelpMessages = [setGoogleSheetHelp];
