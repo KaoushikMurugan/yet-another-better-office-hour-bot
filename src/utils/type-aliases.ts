@@ -3,7 +3,7 @@
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
-    RESTPostAPIApplicationCommandsJSONBody,
+    RESTPostAPIChatInputApplicationCommandsJSONBody,
     SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
@@ -159,7 +159,7 @@ type SettingsMenuOption = {
 };
 
 /** Type alias for interaction extensions */
-type CommandData = ReadonlyArray<RESTPostAPIApplicationCommandsJSONBody>;
+type CommandData = ReadonlyArray<RESTPostAPIChatInputApplicationCommandsJSONBody>;
 
 export {
     /** Types */
