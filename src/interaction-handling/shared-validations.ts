@@ -5,7 +5,7 @@ import {
     Interaction,
     ModalSubmitInteraction,
     PermissionsBitField,
-    SelectMenuInteraction
+    StringSelectMenuInteraction
 } from 'discord.js';
 import {
     AttendingServerV2,
@@ -30,7 +30,7 @@ import { CategoryChannelId } from '../utils/type-aliases.js';
  * @returns the {@link AttendingServerV2} object
  */
 function isValidDMInteraction(
-    interaction: ButtonInteraction | ModalSubmitInteraction | SelectMenuInteraction
+    interaction: ButtonInteraction | ModalSubmitInteraction | StringSelectMenuInteraction
 ): AttendingServerV2 {
     const [type, , serverId] = decompressComponentId(interaction.customId);
     if (type !== 'dm') {

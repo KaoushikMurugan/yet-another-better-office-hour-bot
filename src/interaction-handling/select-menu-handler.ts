@@ -1,4 +1,4 @@
-import { SelectMenuInteraction } from 'discord.js';
+import { StringSelectMenuInteraction } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
 import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
@@ -33,7 +33,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
  * @param interaction
  */
 async function showSettingsSubMenu(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const selectedOption = interaction.values[0];
@@ -53,7 +53,7 @@ async function showSettingsSubMenu(
  * @param interaction
  */
 async function selectLoggingChannel(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const channelId = interaction.values[0];
@@ -83,7 +83,7 @@ async function selectLoggingChannel(
  * @param interaction
  */
 async function selectHelpCommand(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const selectedOption = interaction.values[0];

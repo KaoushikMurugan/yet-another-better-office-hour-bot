@@ -1,6 +1,6 @@
 import {
     ActionRowBuilder,
-    SelectMenuBuilder,
+    StringSelectMenuBuilder,
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder
@@ -208,7 +208,7 @@ function HelpMenuSelectMenu(
     server: AttendingServerV2,
     page: number,
     subMenu: AccessLevelRole = 'student'
-): ActionRowBuilder<SelectMenuBuilder> {
+): ActionRowBuilder<StringSelectMenuBuilder> {
     const allHelpMessages = (
         subMenu === 'botAdmin'
             ? adminCommandHelpMessages
@@ -219,8 +219,8 @@ function HelpMenuSelectMenu(
 
     const pageHelpMessages = allHelpMessages.slice(page * 25, (page + 1) * 25);
 
-    const selectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
+    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.HelpMenu,
             server.guild.id,

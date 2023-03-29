@@ -153,7 +153,7 @@ type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
 /**
  * Represents 1 option inside the main settings menu
  *
- * `selectMenuOptionData` is directly passed to the SelectMenuBuilder.addOptions method
+ * `selectMenuOptionData` is directly passed to the StringSelectMenuBuilder.addOptions method
  *
  * `useInSettingsCommand` is whether to use in /settings options
  *
@@ -161,7 +161,7 @@ type EnsureCorrectEnum<T extends { [K in Exclude<keyof T, number>]: K }> = true;
  * */
 type SettingsMenuOption = {
     /**
-     * This is directly passed to the SelectMenuBuilder.addOptions method
+     * This is directly passed to the StringSelectMenuBuilder.addOptions method
      */
     selectMenuOptionData: SelectMenuComponentOptionData;
     /**
