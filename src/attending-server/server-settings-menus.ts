@@ -42,7 +42,7 @@ function SettingsSwitcher(
             .addOptions(
                 serverSettingsMainMenuOptions
                     .filter(menuOption => menuOption.menu !== currentMenu)
-                    .map(option => option.optionData)
+                    .map(option => option.selectMenuOptionData)
             )
     );
 }
@@ -84,75 +84,83 @@ const documentationLinks = {
  */
 const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🏠',
             label: 'Main Menu',
             description: 'Return to the main menu',
             value: 'main-menu'
         },
+        useInSettingsCommand: false,
         menu: SettingsMainMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📝',
             label: 'Server Roles',
             description: 'Configure the server roles',
             value: 'server-roles'
         },
+        useInSettingsCommand: true,
         menu: RolesConfigMenuInGuild
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📨',
             label: 'After Session Message',
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
+        useInSettingsCommand: true,
         menu: AfterSessionMessageConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '⏳',
             label: 'Queue Auto Clear',
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
+        useInSettingsCommand: true,
         menu: QueueAutoClearConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🪵',
             label: 'Logging Channel',
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
+        useInSettingsCommand: true,
         menu: LoggingChannelConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🎓',
             label: 'Auto Give Student Role',
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
+        useInSettingsCommand: true,
         menu: AutoGiveStudentRoleConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🙋',
             label: 'Help Topic Prompt',
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
+        useInSettingsCommand: true,
         menu: PromptHelpTopicConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🧐',
             label: 'Serious Mode',
             description: 'Configure the serious mode',
             value: 'serious-mode'
         },
+        useInSettingsCommand: true,
         menu: SeriousModeConfigMenu
     }
 ];

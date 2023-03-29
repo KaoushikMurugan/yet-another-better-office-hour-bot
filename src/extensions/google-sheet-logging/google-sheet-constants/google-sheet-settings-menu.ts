@@ -11,12 +11,13 @@ import { SettingsSwitcher } from '../../../attending-server/server-settings-menu
  */
 const googleSheetSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📊',
             label: 'Google Sheet Logging Settings',
             description: 'Configure the Google Sheet Logging settings',
             value: 'google-sheet-settings'
         },
+        useInSettingsCommand: true,
         menu: GoogleSheetSettingsConfigMenu
     }
 ];

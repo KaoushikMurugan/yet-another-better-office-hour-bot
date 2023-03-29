@@ -15,6 +15,7 @@ import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
+import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -271,9 +272,27 @@ const setRolesCommand = new SlashCommandBuilder()
     );
 
 // /settings
-const settingsCommand = new SlashCommandBuilder()
-    .setName(CommandNames.settings)
-    .setDescription('Sets up the server config for the bot');
+function generateSettingsCommand() {
+    return new SlashCommandBuilder()
+        .setName(CommandNames.settings)
+        .setDescription('Sets up the server config for the bot')
+        .addStringOption(option =>
+            option
+                .setName('sub_menu')
+                .setDescription('The sub menu to jump to')
+                .setRequired(false)
+                .addChoices(
+                    ...serverSettingsMainMenuOptions
+                        .filter(option => option.useInSettingsCommand === true)
+                        .map(option => {
+                            return {
+                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
+                                value: option.selectMenuOptionData.value
+                            };
+                        })
+                )
+        );
+}
 
 // /pause
 const pauseCommand = new SlashCommandBuilder()
@@ -311,7 +330,6 @@ const commandData = [
     stopLoggingCommand.toJSON(),
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
-    settingsCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
     helpCommand.toJSON()
@@ -338,7 +356,10 @@ async function postSlashCommands(
             ),
             {
                 // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
-                body: commandData.concat(externalCommands)
+                body: commandData.concat(
+                    externalCommands,
+                    generateSettingsCommand().toJSON()
+                )
             }
         )
         .catch(e =>

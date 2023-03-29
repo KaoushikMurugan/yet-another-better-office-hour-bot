@@ -14,12 +14,13 @@ import { CalendarButtonNames } from './calendar-interaction-names.js';
  */
 const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🗓',
             label: 'Calendar Settings',
             description: 'Configure the calendar settings',
             value: 'calendar-settings'
         },
+        useInSettingsCommand: true,
         menu: CalendarSettingsConfigMenu
     }
 ];
