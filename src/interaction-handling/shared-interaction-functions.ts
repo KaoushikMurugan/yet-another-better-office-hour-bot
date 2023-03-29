@@ -43,7 +43,7 @@ function HelpMainMenuEmbed(
     if (viewMode === 'botAdmin') {
         embed.addFields([
             {
-                name: 'Admin Commands',
+                name: ' 👮 Bot Admin Commands',
                 value: 'Commands for bot admins to use to manage the bot.'
             }
         ]);
@@ -55,7 +55,7 @@ function HelpMainMenuEmbed(
                 UnknownId
             ])
                 .setStyle(ButtonStyle.Primary)
-                .setLabel('Admin Commands')
+                .setLabel('Bot Admin Commands')
                 .setEmoji('👮')
         );
     }
@@ -63,7 +63,7 @@ function HelpMainMenuEmbed(
     // Helper commands
     embed.addFields([
         {
-            name: 'Helper Commands',
+            name: '👨‍🏫 Helper Commands',
             value: 'Commands for helpers to use to manage the help channels.'
         }
     ]);
@@ -82,7 +82,7 @@ function HelpMainMenuEmbed(
     // Student commands
     embed.addFields([
         {
-            name: 'Student Commands',
+            name: '👨‍🎓 Student Commands',
             value: 'Commands for students to use to interact with the help channels.'
         }
     ]);
@@ -124,41 +124,45 @@ function HelpSubMenuEmbed(
             : studentCommandHelpMessages
     ).filter(helpMessage => helpMessage.useInHelpCommand === true);
 
-    // create select menu from the help messages
-    const selectMenu = HelpMenuSelectMenu(server, page, subMenu);
-
     const embed = new EmbedBuilder()
         .setTitle(
             `${
                 subMenu === 'botAdmin'
-                    ? 'Admin'
+                    ? '👮 Bot Admin'
                     : subMenu === 'staff'
-                    ? 'Staff'
-                    : 'Student'
+                    ? '👨‍🏫 Staff'
+                    : '👨‍🎓 Student'
             } Help Menu`
         )
         .setColor(EmbedColor.Pink)
         .setDescription(
             'This is the help menu for YABOB. Use the buttons below to navigate through the menu.'
-        )
-        .setFooter({
-            text: `Page ${page + 1}/${Math.ceil(allHelpMessages.length / 25)}`
+        );
+
+    const numPages = Math.ceil(allHelpMessages.length / 25);
+    if (numPages > 1) {
+        embed.setFooter({
+            text: `Page ${page + 1}/${numPages}`
         });
+    }
 
     return {
         embeds: [embed],
         components:
-            Math.floor(allHelpMessages.length / 25) >= 2
+            Math.floor(allHelpMessages.length / 25) >= 2 // Only show the turn page buttons if there are 2 or more pages
                 ? [
                       HelpMenuButtons(
                           server,
                           page,
                           Math.floor(allHelpMessages.length / 25)
                       ),
-                      selectMenu,
+                      HelpMenuSelectMenu(server, page, subMenu),
                       ReturnToHelpMainMenuButton(server)
                   ]
-                : [selectMenu, ReturnToHelpMainMenuButton(server)]
+                : [
+                      HelpMenuSelectMenu(server, page, subMenu),
+                      ReturnToHelpMainMenuButton(server)
+                  ]
     };
 }
 
