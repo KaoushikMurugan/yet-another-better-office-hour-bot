@@ -162,7 +162,8 @@ const queueNotifyHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🔔'
 };
 
 const helpHelp: HelpMessage = {

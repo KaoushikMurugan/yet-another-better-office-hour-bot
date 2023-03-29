@@ -233,7 +233,7 @@ const setAfterSessionsMsgHelp: HelpMessage = {
             }
         ]
     },
-    emoji: '📝'
+    emoji: '📨'
 };
 
 const setLoggingChannelHelp: HelpMessage = {
@@ -456,7 +456,7 @@ const createOfficesHelp: HelpMessage = {
         value: 'create_offices'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -484,7 +484,8 @@ const createOfficesHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '🔊'
 };
 
 const setRoleHelp: HelpMessage = {
@@ -493,7 +494,7 @@ const setRoleHelp: HelpMessage = {
         value: 'set_role'
     },
     useInHelpChannel: true,
-    useInHelpCommand: false,
+    useInHelpCommand: true,
     message: {
         embeds: [
             {
@@ -516,7 +517,8 @@ const setRoleHelp: HelpMessage = {
                 ]
             }
         ]
-    }
+    },
+    emoji: '👥'
 };
 
 const adminCommandHelpMessages: HelpMessage[] = [
