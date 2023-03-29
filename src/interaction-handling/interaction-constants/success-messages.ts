@@ -10,7 +10,7 @@ export const SuccessMessages = {
     createdQueue: (queueName: string) =>
         SimpleEmbed(
             `Successfully created \`${queueName}\`. It should be at the end of your channels list.`,
-            EmbedColor.Success,
+            EmbedColor.Success
         ),
     deletedQueue: (queueName: string) =>
         SimpleEmbed(`Successfully deleted \`${queueName}\`.`, EmbedColor.Success),
@@ -104,18 +104,20 @@ export const SuccessMessages = {
             EmbedColor.Success
         )
     },
-    turnedOnSeriousMode: (warningMessage?: string) => SimpleEmbed(
-        `Serious mode has been turned on.`,
-        EmbedColor.Success,
-        '',
-        warningMessage
-    ),
-    turnedOffSeriousMode: (warningMessage? : string) => SimpleEmbed(
-        `Serious mode has been turned off.\nThere's no need to be so serious!`,
-        EmbedColor.Success,
-        '',
-        warningMessage
-    ),
+    turnedOnSeriousMode: (warningMessage?: string) =>
+        SimpleEmbed(
+            `Serious mode has been turned on.`,
+            EmbedColor.Success,
+            '',
+            warningMessage
+        ),
+    turnedOffSeriousMode: (warningMessage?: string) =>
+        SimpleEmbed(
+            `Serious mode has been turned off.\nThere's no need to be so serious!`,
+            EmbedColor.Success,
+            '',
+            warningMessage
+        ),
     createdOffices: (numOffices: number) =>
         SimpleEmbed(
             `Successfully created ${numOffices} office${

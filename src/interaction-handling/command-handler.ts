@@ -16,15 +16,8 @@ import {
     createOfficeVoiceChannels
 } from '../attending-server/guild-actions.js';
 import { SettingsMainMenu } from '../attending-server/server-settings-menus.js';
-import {
-    ExpectedParseErrors,
-    ExpectedParseWarnings
-} from './interaction-constants/expected-interaction-errors.js';
-import {
-    AfterSessionMessageModal,
-    PromptHelpTopicModal,
-    QueueAutoClearModal
-} from './interaction-constants/modal-objects.js';
+import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import { PromptHelpTopicModal } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     hasValidQueueArgument,
@@ -53,22 +46,13 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.cleanup_help_channels]: cleanupHelpChannel,
         [CommandNames.help]: help,
         [CommandNames.set_logging_channel]: setLoggingChannel,
-        [CommandNames.set_queue_auto_clear]: showQueueAutoClearModal,
         [CommandNames.stop_logging]: stopLogging,
-        [CommandNames.serious_mode]: setSeriousMode,
         [CommandNames.create_offices]: createOffices,
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
-        [CommandNames.auto_give_student_role]: setAutoGiveStudentRole,
-        [CommandNames.set_after_session_msg]: showAfterSessionMessageModal,
-        [CommandNames.prompt_help_topic]: setPromptHelpTopic,
         [CommandNames.queue_notify]: joinQueueNotify
     },
-    skipProgressMessageCommands: new Set([
-        CommandNames.set_after_session_msg,
-        CommandNames.set_queue_auto_clear,
-        CommandNames.enqueue
-    ])
+    skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
 
 /**
@@ -440,22 +424,6 @@ async function cleanupHelpChannel(
 }
 
 /**
- * The `/set_after_session_msg` command
- */
-async function showAfterSessionMessageModal(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.set_after_session_msg,
-        'botAdmin'
-    );
-    await interaction.showModal(AfterSessionMessageModal(server.guild.id));
-}
-
-/**
  * The `/help` command
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
@@ -492,22 +460,6 @@ async function setLoggingChannel(
 }
 
 /**
- * The `/set_queue_auto_clear` command
- */
-async function showQueueAutoClearModal(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.set_queue_auto_clear,
-        'botAdmin'
-    );
-    await interaction.showModal(QueueAutoClearModal(server.guild.id));
-}
-
-/**
  * The `/stop_logging` command
  */
 async function stopLogging(
@@ -522,32 +474,6 @@ async function stopLogging(
     );
     await server.setLoggingChannel(undefined);
     await interaction.editReply(SuccessMessages.stoppedLogging);
-}
-
-/**
- * The `/serious_mode` command
-
- */
-async function setSeriousMode(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.serious_mode,
-        'botAdmin'
-    );
-    const onOrOff = interaction.options.getSubcommand();
-    const warningMessage =
-        server.queues.length < 0 ? ExpectedParseWarnings.noQueuesInServer() : '';
-    if (onOrOff === 'on') {
-        await server.setSeriousServer(true);
-        await interaction.editReply(SuccessMessages.turnedOnSeriousMode(warningMessage));
-    } else {
-        await server.setSeriousServer(false);
-        await interaction.editReply(SuccessMessages.turnedOffSeriousMode(warningMessage));
-    }
 }
 
 /**
@@ -644,50 +570,6 @@ async function settingsMenu(
         'botAdmin'
     );
     await interaction.editReply(SettingsMainMenu(server));
-}
-
-/**
- * The `/auto_give_student_role` command
- */
-async function setAutoGiveStudentRole(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.auto_give_student_role,
-        'botAdmin'
-    );
-    const onOrOff = interaction.options.getSubcommand();
-    await server.setAutoGiveStudentRole(onOrOff === 'on');
-    await interaction.editReply(
-        onOrOff === 'on'
-            ? SuccessMessages.turnedOnAutoGiveStudentRole
-            : SuccessMessages.turnedOffAutoGiveStudentRole
-    );
-}
-
-/**
- * The `/prompt_help_topic` command
- */
-async function setPromptHelpTopic(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.prompt_help_topic,
-        'botAdmin'
-    );
-    const onOrOff = interaction.options.getSubcommand();
-    await server.setPromptHelpTopic(onOrOff === 'on');
-    await interaction.editReply(
-        onOrOff === 'on'
-            ? SuccessMessages.turnedOnPromptHelpTopic
-            : SuccessMessages.turnedOffPromptHelpTopic
-    );
 }
 
 /**

@@ -3,7 +3,7 @@ import { GoogleSheetCommands } from './google-sheet-interaction-names.js';
 
 // `/get_statistics`
 const getStatistics = new SlashCommandBuilder()
-    .setName('stats')
+    .setName(GoogleSheetCommands.stats)
     .setDescription('Statistics')
     .addSubcommand(subcommand =>
         subcommand
@@ -64,7 +64,7 @@ const getStatistics = new SlashCommandBuilder()
 
 // `/weekly_report`
 const weeklyReport = new SlashCommandBuilder()
-    .setName('weekly_report')
+    .setName(GoogleSheetCommands.weekly_report)
     .setDescription('Get a weekly report for the past `x` weeks.')
     .addSubcommand(subcommand =>
         subcommand
@@ -95,25 +95,25 @@ const weeklyReport = new SlashCommandBuilder()
             )
     );
 
-// `/set_google_sheet`
-const setGoogleSheet = new SlashCommandBuilder()
-    .setName(GoogleSheetCommands.set_google_sheet)
-    .setDescription(
-        'Changes which google sheet to use when logging attendance statistics.'
-    )
-    .addStringOption(option =>
-        option
-            .setName('sheet_id')
-            .setDescription(
-                'The id of the new google sheet. See the user manual for how to find this id.'
-            )
-            .setRequired(true)
-    );
+// // `/set_google_sheet`
+// const setGoogleSheet = new SlashCommandBuilder()
+//     .setName(GoogleSheetCommands.set_google_sheet)
+//     .setDescription(
+//         'Changes which google sheet to use when logging attendance statistics.'
+//     )
+//     .addStringOption(option =>
+//         option
+//             .setName('sheet_id')
+//             .setDescription(
+//                 'The id of the new google sheet. See the user manual for how to find this id.'
+//             )
+//             .setRequired(true)
+//     );
 
 const googleSheetsCommands = [
     getStatistics.toJSON(),
-    weeklyReport.toJSON(),
-    setGoogleSheet.toJSON()
+    weeklyReport.toJSON()
+    // setGoogleSheet.toJSON()
 ];
 
 export { googleSheetsCommands };

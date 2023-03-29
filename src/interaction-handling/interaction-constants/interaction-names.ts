@@ -26,14 +26,9 @@ enum CommandNames {
     queue_notify = 'queue_notify',
     set_logging_channel = 'set_logging_channel',
     stop_logging = 'stop_logging',
-    serious_mode = 'serious_mode',
     create_offices = 'create_offices',
     set_roles = 'set_roles',
-    settings = 'settings',
-    auto_give_student_role = 'auto_give_student_role',
-    prompt_help_topic = 'prompt_help_topic',
-    set_after_session_msg = 'set_after_session_msg',
-    set_queue_auto_clear = 'set_queue_auto_clear'
+    settings = 'settings'
 }
 
 /**

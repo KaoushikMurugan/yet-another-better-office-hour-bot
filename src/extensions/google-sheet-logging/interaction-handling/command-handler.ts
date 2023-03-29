@@ -3,7 +3,6 @@ import { CommandHandlerProps } from '../../../interaction-handling/handler-inter
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { Optional } from '../../../utils/type-aliases.js';
 import { GoogleSheetCommands } from '../google-sheet-constants/google-sheet-interaction-names.js';
-import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
@@ -11,8 +10,7 @@ import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
         [GoogleSheetCommands.stats]: getStatistics,
-        [GoogleSheetCommands.weekly_report]: getWeeklyReport,
-        [GoogleSheetCommands.set_google_sheet]: setGoogleSheet
+        [GoogleSheetCommands.weekly_report]: getWeeklyReport
     },
     skipProgressMessageCommands: new Set()
 };
@@ -433,20 +431,6 @@ async function getWeeklyReport(
             EmbedColor.Neutral,
             weeklyStatsString
         )
-    );
-}
-
-/**
- * Changes which google sheet to read from. The `/set_google_sheet` command
- */
-async function setGoogleSheet(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const state = GoogleSheetExtensionState.get(interaction.guildId);
-    const sheetId = interaction.options.getString('sheet_id', true).trim();
-    await state.setGoogleSheet(sheetId);
-    await interaction.editReply(
-        GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheet.title)
     );
 }
 

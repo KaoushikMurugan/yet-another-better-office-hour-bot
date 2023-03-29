@@ -196,18 +196,6 @@ const cleanupHelpChannelCommand = new SlashCommandBuilder()
     .setName(CommandNames.cleanup_help_channels)
     .setDescription('Debug feature: Force updates the command help channels');
 
-// /set_after_session_message
-const setAfterSessionMessageCommand = new SlashCommandBuilder()
-    .setName(CommandNames.set_after_session_msg)
-    .setDescription(
-        'Sets the message automatically sent to students after they leave the voice chat'
-    );
-
-// /set_queue_auto_clear
-const setQueueAutoClear = new SlashCommandBuilder()
-    .setName(CommandNames.set_queue_auto_clear)
-    .setDescription('Sets the timeout before automatically clearing all the queues');
-
 // /set_logging_channel [channel]
 const setLoggingChannelCommand = new SlashCommandBuilder()
     .setName(CommandNames.set_logging_channel)
@@ -224,17 +212,6 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
 const stopLoggingCommand = new SlashCommandBuilder()
     .setName(CommandNames.stop_logging)
     .setDescription('Stops the bot from logging events');
-
-// /serious_mode [enable]
-const activateSeriousModeCommand = new SlashCommandBuilder()
-    .setName(CommandNames.serious_mode)
-    .setDescription('Activates serious mode')
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on serious mode')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off serious mode')
-    );
 
 // /create_offices [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
@@ -298,17 +275,6 @@ const settingsCommand = new SlashCommandBuilder()
     .setName(CommandNames.settings)
     .setDescription('Sets up the server config for the bot');
 
-// /auto_give_student_role {on|off}
-const autoGiveStudentRoleCommand = new SlashCommandBuilder()
-    .setName(CommandNames.auto_give_student_role)
-    .setDescription('Automatically gives the student role to new members')
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on auto giving student role')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off auto giving student role')
-    );
-
 // /pause
 const pauseCommand = new SlashCommandBuilder()
     .setName(CommandNames.pause)
@@ -321,29 +287,9 @@ const resumeCommand = new SlashCommandBuilder()
     .setName(CommandNames.resume)
     .setDescription('Allow students to join the queue again after /pause was used.');
 
-// /prompt_help_topic {on|off}
-const promptHelpTopicCommand = new SlashCommandBuilder()
-    .setName(CommandNames.prompt_help_topic)
-    .setDescription(
-        'Enable or disable the modal that prompts the student to enter what they need help with'
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on the prompt')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off the prompt')
-    );
-
-// /help
-/**
- * Generates the help command based on adminCommandHelpMessages,
- * helperCommandHelpMessages,and studentCommandHelpMessages
- */
-function generateHelpCommand() {
-    return new SlashCommandBuilder()
-        .setName(CommandNames.help)
-        .setDescription('Get help with the bot');
-}
+const helpCommand = new SlashCommandBuilder()
+    .setName(CommandNames.help)
+    .setDescription('Get help with the bot');
 
 /** The raw data that can be sent to Discord */
 const commandData = [
@@ -361,18 +307,14 @@ const commandData = [
     cleanupQueue.toJSON(),
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
-    setAfterSessionMessageCommand.toJSON(),
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
-    setQueueAutoClear.toJSON(),
-    activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
     settingsCommand.toJSON(),
-    autoGiveStudentRoleCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
-    promptHelpTopicCommand.toJSON()
+    helpCommand.toJSON()
 ];
 
 async function postSlashCommands(
@@ -396,7 +338,7 @@ async function postSlashCommands(
             ),
             {
                 // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
-                body: commandData.concat(externalCommands, generateHelpCommand().toJSON())
+                body: commandData.concat(externalCommands)
             }
         )
         .catch(e =>

@@ -4,7 +4,6 @@ import {
     Role,
     EmbedBuilder
 } from 'discord.js';
-import { environment } from '../../../environment/environment-manager.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { red } from '../../../utils/command-line-colors.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
@@ -20,9 +19,7 @@ import {
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
 import {
-    checkCalendarConnection,
     isServerCalendarInteraction,
-    restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody
 } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
@@ -33,57 +30,14 @@ import {
 
 const calendarCommandMap: CommandHandlerProps = {
     methodMap: {
-        [CalendarCommandNames.set_calendar]: updateCalendarId,
-        [CalendarCommandNames.unset_calendar]: unsetCalendarId,
         [CalendarCommandNames.when_next]: listUpComingHours,
         [CalendarCommandNames.make_calendar_string]: interaction =>
             makeParsableCalendarTitle(interaction, false),
         [CalendarCommandNames.make_calendar_string_all]: interaction =>
-            makeParsableCalendarTitle(interaction, true),
-        [CalendarCommandNames.set_public_embed_url]: setPublicEmbedUrl
+            makeParsableCalendarTitle(interaction, true)
     },
     skipProgressMessageCommands: new Set()
 };
-
-/**
- * The `/set_calendar [calendar_id]` command,
- * Updates the calendar id in the shared calendar extension states
- * - Triggers the queue level extensions to update
- */
-async function updateCalendarId(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const newCalendarId = interaction.options.getString('calendar_id', true);
-    const newCalendarName = await checkCalendarConnection(newCalendarId).catch(() => {
-        throw ExpectedCalendarErrors.badId.newId;
-    });
-    const [server, state] = isServerCalendarInteraction(interaction);
-    await state.setCalendarId(newCalendarId);
-    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
-    await interaction.editReply(
-        CalendarSuccessMessages.updatedCalendarId(newCalendarName)
-    );
-}
-
-/**
- * The `/unset_calendar` command
- *
- * Resets the calendar id to default
- */
-async function unsetCalendarId(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const [server, state] = isServerCalendarInteraction(interaction);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        'unset_calendar',
-        'botAdmin'
-    );
-    await state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID);
-    server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
-    await interaction.editReply(CalendarSuccessMessages.unsetCalendar);
-}
 
 /**
  * The `/when_next` command, builds the embed for /when_next
@@ -191,33 +145,6 @@ async function makeParsableCalendarTitle(
             validQueueOptions.map(queue => queue.name)
         )
     );
-}
-
-/**
- * The `/set_public_embed_url` command
- * Sets the public embed url for the server's calendar
- * @param interaction
- */
-async function setPublicEmbedUrl(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    const [server, state] = isServerCalendarInteraction(interaction);
-    const rawUrl = interaction.options.getString('url', true);
-    const enable = interaction.options.getBoolean('enable', true);
-    isTriggeredByMemberWithRoles(server, interaction.member, 'set_calendar', 'botAdmin');
-    if (enable) {
-        try {
-            new URL(rawUrl); // call this constructor to check if URL is valid
-        } catch {
-            throw ExpectedCalendarErrors.badPublicEmbedUrl;
-        }
-        // now rawUrl is valid
-        await state.setPublicEmbedUrl(rawUrl);
-        await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.updated);
-    } else {
-        await state.setPublicEmbedUrl(restorePublicEmbedURL(state.calendarId));
-        await interaction.editReply(CalendarSuccessMessages.publicEmbedUrl.backToDefault);
-    }
 }
 
 export { calendarCommandMap };
