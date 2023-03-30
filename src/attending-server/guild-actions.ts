@@ -160,6 +160,18 @@ async function setHelpChannelVisibility(
             )
             .flat()
     );
+    if (!guild.roles.cache.hasAll(...Object.values(accessLevelRoleIds))) {
+        // if some of the roles are not set, all channels visible to everyone
+        // temporary solution
+        await Promise.all(
+            helpChannels.map(channel =>
+                channel.permissionOverwrites.create(guild.roles.everyone, {
+                    ViewChannel: true
+                })
+            )
+        );
+        return;
+    }
     // make the channel invisible to @everyone first
     await Promise.all(
         helpChannels.map(channel =>
