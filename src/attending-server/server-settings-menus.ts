@@ -790,7 +790,6 @@ function SeriousModeConfigMenu(
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
-
     const noQueues = server.queues.length === 0;
 
     const embed = new EmbedBuilder()
@@ -808,10 +807,15 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Current Configuration',
-                value: (server.isSerious
-                    ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
-                    : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`) +
-                    `\n\n**Note:** ${noQueues ? 'There are no queues in the server so serious mode doesn\'t have any noticable effect' : `Serious mode affects all queues in this server.`}`
+                value:
+                    (server.isSerious
+                        ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
+                        : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`) +
+                    `\n\n**Note:** ${
+                        noQueues
+                            ? "There are no queues in the server so serious mode doesn't have any noticable effect"
+                            : `Serious mode affects all queues in this server.`
+                    }`
             }
         );
     if (updateMessage.length > 0) {

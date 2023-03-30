@@ -26,6 +26,10 @@ const calendarButtonMap: ButtonHandlerProps = {
     ])
 };
 
+/**
+ * Resets the calendar settings to the default specified in the environment
+ * @param interaction
+ */
 async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {

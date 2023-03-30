@@ -1,9 +1,9 @@
 import { SlashCommandBuilder } from 'discord.js';
-import { GoogleSheetCommands } from './google-sheet-interaction-names.js';
+import { GoogleSheetCommandNames } from './google-sheet-interaction-names.js';
 
 // `/get_statistics`
 const getStatistics = new SlashCommandBuilder()
-    .setName(GoogleSheetCommands.stats)
+    .setName(GoogleSheetCommandNames.stats)
     .setDescription('Statistics')
     .addSubcommand(subcommand =>
         subcommand
@@ -64,7 +64,7 @@ const getStatistics = new SlashCommandBuilder()
 
 // `/weekly_report`
 const weeklyReport = new SlashCommandBuilder()
-    .setName(GoogleSheetCommands.weekly_report)
+    .setName(GoogleSheetCommandNames.weekly_report)
     .setDescription('Get a weekly report for the past `x` weeks.')
     .addSubcommand(subcommand =>
         subcommand
