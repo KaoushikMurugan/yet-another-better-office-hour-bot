@@ -10,7 +10,7 @@ import {
     Interaction,
     ModalSubmitInteraction,
     Role,
-    SelectMenuInteraction,
+    StringSelectMenuInteraction,
     TextChannel,
     VoiceChannel,
     VoiceState
@@ -169,7 +169,7 @@ function getInteractionName(interaction: Interaction): string {
     if (interaction.isModalSubmit()) {
         return extractComponentName(interaction.customId, true) ?? 'Modal Submit';
     }
-    if (interaction.isSelectMenu()) {
+    if (interaction.isStringSelectMenu()) {
         return (
             extractComponentName(interaction.customId, true) ??
             interaction.component.placeholder ??
@@ -353,7 +353,7 @@ function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string
  * @param selectMenuName
  */
 function logSelectMenuSelection(
-    interaction: SelectMenuInteraction<'cached'>,
+    interaction: StringSelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
     console.log(
@@ -376,7 +376,7 @@ function logSelectMenuSelection(
  * @param selectMenuName
  */
 function logDMSelectMenuSelection(
-    interaction: SelectMenuInteraction,
+    interaction: StringSelectMenuInteraction,
     selectMenuName: string
 ): void {
     console.log(

@@ -3,7 +3,7 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    SelectMenuBuilder,
+    StringSelectMenuBuilder,
     Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
@@ -30,9 +30,9 @@ import {
  */
 function SettingsSwitcher(
     currentMenu: SettingsMenuConstructor
-): ActionRowBuilder<SelectMenuBuilder> {
-    return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
+): ActionRowBuilder<StringSelectMenuBuilder> {
+    return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
             UnknownId,
@@ -616,8 +616,8 @@ function LoggingChannelConfigMenu(
                 longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
                 longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
         );
-    const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
+    const channelsSelectMenu = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.SelectLoggingChannel,
             server.guild.id,

@@ -155,11 +155,11 @@ async function processButton(interaction: Interaction): Promise<void> {
 }
 
 /**
- * Process SelectMenuInteractions
+ * Process StringSelectMenuInteractions
  * @param interaction
  */
 async function processSelectMenu(interaction: Interaction): Promise<void> {
-    if (!interaction.isSelectMenu()) {
+    if (!interaction.isStringSelectMenu()) {
         return;
     }
     const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
@@ -252,7 +252,7 @@ function getHandler(interaction: Interaction): (i: Interaction) => Promise<void>
     if (interaction.isModalSubmit()) {
         return processModalSubmit;
     }
-    if (interaction.isSelectMenu()) {
+    if (interaction.isStringSelectMenu()) {
         return processSelectMenu;
     }
     if (interaction.isButton()) {
