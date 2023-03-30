@@ -99,7 +99,7 @@ const leaveHelp: HelpMessage = {
 const listHelpersHelp: HelpMessage = {
     nameValuePair: {
         name: 'list_helpers',
-        value: 'list helpers'
+        value: 'list_helpers'
     },
     useInHelpChannel: true,
     useInHelpCommand: true,
@@ -129,6 +129,41 @@ const listHelpersHelp: HelpMessage = {
         ]
     },
     emoji: '👨‍🏫'
+};
+
+const queueNotifyHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'queue_notify',
+        value: 'queue_notify'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/queue_notify [queue_name] [on|off]]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Toggles whether the sender will be notified when they are next in line for the queue `queue_name`',
+                        inline: false
+                    },
+                    {
+                        name: 'Options',
+                        value: '`queue_name: string`\nName of the queue to toggle the notification for\n\n`on|off: string`\nWhether to turn the notification on or off',
+                        inline: true
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/queue_notify ECS32A`',
+                        inline: true
+                    }
+                ]
+            }
+        ]
+    },
+    emoji: '🔔'
 };
 
 const helpHelp: HelpMessage = {
@@ -172,6 +207,7 @@ const studentCommandHelpMessages: HelpMessage[] = [
     enqueueHelp,
     leaveHelp,
     listHelpersHelp,
+    queueNotifyHelp,
     helpHelp
 ];
 

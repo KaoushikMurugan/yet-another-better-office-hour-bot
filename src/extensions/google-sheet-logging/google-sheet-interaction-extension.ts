@@ -11,7 +11,9 @@ import {
 } from './google-sheet-constants/GoogleSheetCommands.js';
 import { googleSheetSettingsMainMenuOptions } from './google-sheet-constants/google-sheet-settings-menu.js';
 import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slash-commands.js';
+import { googleSheetButtonMap } from './interaction-handling/button-handler.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
+import { googleSheetModalMap } from './interaction-handling/modal-handler.js';
 import { loadSheetById } from './shared-sheet-functions.js';
 
 class GoogleSheetInteractionExtension
@@ -27,6 +29,16 @@ class GoogleSheetInteractionExtension
         staff: googleSheetStaffHelpMessages,
         student: []
     };
+
+    override buttonMap = googleSheetButtonMap;
+
+    override modalMap = googleSheetModalMap;
+
+    override slashCommandData = googleSheetsCommands;
+
+    override commandMap = googleSheetCommandMap;
+
+    override settingsMainMenuOptions = googleSheetSettingsMainMenuOptions;
 
     /**
      * Checks if the default google sheet is accessible
@@ -55,12 +67,6 @@ class GoogleSheetInteractionExtension
             )} as the default google sheet.`
         );
     }
-
-    override slashCommandData = googleSheetsCommands;
-
-    override commandMap = googleSheetCommandMap;
-
-    override settingsMainMenuOptions = googleSheetSettingsMainMenuOptions;
 }
 
 export { GoogleSheetInteractionExtension };

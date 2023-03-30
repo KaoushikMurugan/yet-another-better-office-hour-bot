@@ -1,4 +1,4 @@
-import { SelectMenuInteraction } from 'discord.js';
+import { StringSelectMenuInteraction } from 'discord.js';
 import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
 import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
@@ -33,12 +33,12 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
  * @param interaction
  */
 async function showSettingsSubMenu(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
-        option => option.optionData.value === selectedOption
+        option => option.selectMenuOptionData.value === selectedOption
     )?.menu;
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
@@ -53,13 +53,13 @@ async function showSettingsSubMenu(
  * @param interaction
  */
 async function selectLoggingChannel(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const channelId = interaction.values[0];
     const loggingChannel = server.guild.channels.cache.get(channelId ?? '');
     const callbackMenu = serverSettingsMainMenuOptions.find(
-        option => option.optionData.value === 'logging-channel'
+        option => option.selectMenuOptionData.value === 'logging-channel'
     );
     if (!loggingChannel || !isTextChannel(loggingChannel)) {
         throw ExpectedParseErrors.nonExistentTextChannel(channelId);
@@ -83,7 +83,7 @@ async function selectLoggingChannel(
  * @param interaction
  */
 async function selectHelpCommand(
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const selectedOption = interaction.values[0];

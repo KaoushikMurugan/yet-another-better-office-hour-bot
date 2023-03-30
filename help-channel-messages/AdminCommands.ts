@@ -200,42 +200,6 @@ const clearAllHelp: HelpMessage = {
     emoji: '🧹'
 };
 
-const setAfterSessionsMsgHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'set_after_session_msg',
-        value: 'set_after_session_msg'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/set_after_session_msg [message]`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Prompts a modal (aka form) where you can enter a message \
-                        that is to be sent to the students after a session is over.',
-                        inline: false
-                    },
-                    {
-                        name: 'Modal Input Fields',
-                        value: '`message: text - paragraph`\nThe message to send to the queue when a session ends.',
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/set_after_session_msg`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '📝'
-};
-
 const setLoggingChannelHelp: HelpMessage = {
     nameValuePair: {
         name: 'set_logging_channel',
@@ -306,78 +270,6 @@ const stopLoggingHelp: HelpMessage = {
     emoji: '🪵'
 };
 
-const setQueueAutoClearHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'set_queue_auto_clear',
-        value: 'set_queue_auto_clear'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/set_queue_auto_clear`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Sets the time after which the queue will be cleared automatically.',
-                        inline: false
-                    },
-                    {
-                        name: 'Modal Input Fields',
-                        value: '`hours: number - 2 digit max` \n`minutes: number - 2 digit max`\
-                        \nSubmitting the modal will set the auto clear time to hours:minutes',
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/set_queue_auto_clear`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '🕐'
-};
-
-const seriousModeHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'serious_mode',
-        value: 'serious_mode'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/serious_mode`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Toggles serious mode. When serious mode is on, the bot will not use \
-                        emotes or emoticons in messages and embeds.',
-                        inline: false
-                    },
-                    {
-                        name: 'Options',
-                        value: 'None',
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/serious_mode`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '🧐'
-};
-
 const settingsHelp: HelpMessage = {
     nameValuePair: {
         name: 'settings',
@@ -399,7 +291,7 @@ const settingsHelp: HelpMessage = {
                     },
                     {
                         name: 'Options',
-                        value: 'None',
+                        value: '`sub_menu_jump: string`: Jump to a specific sub menu.',
                         inline: true
                     },
                     {
@@ -414,10 +306,10 @@ const settingsHelp: HelpMessage = {
     emoji: '⚙️'
 };
 
-const setAutoGiveStudentRoleHelp: HelpMessage = {
+const createOfficesHelp: HelpMessage = {
     nameValuePair: {
-        name: 'auto_give_student_role',
-        value: 'auto_give_student_role'
+        name: 'create_offices',
+        value: 'create_offices'
     },
     useInHelpChannel: true,
     useInHelpCommand: true,
@@ -425,29 +317,64 @@ const setAutoGiveStudentRoleHelp: HelpMessage = {
         embeds: [
             {
                 color: EmbedColor.NoColor,
-                title: 'Command: `/auto_give_student_role`',
+                title: 'Command: `/create_offices`',
                 fields: [
                     {
                         name: 'Description',
-                        value: 'Toggles whether or not the bot will automatically give the student role \
-                        to users who join the server.',
+                        value: 'Creates the office hours channels for the server. This command will create \
+                        the voice channels and set the appropriate permissions.',
                         inline: false
                     },
                     {
                         name: 'Options',
-                        value: 'None',
+                        value: '`category_name: string` The name of the category to create the voice channels in. \n\
+                        `office_names: string` The name of the voice channels to create. Will be created as office_name-1, office_name-2 etc. \n\
+                        `number_of_offices: number` The number of offices to create.',
                         inline: true
                     },
                     {
                         name: 'Example Usage',
-                        value: '`/set_auto_give_student_role`',
+                        value: '`/create_offices "Office Hours" "Office" 3`',
                         inline: true
                     }
                 ]
             }
         ]
     },
-    emoji: '👨‍🎓'
+    emoji: '🔊'
+};
+
+const setRoleHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_role',
+        value: 'set_role'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_role`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the role(s) for the server to use for `Bot Admin`, `Helper` and `Student` roles.'
+                    },
+                    {
+                        name: 'Options',
+                        value: '`role_name: [Bot Admin | Staff | Studnet]`: The name of the role to set. \n\
+                        `role: Role`: The role to set the chosen role to.'
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_role Bot Admin @Moderator`'
+                    }
+                ]
+            }
+        ]
+    },
+    emoji: '👥'
 };
 
 const adminCommandHelpMessages: HelpMessage[] = [
@@ -457,13 +384,11 @@ const adminCommandHelpMessages: HelpMessage[] = [
     cleanupQueueHelp,
     cleanupHelpChannelHelp,
     clearAllHelp,
-    setAfterSessionsMsgHelp,
     setLoggingChannelHelp,
     stopLoggingHelp,
-    setQueueAutoClearHelp,
-    seriousModeHelp,
     settingsHelp,
-    setAutoGiveStudentRoleHelp
+    createOfficesHelp,
+    setRoleHelp
 ];
 
 export { adminCommandHelpMessages };

@@ -1,7 +1,16 @@
-enum GoogleSheetCommands {
+enum GoogleSheetCommandNames {
     stats = 'stats',
-    weekly_report = 'weekly_report',
-    set_google_sheet = 'set_google_sheet'
+    weekly_report = 'weekly_report'
 }
 
-export { GoogleSheetCommands };
+enum GoogleSheetButtonNames {
+    ResetGoogleSheetSettings = 'ResetGoogleSheetSettings',
+    ShowGoogleSheetSettingsModal = 'ShowGoogleSheetsSettingsModal'
+}
+
+enum GoogleSheetModalNames {
+    GoogleSheetSettingsModal = 'GoogleSheetsSettingsModal',
+    GoogleSheetSettingsModalMenuVersion = 'GoogleSheetsSettingsModalMenuVersion'
+}
+
+export { GoogleSheetCommandNames, GoogleSheetButtonNames, GoogleSheetModalNames };

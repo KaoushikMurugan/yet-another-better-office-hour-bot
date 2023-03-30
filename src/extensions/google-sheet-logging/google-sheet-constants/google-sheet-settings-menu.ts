@@ -1,9 +1,11 @@
-import { EmbedBuilder } from 'discord.js';
+import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
+import { GoogleSheetButtonNames } from './google-sheet-interaction-names.js';
 
 /**
  * Options for the server settings main menu
@@ -11,12 +13,13 @@ import { SettingsSwitcher } from '../../../attending-server/server-settings-menu
  */
 const googleSheetSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📊',
             label: 'Google Sheet Logging Settings',
             description: 'Configure the Google Sheet Logging settings',
             value: 'google-sheet-settings'
         },
+        useInSettingsCommand: true,
         menu: GoogleSheetSettingsConfigMenu
     }
 ];
@@ -61,9 +64,30 @@ function GoogleSheetSettingsConfigMenu(
     if (updateMessage.length > 0) {
         embed.setFooter({ text: `✅ ${updateMessage}` });
     }
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('📊')
+            .setLabel('Change Google Sheet')
+            .setStyle(ButtonStyle.Secondary),
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            GoogleSheetButtonNames.ResetGoogleSheetSettings,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔗')
+            .setLabel('Reset Google Sheet')
+            .setStyle(ButtonStyle.Secondary)
+    );
     return {
         embeds: [embed],
-        components: [SettingsSwitcher(GoogleSheetSettingsConfigMenu)]
+        components: [buttons, SettingsSwitcher(GoogleSheetSettingsConfigMenu)]
     };
 }
 

@@ -5,12 +5,9 @@
  */
 
 enum CalendarCommandNames {
-    set_calendar = 'set_calendar',
-    unset_calendar = 'unset_calendar',
     when_next = 'when_next',
     make_calendar_string = 'make_calendar_string',
-    make_calendar_string_all = 'make_calendar_string_all',
-    set_public_embed_url = 'set_public_embed_url'
+    make_calendar_string_all = 'make_calendar_string_all'
 }
 
 enum CalendarButtonNames {

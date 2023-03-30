@@ -48,7 +48,8 @@ const DEFAULT_PFP = 'https://i.postimg.cc/dVkg4XFf/BOB-pfp.png' as const;
 function SimpleEmbed(
     message: string,
     color = EmbedColor.Neutral,
-    description = ''
+    description = '',
+    warning = ''
 ): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     if (message.length <= 256) {
@@ -59,6 +60,8 @@ function SimpleEmbed(
                     title: message,
                     timestamp: new Date().toISOString(),
                     description: description.slice(0, 4096),
+                    fields:
+                        warning.length > 0 ? [{ name: 'Warning', value: warning }] : [],
                     author: {
                         name: 'YABOB',
                         icon_url: YABOB_PFP_URL
@@ -73,6 +76,8 @@ function SimpleEmbed(
                 {
                     color: color,
                     description: (message + '\n\n' + description).slice(0, 4096),
+                    fields:
+                        warning.length > 0 ? [{ name: 'Warning', value: warning }] : [],
                     timestamp: new Date().toISOString(),
                     author: {
                         name: 'YABOB',
@@ -88,8 +93,9 @@ function SimpleEmbed(
 function SimpleEmbed2(
     message: string,
     color = EmbedColor.Neutral,
-    description = ''
-): EmbedData {
+    description = '',
+    warning = ''
+): EmbedBuilder {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
     const embed = new EmbedBuilder()
         .setColor(color)
@@ -106,7 +112,14 @@ function SimpleEmbed2(
             embed.setDescription(description.slice(0, 4096));
         }
     }
-    return { embeds: [embed.data] };
+    if (warning.length > 0) {
+        embed.addFields({
+            name: 'Warning',
+            value: warning
+        });
+    }
+
+    return embed;
 }
 
 /**

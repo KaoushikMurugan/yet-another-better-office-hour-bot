@@ -8,7 +8,7 @@ import {
     Optional
 } from './type-aliases.js';
 import LZString from 'lz-string';
-import { ButtonBuilder, ModalBuilder, SelectMenuBuilder } from 'discord.js';
+import { ButtonBuilder, ModalBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
 
 /** A tuple that represents the information encoded in a custom id */
@@ -47,7 +47,7 @@ const UnknownId = '0' as const;
  */
 function buildComponent<
     T extends ComponentLocation,
-    R extends ButtonBuilder | ModalBuilder | SelectMenuBuilder
+    R extends ButtonBuilder | ModalBuilder | StringSelectMenuBuilder
 >(builder: R, idInfo: CustomIdTuple<T>): R {
     builder.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
     return builder;
@@ -153,7 +153,7 @@ class YabobButton<T extends ComponentLocation> extends ButtonBuilder {
     }
 }
 
-class YabobSelectMenu<T extends ComponentLocation> extends SelectMenuBuilder {
+class YabobSelectMenu<T extends ComponentLocation> extends StringSelectMenuBuilder {
     constructor(idInfo: CustomIdTuple<T>) {
         super();
         super.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));

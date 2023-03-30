@@ -4,26 +4,6 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { ChannelType } from 'discord.js';
 import { CalendarCommandNames } from './calendar-interaction-names.js';
 
-// /set_calendar [calendar_id]
-const setCalendar = new SlashCommandBuilder()
-    .setName(CalendarCommandNames.set_calendar)
-    .setDescription(
-        'Commands to modify the resources connected to the /when_next command'
-    )
-    .addStringOption(option =>
-        option
-            .setName('calendar_id')
-            .setDescription('The link to the calendar')
-            .setRequired(true)
-    );
-
-// /unset_calendar
-const unsetCalendar = new SlashCommandBuilder()
-    .setName(CalendarCommandNames.unset_calendar)
-    .setDescription(
-        'De-syncs the bot from the current calendar and sets it to the default calendar'
-    );
-
 // /when_next [queue_name]
 const whenNext = new SlashCommandBuilder()
     .setName(CalendarCommandNames.when_next)
@@ -99,33 +79,10 @@ const makeCalendarStringAll = new SlashCommandBuilder()
             .setRequired(false)
     );
 
-// /set_public_embed_url [url] (enable)
-const setPublicEmbedUrl = new SlashCommandBuilder()
-    .setName(CalendarCommandNames.set_public_embed_url)
-    .setDescription('Use another public calendar embed')
-    .addStringOption(option =>
-        option
-            .setName('url')
-            .setDescription('The full URL to the public calendar embed')
-            .setRequired(true)
-    )
-    .addBooleanOption(option =>
-        option
-            .setName('enable')
-            .setDescription(
-                'Whether to switch to this new public url. ' +
-                    'If false, the value in `url` will be ignored'
-            )
-            .setRequired(true)
-    );
-
 const calendarCommands = [
-    setCalendar.toJSON(),
-    unsetCalendar.toJSON(),
     whenNext.toJSON(),
     makeCalendarStringCommand.toJSON(),
-    makeCalendarStringAll.toJSON(),
-    setPublicEmbedUrl.toJSON()
+    makeCalendarStringAll.toJSON()
 ];
 
 export { calendarCommands };

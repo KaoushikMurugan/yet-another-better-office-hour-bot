@@ -2,73 +2,6 @@
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { HelpMessage } from '../../../utils/type-aliases.js';
 
-const setCalendarHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'set_calendar',
-        value: 'set_calendar'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/set_calendar [calendar_id]`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Prompts a modal to set the calendar for the server.',
-                        inline: false
-                    },
-                    {
-                        name: 'Options',
-                        value: "`calendar_id: string`\nID of the calendar to set.\
-                        \nGo to that particular calendar's Settings and Sharing tab. Scrolling down will take you do the Integrate Calendar Section. \
-                        Copy the Calendar ID. It should end with calendar.google.com.",
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/set_calendar 3o2ih5bk35b154@calendar.google.com`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '📅'
-};
-
-const unsetCalendarHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'unset_calendar',
-        value: 'unset_calendar'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/unset_calendar`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Resets the calendar that YABOB reads from to the default calendar.',
-                        inline: false
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/unset_calendar`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '📅'
-};
-
 const makeCalendarStringHelp: HelpMessage = {
     nameValuePair: {
         name: 'make_calendar_string',
@@ -144,42 +77,6 @@ const makeCalendarStringAllHelp: HelpMessage = {
     emoji: '📅'
 };
 
-const setPublicEmbedUrlHelp: HelpMessage = {
-    nameValuePair: {
-        name: 'set_public_embed_url',
-        value: 'set_public_embed_url'
-    },
-    useInHelpChannel: true,
-    useInHelpCommand: true,
-    message: {
-        embeds: [
-            {
-                color: EmbedColor.NoColor,
-                title: 'Command: `/set_public_embed_url [url]`',
-                fields: [
-                    {
-                        name: 'Description',
-                        value: 'Sets the URL that upcoming sessions embed calendar redirects you to.',
-                        inline: false
-                    },
-                    {
-                        name: 'Options',
-                        value: '`url: string`\nA public url to a website which shows the calendar for the server.\
-                        \nThis url will be used in the queue embeds to redirect users to the calendar.',
-                        inline: true
-                    },
-                    {
-                        name: 'Example Usage',
-                        value: '`/set_public_embed_url https://supercoolcalendar.com`',
-                        inline: true
-                    }
-                ]
-            }
-        ]
-    },
-    emoji: '📅'
-};
-
 const whenNextHelp: HelpMessage = {
     nameValuePair: {
         name: 'when_next',
@@ -217,12 +114,6 @@ const whenNextHelp: HelpMessage = {
     emoji: '📅'
 };
 
-const calendarAdminHelpMessages = [
-    setCalendarHelp,
-    unsetCalendarHelp,
-    setPublicEmbedUrlHelp
-] as const;
-
 const calendarHelperHelpMessages = [
     makeCalendarStringHelp,
     makeCalendarStringAllHelp
@@ -230,8 +121,4 @@ const calendarHelperHelpMessages = [
 
 const calendarStudentHelpMessages = [whenNextHelp] as const;
 
-export {
-    calendarAdminHelpMessages,
-    calendarHelperHelpMessages,
-    calendarStudentHelpMessages
-};
+export { calendarHelperHelpMessages, calendarStudentHelpMessages };

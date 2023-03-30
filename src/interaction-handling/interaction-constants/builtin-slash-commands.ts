@@ -15,6 +15,7 @@ import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
+import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -118,6 +119,35 @@ const clearAllCommand = new SlashCommandBuilder()
     .setName(CommandNames.clear_all)
     .setDescription('Admin only. Clears all the queues on this server');
 
+// /queue_notify [queue_name] [on | off]
+const queueNotifyCommand = new SlashCommandBuilder()
+    .setName(CommandNames.queue_notify)
+    .setDescription('Toggle whether you want to be pinged when you are next in line')
+    .addSubcommand(subcommand =>
+        subcommand // /queue_notify on [queue_name]
+            .setName('on')
+            .setDescription('Turn on notifications for a queue')
+            .addChannelOption(option =>
+                option
+                    .setName('queue_name')
+                    .setDescription('The queue to turn on notifications for')
+                    .setRequired(true)
+                    .addChannelTypes(ChannelType.GuildCategory)
+            )
+    )
+    .addSubcommand(subcommand =>
+        subcommand // /queue_notify off [queue_name]
+            .setName('off')
+            .setDescription('Turn off notifications for a queue')
+            .addChannelOption(option =>
+                option
+                    .setName('queue_name')
+                    .setDescription('The queue to turn off notifications for')
+                    .setRequired(true)
+                    .addChannelTypes(ChannelType.GuildCategory)
+            )
+    );
+
 // /announce [message] (queue_name)
 const announceCommand = new SlashCommandBuilder()
     .setName(CommandNames.announce)
@@ -167,18 +197,6 @@ const cleanupHelpChannelCommand = new SlashCommandBuilder()
     .setName(CommandNames.cleanup_help_channels)
     .setDescription('Debug feature: Force updates the command help channels');
 
-// /set_after_session_message
-const setAfterSessionMessageCommand = new SlashCommandBuilder()
-    .setName(CommandNames.set_after_session_msg)
-    .setDescription(
-        'Sets the message automatically sent to students after they leave the voice chat'
-    );
-
-// /set_queue_auto_clear
-const setQueueAutoClear = new SlashCommandBuilder()
-    .setName(CommandNames.set_queue_auto_clear)
-    .setDescription('Sets the timeout before automatically clearing all the queues');
-
 // /set_logging_channel [channel]
 const setLoggingChannelCommand = new SlashCommandBuilder()
     .setName(CommandNames.set_logging_channel)
@@ -195,17 +213,6 @@ const setLoggingChannelCommand = new SlashCommandBuilder()
 const stopLoggingCommand = new SlashCommandBuilder()
     .setName(CommandNames.stop_logging)
     .setDescription('Stops the bot from logging events');
-
-// /serious_mode [enable]
-const activateSeriousModeCommand = new SlashCommandBuilder()
-    .setName(CommandNames.serious_mode)
-    .setDescription('Activates serious mode')
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on serious mode')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off serious mode')
-    );
 
 // /create_offices [category_name] [office_name] [number_of_offices]
 const createOfficesCommand = new SlashCommandBuilder()
@@ -265,53 +272,43 @@ const setRolesCommand = new SlashCommandBuilder()
     );
 
 // /settings
-const settingsCommand = new SlashCommandBuilder()
-    .setName(CommandNames.settings)
-    .setDescription('Sets up the server config for the bot');
+function generateSettingsCommand() {
+    return new SlashCommandBuilder()
+        .setName(CommandNames.settings)
+        .setDescription('Sets up the server config for the bot')
+        .addStringOption(option =>
+            option
+                .setName('sub_menu_jump')
+                .setDescription('The sub menu to jump to')
+                .setRequired(false)
+                .addChoices(
+                    ...serverSettingsMainMenuOptions
+                        .filter(option => option.useInSettingsCommand === true)
+                        .map(option => {
+                            return {
+                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
+                                value: option.selectMenuOptionData.value
+                            };
+                        })
+                )
+        );
+}
 
-// /auto_give_student_role {on|off}
-const autoGiveStudentRoleCommand = new SlashCommandBuilder()
-    .setName(CommandNames.auto_give_student_role)
-    .setDescription('Automatically gives the student role to new members')
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on auto giving student role')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off auto giving student role')
-    );
-
+// /pause
 const pauseCommand = new SlashCommandBuilder()
     .setName(CommandNames.pause)
     .setDescription(
         'Prevents students from joining the queue, but allows the helper to dequeue.'
     );
 
+// /resume
 const resumeCommand = new SlashCommandBuilder()
     .setName(CommandNames.resume)
     .setDescription('Allow students to join the queue again after /pause was used.');
 
-const promptHelpTopicCommand = new SlashCommandBuilder()
-    .setName(CommandNames.prompt_help_topic)
-    .setDescription(
-        'Enable or disable the modal that prompts the student to enter what they need help with'
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('on').setDescription('Turns on the prompt')
-    )
-    .addSubcommand(subcommand =>
-        subcommand.setName('off').setDescription('Turns off the prompt')
-    );
-
-// /help
-/**
- * Generates the help command based on adminCommandHelpMessages,
- * helperCommandHelpMessages,and studentCommandHelpMessages
- */
-function generateHelpCommand() {
-    return new SlashCommandBuilder()
-        .setName(CommandNames.help)
-        .setDescription('Get help with the bot');
-}
+const helpCommand = new SlashCommandBuilder()
+    .setName(CommandNames.help)
+    .setDescription('Get help with the bot');
 
 /** The raw data that can be sent to Discord */
 const commandData = [
@@ -323,23 +320,19 @@ const commandData = [
     leaveCommand.toJSON(),
     clearCommand.toJSON(),
     clearAllCommand.toJSON(),
+    queueNotifyCommand.toJSON(),
     listHelpersCommand.toJSON(),
     announceCommand.toJSON(),
     cleanupQueue.toJSON(),
     cleanupAllQueues.toJSON(),
     cleanupHelpChannelCommand.toJSON(),
-    setAfterSessionMessageCommand.toJSON(),
     setLoggingChannelCommand.toJSON(),
     stopLoggingCommand.toJSON(),
-    setQueueAutoClear.toJSON(),
-    activateSeriousModeCommand.toJSON(),
     createOfficesCommand.toJSON(),
     setRolesCommand.toJSON(),
-    settingsCommand.toJSON(),
-    autoGiveStudentRoleCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
-    promptHelpTopicCommand.toJSON()
+    helpCommand.toJSON()
 ];
 
 async function postSlashCommands(
@@ -363,7 +356,10 @@ async function postSlashCommands(
             ),
             {
                 // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
-                body: commandData.concat(externalCommands, generateHelpCommand().toJSON())
+                body: commandData.concat(
+                    externalCommands,
+                    generateSettingsCommand().toJSON()
+                )
             }
         )
         .catch(e =>

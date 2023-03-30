@@ -3,7 +3,7 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    SelectMenuBuilder,
+    StringSelectMenuBuilder,
     Snowflake
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
@@ -30,9 +30,9 @@ import {
  */
 function SettingsSwitcher(
     currentMenu: SettingsMenuConstructor
-): ActionRowBuilder<SelectMenuBuilder> {
-    return new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
+): ActionRowBuilder<StringSelectMenuBuilder> {
+    return new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+        buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
             UnknownId,
@@ -42,7 +42,7 @@ function SettingsSwitcher(
             .addOptions(
                 serverSettingsMainMenuOptions
                     .filter(menuOption => menuOption.menu !== currentMenu)
-                    .map(option => option.optionData)
+                    .map(option => option.selectMenuOptionData)
             )
     );
 }
@@ -84,75 +84,83 @@ const documentationLinks = {
  */
 const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🏠',
             label: 'Main Menu',
             description: 'Return to the main menu',
             value: 'main-menu'
         },
+        useInSettingsCommand: false,
         menu: SettingsMainMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📝',
             label: 'Server Roles',
             description: 'Configure the server roles',
             value: 'server-roles'
         },
+        useInSettingsCommand: true,
         menu: RolesConfigMenuInGuild
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '📨',
             label: 'After Session Message',
             description: 'Configure the message sent after a session',
             value: 'after-session-message'
         },
+        useInSettingsCommand: true,
         menu: AfterSessionMessageConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '⏳',
             label: 'Queue Auto Clear',
             description: 'Configure the auto-clearing of queues',
             value: 'queue-auto-clear'
         },
+        useInSettingsCommand: true,
         menu: QueueAutoClearConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🪵',
             label: 'Logging Channel',
             description: 'Configure the logging channel',
             value: 'logging-channel'
         },
+        useInSettingsCommand: true,
         menu: LoggingChannelConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🎓',
             label: 'Auto Give Student Role',
             description: 'Configure the auto-giving of the student role',
             value: 'auto-give-student-role'
         },
+        useInSettingsCommand: true,
         menu: AutoGiveStudentRoleConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🙋',
             label: 'Help Topic Prompt',
             description: 'Configure the help topic prompt',
             value: 'help-topic-prompt'
         },
+        useInSettingsCommand: true,
         menu: PromptHelpTopicConfigMenu
     },
     {
-        optionData: {
+        selectMenuOptionData: {
             emoji: '🧐',
             label: 'Serious Mode',
             description: 'Configure the serious mode',
             value: 'serious-mode'
         },
+        useInSettingsCommand: true,
         menu: SeriousModeConfigMenu
     }
 ];
@@ -616,23 +624,24 @@ function LoggingChannelConfigMenu(
                 longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
                 longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
         );
-    const channelsSelectMenu = new ActionRowBuilder<SelectMenuBuilder>().addComponents(
-        buildComponent(new SelectMenuBuilder(), [
-            'other',
-            SelectMenuNames.SelectLoggingChannel,
-            server.guild.id,
-            channelId
-        ])
-            .setPlaceholder('Select a Text Channel')
-            .addOptions(
-                // Cannot have more than 25 options
-                mostLikelyLoggingChannels.first(25).map(channel => ({
-                    label: channel.name,
-                    description: channel.name,
-                    value: channel.id
-                }))
-            )
-    );
+    const channelsSelectMenu =
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildComponent(new StringSelectMenuBuilder(), [
+                'other',
+                SelectMenuNames.SelectLoggingChannel,
+                server.guild.id,
+                channelId
+            ])
+                .setPlaceholder('Select a Text Channel')
+                .addOptions(
+                    // Cannot have more than 25 options
+                    mostLikelyLoggingChannels.first(25).map(channel => ({
+                        label: channel.name,
+                        description: channel.name,
+                        value: channel.id
+                    }))
+                )
+        );
     return {
         embeds: [embed.data],
         components: [
@@ -781,6 +790,8 @@ function SeriousModeConfigMenu(
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
+    const noQueues = server.queues.length === 0;
+
     const embed = new EmbedBuilder()
         .setTitle(`🧐 Serious Mode Configuration for ${server.guild.name} 🧐`)
         .setColor(EmbedColor.Aqua)
@@ -796,9 +807,15 @@ function SeriousModeConfigMenu(
             },
             {
                 name: 'Current Configuration',
-                value: server.isSerious
-                    ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
-                    : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`
+                value:
+                    (server.isSerious
+                        ? `**Enabled** - YABOB will not use emojis or emoticons for fun purposes.`
+                        : `**Disabled** - YABOB can use emojis and emoticons for fun purposes.`) +
+                    `\n\n**Note:** ${
+                        noQueues
+                            ? "There are no queues in the server so serious mode doesn't have any noticable effect"
+                            : `Serious mode affects all queues in this server.`
+                    }`
             }
         );
     if (updateMessage.length > 0) {

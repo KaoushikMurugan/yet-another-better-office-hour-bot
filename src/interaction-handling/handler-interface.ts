@@ -2,7 +2,7 @@ import type {
     ButtonInteraction,
     ChatInputCommandInteraction,
     ModalSubmitInteraction,
-    SelectMenuInteraction
+    StringSelectMenuInteraction
 } from 'discord.js';
 
 /** ChatInputCommands can only exist in guilds, so we can assume it will always be cached */
@@ -15,10 +15,10 @@ type GuildButtonHandler = (interaction: ButtonInteraction<'cached'>) => Promise<
 type DMButtonHandler = (interaction: ButtonInteraction) => Promise<void>;
 
 type GuildSelectMenuHandler = (
-    interaction: SelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>
 ) => Promise<void>;
 
-type DMSelectMenuHandler = (interaction: SelectMenuInteraction) => Promise<void>;
+type DMSelectMenuHandler = (interaction: StringSelectMenuInteraction) => Promise<void>;
 
 type GuildModalSubmitHandler = (
     interaction: ModalSubmitInteraction<'cached'>
