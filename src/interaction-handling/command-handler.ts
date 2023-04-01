@@ -19,7 +19,10 @@ import {
     SettingsMainMenu,
     serverSettingsMainMenuOptions
 } from '../attending-server/server-settings-menus.js';
-import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import {
+    ExpectedParseErrors,
+    UnexpectedParseErrors
+} from './interaction-constants/expected-interaction-errors.js';
 import { PromptHelpTopicModal } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
@@ -29,6 +32,8 @@ import {
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
+import { HelperRolesData } from '../utils/type-aliases.js';
+import { parse } from 'csv-string';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -53,7 +58,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.create_offices]: createOffices,
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
-        [CommandNames.queue_notify]: joinQueueNotify
+        [CommandNames.queue_notify]: joinQueueNotify,
+        [CommandNames.assign_helpers_roles]: assignHelpersRoles
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -626,6 +632,58 @@ async function joinQueueNotify(
     } else {
         throw new CommandParseError('Invalid subcommand.');
     }
+}
+
+async function assignHelpersRoles(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.assign_helpers_roles,
+        'botAdmin'
+    );
+
+    const attachment = interaction.options.getAttachment('csv_file', true);
+    if (!attachment.contentType?.includes('text/csv')) {
+        throw ExpectedParseErrors.invalidContentType(attachment.contentType);
+    }
+
+    const csvText0 = await fetch(attachment.url);
+
+    if (!csvText0.ok) {
+        throw UnexpectedParseErrors.unexpectedFetchError(
+            interaction,
+            csvText0.status,
+            csvText0.statusText
+        );
+    }
+
+    const csvText = await csvText0.text();
+
+    const helpersRolesData: HelperRolesData[] = [];
+
+    const data = parse(csvText);
+
+    data.forEach(record => {
+        const recordDiscordID = record[0];
+        if (recordDiscordID === undefined || recordDiscordID.length < 18) {
+            throw ExpectedParseErrors.invalidDiscordId(recordDiscordID);
+        }
+        const recordQueueNames = record.slice(1);
+        if (recordQueueNames.length === 0) {
+            throw ExpectedParseErrors.noQueueNames(recordDiscordID);
+        }
+        helpersRolesData.push({
+            helperId: recordDiscordID,
+            queues: recordQueueNames
+        });
+    });
+
+    await server.assignHelpersRoles(helpersRolesData);
+
+    await interaction.editReply(SuccessMessages.assignedHelpersRoles);
 }
 
 export { baseYabobCommandMap };

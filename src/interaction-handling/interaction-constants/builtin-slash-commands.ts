@@ -310,6 +310,17 @@ const helpCommand = new SlashCommandBuilder()
     .setName(CommandNames.help)
     .setDescription('Get help with the bot');
 
+// /assign_helpers_roles
+const assignHelpersRolesCommand = new SlashCommandBuilder()
+    .setName(CommandNames.assign_helpers_roles)
+    .setDescription('Uses a .csv file to assign roles to all helpers')
+    .addAttachmentOption(option =>
+        option
+            .setName('csv_file')
+            .setDescription('The .csv file to use')
+            .setRequired(true)
+    );
+
 /** The raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -332,7 +343,8 @@ const commandData = [
     setRolesCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
-    helpCommand.toJSON()
+    helpCommand.toJSON(),
+    assignHelpersRolesCommand.toJSON()
 ];
 
 async function postSlashCommands(

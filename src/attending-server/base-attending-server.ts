@@ -42,6 +42,7 @@ import {
 import {
     CategoryChannelId,
     GuildMemberId,
+    HelperRolesData,
     Optional,
     OptionalRoleId,
     SpecialRoleValues,
@@ -1033,6 +1034,33 @@ class AttendingServerV2 {
             this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
         );
         return true;
+    }
+
+    async assignHelpersRoles(helpersRolesData: HelperRolesData[]): Promise<void> {
+        // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
+        const queueNames = this.queues.map(queue => queue.queueName);
+        // ensure the queue roles exist so that queueRoles is garunteed to not contain undefined
+        await this.createQueueRoles();
+        // find the roles that match the queue names
+        const queueRoles = queueNames
+            .map(queueName =>
+                this.guild.roles.cache.find(role => role.name === queueName)
+            )
+            .filter((role): role is Role => role !== undefined);
+
+        await Promise.all(
+            helpersRolesData.map(async helperRolesData => {
+                const helper = await this.guild.members.fetch(helperRolesData.helperId);
+                const helperRoles = helperRolesData.queues
+                    .map(queueName => queueRoles.find(role => role.name === queueName))
+                    .filter((role): role is Role => role !== undefined);
+
+                await helper.roles.remove(queueRoles);
+                if (helperRoles.length > 0) {
+                    await helper.roles.add(helperRoles);
+                }
+            })
+        );
     }
 
     /**
