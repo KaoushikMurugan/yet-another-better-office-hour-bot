@@ -1036,7 +1036,7 @@ class AttendingServerV2 {
         return true;
     }
 
-    async assignHelpersRoles(helpersRolesData: HelperRolesData[]): Promise<void> {
+    async assignHelpersRoles(helpersRolesData: HelperRolesData[]): Promise<string> {
         // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
         const queueNames = this.queues.map(queue => queue.queueName);
         // ensure the queue roles exist so that queueRoles is garunteed to not contain undefined
@@ -1047,20 +1047,40 @@ class AttendingServerV2 {
                 this.guild.roles.cache.find(role => role.name === queueName)
             )
             .filter((role): role is Role => role !== undefined);
-
+        const logMap: Map<string, string> = new Map();
         await Promise.all(
             helpersRolesData.map(async helperRolesData => {
                 const helper = await this.guild.members.fetch(helperRolesData.helperId);
-                const helperRoles = helperRolesData.queues
+                // give the helper the staff role if they don't have it
+                if (!helper.roles.cache.has(this.settings.accessLevelRoleIds.staff)) {
+                    await helper.roles.add(this.settings.accessLevelRoleIds.staff);
+                    logMap.set(
+                        helperRolesData.helperId,
+                        `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
+                            helperRolesData.helperId
+                        )}`
+                    );
+                }
+                // remove old queue roles
+                await helper.roles.remove(queueRoles);
+                // get the queue roles from the helperRolesData
+                const helperQueueRoles = helperRolesData.queues
                     .map(queueName => queueRoles.find(role => role.name === queueName))
                     .filter((role): role is Role => role !== undefined);
-
-                await helper.roles.remove(queueRoles);
-                if (helperRoles.length > 0) {
-                    await helper.roles.add(helperRoles);
+                // add the new queue roles
+                if (helperQueueRoles.length > 0) {
+                    await helper.roles.add(helperQueueRoles);
                 }
+                logMap.set(
+                    helperRolesData.helperId,
+                    helperQueueRoles.map(role => role.toString()).join(' ')
+                );
             })
         );
+
+        return `Assigned roles to helpers:\n${Array.from(logMap.entries())
+            .map(([helperId, roles]) => `<@${helperId}>: ${roles}`)
+            .join('\n')}`;
     }
 
     /**

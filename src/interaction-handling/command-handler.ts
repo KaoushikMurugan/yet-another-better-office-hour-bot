@@ -681,9 +681,9 @@ async function assignHelpersRoles(
         });
     });
 
-    await server.assignHelpersRoles(helpersRolesData);
+    const roleLogs = await server.assignHelpersRoles(helpersRolesData);
 
-    await interaction.editReply(SuccessMessages.assignedHelpersRoles);
+    await interaction.editReply(SuccessMessages.assignedHelpersRoles(roleLogs));
 }
 
 export { baseYabobCommandMap };
