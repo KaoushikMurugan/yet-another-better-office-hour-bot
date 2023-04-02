@@ -634,6 +634,10 @@ async function joinQueueNotify(
     }
 }
 
+/**
+ * The `/assign_helpers_roles` command
+ * @param interaction
+ */
 async function assignHelpersRoles(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
@@ -650,17 +654,17 @@ async function assignHelpersRoles(
         throw ExpectedParseErrors.invalidContentType(attachment.contentType);
     }
 
-    const csvText0 = await fetch(attachment.url);
+    const csvFile = await fetch(attachment.url);
 
-    if (!csvText0.ok) {
+    if (!csvFile.ok) {
         throw UnexpectedParseErrors.unexpectedFetchError(
             interaction,
-            csvText0.status,
-            csvText0.statusText
+            csvFile.status,
+            csvFile.statusText
         );
     }
 
-    const csvText = await csvText0.text();
+    const csvText = await csvFile.text();
 
     const helpersRolesData: HelperRolesData[] = [];
 
@@ -668,22 +672,29 @@ async function assignHelpersRoles(
 
     data.forEach(record => {
         const recordDiscordID = record[0];
-        if (recordDiscordID === undefined || recordDiscordID.length < 18) {
-            throw ExpectedParseErrors.invalidDiscordId(recordDiscordID);
-        }
         const recordQueueNames = record.slice(1);
-        if (recordQueueNames.length === 0) {
-            throw ExpectedParseErrors.noQueueNames(recordDiscordID);
-        }
         helpersRolesData.push({
-            helperId: recordDiscordID,
+            helperId: recordDiscordID ?? '0',
             queues: recordQueueNames
         });
     });
 
-    const roleLogs = await server.assignHelpersRoles(helpersRolesData);
+    const [logMap, errorMap] = await server.assignHelpersRoles(helpersRolesData);
 
-    await interaction.editReply(SuccessMessages.assignedHelpersRoles(roleLogs));
+    let roleLogs = `Assigned roles to helpers:\n${Array.from(logMap.entries())
+        .map(([helperId, roles]) => `<@${helperId}>: ${roles}`)
+        .join('\n')}`;
+
+    if (errorMap.size > 0) {
+        roleLogs += `\n\nErrors:\n${Array.from(errorMap.entries())
+            .map(([helperId, error]) => `<@${helperId}>: ${error}`)
+            .join('\n')}`;
+        await interaction.editReply(
+            SuccessMessages.partiallyAssignedHelpersRoles(roleLogs)
+        );
+    } else {
+        await interaction.editReply(SuccessMessages.assignedHelpersRoles(roleLogs));
+    }
 }
 
 export { baseYabobCommandMap };

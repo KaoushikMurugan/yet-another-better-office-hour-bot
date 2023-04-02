@@ -310,7 +310,7 @@ const helpCommand = new SlashCommandBuilder()
     .setName(CommandNames.help)
     .setDescription('Get help with the bot');
 
-// /assign_helpers_roles
+// /assign_helpers_roles [csv_file]
 const assignHelpersRolesCommand = new SlashCommandBuilder()
     .setName(CommandNames.assign_helpers_roles)
     .setDescription('Uses a .csv file to assign roles to all helpers')

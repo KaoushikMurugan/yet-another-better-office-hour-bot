@@ -158,8 +158,14 @@ export const SuccessMessages = {
     ),
     assignedHelpersRoles: (roleLogs: string) =>
         SimpleEmbed(
-            `Successfully assigned the respective queue roles to all the helpers`,
+            `Successfully assigned the respective queue roles to the helpers`,
             EmbedColor.Success,
+            roleLogs
+        ),
+    partiallyAssignedHelpersRoles: (roleLogs: string) =>
+        SimpleEmbed(
+            `There were some errors assigning the respective queue roles to the helpers. Please check the logs below.`,
+            EmbedColor.KindaBad,
             roleLogs
         )
 } as const;
