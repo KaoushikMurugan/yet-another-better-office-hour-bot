@@ -248,13 +248,16 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         }
         const requiredHeaders = [
             'Helper Username',
-            'Time In',
-            'Time Out',
+            'Time In (Local Time)',
+            'Time Out (Local Time)',
             'Helped Students',
             'Discord ID',
             'Session Time (ms)',
             'Active Time (ms)',
-            'Number of Students Helped'
+            'Number of Students Helped',
+            '[[ Spacer ]]',
+            'Time In (Unix Timestamp)',
+            'Time Out (Unix Timestamp)'
         ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
@@ -286,12 +289,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
                     'Helper Username': entry.member.user.username,
-                    'Time In': entry.helpStart.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
+                    'Time In (Local Time)': `=EPOCHTODATE(${entry.helpStart.valueOf()}, 2)`,
+                    'Time Out (Local Time)': `=EPOCHTODATE(${entry.helpEnd.valueOf()}, 2)`,
                     'Helped Students': JSON.stringify(
                         entry.helpedMembers.map(student => ({
                             displayName: student.member.displayName,
@@ -303,10 +302,13 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     'Session Time (ms)':
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
                     'Active Time (ms)': entry.activeTimeMs,
-                    'Number of Students Helped': entry.helpedMembers.length
+                    'Number of Students Helped': entry.helpedMembers.length,
+                    '[[ Spacer ]]': '',
+                    'Time In (Unix Timestamp)': entry.helpStart.valueOf(),
+                    'Time Out (Unix Timestamp)': entry.helpEnd.valueOf()
                 })),
                 {
-                    raw: true,
+                    raw: false,
                     insert: true
                 }
             ),
