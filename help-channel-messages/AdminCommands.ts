@@ -377,6 +377,40 @@ const setRoleHelp: HelpMessage = {
     emoji: '👥'
 };
 
+const assignHelpersRolesHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'assign_helpers_roles',
+        value: 'assign_helpers_roles'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/assign_helpers_roles [csv_file]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Assigns helpers listed in the csv file to the corresponding queue roles.'
+                    },
+                    {
+                        name: 'Options',
+                        value:
+                            '`csv_file: File`: The csv file containing the data information.' +
+                            'The csv file should be formatted as follows: \n```discord_id,queue_name1, queu_name2\ndiscord_id,queue_name3```\n'
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/assign_helpers_roles helpers.csv`'
+                    }
+                ]
+            }
+        ]
+    },
+    emoji: '🪪'
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTitleMessage,
     queueAddHelp,
@@ -388,7 +422,8 @@ const adminCommandHelpMessages: HelpMessage[] = [
     stopLoggingHelp,
     settingsHelp,
     createOfficesHelp,
-    setRoleHelp
+    setRoleHelp,
+    assignHelpersRolesHelp
 ];
 
 export { adminCommandHelpMessages };

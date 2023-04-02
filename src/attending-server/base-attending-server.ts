@@ -1036,6 +1036,13 @@ class AttendingServerV2 {
         return true;
     }
 
+    /**
+     * Assigns users to the queue roles based on the data provided. Gives the staff role to the user if they don't have it already.
+     *
+     * **Warning**: Role names in the data array must match the queue names / roles exactly. It is *case sensitive*.
+     * @param helpersRolesData
+     * @returns Log of successfully asssigned roles and errors
+     */
     async assignHelpersRoles(
         helpersRolesData: HelperRolesData[]
     ): Promise<[Map<string, string>, Map<string, string>]> {
