@@ -176,6 +176,13 @@ type SettingsMenuOption = {
 /** Type alias for interaction extensions */
 type CommandData = ReadonlyArray<RESTPostAPIChatInputApplicationCommandsJSONBody>;
 
+type HelperRolesData = {
+    /** The user id of the helper */
+    helperId: GuildMemberId;
+    /** Thbe queues for which the helper is assigned */
+    queues: string[];
+};
+
 export {
     /** Types */
     WithRequired,
@@ -194,6 +201,7 @@ export {
     EnsureCorrectEnum,
     SettingsMenuOption,
     CommandData,
+    HelperRolesData,
     /** Aliases */
     GuildId,
     GuildMemberId,

@@ -155,5 +155,17 @@ export const SuccessMessages = {
     turnedOffPromptHelpTopic: SimpleEmbed(
         `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
         EmbedColor.Success
-    )
+    ),
+    assignedHelpersRoles: (roleLogs: string) =>
+        SimpleEmbed(
+            `Successfully assigned the respective queue roles to the helpers`,
+            EmbedColor.Success,
+            roleLogs
+        ),
+    partiallyAssignedHelpersRoles: (roleLogs: string) =>
+        SimpleEmbed(
+            `There were some errors assigning the respective queue roles to the helpers. Please check the logs below.`,
+            EmbedColor.KindaBad,
+            roleLogs
+        )
 } as const;
