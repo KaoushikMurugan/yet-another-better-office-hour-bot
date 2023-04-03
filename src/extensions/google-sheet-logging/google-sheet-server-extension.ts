@@ -319,8 +319,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
                     'Active Time (ms)': entry.activeTimeMs,
                     'Number of Students Helped': entry.helpedMembers.length,
-                    'Time In (Unix Timestamp)': entry.helpStart.valueOf(),
-                    'Time Out (Unix Timestamp)': entry.helpEnd.valueOf()
+                    'Time In (Unix Timestamp)': entry.helpStart.getTime(),
+                    'Time Out (Unix Timestamp)': entry.helpEnd.getTime()
                 })),
                 {
                     raw: false, // false to make google sheets interpret the formula
@@ -410,8 +410,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     ),
                     'Queue Name': entry.queueName,
                     'Wait Time (ms)': entry.waitTimeMs,
-                    'Session Start (Unix Timestamp)': entry.sessionStart.valueOf(),
-                    'Session End (Unix Timestamp)': entry.sessionStart.valueOf()
+                    'Session Start (Unix Timestamp)': entry.sessionStart.getTime(),
+                    'Session End (Unix Timestamp)': entry.sessionStart.getTime()
                 })),
                 { raw: false, insert: true }
             ),
@@ -432,7 +432,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * @param timezone timezone of server
      */
     private timeFormula(date: Date, { sign, hours, minutes }: SimpleTimeZone): string {
-        return `=TEXT(EPOCHTODATE(${date.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0), "MM/DD/YYYY HH:MM:SS") & " (UTC${sign}${padTo2Digits(
+        return `=TEXT(EPOCHTODATE(${date.getTime()}, 2) ${sign} TIME(${hours}, ${minutes}, 0), "MM/DD/YYYY HH:MM:SS") & " (UTC${sign}${padTo2Digits(
             hours
         )}:${padTo2Digits(minutes)})"`;
     }
