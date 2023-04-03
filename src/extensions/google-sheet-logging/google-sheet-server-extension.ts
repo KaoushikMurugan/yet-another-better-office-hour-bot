@@ -2,7 +2,7 @@
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { red } from '../../utils/command-line-colors.js';
-import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
+import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
 import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
@@ -27,21 +27,16 @@ type AttendanceEntry = Omit<Required<ActiveTime & Helper>, 'latestStudentJoinTim
  * Individual help sessions
  */
 type HelpSessionEntry = {
-    'Student Username': string;
-    'Student Discord ID': string;
-    'Helper Username': string;
-    'Helper Discord ID': string;
-    'Session Start': Date; // time join VC, also wait start
-    'Session End'?: Date; // time leave VC
-    'Wait Start': Date; // Helpee.waitStart
-    'Queue Name': string;
-    'Wait Time (ms)': number; // wait end - wait start
+    studentUsername: string;
+    studentDiscordId: Snowflake;
+    helperUsername: string;
+    helperDiscordId: string;
+    sessionStart: Date; // time join VC, also wait start
+    sessionEnd?: Date; // time leave VC
+    waitStart: Date; // Helpee.waitStart
+    queueName: string;
+    waitTimeMs: number; // wait end - wait start
 };
-
-/**
- * Required headers of the help session GoogleSpreadsheetWorkSheet
- */
-type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
 class GoogleSheetServerExtension extends BaseServerExtension implements ServerExtension {
@@ -90,11 +85,12 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         'Student Discord ID',
         'Helper Username',
         'Helper Discord ID',
-        'Session Start', // time join VC, also wait start
-        'Session End', // time leave VC
-        'Wait Start', // Helpee.waitStart
+        'Session Start (Local Time)',
+        'Session End (Local Time)',
         'Queue Name',
-        'Wait Time (ms)' // wait end - wait start
+        'Wait Time (ms)',
+        'Session Start (Unix Timestamp)',
+        'Session End (Unix Timestamp)'
     ];
 
     constructor(private readonly guild: Guild) {
@@ -212,15 +208,15 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 continue;
             }
             const helpSessionEntry: HelpSessionEntry = {
-                'Student Username': student.member.user.username,
-                'Student Discord ID': studentId,
-                'Helper Username': helper.member.user.username,
-                'Helper Discord ID': helper.member.id,
-                'Session Start': new Date(),
-                'Session End': undefined,
-                'Wait Start': student.waitStart,
-                'Queue Name': student.queue.queueName,
-                'Wait Time (ms)': new Date().getTime() - student.waitStart.getTime()
+                studentUsername: student.member.user.username,
+                studentDiscordId: studentId,
+                helperUsername: helper.member.user.username,
+                helperDiscordId: helper.member.id,
+                sessionStart: new Date(),
+                sessionEnd: undefined,
+                waitStart: student.waitStart,
+                queueName: student.queue.queueName,
+                waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
             this.helpSessionEntries.has(studentId)
                 ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
@@ -253,10 +249,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-        const completeHelpSessionEntries = helpSessionEntries.map(entry => ({
-            ...entry,
-            'Session End': new Date()
-        }));
+        const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
+            helpSessionEntries.map(entry => ({
+                ...entry,
+                sessionEnd: new Date()
+            }));
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
@@ -355,6 +352,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     err.message
                 );
                 // have to manually manuever this, otherwise we only get [object Object]
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
                     console.error(rest);
                     for (const helpedMember of helpedMembers) {
@@ -371,10 +369,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.allStates.get(
-            this.guild.id
-        )?.googleSheet;
-        if (entries[0] === undefined || !googleSheet) {
+        const googleSheet = GoogleSheetExtensionState.safeGet(this.guild.id)?.googleSheet;
+        if (entries.length === 0 || !googleSheet) {
             return; // do nothing if there's nothing to update
         }
         // trim off colon because google api bug, then trim off any excess spaces
@@ -382,55 +378,48 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             /\s{2,}/g,
             ' '
         );
-        const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: requiredHeaders
+                headerValues: this.helpSessionHeaders
             }));
         const safeToUpdate = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             helpSessionSheet.headerValues && // this is necessary, could be undefined
-            helpSessionSheet.headerValues.length ===
-                [...requiredHeaders, 'Session Time (ms)'].length &&
+            helpSessionSheet.headerValues.length === this.helpSessionHeaders.length &&
             helpSessionSheet.headerValues.every(header =>
-                [...requiredHeaders, 'Session Time (ms)'].includes(header)
+                this.helpSessionHeaders.includes(header)
             );
         if (!safeToUpdate) {
-            await helpSessionSheet.setHeaderRow([
-                ...requiredHeaders,
-                'Session Time (ms)'
-            ]);
+            await helpSessionSheet.setHeaderRow(this.helpSessionHeaders);
         }
         Promise.all([
             helpSessionSheet.addRows(
-                entries.map(entry =>
-                    Object.fromEntries([
-                        ...requiredHeaders.map(header =>
-                            header === 'Session End' ||
-                            header === 'Session Start' ||
-                            header === 'Wait Start'
-                                ? [
-                                      header,
-                                      entry[header].toLocaleString('en-US', {
-                                          timeZone: 'PST8PDT'
-                                      })
-                                  ]
-                                : [header, entry[header].toString()]
-                        ),
-                        [
-                            'Session Time (ms)',
-                            entry['Session End'].getTime() -
-                                entry['Session Start'].getTime()
-                        ]
-                    ])
-                ),
+                entries.map(entry => ({
+                    'Student Username': entry.studentUsername,
+                    'Student Discord ID': entry.studentDiscordId,
+                    'Helper Username': entry.helperUsername,
+                    'Helper Discord ID': entry.helperDiscordId,
+                    'Session Start (Local Time)': this.timeFormula(
+                        entry.sessionStart,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    'Session End (Local Time)': this.timeFormula(
+                        entry.sessionEnd,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    'Queue Name': entry.queueName,
+                    'Wait Time (ms)': entry.waitTimeMs,
+                    'Session Start (Unix Timestamp)': entry.sessionStart.valueOf(),
+                    'Session End (Unix Timestamp)': entry.sessionStart.valueOf()
+                })),
                 { raw: false, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
             console.error(
                 red('Error when updating help session: '),
+                entries,
                 err.name,
                 err.message
             )
@@ -449,4 +438,4 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 }
 
-export { GoogleSheetServerExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };
+export { GoogleSheetServerExtension, ActiveTime, AttendanceEntry };
