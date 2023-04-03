@@ -129,7 +129,6 @@ class AttendingServerV2 {
      * Server settings. An firebase update is requested as soon as this changes
      */
     private settings: ServerSettings = {
-        // TODO: Use the Proxy class to abstract away the update logic
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
@@ -139,8 +138,8 @@ class AttendingServerV2 {
             student: SpecialRoleValues.NotSet
         },
         timezone: {
-            sign: '+',
-            hours: 0,
+            sign: '-',
+            hours: 7,
             minutes: 0
         }
     };

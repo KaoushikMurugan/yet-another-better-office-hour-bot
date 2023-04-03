@@ -9,13 +9,14 @@
  */
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
+import { Routes } from 'discord-api-types/v10';
 import { ChannelType, Guild } from 'discord.js';
 import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
+import { range } from '../../utils/util-functions.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -236,12 +237,10 @@ const createOfficesCommand = new SlashCommandBuilder()
             .setDescription('The number of offices to create')
             .setRequired(true)
             .addChoices(
-                ...Array(10) // 1~10
-                    .fill(undefined)
-                    .map((_, i) => ({
-                        name: `${i + 1}`,
-                        value: i + 1
-                    }))
+                ...range(10).map(i => ({
+                    name: `${i + 1}`,
+                    value: i + 1
+                }))
             )
     );
 
@@ -330,12 +329,10 @@ const setTimeZoneCommand = new SlashCommandBuilder()
             .setDescription('Hours')
             .setRequired(true)
             .addChoices(
-                ...Array(13) // 0~12
-                    .fill(undefined)
-                    .map((_, i) => ({
-                        name: `${i}`,
-                        value: i
-                    }))
+                ...range(13).map(i => ({
+                    name: `${i}`,
+                    value: i
+                }))
             )
     )
     .addIntegerOption(option =>

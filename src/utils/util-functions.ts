@@ -82,6 +82,28 @@ function padTo2Digits(num: number): string {
 }
 
 /**
+ * Creates a list of integers in [low, high), behaves exactly like python's range function
+ * @param low lower end of the range (inclusive),
+ *  if high is not specified, this is the max and 0 is used as the low end
+ * @param high higher end of the range, exclusive
+ * @param step step size, defaults to 1, requires all params to be specified
+ * @returns a list of integers
+ */
+function range(low: number, high?: number, step = 1): number[] {
+    if (!high) {
+        return Array(low)
+            .fill(undefined)
+            .map((_, i) => i * step);
+    }
+    if (step > high - low) {
+        throw new Error('Step size must be <= interval size');
+    }
+    return Array(Math.ceil((high - low) / step))
+        .fill(undefined)
+        .map((_, i) => i * step + low);
+}
+
+/**
  * Converts the time delta in milliseconds into a readable format
  * @param milliseconds the difference to convert
  */
@@ -514,6 +536,7 @@ export {
     logWithTimeStamp,
     longestCommonSubsequence,
     padTo2Digits,
+    range,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,

@@ -158,8 +158,9 @@ export const SuccessMessages = {
         EmbedColor.Success
     ),
     changedTimeZone: (
+        // destructure inside parameter list to avoid creating a bunch of variables
         { sign: oldSign, hours: oldHours, minutes: oldMinutes }: SimpleTimeZone,
-        { sign: newSign, hours: newHours, minutes: newMinutes }: SimpleTimeZone // destructure inside parameter list to avoid creating a bunch of variables
+        { sign: newSign, hours: newHours, minutes: newMinutes }: SimpleTimeZone
     ) =>
         SimpleEmbed(
             `Successfully changed timezone of this server from **UTC ${oldSign}${padTo2Digits(

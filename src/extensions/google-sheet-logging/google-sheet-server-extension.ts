@@ -169,7 +169,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             setTimeout(async () => {
                 this.attendanceUpdateIsScheduled = false;
                 await this.batchUpdateAttendance();
-            }, 1000);
+            }, 60 * 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
     }
