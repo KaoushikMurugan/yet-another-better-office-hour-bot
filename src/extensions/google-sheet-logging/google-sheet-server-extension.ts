@@ -3,10 +3,10 @@ import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildMemberId } from '../../utils/type-aliases.js';
+import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
-import { logWithTimeStamp } from '../../utils/util-functions.js';
+import { logWithTimeStamp, padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
@@ -72,7 +72,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
 
-    private readonly requiredHeaders = [
+    private readonly attendanceHeaders = [
         'Helper Username',
         'Time In (Local Time)',
         'Time Out (Local Time)',
@@ -81,10 +81,21 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         'Session Time (ms)',
         'Active Time (ms)',
         'Number of Students Helped',
-        'Spacer',
         'Time In (Unix Timestamp)',
         'Time Out (Unix Timestamp)'
     ]; // TODO: this is technically bad bc it's not synced with the addRows method
+
+    private readonly helpSessionHeaders = [
+        'Student Username',
+        'Student Discord ID',
+        'Helper Username',
+        'Helper Discord ID',
+        'Session Start', // time join VC, also wait start
+        'Session End', // time leave VC
+        'Wait Start', // Helpee.waitStart
+        'Queue Name',
+        'Wait Time (ms)' // wait end - wait start
+    ];
 
     constructor(private readonly guild: Guild) {
         super();
@@ -158,7 +169,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             setTimeout(async () => {
                 this.attendanceUpdateIsScheduled = false;
                 await this.batchUpdateAttendance();
-            }, 60 * 1000);
+            }, 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
     }
@@ -253,11 +264,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             );
     }
 
-    /** Updates all the cached attendance entries */
+    /**
+     * Updates all the cached attendance entries
+     */
     private async batchUpdateAttendance(): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.allStates.get(
-            this.guild.id
-        )?.googleSheet;
+        const googleSheet = GoogleSheetExtensionState.safeGet(this.guild.id)?.googleSheet;
         if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
@@ -271,29 +282,34 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: this.requiredHeaders
+                headerValues: this.attendanceHeaders
             }));
         const safeToUpdate =
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === this.requiredHeaders.length &&
+            attendanceSheet.headerValues.length === this.attendanceHeaders.length &&
             attendanceSheet.headerValues.every(
                 // finally check if all headers exist both the previous conditions are true
-                header => this.requiredHeaders.includes(header)
+                header => this.attendanceHeaders.includes(header)
             );
         if (!safeToUpdate) {
             // very slow, O(n^2 * m) string array comparison is faster than this
-            await attendanceSheet.setHeaderRow(this.requiredHeaders);
+            await attendanceSheet.setHeaderRow(this.attendanceHeaders);
         }
         const updatedCountSnapshot = this.attendanceEntries.length;
-        const { sign, hours, minutes } = AttendingServerV2.get(this.guild.id).timezone;
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
                     'Helper Username': entry.member.user.username,
-                    'Time In (Local Time)': `=EPOCHTODATE(${entry.helpStart.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0)`,
-                    'Time Out (Local Time)': `=EPOCHTODATE(${entry.helpEnd.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0)`,
+                    'Time In (Local Time)': this.timeFormula(
+                        entry.helpStart,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    'Time Out (Local Time)': this.timeFormula(
+                        entry.helpEnd,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
                     'Helped Students': JSON.stringify(
                         entry.helpedMembers.map(student => ({
                             displayName: student.member.displayName,
@@ -306,12 +322,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
                     'Active Time (ms)': entry.activeTimeMs,
                     'Number of Students Helped': entry.helpedMembers.length,
-                    'Spacer': '',
                     'Time In (Unix Timestamp)': entry.helpStart.valueOf(),
                     'Time Out (Unix Timestamp)': entry.helpEnd.valueOf()
                 })),
                 {
-                    raw: false,
+                    raw: false, // false to make google sheets interpret the formula
                     insert: true
                 }
             ),
@@ -410,7 +425,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                         ]
                     ])
                 ),
-                { raw: true, insert: true }
+                { raw: false, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
@@ -420,6 +435,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 err.message
             )
         );
+    }
+
+    /**
+     * Displays a date object on google sheets including the timezone
+     * @param date date to show
+     * @param timezone timezone of server
+     */
+    private timeFormula(date: Date, { sign, hours, minutes }: SimpleTimeZone): string {
+        return `=TEXT(EPOCHTODATE(${date.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0), "MM/DD/YYYY HH:MM:SS") & " (UTC${sign}${padTo2Digits(
+            hours
+        )}:${padTo2Digits(minutes)})"`;
     }
 }
 
