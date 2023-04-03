@@ -42,7 +42,6 @@ import {
 import {
     CategoryChannelId,
     GuildMemberId,
-    IntRange,
     Optional,
     OptionalRoleId,
     SimpleTimeZone,
@@ -1133,15 +1132,6 @@ class AttendingServerV2 {
                 botAdmin: backup.botAdminRoleId,
                 staff: backup.staffRoleId,
                 student: backup.studentRoleId
-            },
-            timezone: {
-                ...(backup.timezone
-                    ? backup.timezone
-                    : {
-                          sign: '+',
-                          hours: 0,
-                          minutes: 0
-                      })
             }
         };
         const loggingChannelFromBackup = this.guild.channels.cache.get(

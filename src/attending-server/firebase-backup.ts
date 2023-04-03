@@ -195,8 +195,9 @@ function useFullBackup(
     // this parameter specifies the context of the decorator
     descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
         // .apply accepts 'this' as the first parameter to specify the context of the function call
-        original.apply(this, args);
+        const res = original.apply(this, args);
         fullServerBackup(this);
+        return res;
     };
     return descriptor;
 }
@@ -213,8 +214,9 @@ function useSettingsBackup(
 ): PropertyDescriptor {
     const original = descriptor.value;
     descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
-        original.apply(this, args);
+        const res = original.apply(this, args);
         backupServerSettings(this);
+        return res;
     };
     return descriptor;
 }
@@ -231,8 +233,9 @@ function useQueueBackup(
 ): PropertyDescriptor {
     const original = descriptor.value;
     descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
-        original.apply(this, args);
+        const res = original.apply(this, args);
         backupQueueData(this);
+        return res;
     };
     return descriptor;
 }
