@@ -349,7 +349,16 @@ const setTimeZoneCommand = new SlashCommandBuilder()
                 name: '45',
                 value: 45
             }
-        )
+        ));
+// /assign_helpers_roles [csv_file]
+const assignHelpersRolesCommand = new SlashCommandBuilder()
+    .setName(CommandNames.assign_helpers_roles)
+    .setDescription('Uses a .csv file to assign roles to all helpers')
+    .addAttachmentOption(option =>
+        option
+            .setName('csv_file')
+            .setDescription('The .csv file to use')
+            .setRequired(true)
     );
 
 /** The raw data that can be sent to Discord */
@@ -375,7 +384,8 @@ const commandData = [
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
     helpCommand.toJSON(),
-    setTimeZoneCommand.toJSON()
+    setTimeZoneCommand.toJSON(),
+    assignHelpersRolesCommand.toJSON()
 ];
 
 async function postSlashCommands(

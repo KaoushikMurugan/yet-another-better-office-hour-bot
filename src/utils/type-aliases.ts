@@ -176,17 +176,17 @@ type SettingsMenuOption = {
 /** Type alias for interaction extensions */
 type CommandData = ReadonlyArray<RESTPostAPIChatInputApplicationCommandsJSONBody>;
 
-// https://stackoverflow.com/questions/39494689/is-it-possible-to-restrict-number-to-a-certain-range
-type Enumerate<N extends number, Acc extends number[] = []> = Acc['length'] extends N
-    ? Acc[number]
-    : Enumerate<N, [...Acc, Acc['length']]>;
-
-type IntRange<F extends number, T extends number> = Exclude<Enumerate<T>, Enumerate<F>>;
-
 type SimpleTimeZone = {
     sign: '+' | '-';
     hours: number;
     minutes: 0 | 30 | 45;
+};
+
+type HelperRolesData = {
+    /** The user id of the helper */
+    helperId: GuildMemberId;
+    /** The queues for which the helper is assigned */
+    queues: string[];
 };
 
 export {
@@ -207,9 +207,8 @@ export {
     EnsureCorrectEnum,
     SettingsMenuOption,
     CommandData,
-    Enumerate,
-    IntRange,
     SimpleTimeZone,
+    HelperRolesData,
     /** Aliases */
     GuildId,
     GuildMemberId,

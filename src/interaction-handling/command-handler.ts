@@ -19,7 +19,10 @@ import {
     SettingsMainMenu,
     serverSettingsMainMenuOptions
 } from '../attending-server/server-settings-menus.js';
-import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import {
+    ExpectedParseErrors,
+    UnexpectedParseErrors
+} from './interaction-constants/expected-interaction-errors.js';
 import { PromptHelpTopicModal } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
@@ -29,7 +32,6 @@ import {
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
-import { SimpleTimeZone } from '../utils/type-aliases.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -54,8 +56,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.create_offices]: createOffices,
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
-        [CommandNames.queue_notify]: joinQueueNotify,
-        [CommandNames.set_time_zone]: setTimeZone
+        [CommandNames.queue_notify]: joinQueueNotify
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -628,29 +629,6 @@ async function joinQueueNotify(
     } else {
         throw new CommandParseError('Invalid subcommand.');
     }
-}
-
-async function setTimeZone(interaction: ChatInputCommandInteraction<'cached'>) {
-    const server = AttendingServerV2.get(interaction.guildId);
-    isTriggeredByMemberWithRoles(
-        server,
-        interaction.member,
-        CommandNames.set_time_zone,
-        'botAdmin'
-    );
-    // 1 level deep copy, otherwise old and new have the same ref
-    // Don't do this on deeply nested objects, use structuredClone instead
-    const oldTimezone = { ...server.timezone };
-    // no validation here because we have limited the options from the start
-    const newTimeZone = {
-        sign: interaction.options.getString('sign', true),
-        hours: interaction.options.getInteger('hours', true),
-        minutes: interaction.options.getInteger('minutes', true)
-    } as SimpleTimeZone;
-    await server.setTimeZone(newTimeZone);
-    await interaction.editReply(
-        SuccessMessages.changedTimeZone(oldTimezone, newTimeZone)
-    );
 }
 
 export { baseYabobCommandMap };

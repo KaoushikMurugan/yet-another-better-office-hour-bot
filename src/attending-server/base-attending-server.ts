@@ -42,6 +42,7 @@ import {
 import {
     CategoryChannelId,
     GuildMemberId,
+    HelperRolesData,
     Optional,
     OptionalRoleId,
     SimpleTimeZone,
@@ -1054,6 +1055,92 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onTimeZoneChange(this))
         );
+    }
+
+    /**
+     * Assigns users to the queue roles based on the data provided. Gives the staff role to the user if they don't have it already.
+     *
+     * **Warning**: Role names in the data array must match the queue names / roles exactly. It is *case sensitive*.
+     * @param helpersRolesData
+     * @returns Log of successfully asssigned roles and errors
+     */
+    async assignHelpersRoles(
+        helpersRolesData: HelperRolesData[]
+    ): Promise<[Map<string, string>, Map<string, string>]> {
+        // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
+        const queueNames = this.queues.map(queue => queue.queueName);
+        // ensure the queue roles exist so that queueRoles is garunteed to not contain undefined
+        await this.createQueueRoles();
+        // find the roles that match the queue names
+        const queueRoles = queueNames
+            .map(queueName =>
+                this.guild.roles.cache.find(role => role.name === queueName)
+            )
+            .filter((role): role is Role => role !== undefined);
+        const logMap: Map<string, string> = new Map();
+        const errorMap: Map<string, string> = new Map();
+        if (this.accessLevelRoleIds.staff === 'NotSet') {
+            errorMap.set('Warning', 'Staff role has not been set up yet.');
+        }
+        if (this.accessLevelRoleIds.staff === 'Deleted') {
+            errorMap.set(
+                'Warning',
+                "Staff role has been deleted. Wasn't able to assign staff role to helpers."
+            );
+        }
+        await Promise.all(
+            helpersRolesData.map(async helperRolesData => {
+                if (!this.guild.members.cache.has(helperRolesData.helperId)) {
+                    errorMap.set(
+                        helperRolesData.helperId,
+                        `Failed to find member with id ${helperRolesData.helperId} in this server.`
+                    );
+                    return;
+                }
+                const helper = await this.guild.members.fetch(helperRolesData.helperId);
+                // give the helper the staff role if they don't have it
+                if (!helper.roles.cache.has(this.settings.accessLevelRoleIds.staff)) {
+                    await helper.roles.add(this.settings.accessLevelRoleIds.staff);
+                    logMap.set(
+                        helperRolesData.helperId,
+                        `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
+                            helperRolesData.helperId
+                        )}`
+                    );
+                }
+                // remove old queue roles
+                await helper.roles.remove(queueRoles);
+                // get the queue roles from the helperRolesData
+                if (helperRolesData.queues.length === 0) {
+                    errorMap.set(
+                        helperRolesData.helperId,
+                        `No queues were provided for helper with id ${helperRolesData.helperId}.`
+                    );
+                }
+                const helperQueueRoles = helperRolesData.queues
+                    .map(queueName => {
+                        if (!queueNames.includes(queueName)) {
+                            errorMap.set(
+                                helperRolesData.helperId,
+                                `Failed to find queue with name ${queueName}.`
+                            );
+                            return undefined;
+                        }
+                        return queueRoles.find(role => role.name === queueName);
+                    })
+                    .filter((role): role is Role => role !== undefined);
+                // add the new queue roles
+                if (helperQueueRoles.length > 0) {
+                    await helper.roles.add(helperQueueRoles);
+                }
+                logMap.set(
+                    helperRolesData.helperId,
+                    helperQueueRoles.map(role => role.toString()).join(' ')
+                );
+            })
+        );
+
+        return [logMap, errorMap];
     }
 
     /**

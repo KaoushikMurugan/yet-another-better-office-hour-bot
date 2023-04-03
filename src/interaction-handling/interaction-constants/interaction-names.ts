@@ -29,7 +29,8 @@ enum CommandNames {
     create_offices = 'create_offices',
     set_roles = 'set_roles',
     set_time_zone = 'set_time_zone',
-    settings = 'settings'
+    settings = 'settings',
+    assign_helpers_roles = 'assign_helpers_roles'
 }
 
 /**

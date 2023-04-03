@@ -55,6 +55,11 @@ const ExpectedServerErrors = {
         new ServerError(
             "The student you just dequeued did not allow YABOB to send them the invite to your voice channel. Don't worry, they have been successfully dequeued.",
             `ID of the unreachable student: <@${studentThatClosedDm}>`
+        ),
+    memberNotFound: (userId: string) =>
+        new ServerError(
+            `No member with the userId ${userId} was found in this server`,
+            `Please make sure you are using the correct userId.`
         )
 } as const;
 
