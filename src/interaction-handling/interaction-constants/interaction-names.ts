@@ -28,6 +28,7 @@ enum CommandNames {
     stop_logging = 'stop_logging',
     create_offices = 'create_offices',
     set_roles = 'set_roles',
+    set_time_zone = 'set_time_zone',
     settings = 'settings'
 }
 

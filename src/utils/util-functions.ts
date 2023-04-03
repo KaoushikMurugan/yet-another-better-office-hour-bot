@@ -77,15 +77,15 @@ function logWithTimeStamp(
     );
 }
 
+function padTo2Digits(num: number): string {
+    return num.toString().padStart(2, '0');
+}
+
 /**
  * Converts the time delta in milliseconds into a readable format
  * @param milliseconds the difference to convert
  */
 function convertMsToTime(milliseconds: number): string {
-    function padTo2Digits(num: number): string {
-        return num.toString().padStart(2, '0');
-    }
-
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -513,6 +513,7 @@ export {
     printTitleString,
     logWithTimeStamp,
     longestCommonSubsequence,
+    padTo2Digits,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,

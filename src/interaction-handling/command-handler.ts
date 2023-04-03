@@ -53,7 +53,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.create_offices]: createOffices,
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
-        [CommandNames.queue_notify]: joinQueueNotify
+        [CommandNames.queue_notify]: joinQueueNotify,
+        [CommandNames.set_time_zone]: setTimeZone
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -626,6 +627,25 @@ async function joinQueueNotify(
     } else {
         throw new CommandParseError('Invalid subcommand.');
     }
+}
+
+async function setTimeZone(interaction: ChatInputCommandInteraction<'cached'>) {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.set_time_zone,
+        'botAdmin'
+    );
+    const [sign, hours, minutes] = [
+        interaction.options.getString('sign', true),
+        interaction.options.getInteger('hours', true),
+        interaction.options.getInteger('minutes', true)
+    ];
+    await interaction.editReply(
+        // cast to + | - because it's guaranteed
+        SuccessMessages.changedTimeZone(sign as '+' | '-', hours, minutes)
+    );
 }
 
 export { baseYabobCommandMap };

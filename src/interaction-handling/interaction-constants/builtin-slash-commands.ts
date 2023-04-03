@@ -310,6 +310,56 @@ const helpCommand = new SlashCommandBuilder()
     .setName(CommandNames.help)
     .setDescription('Get help with the bot');
 
+const setTimeZoneCommand = new SlashCommandBuilder()
+    .setName(CommandNames.set_time_zone)
+    .setDescription('Set the time zone of this server relative to UTC')
+    .addStringOption(option =>
+        option
+            .setName('sign')
+            .setDescription('Plus or Minute from UTC')
+            .setRequired(true)
+            .addChoices(
+                {
+                    name: '+',
+                    value: '+'
+                },
+                {
+                    name: '-',
+                    value: '-'
+                }
+            )
+    )
+    .addIntegerOption(option =>
+        option
+            .setName('hours')
+            .setDescription('Hours')
+            .setRequired(true)
+            .addChoices(
+                ...Array(12)
+                    .fill(undefined)
+                    .map((_, i) => ({
+                        name: `${i + 1}`,
+                        value: i + 1
+                    }))
+            )
+    )
+    .addIntegerOption(option =>
+        option.setName('minutes').setDescription('Minutes').setRequired(true).addChoices(
+            {
+                name: '0',
+                value: 0
+            },
+            {
+                name: '30',
+                value: 30
+            },
+            {
+                name: '45',
+                value: 45
+            }
+        )
+    );
+
 /** The raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -332,7 +382,8 @@ const commandData = [
     setRolesCommand.toJSON(),
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
-    helpCommand.toJSON()
+    helpCommand.toJSON(),
+    setTimeZoneCommand.toJSON()
 ];
 
 async function postSlashCommands(
