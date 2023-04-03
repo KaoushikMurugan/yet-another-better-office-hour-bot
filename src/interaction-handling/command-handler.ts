@@ -638,6 +638,9 @@ async function setTimeZone(interaction: ChatInputCommandInteraction<'cached'>) {
         CommandNames.set_time_zone,
         'botAdmin'
     );
+    // 1 level deep copy, otherwise old and new have the same ref
+    // Don't do this on deeply nested objects, use structuredClone instead
+    const oldTimezone = { ...server.timezone };
     // no validation here because we have limited the options from the start
     const newTimeZone = {
         sign: interaction.options.getString('sign', true),
@@ -645,7 +648,9 @@ async function setTimeZone(interaction: ChatInputCommandInteraction<'cached'>) {
         minutes: interaction.options.getInteger('minutes', true)
     } as SimpleTimeZone;
     await server.setTimeZone(newTimeZone);
-    await interaction.editReply(SuccessMessages.changedTimeZone(newTimeZone));
+    await interaction.editReply(
+        SuccessMessages.changedTimeZone(oldTimezone, newTimeZone)
+    );
 }
 
 export { baseYabobCommandMap };

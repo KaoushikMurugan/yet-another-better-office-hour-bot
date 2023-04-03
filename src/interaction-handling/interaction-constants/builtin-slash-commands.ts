@@ -284,12 +284,10 @@ function generateSettingsCommand() {
                 .addChoices(
                     ...serverSettingsMainMenuOptions
                         .filter(option => option.useInSettingsCommand === true)
-                        .map(option => {
-                            return {
-                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
-                                value: option.selectMenuOptionData.value
-                            };
-                        })
+                        .map(option => ({
+                            name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
+                            value: option.selectMenuOptionData.value
+                        }))
                 )
         );
 }
@@ -310,6 +308,7 @@ const helpCommand = new SlashCommandBuilder()
     .setName(CommandNames.help)
     .setDescription('Get help with the bot');
 
+// /set_time_zone
 const setTimeZoneCommand = new SlashCommandBuilder()
     .setName(CommandNames.set_time_zone)
     .setDescription('Set the time zone of this server relative to UTC')
@@ -335,11 +334,11 @@ const setTimeZoneCommand = new SlashCommandBuilder()
             .setDescription('Hours')
             .setRequired(true)
             .addChoices(
-                ...Array(13)
+                ...Array(13) // 0~12
                     .fill(undefined)
                     .map((_, i) => ({
                         name: `${i}`,
-                        value: i + 1
+                        value: i
                     }))
             )
     )
@@ -396,9 +395,7 @@ async function postSlashCommands(
     if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0) {
         throw new Error('Failed to post commands. BOT_TOKEN is undefined');
     }
-    const rest = new REST({ version: '9' }).setToken(
-        environment.discordBotCredentials.YABOB_BOT_TOKEN
-    );
+    const rest = new REST().setToken(environment.discordBotCredentials.YABOB_BOT_TOKEN);
     await rest
         .put(
             Routes.applicationGuildCommands(

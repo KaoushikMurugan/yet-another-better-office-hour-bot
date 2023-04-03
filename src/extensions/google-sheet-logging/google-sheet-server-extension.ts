@@ -8,6 +8,7 @@ import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-err
 import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * Additional attendance info for each helper
@@ -70,6 +71,20 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * - Key is student member.id, value is corresponding helpee object
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
+
+    private readonly requiredHeaders = [
+        'Helper Username',
+        'Time In (Local Time)',
+        'Time Out (Local Time)',
+        'Helped Students',
+        'Discord ID',
+        'Session Time (ms)',
+        'Active Time (ms)',
+        'Number of Students Helped',
+        'Spacer',
+        'Time In (Unix Timestamp)',
+        'Time Out (Unix Timestamp)'
+    ]; // TODO: this is technically bad bc it's not synced with the addRows method
 
     constructor(private readonly guild: Guild) {
         super();
@@ -246,19 +261,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
-        const requiredHeaders = [
-            'Helper Username',
-            'Time In (Local Time)',
-            'Time Out (Local Time)',
-            'Helped Students',
-            'Discord ID',
-            'Session Time (ms)',
-            'Active Time (ms)',
-            'Number of Students Helped',
-            '[[ Spacer ]]',
-            'Time In (Unix Timestamp)',
-            'Time Out (Unix Timestamp)'
-        ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Attendance`.replace(
@@ -269,28 +271,29 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: requiredHeaders
+                headerValues: this.requiredHeaders
             }));
         const safeToUpdate =
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === requiredHeaders.length &&
+            attendanceSheet.headerValues.length === this.requiredHeaders.length &&
             attendanceSheet.headerValues.every(
                 // finally check if all headers exist both the previous conditions are true
-                header => requiredHeaders.includes(header)
+                header => this.requiredHeaders.includes(header)
             );
         if (!safeToUpdate) {
             // very slow, O(n^2 * m) string array comparison is faster than this
-            await attendanceSheet.setHeaderRow(requiredHeaders);
+            await attendanceSheet.setHeaderRow(this.requiredHeaders);
         }
         const updatedCountSnapshot = this.attendanceEntries.length;
+        const { sign, hours, minutes } = AttendingServerV2.get(this.guild.id).timezone;
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
                     'Helper Username': entry.member.user.username,
-                    'Time In (Local Time)': `=EPOCHTODATE(${entry.helpStart.valueOf()}, 2)`,
-                    'Time Out (Local Time)': `=EPOCHTODATE(${entry.helpEnd.valueOf()}, 2)`,
+                    'Time In (Local Time)': `=EPOCHTODATE(${entry.helpStart.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0)`,
+                    'Time Out (Local Time)': `=EPOCHTODATE(${entry.helpEnd.valueOf()}, 2) ${sign} TIME(${hours}, ${minutes}, 0)`,
                     'Helped Students': JSON.stringify(
                         entry.helpedMembers.map(student => ({
                             displayName: student.member.displayName,
@@ -303,7 +306,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
                     'Active Time (ms)': entry.activeTimeMs,
                     'Number of Students Helped': entry.helpedMembers.length,
-                    '[[ Spacer ]]': '',
+                    'Spacer': '',
                     'Time In (Unix Timestamp)': entry.helpStart.valueOf(),
                     'Time Out (Unix Timestamp)': entry.helpEnd.valueOf()
                 })),
@@ -333,10 +336,16 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     red(
                         `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
                     ),
-                    this.attendanceEntries,
                     err.name,
                     err.message
                 );
+                // have to manually manuever this, otherwise we only get [object Object]
+                for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
+                    console.error(rest);
+                    for (const helpedMember of helpedMembers) {
+                        console.error(helpedMember.member.nickname);
+                    }
+                }
             });
     }
 

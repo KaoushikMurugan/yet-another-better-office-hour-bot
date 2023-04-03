@@ -185,7 +185,7 @@ type IntRange<F extends number, T extends number> = Exclude<Enumerate<T>, Enumer
 
 type SimpleTimeZone = {
     sign: '+' | '-';
-    hours: IntRange<0, 13>;
+    hours: number;
     minutes: 0 | 30 | 45;
 };
 

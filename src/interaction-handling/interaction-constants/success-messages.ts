@@ -157,11 +157,16 @@ export const SuccessMessages = {
         `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
         EmbedColor.Success
     ),
-    changedTimeZone: ({sign, hours, minutes}: SimpleTimeZone) =>
+    changedTimeZone: (
+        { sign: oldSign, hours: oldHours, minutes: oldMinutes }: SimpleTimeZone,
+        { sign: newSign, hours: newHours, minutes: newMinutes }: SimpleTimeZone // destructure inside parameter list to avoid creating a bunch of variables
+    ) =>
         SimpleEmbed(
-            `Successfully changed timezone of this server to **UTC ${sign}${padTo2Digits(
-                hours
-            )}:${padTo2Digits(minutes)}** `,
+            `Successfully changed timezone of this server from **UTC ${oldSign}${padTo2Digits(
+                oldHours
+            )}:${padTo2Digits(oldMinutes)}** to **UTC ${newSign}${padTo2Digits(
+                newHours
+            )}:${padTo2Digits(newMinutes)}**.`,
             EmbedColor.Success
         )
 } as const;

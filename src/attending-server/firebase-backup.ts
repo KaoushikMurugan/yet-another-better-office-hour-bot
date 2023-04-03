@@ -25,7 +25,7 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
             red(
                 `External backups were found for ${
                     client.guilds.cache.get(serverId)?.name
-                } but contains invalid data. ` + `Creating new instance.`
+                } but contains invalid data. Creating new instance.`
             )
         );
         return undefined;
@@ -44,7 +44,12 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
         timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
         autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
         promptHelpTopic: unpack.data.promptHelpTopic ?? false,
-        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
+        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set', // !Migration code
+        timezone: unpack.data.timezone ?? {
+            sign: '-',
+            hours: 7,
+            minutes: 0 // default to PDT, UTC-7
+        }
     };
     return backupData;
 }
@@ -76,7 +81,8 @@ function fullServerBackup(server: FrozenServer): void {
         staffRoleId: server.staffRoleID,
         studentRoleId: server.studentRoleID,
         autoGiveStudentRole: server.autoGiveStudentRole,
-        promptHelpTopic: server.promptHelpTopic
+        promptHelpTopic: server.promptHelpTopic,
+        timezone: server.timezone
     };
     firebaseDB
         .collection('serverBackups')
