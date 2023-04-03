@@ -29,6 +29,7 @@ import {
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
+import { SimpleTimeZone } from '../utils/type-aliases.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -637,15 +638,14 @@ async function setTimeZone(interaction: ChatInputCommandInteraction<'cached'>) {
         CommandNames.set_time_zone,
         'botAdmin'
     );
-    const [sign, hours, minutes] = [
-        interaction.options.getString('sign', true),
-        interaction.options.getInteger('hours', true),
-        interaction.options.getInteger('minutes', true)
-    ];
-    await interaction.editReply(
-        // cast to + | - because it's guaranteed
-        SuccessMessages.changedTimeZone(sign as '+' | '-', hours, minutes)
-    );
+    // no validation here because we have limited the options from the start
+    const newTimeZone = {
+        sign: interaction.options.getString('sign', true),
+        hours: interaction.options.getInteger('hours', true),
+        minutes: interaction.options.getInteger('minutes', true)
+    } as SimpleTimeZone;
+    await server.setTimeZone(newTimeZone);
+    await interaction.editReply(SuccessMessages.changedTimeZone(newTimeZone));
 }
 
 export { baseYabobCommandMap };

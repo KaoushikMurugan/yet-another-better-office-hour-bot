@@ -112,7 +112,8 @@ function backupServerSettings(server: FrozenServer): void {
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
             autoGiveStudentRole: server.autoGiveStudentRole,
-            promptHelpTopic: server.promptHelpTopic
+            promptHelpTopic: server.promptHelpTopic,
+            timezone: server.timezone
         })
         .then(() =>
             logWithTimeStamp(server.guild.name, '- Server settings backup successful')

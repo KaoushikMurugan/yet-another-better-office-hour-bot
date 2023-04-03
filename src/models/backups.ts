@@ -1,6 +1,7 @@
 /** @module  Backups */
 
 import { AutoClearTimeout } from '../help-queue/help-queue.js';
+import { IntRange } from '../utils/type-aliases.js';
 import { Helpee } from './member-states.js';
 import { z } from 'zod';
 
@@ -50,6 +51,12 @@ type ServerBackup = {
     autoGiveStudentRole: boolean;
     /** whether to prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
+    /** timezone of this server */
+    timezone?: {
+        sign: '+' | '-';
+        hours: IntRange<0, 13>;
+        minutes: 0 | 30 | 45;
+    };
 };
 
 const firebaseTimestampSchema = z.object({

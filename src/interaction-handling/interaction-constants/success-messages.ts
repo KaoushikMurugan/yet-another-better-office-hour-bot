@@ -1,5 +1,6 @@
 import { Helper } from '../../models/member-states.js';
 import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
+import { SimpleTimeZone } from '../../utils/type-aliases.js';
 import { convertMsToTime, padTo2Digits } from '../../utils/util-functions.js';
 
 /**
@@ -156,7 +157,7 @@ export const SuccessMessages = {
         `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
         EmbedColor.Success
     ),
-    changedTimeZone: (sign: '+' | '-', hours: number, minutes: number) =>
+    changedTimeZone: ({sign, hours, minutes}: SimpleTimeZone) =>
         SimpleEmbed(
             `Successfully changed timezone of this server to **UTC ${sign}${padTo2Digits(
                 hours

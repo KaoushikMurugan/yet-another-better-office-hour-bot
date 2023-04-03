@@ -335,10 +335,10 @@ const setTimeZoneCommand = new SlashCommandBuilder()
             .setDescription('Hours')
             .setRequired(true)
             .addChoices(
-                ...Array(12)
+                ...Array(13)
                     .fill(undefined)
                     .map((_, i) => ({
-                        name: `${i + 1}`,
+                        name: `${i}`,
                         value: i + 1
                     }))
             )
