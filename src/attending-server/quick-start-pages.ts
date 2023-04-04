@@ -77,7 +77,7 @@ function QuickStartSetRoles(
         .setTitle(`Quick Start: Set Roles`)
         .setColor(EmbedColor.Aqua)
         .setFooter({
-            text: generatePageNumber(QuickStartSetRoles)
+            text: `${generatePageNumber(QuickStartSetRoles)}` + ((updateMessage.length > 0) ? ` ● ✅ ${updateMessage}` : '')
         })
         .addFields(
             {
@@ -116,16 +116,11 @@ function QuickStartSetRoles(
                 inline: true
             }
         );
-    if (updateMessage.length > 0) {
-        embed.setFooter({
-            text: `✅ ${updateMessage}`
-        });
-    }
     const buttons = [
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1,
+                ButtonNames.ServerRoleConfig1QS,
                 server.guild.id,
                 channelId
             ])
@@ -136,7 +131,7 @@ function QuickStartSetRoles(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1a,
+                ButtonNames.ServerRoleConfig1aQS,
                 server.guild.id,
                 channelId
             ])
@@ -147,7 +142,7 @@ function QuickStartSetRoles(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2,
+                ButtonNames.ServerRoleConfig2QS,
                 server.guild.id,
                 channelId
             ])
@@ -156,7 +151,7 @@ function QuickStartSetRoles(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2a,
+                ButtonNames.ServerRoleConfig2aQS,
                 server.guild.id,
                 channelId
             ])
@@ -277,4 +272,4 @@ function quickStartSkipButton(enable: boolean): ButtonBuilder {
         .setDisabled(!enable);
 }
 
-export { QuickStartPages };
+export { QuickStartPages, QuickStartFirstPage, QuickStartSetRoles, QuickStartCreateAQueue, QuickStartLastPage };

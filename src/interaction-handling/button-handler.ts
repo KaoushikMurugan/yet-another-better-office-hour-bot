@@ -27,7 +27,7 @@ import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
-import { QuickStartPages } from '../attending-server/quick-start-pages.js';
+import { QuickStartPages, QuickStartSetRoles } from '../attending-server/quick-start-pages.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -39,14 +39,22 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         },
         other: {
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
-            [ButtonNames.ServerRoleConfig1]: interaction =>
-                createAccessLevelRoles(interaction, false, false),
-            [ButtonNames.ServerRoleConfig1a]: interaction =>
-                createAccessLevelRoles(interaction, false, true),
-            [ButtonNames.ServerRoleConfig2]: interaction =>
-                createAccessLevelRoles(interaction, true, false),
-            [ButtonNames.ServerRoleConfig2a]: interaction =>
-                createAccessLevelRoles(interaction, true, true),
+            [ButtonNames.ServerRoleConfig1SM]: interaction =>
+                createAccessLevelRoles(interaction, false, false, 'settings'),
+            [ButtonNames.ServerRoleConfig1aSM]: interaction =>
+                createAccessLevelRoles(interaction, false, true, 'settings'),
+            [ButtonNames.ServerRoleConfig2SM]: interaction =>
+                createAccessLevelRoles(interaction, true, false, 'settings'),
+            [ButtonNames.ServerRoleConfig2aSM]: interaction =>
+                createAccessLevelRoles(interaction, true, true, 'settings'),
+            [ButtonNames.ServerRoleConfig1QS]: interaction =>
+                createAccessLevelRoles(interaction, false, false, 'quickStart'),
+            [ButtonNames.ServerRoleConfig1aQS]: interaction =>
+                createAccessLevelRoles(interaction, false, true, 'quickStart'),
+            [ButtonNames.ServerRoleConfig2QS]: interaction =>
+                createAccessLevelRoles(interaction, true, false, 'quickStart'),
+            [ButtonNames.ServerRoleConfig2aQS]: interaction =>
+                createAccessLevelRoles(interaction, true, true, 'quickStart'),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
             [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
@@ -91,22 +99,26 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         }
     },
     dmMethodMap: {
-        [ButtonNames.ServerRoleConfig1]: interaction =>
+        [ButtonNames.ServerRoleConfig1SM]: interaction =>
             createServerRolesDM(interaction, false, false),
-        [ButtonNames.ServerRoleConfig1a]: interaction =>
+        [ButtonNames.ServerRoleConfig1aSM]: interaction =>
             createServerRolesDM(interaction, false, true),
-        [ButtonNames.ServerRoleConfig2]: interaction =>
+        [ButtonNames.ServerRoleConfig2SM]: interaction =>
             createServerRolesDM(interaction, true, false),
-        [ButtonNames.ServerRoleConfig2a]: interaction =>
+        [ButtonNames.ServerRoleConfig2aSM]: interaction =>
             createServerRolesDM(interaction, true, true)
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
         ButtonNames.ReturnToMainMenu,
-        ButtonNames.ServerRoleConfig1,
-        ButtonNames.ServerRoleConfig1a,
-        ButtonNames.ServerRoleConfig2,
-        ButtonNames.ServerRoleConfig2a,
+        ButtonNames.ServerRoleConfig1SM,
+        ButtonNames.ServerRoleConfig1aSM,
+        ButtonNames.ServerRoleConfig2SM,
+        ButtonNames.ServerRoleConfig2aSM,
+        ButtonNames.ServerRoleConfig1QS,
+        ButtonNames.ServerRoleConfig1aQS,
+        ButtonNames.ServerRoleConfig2QS,
+        ButtonNames.ServerRoleConfig2aQS,
         ButtonNames.DisableAfterSessionMessage,
         ButtonNames.ShowAfterSessionMessageModal,
         ButtonNames.DisableQueueAutoClear,
@@ -235,15 +247,23 @@ async function showSettingsMainMenu(
 async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
     forceCreate: boolean,
-    everyoneIsStudent: boolean
+    everyoneIsStudent: boolean,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
-        RolesConfigMenu(
+        parent === 'settings' ? RolesConfigMenu(
             server,
             interaction.channelId,
             false,
+            forceCreate
+                ? 'New roles have been created!'
+                : 'Role configurations have been updated!'
+        )
+        : QuickStartSetRoles(
+            server,
+            interaction.channelId,
             forceCreate
                 ? 'New roles have been created!'
                 : 'Role configurations have been updated!'

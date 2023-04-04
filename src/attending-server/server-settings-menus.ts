@@ -246,7 +246,7 @@ function RolesConfigMenuInGuild(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1,
+                ButtonNames.ServerRoleConfig1SM,
                 server.guild.id,
                 channelId
             ])
@@ -257,7 +257,7 @@ function RolesConfigMenuInGuild(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1a,
+                ButtonNames.ServerRoleConfig1aSM,
                 server.guild.id,
                 channelId
             ])
@@ -268,7 +268,7 @@ function RolesConfigMenuInGuild(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2,
+                ButtonNames.ServerRoleConfig2SM,
                 server.guild.id,
                 channelId
             ])
@@ -277,7 +277,7 @@ function RolesConfigMenuInGuild(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2a,
+                ButtonNames.ServerRoleConfig2aSM,
                 server.guild.id,
                 channelId
             ])
@@ -355,7 +355,7 @@ function RolesConfigMenuForServerInit(
               new ActionRowBuilder<ButtonBuilder>().addComponents(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig1,
+                      ButtonNames.ServerRoleConfig1SM,
                       server.guild.id,
                       channelId
                   ])
@@ -366,7 +366,7 @@ function RolesConfigMenuForServerInit(
                       .setStyle(ButtonStyle.Secondary),
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig1a,
+                      ButtonNames.ServerRoleConfig1aSM,
                       server.guild.id,
                       channelId
                   ])
@@ -377,7 +377,7 @@ function RolesConfigMenuForServerInit(
               new ActionRowBuilder<ButtonBuilder>().addComponents(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig2,
+                      ButtonNames.ServerRoleConfig2SM,
                       server.guild.id,
                       channelId
                   ])
@@ -386,7 +386,7 @@ function RolesConfigMenuForServerInit(
                       .setStyle(ButtonStyle.Secondary),
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig2a,
+                      ButtonNames.ServerRoleConfig2aSM,
                       server.guild.id,
                       channelId
                   ])
