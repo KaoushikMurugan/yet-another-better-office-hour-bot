@@ -271,28 +271,10 @@ const setRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-// /settings
-function generateSettingsCommand() {
-    return new SlashCommandBuilder()
-        .setName(CommandNames.settings)
-        .setDescription('Sets up the server config for the bot')
-        .addStringOption(option =>
-            option
-                .setName('sub_menu_jump')
-                .setDescription('The sub menu to jump to')
-                .setRequired(false)
-                .addChoices(
-                    ...serverSettingsMainMenuOptions
-                        .filter(option => option.useInSettingsCommand === true)
-                        .map(option => {
-                            return {
-                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
-                                value: option.selectMenuOptionData.value
-                            };
-                        })
-                )
-        );
-}
+// /quick_start
+const quickStartCommand = new SlashCommandBuilder()
+    .setName(CommandNames.quick_start)
+    .setDescription('Quickly set up the bot for your server');
 
 // /pause
 const pauseCommand = new SlashCommandBuilder()
@@ -321,6 +303,29 @@ const assignHelpersRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+// /settings
+function generateSettingsCommand() {
+    return new SlashCommandBuilder()
+        .setName(CommandNames.settings)
+        .setDescription('Sets up the server config for the bot')
+        .addStringOption(option =>
+            option
+                .setName('sub_menu_jump')
+                .setDescription('The sub menu to jump to')
+                .setRequired(false)
+                .addChoices(
+                    ...serverSettingsMainMenuOptions
+                        .filter(option => option.useInSettingsCommand === true)
+                        .map(option => {
+                            return {
+                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
+                                value: option.selectMenuOptionData.value
+                            };
+                        })
+                )
+        );
+}
+
 /** The raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -344,7 +349,8 @@ const commandData = [
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
     helpCommand.toJSON(),
-    assignHelpersRolesCommand.toJSON()
+    assignHelpersRolesCommand.toJSON(),
+    quickStartCommand.toJSON()
 ];
 
 async function postSlashCommands(

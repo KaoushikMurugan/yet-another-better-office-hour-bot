@@ -29,7 +29,8 @@ enum CommandNames {
     create_offices = 'create_offices',
     set_roles = 'set_roles',
     settings = 'settings',
-    assign_helpers_roles = 'assign_helpers_roles'
+    assign_helpers_roles = 'assign_helpers_roles',
+    quick_start = 'quick_start'
 }
 
 /**
@@ -64,7 +65,10 @@ enum ButtonNames {
     ReturnToHelpMainMenu = 'ReturnToHelpMainMenu',
     ReturnToHelpAdminSubMenu = 'ReturnToHelpAdminSubMenu',
     ReturnToHelpStaffSubMenu = 'ReturnToHelpStaffSubMenu',
-    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu'
+    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu',
+    QuickStartBack = 'QuickStartBack',
+    QuickStartNext = 'QuickStartNext',
+    QuickStartSkip = 'QuickStartSkip'
 }
 
 /**

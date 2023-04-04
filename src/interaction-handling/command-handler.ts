@@ -34,6 +34,7 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server.js'
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
 import { HelperRolesData } from '../utils/type-aliases.js';
 import { parse } from 'csv-string';
+import { QuickStartPages } from '../attending-server/quick-start-pages.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -59,7 +60,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
         [CommandNames.queue_notify]: joinQueueNotify,
-        [CommandNames.assign_helpers_roles]: assignHelpersRoles
+        [CommandNames.assign_helpers_roles]: assignHelpersRoles,
+        [CommandNames.quick_start]: quickStart
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -695,6 +697,26 @@ async function assignHelpersRoles(
     } else {
         await interaction.editReply(SuccessMessages.assignedHelpersRoles(roleLogs));
     }
+}
+
+async function quickStart(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.quick_start,
+        'botAdmin'
+    );
+
+    const firstQuickStartPage = QuickStartPages[0];
+
+    if (firstQuickStartPage === undefined) {
+        throw new CommandParseError('Invalid quick start page.');
+    }
+
+    await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
 }
 
 export { baseYabobCommandMap };

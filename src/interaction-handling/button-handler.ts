@@ -27,6 +27,7 @@ import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
+import { QuickStartPages } from '../attending-server/quick-start-pages.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -80,7 +81,13 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.ReturnToHelpStaffSubMenu]: interaction =>
                 returnToHelpSubMenu(interaction, 'staff'),
             [ButtonNames.ReturnToHelpStudentSubMenu]: interaction =>
-                returnToHelpSubMenu(interaction, 'student')
+                returnToHelpSubMenu(interaction, 'student'),
+            [ButtonNames.QuickStartBack]: interaction =>
+                shiftQuickStartPage(interaction, 'back'),
+            [ButtonNames.QuickStartNext]: interaction =>
+                shiftQuickStartPage(interaction, 'next'),
+            [ButtonNames.QuickStartSkip]: interaction =>
+                shiftQuickStartPage(interaction, 'skip')
         }
     },
     dmMethodMap: {
@@ -119,7 +126,10 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ReturnToHelpMainMenu,
         ButtonNames.ReturnToHelpAdminSubMenu,
         ButtonNames.ReturnToHelpStaffSubMenu,
-        ButtonNames.ReturnToHelpStudentSubMenu
+        ButtonNames.ReturnToHelpStudentSubMenu,
+        ButtonNames.QuickStartBack,
+        ButtonNames.QuickStartNext,
+        ButtonNames.QuickStartSkip
     ])
 };
 
@@ -452,6 +462,30 @@ async function returnToHelpSubMenu(
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
+}
+
+async function shiftQuickStartPage(
+    interaction: ButtonInteraction<'cached'>,
+    buttonPressed: 'back' | 'next' | 'skip'
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const oldEmbed = interaction.message.embeds[0];
+    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const oldPage = Number(footerText?.split('/')[0]);
+    const maxPage = Number(footerText?.split('/')[1]);
+    // invalid parse check
+    if (isNaN(oldPage) || isNaN(maxPage)) return;
+    // bounds check
+    if (
+        (buttonPressed === 'back' && oldPage <= 1) ||
+        (buttonPressed === 'next' && oldPage === maxPage)
+    ) {
+        return;
+    }
+    const newPage = buttonPressed === 'back' ? oldPage - 2 : oldPage;
+    const quickStartEmbed = QuickStartPages[newPage];
+    if (quickStartEmbed === undefined) return;
+    await interaction.update(quickStartEmbed(server, interaction.channelId));
 }
 
 export { baseYabobButtonMethodMap };
