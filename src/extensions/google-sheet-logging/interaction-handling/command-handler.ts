@@ -8,269 +8,79 @@ import { GoogleSheetCommandNames } from '../google-sheet-constants/google-sheet-
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
-import { convertMsToShortTime } from '../../../utils/util-functions.js';
+import { camelCaseToTitleCase, convertMsToTime } from '../../../utils/util-functions.js';
 
-type ServerHelpSessionStats = {
-    totalSessionTime: number;
-    uniqueStudents: number;
-    returningStudents: number;
-    totalWaitTime: number;
-    numSessions: number;
-    averageWaitTime: number;
-    averageSessionTime: number;
+/**
+ * Statistics for both server help sessions and helper attendance
+ * - Everything under `time` is a unix timestamp in ms
+ */
+type HelpSessionStats = {
+    /**
+     * Numerical values in this sections is formatted with  {@link convertMsToTime}
+     */
+    time: {
+        /**
+         * Sum of all session durations
+         */
+        totalSessionTime: number;
+        /**
+         * Sum of wait time of all students
+         */
+        totalWaitTime: number;
+        /**
+         * totalWaitTime / numSessions
+         */
+        averageWaitTime: number;
+        /**
+         * totalSessionTime / numSessions
+         */
+        averageSessionTime: number;
+    };
+    /**
+     * Numerical values here are positive integers and are printed raw
+     */
+    count: {
+        /**
+         * Number of unique students
+         */
+        uniqueStudents: number;
+        /**
+         * Number of students that have visited more than once
+         */
+        returningStudents: number;
+        /**
+         * Number of sessions
+         */
+        sessions: number;
+    };
 };
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
-        [GoogleSheetCommandNames.stats]: getStatistics,
+        [GoogleSheetCommandNames.stats]: stats,
         [GoogleSheetCommandNames.weekly_report]: getWeeklyReport
     },
     skipProgressMessageCommands: new Set()
 };
 
 /**
- * The `/stats` command
- * Prints out the following statistics for the server
- * - Total number of help sessions
- * - Total session time
- * - Total number of students sessions helped
- * - Number of unique students helped
- * - Total number of returning students
- * - Average Session Time
+ * /stats handler
+ * @param interaction
  */
-async function getStatistics_____(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
-    // get the doc for this server
-    const server = AttendingServerV2.get(interaction.guildId);
-    const googleSheet = GoogleSheetExtensionState.get(interaction.guildId).googleSheet;
-
-    // FIXME: This is technically guaranteed so maybe we don't need to do the transformation
-    const attendanceSheetTitle = `${server.guild.name.replace(
-        /:/g,
-        ' '
-    )} Attendance`.replace(/\s{2,}/g, ' ');
-
-    const attendanceSheet = googleSheet.sheetsByTitle[attendanceSheetTitle];
-
-    if (!attendanceSheet) {
-        throw new Error(
-            `No attendance sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id`
-        );
-    }
-
-    const commandType = interaction.options.getSubcommand();
-
-    let user: Optional<User> = undefined;
-
-    if (commandType === 'server') {
-        // do nothing
-    } else if (commandType === 'helper') {
-        user = interaction.options.getUser('user') ?? interaction.user;
-    } else {
-        throw new Error(`Invalid command type ${commandType}`);
-    }
-
-    const timeFrame = interaction.options.getString('time_frame') ?? 'all-time';
-
-    const attendanceRows = await attendanceSheet.getRows();
-
-    let filteredAttendanceRows = attendanceRows.filter(row => {
-        return user ? row['Discord ID'] === user.id : true;
-    });
-
-    const startTime = new Date();
-
-    if (timeFrame === 'past_week') {
-        startTime.setDate(startTime.getDate() - 7);
-    } else if (timeFrame === 'past_month') {
-        startTime.setMonth(startTime.getMonth() - 1);
-    } else if (timeFrame === 'all_time') {
-        // set to 0 unix time
-        startTime.setTime(0);
-    }
-
-    filteredAttendanceRows = filteredAttendanceRows.filter(row => {
-        // the row 'Time In' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-        const returnDate = row['Time In'].split(',')[0];
-        const returnTime = row['Time In'].split(',')[1];
-        const returnDateParts = returnDate.split('/');
-        const returnTimeParts = returnTime.split(':');
-        const returnDateObj = new Date(
-            parseInt(returnDateParts[2]),
-            parseInt(returnDateParts[0]) - 1,
-            parseInt(returnDateParts[1]),
-            parseInt(returnTimeParts[0]),
-            parseInt(returnTimeParts[1]),
-            parseInt(returnTimeParts[2].split(' ')[0])
-        );
-
-        return returnDateObj >= startTime;
-    });
-
-    if (filteredAttendanceRows.length === 0) {
-        await interaction.editReply(
-            SimpleEmbed(
-                `No help sessions found for ${user?.username ?? server.guild.name}`,
-                EmbedColor.Neutral
-            )
-        );
-    }
-
-    const helperSessionCount = filteredAttendanceRows.length;
-
-    const totalAvailableTime = filteredAttendanceRows
-        .map(row => {
-            return parseInt(row['Session Time (ms)']);
-        })
-        .filter((time: number) => !isNaN(time))
-        .reduce((a, b) => a + b, 0);
-
-    const totalAvailableTimeHours = Math.trunc(totalAvailableTime / (1000 * 60 * 60));
-    const totalAvailableTimeMinutes = Math.trunc(totalAvailableTime / (1000 * 60)) % 60;
-
-    const numberOfStudents = filteredAttendanceRows
-        .map(row => {
-            return parseInt(row['Number of Students Helped']);
-        })
-        .filter((num: number) => !isNaN(num))
-        .reduce((a, b) => a + b, 0);
-
-    const studentsList: string[] = [];
-
-    // each cell in the 'Helped Student' is an array of json strings, where the json is of the form
-    // {displayName: string, username: string, id: string}
-    filteredAttendanceRows.forEach(row => {
-        const students = row['Helped Students'];
-        if (students) {
-            const studentArray = JSON.parse(students);
-            studentArray.forEach((student: { id: string }) => {
-                studentsList.push(student.id);
-            });
-        }
-    });
-
-    const uniqueStudents = new Set(studentsList);
-
-    // count students who were helped multiple times
-    const returningStudents = new Set(
-        studentsList.filter((student, index) => studentsList.indexOf(student) !== index)
-    );
-
-    //   --------------------------
-    //   Reading Help Session Sheet
-    //   --------------------------
-
-    const helpSessionSheetTitle = `${server.guild.name.replace(
-        /:/g,
-        ' '
-    )} Help Sessions`.replace(/\s{2,}/g, ' ');
-
-    const helpSessionSheet = googleSheet.sheetsByTitle[helpSessionSheetTitle];
-
-    if (!helpSessionSheet) {
-        throw new Error(
-            `No help session sheet found for server ${server.guild.name}. ` +
-                `Did you forget to set the google sheet id?`
-        );
-    }
-
-    const helpSessionRows = await helpSessionSheet.getRows();
-
-    let filteredHelpSessionRows = helpSessionRows.filter(row => {
-        return user ? row['Helper Discord ID'] === user.id : true;
-    });
-
-    filteredHelpSessionRows = filteredHelpSessionRows.filter(row => {
-        // the row 'Session Start' is in the format 'MM/DD/YYYY, HH:MM:SS AM/PM'
-        const returnDate = row['Session Start'].split(',')[0];
-        const returnTime = row['Session Start'].split(',')[1];
-        const returnDateParts = returnDate.split('/');
-        const returnTimeParts = returnTime.split(':');
-        const returnDateObj = new Date(
-            parseInt(returnDateParts[2]),
-            parseInt(returnDateParts[0]) - 1,
-            parseInt(returnDateParts[1]),
-            parseInt(returnTimeParts[0]),
-            parseInt(returnTimeParts[1]),
-            parseInt(returnTimeParts[2].split(' ')[0])
-        );
-
-        return returnDateObj >= startTime;
-    });
-
-    if (filteredAttendanceRows.length === 0) {
-        await interaction.editReply(
-            SimpleEmbed(
-                `No help sessions found for ${user?.username ?? server.guild.name}`,
-                EmbedColor.Neutral
-            )
-        );
-    }
-
-    const helpSessionCount = filteredHelpSessionRows.length;
-
-    const totalSessionTime = filteredHelpSessionRows
-        .map(row => {
-            return parseInt(row['Session Time (ms)']);
-        })
-        .filter((time: number) => !isNaN(time))
-        .reduce((a, b) => a + b, 0);
-
-    const totalSessionTimeHours = Math.trunc(totalSessionTime / (1000 * 60 * 60));
-    const totalSessionTimeMinutes = Math.trunc(totalSessionTime / (1000 * 60)) % 60;
-
-    const averageSessionTime = totalSessionTime / helpSessionCount;
-
-    const averageSessionTimeHours = Math.trunc(averageSessionTime / (1000 * 60 * 60));
-    const averageSessionTimeMinutes = Math.trunc(averageSessionTime / (1000 * 60)) % 60;
-
-    const totalWaitTime = filteredHelpSessionRows
-        .map(row => {
-            return parseInt(row['Wait Time (ms)']);
-        })
-        .filter((time: number) => !isNaN(time))
-        .reduce((a, b) => a + b, 0);
-
-    const averageWaitTime = totalWaitTime / helpSessionCount;
-
-    const averageWaitTimeHours = Math.trunc(averageWaitTime / (1000 * 60 * 60));
-    const averageWaitTimeMinutes = Math.trunc(averageWaitTime / (1000 * 60)) % 60;
-
-    const result = SimpleEmbed(
-        `Help session statistics for ` + `${user ? user.username : server.guild.name}`,
-        EmbedColor.Neutral,
-        `Help sessions: **${helperSessionCount}**\n` +
-            `Total available time: **${
-                totalAvailableTimeHours > 0 ? `${totalAvailableTimeHours} h ` : ''
-            }${totalAvailableTimeMinutes} min**\n` +
-            `Total helping time: **${
-                totalSessionTimeHours > 0 ? `${totalSessionTimeHours} h ` : ''
-            }${totalSessionTimeMinutes} min**\n\n` +
-            `Number of student sessions: **${numberOfStudents}**\n` +
-            `Unique students helped: **${uniqueStudents.size}**\n` +
-            `Returning students: **${returningStudents.size}**\n\n` +
-            `Average session time: **${
-                averageSessionTimeHours > 0 ? `${averageSessionTimeHours} h ` : ''
-            }${averageSessionTimeMinutes} min**\n` +
-            `Average wait time: **${
-                averageWaitTimeHours > 0 ? `${averageWaitTimeHours} h ` : ''
-            }${averageWaitTimeMinutes} min**\n`
-    );
-    await interaction.editReply(result);
-}
-
-async function getStatistics(
-    interaction: ChatInputCommandInteraction<'cached'>
-): Promise<void> {
+async function stats(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const timeFrame = (interaction.options.getString('time_frame') ?? 'all-time') as
         | 'all_time'
         | 'past_month'
         | 'past_week';
-    const stats = await getServerStatistics(interaction.guild, timeFrame);
+    const helper =
+        interaction.options.getSubcommand() === 'helper'
+            ? interaction.options.getUser('user') ?? interaction.user
+            : undefined;
+    const stats = await getStatistics(interaction.guild, timeFrame, helper);
     const embed = new EmbedBuilder()
-        .setTitle(`Help session statistics for ${interaction.guild.name}`)
+        .setTitle(
+            `Help session statistics for ${helper?.username ?? interaction.guild.name}`
+        )
         .setColor(EmbedColor.Success)
         .setDescription(
             `\`\`\`${new AsciiTable3()
@@ -278,16 +88,14 @@ async function getStatistics(
                 .setAlign(2, AlignmentEnum.CENTER)
                 .setStyle('unicode-single')
                 .addRowMatrix([
-                    ['Total Session Time', convertMsToShortTime(stats.totalSessionTime)],
-                    ['Unique Students', convertMsToShortTime(stats.uniqueStudents)],
-                    ['Returning Students', convertMsToShortTime(stats.returningStudents)],
-                    ['Total Wait Time', convertMsToShortTime(stats.totalWaitTime)],
-                    ['Number of Sessions', stats.numSessions],
-                    ['Average Wait Time', convertMsToShortTime(stats.averageWaitTime)],
-                    [
-                        'Average Session Time',
-                        convertMsToShortTime(stats.averageSessionTime)
-                    ]
+                    ...Object.entries(stats.time).map(([key, value]) => [
+                        camelCaseToTitleCase(key),
+                        convertMsToTime(value)
+                    ]),
+                    ...Object.entries(stats.count).map(([key, value]) => [
+                        camelCaseToTitleCase(key),
+                        value
+                    ])
                 ])
                 .toString()}\`\`\``
         )
@@ -298,42 +106,44 @@ async function getStatistics(
 }
 
 /**
- * The `/stats` command
- * Prints out the following statistics for the server
- * - Total number of help sessions
- * - Total session time
- * - Total number of students sessions helped
- * - Number of unique students helped
- * - Total number of returning students
- * - Average Session Time
+ * Computes the help session statistics for either server or helper
+ * @param guild
+ * @param timeFrame
+ * @param helper
+ * @returns
  */
-async function getServerStatistics(
+async function getStatistics(
     guild: Guild,
-    timeFrame: 'all_time' | 'past_month' | 'past_week'
-): Promise<ServerHelpSessionStats> {
-    const helpSessionSheetTitle = `${guild.name.replace(
-        /:/g,
+    timeFrame: 'all_time' | 'past_month' | 'past_week',
+    helper?: User
+): Promise<HelpSessionStats> {
+    const title = `${guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
+        /\s{2,}/g,
         ' '
-    )} Help Sessions`.replace(/\s{2,}/g, ' ');
-    // based on the time frame,
-    // everything with a timestamp larger than this value is used to compute
+    );
     const rows = await GoogleSheetExtensionState.get(guild.id).googleSheet.sheetsByTitle[
-        helpSessionSheetTitle
+        title
     ]?.getRows();
     if (rows === undefined) {
         throw ExpectedSheetErrors.missingSheet('Help Session');
     }
-    // object ot hold results for the imperative for loop
+    // object to hold results for the imperative for loop
     const runningResult = {
         totalSessionTime: 0,
         uniqueStudentIds: new Set(),
         returningStudents: 0,
         totalWaitTime: 0,
-        numStudentsHelped: 0
+        numStudentsHelped: 0,
+        sessions: 0
     };
     const timeFilter = getTimeFilter(timeFrame);
-    // no checks is done in this for loop since NaN + NaN or NaN + number is safe
     for (const row of rows) {
+        // if helper is specified, only look for rows that has this helper's id
+        if (helper !== undefined && row['Helper Discord ID'] !== helper.id) {
+            continue;
+        }
+        // now we are in a row that we are interested in
+        // whether it's for server or helper doesn't matter anymore
         const [start, end, waitTime] = [
             parseInt(row['Session Start (Unix Timestamp)']),
             parseInt(row['Session End (Unix Timestamp)']),
@@ -342,6 +152,7 @@ async function getServerStatistics(
         if (isNaN(start) || isNaN(end) || isNaN(waitTime)) {
             throw new Error('Some numerical values are damaged.');
         }
+        // skip if outside time frame
         if (start < timeFilter) {
             continue;
         }
@@ -353,15 +164,20 @@ async function getServerStatistics(
             : 0;
         runningResult.totalWaitTime += waitTime;
         runningResult.uniqueStudentIds.add(row['Student Discord ID']);
+        runningResult.sessions += 1;
     }
-    const finalResult = {
-        totalSessionTime: runningResult.totalSessionTime,
-        uniqueStudents: runningResult.uniqueStudentIds.size,
-        returningStudents: runningResult.returningStudents,
-        totalWaitTime: runningResult.totalWaitTime,
-        numSessions: rows.length,
-        averageWaitTime: runningResult.totalWaitTime / rows.length,
-        averageSessionTime: runningResult.totalSessionTime / rows.length
+    const finalResult: HelpSessionStats = {
+        time: {
+            totalSessionTime: runningResult.totalSessionTime,
+            totalWaitTime: runningResult.totalWaitTime,
+            averageWaitTime: Math.floor(runningResult.totalWaitTime / rows.length),
+            averageSessionTime: Math.floor(runningResult.totalSessionTime / rows.length)
+        },
+        count: {
+            uniqueStudents: runningResult.uniqueStudentIds.size,
+            returningStudents: runningResult.returningStudents,
+            sessions: runningResult.sessions
+        }
     };
     return finalResult;
 }

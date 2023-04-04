@@ -104,7 +104,7 @@ function range(low: number, high?: number, step = 1): number[] {
 }
 
 /**
- * Converts the time delta in milliseconds into a readable format
+ * Converts the time delta in milliseconds into 'HH hours, MM minutes, SS seconds'
  * @param milliseconds the difference to convert
  */
 function convertMsToTime(milliseconds: number): string {
@@ -127,7 +127,7 @@ function convertMsToTime(milliseconds: number): string {
 }
 
 /**
- * Converts the time delta in milliseconds into a readable format
+ * Converts the time delta in milliseconds into HH:MM:SS
  * @param milliseconds the difference to convert
  */
 function convertMsToShortTime(milliseconds: number): string {
@@ -143,6 +143,11 @@ function convertMsToShortTime(milliseconds: number): string {
     minutes = minutes % 60;
 
     return `${padTo2Digits(hours)}:${padTo2Digits(minutes)}:${padTo2Digits(seconds)}`;
+}
+
+function camelCaseToTitleCase(text: string): string {
+    const result = text.replace(/([A-Z])/g, ' $1');
+    return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 /**
@@ -537,6 +542,7 @@ export {
     longestCommonSubsequence,
     padTo2Digits,
     range,
+    camelCaseToTitleCase,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,

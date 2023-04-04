@@ -75,7 +75,6 @@ async function replyWithError(
     error: Error,
     botAdminRoleID: Snowflake
 ): Promise<void> {
-    console.error(error);
     if (!interaction.isRepliable()) {
         return;
     }
