@@ -1,4 +1,6 @@
-import { ChatInputCommandInteraction, User } from 'discord.js';
+// @ts-expect-error the ascii table lib has no type
+import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
+import { ChatInputCommandInteraction, EmbedBuilder, Guild, User } from 'discord.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { SimpleEmbed, EmbedColor } from '../../../utils/embed-helper.js';
 import { Optional } from '../../../utils/type-aliases.js';
@@ -6,6 +8,17 @@ import { GoogleSheetCommandNames } from '../google-sheet-constants/google-sheet-
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
+import { convertMsToShortTime } from '../../../utils/util-functions.js';
+
+type ServerHelpSessionStats = {
+    totalSessionTime: number;
+    uniqueStudents: number;
+    returningStudents: number;
+    totalWaitTime: number;
+    numSessions: number;
+    averageWaitTime: number;
+    averageSessionTime: number;
+};
 
 const googleSheetCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -25,7 +38,7 @@ const googleSheetCommandMap: CommandHandlerProps = {
  * - Total number of returning students
  * - Average Session Time
  */
-async function getStatistics(
+async function getStatistics_____(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     // get the doc for this server
@@ -248,6 +261,111 @@ async function getStatistics(
     await interaction.editReply(result);
 }
 
+async function getStatistics(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const timeFrame = (interaction.options.getString('time_frame') ?? 'all-time') as
+        | 'all_time'
+        | 'past_month'
+        | 'past_week';
+    const stats = await getServerStatistics(interaction.guild, timeFrame);
+    const embed = new EmbedBuilder()
+        .setTitle(`Help session statistics for ${interaction.guild.name}`)
+        .setColor(EmbedColor.Success)
+        .setDescription(
+            `\`\`\`${new AsciiTable3()
+                .setAlign(1, AlignmentEnum.CENTER)
+                .setAlign(2, AlignmentEnum.CENTER)
+                .setStyle('unicode-single')
+                .addRowMatrix([
+                    ['Total Session Time', convertMsToShortTime(stats.totalSessionTime)],
+                    ['Unique Students', convertMsToShortTime(stats.uniqueStudents)],
+                    ['Returning Students', convertMsToShortTime(stats.returningStudents)],
+                    ['Total Wait Time', convertMsToShortTime(stats.totalWaitTime)],
+                    ['Number of Sessions', stats.numSessions],
+                    ['Average Wait Time', convertMsToShortTime(stats.averageWaitTime)],
+                    [
+                        'Average Session Time',
+                        convertMsToShortTime(stats.averageSessionTime)
+                    ]
+                ])
+                .toString()}\`\`\``
+        )
+        .setFooter({
+            text: 'All time values are in the format HH:MM:SS'
+        });
+    await interaction.editReply({ embeds: [embed.data] });
+}
+
+/**
+ * The `/stats` command
+ * Prints out the following statistics for the server
+ * - Total number of help sessions
+ * - Total session time
+ * - Total number of students sessions helped
+ * - Number of unique students helped
+ * - Total number of returning students
+ * - Average Session Time
+ */
+async function getServerStatistics(
+    guild: Guild,
+    timeFrame: 'all_time' | 'past_month' | 'past_week'
+): Promise<ServerHelpSessionStats> {
+    const helpSessionSheetTitle = `${guild.name.replace(
+        /:/g,
+        ' '
+    )} Help Sessions`.replace(/\s{2,}/g, ' ');
+    // based on the time frame,
+    // everything with a timestamp larger than this value is used to compute
+    const rows = await GoogleSheetExtensionState.get(guild.id).googleSheet.sheetsByTitle[
+        helpSessionSheetTitle
+    ]?.getRows();
+    if (rows === undefined) {
+        throw ExpectedSheetErrors.missingSheet('Help Session');
+    }
+    // object ot hold results for the imperative for loop
+    const runningResult = {
+        totalSessionTime: 0,
+        uniqueStudentIds: new Set(),
+        returningStudents: 0,
+        totalWaitTime: 0,
+        numStudentsHelped: 0
+    };
+    const timeFilter = getTimeFilter(timeFrame);
+    // no checks is done in this for loop since NaN + NaN or NaN + number is safe
+    for (const row of rows) {
+        const [start, end, waitTime] = [
+            parseInt(row['Session Start (Unix Timestamp)']),
+            parseInt(row['Session End (Unix Timestamp)']),
+            parseInt(row['Wait Time (ms)'])
+        ];
+        if (isNaN(start) || isNaN(end) || isNaN(waitTime)) {
+            throw new Error('Some numerical values are damaged.');
+        }
+        if (start < timeFilter) {
+            continue;
+        }
+        runningResult.totalSessionTime += end - start;
+        runningResult.returningStudents += runningResult.uniqueStudentIds.has(
+            row['Student Discord ID']
+        )
+            ? 1
+            : 0;
+        runningResult.totalWaitTime += waitTime;
+        runningResult.uniqueStudentIds.add(row['Student Discord ID']);
+    }
+    const finalResult = {
+        totalSessionTime: runningResult.totalSessionTime,
+        uniqueStudents: runningResult.uniqueStudentIds.size,
+        returningStudents: runningResult.returningStudents,
+        totalWaitTime: runningResult.totalWaitTime,
+        numSessions: rows.length,
+        averageWaitTime: runningResult.totalWaitTime / rows.length,
+        averageSessionTime: runningResult.totalSessionTime / rows.length
+    };
+    return finalResult;
+}
+
 /**
  * The `/weekly_report` command
  * Prints a report of the help sessions for the past 'n' weeks
@@ -432,6 +550,25 @@ async function getWeeklyReport(
             weeklyStatsString
         )
     );
+}
+
+/**
+ * Returns a unix timestamp that is the lower bound of the specified time frame
+ * @param timeFrame size of the time frame
+ * @param basis what's the upper bound of the time frame. Defaults to today
+ */
+function getTimeFilter(
+    timeFrame: 'all_time' | 'past_month' | 'past_week',
+    basis = new Date()
+): number {
+    if (timeFrame === 'past_week') {
+        return basis.getTime() - 7 * 24 * 60 * 60 * 1000;
+    }
+    if (timeFrame === 'past_month') {
+        // assuming 30 days for simplicity
+        return basis.getTime() - 30 * 24 * 60 * 60 * 1000;
+    }
+    return 0; // unix timestamp 0 catches all possible dates
 }
 
 export { googleSheetCommandMap };

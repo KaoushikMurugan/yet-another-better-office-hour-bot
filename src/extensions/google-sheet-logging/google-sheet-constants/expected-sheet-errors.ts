@@ -37,6 +37,11 @@ const ExpectedSheetErrors = {
     badGoogleSheetId: new GoogleSheetConnectionError(
         `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
     ),
+    missingSheet: (type: 'Help Session' | 'Attendance') =>
+        new GoogleSheetConnectionError(
+            `${type} google worksheet is missing in the google sheet document. This is expected if your server has never had any office hour sessions.` +
+                ' This can also happen if you changed your server name recently and have not hosted a office hour session yet.'
+        ),
     unparsableDateString: (sheetName: string) =>
         new CommandParseError(
             `Hmmm...YABOB cannot parse the data stored in ${sheetName}. Is the data format altered?`

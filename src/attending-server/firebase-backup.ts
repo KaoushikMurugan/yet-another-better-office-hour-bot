@@ -194,7 +194,6 @@ function useFullBackup(
 ): PropertyDescriptor {
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
-        console.log('async function', original.name);
         // this parameter specifies the context of the decorator
         descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
@@ -225,7 +224,6 @@ function useSettingsBackup(
 ): PropertyDescriptor {
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
-        console.log('async function', original.name);
         // this parameter specifies the context of the decorator
         descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
@@ -256,7 +254,6 @@ function useQueueBackup(
 ): PropertyDescriptor {
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
-        console.log('async function', original.name);
         // this parameter specifies the context of the decorator
         descriptor.value = async function (this: HelpQueueV2, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
