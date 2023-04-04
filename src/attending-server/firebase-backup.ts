@@ -8,6 +8,7 @@ import { FrozenServer } from '../extensions/extension-utils.js';
 import { logWithTimeStamp } from '../utils/util-functions.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { AttendingServerV2 } from './base-attending-server.js';
+import util from 'util';
 
 /**
  * Loads the backup data in firebase given a server id
@@ -192,13 +193,23 @@ function useFullBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    // this parameter specifies the context of the decorator
-    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
-        // .apply accepts 'this' as the first parameter to specify the context of the function call
-        const res = original.apply(this, args);
-        fullServerBackup(this);
-        return res;
-    };
+    if (util.types.isAsyncFunction(original)) {
+        console.log('async function', original.name);
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            fullServerBackup(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            fullServerBackup(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 
@@ -213,11 +224,23 @@ function useSettingsBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
-        const res = original.apply(this, args);
-        backupServerSettings(this);
-        return res;
-    };
+    if (util.types.isAsyncFunction(original)) {
+        console.log('async function', original.name);
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            backupServerSettings(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            backupServerSettings(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 
@@ -232,11 +255,23 @@ function useQueueBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
-        const res = original.apply(this, args);
-        backupQueueData(this);
-        return res;
-    };
+    if (util.types.isAsyncFunction(original)) {
+        console.log('async function', original.name);
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: HelpQueueV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            backupQueueData(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            backupQueueData(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 

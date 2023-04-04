@@ -1,7 +1,7 @@
 /** @module  Backups */
 
 import { AutoClearTimeout } from '../help-queue/help-queue.js';
-import { IntRange, SimpleTimeZone } from '../utils/type-aliases.js';
+import { SimpleTimeZone } from '../utils/type-aliases.js';
 import { Helpee } from './member-states.js';
 import { z } from 'zod';
 
