@@ -55,9 +55,11 @@ const ExpectedSheetErrors = {
                   'I can only accept server based interactions. ' +
                       `Are you sure ${guildName} has a initialized YABOB with the google sheets extension?`
               ),
-    badNumericalValues: (sheetName:string, column: string) =>
+    badNumericalValues: (sheetName: string, column?: string) =>
         new CommandParseError(
-            `Some numbers in ${sheetName} at column ${column} is not an integer. You can fix the values then run the command again.`
+            `Some numbers in ${sheetName}${
+                column ? ` at column ${column}` : ''
+            } is not a positive integer. You can fix the values then run the command again.`
         )
 } as const;
 

@@ -92,7 +92,7 @@ const googleSheetCommandMap: CommandHandlerProps = {
  * @param interaction
  */
 async function stats(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const timeFrame = (interaction.options.getString('time_frame') ?? 'all-time') as
+    const timeFrame = interaction.options.getString('time_frame', true) as
         | 'all_time'
         | 'past_month'
         | 'past_week';
@@ -101,30 +101,29 @@ async function stats(interaction: ChatInputCommandInteraction<'cached'>): Promis
             ? interaction.options.getUser('user') ?? interaction.user
             : undefined;
     const stats = await getStatistics(interaction.guild, timeFrame, helper);
+    const table = new AsciiTable3()
+        .setAlign(1, AlignmentEnum.CENTER)
+        .setAlign(2, AlignmentEnum.CENTER)
+        .setStyle('unicode-single')
+        .addRowMatrix([
+            // this assumes the shape of stats is exactly HelpSessionStats
+            // if there are other fields it will create extra rows
+            ...Object.entries(stats.time).map(([key, value]) => [
+                camelCaseToTitleCase(key),
+                convertMsToShortTime(value)
+            ]),
+            ...Object.entries(stats.count).map(([key, value]) => [
+                camelCaseToTitleCase(key),
+                value
+            ])
+        ])
+        .toString();
     const embed = new EmbedBuilder()
         .setTitle(
             `Help session statistics for ${helper?.username ?? interaction.guild.name}`
         )
         .setColor(EmbedColor.Success)
-        .setDescription(
-            `\`\`\`${new AsciiTable3()
-                .setAlign(1, AlignmentEnum.CENTER)
-                .setAlign(2, AlignmentEnum.CENTER)
-                .setStyle('unicode-single')
-                .addRowMatrix([
-                    // this assumes the shape of stats is exactly HelpSessionStats
-                    // if there are other fields it will create extra rows
-                    ...Object.entries(stats.time).map(([key, value]) => [
-                        camelCaseToTitleCase(key),
-                        convertMsToShortTime(value)
-                    ]),
-                    ...Object.entries(stats.count).map(([key, value]) => [
-                        camelCaseToTitleCase(key),
-                        value
-                    ])
-                ])
-                .toString()}\`\`\``
-        )
+        .setDescription(`\`\`\`${table}\`\`\``)
         .setFooter({
             text: 'All time values are in the format HH:MM:SS'
         });
@@ -175,11 +174,11 @@ async function getStatistics(
             parseInt(row[HelpSessionHeaders.SessionEndUnix]),
             parseInt(row[HelpSessionHeaders.WaitTimeMs])
         ];
-        if (isNaN(start) || isNaN(end) || isNaN(waitTime)) {
-            throw new Error('Some numerical values are damaged.');
+        if ([start, end, waitTime].some(val => isNaN(val) || val < 0)) {
+            throw ExpectedSheetErrors.badNumericalValues(title);
         }
-        // skip if outside time frame
         if (start < timeFilter) {
+            // skip if outside time frame
             continue;
         }
         buffer.totalSessionTime += end - start;
@@ -256,7 +255,7 @@ async function weeklyReport(
         .setColor(EmbedColor.Success)
         .setDescription(`\`\`\`${table.toString()}\`\`\``)
         .setFooter({
-            text: 'All time values are in the format HH:MM:SS'
+            text: 'All time values are in the format HH:MM:SS. Weeks with no entries are omitted.'
         });
     await interaction.editReply({ embeds: [embed.data] });
 }
@@ -291,18 +290,26 @@ async function getWeeklyReports(
             new Date().getTime() - week * msInWeek
         ];
         const rowsInWeek = rowsToSearch
-            .filter(
-                row =>
-                    row[AttendanceHeaders.UnixTimeIn] >= weekStartUnix &&
-                    row[AttendanceHeaders.UnixTimeOut] <= weekEndUnix
-            )
+            .filter(row => {
+                const [timeIn, timeOut] = [
+                    parseInt(row[AttendanceHeaders.UnixTimeIn]),
+                    parseInt(row[AttendanceHeaders.UnixTimeOut])
+                ];
+                if ([timeIn, timeOut].some(val => isNaN(val) || val < 0)) {
+                    throw ExpectedSheetErrors.badNumericalValues(
+                        title,
+                        AttendanceHeaders.UnixTimeIn
+                    );
+                }
+                return timeIn >= weekStartUnix && timeOut <= weekEndUnix;
+            })
             .map(row => {
                 const result = {
                     sessions: 1,
                     students: 0,
                     totalTimeMs: parseInt(row[AttendanceHeaders.OfficeHourTimeMs])
                 };
-                if (isNaN(result.totalTimeMs)) {
+                if (isNaN(result.totalTimeMs) || result.totalTimeMs < 0) {
                     throw ExpectedSheetErrors.badNumericalValues(
                         title,
                         AttendanceHeaders.OfficeHourTimeMs
@@ -311,10 +318,10 @@ async function getWeeklyReports(
                 try {
                     result.students = JSON.parse(
                         row[AttendanceHeaders.HelpedStudents]
-                    )?.length; // try to optionally access the length prop here
-                    // now check if length actually exists
+                    )?.length;
                     if (typeof result.students !== 'number' || result.students < 0) {
-                        throw Error(''); // this error is unused, it's here just to skip to the catch block
+                        // this error is unused, it's here just to skip to the catch block
+                        throw Error('');
                     }
                 } catch {
                     throw ExpectedSheetErrors.unparsableNonNumericData(
