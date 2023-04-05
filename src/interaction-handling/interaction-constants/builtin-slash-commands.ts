@@ -349,7 +349,8 @@ const setTimeZoneCommand = new SlashCommandBuilder()
                 name: '45',
                 value: 45
             }
-        ));
+        )
+    );
 // /assign_helpers_roles [csv_file]
 const assignHelpersRolesCommand = new SlashCommandBuilder()
     .setName(CommandNames.assign_helpers_roles)

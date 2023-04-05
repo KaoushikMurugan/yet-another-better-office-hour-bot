@@ -44,7 +44,7 @@ const ExpectedSheetErrors = {
         ),
     unparsableNonNumericData: (sheetName: string, column: string) =>
         new CommandParseError(
-            `Hmmm...YABOB cannot parse the data stored in ${sheetName} at column${column}. Is the data format altered?`
+            `Hmmm...YABOB cannot parse the data stored in ${sheetName} at column ${column}. Is the data format altered?`
         ),
     nonServerInteraction: (guildName?: string) =>
         guildName === undefined
