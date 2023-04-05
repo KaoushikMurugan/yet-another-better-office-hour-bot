@@ -198,10 +198,12 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
             text: generatePageNumber(QuickStartCreateAQueue)
         });
 
+    const showSkip = server.queues.length === 0;
+
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
-        quickStartNextButton(true),
-        quickStartSkipButton(false)
+        quickStartNextButton(!showSkip),
+        quickStartSkipButton(showSkip)
     );
 
     return {
