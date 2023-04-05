@@ -2,7 +2,7 @@
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { ChatInputCommandInteraction, EmbedBuilder, Guild, User } from 'discord.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';
-import { EmbedColor } from '../../../utils/embed-helper.js';
+import { EmbedColor, SimpleEmbed } from '../../../utils/embed-helper.js';
 import { GoogleSheetCommandNames } from '../google-sheet-constants/google-sheet-interaction-names.js';
 import { ExpectedSheetErrors } from '../google-sheet-constants/expected-sheet-errors.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
@@ -226,6 +226,16 @@ async function weeklyReport(
         Math.max(interaction.options.getInteger('num_weeks') ?? 1, 1),
         helper
     );
+    if (reports.length === 0) {
+        await interaction.editReply(
+            SimpleEmbed(
+                `There are no attendance entries for ${
+                    helper?.username ?? interaction.guild.name
+                }`
+            )
+        );
+        return;
+    }
     const table = new AsciiTable3()
         .setAlign(1, AlignmentEnum.CENTER)
         .setAlign(2, AlignmentEnum.CENTER)
@@ -286,12 +296,34 @@ async function getWeeklyReports(
                     row[AttendanceHeaders.UnixTimeIn] >= weekStartUnix &&
                     row[AttendanceHeaders.UnixTimeOut] <= weekEndUnix
             )
-            .map(row => ({
-                sessions: 1,
-                students: (JSON.parse(row[AttendanceHeaders.HelpedStudents]) as unknown[])
-                    .length,
-                totalTimeMs: parseInt(row[AttendanceHeaders.OfficeHourTimeMs])
-            }));
+            .map(row => {
+                const result = {
+                    sessions: 1,
+                    students: 0,
+                    totalTimeMs: parseInt(row[AttendanceHeaders.OfficeHourTimeMs])
+                };
+                if (isNaN(result.totalTimeMs)) {
+                    throw ExpectedSheetErrors.badNumericalValues(
+                        title,
+                        AttendanceHeaders.OfficeHourTimeMs
+                    );
+                }
+                try {
+                    result.students = JSON.parse(
+                        row[AttendanceHeaders.HelpedStudents]
+                    )?.length; // try to optionally access the length prop here
+                    // now check if length actually exists
+                    if (typeof result.students !== 'number' || result.students < 0) {
+                        throw Error(''); // this error is unused, it's here just to skip to the catch block
+                    }
+                } catch {
+                    throw ExpectedSheetErrors.unparsableNonNumericData(
+                        title,
+                        AttendanceHeaders.HelpedStudents
+                    );
+                }
+                return result;
+            });
         if (rowsInWeek.length === 0) {
             continue;
         }
