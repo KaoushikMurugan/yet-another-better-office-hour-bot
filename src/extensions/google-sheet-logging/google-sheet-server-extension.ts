@@ -9,6 +9,12 @@ import { FrozenServer } from '../extension-utils.js';
 import { logWithTimeStamp, padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import {
+    AttendanceHeaders,
+    HelpSessionHeaders,
+    attendanceHeaders,
+    helpSessionHeaders
+} from './google-sheet-constants/column-enums.js';
 
 /**
  * Additional attendance info for each helper
@@ -66,32 +72,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * - Key is student member.id, value is corresponding helpee object
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
-
-    private readonly attendanceHeaders = [
-        'Helper Username',
-        'Time In (Local Time)',
-        'Time Out (Local Time)',
-        'Helped Students',
-        'Discord ID',
-        'Session Time (ms)',
-        'Active Time (ms)',
-        'Number of Students Helped',
-        'Time In (Unix Timestamp)',
-        'Time Out (Unix Timestamp)'
-    ]; // TODO: this is technically bad bc it's not synced with the addRows method
-
-    private readonly helpSessionHeaders = [
-        'Student Username',
-        'Student Discord ID',
-        'Helper Username',
-        'Helper Discord ID',
-        'Session Start (Local Time)',
-        'Session End (Local Time)',
-        'Queue Name',
-        'Wait Time (ms)',
-        'Session Start (Unix Timestamp)',
-        'Session End (Unix Timestamp)'
-    ];
 
     constructor(private readonly guild: Guild) {
         super();
@@ -165,7 +145,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             setTimeout(async () => {
                 this.attendanceUpdateIsScheduled = false;
                 await this.batchUpdateAttendance();
-            }, 60 * 1000);
+            }, 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
     }
@@ -279,48 +259,48 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: this.attendanceHeaders
+                headerValues: attendanceHeaders
             }));
         const safeToUpdate =
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === this.attendanceHeaders.length &&
+            attendanceSheet.headerValues.length === attendanceHeaders.length &&
             attendanceSheet.headerValues.every(
                 // finally check if all headers exist both the previous conditions are true
-                header => this.attendanceHeaders.includes(header)
+                header => (attendanceHeaders as string[]).includes(header)
             );
         if (!safeToUpdate) {
             // very slow, O(n^2 * m) string array comparison is faster than this
-            await attendanceSheet.setHeaderRow(this.attendanceHeaders);
+            await attendanceSheet.setHeaderRow(attendanceHeaders);
         }
         const updatedCountSnapshot = this.attendanceEntries.length;
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
-                    'Helper Username': entry.member.user.username,
-                    'Time In (Local Time)': this.timeFormula(
+                    [AttendanceHeaders.HelperUserName]: entry.member.user.username,
+                    [AttendanceHeaders.TimeInLocal]: this.timeFormula(
                         entry.helpStart,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
-                    'Time Out (Local Time)': this.timeFormula(
+                    [AttendanceHeaders.TimeOutLocal]: this.timeFormula(
                         entry.helpEnd,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
-                    'Helped Students': JSON.stringify(
+                    [AttendanceHeaders.HelpedStudents]: JSON.stringify(
                         entry.helpedMembers.map(student => ({
                             displayName: student.member.displayName,
                             username: student.member.user.username,
                             id: student.member.id
                         }))
                     ),
-                    'Discord ID': entry.member.id,
-                    'Session Time (ms)':
+                    [AttendanceHeaders.HelperDiscordId]: entry.member.id,
+                    [AttendanceHeaders.OfficeHourTimeMs]:
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                    'Active Time (ms)': entry.activeTimeMs,
-                    'Number of Students Helped': entry.helpedMembers.length,
-                    'Time In (Unix Timestamp)': entry.helpStart.getTime(),
-                    'Time Out (Unix Timestamp)': entry.helpEnd.getTime()
+                    [AttendanceHeaders.ActiveTimeMs]: entry.activeTimeMs,
+                    [AttendanceHeaders.NumStudents]: entry.helpedMembers.length,
+                    [AttendanceHeaders.UnixTimeIn]: entry.helpStart.getTime(),
+                    [AttendanceHeaders.UnixTimeOut]: entry.helpEnd.getTime()
                 })),
                 {
                     raw: false, // false to make google sheets interpret the formula
@@ -382,36 +362,36 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: this.helpSessionHeaders
+                headerValues: helpSessionHeaders
             }));
         const safeToUpdate = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             helpSessionSheet.headerValues && // this is necessary, could be undefined
-            helpSessionSheet.headerValues.length === this.helpSessionHeaders.length &&
+            helpSessionSheet.headerValues.length === helpSessionHeaders.length &&
             helpSessionSheet.headerValues.every(header =>
-                this.helpSessionHeaders.includes(header)
+                (helpSessionHeaders as string[]).includes(header)
             );
         if (!safeToUpdate) {
-            await helpSessionSheet.setHeaderRow(this.helpSessionHeaders);
+            await helpSessionSheet.setHeaderRow(helpSessionHeaders);
         }
         Promise.all([
             helpSessionSheet.addRows(
                 entries.map(entry => ({
-                    'Student Username': entry.studentUsername,
-                    'Student Discord ID': entry.studentDiscordId,
-                    'Helper Username': entry.helperUsername,
-                    'Helper Discord ID': entry.helperDiscordId,
-                    'Session Start (Local Time)': this.timeFormula(
+                    [HelpSessionHeaders.StudentUsername]: entry.studentUsername,
+                    [HelpSessionHeaders.StudentDiscordId]: entry.studentDiscordId,
+                    [HelpSessionHeaders.HelperUsername]: entry.helperUsername,
+                    [HelpSessionHeaders.HelperDiscordId]: entry.helperDiscordId,
+                    [HelpSessionHeaders.SessionStartLocal]: this.timeFormula(
                         entry.sessionStart,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
-                    'Session End (Local Time)': this.timeFormula(
+                    [HelpSessionHeaders.SessionEndLocal]: this.timeFormula(
                         entry.sessionEnd,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
-                    'Queue Name': entry.queueName,
-                    'Wait Time (ms)': entry.waitTimeMs,
-                    'Session Start (Unix Timestamp)': entry.sessionStart.getTime(),
-                    'Session End (Unix Timestamp)': entry.sessionStart.getTime()
+                    [HelpSessionHeaders.QueueName]: entry.queueName,
+                    [HelpSessionHeaders.WaitTimeMs]: entry.waitTimeMs,
+                    [HelpSessionHeaders.SessionStartUnix]: entry.sessionStart.getTime(),
+                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionStart.getTime()
                 })),
                 { raw: false, insert: true }
             ),
