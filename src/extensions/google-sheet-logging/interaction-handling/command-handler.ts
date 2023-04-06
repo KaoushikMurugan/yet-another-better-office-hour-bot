@@ -191,7 +191,7 @@ async function getStatistics(
         buffer.uniqueStudentIds.add(row[HelpSessionHeaders.StudentDiscordId]);
         buffer.sessions += 1;
     }
-    const finalResult: HelpSessionStats = {
+    return {
         time: {
             totalSessionTime: buffer.totalSessionTime,
             totalWaitTime: buffer.totalWaitTime,
@@ -201,12 +201,11 @@ async function getStatistics(
             )
         },
         count: {
-            sessions: helpSessionRows.length,
+            sessions: buffer.sessions,
             returningStudents: buffer.returningStudents,
             uniqueStudents: buffer.uniqueStudentIds.size
         }
     };
-    return finalResult;
 }
 
 /**
