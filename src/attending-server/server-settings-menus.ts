@@ -675,7 +675,7 @@ function AutoGiveStudentRoleConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.AutoGiveStudentRoleConfig1,
+            ButtonNames.AutoGiveStudentRoleConfig1SM,
             server.guild.id,
             channelId
         ])
@@ -684,7 +684,7 @@ function AutoGiveStudentRoleConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.AutoGiveStudentRoleConfig2,
+            ButtonNames.AutoGiveStudentRoleConfig2SM,
             server.guild.id,
             channelId
         ])

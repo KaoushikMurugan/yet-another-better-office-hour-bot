@@ -27,7 +27,11 @@ import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
-import { QuickStartPages, QuickStartSetRoles } from '../attending-server/quick-start-pages.js';
+import {
+    QuickStartAutoGiveStudentRole,
+    QuickStartPages,
+    QuickStartSetRoles
+} from '../attending-server/quick-start-pages.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -58,10 +62,14 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
             [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
-            [ButtonNames.AutoGiveStudentRoleConfig1]: interaction =>
-                toggleAutoGiveStudentRole(interaction, true),
-            [ButtonNames.AutoGiveStudentRoleConfig2]: interaction =>
-                toggleAutoGiveStudentRole(interaction, false),
+            [ButtonNames.AutoGiveStudentRoleConfig1SM]: interaction =>
+                toggleAutoGiveStudentRole(interaction, true, 'settings'),
+            [ButtonNames.AutoGiveStudentRoleConfig2SM]: interaction =>
+                toggleAutoGiveStudentRole(interaction, false, 'settings'),
+            [ButtonNames.AutoGiveStudentRoleConfig1QS]: interaction =>
+                toggleAutoGiveStudentRole(interaction, true, 'quickStart'),
+            [ButtonNames.AutoGiveStudentRoleConfig2QS]: interaction =>
+                toggleAutoGiveStudentRole(interaction, false, 'quickStart'),
             [ButtonNames.ShowAfterSessionMessageModal]: showAfterSessionMessageModal,
             [ButtonNames.ShowQueueAutoClearModal]: showQueueAutoClearModal,
             [ButtonNames.PromptHelpTopicConfig1]: interaction =>
@@ -124,8 +132,10 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.DisableQueueAutoClear,
         ButtonNames.ShowQueueAutoClearModal,
         ButtonNames.DisableLoggingChannel,
-        ButtonNames.AutoGiveStudentRoleConfig1,
-        ButtonNames.AutoGiveStudentRoleConfig2,
+        ButtonNames.AutoGiveStudentRoleConfig1SM,
+        ButtonNames.AutoGiveStudentRoleConfig2SM,
+        ButtonNames.AutoGiveStudentRoleConfig1QS,
+        ButtonNames.AutoGiveStudentRoleConfig2QS,
         ButtonNames.PromptHelpTopicConfig1,
         ButtonNames.PromptHelpTopicConfig2,
         ButtonNames.SeriousModeConfig1,
@@ -253,21 +263,22 @@ async function createAccessLevelRoles(
     const server = AttendingServerV2.get(interaction.guildId);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
-        parent === 'settings' ? RolesConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            forceCreate
-                ? 'New roles have been created!'
-                : 'Role configurations have been updated!'
-        )
-        : QuickStartSetRoles(
-            server,
-            interaction.channelId,
-            forceCreate
-                ? 'New roles have been created!'
-                : 'Role configurations have been updated!'
-        )
+        parent === 'settings'
+            ? RolesConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  forceCreate
+                      ? 'New roles have been created!'
+                      : 'Role configurations have been updated!'
+              )
+            : QuickStartSetRoles(
+                  server,
+                  interaction.channelId,
+                  forceCreate
+                      ? 'New roles have been created!'
+                      : 'Role configurations have been updated!'
+              )
     );
 }
 
@@ -369,20 +380,33 @@ async function disableLoggingChannel(
  */
 async function toggleAutoGiveStudentRole(
     interaction: ButtonInteraction<'cached'>,
-    autoGiveStudentRole: boolean
+    autoGiveStudentRole: boolean,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
-    await interaction.update(
-        AutoGiveStudentRoleConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            `Successfully turned ${
-                autoGiveStudentRole ? 'on' : 'off'
-            } auto give student role.`
-        )
-    );
+    if (parent === 'settings') {
+        await interaction.update(
+            AutoGiveStudentRoleConfigMenu(
+                server,
+                interaction.channelId,
+                false,
+                `Successfully turned ${
+                    autoGiveStudentRole ? 'on' : 'off'
+                } auto give student role.`
+            )
+        );
+    } else {
+        await interaction.update(
+            QuickStartAutoGiveStudentRole(
+                server,
+                interaction.channelId,
+                `Successfully turned ${
+                    autoGiveStudentRole ? 'on' : 'off'
+                } auto give student role.`
+            )
+        );
+    }
 }
 
 /**
@@ -498,7 +522,7 @@ async function shiftQuickStartPage(
     // bounds check
     if (
         (buttonPressed === 'back' && oldPage <= 1) ||
-        (buttonPressed === 'next' && oldPage === maxPage)
+        ((buttonPressed === 'next' || buttonPressed === 'skip') && oldPage === maxPage)
     ) {
         return;
     }

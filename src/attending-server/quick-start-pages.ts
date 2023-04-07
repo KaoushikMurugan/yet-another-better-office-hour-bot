@@ -23,6 +23,8 @@ const QuickStartPages: QuickStartPageFunctions[] = [
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartCreateAQueue,
+    QuickStartAutoGiveStudentRole,
+    QuickStartLoggingChannel,
     QuickStartLastPage
 ];
 
@@ -37,6 +39,7 @@ function generatePageNumber(functionName: QuickStartPageFunctions): string {
 function QuickStartFirstPage(): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start')
+        .setColor(EmbedColor.Aqua)
         .setDescription(
             'Welcome to YABOB! This is a quick start guide to get you started with the bot. If you have any questions, please ask in the support server.' +
                 '\n\nUse the **Next** button to go to the next page, and the **Back** button to go to the previous page. ' +
@@ -48,8 +51,7 @@ function QuickStartFirstPage(): YabobEmbed {
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(false),
-        quickStartNextButton(true),
-        quickStartSkipButton(false)
+        quickStartNextButton(true)
     );
 
     return {
@@ -77,7 +79,9 @@ function QuickStartSetRoles(
         .setTitle(`Quick Start: Set Roles`)
         .setColor(EmbedColor.Aqua)
         .setFooter({
-            text: `${generatePageNumber(QuickStartSetRoles)}` + ((updateMessage.length > 0) ? ` ● ✅ ${updateMessage}` : '')
+            text:
+                `${generatePageNumber(QuickStartSetRoles)}` +
+                (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
         })
         .addFields(
             {
@@ -187,6 +191,7 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
 
     const embed = new EmbedBuilder()
         .setTitle('Quick Start - Create a Queue')
+        .setColor(EmbedColor.Aqua)
         .setDescription(
             'Now that you have set up your server roles, try creating a queue!' +
                 `\n\nUse the </queue add:${queueAddCommandId}> command to create a queue. Enter the name of the queue, e.g. \`Office Hours\`` +
@@ -212,12 +217,133 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
     };
 }
 
-function QuickStartLastPage(): YabobEmbed {
+function QuickStartAutoGiveStudentRole(
+    server: AttendingServerV2,
+    channelId: string,
+    updateMessage = ''
+): YabobEmbed {
+    const embed = new EmbedBuilder()
+        .setTitle('Quick Start - Auto Give Student Role')
+        .setColor(EmbedColor.Aqua)
+        .addFields(
+            {
+                name: 'Description',
+                value: `Whether to automatically give new members the <@&${server.studentRoleID}> role if configured.`
+            },
+            {
+                name: 'Documentation',
+                value: `[Learn more about auto give student role here.](${documentationLinks.autoGiveStudentRole})`
+            },
+            {
+                name: 'Current Configuration',
+                value: server.autoGiveStudentRole
+                    ? `**Enabled** - New members will automatically become <@&${server.studentRoleID}>.`
+                    : `**Disabled** - New members need to be manually assigned <@&${server.studentRoleID}>.`
+            }
+        )
+        .setFooter({
+            text:
+                `${generatePageNumber(QuickStartAutoGiveStudentRole)}` +
+                (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
+        });
+
+    const settingsButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.AutoGiveStudentRoleConfig1QS,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔓')
+            .setLabel('Enable')
+            .setStyle(ButtonStyle.Secondary),
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.AutoGiveStudentRoleConfig2QS,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
+
+    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        quickStartBackButton(true),
+        quickStartNextButton(true)
+    );
+
+    return {
+        embeds: [embed],
+        components: [quickStartButtons, settingsButtons]
+    };
+}
+
+function QuickStartLoggingChannel(
+    server: AttendingServerV2,
+    channelId: string,
+    updateMessage = ''
+): YabobEmbed {
+    const setLoggingChannelCommandId = server.guild.commands.cache.find(
+        command => command.name === 'set_logging_channel'
+    )?.id;
+    const embed = new EmbedBuilder()
+        .setTitle('Quick Start - Logging Channel')
+        .setColor(EmbedColor.Aqua)
+        .addFields(
+            {
+                name: 'Description',
+                value: 'If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.'
+            },
+            {
+                name: 'Documentation',
+                value: `[Learn more about YABOB logging channels here.](${documentationLinks.loggingChannel})`
+            },
+            {
+                name: 'Note: Select menu length limit',
+                value: `Discord only allows up to 25 options in this select menu. If your desired logging channel is not listed, you can use the ${
+                    setLoggingChannelCommandId
+                        ? `</set_logging_channel:${setLoggingChannelCommandId}>`
+                        : '`/set_logging_channel`'
+                } command to select any text channel on this server.`
+            },
+            {
+                name: 'Current Logging Channel',
+                value:
+                    server.loggingChannel === undefined
+                        ? '**Disabled** - YABOB will not send logs to this server.'
+                        : server.loggingChannel.toString()
+            }
+        )
+        .setFooter({
+            text:
+                `${generatePageNumber(QuickStartLoggingChannel)}` +
+                (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
+        });
+
+    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        quickStartBackButton(true),
+        quickStartNextButton(true)
+    );
+
+    return {
+        embeds: [embed],
+        components: [quickStartButtons]
+    };
+}
+
+function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
+    // get the settings command id
+    const settingsCommandId = server.guild.commands.cache.find(
+        command => command.name === CommandNames.settings
+    )?.id;
+
     const embed = new EmbedBuilder()
         .setTitle('Quick Start - Finished!')
         .setDescription(
             'Congratulations! You have completed the quick start guide. If you have any questions, please ask in the support server. ' +
-                'Use the **Back** button to go to the previous page. Press the blue `dismiss message` text below the buttons to close this message.'
+                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}>` +
+                '\n\nUse the **Back** button to go to the previous page. Press the blue `dismiss message` text below the buttons to close this message.'
         )
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
@@ -225,8 +351,7 @@ function QuickStartLastPage(): YabobEmbed {
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
-        quickStartNextButton(false),
-        quickStartSkipButton(false)
+        quickStartNextButton(false)
     );
 
     return {
@@ -244,7 +369,7 @@ function quickStartBackButton(enable: boolean): ButtonBuilder {
     ])
         .setEmoji('⬅️')
         .setLabel('Back')
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Primary)
         .setDisabled(!enable);
 }
 
@@ -257,7 +382,7 @@ function quickStartNextButton(enable: boolean): ButtonBuilder {
     ])
         .setEmoji('➡️')
         .setLabel('Next')
-        .setStyle(ButtonStyle.Secondary)
+        .setStyle(ButtonStyle.Primary)
         .setDisabled(!enable);
 }
 
@@ -274,4 +399,12 @@ function quickStartSkipButton(enable: boolean): ButtonBuilder {
         .setDisabled(!enable);
 }
 
-export { QuickStartPages, QuickStartFirstPage, QuickStartSetRoles, QuickStartCreateAQueue, QuickStartLastPage };
+export {
+    QuickStartPages,
+    QuickStartFirstPage,
+    QuickStartSetRoles,
+    QuickStartAutoGiveStudentRole,
+    QuickStartLoggingChannel,
+    QuickStartCreateAQueue,
+    QuickStartLastPage
+};
