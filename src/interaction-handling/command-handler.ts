@@ -112,9 +112,19 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
         targetQueue || targetStudent
             ? await server.dequeueWithArguments(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
-    await interaction.editReply(
-        SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
-    );
+    const helpTopic = dequeuedStudent.helpTopic;
+    if (!helpTopic) {
+        await interaction.editReply(
+            SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
+        );
+    } else {
+        await interaction.editReply(
+            SuccessMessages.inviteSentAndShowHelpTopic(
+                dequeuedStudent.member.displayName,
+                helpTopic
+            )
+        );
+    }
 }
 
 /**

@@ -22,6 +22,10 @@ type Helpee = {
      * GuildMember object backref
      */
     readonly member: GuildMember;
+    /**
+     * The (optional) help topic the student entered when using `/enqueue` or [JOIN]
+     */
+    helpTopic?: string;
 };
 
 /**

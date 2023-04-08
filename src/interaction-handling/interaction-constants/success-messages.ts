@@ -37,6 +37,12 @@ export const SuccessMessages = {
         ),
     inviteSent: (studentName: string) =>
         SimpleEmbed(`An invite has been sent to ${studentName}.`, EmbedColor.Success),
+    inviteSentAndShowHelpTopic: (studentName: string, helpTopic: string) =>
+        SimpleEmbed(
+            `An invite has been sent to ${studentName}.`,
+            EmbedColor.Success,
+            `\n\n Their help topic is: \n\n ${helpTopic}`
+        ),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',
         EmbedColor.Success
