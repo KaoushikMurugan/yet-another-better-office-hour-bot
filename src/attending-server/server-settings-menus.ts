@@ -553,7 +553,7 @@ function LoggingChannelConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.DisableLoggingChannel,
+            ButtonNames.DisableLoggingChannelSM,
             server.guild.id,
             channelId
         ])
@@ -612,7 +612,7 @@ function LoggingChannelConfigMenu(
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
-                SelectMenuNames.SelectLoggingChannel,
+                SelectMenuNames.SelectLoggingChannelSM,
                 server.guild.id,
                 channelId
             ])

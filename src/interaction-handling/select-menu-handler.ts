@@ -10,20 +10,25 @@ import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCom
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
 import { ReturnToHelpMainAndSubMenuButton } from './shared-interaction-functions.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
+import { QuickStartLoggingChannel } from '../attending-server/quick-start-pages.js';
 
 const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
             [SelectMenuNames.ServerSettings]: showSettingsSubMenu,
-            [SelectMenuNames.SelectLoggingChannel]: selectLoggingChannel,
+            [SelectMenuNames.SelectLoggingChannelSM]: interaction =>
+                selectLoggingChannel(interaction, 'settings'),
+            [SelectMenuNames.SelectLoggingChannelQS]: interaction =>
+                selectLoggingChannel(interaction, 'quickStart'),
             [SelectMenuNames.HelpMenu]: selectHelpCommand
         }
     },
     dmMethodMap: {},
     skipProgressMessageSelectMenus: new Set([
         SelectMenuNames.ServerSettings,
-        SelectMenuNames.SelectLoggingChannel,
+        SelectMenuNames.SelectLoggingChannelSM,
+        SelectMenuNames.SelectLoggingChannelQS,
         SelectMenuNames.HelpMenu
     ])
 };
@@ -53,7 +58,8 @@ async function showSettingsSubMenu(
  * @param interaction
  */
 async function selectLoggingChannel(
-    interaction: StringSelectMenuInteraction<'cached'>
+    interaction: StringSelectMenuInteraction<'cached'>,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const channelId = interaction.values[0];
@@ -68,14 +74,24 @@ async function selectLoggingChannel(
         throw new Error('Invalid option selected:');
     }
     await server.setLoggingChannel(loggingChannel);
-    await interaction.update(
-        callbackMenu.menu(
-            server,
-            interaction.channelId,
-            false,
-            'Logging channel has been updated!'
-        )
-    );
+    if (parent === 'settings') {
+        await interaction.update(
+            callbackMenu.menu(
+                server,
+                interaction.channelId,
+                false,
+                'Logging channel has been updated!'
+            )
+        );
+    } else {
+        await interaction.update(
+            QuickStartLoggingChannel(
+                server,
+                interaction.channelId,
+                'Logging channel has been updated!'
+            )
+        );
+    }
 }
 
 /**

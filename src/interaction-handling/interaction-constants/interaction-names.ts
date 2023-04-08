@@ -52,7 +52,8 @@ enum ButtonNames {
     ServerRoleConfig2aQS = 'ServerRoleConfig2aQS',
     DisableAfterSessionMessage = 'DisableAfterSessionMessage',
     DisableQueueAutoClear = 'DisableQueueAutoClear',
-    DisableLoggingChannel = 'DisableLoggingChannel',
+    DisableLoggingChannelSM = 'DisableLoggingChannelSM',
+    DisableLoggingChannelQS = 'DisableLoggingChannelQS',
     AutoGiveStudentRoleConfig1SM = 'AutoGiveStudentRoleConfig1SM',
     AutoGiveStudentRoleConfig2SM = 'AutoGiveStudentRoleConfig2SM',
     AutoGiveStudentRoleConfig1QS = 'AutoGiveStudentRoleConfig1QS',
@@ -91,7 +92,8 @@ enum ModalNames {
 /** Known base yabob select menu names */
 enum SelectMenuNames {
     ServerSettings = 'ServerSettings',
-    SelectLoggingChannel = 'SelectLoggingChannel',
+    SelectLoggingChannelSM = 'SelectLoggingChannelSM',
+    SelectLoggingChannelQS = 'SelectLoggingChannelQS',
     HelpMenu = 'HelpMenu'
 }
 

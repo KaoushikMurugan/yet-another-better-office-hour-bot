@@ -3,7 +3,8 @@ import {
     ButtonBuilder,
     ButtonStyle,
     EmbedBuilder,
-    Snowflake
+    Snowflake,
+    StringSelectMenuBuilder
 } from 'discord.js';
 import {
     QuickStartPageFunctions,
@@ -13,11 +14,17 @@ import {
 import { UnknownId, buildComponent } from '../utils/component-id-factory.js';
 import {
     ButtonNames,
-    CommandNames
+    CommandNames,
+    SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from './base-attending-server.js';
-import { documentationLinks } from '../utils/documentation-helper.js';
+import {
+    documentationLinks,
+    supportServerInviteLink,
+    wikiBaseUrl
+} from '../utils/documentation-helper.js';
+import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
 const QuickStartPages: QuickStartPageFunctions[] = [
     QuickStartFirstPage,
@@ -41,7 +48,8 @@ function QuickStartFirstPage(): YabobEmbed {
         .setTitle('Quick Start')
         .setColor(EmbedColor.Aqua)
         .setDescription(
-            'Welcome to YABOB! This is a quick start guide to get you started with the bot. If you have any questions, please ask in the support server.' +
+            `**Welcome to YABOB!** This is a quick start guide to get you started with the bot. If you have any questions, \
+            check out [the guide on github](${wikiBaseUrl}) or [the support discord server](${supportServerInviteLink}).` +
                 '\n\nUse the **Next** button to go to the next page, and the **Back** button to go to the previous page. ' +
                 'Use the **Skip** button to skip a page. '
         )
@@ -87,10 +95,10 @@ function QuickStartSetRoles(
             {
                 name: 'Description',
                 value:
-                    'YABOB requires three roles to function properly: Bot Admin, Staff, and Student. These roles are used to control access to the bot and its commands.' +
-                    '\n\nStudent only have acces to joining/leaving queues and viewing schedules, Helpers can host sessions, and Bot Admins can configure the bot.' +
-                    '\n\nYou can use the buttons below to create new roles, or use existing roles. If you use existing roles, make sure they have the correct permissions.' +
-                    `\n\nIf you'd like more granular control over roles, use the </set_roles:${setRolesCommandId}> command.`
+                    'YABOB requires three roles to function properly: **Bot Admin**, **Staff**, and **Student**. These roles are used to control access to the bot and its commands.' +
+                    '\n\n*Students* only have acces to joining/leaving queues and viewing schedules, *Helpers* can host sessions, and *Bot Admins* can configure the bot.' +
+                    '\n\nYou can use the buttons below to create new roles, or use existing roles. If you use existing roles, make sure they have the appropriate permissions.' +
+                    `\n\nIf you'd like more *granular* control over roles, use the **</set_roles:${setRolesCommandId}> command.**`
             },
             {
                 name: 'Documentation',
@@ -193,8 +201,8 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
         .setTitle('Quick Start - Create a Queue')
         .setColor(EmbedColor.Aqua)
         .setDescription(
-            'Now that you have set up your server roles, try creating a queue!' +
-                `\n\nUse the </queue add:${queueAddCommandId}> command to create a queue. Enter the name of the queue, e.g. \`Office Hours\`` +
+            '**Now that you have set up your server roles, try creating a queue!**' +
+                `\n\nUse the **</queue add:${queueAddCommandId}>** command to create a queue. Enter the name of the queue, e.g. \`Office Hours\`` +
                 `\n\nAfter entering the command you should be able to see a new category created on the server with the name you entered, under it will be a \`#chat\` channel and \`#queue\` channel` +
                 '\n\nUse the **Next** button to go to the next page, and the **Back** button to go to the previous page. ' +
                 'Use the **Skip** button to skip a page.'
@@ -228,7 +236,9 @@ function QuickStartAutoGiveStudentRole(
         .addFields(
             {
                 name: 'Description',
-                value: `Whether to automatically give new members the <@&${server.studentRoleID}> role if configured.`
+                value:
+                    `YABOB can automatically give the student (<@&${server.studentRoleID}>) role to each new user that joins this server. By default it is disabled, but you can enable it by pressing the **Enable** button- if you wish to have this feature.` +
+                    `\n\n *If you wish to use another bot to control the assignment of roles, that's fine! It is only important that YABOB knows which roles are the student, helper and bot admin roles*`
             },
             {
                 name: 'Documentation',
@@ -237,7 +247,7 @@ function QuickStartAutoGiveStudentRole(
             {
                 name: 'Current Configuration',
                 value: server.autoGiveStudentRole
-                    ? `**Enabled** - New members will automatically become <@&${server.studentRoleID}>.`
+                    ? `**Enabled** - New members will automatically assigned <@&${server.studentRoleID}>.`
                     : `**Disabled** - New members need to be manually assigned <@&${server.studentRoleID}>.`
             }
         )
@@ -293,7 +303,9 @@ function QuickStartLoggingChannel(
         .addFields(
             {
                 name: 'Description',
-                value: 'If enabled, YABOB will send log embeds to the given text channel after receiving interactions and encountering errors.'
+                value:
+                    'YABOB can log any interactions with it, such as commands, buttons and more. This is useful if you run into any unexpected errors involving YABOB.' +
+                    '\n\nYou can enable logging by selecting a text channel from the dropdown menu below. If you wish to disable logging, select the **Disable** option.'
             },
             {
                 name: 'Documentation',
@@ -320,6 +332,51 @@ function QuickStartLoggingChannel(
                 `${generatePageNumber(QuickStartLoggingChannel)}` +
                 (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
         });
+    const mostLikelyLoggingChannels = server.guild.channels.cache
+        .filter(
+            channel =>
+                isTextChannel(channel) &&
+                channel.name !== 'queue' &&
+                channel.name !== 'chat'
+        ) // don't consider the queue channels
+        .sort(
+            // sort by LCS, higher LCS with 'logs' are closer to the start of the array
+            // TODO: change the 'logs' parameter to another string if necessary
+            (channel1, channel2) =>
+                longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
+                longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
+        );
+
+    const channelsSelectMenu =
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildComponent(new StringSelectMenuBuilder(), [
+                'other',
+                SelectMenuNames.SelectLoggingChannelQS,
+                server.guild.id,
+                channelId
+            ])
+                .setPlaceholder('Select a Text Channel')
+                .addOptions(
+                    // Cannot have more than 25 options
+                    mostLikelyLoggingChannels.first(25).map(channel => ({
+                        label: channel.name,
+                        description: channel.name,
+                        value: channel.id
+                    }))
+                )
+        );
+
+    const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.DisableLoggingChannelQS,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('🔒')
+            .setLabel('Disable')
+            .setStyle(ButtonStyle.Secondary)
+    );
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
@@ -328,7 +385,7 @@ function QuickStartLoggingChannel(
 
     return {
         embeds: [embed],
-        components: [quickStartButtons]
+        components: [channelsSelectMenu, buttons, quickStartButtons]
     };
 }
 
@@ -341,7 +398,8 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start - Finished!')
         .setDescription(
-            'Congratulations! You have completed the quick start guide. If you have any questions, please ask in the support server. ' +
+            `Congratulations! You have completed the quick start guide. If you have any questions, \
+            check out [the guide on github](${wikiBaseUrl}) or [the support discord server](${supportServerInviteLink}).` +
                 `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}>` +
                 '\n\nUse the **Back** button to go to the previous page. Press the blue `dismiss message` text below the buttons to close this message.'
         )

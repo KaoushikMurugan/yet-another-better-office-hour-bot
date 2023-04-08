@@ -29,6 +29,7 @@ import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
 import {
     QuickStartAutoGiveStudentRole,
+    QuickStartLoggingChannel,
     QuickStartPages,
     QuickStartSetRoles
 } from '../attending-server/quick-start-pages.js';
@@ -61,7 +62,10 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
                 createAccessLevelRoles(interaction, true, true, 'quickStart'),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
-            [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
+            [ButtonNames.DisableLoggingChannelSM]: interaction =>
+                disableLoggingChannel(interaction, 'settings'),
+            [ButtonNames.DisableLoggingChannelQS]: interaction =>
+                disableLoggingChannel(interaction, 'quickStart'),
             [ButtonNames.AutoGiveStudentRoleConfig1SM]: interaction =>
                 toggleAutoGiveStudentRole(interaction, true, 'settings'),
             [ButtonNames.AutoGiveStudentRoleConfig2SM]: interaction =>
@@ -131,7 +135,8 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ShowAfterSessionMessageModal,
         ButtonNames.DisableQueueAutoClear,
         ButtonNames.ShowQueueAutoClearModal,
-        ButtonNames.DisableLoggingChannel,
+        ButtonNames.DisableLoggingChannelSM,
+        ButtonNames.DisableLoggingChannelQS,
         ButtonNames.AutoGiveStudentRoleConfig1SM,
         ButtonNames.AutoGiveStudentRoleConfig2SM,
         ButtonNames.AutoGiveStudentRoleConfig1QS,
@@ -360,18 +365,29 @@ async function disableQueueAutoClear(
  * Disable logging channel
  */
 async function disableLoggingChannel(
-    interaction: ButtonInteraction<'cached'>
+    interaction: ButtonInteraction<'cached'>,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.setLoggingChannel(undefined);
-    await interaction.update(
-        LoggingChannelConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            `Successfully disabled logging on ${server.guild.name}`
-        )
-    );
+    if (parent === 'settings') {
+        await interaction.update(
+            LoggingChannelConfigMenu(
+                server,
+                interaction.channelId,
+                false,
+                `Successfully disabled logging on ${server.guild.name}`
+            )
+        );
+    } else {
+        await interaction.update(
+            QuickStartLoggingChannel(
+                server,
+                interaction.channelId,
+                `Successfully disabled logging on ${server.guild.name}`
+            )
+        );
+    }
 }
 
 /**

@@ -15,4 +15,9 @@ const documentationLinks = {
     seriousMode: `${documentationBaseUrl}#serious-mode`
 };
 
-export { documentationLinks };
+const wikiBaseUrl =
+    'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki';
+
+const supportServerInviteLink = 'https://discord.gg/p7HS92mHsG';
+
+export { documentationLinks, wikiBaseUrl, supportServerInviteLink };
