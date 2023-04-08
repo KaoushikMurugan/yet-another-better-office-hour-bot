@@ -2,12 +2,19 @@
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { red } from '../../utils/command-line-colors.js';
-import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
-import { GuildMemberId } from '../../utils/type-aliases.js';
+import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
+import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
-import { logWithTimeStamp } from '../../utils/util-functions.js';
+import { logWithTimeStamp, padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
+import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import {
+    AttendanceHeaders,
+    HelpSessionHeaders,
+    attendanceHeaders,
+    helpSessionHeaders
+} from './google-sheet-constants/column-enums.js';
 
 /**
  * Additional attendance info for each helper
@@ -26,21 +33,16 @@ type AttendanceEntry = Omit<Required<ActiveTime & Helper>, 'latestStudentJoinTim
  * Individual help sessions
  */
 type HelpSessionEntry = {
-    'Student Username': string;
-    'Student Discord ID': string;
-    'Helper Username': string;
-    'Helper Discord ID': string;
-    'Session Start': Date; // time join VC, also wait start
-    'Session End'?: Date; // time leave VC
-    'Wait Start': Date; // Helpee.waitStart
-    'Queue Name': string;
-    'Wait Time (ms)': number; // wait end - wait start
+    studentUsername: string;
+    studentDiscordId: Snowflake;
+    helperUsername: string;
+    helperDiscordId: string;
+    sessionStart: Date; // time join VC, also wait start
+    sessionEnd?: Date; // time leave VC
+    waitStart: Date; // Helpee.waitStart
+    queueName: string;
+    waitTimeMs: number; // wait end - wait start
 };
-
-/**
- * Required headers of the help session GoogleSpreadsheetWorkSheet
- */
-type HelpSessionSheetHeaders = (keyof HelpSessionEntry)[];
 
 // Credit of all the update logic goes to Kaoushik
 class GoogleSheetServerExtension extends BaseServerExtension implements ServerExtension {
@@ -143,7 +145,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             setTimeout(async () => {
                 this.attendanceUpdateIsScheduled = false;
                 await this.batchUpdateAttendance();
-            }, 60 * 1000);
+            }, 1000);
         }
         this.activeTimeEntries.delete(helper.member.id);
     }
@@ -186,15 +188,15 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 continue;
             }
             const helpSessionEntry: HelpSessionEntry = {
-                'Student Username': student.member.user.username,
-                'Student Discord ID': studentId,
-                'Helper Username': helper.member.user.username,
-                'Helper Discord ID': helper.member.id,
-                'Session Start': new Date(),
-                'Session End': undefined,
-                'Wait Start': student.waitStart,
-                'Queue Name': student.queue.queueName,
-                'Wait Time (ms)': new Date().getTime() - student.waitStart.getTime()
+                studentUsername: student.member.user.username,
+                studentDiscordId: studentId,
+                helperUsername: helper.member.user.username,
+                helperDiscordId: helper.member.id,
+                sessionStart: new Date(),
+                sessionEnd: undefined,
+                waitStart: student.waitStart,
+                queueName: student.queue.queueName,
+                waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
             this.helpSessionEntries.has(studentId)
                 ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
@@ -227,10 +229,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-        const completeHelpSessionEntries = helpSessionEntries.map(entry => ({
-            ...entry,
-            'Session End': new Date()
-        }));
+        const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
+            helpSessionEntries.map(entry => ({
+                ...entry,
+                sessionEnd: new Date()
+            }));
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
@@ -238,24 +241,14 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             );
     }
 
-    /** Updates all the cached attendance entries */
+    /**
+     * Updates all the cached attendance entries
+     */
     private async batchUpdateAttendance(): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.allStates.get(
-            this.guild.id
-        )?.googleSheet;
+        const googleSheet = GoogleSheetExtensionState.safeGet(this.guild.id)?.googleSheet;
         if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
-        const requiredHeaders = [
-            'Helper Username',
-            'Time In',
-            'Time Out',
-            'Helped Students',
-            'Discord ID',
-            'Session Time (ms)',
-            'Active Time (ms)',
-            'Number of Students Helped'
-        ];
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Attendance`.replace(
@@ -266,47 +259,51 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: requiredHeaders
+                headerValues: attendanceHeaders
             }));
         const safeToUpdate =
             // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === requiredHeaders.length &&
+            attendanceSheet.headerValues.length === attendanceHeaders.length &&
             attendanceSheet.headerValues.every(
                 // finally check if all headers exist both the previous conditions are true
-                header => requiredHeaders.includes(header)
+                header => (attendanceHeaders as string[]).includes(header)
             );
         if (!safeToUpdate) {
             // very slow, O(n^2 * m) string array comparison is faster than this
-            await attendanceSheet.setHeaderRow(requiredHeaders);
+            await attendanceSheet.setHeaderRow(attendanceHeaders);
         }
         const updatedCountSnapshot = this.attendanceEntries.length;
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
-                    'Helper Username': entry.member.user.username,
-                    'Time In': entry.helpStart.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Time Out': entry.helpEnd.toLocaleString('en-US', {
-                        timeZone: 'PST8PDT'
-                    }),
-                    'Helped Students': JSON.stringify(
+                    [AttendanceHeaders.HelperUserName]: entry.member.user.username,
+                    [AttendanceHeaders.TimeInLocal]: this.timeFormula(
+                        entry.helpStart,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    [AttendanceHeaders.TimeOutLocal]: this.timeFormula(
+                        entry.helpEnd,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    [AttendanceHeaders.HelpedStudents]: JSON.stringify(
                         entry.helpedMembers.map(student => ({
                             displayName: student.member.displayName,
                             username: student.member.user.username,
                             id: student.member.id
                         }))
                     ),
-                    'Discord ID': entry.member.id,
-                    'Session Time (ms)':
+                    [AttendanceHeaders.HelperDiscordId]: entry.member.id,
+                    [AttendanceHeaders.OfficeHourTimeMs]:
                         entry.helpEnd.getTime() - entry.helpStart.getTime(),
-                    'Active Time (ms)': entry.activeTimeMs,
-                    'Number of Students Helped': entry.helpedMembers.length
+                    [AttendanceHeaders.ActiveTimeMs]: entry.activeTimeMs,
+                    [AttendanceHeaders.NumStudents]: entry.helpedMembers.length,
+                    [AttendanceHeaders.UnixTimeIn]: entry.helpStart.getTime(),
+                    [AttendanceHeaders.UnixTimeOut]: entry.helpEnd.getTime()
                 })),
                 {
-                    raw: true,
+                    raw: false, // false to make google sheets interpret the formula
                     insert: true
                 }
             ),
@@ -331,10 +328,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     red(
                         `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
                     ),
-                    this.attendanceEntries,
                     err.name,
                     err.message
                 );
+                // have to manually manuever this, otherwise we only get [object Object]
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+                for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
+                    console.error(rest);
+                    for (const helpedMember of helpedMembers) {
+                        console.error(helpedMember.member.nickname);
+                    }
+                }
             });
     }
 
@@ -345,10 +349,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     private async updateHelpSession(
         entries: Required<HelpSessionEntry>[]
     ): Promise<void> {
-        const googleSheet = GoogleSheetExtensionState.allStates.get(
-            this.guild.id
-        )?.googleSheet;
-        if (entries[0] === undefined || !googleSheet) {
+        const googleSheet = GoogleSheetExtensionState.safeGet(this.guild.id)?.googleSheet;
+        if (entries.length === 0 || !googleSheet) {
             return; // do nothing if there's nothing to update
         }
         // trim off colon because google api bug, then trim off any excess spaces
@@ -356,60 +358,64 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             /\s{2,}/g,
             ' '
         );
-        const requiredHeaders = Object.keys(entries[0]) as HelpSessionSheetHeaders;
         const helpSessionSheet =
             googleSheet.sheetsByTitle[sheetTitle] ??
             (await googleSheet.addSheet({
                 title: sheetTitle,
-                headerValues: requiredHeaders
+                headerValues: helpSessionHeaders
             }));
         const safeToUpdate = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
             helpSessionSheet.headerValues && // this is necessary, could be undefined
-            helpSessionSheet.headerValues.length ===
-                [...requiredHeaders, 'Session Time (ms)'].length &&
+            helpSessionSheet.headerValues.length === helpSessionHeaders.length &&
             helpSessionSheet.headerValues.every(header =>
-                [...requiredHeaders, 'Session Time (ms)'].includes(header)
+                (helpSessionHeaders as string[]).includes(header)
             );
         if (!safeToUpdate) {
-            await helpSessionSheet.setHeaderRow([
-                ...requiredHeaders,
-                'Session Time (ms)'
-            ]);
+            await helpSessionSheet.setHeaderRow(helpSessionHeaders);
         }
         Promise.all([
             helpSessionSheet.addRows(
-                entries.map(entry =>
-                    Object.fromEntries([
-                        ...requiredHeaders.map(header =>
-                            header === 'Session End' ||
-                            header === 'Session Start' ||
-                            header === 'Wait Start'
-                                ? [
-                                      header,
-                                      entry[header].toLocaleString('en-US', {
-                                          timeZone: 'PST8PDT'
-                                      })
-                                  ]
-                                : [header, entry[header].toString()]
-                        ),
-                        [
-                            'Session Time (ms)',
-                            entry['Session End'].getTime() -
-                                entry['Session Start'].getTime()
-                        ]
-                    ])
-                ),
-                { raw: true, insert: true }
+                entries.map(entry => ({
+                    [HelpSessionHeaders.StudentUsername]: entry.studentUsername,
+                    [HelpSessionHeaders.StudentDiscordId]: entry.studentDiscordId,
+                    [HelpSessionHeaders.HelperUsername]: entry.helperUsername,
+                    [HelpSessionHeaders.HelperDiscordId]: entry.helperDiscordId,
+                    [HelpSessionHeaders.SessionStartLocal]: this.timeFormula(
+                        entry.sessionStart,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    [HelpSessionHeaders.SessionEndLocal]: this.timeFormula(
+                        entry.sessionEnd,
+                        AttendingServerV2.get(this.guild.id).timezone
+                    ),
+                    [HelpSessionHeaders.QueueName]: entry.queueName,
+                    [HelpSessionHeaders.WaitTimeMs]: entry.waitTimeMs,
+                    [HelpSessionHeaders.SessionStartUnix]: entry.sessionStart.getTime(),
+                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionStart.getTime()
+                })),
+                { raw: false, insert: true }
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
             console.error(
                 red('Error when updating help session: '),
+                entries,
                 err.name,
                 err.message
             )
         );
     }
+
+    /**
+     * Displays a date object on google sheets including the timezone
+     * @param date date to show
+     * @param timezone timezone of server
+     */
+    private timeFormula(date: Date, { sign, hours, minutes }: SimpleTimeZone): string {
+        return `=TEXT(EPOCHTODATE(${date.getTime()}, 2) ${sign} TIME(${hours}, ${minutes}, 0), "MM/DD/YYYY HH:MM:SS") & " (UTC${sign}${padTo2Digits(
+            hours
+        )}:${padTo2Digits(minutes)})"`;
+    }
 }
 
-export { GoogleSheetServerExtension, ActiveTime, HelpSessionEntry, AttendanceEntry };
+export { GoogleSheetServerExtension, ActiveTime, AttendanceEntry };

@@ -138,6 +138,10 @@ interface ServerExtension {
      */
     onServerDelete: (server: FrozenServer) => Promise<void>;
     /**
+     * When /set_time_zone is used
+     */
+    onTimeZoneChange: (server: FrozenServer) => Promise<void>;
+    /**
      * When the server asks for external backup data. Called inside AttendingServerV2.create
      * @param serverId the guild id
      * @returns Optional backup. If no extension provides backups, start fresh
@@ -309,6 +313,9 @@ abstract class BaseServerExtension implements ServerExtension {
         return Promise.resolve();
     }
     onServerDelete(server: FrozenServer): Promise<void> {
+        return Promise.resolve();
+    }
+    onTimeZoneChange(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
     loadExternalServerData(serverId: string): Promise<Optional<ServerBackup>> {

@@ -9,13 +9,14 @@
  */
 import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v9';
+import { Routes } from 'discord-api-types/v10';
 import { ChannelType, Guild } from 'discord.js';
 import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
+import { range } from '../../utils/util-functions.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -236,16 +237,10 @@ const createOfficesCommand = new SlashCommandBuilder()
             .setDescription('The number of offices to create')
             .setRequired(true)
             .addChoices(
-                { name: '1', value: 1 },
-                { name: '2', value: 2 },
-                { name: '3', value: 3 },
-                { name: '4', value: 4 },
-                { name: '5', value: 5 },
-                { name: '6', value: 6 },
-                { name: '7', value: 7 },
-                { name: '8', value: 8 },
-                { name: '9', value: 9 },
-                { name: '10', value: 10 }
+                ...range(10).map(i => ({
+                    name: `${i + 1}`,
+                    value: i + 1
+                }))
             )
     );
 
@@ -284,12 +279,10 @@ function generateSettingsCommand() {
                 .addChoices(
                     ...serverSettingsMainMenuOptions
                         .filter(option => option.useInSettingsCommand === true)
-                        .map(option => {
-                            return {
-                                name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
-                                value: option.selectMenuOptionData.value
-                            };
-                        })
+                        .map(option => ({
+                            name: `${option.selectMenuOptionData.emoji} ${option.selectMenuOptionData.label}`,
+                            value: option.selectMenuOptionData.value
+                        }))
                 )
         );
 }
@@ -310,6 +303,54 @@ const helpCommand = new SlashCommandBuilder()
     .setName(CommandNames.help)
     .setDescription('Get help with the bot');
 
+// /set_time_zone
+const setTimeZoneCommand = new SlashCommandBuilder()
+    .setName(CommandNames.set_time_zone)
+    .setDescription('Set the time zone of this server relative to UTC')
+    .addStringOption(option =>
+        option
+            .setName('sign')
+            .setDescription('Plus or Minute from UTC')
+            .setRequired(true)
+            .addChoices(
+                {
+                    name: '+',
+                    value: '+'
+                },
+                {
+                    name: '-',
+                    value: '-'
+                }
+            )
+    )
+    .addIntegerOption(option =>
+        option
+            .setName('hours')
+            .setDescription('Hours')
+            .setRequired(true)
+            .addChoices(
+                ...range(13).map(i => ({
+                    name: `${i}`,
+                    value: i
+                }))
+            )
+    )
+    .addIntegerOption(option =>
+        option.setName('minutes').setDescription('Minutes').setRequired(true).addChoices(
+            {
+                name: '0',
+                value: 0
+            },
+            {
+                name: '30',
+                value: 30
+            },
+            {
+                name: '45',
+                value: 45
+            }
+        )
+    );
 // /assign_helpers_roles [csv_file]
 const assignHelpersRolesCommand = new SlashCommandBuilder()
     .setName(CommandNames.assign_helpers_roles)
@@ -344,6 +385,7 @@ const commandData = [
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
     helpCommand.toJSON(),
+    setTimeZoneCommand.toJSON(),
     assignHelpersRolesCommand.toJSON()
 ];
 
@@ -357,9 +399,7 @@ async function postSlashCommands(
     if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0) {
         throw new Error('Failed to post commands. BOT_TOKEN is undefined');
     }
-    const rest = new REST({ version: '9' }).setToken(
-        environment.discordBotCredentials.YABOB_BOT_TOKEN
-    );
+    const rest = new REST().setToken(environment.discordBotCredentials.YABOB_BOT_TOKEN);
     await rest
         .put(
             Routes.applicationGuildCommands(

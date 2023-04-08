@@ -176,10 +176,16 @@ type SettingsMenuOption = {
 /** Type alias for interaction extensions */
 type CommandData = ReadonlyArray<RESTPostAPIChatInputApplicationCommandsJSONBody>;
 
+type SimpleTimeZone = {
+    sign: '+' | '-';
+    hours: number;
+    minutes: 0 | 30 | 45;
+};
+
 type HelperRolesData = {
     /** The user id of the helper */
     helperId: GuildMemberId;
-    /** Thbe queues for which the helper is assigned */
+    /** The queues for which the helper is assigned */
     queues: string[];
 };
 
@@ -201,6 +207,7 @@ export {
     EnsureCorrectEnum,
     SettingsMenuOption,
     CommandData,
+    SimpleTimeZone,
     HelperRolesData,
     /** Aliases */
     GuildId,
