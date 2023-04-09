@@ -45,6 +45,7 @@ import {
     HelperRolesData,
     Optional,
     OptionalRoleId,
+    SimpleTimeZone,
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
@@ -90,6 +91,10 @@ type ServerSettings = {
      * - 'Deleted' means that the role was deleted
      */
     accessLevelRoleIds: AccessLevelRoleIds;
+    /**
+     * Timezone of the server, defaults to utc (sign = +, hours = 0, minutes = 0)
+     */
+    timezone: SimpleTimeZone;
 };
 
 /**
@@ -106,7 +111,6 @@ class AttendingServerV2 {
      */
     private static readonly allServers: Collection<Snowflake, AttendingServerV2> =
         new Collection();
-
     /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
@@ -125,7 +129,6 @@ class AttendingServerV2 {
      * Server settings. An firebase update is requested as soon as this changes
      */
     private settings: ServerSettings = {
-        // TODO: Use the Proxy class to abstract away the update logic
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
@@ -133,6 +136,11 @@ class AttendingServerV2 {
             botAdmin: SpecialRoleValues.NotSet,
             staff: SpecialRoleValues.NotSet,
             student: SpecialRoleValues.NotSet
+        },
+        timezone: {
+            sign: '-',
+            hours: 7,
+            minutes: 0
         }
     };
 
@@ -171,6 +179,11 @@ class AttendingServerV2 {
     /** All the helpers on this server, both active and paused */
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;
+    }
+
+    /** Timezone of the server */
+    get timezone(): Readonly<SimpleTimeZone> {
+        return this.settings.timezone;
     }
 
     /**
@@ -1034,6 +1047,14 @@ class AttendingServerV2 {
             this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
         );
         return true;
+    }
+
+    @useSettingsBackup
+    async setTimeZone(newTimeZone: SimpleTimeZone): Promise<void> {
+        this.settings.timezone = newTimeZone;
+        await Promise.all(
+            this.serverExtensions.map(extension => extension.onTimeZoneChange(this))
+        );
     }
 
     /**

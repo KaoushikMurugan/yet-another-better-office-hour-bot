@@ -52,7 +52,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
 }
 
 /**
- * Updates the help channel messages
+ * Updates the help channel messages & permissions
  * Removes all messages in the help channel and posts new ones
  * @param guild
  * @param accessLevelRoleIds the access level role ids used to configure visibility
@@ -83,27 +83,35 @@ async function updateCommandHelpChannels(
                 })
             )
         );
-        // console.log(helpCategory.children.cache.map(c => c.permissionOverwrites.cache.map(h => h.deny)));
-        await Promise.all([
+        Promise.all([
             sendHelpChannelMessages(helpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
-        ]);
+        ])
+            .then(() =>
+                console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`))
+            )
+            .catch(err => console.error('Failed to update help messages', err));
     } else {
         console.log(
             `Found existing help channels in ${yellow(
                 guild.name
             )}, updating command help files`
         );
-        await Promise.all([
+        Promise.all([
             sendHelpChannelMessages(existingHelpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
-        ]);
+        ])
+            .then(() =>
+                console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`))
+            )
+            .catch(err => console.error('Failed to update help messages', err));
     }
-    console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`));
 }
 
 /**
  * Overwrites the existing command help channel and send new help messages
+ * @remark the async calls in this function are very slow,
+ *  so the callee should use callbacks instead of await
  * @param helpCategory the category named 'Bot Commands Help'
  */
 async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<void> {

@@ -114,7 +114,8 @@ class HelpQueueV2 {
                 this._students.push({
                     waitStart: studentBackup.waitStart,
                     member: correspondingMember,
-                    queue: this
+                    queue: this,
+                    helpTopic: studentBackup.helpTopic
                 });
             }
         }
@@ -342,7 +343,8 @@ class HelpQueueV2 {
         const student: Helpee = {
             waitStart: new Date(),
             member: studentMember,
-            queue: this
+            queue: this,
+            helpTopic: undefined
         };
         this._students.push(student);
         await Promise.all([
@@ -350,6 +352,19 @@ class HelpQueueV2 {
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
             this.triggerRender()
         ]);
+    }
+
+    @useQueueBackup
+    async updateStudentHelpTopic(
+        studentMember: GuildMember,
+        helpTopic: string
+    ): Promise<void> {
+        const student = this._students.find(
+            student => student.member.id === studentMember.id
+        );
+        if (student) {
+            student.helpTopic = helpTopic;
+        }
     }
 
     /**

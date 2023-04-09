@@ -1,6 +1,7 @@
 import { Helper } from '../../models/member-states.js';
 import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
-import { convertMsToTime } from '../../utils/util-functions.js';
+import { SimpleTimeZone } from '../../utils/type-aliases.js';
+import { convertMsToTime, padTo2Digits } from '../../utils/util-functions.js';
 
 /**
  * All possible success messages of base yabob
@@ -36,6 +37,12 @@ export const SuccessMessages = {
         ),
     inviteSent: (studentName: string) =>
         SimpleEmbed(`An invite has been sent to ${studentName}.`, EmbedColor.Success),
+    inviteSentAndShowHelpTopic: (studentName: string, helpTopic: string) =>
+        SimpleEmbed(
+            `An invite has been sent to ${studentName}.`,
+            EmbedColor.Success,
+            `\n\n Their help topic is: \n\n ${helpTopic}`
+        ),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',
         EmbedColor.Success
@@ -156,6 +163,19 @@ export const SuccessMessages = {
         `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
         EmbedColor.Success
     ),
+    changedTimeZone: (
+        // destructure inside parameter list to avoid creating a bunch of variables
+        { sign: oldSign, hours: oldHours, minutes: oldMinutes }: SimpleTimeZone,
+        { sign: newSign, hours: newHours, minutes: newMinutes }: SimpleTimeZone
+    ) =>
+        SimpleEmbed(
+            `Successfully changed timezone of this server from **UTC ${oldSign}${padTo2Digits(
+                oldHours
+            )}:${padTo2Digits(oldMinutes)}** to **UTC ${newSign}${padTo2Digits(
+                newHours
+            )}:${padTo2Digits(newMinutes)}**.`,
+            EmbedColor.Success
+        ),
     assignedHelpersRoles: (roleLogs: string) =>
         SimpleEmbed(
             `Successfully assigned the respective queue roles to the helpers`,

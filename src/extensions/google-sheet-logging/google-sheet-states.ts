@@ -1,6 +1,6 @@
 import { Collection, Guild, Snowflake } from 'discord.js';
 import { GoogleSheetServerExtension } from './google-sheet-server-extension.js';
-import { GuildId } from '../../utils/type-aliases.js';
+import { GuildId, Optional } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { yellow, blue } from '../../utils/command-line-colors.js';
@@ -69,6 +69,10 @@ class GoogleSheetExtensionState {
             );
         }
         return state;
+    }
+
+    static safeGet(serverId: Snowflake): Optional<GoogleSheetExtensionState> {
+        return GoogleSheetExtensionState.allStates.get(serverId);
     }
 
     /**

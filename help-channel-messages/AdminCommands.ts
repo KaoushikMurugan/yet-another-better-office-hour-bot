@@ -411,6 +411,40 @@ const assignHelpersRolesHelp: HelpMessage = {
     emoji: '🪪'
 };
 
+const setTimeZoneHelp: HelpMessage = {
+    nameValuePair: {
+        name: 'set_time_zone',
+        value: 'set_time_zone'
+    },
+    useInHelpChannel: true,
+    useInHelpCommand: true,
+    message: {
+        embeds: [
+            {
+                color: EmbedColor.NoColor,
+                title: 'Command: `/set_time_zone [sign] [hours] [minutes]`',
+                fields: [
+                    {
+                        name: 'Description',
+                        value: 'Sets the UTC timezone of this server. Any functionality involving date and time will reference this timezone.'
+                    },
+                    {
+                        name: 'Options',
+                        value:
+                            '`sign: + or -`: The sign of the UTC offset.\n' +
+                            '`hours: 0 ~ 12`: The number of hours in the offset.\n' +
+                            '`minutes: 0, 30, or 45`: The number of minutes in the offset.'
+                    },
+                    {
+                        name: 'Example Usage',
+                        value: '`/set_time_zone sign=-, hours=7, minutes=0`'
+                    }
+                ]
+            }
+        ]
+    }
+};
+
 const adminCommandHelpMessages: HelpMessage[] = [
     adminCommandsTitleMessage,
     queueAddHelp,
@@ -423,7 +457,8 @@ const adminCommandHelpMessages: HelpMessage[] = [
     settingsHelp,
     createOfficesHelp,
     setRoleHelp,
-    assignHelpersRolesHelp
+    assignHelpersRolesHelp,
+    setTimeZoneHelp
 ];
 
 export { adminCommandHelpMessages };

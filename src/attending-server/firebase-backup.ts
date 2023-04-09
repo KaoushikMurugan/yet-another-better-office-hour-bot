@@ -8,6 +8,7 @@ import { FrozenServer } from '../extensions/extension-utils.js';
 import { logWithTimeStamp } from '../utils/util-functions.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { AttendingServerV2 } from './base-attending-server.js';
+import util from 'util';
 
 /**
  * Loads the backup data in firebase given a server id
@@ -25,7 +26,7 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
             red(
                 `External backups were found for ${
                     client.guilds.cache.get(serverId)?.name
-                } but contains invalid data. ` + `Creating new instance.`
+                } but contains invalid data. Creating new instance.`
             )
         );
         return undefined;
@@ -44,7 +45,12 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
         timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
         autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
         promptHelpTopic: unpack.data.promptHelpTopic ?? false,
-        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set' // !Migration code
+        staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set', // !Migration code
+        timezone: unpack.data.timezone ?? {
+            sign: '-',
+            hours: 7,
+            minutes: 0 // default to PDT, UTC-7
+        }
     };
     return backupData;
 }
@@ -76,7 +82,8 @@ function fullServerBackup(server: FrozenServer): void {
         staffRoleId: server.staffRoleID,
         studentRoleId: server.studentRoleID,
         autoGiveStudentRole: server.autoGiveStudentRole,
-        promptHelpTopic: server.promptHelpTopic
+        promptHelpTopic: server.promptHelpTopic,
+        timezone: server.timezone
     };
     firebaseDB
         .collection('serverBackups')
@@ -112,7 +119,8 @@ function backupServerSettings(server: FrozenServer): void {
             staffRoleId: server.staffRoleID,
             studentRoleId: server.studentRoleID,
             autoGiveStudentRole: server.autoGiveStudentRole,
-            promptHelpTopic: server.promptHelpTopic
+            promptHelpTopic: server.promptHelpTopic,
+            timezone: server.timezone
         })
         .then(() =>
             logWithTimeStamp(server.guild.name, '- Server settings backup successful')
@@ -185,12 +193,22 @@ function useFullBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    // this parameter specifies the context of the decorator
-    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
-        // .apply accepts 'this' as the first parameter to specify the context of the function call
-        original.apply(this, args);
-        fullServerBackup(this);
-    };
+    if (util.types.isAsyncFunction(original)) {
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            fullServerBackup(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            fullServerBackup(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 
@@ -205,10 +223,22 @@ function useSettingsBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
-        original.apply(this, args);
-        backupServerSettings(this);
-    };
+    if (util.types.isAsyncFunction(original)) {
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            backupServerSettings(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            backupServerSettings(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 
@@ -223,10 +253,22 @@ function useQueueBackup(
     descriptor: PropertyDescriptor
 ): PropertyDescriptor {
     const original = descriptor.value;
-    descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
-        original.apply(this, args);
-        backupQueueData(this);
-    };
+    if (util.types.isAsyncFunction(original)) {
+        // this parameter specifies the context of the decorator
+        descriptor.value = async function (this: HelpQueueV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = await original.apply(this, args);
+            backupQueueData(this);
+            return res;
+        };
+    } else {
+        descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
+            // .apply accepts 'this' as the first parameter to specify the context of the function call
+            const res = original.apply(this, args);
+            backupQueueData(this);
+            return res;
+        };
+    }
     return descriptor;
 }
 

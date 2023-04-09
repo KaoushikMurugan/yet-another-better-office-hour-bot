@@ -77,15 +77,37 @@ function logWithTimeStamp(
     );
 }
 
+function padTo2Digits(num: number): string {
+    return num.toString().padStart(2, '0');
+}
+
 /**
- * Converts the time delta in milliseconds into a readable format
+ * Creates a list of integers in [low, high), behaves exactly like python's range function
+ * @param low lower end of the range (inclusive),
+ *  if high is not specified, this is the max and 0 is used as the low end
+ * @param high higher end of the range, exclusive
+ * @param step step size, defaults to 1, requires all params to be specified
+ * @returns a list of integers
+ */
+function range(low: number, high?: number, step = 1): number[] {
+    if (!high) {
+        return Array(low)
+            .fill(undefined)
+            .map((_, i) => i * step);
+    }
+    if (step > high - low) {
+        throw new Error('Step size must be <= interval size');
+    }
+    return Array(Math.ceil((high - low) / step))
+        .fill(undefined)
+        .map((_, i) => i * step + low);
+}
+
+/**
+ * Converts the time delta in milliseconds into 'HH hours, MM minutes, SS seconds'
  * @param milliseconds the difference to convert
  */
 function convertMsToTime(milliseconds: number): string {
-    function padTo2Digits(num: number): string {
-        return num.toString().padStart(2, '0');
-    }
-
     let seconds = Math.floor(milliseconds / 1000);
     let minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -105,7 +127,7 @@ function convertMsToTime(milliseconds: number): string {
 }
 
 /**
- * Converts the time delta in milliseconds into a readable format
+ * Converts the time delta in milliseconds into HH:MM:SS
  * @param milliseconds the difference to convert
  */
 function convertMsToShortTime(milliseconds: number): string {
@@ -121,6 +143,11 @@ function convertMsToShortTime(milliseconds: number): string {
     minutes = minutes % 60;
 
     return `${padTo2Digits(hours)}:${padTo2Digits(minutes)}:${padTo2Digits(seconds)}`;
+}
+
+function camelCaseToTitleCase(text: string): string {
+    const result = text.replace(/([A-Z])/g, ' $1');
+    return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
 /**
@@ -513,6 +540,9 @@ export {
     printTitleString,
     logWithTimeStamp,
     longestCommonSubsequence,
+    padTo2Digits,
+    range,
+    camelCaseToTitleCase,
     /** Type Guards */
     isLeaveVC,
     isJoinVC,
