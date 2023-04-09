@@ -266,6 +266,10 @@ const setRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+// /quick_start
+const quickStartCommand = new SlashCommandBuilder()
+    .setName(CommandNames.quick_start)
+    .setDescription('Quickly set up the bot for your server');
 // /settings
 function generateSettingsCommand() {
     return new SlashCommandBuilder()
@@ -385,8 +389,9 @@ const commandData = [
     pauseCommand.toJSON(),
     resumeCommand.toJSON(),
     helpCommand.toJSON(),
-    setTimeZoneCommand.toJSON(),
-    assignHelpersRolesCommand.toJSON()
+    assignHelpersRolesCommand.toJSON(),
+    quickStartCommand.toJSON(),
+    setTimeZoneCommand.toJSON()
 ];
 
 async function postSlashCommands(

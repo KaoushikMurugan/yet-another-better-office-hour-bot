@@ -30,7 +30,8 @@ enum CommandNames {
     set_roles = 'set_roles',
     set_time_zone = 'set_time_zone',
     settings = 'settings',
-    assign_helpers_roles = 'assign_helpers_roles'
+    assign_helpers_roles = 'assign_helpers_roles',
+    quick_start = 'quick_start'
 }
 
 /**
@@ -42,15 +43,22 @@ enum ButtonNames {
     Notif = 'Notif',
     RemoveNotif = 'RemoveNotif',
     ReturnToMainMenu = 'ReturnToMainMenu',
-    ServerRoleConfig1 = 'ServerRoleConfig1',
-    ServerRoleConfig1a = 'ServerRoleConfig1a',
-    ServerRoleConfig2 = 'ServerRoleConfig2',
-    ServerRoleConfig2a = 'ServerRoleConfig2a',
+    ServerRoleConfig1SM = 'ServerRoleConfig1SM',
+    ServerRoleConfig1aSM = 'ServerRoleConfig1aSM',
+    ServerRoleConfig2SM = 'ServerRoleConfig2SM',
+    ServerRoleConfig2aSM = 'ServerRoleConfig2aSM',
+    ServerRoleConfig1QS = 'ServerRoleConfig1QS',
+    ServerRoleConfig1aQS = 'ServerRoleConfig1aQS',
+    ServerRoleConfig2QS = 'ServerRoleConfig2QS',
+    ServerRoleConfig2aQS = 'ServerRoleConfig2aQS',
     DisableAfterSessionMessage = 'DisableAfterSessionMessage',
     DisableQueueAutoClear = 'DisableQueueAutoClear',
-    DisableLoggingChannel = 'DisableLoggingChannel',
-    AutoGiveStudentRoleConfig1 = 'AutoGiveStudentRoleConfig1',
-    AutoGiveStudentRoleConfig2 = 'AutoGiveStudentRoleConfig2',
+    DisableLoggingChannelSM = 'DisableLoggingChannelSM',
+    DisableLoggingChannelQS = 'DisableLoggingChannelQS',
+    AutoGiveStudentRoleConfig1SM = 'AutoGiveStudentRoleConfig1SM',
+    AutoGiveStudentRoleConfig2SM = 'AutoGiveStudentRoleConfig2SM',
+    AutoGiveStudentRoleConfig1QS = 'AutoGiveStudentRoleConfig1QS',
+    AutoGiveStudentRoleConfig2QS = 'AutoGiveStudentRoleConfig2QS',
     ShowAfterSessionMessageModal = 'ShowAfterSessionMessageModal',
     ShowQueueAutoClearModal = 'ShowQueueAutoClearModal',
     PromptHelpTopicConfig1 = 'PromptHelpTopicConfig1',
@@ -65,7 +73,10 @@ enum ButtonNames {
     ReturnToHelpMainMenu = 'ReturnToHelpMainMenu',
     ReturnToHelpAdminSubMenu = 'ReturnToHelpAdminSubMenu',
     ReturnToHelpStaffSubMenu = 'ReturnToHelpStaffSubMenu',
-    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu'
+    ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu',
+    QuickStartBack = 'QuickStartBack',
+    QuickStartNext = 'QuickStartNext',
+    QuickStartSkip = 'QuickStartSkip'
 }
 
 /**
@@ -82,7 +93,8 @@ enum ModalNames {
 /** Known base yabob select menu names */
 enum SelectMenuNames {
     ServerSettings = 'ServerSettings',
-    SelectLoggingChannel = 'SelectLoggingChannel',
+    SelectLoggingChannelSM = 'SelectLoggingChannelSM',
+    SelectLoggingChannelQS = 'SelectLoggingChannelQS',
     HelpMenu = 'HelpMenu'
 }
 

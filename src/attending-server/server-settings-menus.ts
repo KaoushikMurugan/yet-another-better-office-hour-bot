@@ -21,6 +21,7 @@ import {
     CommandNames,
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
+import { documentationLinks } from '../utils/documentation-helper.js';
 
 /**
  * Composes the select menu that allows user to jump between different settings menus
@@ -61,23 +62,6 @@ const trailingNewLine = '\n\u200b' as const;
 /** Use this string to force a leading new line in an embed field */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const leadingNewLine = '\u200b\n' as const;
-
-const documentationBaseUrl =
-    'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server' as const;
-
-/**
- * Links to the documentation
- */
-const documentationLinks = {
-    main: documentationBaseUrl,
-    serverRoles: `${documentationBaseUrl}#server-roles`,
-    autoClear: `${documentationBaseUrl}#queue-auto-clear`,
-    loggingChannel: `${documentationBaseUrl}#logging-channel`,
-    afterSessionMessage: `${documentationBaseUrl}#after-session-message`,
-    autoGiveStudentRole: `${documentationBaseUrl}#auto-give-student-role`,
-    promptHelpTopic: `${documentationBaseUrl}#help-topic-prompt`,
-    seriousMode: `${documentationBaseUrl}#serious-mode`
-};
 
 /**
  * Options for the main menu of server settings
@@ -262,7 +246,7 @@ function RolesConfigMenuInGuild(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1,
+                ButtonNames.ServerRoleConfig1SM,
                 server.guild.id,
                 channelId
             ])
@@ -273,7 +257,7 @@ function RolesConfigMenuInGuild(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig1a,
+                ButtonNames.ServerRoleConfig1aSM,
                 server.guild.id,
                 channelId
             ])
@@ -284,7 +268,7 @@ function RolesConfigMenuInGuild(
         new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2,
+                ButtonNames.ServerRoleConfig2SM,
                 server.guild.id,
                 channelId
             ])
@@ -293,7 +277,7 @@ function RolesConfigMenuInGuild(
                 .setStyle(ButtonStyle.Secondary),
             buildComponent(new ButtonBuilder(), [
                 'other',
-                ButtonNames.ServerRoleConfig2a,
+                ButtonNames.ServerRoleConfig2aSM,
                 server.guild.id,
                 channelId
             ])
@@ -371,7 +355,7 @@ function RolesConfigMenuForServerInit(
               new ActionRowBuilder<ButtonBuilder>().addComponents(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig1,
+                      ButtonNames.ServerRoleConfig1SM,
                       server.guild.id,
                       channelId
                   ])
@@ -382,7 +366,7 @@ function RolesConfigMenuForServerInit(
                       .setStyle(ButtonStyle.Secondary),
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig1a,
+                      ButtonNames.ServerRoleConfig1aSM,
                       server.guild.id,
                       channelId
                   ])
@@ -393,7 +377,7 @@ function RolesConfigMenuForServerInit(
               new ActionRowBuilder<ButtonBuilder>().addComponents(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig2,
+                      ButtonNames.ServerRoleConfig2SM,
                       server.guild.id,
                       channelId
                   ])
@@ -402,7 +386,7 @@ function RolesConfigMenuForServerInit(
                       .setStyle(ButtonStyle.Secondary),
                   buildComponent(new ButtonBuilder(), [
                       'dm',
-                      ButtonNames.ServerRoleConfig2a,
+                      ButtonNames.ServerRoleConfig2aSM,
                       server.guild.id,
                       channelId
                   ])
@@ -569,7 +553,7 @@ function LoggingChannelConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.DisableLoggingChannel,
+            ButtonNames.DisableLoggingChannelSM,
             server.guild.id,
             channelId
         ])
@@ -628,7 +612,7 @@ function LoggingChannelConfigMenu(
         new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
-                SelectMenuNames.SelectLoggingChannel,
+                SelectMenuNames.SelectLoggingChannelSM,
                 server.guild.id,
                 channelId
             ])
@@ -691,7 +675,7 @@ function AutoGiveStudentRoleConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.AutoGiveStudentRoleConfig1,
+            ButtonNames.AutoGiveStudentRoleConfig1SM,
             server.guild.id,
             channelId
         ])
@@ -700,7 +684,7 @@ function AutoGiveStudentRoleConfigMenu(
             .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            ButtonNames.AutoGiveStudentRoleConfig2,
+            ButtonNames.AutoGiveStudentRoleConfig2SM,
             server.guild.id,
             channelId
         ])

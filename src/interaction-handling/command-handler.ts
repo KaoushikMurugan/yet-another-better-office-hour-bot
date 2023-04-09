@@ -19,7 +19,10 @@ import {
     SettingsMainMenu,
     serverSettingsMainMenuOptions
 } from '../attending-server/server-settings-menus.js';
-import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
+import {
+    ExpectedParseErrors,
+    UnexpectedParseErrors
+} from './interaction-constants/expected-interaction-errors.js';
 import { PromptHelpTopicModal } from './interaction-constants/modal-objects.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
@@ -29,6 +32,9 @@ import {
 } from './shared-validations.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
+import { HelperRolesData } from '../utils/type-aliases.js';
+import { parse } from 'csv-string';
+import { QuickStartPages } from '../attending-server/quick-start-pages.js';
 import { SimpleTimeZone } from '../utils/type-aliases.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
@@ -55,6 +61,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.set_roles]: setRoles,
         [CommandNames.settings]: settingsMenu,
         [CommandNames.queue_notify]: joinQueueNotify,
+        [CommandNames.assign_helpers_roles]: assignHelpersRoles,
+        [CommandNames.quick_start]: quickStart,
         [CommandNames.set_time_zone]: setTimeZone
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
@@ -663,6 +671,89 @@ async function setTimeZone(
     await interaction.editReply(
         SuccessMessages.changedTimeZone(oldTimezone, newTimeZone)
     );
+}
+
+async function quickStart(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.quick_start,
+        'botAdmin'
+    );
+
+    const firstQuickStartPage = QuickStartPages[0];
+
+    if (firstQuickStartPage === undefined) {
+        throw new CommandParseError('Invalid quick start page.');
+    }
+
+    await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
+}
+
+/**
+ * The `/assign_helpers_roles` command
+ * @param interaction
+ */
+async function assignHelpersRoles(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        CommandNames.assign_helpers_roles,
+        'botAdmin'
+    );
+
+    const attachment = interaction.options.getAttachment('csv_file', true);
+    if (!attachment.contentType?.includes('text/csv')) {
+        throw ExpectedParseErrors.invalidContentType(attachment.contentType);
+    }
+
+    const csvFile = await fetch(attachment.url);
+
+    if (!csvFile.ok) {
+        throw UnexpectedParseErrors.unexpectedFetchError(
+            interaction,
+            csvFile.status,
+            csvFile.statusText
+        );
+    }
+
+    const csvText = await csvFile.text();
+
+    const helpersRolesData: HelperRolesData[] = [];
+
+    const data = parse(csvText);
+
+    data.forEach(record => {
+        const recordDiscordID = record[0];
+        const recordQueueNames = record.slice(1);
+        helpersRolesData.push({
+            helperId: recordDiscordID ?? '0',
+            queues: recordQueueNames
+        });
+    });
+
+    const [logMap, errorMap] = await server.assignHelpersRoles(helpersRolesData);
+
+    let roleLogs = `Assigned roles to helpers:\n${Array.from(logMap.entries())
+        .map(([helperId, roles]) => `<@${helperId}>: ${roles}`)
+        .join('\n')}`;
+
+    if (errorMap.size > 0) {
+        roleLogs += `\n\nErrors:\n${Array.from(errorMap.entries())
+            .map(([helperId, error]) => `<@${helperId}>: ${error}`)
+            .join('\n')}`;
+        await interaction.editReply(
+            SuccessMessages.partiallyAssignedHelpersRoles(roleLogs)
+        );
+    } else {
+        await interaction.editReply(SuccessMessages.assignedHelpersRoles(roleLogs));
+    }
 }
 
 export { baseYabobCommandMap };

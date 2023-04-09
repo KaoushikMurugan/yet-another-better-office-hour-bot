@@ -27,6 +27,12 @@ import { SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
+import {
+    QuickStartAutoGiveStudentRole,
+    QuickStartLoggingChannel,
+    QuickStartPages,
+    QuickStartSetRoles
+} from '../attending-server/quick-start-pages.js';
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -38,21 +44,36 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         },
         other: {
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
-            [ButtonNames.ServerRoleConfig1]: interaction =>
-                createAccessLevelRoles(interaction, false, false),
-            [ButtonNames.ServerRoleConfig1a]: interaction =>
-                createAccessLevelRoles(interaction, false, true),
-            [ButtonNames.ServerRoleConfig2]: interaction =>
-                createAccessLevelRoles(interaction, true, false),
-            [ButtonNames.ServerRoleConfig2a]: interaction =>
-                createAccessLevelRoles(interaction, true, true),
+            [ButtonNames.ServerRoleConfig1SM]: interaction =>
+                createAccessLevelRoles(interaction, false, false, 'settings'),
+            [ButtonNames.ServerRoleConfig1aSM]: interaction =>
+                createAccessLevelRoles(interaction, false, true, 'settings'),
+            [ButtonNames.ServerRoleConfig2SM]: interaction =>
+                createAccessLevelRoles(interaction, true, false, 'settings'),
+            [ButtonNames.ServerRoleConfig2aSM]: interaction =>
+                createAccessLevelRoles(interaction, true, true, 'settings'),
+            [ButtonNames.ServerRoleConfig1QS]: interaction =>
+                createAccessLevelRoles(interaction, false, false, 'quickStart'),
+            [ButtonNames.ServerRoleConfig1aQS]: interaction =>
+                createAccessLevelRoles(interaction, false, true, 'quickStart'),
+            [ButtonNames.ServerRoleConfig2QS]: interaction =>
+                createAccessLevelRoles(interaction, true, false, 'quickStart'),
+            [ButtonNames.ServerRoleConfig2aQS]: interaction =>
+                createAccessLevelRoles(interaction, true, true, 'quickStart'),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
-            [ButtonNames.DisableLoggingChannel]: disableLoggingChannel,
-            [ButtonNames.AutoGiveStudentRoleConfig1]: interaction =>
-                toggleAutoGiveStudentRole(interaction, true),
-            [ButtonNames.AutoGiveStudentRoleConfig2]: interaction =>
-                toggleAutoGiveStudentRole(interaction, false),
+            [ButtonNames.DisableLoggingChannelSM]: interaction =>
+                disableLoggingChannel(interaction, 'settings'),
+            [ButtonNames.DisableLoggingChannelQS]: interaction =>
+                disableLoggingChannel(interaction, 'quickStart'),
+            [ButtonNames.AutoGiveStudentRoleConfig1SM]: interaction =>
+                toggleAutoGiveStudentRole(interaction, true, 'settings'),
+            [ButtonNames.AutoGiveStudentRoleConfig2SM]: interaction =>
+                toggleAutoGiveStudentRole(interaction, false, 'settings'),
+            [ButtonNames.AutoGiveStudentRoleConfig1QS]: interaction =>
+                toggleAutoGiveStudentRole(interaction, true, 'quickStart'),
+            [ButtonNames.AutoGiveStudentRoleConfig2QS]: interaction =>
+                toggleAutoGiveStudentRole(interaction, false, 'quickStart'),
             [ButtonNames.ShowAfterSessionMessageModal]: showAfterSessionMessageModal,
             [ButtonNames.ShowQueueAutoClearModal]: showQueueAutoClearModal,
             [ButtonNames.PromptHelpTopicConfig1]: interaction =>
@@ -80,33 +101,46 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.ReturnToHelpStaffSubMenu]: interaction =>
                 returnToHelpSubMenu(interaction, 'staff'),
             [ButtonNames.ReturnToHelpStudentSubMenu]: interaction =>
-                returnToHelpSubMenu(interaction, 'student')
+                returnToHelpSubMenu(interaction, 'student'),
+            [ButtonNames.QuickStartBack]: interaction =>
+                shiftQuickStartPage(interaction, 'back'),
+            [ButtonNames.QuickStartNext]: interaction =>
+                shiftQuickStartPage(interaction, 'next'),
+            [ButtonNames.QuickStartSkip]: interaction =>
+                shiftQuickStartPage(interaction, 'skip')
         }
     },
     dmMethodMap: {
-        [ButtonNames.ServerRoleConfig1]: interaction =>
+        [ButtonNames.ServerRoleConfig1SM]: interaction =>
             createServerRolesDM(interaction, false, false),
-        [ButtonNames.ServerRoleConfig1a]: interaction =>
+        [ButtonNames.ServerRoleConfig1aSM]: interaction =>
             createServerRolesDM(interaction, false, true),
-        [ButtonNames.ServerRoleConfig2]: interaction =>
+        [ButtonNames.ServerRoleConfig2SM]: interaction =>
             createServerRolesDM(interaction, true, false),
-        [ButtonNames.ServerRoleConfig2a]: interaction =>
+        [ButtonNames.ServerRoleConfig2aSM]: interaction =>
             createServerRolesDM(interaction, true, true)
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
         ButtonNames.ReturnToMainMenu,
-        ButtonNames.ServerRoleConfig1,
-        ButtonNames.ServerRoleConfig1a,
-        ButtonNames.ServerRoleConfig2,
-        ButtonNames.ServerRoleConfig2a,
+        ButtonNames.ServerRoleConfig1SM,
+        ButtonNames.ServerRoleConfig1aSM,
+        ButtonNames.ServerRoleConfig2SM,
+        ButtonNames.ServerRoleConfig2aSM,
+        ButtonNames.ServerRoleConfig1QS,
+        ButtonNames.ServerRoleConfig1aQS,
+        ButtonNames.ServerRoleConfig2QS,
+        ButtonNames.ServerRoleConfig2aQS,
         ButtonNames.DisableAfterSessionMessage,
         ButtonNames.ShowAfterSessionMessageModal,
         ButtonNames.DisableQueueAutoClear,
         ButtonNames.ShowQueueAutoClearModal,
-        ButtonNames.DisableLoggingChannel,
-        ButtonNames.AutoGiveStudentRoleConfig1,
-        ButtonNames.AutoGiveStudentRoleConfig2,
+        ButtonNames.DisableLoggingChannelSM,
+        ButtonNames.DisableLoggingChannelQS,
+        ButtonNames.AutoGiveStudentRoleConfig1SM,
+        ButtonNames.AutoGiveStudentRoleConfig2SM,
+        ButtonNames.AutoGiveStudentRoleConfig1QS,
+        ButtonNames.AutoGiveStudentRoleConfig2QS,
         ButtonNames.PromptHelpTopicConfig1,
         ButtonNames.PromptHelpTopicConfig2,
         ButtonNames.SeriousModeConfig1,
@@ -119,7 +153,10 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ReturnToHelpMainMenu,
         ButtonNames.ReturnToHelpAdminSubMenu,
         ButtonNames.ReturnToHelpStaffSubMenu,
-        ButtonNames.ReturnToHelpStudentSubMenu
+        ButtonNames.ReturnToHelpStudentSubMenu,
+        ButtonNames.QuickStartBack,
+        ButtonNames.QuickStartNext,
+        ButtonNames.QuickStartSkip
     ])
 };
 
@@ -225,19 +262,28 @@ async function showSettingsMainMenu(
 async function createAccessLevelRoles(
     interaction: ButtonInteraction<'cached'>,
     forceCreate: boolean,
-    everyoneIsStudent: boolean
+    everyoneIsStudent: boolean,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
-        RolesConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            forceCreate
-                ? 'New roles have been created!'
-                : 'Role configurations have been updated!'
-        )
+        parent === 'settings'
+            ? RolesConfigMenu(
+                  server,
+                  interaction.channelId,
+                  false,
+                  forceCreate
+                      ? 'New roles have been created!'
+                      : 'Role configurations have been updated!'
+              )
+            : QuickStartSetRoles(
+                  server,
+                  interaction.channelId,
+                  forceCreate
+                      ? 'New roles have been created!'
+                      : 'Role configurations have been updated!'
+              )
     );
 }
 
@@ -319,18 +365,29 @@ async function disableQueueAutoClear(
  * Disable logging channel
  */
 async function disableLoggingChannel(
-    interaction: ButtonInteraction<'cached'>
+    interaction: ButtonInteraction<'cached'>,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.setLoggingChannel(undefined);
-    await interaction.update(
-        LoggingChannelConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            `Successfully disabled logging on ${server.guild.name}`
-        )
-    );
+    if (parent === 'settings') {
+        await interaction.update(
+            LoggingChannelConfigMenu(
+                server,
+                interaction.channelId,
+                false,
+                `Successfully disabled logging on ${server.guild.name}`
+            )
+        );
+    } else {
+        await interaction.update(
+            QuickStartLoggingChannel(
+                server,
+                interaction.channelId,
+                `Successfully disabled logging on ${server.guild.name}`
+            )
+        );
+    }
 }
 
 /**
@@ -339,20 +396,33 @@ async function disableLoggingChannel(
  */
 async function toggleAutoGiveStudentRole(
     interaction: ButtonInteraction<'cached'>,
-    autoGiveStudentRole: boolean
+    autoGiveStudentRole: boolean,
+    parent: 'settings' | 'quickStart'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
-    await interaction.update(
-        AutoGiveStudentRoleConfigMenu(
-            server,
-            interaction.channelId,
-            false,
-            `Successfully turned ${
-                autoGiveStudentRole ? 'on' : 'off'
-            } auto give student role.`
-        )
-    );
+    if (parent === 'settings') {
+        await interaction.update(
+            AutoGiveStudentRoleConfigMenu(
+                server,
+                interaction.channelId,
+                false,
+                `Successfully turned ${
+                    autoGiveStudentRole ? 'on' : 'off'
+                } auto give student role.`
+            )
+        );
+    } else {
+        await interaction.update(
+            QuickStartAutoGiveStudentRole(
+                server,
+                interaction.channelId,
+                `Successfully turned ${
+                    autoGiveStudentRole ? 'on' : 'off'
+                } auto give student role.`
+            )
+        );
+    }
 }
 
 /**
@@ -452,6 +522,30 @@ async function returnToHelpSubMenu(
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
+}
+
+async function shiftQuickStartPage(
+    interaction: ButtonInteraction<'cached'>,
+    buttonPressed: 'back' | 'next' | 'skip'
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const oldEmbed = interaction.message.embeds[0];
+    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const oldPage = Number(footerText?.split('/')[0]);
+    const maxPage = Number(footerText?.split('/')[1]);
+    // invalid parse check
+    if (isNaN(oldPage) || isNaN(maxPage)) return;
+    // bounds check
+    if (
+        (buttonPressed === 'back' && oldPage <= 1) ||
+        ((buttonPressed === 'next' || buttonPressed === 'skip') && oldPage === maxPage)
+    ) {
+        return;
+    }
+    const newPage = buttonPressed === 'back' ? oldPage - 2 : oldPage;
+    const quickStartEmbed = QuickStartPages[newPage];
+    if (quickStartEmbed === undefined) return;
+    await interaction.update(quickStartEmbed(server, interaction.channelId));
 }
 
 export { baseYabobButtonMethodMap };

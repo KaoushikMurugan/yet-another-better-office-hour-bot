@@ -173,6 +173,12 @@ type SettingsMenuOption = {
     menu: SettingsMenuConstructor;
 };
 
+type QuickStartPageFunctions = (
+    server: AttendingServerV2,
+    channelId: string,
+    updateMessage?: string
+) => YabobEmbed;
+
 /** Type alias for interaction extensions */
 type CommandData = ReadonlyArray<RESTPostAPIChatInputApplicationCommandsJSONBody>;
 
@@ -206,6 +212,7 @@ export {
     Entries,
     EnsureCorrectEnum,
     SettingsMenuOption,
+    QuickStartPageFunctions,
     CommandData,
     SimpleTimeZone,
     HelperRolesData,
