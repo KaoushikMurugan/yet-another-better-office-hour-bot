@@ -108,29 +108,44 @@ function backupServerSettings(server: FrozenServer): void {
     firebaseDB
         .collection('serverBackups')
         .doc(server.guild.id)
-        .update({
-            serverName: server.guild.name,
-            timeStamp: new Date(),
-            afterSessionMessage: server.afterSessionMessage,
-            loggingChannelId: server.loggingChannel?.id ?? '',
-            hoursUntilAutoClear: server.queueAutoClearTimeout ?? 'AUTO_CLEAR_DISABLED',
-            seriousServer: server.isSerious,
-            botAdminRoleId: server.botAdminRoleID,
-            staffRoleId: server.staffRoleID,
-            studentRoleId: server.studentRoleID,
-            autoGiveStudentRole: server.autoGiveStudentRole,
-            promptHelpTopic: server.promptHelpTopic,
-            timezone: server.timezone
+        .get()
+        .then(doc => {
+            if (!doc.exists) {
+                fullServerBackup(server);
+            } else {
+                firebaseDB
+                    .collection('serverBackups')
+                    .doc(server.guild.id)
+                    .update({
+                        serverName: server.guild.name,
+                        timeStamp: new Date(),
+                        afterSessionMessage: server.afterSessionMessage,
+                        loggingChannelId: server.loggingChannel?.id ?? '',
+                        hoursUntilAutoClear:
+                            server.queueAutoClearTimeout ?? 'AUTO_CLEAR_DISABLED',
+                        seriousServer: server.isSerious,
+                        botAdminRoleId: server.botAdminRoleID,
+                        staffRoleId: server.staffRoleID,
+                        studentRoleId: server.studentRoleID,
+                        autoGiveStudentRole: server.autoGiveStudentRole,
+                        promptHelpTopic: server.promptHelpTopic,
+                        timezone: server.timezone
+                    })
+                    .then(() =>
+                        logWithTimeStamp(
+                            server.guild.name,
+                            '- Server settings backup successful'
+                        )
+                    )
+                    .catch((err: Error) =>
+                        console.error('Firebase server backup failed.', err.message)
+                    );
+                server.sendLogMessage(
+                    SimpleLogEmbed('Settings for this server backed-up in firebase')
+                );
+            }
         })
-        .then(() =>
-            logWithTimeStamp(server.guild.name, '- Server settings backup successful')
-        )
-        .catch((err: Error) =>
-            console.error('Firebase server backup failed.', err.message)
-        );
-    server.sendLogMessage(
-        SimpleLogEmbed('Settings for this server backed-up in firebase')
-    );
+        .catch(err => console.error('Failed to fetch firebase doc', err));
 }
 
 /**
@@ -150,6 +165,7 @@ function backupQueueData(queue: HelpQueueV2): void {
     const firebaseDoc = firebaseDB
         .collection('serverBackups')
         .doc(queue.queueChannel.channelObj.guild.id);
+    // we are assuming the doc exists, since it's impossible to have a queue method call without a queue
     firebaseDoc
         .get()
         .then(response => {

@@ -391,7 +391,7 @@ const commandData = [
     helpCommand.toJSON(),
     assignHelpersRolesCommand.toJSON(),
     quickStartCommand.toJSON(),
-    setTimeZoneCommand.toJSON(),
+    setTimeZoneCommand.toJSON()
 ];
 
 async function postSlashCommands(
