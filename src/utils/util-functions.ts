@@ -73,8 +73,7 @@ function logWithTimeStamp(
                 timeZone: 'PST8PDT'
             })
         )} ${yellow(guildName)}]\n`,
-        ...params,
-        '\n'
+        ...params
     );
 }
 
@@ -284,7 +283,7 @@ function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): vo
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Command Used: ${magenta(interaction.toString())}\n`
+            ` - Command Used: ${magenta(interaction.toString())}`
     );
 }
 
@@ -309,8 +308,7 @@ function logButtonPress(
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}` +
-            (queueName ? `\n - In Queue: ${queueName}` : ''),
-        '\n'
+            (queueName ? `\n - In Queue: ${queueName}` : '')
     );
 }
 
@@ -329,8 +327,7 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
             `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
-            ` - In DM`,
-        '\n'
+            ` - In DM`
     );
 }
 
@@ -352,8 +349,7 @@ function logModalSubmit(
             `${yellow(interaction.guild.name)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
-            ` - Modal Used: ${magenta(modalName)}`,
-        '\n'
+            ` - Modal Used: ${magenta(modalName)}`
     );
 }
 
@@ -373,8 +369,7 @@ function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Related Server Id: ${interaction.guildId}\n` +
             ` - Modal Used: ${magenta(modalName)}` +
-            ` - In DM`,
-        '\n'
+            ` - In DM`
     );
 }
 
@@ -397,8 +392,7 @@ function logSelectMenuSelection(
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Server Id: ${interaction.guildId}\n` +
             ` - Select Menu Used: ${magenta(selectMenuName)}\n` +
-            ` - Selected Options: ${magenta(interaction.values.join(', '))}`,
-        '\n'
+            ` - Selected Options: ${magenta(interaction.values.join(', '))}`
     );
 }
 
@@ -422,8 +416,7 @@ function logDMSelectMenuSelection(
             ` - Related Server Id: ${interaction.guildId}\n` +
             ` - Select Menu Used: ${magenta(selectMenuName)}` +
             ` - Selected Options: ${magenta(interaction.values.join(', '))}` +
-            ` - In DM`,
-        '\n'
+            ` - In DM`
     );
 }
 
@@ -443,8 +436,7 @@ function logExpectedErrors(interaction: Interaction, error: Error): void {
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Related Server Id: ${interaction.guildId}\n` +
             ` - ${red(`Error: ${error.name}`)}\n` +
-            ` - Error Message: ${error.message}`,
-        '\n'
+            ` - Error Message: ${error.message}`
     );
 }
 

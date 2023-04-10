@@ -41,7 +41,7 @@ export const SuccessMessages = {
         SimpleEmbed(
             `An invite has been sent to ${studentName}.`,
             EmbedColor.Success,
-            `\n\n Their help topic is: \n\n ${helpTopic}`
+            `**${studentName}'s Help Topic**\n${helpTopic.slice(0, 4000)}` // in case the student's name is long
         ),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',

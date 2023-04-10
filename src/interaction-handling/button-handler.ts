@@ -172,7 +172,6 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
             ephemeral: true
         });
     }
-    // await server.enqueueStudent(interaction.member, queueChannel);
     await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
