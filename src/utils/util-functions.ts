@@ -326,7 +326,6 @@ function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): v
         )} ` +
             `${yellow(interaction.user.username)}]\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Related Server Id: ${interaction.guildId}\n` +
             ` - Button Pressed: ${magenta(buttonName)}\n` +
             ` - In DM`
     );

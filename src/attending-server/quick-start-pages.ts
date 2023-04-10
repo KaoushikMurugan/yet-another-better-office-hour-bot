@@ -26,7 +26,7 @@ import {
 } from '../utils/documentation-helper.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
-const QuickStartPages: QuickStartPageFunctions[] = [
+const quickStartPages: QuickStartPageFunctions[] = [
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartCreateAQueue,
@@ -35,12 +35,10 @@ const QuickStartPages: QuickStartPageFunctions[] = [
     QuickStartLastPage
 ];
 
-function generatePageNumber(functionName: QuickStartPageFunctions): string {
-    return `Page ${
-        QuickStartPages.findIndex(pageFunction => {
-            return pageFunction === functionName;
-        }) + 1
-    }/${QuickStartPages.length}`;
+function generatePageNumber(targetPage: QuickStartPageFunctions): string {
+    return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${
+        quickStartPages.length
+    }`;
 }
 
 function QuickStartFirstPage(): YabobEmbed {
@@ -135,8 +133,6 @@ function QuickStartSetRoles(
                 server.guild.id,
                 channelId
             ])
-                // this emoji string must be free of any other characters
-                // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles')
                 .setStyle(ButtonStyle.Secondary),
@@ -321,7 +317,7 @@ function QuickStartLoggingChannel(
         .setFooter({
             text:
                 `${generatePageNumber(QuickStartLoggingChannel)}` +
-                (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
+                (updateMessage.length > 0 ? ` • ✅ ${updateMessage}` : '')
         });
     const possibleLoggingChannels = server.guild.channels.cache
         .filter(
@@ -329,10 +325,8 @@ function QuickStartLoggingChannel(
                 isTextChannel(channel) &&
                 channel.name !== 'queue' &&
                 channel.name !== 'chat'
-        ) // don't consider the queue channels
+        )
         .sort(
-            // sort by LCS, higher LCS with 'logs' are closer to the start of the array
-            // TODO: change the 'logs' parameter to another string if necessary
             (channel1, channel2) =>
                 longestCommonSubsequence(channel2.name.toLowerCase(), 'logs') -
                 longestCommonSubsequence(channel1.name.toLowerCase(), 'logs')
@@ -381,27 +375,25 @@ function QuickStartLoggingChannel(
 }
 
 function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
-    // get the settings command id
     const settingsCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.settings
     )?.id;
-
     const embed = new EmbedBuilder()
         .setTitle('Quick Start - Finished!')
         .setDescription(
             `Congratulations! You have completed the quick start guide. If you have any questions, \
             check out [the guide on github](${wikiBaseUrl}) or join [the support discord server](${supportServerInviteLink}).` +
-                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}> menu.`
+                `\n\nThere are many other functionalities of the bot that you can explore via the ${
+                    settingsCommandId ? `</settings:${settingsCommandId}>` : '`/settings`'
+                } menu.`
         )
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
         });
-
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
         quickStartNextButton(false)
     );
-
     return {
         embeds: [embed],
         components: [quickStartButtons]
@@ -435,7 +427,7 @@ function quickStartNextButton(enable: boolean): ButtonBuilder {
 }
 
 export {
-    QuickStartPages,
+    quickStartPages,
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartAutoGiveStudentRole,

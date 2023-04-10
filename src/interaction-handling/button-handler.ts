@@ -30,7 +30,7 @@ import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functi
 import {
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
-    QuickStartPages,
+    quickStartPages,
     QuickStartSetRoles
 } from '../attending-server/quick-start-pages.js';
 
@@ -172,7 +172,6 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
             ephemeral: true
         });
     }
-    // await server.enqueueStudent(interaction.member, queueChannel);
     await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
@@ -477,8 +476,7 @@ async function switchHelpMenuPage(
     leftOrRight: 'left' | 'right'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    const oldEmbed = interaction.message.embeds[0];
-    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const footerText = interaction.message.embeds[0]?.footer?.text.split(' ')[1];
     const oldPage = Number(footerText?.split('/')[0]);
     const maxPage = Number(footerText?.split('/')[1]);
     // invalid parse check
@@ -490,11 +488,11 @@ async function switchHelpMenuPage(
     ) {
         return;
     }
-    const helpmenu = HelpSubMenuEmbed(
+    const helpMenu = HelpSubMenuEmbed(
         server,
         leftOrRight === 'left' ? oldPage - 2 : oldPage
     );
-    await interaction.update(helpmenu);
+    await interaction.update(helpMenu);
 }
 
 async function showHelpSubMenu(
@@ -526,12 +524,13 @@ async function shiftQuickStartPage(
     buttonPressed: 'back' | 'next'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    const oldEmbed = interaction.message.embeds[0];
-    const footerText = oldEmbed?.footer?.text.split(' ')[1];
+    const footerText = interaction.message.embeds[0]?.footer?.text.split(' ')[1];
     const oldPage = Number(footerText?.split('/')[0]);
     const maxPage = Number(footerText?.split('/')[1]);
     // invalid parse check
-    if (isNaN(oldPage) || isNaN(maxPage)) return;
+    if (isNaN(oldPage) || isNaN(maxPage)) {
+        return;
+    }
     // bounds check
     if (
         (buttonPressed === 'back' && oldPage <= 1) ||
@@ -540,7 +539,7 @@ async function shiftQuickStartPage(
         return;
     }
     const newPage = buttonPressed === 'back' ? oldPage - 2 : oldPage;
-    const quickStartEmbed = QuickStartPages[newPage];
+    const quickStartEmbed = quickStartPages[newPage];
     if (quickStartEmbed === undefined) {
         return;
     }

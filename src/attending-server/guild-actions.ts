@@ -142,6 +142,7 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
 /**
  * Sets the command help channel visibility with the given role ids;
  *  Delete all existing permission overwrites, then create new ones
+ * @remark the async calls in this function are very slow, so callee should attach .catch() callback instead of await
  * @param guild
  * @param accessLevelRoleIds the newly updated access level role ids
  */

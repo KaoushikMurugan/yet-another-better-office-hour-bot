@@ -34,7 +34,7 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server.js'
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
 import { HelperRolesData } from '../utils/type-aliases.js';
 import { parse } from 'csv-string';
-import { QuickStartPages } from '../attending-server/quick-start-pages.js';
+import { quickStartPages } from '../attending-server/quick-start-pages.js';
 import { SimpleTimeZone } from '../utils/type-aliases.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
@@ -684,7 +684,7 @@ async function quickStart(
         'botAdmin'
     );
 
-    const firstQuickStartPage = QuickStartPages[0];
+    const firstQuickStartPage = quickStartPages[0];
 
     if (firstQuickStartPage === undefined) {
         throw new CommandParseError('Invalid quick start page.');
