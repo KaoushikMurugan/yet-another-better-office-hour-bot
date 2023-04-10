@@ -75,8 +75,7 @@ enum ButtonNames {
     ReturnToHelpStaffSubMenu = 'ReturnToHelpStaffSubMenu',
     ReturnToHelpStudentSubMenu = 'ReturnToHelpStudentSubMenu',
     QuickStartBack = 'QuickStartBack',
-    QuickStartNext = 'QuickStartNext',
-    QuickStartSkip = 'QuickStartSkip'
+    QuickStartNext = 'QuickStartNext'
 }
 
 /**

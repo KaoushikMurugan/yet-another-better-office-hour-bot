@@ -95,9 +95,8 @@ function QuickStartSetRoles(
             {
                 name: 'Description',
                 value:
-                    'YABOB requires three roles to function properly: **Bot Admin**, **Staff**, and **Student**. These roles are used to control access to the bot and its commands.' +
-                    '\n\n*Students* only have acces to joining/leaving queues and viewing schedules, *Helpers* can host sessions, and *Bot Admins* can configure the bot.' +
-                    '\n\nYou can use the buttons below to create new roles, or use existing roles. If you use existing roles, make sure they have the appropriate permissions.' +
+                    'YABOB requires three roles to function properly: **Bot Admin**, **Staff**, and **Student**. These roles are used to control access to the bot and its commands. ' +
+                    'For fresh servers, we recommend using [Create New Roles].' +
                     `\n\nIf you'd like more *granular* control over roles, use the **</set_roles:${setRolesCommandId}> command.**`
             },
             {
@@ -172,21 +171,16 @@ function QuickStartSetRoles(
                 .setStyle(ButtonStyle.Secondary)
         )
     ];
-
-    const allowSkip =
-        server.botAdminRoleID === SpecialRoleValues.NotSet ||
-        server.staffRoleID === SpecialRoleValues.NotSet ||
-        server.studentRoleID === SpecialRoleValues.NotSet;
-
+    // always make Next available, because we can't detect if /set_roles is used
+    // if the user manually sets up all the roles with set_roles
+    // we don't have a way to update this menu
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
-        quickStartNextButton(!allowSkip),
-        quickStartSkipButton(allowSkip)
+        quickStartNextButton(true)
     );
-
     return {
         embeds: [embed.data],
-        components: [quickStartButtons, ...buttons]
+        components: [...buttons, quickStartButtons]
     };
 }
 
@@ -203,20 +197,15 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
         .setDescription(
             '**Now that you have set up your server roles, try creating a queue!**' +
                 `\n\nUse the **</queue add:${queueAddCommandId}>** command to create a queue. Enter the name of the queue, e.g. \`Office Hours\`` +
-                `\n\nAfter entering the command you should be able to see a new category created on the server with the name you entered, under it will be a \`#chat\` channel and \`#queue\` channel` +
-                '\n\nUse the **Next** button to go to the next page, and the **Back** button to go to the previous page. ' +
-                'Use the **Skip** button to skip a page.'
+                `\n\nAfter entering the command you should be able to see a new category created on the server with the name you entered, under it will be a \`#chat\` channel and \`#queue\` channel`
         )
         .setFooter({
             text: generatePageNumber(QuickStartCreateAQueue)
         });
 
-    const showSkip = server.queues.length === 0;
-
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
-        quickStartNextButton(!showSkip),
-        quickStartSkipButton(showSkip)
+        quickStartNextButton(true)
     );
 
     return {
@@ -236,9 +225,11 @@ function QuickStartAutoGiveStudentRole(
         .addFields(
             {
                 name: 'Description',
-                value:
-                    `YABOB can automatically give the student (<@&${server.studentRoleID}>) role to each new user that joins this server. By default it is disabled, but you can enable it by pressing the **Enable** button- if you wish to have this feature.` +
-                    `\n\n *If you wish to use another bot to control the assignment of roles, that's fine! It is only important that YABOB knows which roles are the student, helper and bot admin roles*`
+                value: `YABOB can automatically give the student (<@&${server.studentRoleID}>) role to each new user that joins this server.`
+            },
+            {
+                name: 'Note: Integrate with other bots',
+                value: "If you wish to use another bot to control the assignment of roles, that's fine! It is only important that YABOB knows which roles are the student, helper and bot admin roles."
             },
             {
                 name: 'Documentation',
@@ -285,7 +276,7 @@ function QuickStartAutoGiveStudentRole(
 
     return {
         embeds: [embed],
-        components: [quickStartButtons, settingsButtons]
+        components: [settingsButtons, quickStartButtons]
     };
 }
 
@@ -332,7 +323,7 @@ function QuickStartLoggingChannel(
                 `${generatePageNumber(QuickStartLoggingChannel)}` +
                 (updateMessage.length > 0 ? ` ● ✅ ${updateMessage}` : '')
         });
-    const mostLikelyLoggingChannels = server.guild.channels.cache
+    const possibleLoggingChannels = server.guild.channels.cache
         .filter(
             channel =>
                 isTextChannel(channel) &&
@@ -358,7 +349,7 @@ function QuickStartLoggingChannel(
                 .setPlaceholder('Select a Text Channel')
                 .addOptions(
                     // Cannot have more than 25 options
-                    mostLikelyLoggingChannels.first(25).map(channel => ({
+                    possibleLoggingChannels.first(25).map(channel => ({
                         label: channel.name,
                         description: channel.name,
                         value: channel.id
@@ -399,9 +390,8 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
         .setTitle('Quick Start - Finished!')
         .setDescription(
             `Congratulations! You have completed the quick start guide. If you have any questions, \
-            check out [the guide on github](${wikiBaseUrl}) or [the support discord server](${supportServerInviteLink}).` +
-                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}>` +
-                '\n\nUse the **Back** button to go to the previous page. Press the blue `dismiss message` text below the buttons to close this message.'
+            check out [the guide on github](${wikiBaseUrl}) or join [the support discord server](${supportServerInviteLink}).` +
+                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}> menu.`
         )
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
@@ -441,19 +431,6 @@ function quickStartNextButton(enable: boolean): ButtonBuilder {
         .setEmoji('➡️')
         .setLabel('Next')
         .setStyle(ButtonStyle.Primary)
-        .setDisabled(!enable);
-}
-
-function quickStartSkipButton(enable: boolean): ButtonBuilder {
-    return buildComponent(new ButtonBuilder(), [
-        'other',
-        ButtonNames.QuickStartSkip,
-        UnknownId,
-        UnknownId
-    ])
-        .setEmoji('⏭️')
-        .setLabel('Skip')
-        .setStyle(ButtonStyle.Secondary)
         .setDisabled(!enable);
 }
 
