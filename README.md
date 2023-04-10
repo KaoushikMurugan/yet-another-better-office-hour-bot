@@ -2,7 +2,7 @@
 <div align="center">
       <div>
       
-<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/211232336-e36c52ee-d74f-470d-ac82-48089e5860ed.svg"/>
+<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/230826224-6d54e3a4-1d31-4c1d-b463-39ce9e2e505f.svg"/>
       </div>
 </div>
 
