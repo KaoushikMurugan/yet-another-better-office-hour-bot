@@ -177,10 +177,10 @@ function QuickStartSetRoles(
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         quickStartBackButton(true),
         quickStartNextButton(true)
-    ); 
+    );
     return {
         embeds: [embed.data],
-        components: [quickStartButtons, ...buttons]
+        components: [...buttons, quickStartButtons]
     };
 }
 
@@ -225,9 +225,11 @@ function QuickStartAutoGiveStudentRole(
         .addFields(
             {
                 name: 'Description',
-                value:
-                    `YABOB can automatically give the student (<@&${server.studentRoleID}>) role to each new user that joins this server. By default it is disabled, but you can enable it by pressing the **Enable** button- if you wish to have this feature.` +
-                    `\n\n *If you wish to use another bot to control the assignment of roles, that's fine! It is only important that YABOB knows which roles are the student, helper and bot admin roles*`
+                value: `YABOB can automatically give the student (<@&${server.studentRoleID}>) role to each new user that joins this server.`
+            },
+            {
+                name: 'Note: Integrate with other bots',
+                value: "If you wish to use another bot to control the assignment of roles, that's fine! It is only important that YABOB knows which roles are the student, helper and bot admin roles."
             },
             {
                 name: 'Documentation',
@@ -274,7 +276,7 @@ function QuickStartAutoGiveStudentRole(
 
     return {
         embeds: [embed],
-        components: [quickStartButtons, settingsButtons]
+        components: [settingsButtons, quickStartButtons]
     };
 }
 
@@ -389,7 +391,7 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
         .setDescription(
             `Congratulations! You have completed the quick start guide. If you have any questions, \
             check out [the guide on github](${wikiBaseUrl}) or join [the support discord server](${supportServerInviteLink}).` +
-                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}>`
+                `\n\nThere are many other functionalities of the bot that you can explore via the </settings:${settingsCommandId}> menu.`
         )
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
