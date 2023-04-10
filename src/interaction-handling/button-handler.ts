@@ -105,9 +105,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.QuickStartBack]: interaction =>
                 shiftQuickStartPage(interaction, 'back'),
             [ButtonNames.QuickStartNext]: interaction =>
-                shiftQuickStartPage(interaction, 'next'),
-            [ButtonNames.QuickStartSkip]: interaction =>
-                shiftQuickStartPage(interaction, 'skip')
+                shiftQuickStartPage(interaction, 'next')
         }
     },
     dmMethodMap: {
@@ -155,8 +153,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         ButtonNames.ReturnToHelpStaffSubMenu,
         ButtonNames.ReturnToHelpStudentSubMenu,
         ButtonNames.QuickStartBack,
-        ButtonNames.QuickStartNext,
-        ButtonNames.QuickStartSkip
+        ButtonNames.QuickStartNext
     ])
 };
 
@@ -526,7 +523,7 @@ async function returnToHelpSubMenu(
 
 async function shiftQuickStartPage(
     interaction: ButtonInteraction<'cached'>,
-    buttonPressed: 'back' | 'next' | 'skip'
+    buttonPressed: 'back' | 'next'
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     const oldEmbed = interaction.message.embeds[0];
@@ -538,13 +535,15 @@ async function shiftQuickStartPage(
     // bounds check
     if (
         (buttonPressed === 'back' && oldPage <= 1) ||
-        ((buttonPressed === 'next' || buttonPressed === 'skip') && oldPage === maxPage)
+        (buttonPressed === 'next' && oldPage === maxPage)
     ) {
         return;
     }
     const newPage = buttonPressed === 'back' ? oldPage - 2 : oldPage;
     const quickStartEmbed = QuickStartPages[newPage];
-    if (quickStartEmbed === undefined) return;
+    if (quickStartEmbed === undefined) {
+        return;
+    }
     await interaction.update(quickStartEmbed(server, interaction.channelId));
 }
 
