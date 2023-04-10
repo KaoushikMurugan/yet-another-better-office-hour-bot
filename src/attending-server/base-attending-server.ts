@@ -484,11 +484,15 @@ class AttendingServerV2 {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
-        await setHelpChannelVisibility(this.guild, this.accessLevelRoleIds);
+        setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
+            console.error('Failed to update help channel visibilities.', err)
+        );
         createdRoles.length > 0
             ? console.log(blue('Created roles:'), createdRoles)
             : console.log(green(`All required roles exist in ${this.guild.name}!`));
-        foundRoles.length > 0 && console.log('Found roles:', foundRoles);
+        if (foundRoles.length > 0) {
+            console.log('Found roles:', foundRoles);
+        }
     }
 
     /**
