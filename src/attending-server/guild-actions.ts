@@ -20,6 +20,7 @@ import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
+import type { ServerError } from '../utils/error-types.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -269,11 +270,12 @@ async function createOfficeVoiceChannels(
  * Sends the VC invite to the student after successful dequeue
  * @param student who will receive the invite
  * @param helperVoiceChannel which vc channel to invite the student to
+ * @returns a tagged union of whether the invite is successfully sent
  */
 async function sendInvite(
     student: GuildMember,
     helperVoiceChannel: VoiceBasedChannel
-): Promise<void> {
+): Promise<{ ok: true } | { ok: false; error: ServerError }> {
     const [invite] = await Promise.all([
         helperVoiceChannel.createInvite({
             maxAge: 15 * 60,
@@ -293,17 +295,20 @@ async function sendInvite(
                 console.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
-    await student
-        .send(
+    try {
+        await student.send(
             SimpleEmbed(
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             )
-        )
-        .catch(() => {
-            // TODO: this assumes the error is always because of student blocking the dm
-            throw ExpectedServerErrors.studentBlockedDm(student.id);
-        });
+        );
+    } catch {
+        return {
+            ok: false,
+            error: ExpectedServerErrors.studentBlockedDm(student.id)
+        };
+    }
+    return { ok: true };
 }
 
 export {

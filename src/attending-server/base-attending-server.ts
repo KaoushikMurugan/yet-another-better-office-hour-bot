@@ -599,14 +599,15 @@ class AttendingServerV2 {
         );
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
-        await Promise.all([
-            // ! this is technically bad, we are making changes even though we expect this function to throw
-            // TODO: use a different solution
+        const [inviteStatus] = await Promise.all([
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
         ]);
+        if (!inviteStatus.ok) {
+            throw inviteStatus.error;
+        }
         return student;
     }
 
@@ -666,12 +667,15 @@ class AttendingServerV2 {
             throw ExpectedServerErrors.badDequeueArguments;
         }
         helperObject.helpedMembers.push(student);
-        await Promise.all([
+        const [inviteStatus] = await Promise.all([
             sendInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
         ]);
+        if (!inviteStatus.ok) {
+            throw inviteStatus.error;
+        }
         return student;
     }
 
