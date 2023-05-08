@@ -16,7 +16,7 @@ import { CalendarModalNames } from './calendar-interaction-names.js';
  * @param useMenu whether this modal should show the settings menu or the success message
  * @returns the settings modal
  */
-function calendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuilder {
+function CalendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuilder {
     const state = CalendarExtensionState.allStates.get(serverId);
     const modal = buildComponent(new ModalBuilder(), [
         'other',
@@ -52,4 +52,4 @@ function calendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuild
     return modal;
 }
 
-export { calendarSettingsModal };
+export { CalendarSettingsModal };

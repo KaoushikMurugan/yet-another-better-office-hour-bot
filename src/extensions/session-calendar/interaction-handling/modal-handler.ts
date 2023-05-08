@@ -8,10 +8,11 @@ import {
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
 import {
-    isServerCalendarInteraction,
     checkCalendarConnection,
     restorePublicEmbedURL
 } from '../shared-calendar-functions.js';
+import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { CalendarExtensionState } from '../calendar-states.js';
 
 const calendarModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
@@ -36,7 +37,8 @@ async function updateCalendarSettings(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const [server, state, safeInteraction] = isServerCalendarInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
+    const state = CalendarExtensionState.get(interaction.guildId);
     const calendarId = interaction.fields.getTextInputValue('calendar_id');
     const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
     await checkCalendarConnection(calendarId).catch(() => {
@@ -59,7 +61,7 @@ async function updateCalendarSettings(
         ? interaction.update(
               CalendarSettingsConfigMenu(
                   server,
-                  safeInteraction.channel.id,
+                  interaction.channel?.id ?? '0',
                   false,
                   'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
               )

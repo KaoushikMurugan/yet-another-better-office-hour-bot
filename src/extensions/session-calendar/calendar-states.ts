@@ -65,7 +65,7 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
+    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 100 });
     /**
      * When was the upcomingSessions cache last updated
      */

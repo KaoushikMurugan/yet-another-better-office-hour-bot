@@ -74,8 +74,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
         CalendarExtensionState.get(
             this.queueChannel.channelObj.guild.id
         ).queueExtensions.delete(deletedQueue.queueName);
-        // now garbage collector should clean up this instance
-        // when server deletes the queue from queue collection
     }
 
     /**

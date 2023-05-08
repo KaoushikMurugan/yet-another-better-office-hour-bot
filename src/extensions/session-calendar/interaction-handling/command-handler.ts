@@ -18,15 +18,14 @@ import {
     CalendarSuccessMessages
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
-import {
-    isServerCalendarInteraction,
-    composeUpcomingSessionsEmbedBody
-} from '../shared-calendar-functions.js';
+import { composeUpcomingSessionsEmbedBody } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
     isTriggeredByMemberWithRoles,
     hasValidQueueArgument
 } from '../../../interaction-handling/shared-validations.js';
+import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { CalendarExtensionState } from '../calendar-states.js';
 
 const calendarCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -48,7 +47,8 @@ const calendarCommandMap: CommandHandlerProps = {
 async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const [server, state] = isServerCalendarInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
+    const state = CalendarExtensionState.get(interaction.guildId);
     await state.refreshCalendarEvents();
     const showAll = interaction.options.getBoolean('show_all');
     const title = showAll // idk what to call this, but it's either the guild name or the target queue's queueName
@@ -83,7 +83,8 @@ async function makeParsableCalendarTitle(
     interaction: ChatInputCommandInteraction<'cached'>,
     generateAll: boolean
 ): Promise<void> {
-    const [server, state] = isServerCalendarInteraction(interaction);
+    const server = AttendingServerV2.get(interaction.guildId);
+    const state = CalendarExtensionState.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,

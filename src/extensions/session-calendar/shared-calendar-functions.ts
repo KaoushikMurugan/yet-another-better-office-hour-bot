@@ -7,13 +7,10 @@ import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
-import { GuildMemberId, WithRequired } from '../../utils/type-aliases.js';
+import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
-import { Snowflake, Interaction } from 'discord.js';
-import { isTextChannel } from '../../utils/util-functions.js';
+import { Snowflake } from 'discord.js';
 import { z } from 'zod';
-import { FrozenServer } from '../extension-utils.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * ViewModel for 1 tutor's upcoming session
@@ -206,28 +203,6 @@ function restorePublicEmbedURL(calendarId: string): string {
     return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
 }
 
-/**
- * Checks if the calendar interaction is safe to execute
- * @deprecated will be removed as the base isServerInteraction gets deprecated
- * @param interaction
- * @returns server, state, and interaction 3-tuple
- */
-function isServerCalendarInteraction<T extends Interaction<'cached'>>(
-    interaction: T
-): [
-    server: FrozenServer,
-    state: CalendarExtensionState,
-    interaction: WithRequired<T, 'channel' | 'channelId'>
-] {
-    const server = AttendingServerV2.get(interaction.guildId);
-    const state = CalendarExtensionState.allStates.get(server.guild.id);
-    if (!state || !isTextChannel(interaction.channel)) {
-        throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
-    }
-    // already checked for non-null channelId, idk why type inference doesn't work
-    // destructuring works but it has massive memory overhead
-    return [server, state, interaction as WithRequired<T, 'channel' | 'channelId'>];
-}
 
 /**
  * Fetches 100 calendar events of a server
@@ -352,5 +327,4 @@ export {
     checkCalendarConnection,
     restorePublicEmbedURL,
     composeUpcomingSessionsEmbedBody,
-    isServerCalendarInteraction
 };

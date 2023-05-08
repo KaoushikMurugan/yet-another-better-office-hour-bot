@@ -22,8 +22,6 @@ import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands
 import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
 
-const failedInteractions: Array<{ username: string; interaction: Interaction }> = [];
-
 /**
  * After login startup sequence
  */
@@ -91,19 +89,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
         console.error(red('Uncaught Error: '), err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(() => {
-                failedInteractions.push({
-                    username: interaction.user.username,
-                    interaction: interaction
-                });
-                if (failedInteractions.length > 5) {
-                    console.log(
-                        `These ${failedInteractions.length} interactions completely failed:`
-                    );
-                    console.log(failedInteractions);
-                    failedInteractions.slice(0, failedInteractions.length);
-                }
-            });
+            .catch(console.error);
     });
 });
 
@@ -199,8 +185,6 @@ client.on(Events.Warn, warning => {
 process.on('exit', () => {
     console.log(centered('-------- End of Server Log --------'));
     console.log(`${centered('-------- Begin Error Stack Trace --------')}\n`);
-    console.log(`These ${failedInteractions.length} interactions failed:`);
-    console.log(failedInteractions);
 });
 
 /**

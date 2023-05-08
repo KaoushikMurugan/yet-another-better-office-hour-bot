@@ -46,7 +46,6 @@ const client: Client<true> = new Client({
         GatewayIntentBits.GuildMembers,
         GatewayIntentBits.GuildInvites,
         GatewayIntentBits.GuildVoiceStates,
-        GatewayIntentBits.GuildPresences,
         GatewayIntentBits.GuildMessages,
         GatewayIntentBits.DirectMessages
     ],
@@ -60,7 +59,9 @@ const client: Client<true> = new Client({
             maxSize: 5, // arbitrary, keep 5 messages max in each channel
             // never clear YABOB messages
             keepOverLimit: msg => msg.author.id === client.user.id
-        }
+        },
+        AutoModerationRuleManager: 0,
+        ApplicationCommandManager: 0
     })
 });
 
