@@ -145,11 +145,11 @@ class QueueDisplayV2 {
     }
 
     /**
-     * Request a render of a non-queue (not the main queue list) embed
+     * Request a render of embeds from extensions
      * @param embedElements the embeds to render
      * @param renderIndex the index given by HelpQueueV2
      */
-    requestNonQueueEmbedRender(
+    requestExtensionEmbedRender(
         embedElements: Pick<BaseMessageOptions, 'embeds' | 'components'>,
         renderIndex: number
     ): void {
@@ -336,10 +336,9 @@ class QueueDisplayV2 {
             this.isRendering = false;
             return;
         }
-        const [yabobMessages, nonYabobMessages] =
-            this.queueChannel.channelObj.messages.cache.partition(
-                msg => msg.author.id === client.user.id
-            );
+        const [yabobMessages, nonYabobMessages] = (
+            await this.queueChannel.channelObj.messages.fetch({ cache: false })
+        ).partition(msg => msg.author.id === client.user.id);
         const existingEmbeds = yabobMessages.filter(msg =>
             this.embedMessageIdMap.some(id => id === msg.id)
         );
