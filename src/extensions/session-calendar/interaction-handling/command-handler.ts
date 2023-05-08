@@ -18,7 +18,7 @@ import {
     CalendarSuccessMessages
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
-import { composeUpcomingSessionsEmbedBody } from '../shared-calendar-functions.js';
+import { buildUpcomingSessionsEmbedBody } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
     isTriggeredByMemberWithRoles,
@@ -61,7 +61,7 @@ async function listUpComingHours(
         .setTitle(`Upcoming Hours for ${title}`)
         .setColor(EmbedColor.Blue)
         .setDescription(
-            composeUpcomingSessionsEmbedBody(
+            buildUpcomingSessionsEmbedBody(
                 viewModels,
                 title,
                 state.lastUpdatedTimeStamp,

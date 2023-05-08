@@ -7,7 +7,7 @@ import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    getUpComingTutoringEventsForServer,
+    fetchUpcomingSessions,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
@@ -131,7 +131,7 @@ class CalendarExtensionState {
      * - **Requires the allStates map to have this instance**
      */
     async refreshCalendarEvents(): Promise<void> {
-        this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
+        this.upcomingSessions = await fetchUpcomingSessions(this.guild.id);
         this.lastUpdatedTimeStamp = new Date();
     }
 

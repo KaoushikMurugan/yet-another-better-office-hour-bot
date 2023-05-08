@@ -125,14 +125,14 @@ function transformViewModelToString(viewModel: UpComingSessionViewModel): string
 }
 /**
  * Builds the body message of the upcoming sessions embed
- * @param viewModels models from {@link getUpComingTutoringEventsForServer}
+ * @param viewModels models from {@link fetchUpcomingSessions}
  * @param title the queue name or the guild name
  * @param lastUpdatedTimeStamp when was the last time that the view models are updated
  * @param returnCount the MAXIMUM number of events to render
  * - if the value is 'max', show as many sessions as possible
  * @returns string that goes into the embed
  */
-function composeUpcomingSessionsEmbedBody(
+function buildUpcomingSessionsEmbedBody(
     viewModels: UpComingSessionViewModel[],
     title: string,
     lastUpdatedTimeStamp: Date,
@@ -188,9 +188,9 @@ function buildCalendarURL(args: {
     return [
         `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?`,
         `&key=${args.apiKey}`,
+        `&maxResults=${args.maxResults.toString()}`,
         `&timeMax=${args.timeMax.toISOString()}`,
         `&timeMin=${args.timeMin.toISOString()}`,
-        `&maxResults=${args.maxResults.toString()}`,
         `&orderBy=startTime`,
         `&singleEvents=true`
     ].join('');
@@ -203,13 +203,12 @@ function restorePublicEmbedURL(calendarId: string): string {
     return `https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=America%2FLos_Angeles&mode=WEEK`;
 }
 
-
 /**
- * Fetches 100 calendar events of a server
+ * Fetches 100 calendar events of a server and converts them into individual sessions
  * @param serverId id of the server to fetch for
  * @returns at most 100 UpComingSessionViewModels
  */
-async function getUpComingTutoringEventsForServer(
+async function fetchUpcomingSessions(
     serverId: Snowflake
 ): Promise<UpComingSessionViewModel[]> {
     const nextWeek = new Date();
@@ -232,8 +231,7 @@ async function getUpComingTutoringEventsForServer(
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
-    const responseJSON = await response.data;
-    const rawEvents = (responseJSON as calendar_v3.Schema$Events).items;
+    const rawEvents = ((await response.data) as calendar_v3.Schema$Events).items;
     if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
@@ -322,9 +320,9 @@ function composeViewModelsByString(
 export {
     UpComingSessionViewModel,
     CalendarConfigBackup,
-    getUpComingTutoringEventsForServer,
+    fetchUpcomingSessions,
     buildCalendarURL,
     checkCalendarConnection,
     restorePublicEmbedURL,
-    composeUpcomingSessionsEmbedBody,
+    buildUpcomingSessionsEmbedBody
 };
