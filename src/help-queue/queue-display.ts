@@ -248,8 +248,8 @@ class QueueDisplayV2 {
             // bc students can't see the channel ping if they don't have permission
             const vcStatus = voiceChannel
                 ? voiceChannel.members.size > 1
-                    ? `Busy in #${voiceChannel.name}`
-                    : `Idling in #${voiceChannel.name}`
+                    ? `🔴 Busy in #${voiceChannel.name}`
+                    : `🟢 Idling in #${voiceChannel.name}`
                 : 'Not in voice channel.';
             return `<@${helperId}>${spacer}${vcStatus}`;
         };

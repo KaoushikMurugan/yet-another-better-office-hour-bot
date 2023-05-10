@@ -97,6 +97,24 @@ type ServerSettings = {
     timezone: SimpleTimeZone;
 };
 
+type SortedAccessLevelRolesTuple = readonly [
+    botAdmin: {
+        key: 'botAdmin';
+        displayName: string;
+        id: OptionalRoleId;
+    },
+    staff: {
+        key: 'staff';
+        displayName: string;
+        id: OptionalRoleId;
+    },
+    student: {
+        key: 'student';
+        displayName: string;
+        id: OptionalRoleId;
+    }
+];
+
 /**
  * Represents 1 server that this YABOB is a member of.
  * - Public functions can be accessed by the command handler
@@ -217,17 +235,24 @@ class AttendingServerV2 {
     /**
      * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
-    get sortedAccessLevelRoles(): ReadonlyArray<{
-        key: AccessLevelRole; // this can be used to index accessLevelRoleConfigs and AccessLevelRoleIds
-        displayName: typeof accessLevelRoleConfigs[keyof AccessLevelRoleIds]['displayName'];
-        id: OptionalRoleId;
-    }> {
-        return Object.entries(this.settings.accessLevelRoleIds).map(([name, id]) => ({
-            key: name as AccessLevelRole, // guaranteed to be the key
-            displayName:
-                accessLevelRoleConfigs[name as keyof AccessLevelRoleIds].displayName,
-            id: id
-        }));
+    get sortedAccessLevelRoles(): SortedAccessLevelRolesTuple {
+        return [
+            {
+                key: 'botAdmin',
+                displayName: accessLevelRoleConfigs.botAdmin.displayName,
+                id: this.settings.accessLevelRoleIds.botAdmin
+            },
+            {
+                key: 'staff',
+                displayName: accessLevelRoleConfigs.staff.displayName,
+                id: this.settings.accessLevelRoleIds.staff
+            },
+            {
+                key: 'student',
+                displayName: accessLevelRoleConfigs.student.displayName,
+                id: this.settings.accessLevelRoleIds.student
+            }
+        ] as const;
     }
 
     /** staff role id */
@@ -250,12 +275,11 @@ class AttendingServerV2 {
     ): Promise<Optional<AccessLevelRole>> {
         const roles = member.roles.cache;
         const roleIds = this.sortedAccessLevelRoles.map(role => role.id);
-        //searchin gusing roleIds
-        const highestrole = roleIds.filter(roleId => roles.has(roleId)).at(0);
-        if (highestrole === undefined) {
+        const highestRole = roleIds.filter(roleId => roles.has(roleId)).at(0);
+        if (highestRole === undefined) {
             return undefined;
         }
-        return this.sortedAccessLevelRoles.find(role => role.id === highestrole)?.key;
+        return this.sortedAccessLevelRoles.find(role => role.id === highestRole)?.key;
     }
 
     /**
@@ -459,27 +483,27 @@ class AttendingServerV2 {
         const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
-        for (const role of this.sortedAccessLevelRoles) {
+        for (const { key, displayName, id } of this.sortedAccessLevelRoles) {
             // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
             const existingRole =
-                role.id in SpecialRoleValues || role.id === everyoneRoleId
-                    ? allRoles.find(serverRole => serverRole.name === role.displayName)
-                    : allRoles.get(role.id);
-            if (role.key === 'student' && everyoneIsStudent) {
+                id in SpecialRoleValues || id === everyoneRoleId
+                    ? allRoles.find(serverRole => serverRole.name === displayName)
+                    : allRoles.get(id);
+            if (key === 'student' && everyoneIsStudent) {
                 this.accessLevelRoleIds.student = everyoneRoleId;
                 continue;
             }
             if (existingRole && !allowDuplicate) {
-                this.accessLevelRoleIds[role.key] = existingRole.id;
+                this.accessLevelRoleIds[key] = existingRole.id;
                 foundRoles[existingRole.position] = existingRole.name;
                 continue;
             }
             const newRole = await this.guild.roles.create({
-                ...accessLevelRoleConfigs[role.key],
-                name: accessLevelRoleConfigs[role.key].displayName
+                ...accessLevelRoleConfigs[key],
+                name: accessLevelRoleConfigs[key].displayName
             });
-            this.accessLevelRoleIds[role.key] = newRole.id;
+            this.accessLevelRoleIds[key] = newRole.id;
             // set by indices that are larger than arr length is valid in JS
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;

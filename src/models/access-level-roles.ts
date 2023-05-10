@@ -1,6 +1,9 @@
 import { ColorResolvable, Colors } from 'discord.js';
 import { OptionalRoleId } from '../utils/type-aliases.js';
 
+/**
+ * Keys of accessLevelRoleConfigs
+ */
 type AccessLevelRole = 'botAdmin' | 'staff' | 'student';
 
 /**
