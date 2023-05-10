@@ -65,11 +65,11 @@ import { UnknownId } from '../utils/component-id-factory.js';
  * Wrapper for TextChannel
  * - Guarantees that a queueName and parentCategoryId exists
  */
-type QueueChannel = {
+type QueueChannel = Readonly<{
     channelObj: TextChannel;
     queueName: string;
     parentCategoryId: CategoryChannelId;
-};
+}>;
 
 /**
  * The possible settings of each server
