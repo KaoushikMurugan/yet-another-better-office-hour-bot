@@ -1,13 +1,13 @@
 /** @module HelpQueueV2 */
-
-import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
-import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { QueueExtension } from '../extensions/extension-interface.js';
-import { QueueBackup } from '../models/backups.js';
-import { Helpee } from '../models/member-states.js';
+import type { GuildMember, TextChannel, Snowflake, PartialGuildMember } from 'discord.js';
+import type { QueueChannel } from '../attending-server/base-attending-server.js';
+import type { QueueExtension } from '../extensions/extension-interface.js';
+import type { QueueBackup } from '../models/backups.js';
+import type { Helpee } from '../models/member-states.js';
+import type { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import { Collection } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
-import { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -590,7 +590,9 @@ class HelpQueueV2 {
      * @throws {QueueError} if the student is not in the queue
      */
     @useQueueBackup
-    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
+    async removeStudent(
+        targetStudent: GuildMember | PartialGuildMember
+    ): Promise<Helpee> {
         const index = this._students.findIndex(
             student => student.member.id === targetStudent.id
         );

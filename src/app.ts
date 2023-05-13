@@ -172,6 +172,19 @@ client.on(Events.GuildRoleDelete, async role => {
     await AttendingServerV2.safeGet(role.guild.id)?.onRoleDelete(role);
 });
 
+client.on(Events.GuildMemberRemove, async member => {
+    const server = AttendingServerV2.safeGet(member.guild.id);
+    if (server !== undefined) {
+        await Promise.allSettled(
+            server.queues
+                .filter(queue =>
+                    queue.students.find(student => student.member.id === member.id)
+                )
+                .map(queue => queue.removeStudent(member))
+        );
+    }
+});
+
 /**
  * Discord.js warning handling
  */
