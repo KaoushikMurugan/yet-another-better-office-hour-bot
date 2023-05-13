@@ -21,6 +21,7 @@ import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
 import type { ServerError } from '../utils/error-types.js';
+import type { Result } from '../utils/type-aliases.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -275,7 +276,7 @@ async function createOfficeVoiceChannels(
 async function sendInvite(
     student: GuildMember,
     helperVoiceChannel: VoiceBasedChannel
-): Promise<{ ok: true } | { ok: false; error: ServerError }> {
+): Promise<Result<void, ServerError>> {
     const [invite] = await Promise.all([
         helperVoiceChannel.createInvite({
             maxAge: 15 * 60,
@@ -308,7 +309,7 @@ async function sendInvite(
             error: ExpectedServerErrors.studentBlockedDm(student.id)
         };
     }
-    return { ok: true };
+    return { ok: true, value: undefined };
 }
 
 export {
