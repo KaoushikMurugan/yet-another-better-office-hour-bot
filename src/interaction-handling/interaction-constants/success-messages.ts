@@ -27,12 +27,13 @@ export const SuccessMessages = {
         ),
     joinedNotif: (queueName: string) =>
         SimpleEmbed(
-            `Successfully joined the notification group of \`${queueName}\`.`,
+            `Successfully joined the notification group of \`${queueName}\`. ` +
+                `You will receive a direct message when this queue opens.`,
             EmbedColor.Success
         ),
     removedNotif: (queueName: string) =>
         SimpleEmbed(
-            `Successfully left the notification group of \`${queueName}\`.`,
+            `Successfully left the notification group of \`${queueName}\`. You will no longer be notified when this queue opens.`,
             EmbedColor.Success
         ),
     inviteSent: (studentName: string) =>
@@ -163,17 +164,13 @@ export const SuccessMessages = {
         `Successfully turned off prompt help topic. YABOB will no longer prompt students to select a help topic when they join a queue.`,
         EmbedColor.Success
     ),
-    changedTimeZone: (
-        // destructure inside parameter list to avoid creating a bunch of variables
-        { sign: oldSign, hours: oldHours, minutes: oldMinutes }: SimpleTimeZone,
-        { sign: newSign, hours: newHours, minutes: newMinutes }: SimpleTimeZone
-    ) =>
+    changedTimeZone: (prev: SimpleTimeZone, curr: SimpleTimeZone) =>
         SimpleEmbed(
-            `Successfully changed timezone of this server from **UTC ${oldSign}${padTo2Digits(
-                oldHours
-            )}:${padTo2Digits(oldMinutes)}** to **UTC ${newSign}${padTo2Digits(
-                newHours
-            )}:${padTo2Digits(newMinutes)}**.`,
+            `Successfully changed timezone of this server from **UTC ${
+                prev.sign
+            }${padTo2Digits(prev.hours)}:${padTo2Digits(prev.minutes)}** to **UTC ${
+                curr.sign
+            }${padTo2Digits(curr.hours)}:${padTo2Digits(curr.minutes)}**.`,
             EmbedColor.Success
         ),
     assignedHelpersRoles: (roleLogs: string) =>

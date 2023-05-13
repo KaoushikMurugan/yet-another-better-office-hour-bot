@@ -371,7 +371,7 @@ class HelpQueueV2 {
      * Returns the view model of the current state of the queue
      * @returns QueueViewModel
      */
-    getCurrentViewModel(): QueueViewModel {
+    getViewModel(): QueueViewModel {
         return {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
@@ -544,8 +544,6 @@ class HelpQueueV2 {
         if (!notify) {
             return;
         }
-        // now notify is true
-        // Synchronously notify everyone in the notif group
         // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
         void Promise.allSettled(
             this.notifGroup.map(
@@ -554,7 +552,6 @@ class HelpQueueV2 {
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             )
         ).then(() => this.notifGroup.clear());
-        // clear AFTER the message promise settles to avoid race conditions
     }
 
     /**
@@ -655,7 +652,7 @@ class HelpQueueV2 {
      */
     async triggerForceRender(): Promise<void> {
         this.display.enterWriteOnlyMode();
-        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
+        this.display.requestQueueEmbedRender(this.getViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 // TODO: temporary solution
@@ -672,7 +669,7 @@ class HelpQueueV2 {
      * Composes the queue view model, then sends it to QueueDisplay
      */
     async triggerRender(): Promise<void> {
-        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
+        this.display.requestQueueEmbedRender(this.getViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)

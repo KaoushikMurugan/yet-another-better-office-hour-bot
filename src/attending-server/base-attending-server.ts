@@ -270,12 +270,15 @@ class AttendingServerV2 {
         return this.queues.flatMap(queue => queue.students);
     }
 
-    async getHighestAccessLevelRole(
-        member: GuildMember
-    ): Promise<Optional<AccessLevelRole>> {
-        const roles = member.roles.cache;
-        const roleIds = this.sortedAccessLevelRoles.map(role => role.id);
-        const highestRole = roleIds.filter(roleId => roles.has(roleId)).at(0);
+    /**
+     * Returns the highest access level role of a member. 
+     * Undefined if the member doesn't have any
+     */
+    getHighestAccessLevelRole(member: GuildMember): Optional<AccessLevelRole> {
+        const highestRole = this.sortedAccessLevelRoles
+            .map(role => role.id)
+            .filter(roleId => member.roles.cache.has(roleId))
+            .at(0);
         if (highestRole === undefined) {
             return undefined;
         }
@@ -1094,14 +1097,14 @@ class AttendingServerV2 {
      *
      * **Warning**: Role names in the data array must match the queue names / roles exactly. It is *case sensitive*.
      * @param helpersRolesData
-     * @returns Log of successfully asssigned roles and errors
+     * @returns Log of successfully assigned roles and errors
      */
     async assignHelpersRoles(
         helpersRolesData: HelperRolesData[]
     ): Promise<[Map<string, string>, Map<string, string>]> {
         // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
         const queueNames = this.queues.map(queue => queue.queueName);
-        // ensure the queue roles exist so that queueRoles is garunteed to not contain undefined
+        // ensure the queue roles exist so that queueRoles is guaranteed to not contain undefined
         await this.createQueueRoles();
         // find the roles that match the queue names
         const queueRoles = queueNames

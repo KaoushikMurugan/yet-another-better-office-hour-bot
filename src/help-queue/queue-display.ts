@@ -14,7 +14,6 @@ import {
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
-import { client } from '../global-states.js';
 import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
 import { red } from '../utils/command-line-colors.js';
@@ -33,30 +32,21 @@ type QueueChannelEmbed = {
 const queueStateStyles: {
     [K in QueueState]: {
         color: EmbedColor;
-        statusText: { serious: string; notSerious: string };
+        statusText: string;
     };
 } = {
     // colors are arbitrary, feel free to change these
     closed: {
         color: EmbedColor.PastelPurple,
-        statusText: {
-            serious: '**CLOSED**',
-            notSerious: '**CLOSED**\t◦<(¦3[___]⋆｡˚✩'
-        }
+        statusText: '**CLOSED**'
     },
     open: {
         color: EmbedColor.Aqua,
-        statusText: {
-            serious: '**OPEN**',
-            notSerious: '**OPEN**\t(ﾟ∀ﾟ )'
-        }
+        statusText: '**OPEN**'
     },
     paused: {
         color: EmbedColor.Yellow,
-        statusText: {
-            serious: '**PAUSED**',
-            notSerious: '**PAUSED**\t(´∀` )'
-        }
+        statusText: '**PAUSED**'
     }
 };
 
@@ -165,16 +155,16 @@ class QueueDisplayV2 {
      * @param viewModel
      */
     requestQueueEmbedRender(viewModel: QueueViewModel): void {
+        const guildId = this.queueChannel.channelObj.guild.id;
+        const channelId = this.queueChannel.channelObj.id;
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
-                `Queue for〚 ${viewModel.queueName} 〛is ${
-                    queueStateStyles[viewModel.state].statusText[
-                        viewModel.seriousModeEnabled ? 'serious' : 'notSerious'
-                    ]
+                `Queue for ${viewModel.queueName} is ${
+                    queueStateStyles[viewModel.state].statusText
                 }`
             )
-            .setDescription(this.composeQueueAsciiTable(viewModel))
+            .setDescription(this.getQueueAsciiTable(viewModel))
             .setColor(queueStateStyles[viewModel.state].color);
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
@@ -200,8 +190,8 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Join,
-                this.queueChannel.channelObj.guild.id,
-                this.queueChannel.channelObj.id
+                guildId,
+                channelId
             ])
                 .setEmoji('✅')
                 .setDisabled(viewModel.state !== 'open')
@@ -210,74 +200,72 @@ class QueueDisplayV2 {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Leave,
-                this.queueChannel.channelObj.guild.id,
-                this.queueChannel.channelObj.id
+                guildId,
+                channelId
             ])
+                .setDisabled(viewModel.studentDisplayNames.length === 0)
                 .setEmoji('❎')
                 .setLabel('Leave')
-                .setStyle(ButtonStyle.Danger)
+                .setStyle(ButtonStyle.Danger),
+            new ButtonBuilder()
+                .setStyle(ButtonStyle.Link)
+                .setLabel('Help')
+                .setEmoji('💡')
+                .setURL(
+                    'https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Built-in-Commands#button-list'
+                )
         );
         const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.Notif,
-                this.queueChannel.channelObj.guild.id,
-                this.queueChannel.channelObj.id
+                guildId,
+                channelId
             ])
                 .setEmoji('🔔')
-                .setLabel('Notify When Open')
+                .setLabel('Get Notified')
                 .setStyle(ButtonStyle.Primary),
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.RemoveNotif,
-                this.queueChannel.channelObj.guild.id,
-                this.queueChannel.channelObj.id
+                guildId,
+                channelId
             ])
                 .setEmoji('🔕')
                 .setLabel('Remove Notifications')
                 .setStyle(ButtonStyle.Primary)
         );
         const embedList = [embedTableMsg];
-        const getVcStatus = (helperId: Snowflake) => {
-            const spacer = '\u3000'; // ideographic space character, extra wide
-            const voiceChannel =
-                this.queueChannel.channelObj.guild.voiceStates.cache.get(
-                    helperId
-                )?.channel;
-            // using # gives the same effect as if we use the id
-            // bc students can't see the channel ping if they don't have permission
-            const vcStatus = voiceChannel
-                ? voiceChannel.members.size > 1
-                    ? `🔴 Busy in #${voiceChannel.name}`
-                    : `🟢 Idling in #${voiceChannel.name}`
-                : 'Not in voice channel.';
-            return `<@${helperId}>${spacer}${vcStatus}`;
-        };
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
             helperList
-                .setTitle('Currently Available Helpers and Voice Channel Status')
+                .setTitle('Available Helpers')
                 .setColor(queueStateStyles[viewModel.state].color);
             if (viewModel.activeHelperIDs.length > 0) {
                 helperList.addFields({
-                    name: 'Active Helpers',
-                    value: viewModel.activeHelperIDs.map(getVcStatus).join('\n')
+                    name: 'Active',
+                    value: viewModel.activeHelperIDs
+                        // this arrow function is required for closure
+                        .map(id => this.getVcStatus(id))
+                        .join('\n')
                 });
             }
             if (viewModel.pausedHelperIDs.length > 0) {
                 helperList.addFields({
-                    name: 'Paused Helpers',
-                    value: viewModel.pausedHelperIDs.map(getVcStatus).join('\n')
+                    name: 'Paused',
+                    value: viewModel.pausedHelperIDs
+                        .map(id => this.getVcStatus(id))
+                        .join('\n')
                 });
             }
             embedList.push(helperList);
         }
-        this.queueChannelEmbeds.set(0, {
+        this.queueChannelEmbeds.set(Infinity, {
             contents: {
                 embeds: embedList,
                 components: [joinLeaveButtons, notifButtons]
             },
-            renderIndex: 0,
+            renderIndex: Infinity,
             stale: false
         });
     }
@@ -287,7 +275,7 @@ class QueueDisplayV2 {
      * @param viewModel the data to put into the table
      * @returns the ascii table as a `string` in a code block
      */
-    private composeQueueAsciiTable(viewModel: QueueViewModel): string {
+    private getQueueAsciiTable(viewModel: QueueViewModel): string {
         const table = new AsciiTable3();
         if (viewModel.studentDisplayNames.length > 0) {
             table
@@ -336,16 +324,18 @@ class QueueDisplayV2 {
             this.isRendering = false;
             return;
         }
-        const [yabobMessages, nonYabobMessages] = (
-            await this.queueChannel.channelObj.messages.fetch({ cache: false })
-        ).partition(msg => msg.author.id === client.user.id);
-        const existingEmbeds = yabobMessages.filter(msg =>
-            this.embedMessageIdMap.some(id => id === msg.id)
+        // this avoids the ephemeral reply being counted as a 'message'
+        const allMessages = await this.queueChannel.channelObj.messages.fetch({
+            cache: false
+        });
+        // from all messages select message whose id exists in embedMessageIdMap
+        const existingEmbeds = allMessages.filter(message =>
+            this.embedMessageIdMap.some(id => id === message.id)
         );
-        // all required messages exist and there are no other messages
+        // the channel only has the required messages
         const safeToEdit =
             existingEmbeds.size === this.queueChannelEmbeds.size &&
-            nonYabobMessages.size === 0;
+            allMessages.size === this.queueChannelEmbeds.size;
         if (!safeToEdit || force) {
             const allMessages = await this.queueChannel.channelObj.messages.fetch();
             await Promise.all(allMessages.map(msg => msg.delete()));
@@ -370,6 +360,20 @@ class QueueDisplayV2 {
             );
         }
         this.isRendering = false;
+    }
+
+    private getVcStatus(helperId: Snowflake): string {
+        const spacer = '\u3000'; // ideographic space character, extra wide
+        const voiceChannel =
+            this.queueChannel.channelObj.guild.voiceStates.cache.get(helperId)?.channel;
+        // using # gives the same effect as if we use the id
+        // bc students can't see the channel ping if they don't have permission
+        const vcStatus = voiceChannel
+            ? voiceChannel.members.size > 1
+                ? `🔴 Busy in \`#${voiceChannel.name}\``
+                : `🟢 Idling in \`#${voiceChannel.name}\``
+            : 'Not in voice channel';
+        return `<@${helperId}>${spacer}${vcStatus}`;
     }
 }
 
