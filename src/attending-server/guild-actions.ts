@@ -9,6 +9,7 @@ import {
     ChannelType,
     Guild,
     GuildMember,
+    MessageFlags,
     PermissionFlagsBits,
     Snowflake,
     VoiceBasedChannel
@@ -120,9 +121,8 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
         allHelpChannels.map(async channel => {
-            // have to fetch here, otherwise the cache is empty
-            await channel.messages.fetch();
-            await Promise.all(channel.messages.cache.map(msg => msg.delete()));
+            const messages = await channel.messages.fetch();
+            await Promise.all(messages.map(msg => msg.delete()));
         })
     );
     // send the messages we want to show in the help channels
@@ -131,6 +131,13 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
             helpChannelConfigurations
                 .find(val => val.channelName === channel.name)
                 ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
+                .map(helpMessage => ({
+                    ...helpMessage,
+                    message: {
+                        ...helpMessage.message,
+                        flags: MessageFlags.SuppressNotifications as const
+                    }
+                }))
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );

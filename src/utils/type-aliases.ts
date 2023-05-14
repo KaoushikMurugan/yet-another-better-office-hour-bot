@@ -3,6 +3,7 @@
 import {
     APIApplicationCommandOptionChoice,
     BaseMessageOptions,
+    MessageCreateOptions,
     RESTPostAPIChatInputApplicationCommandsJSONBody,
     SelectMenuComponentOptionData,
     Snowflake
@@ -88,8 +89,8 @@ type HelpMessage = {
     /** if the message can be displayed in the help command */
     useInHelpCommand: boolean;
     /** The actual message to be displayed */
-    message: BaseMessageOptions;
-    /** Emoji corresponding to the commmand. Used in select menus */
+    message: MessageCreateOptions;
+    /** Emoji corresponding to the command. Used in select menus */
     emoji?: string;
 };
 
