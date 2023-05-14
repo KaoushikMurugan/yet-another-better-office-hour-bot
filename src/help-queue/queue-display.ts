@@ -10,7 +10,8 @@ import {
     EmbedBuilder,
     BaseMessageOptions,
     ButtonStyle,
-    Snowflake
+    Snowflake,
+    MessageFlags
 } from 'discord.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
@@ -60,13 +61,16 @@ class QueueDisplayV2 {
      * - binds the render index with a specific message
      * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
      */
-    private embedMessageIdMap: Collection<RenderIndex, MessageId> = new Collection();
+    private renderIndexMessageIdMap: Collection<RenderIndex, MessageId> =
+        new Collection();
+
     /**
      * The mutex that locks the render method during render
      * - avoids the message.delete method from being called on a deleted message
      * - queue and extensions can still request render and write to queueChannelEmbeds
      */
     private isRendering = false;
+
     /**
      * The collection of actual embeds. key is render index
      * - queue has render index 0
@@ -74,6 +78,7 @@ class QueueDisplayV2 {
      */
     private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
         new Collection();
+
     /**
      * Whether the display has temporarily paused rendering
      */
@@ -330,7 +335,7 @@ class QueueDisplayV2 {
         });
         // from all messages select message whose id exists in embedMessageIdMap
         const existingEmbeds = allMessages.filter(message =>
-            this.embedMessageIdMap.some(id => id === message.id)
+            this.renderIndexMessageIdMap.some(id => id === message.id)
         );
         // the channel only has the required messages
         const safeToEdit =
@@ -345,16 +350,17 @@ class QueueDisplayV2 {
             );
             // Cannot promise all here, contents need to be sent in order
             for (const embed of sortedEmbeds.values()) {
-                const newEmbedMessage = await this.queueChannel.channelObj.send(
-                    embed.contents
-                );
-                this.embedMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
+                const newEmbedMessage = await this.queueChannel.channelObj.send({
+                    ...embed.contents,
+                    flags: MessageFlags.SuppressNotifications
+                });
+                this.renderIndexMessageIdMap.set(embed.renderIndex, newEmbedMessage.id);
             }
         } else {
             await Promise.all(
                 this.queueChannelEmbeds.map(embed =>
                     existingEmbeds
-                        .get(this.embedMessageIdMap.get(embed.renderIndex) ?? '')
+                        .get(this.renderIndexMessageIdMap.get(embed.renderIndex) ?? '')
                         ?.edit(embed.contents)
                 )
             );
