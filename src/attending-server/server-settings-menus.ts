@@ -85,7 +85,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
             value: 'server-roles'
         },
         useInSettingsCommand: true,
-        menu: RolesConfigMenuInGuild
+        menu: RoleConfigMenu
     },
     {
         selectMenuOptionData: {
@@ -184,7 +184,7 @@ function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
  * @param channelId id of the channel of the related interaction
  * @returns
  */
-function RolesConfigMenuInGuild(
+function RoleConfigMenu(
     server: AttendingServerV2,
     channelId: string,
     _isDm: boolean, // not used
@@ -288,7 +288,7 @@ function RolesConfigMenuInGuild(
     ];
     return {
         embeds: [embed.data],
-        components: [...buttons, SettingsSwitcher(RolesConfigMenuInGuild)]
+        components: [...buttons, SettingsSwitcher(RoleConfigMenu)]
     };
 }
 
@@ -298,7 +298,7 @@ function RolesConfigMenuInGuild(
  * @param channelId dm channel id
  * @param completed whether the roles have been setup with this menu. Hide the buttons if true
  */
-function RolesConfigMenuForServerInit(
+function RoleConfigMenuForServerInit(
     server: AttendingServerV2,
     channelId: string,
     completed = false
@@ -833,8 +833,8 @@ function SeriousModeConfigMenu(
 
 export {
     SettingsMainMenu,
-    RolesConfigMenuInGuild as RolesConfigMenu,
-    RolesConfigMenuForServerInit,
+    RoleConfigMenu,
+    RoleConfigMenuForServerInit,
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,

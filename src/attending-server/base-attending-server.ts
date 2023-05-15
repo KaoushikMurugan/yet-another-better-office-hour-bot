@@ -51,7 +51,7 @@ import {
 } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { RolesConfigMenuForServerInit } from './server-settings-menus.js';
+import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
     sendInvite,
@@ -316,7 +316,7 @@ class AttendingServerV2 {
         if (missingRoles.length > 0) {
             const owner = await guild.fetchOwner();
             await owner.send(
-                RolesConfigMenuForServerInit(
+                RoleConfigMenuForServerInit(
                     server,
                     owner.dmChannel?.id ?? UnknownId,
                     false

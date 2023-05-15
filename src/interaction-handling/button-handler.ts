@@ -1,12 +1,12 @@
 import { ButtonInteraction } from 'discord.js';
 import {
     SettingsMainMenu,
-    RolesConfigMenu,
+    RoleConfigMenu,
     AfterSessionMessageConfigMenu,
     QueueAutoClearConfigMenu,
     LoggingChannelConfigMenu,
     AutoGiveStudentRoleConfigMenu,
-    RolesConfigMenuForServerInit,
+    RoleConfigMenuForServerInit,
     PromptHelpTopicConfigMenu,
     SeriousModeConfigMenu
 } from '../attending-server/server-settings-menus.js';
@@ -265,7 +265,7 @@ async function createAccessLevelRoles(
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         parent === 'settings'
-            ? RolesConfigMenu(
+            ? RoleConfigMenu(
                   server,
                   interaction.channelId,
                   false,
@@ -297,7 +297,7 @@ async function createServerRolesDM(
     const server = isValidDMInteraction(interaction);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
-        RolesConfigMenuForServerInit(server, interaction.channelId, true)
+        RoleConfigMenuForServerInit(server, interaction.channelId, true)
     );
 }
 
