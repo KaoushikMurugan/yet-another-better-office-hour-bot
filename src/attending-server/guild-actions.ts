@@ -9,6 +9,7 @@ import {
     ChannelType,
     Guild,
     GuildMember,
+    MessageFlags,
     PermissionFlagsBits,
     Snowflake,
     VoiceBasedChannel
@@ -20,6 +21,8 @@ import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
+import type { ServerError } from '../utils/error-types.js';
+import type { Result } from '../utils/type-aliases.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -118,9 +121,8 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
     const allHelpChannels = helpCategory.children.cache.filter(isTextChannel);
     await Promise.all(
         allHelpChannels.map(async channel => {
-            // have to fetch here, otherwise the cache is empty
-            await channel.messages.fetch();
-            await Promise.all(channel.messages.cache.map(msg => msg.delete()));
+            const messages = await channel.messages.fetch();
+            await Promise.all(messages.map(msg => msg.delete()));
         })
     );
     // send the messages we want to show in the help channels
@@ -129,6 +131,13 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
             helpChannelConfigurations
                 .find(val => val.channelName === channel.name)
                 ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
+                .map(helpMessage => ({
+                    ...helpMessage,
+                    message: {
+                        ...helpMessage.message,
+                        flags: MessageFlags.SuppressNotifications as const
+                    }
+                }))
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );
@@ -269,11 +278,12 @@ async function createOfficeVoiceChannels(
  * Sends the VC invite to the student after successful dequeue
  * @param student who will receive the invite
  * @param helperVoiceChannel which vc channel to invite the student to
+ * @returns a tagged union of whether the invite is successfully sent
  */
 async function sendInvite(
     student: GuildMember,
     helperVoiceChannel: VoiceBasedChannel
-): Promise<void> {
+): Promise<Result<void, ServerError>> {
     const [invite] = await Promise.all([
         helperVoiceChannel.createInvite({
             maxAge: 15 * 60,
@@ -293,17 +303,20 @@ async function sendInvite(
                 console.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
-    await student
-        .send(
+    try {
+        await student.send(
             SimpleEmbed(
                 `It's your turn! Join the call: ${invite.toString()}`,
                 EmbedColor.Success
             )
-        )
-        .catch(() => {
-            // TODO: this assumes the error is always because of student blocking the dm
-            throw ExpectedServerErrors.studentBlockedDm(student.id);
-        });
+        );
+    } catch {
+        return {
+            ok: false,
+            error: ExpectedServerErrors.studentBlockedDm(student.id)
+        };
+    }
+    return { ok: true, value: undefined };
 }
 
 export {

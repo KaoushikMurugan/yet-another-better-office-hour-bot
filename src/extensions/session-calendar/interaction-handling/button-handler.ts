@@ -2,14 +2,15 @@ import { ButtonInteraction } from 'discord.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { CalendarButtonNames } from '../calendar-constants/calendar-interaction-names.js';
-import { calendarSettingsModal } from '../calendar-constants/calendar-modal-objects.js';
+import { CalendarSettingsModal } from '../calendar-constants/calendar-modal-objects.js';
 import { CalendarSettingsConfigMenu } from '../calendar-constants/calendar-settings-menu.js';
 import {
     CalendarLogMessages,
     CalendarSuccessMessages
 } from '../calendar-constants/calendar-success-messsages.js';
-import { isServerCalendarInteraction } from '../shared-calendar-functions.js';
 import { isFromQueueChannelWithParent } from '../../../interaction-handling/shared-validations.js';
+import { CalendarExtensionState } from '../calendar-states.js';
+import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
 
 const calendarButtonMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -33,7 +34,8 @@ const calendarButtonMap: ButtonHandlerProps = {
 async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const [server, state] = isServerCalendarInteraction(interaction);
+    const state = CalendarExtensionState.get(interaction.guildId);
+    const server = AttendingServerV2.get(interaction.guildId);
     await Promise.all([
         state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
@@ -56,7 +58,7 @@ async function resetCalendarSettings(
 async function requestCalendarRefresh(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const state = isServerCalendarInteraction(interaction)[1];
+    const state = CalendarExtensionState.get(interaction.guildId);
     const queueName = isFromQueueChannelWithParent(interaction).queueName;
     await state.refreshCalendarEvents();
     await state.emitStateChangeEvent(queueName);
@@ -71,8 +73,7 @@ async function requestCalendarRefresh(
 async function showCalendarSettingsModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const [server] = isServerCalendarInteraction(interaction);
-    await interaction.showModal(calendarSettingsModal(server.guild.id, true));
+    await interaction.showModal(CalendarSettingsModal(interaction.guildId, true));
 }
 
 export { calendarButtonMap };

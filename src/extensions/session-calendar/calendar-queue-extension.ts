@@ -4,7 +4,7 @@ import { EmbedColor } from '../../utils/embed-helper.js';
 import { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
 import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import {
-    composeUpcomingSessionsEmbedBody,
+    buildUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
@@ -74,8 +74,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
         CalendarExtensionState.get(
             this.queueChannel.channelObj.guild.id
         ).queueExtensions.delete(deletedQueue.queueName);
-        // now garbage collector should clean up this instance
-        // when server deletes the queue from queue collection
     }
 
     /**
@@ -88,7 +86,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
             .setDescription(
-                composeUpcomingSessionsEmbedBody(
+                buildUpcomingSessionsEmbedBody(
                     state.upcomingSessions.filter(
                         viewModel => viewModel.queueName === queueName
                     ),
@@ -121,7 +119,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
                 .setLabel('Refresh Upcoming Sessions')
                 .setStyle(ButtonStyle.Secondary)
         );
-        this.display.requestNonQueueEmbedRender(
+        this.display.requestExtensionEmbedRender(
             {
                 embeds: [upcomingSessionsEmbed],
                 components: [buttons]

@@ -18,8 +18,8 @@ type FrozenServer = ConstNoMethod<AttendingServerV2> &
     Pick<AttendingServerV2, 'getQueueChannels' | 'sendLogMessage'>;
 
 /**
- * Only exposes the requestNonQueueEmbedRender method for extensions
+ * Only exposes the requestExtensionEmbedRender method for extensions
  */
-type FrozenDisplay = Pick<QueueDisplayV2, 'requestNonQueueEmbedRender'>;
+type FrozenDisplay = Pick<QueueDisplayV2, 'requestExtensionEmbedRender'>;
 
 export type { FrozenServer, FrozenQueue, FrozenDisplay };

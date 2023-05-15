@@ -48,7 +48,6 @@ class CalendarServerExtension extends BaseServerExtension {
         // otherwise the timer arrow func will still hold the reference to the deleted instance
         clearInterval(this.timerId);
         CalendarExtensionState.allStates.delete(server.guild.id);
-        return Promise.resolve();
     }
 }
 

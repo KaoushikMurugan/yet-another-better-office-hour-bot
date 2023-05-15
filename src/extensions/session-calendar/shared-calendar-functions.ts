@@ -7,13 +7,10 @@ import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
 import { environment } from '../../environment/environment-manager.js';
-import { GuildMemberId, WithRequired } from '../../utils/type-aliases.js';
+import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
-import { Snowflake, Interaction } from 'discord.js';
-import { isTextChannel } from '../../utils/util-functions.js';
+import { Snowflake } from 'discord.js';
 import { z } from 'zod';
-import { FrozenServer } from '../extension-utils.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
 /**
  * ViewModel for 1 tutor's upcoming session
@@ -128,14 +125,14 @@ function transformViewModelToString(viewModel: UpComingSessionViewModel): string
 }
 /**
  * Builds the body message of the upcoming sessions embed
- * @param viewModels models from {@link getUpComingTutoringEventsForServer}
+ * @param viewModels models from {@link fetchUpcomingSessions}
  * @param title the queue name or the guild name
  * @param lastUpdatedTimeStamp when was the last time that the view models are updated
  * @param returnCount the MAXIMUM number of events to render
  * - if the value is 'max', show as many sessions as possible
  * @returns string that goes into the embed
  */
-function composeUpcomingSessionsEmbedBody(
+function buildUpcomingSessionsEmbedBody(
     viewModels: UpComingSessionViewModel[],
     title: string,
     lastUpdatedTimeStamp: Date,
@@ -191,9 +188,9 @@ function buildCalendarURL(args: {
     return [
         `https://www.googleapis.com/calendar/v3/calendars/${args.calendarId}/events?`,
         `&key=${args.apiKey}`,
+        `&maxResults=${args.maxResults.toString()}`,
         `&timeMax=${args.timeMax.toISOString()}`,
         `&timeMin=${args.timeMin.toISOString()}`,
-        `&maxResults=${args.maxResults.toString()}`,
         `&orderBy=startTime`,
         `&singleEvents=true`
     ].join('');
@@ -207,34 +204,11 @@ function restorePublicEmbedURL(calendarId: string): string {
 }
 
 /**
- * Checks if the calendar interaction is safe to execute
- * @deprecated will be removed as the base isServerInteraction gets deprecated
- * @param interaction
- * @returns server, state, and interaction 3-tuple
- */
-function isServerCalendarInteraction<T extends Interaction<'cached'>>(
-    interaction: T
-): [
-    server: FrozenServer,
-    state: CalendarExtensionState,
-    interaction: WithRequired<T, 'channel' | 'channelId'>
-] {
-    const server = AttendingServerV2.get(interaction.guildId);
-    const state = CalendarExtensionState.allStates.get(server.guild.id);
-    if (!state || !isTextChannel(interaction.channel)) {
-        throw ExpectedCalendarErrors.nonServerInteraction(interaction.guild.name);
-    }
-    // already checked for non-null channelId, idk why type inference doesn't work
-    // destructuring works but it has massive memory overhead
-    return [server, state, interaction as WithRequired<T, 'channel' | 'channelId'>];
-}
-
-/**
- * Fetches 100 calendar events of a server
+ * Fetches 100 calendar events of a server and converts them into individual sessions
  * @param serverId id of the server to fetch for
  * @returns at most 100 UpComingSessionViewModels
  */
-async function getUpComingTutoringEventsForServer(
+async function fetchUpcomingSessions(
     serverId: Snowflake
 ): Promise<UpComingSessionViewModel[]> {
     const nextWeek = new Date();
@@ -257,8 +231,7 @@ async function getUpComingTutoringEventsForServer(
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
-    const responseJSON = await response.data;
-    const rawEvents = (responseJSON as calendar_v3.Schema$Events).items;
+    const rawEvents = ((await response.data) as calendar_v3.Schema$Events).items;
     if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
@@ -347,10 +320,9 @@ function composeViewModelsByString(
 export {
     UpComingSessionViewModel,
     CalendarConfigBackup,
-    getUpComingTutoringEventsForServer,
+    fetchUpcomingSessions,
     buildCalendarURL,
     checkCalendarConnection,
     restorePublicEmbedURL,
-    composeUpcomingSessionsEmbedBody,
-    isServerCalendarInteraction
+    buildUpcomingSessionsEmbedBody
 };

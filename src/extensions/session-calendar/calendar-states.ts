@@ -7,7 +7,7 @@ import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
     checkCalendarConnection,
-    getUpComingTutoringEventsForServer,
+    fetchUpcomingSessions,
     restorePublicEmbedURL
 } from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
@@ -65,7 +65,7 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 500 });
+    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 100 });
     /**
      * When was the upcomingSessions cache last updated
      */
@@ -131,7 +131,7 @@ class CalendarExtensionState {
      * - **Requires the allStates map to have this instance**
      */
     async refreshCalendarEvents(): Promise<void> {
-        this.upcomingSessions = await getUpComingTutoringEventsForServer(this.guild.id);
+        this.upcomingSessions = await fetchUpcomingSessions(this.guild.id);
         this.lastUpdatedTimeStamp = new Date();
     }
 

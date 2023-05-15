@@ -19,7 +19,6 @@ import {
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
-import { CommandParseError } from '../utils/error-types.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 import { yellow } from '../utils/command-line-colors.js';
 import { CategoryChannelId } from '../utils/type-aliases.js';
@@ -174,24 +173,6 @@ function hasValidQueueArgumentIdOnly(
 }
 
 /**
- * Checks if the user has the Valid Email role
- * @deprecated
- * @param commandName the command used
- * @returns GuildMember object of the trigger-er
- */
-function isTriggeredByUserWithValidEmail(
-    interaction: Interaction<'cached'>,
-    commandName: string
-): GuildMember {
-    if (!interaction.member.roles.cache.some(role => role.name === 'Verified Email')) {
-        throw new CommandParseError(
-            `You need to have a verified email to use \`/${commandName}\`.`
-        );
-    }
-    return interaction.member;
-}
-
-/**
  * Checks if there are enough channel count for new channels to be created
  * @param interaction
  * @param numNewCategories number of new categories needed to create
@@ -225,6 +206,5 @@ export {
     isTriggeredByMemberWithRoles,
     hasValidQueueArgument,
     hasValidQueueArgumentIdOnly,
-    channelsAreUnderLimit,
-    isTriggeredByUserWithValidEmail
+    channelsAreUnderLimit
 };

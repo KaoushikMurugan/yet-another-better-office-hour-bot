@@ -5,10 +5,6 @@ import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { CommandParseError } from '../../utils/error-types.js';
 import { Optional } from '../../utils/type-aliases.js';
 import { getInteractionName } from '../../utils/util-functions.js';
-import {
-    AccessLevelRoleIds,
-    accessLevelRoleConfigs
-} from '../../models/access-level-roles.js';
 
 /**
  * All the errors expected to happen at the parsing stage
@@ -17,7 +13,7 @@ import {
  */
 const ExpectedParseErrors = {
     accessLevelRoleDoesNotExist: (
-        missingRoleNames: typeof accessLevelRoleConfigs[keyof AccessLevelRoleIds]['displayName'][]
+        missingRoleNames: string[]
     ) =>
         new CommandParseError(
             `The roles ${missingRoleNames.join(

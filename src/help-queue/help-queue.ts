@@ -1,13 +1,13 @@
 /** @module HelpQueueV2 */
-
-import { GuildMember, TextChannel, Collection, Snowflake } from 'discord.js';
-import { QueueChannel } from '../attending-server/base-attending-server.js';
-import { QueueExtension } from '../extensions/extension-interface.js';
-import { QueueBackup } from '../models/backups.js';
-import { Helpee } from '../models/member-states.js';
+import type { GuildMember, TextChannel, Snowflake, PartialGuildMember } from 'discord.js';
+import type { QueueChannel } from '../attending-server/base-attending-server.js';
+import type { QueueExtension } from '../extensions/extension-interface.js';
+import type { QueueBackup } from '../models/backups.js';
+import type { Helpee } from '../models/member-states.js';
+import type { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import { Collection } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
-import { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -371,7 +371,7 @@ class HelpQueueV2 {
      * Returns the view model of the current state of the queue
      * @returns QueueViewModel
      */
-    getCurrentViewModel(): QueueViewModel {
+    getViewModel(): QueueViewModel {
         return {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
@@ -544,8 +544,6 @@ class HelpQueueV2 {
         if (!notify) {
             return;
         }
-        // now notify is true
-        // Synchronously notify everyone in the notif group
         // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
         void Promise.allSettled(
             this.notifGroup.map(
@@ -554,7 +552,6 @@ class HelpQueueV2 {
                     notifMember.send(SimpleEmbed(`Queue \`${this.queueName}\` is open!`))
             )
         ).then(() => this.notifGroup.clear());
-        // clear AFTER the message promise settles to avoid race conditions
     }
 
     /**
@@ -593,7 +590,9 @@ class HelpQueueV2 {
      * @throws {QueueError} if the student is not in the queue
      */
     @useQueueBackup
-    async removeStudent(targetStudent: GuildMember): Promise<Helpee> {
+    async removeStudent(
+        targetStudent: GuildMember | PartialGuildMember
+    ): Promise<Helpee> {
         const index = this._students.findIndex(
             student => student.member.id === targetStudent.id
         );
@@ -655,7 +654,7 @@ class HelpQueueV2 {
      */
     async triggerForceRender(): Promise<void> {
         this.display.enterWriteOnlyMode();
-        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
+        this.display.requestQueueEmbedRender(this.getViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 // TODO: temporary solution
@@ -672,7 +671,7 @@ class HelpQueueV2 {
      * Composes the queue view model, then sends it to QueueDisplay
      */
     async triggerRender(): Promise<void> {
-        this.display.requestQueueEmbedRender(this.getCurrentViewModel());
+        this.display.requestQueueEmbedRender(this.getViewModel());
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)
