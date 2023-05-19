@@ -1,8 +1,7 @@
 <br>
 <div align="center">
       <div>
-      
-<img width="80%" alt="yet another better office hour bot" src="https://user-images.githubusercontent.com/60045212/230826224-6d54e3a4-1d31-4c1d-b463-39ce9e2e505f.svg"/>
+<img width="80%" alt="yet another better office hour bot" src="https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/assets/60045212/c49faee6-053e-482c-9c52-01549047450a"/>
       </div>
 </div>
 
