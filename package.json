@@ -1,6 +1,6 @@
 {
     "name": "yet-another-better-oh-bot",
-    "version": "4.4",
+    "version": "4.4.1",
     "description": "Yet another better discord bot for managing office hours",
     "type": "module",
     "scripts": {

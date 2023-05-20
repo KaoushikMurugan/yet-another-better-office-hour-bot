@@ -142,43 +142,7 @@ function safeDecompressComponentId<T extends ComponentLocation>(
     }
 }
 
-class YabobButton<T extends ComponentLocation> extends ButtonBuilder {
-    constructor(idInfo: CustomIdTuple<T>) {
-        super();
-        super.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override setCustomId(_: string): this {
-        return this;
-    }
-}
-
-class YabobSelectMenu<T extends ComponentLocation> extends StringSelectMenuBuilder {
-    constructor(idInfo: CustomIdTuple<T>) {
-        super();
-        super.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override setCustomId(_: string): this {
-        return this;
-    }
-}
-
-class YabobModal<T extends ComponentLocation> extends ModalBuilder {
-    constructor(idInfo: CustomIdTuple<T>) {
-        super();
-        super.setCustomId(LZString.compressToUTF16(JSON.stringify(idInfo)));
-    }
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    override setCustomId(_: string): this {
-        return this;
-    }
-}
-
 export {
-    YabobButton,
-    YabobSelectMenu,
-    YabobModal,
     buildComponent,
     decompressComponentId,
     safeDecompressComponentId,
