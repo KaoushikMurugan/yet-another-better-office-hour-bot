@@ -5,9 +5,9 @@ import {
     ButtonStyle,
     EmbedBuilder
 } from 'discord.js';
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
 import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { YabobEmbed } from '../utils/type-aliases.js';
