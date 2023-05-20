@@ -100,7 +100,8 @@ async function setQueueAutoClear(
         throw ExpectedParseErrors.badAutoClearValues;
     }
     // move the excess minutes into hours
-    hours += Math.floor(minutes / 60);
+    // if hours > 99, it can't be displayed in a modal with only 2 characters
+    hours = Math.min(99, hours + Math.floor(minutes / 60));
     minutes %= 60;
     const enable = !(hours === 0 && minutes === 0);
     await server.setQueueAutoClear(hours, minutes, enable);

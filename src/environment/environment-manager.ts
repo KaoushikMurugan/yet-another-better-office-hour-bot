@@ -6,19 +6,20 @@ const configuration = {
     development,
     production
 };
-const possibleEnvironments = ['development', 'production'] as const;
-const env = process.env.NODE_ENV as typeof possibleEnvironments[number]; // checked
+const env = process.env.NODE_ENV;
 const disableExtensions = process.argv.slice(2)[0]?.split('=')[1] === 'true';
 
-// this is necessary
-// eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
 if (env === undefined) {
     throw new Error(red('Environment not specified'));
 }
-if (!possibleEnvironments.includes(env)) {
+if (!['development', 'production'].includes(env)) {
     throw new Error(red(`Unknown environment '${env}'`));
 }
 
-const environment = { ...configuration[env], env: env, disableExtensions };
+const environment = {
+    ...configuration[env as 'development' | 'production'],
+    env: env,
+    disableExtensions
+};
 
 export { environment };

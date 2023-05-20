@@ -1,6 +1,6 @@
 import { environment } from './environment/environment-manager.js';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
-import { yellow, black, red } from './utils/command-line-colors.js';
+import { yellow, black, red, blue } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
@@ -51,15 +51,28 @@ const client: Client<true> = new Client({
     ],
     // modifies default caching behavior
     makeCache: Options.cacheWithLimits({
-        ...Options.DefaultMakeCacheSettings,
         ReactionManager: 0,
         GuildBanManager: 0,
         GuildScheduledEventManager: 0,
         MessageManager: 0,
         AutoModerationRuleManager: 0,
+        ThreadManager: 0,
+        GuildForumThreadManager: 0,
+        GuildEmojiManager: 0,
+        ThreadMemberManager: 0,
+        GuildInviteManager: 0,
+        PresenceManager: 0,
+        ReactionUserManager: 0,
+        GuildTextThreadManager: 0,
+        BaseGuildEmojiManager: 0,
+        GuildStickerManager: 0,
+        StageInstanceManager: 0,
+        UserManager: 0,
         ApplicationCommandManager: 0
     })
 });
+
+console.log(blue('\nLogging into Discord...'));
 
 /** Login before export */
 await client
