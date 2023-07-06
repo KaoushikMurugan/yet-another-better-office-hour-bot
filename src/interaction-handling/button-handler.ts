@@ -43,6 +43,11 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.RemoveNotif]: leaveNotifGroup
         },
         other: {
+            [ButtonNames.Start]: start,
+            [ButtonNames.Next]: next,
+            [ButtonNames.Stop]: stop,
+            [ButtonNames.Pause]: pause,
+            [ButtonNames.Resume]: resume,
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
             [ButtonNames.ServerRoleConfig1SM]: interaction =>
                 createAccessLevelRoles(interaction, false, false, 'settings'),
@@ -120,6 +125,11 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
+        // ButtonNames.Start,
+        // ButtonNames.Stop,
+        // ButtonNames.Pause,
+        // ButtonNames.Resume,
+        // ButtonNames.Next,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1SM,
         ButtonNames.ServerRoleConfig1aSM,
@@ -238,6 +248,95 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
         .getQueueById(queueChannel.parentCategoryId)
         .removeFromNotifGroup(interaction.member);
     await interaction.editReply(SuccessMessages.removedNotif(queueChannel.queueName));
+}
+
+/**
+ * Equivalent to the `/start mute_notifs:true` command
+ * @param interaction
+ */
+async function start(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Start,
+        'staff'
+    );
+    await server.openAllOpenableQueues(member, true);
+    await interaction.editReply(SuccessMessages.startedHelping);
+}
+
+/**
+ * The `/next` command, both with arguments or without arguments
+ */
+async function next(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const helperMember = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Next,
+        'staff'
+    );
+    const dequeuedStudent = await server.dequeueGlobalFirst(helperMember);
+    const helpTopic = dequeuedStudent.helpTopic;
+    if (!helpTopic) {
+        await interaction.editReply(
+            SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
+        );
+    } else {
+        await interaction.editReply(
+            SuccessMessages.inviteSentAndShowHelpTopic(
+                dequeuedStudent.member.displayName,
+                helpTopic
+            )
+        );
+    }
+}
+
+/**
+ * Equivalent to the `/stop` command
+ * @param interaction
+ */
+async function stop(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Stop,
+        'staff'
+    );
+    const helpTimeEntry = await server.closeAllClosableQueues(member);
+    await interaction.editReply(SuccessMessages.finishedHelping(helpTimeEntry));
+}
+
+/**
+ * The `/pause` command
+ */
+async function pause(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Pause,
+        'staff'
+    );
+    const existOtherActiveHelpers = await server.pauseHelping(member);
+    await interaction.editReply(SuccessMessages.pausedHelping(existOtherActiveHelpers));
+}
+
+/**
+ * The `/resume` command
+ */
+async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const member = isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Resume,
+        'staff'
+    );
+    await server.resumeHelping(member);
+    await interaction.editReply(SuccessMessages.resumedHelping);
 }
 
 /**
