@@ -9,8 +9,14 @@ import {
 import { CommandHandlerProps } from './handler-interface.js';
 // @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
-import { CommandNames } from './interaction-constants/interaction-names.js';
-import { ChatInputCommandInteraction } from 'discord.js';
+import { ButtonNames, CommandNames } from './interaction-constants/interaction-names.js';
+import {
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    ChatInputCommandInteraction,
+    EmbedBuilder
+} from 'discord.js';
 import {
     updateCommandHelpChannels,
     createOfficeVoiceChannels
@@ -36,6 +42,7 @@ import { HelperRolesData } from '../utils/type-aliases.js';
 import { parse } from 'csv-string';
 import { quickStartPages } from '../attending-server/quick-start-pages.js';
 import { SimpleTimeZone } from '../utils/type-aliases.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -63,7 +70,8 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.queue_notify]: joinQueueNotify,
         [CommandNames.assign_helpers_roles]: assignHelpersRoles,
         [CommandNames.quick_start]: quickStart,
-        [CommandNames.set_time_zone]: setTimeZone
+        [CommandNames.set_time_zone]: setTimeZone,
+        [CommandNames.create_helper_menu]: createHelperMenu
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -673,6 +681,10 @@ async function setTimeZone(
     );
 }
 
+/**
+ * The `/quick_start` command
+ * @param interaction
+ */
 async function quickStart(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
@@ -691,6 +703,103 @@ async function quickStart(
     }
 
     await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
+}
+
+/**
+ * The `/create_helper_menu` command
+ * @param interaction
+ */
+async function createHelperMenu(
+    interaction: ChatInputCommandInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+
+    const helperMenuChannel = interaction.options.getChannel('channel', true);
+
+    if (!isTextChannel(helperMenuChannel)) {
+        await interaction.editReply(
+            ExpectedParseErrors.notTextChannel(helperMenuChannel.name)
+        );
+    } else {
+        const channelId = helperMenuChannel.id;
+        const helperMenuEmbed = new EmbedBuilder()
+            .setTitle('Helper Menu')
+            .setDescription(
+                "**TO BE CHANGED**\n\
+                Use the start button to start helping\n\
+        Use the next button to pull out the next person from the queue\n\
+        Use the stop button to stop helping\n\
+        Use the pause button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n\
+        Use the resume button to reopen the queue."
+            )
+            .setColor(EmbedColor.Aqua);
+
+        const startButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Start,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('▶️')
+            .setLabel('Start')
+            .setStyle(ButtonStyle.Success);
+
+        const nextButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Next,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('⏭️')
+            .setLabel('Next')
+            .setStyle(ButtonStyle.Primary);
+
+        const stopButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Stop,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('⏹️')
+            .setLabel('Stop')
+            .setStyle(ButtonStyle.Danger);
+
+        const pauseButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Pause,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('⏸️')
+            .setLabel('Pause')
+            .setStyle(ButtonStyle.Secondary);
+
+        const resumeButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Resume,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('▶️')
+            .setLabel('Resume')
+            .setStyle(ButtonStyle.Secondary);
+
+        const buttonRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            startButton,
+            nextButton,
+            stopButton
+        );
+        const buttonRow2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+            pauseButton,
+            resumeButton
+        );
+
+        await helperMenuChannel.send({
+            embeds: [helperMenuEmbed],
+            components: [buttonRow1, buttonRow2]
+        });
+        await interaction.editReply(SuccessMessages.createdHelperMenu(helperMenuChannel));
+    }
 }
 
 /**
