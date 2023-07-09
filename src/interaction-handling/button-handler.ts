@@ -125,11 +125,6 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
-        // ButtonNames.Start,
-        // ButtonNames.Stop,
-        // ButtonNames.Pause,
-        // ButtonNames.Resume,
-        // ButtonNames.Next,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1SM,
         ButtonNames.ServerRoleConfig1aSM,

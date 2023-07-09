@@ -366,9 +366,9 @@ const assignHelpersRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
-// /create_helper_menu [channel]
-const createHelperMenuCommand = new SlashCommandBuilder()
-    .setName(CommandNames.create_helper_menu)
+// /create_helper_control_panel [channel]
+const createHelperControlPanelCommand = new SlashCommandBuilder()
+    .setName(CommandNames.create_helper_control_panel)
     .setDescription('Creates a helper menu in the specified channel')
     .addChannelOption(option =>
         option
@@ -404,7 +404,7 @@ const commandData = [
     assignHelpersRolesCommand.toJSON(),
     quickStartCommand.toJSON(),
     setTimeZoneCommand.toJSON(),
-    createHelperMenuCommand.toJSON()
+    createHelperControlPanelCommand.toJSON()
 ];
 
 async function postSlashCommands(

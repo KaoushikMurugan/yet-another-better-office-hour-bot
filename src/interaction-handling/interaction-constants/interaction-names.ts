@@ -31,7 +31,7 @@ enum CommandNames {
     set_time_zone = 'set_time_zone',
     settings = 'settings',
     assign_helpers_roles = 'assign_helpers_roles',
-    create_helper_menu = 'create_helper_menu',
+    create_helper_control_panel = 'create_helper_control_panel',
     quick_start = 'quick_start'
 }
 

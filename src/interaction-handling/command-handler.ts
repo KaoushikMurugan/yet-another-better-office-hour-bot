@@ -71,7 +71,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.assign_helpers_roles]: assignHelpersRoles,
         [CommandNames.quick_start]: quickStart,
         [CommandNames.set_time_zone]: setTimeZone,
-        [CommandNames.create_helper_menu]: createHelperMenu
+        [CommandNames.create_helper_control_panel]: createhelperControlPanel
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -706,31 +706,46 @@ async function quickStart(
 }
 
 /**
- * The `/create_helper_menu` command
+ * The `/create_helper_control_panel` command
  * @param interaction
  */
-async function createHelperMenu(
+async function createhelperControlPanel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
 
-    const helperMenuChannel = interaction.options.getChannel('channel', true);
+    const helperControlPanelChannel = interaction.options.getChannel('channel', true);
 
-    if (!isTextChannel(helperMenuChannel)) {
+    const startCommandId = server.guild.commands.cache.find(
+        command => command.name === CommandNames.start
+    )?.id;
+    const nextCommandId = server.guild.commands.cache.find(
+        command => command.name === CommandNames.next
+    )?.id;
+    const announceCommandId = server.guild.commands.cache.find(
+        command => command.name === CommandNames.announce
+    )?.id;
+
+    if (!isTextChannel(helperControlPanelChannel)) {
         await interaction.editReply(
-            ExpectedParseErrors.notTextChannel(helperMenuChannel.name)
+            ExpectedParseErrors.notTextChannel(helperControlPanelChannel.name)
         );
     } else {
-        const channelId = helperMenuChannel.id;
-        const helperMenuEmbed = new EmbedBuilder()
-            .setTitle('Helper Menu')
+        const channelId = helperControlPanelChannel.id;
+        const helperControlPanelEmbed = new EmbedBuilder()
+            //.setTitle('Helper Menu')
             .setDescription(
-                "**TO BE CHANGED**\n\
-                Use the start button to start helping\n\
-        Use the next button to pull out the next person from the queue\n\
-        Use the stop button to stop helping\n\
-        Use the pause button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n\
-        Use the resume button to reopen the queue."
+                `# Helper Control Panel\n` +
+                    `**Description to be update**\n` +
+                    `Press **▶️ Start** to start helping\n` +
+                    `Press **⏭️ Next** button to pull out the next person from the queue\n` +
+                    `Press **⏹️ Stop** button to stop helping\n` +
+                    `Press **⏸️ Pause** button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n` +
+                    `Press **⏯️ Resume** button to reopen the queue if they are closed.\n\n` +
+                    `## Commands alternatives not in menu (yet)\n` +
+                    `- </start:${startCommandId}>: \`mute_notif\` - prevent pinging people who signed up for notifications for queues that you may open when you start helping\n` +
+                    `- </next:${nextCommandId}>: \`queue_name\` - pull the next person from a specific queue, or \`user\` - pull a specific user out of the queue they're in\n` +
+                    `- </announce:${announceCommandId}>: Send a message to all students in queues that you help for. \`queue_name\` - send an announcement to all students in a specific queue`
             )
             .setColor(EmbedColor.Aqua);
 
@@ -780,7 +795,7 @@ async function createHelperMenu(
             server.guild.id,
             channelId
         ])
-            .setEmoji('▶️')
+            .setEmoji('⏯️')
             .setLabel('Resume')
             .setStyle(ButtonStyle.Secondary);
 
@@ -794,11 +809,13 @@ async function createHelperMenu(
             resumeButton
         );
 
-        await helperMenuChannel.send({
-            embeds: [helperMenuEmbed],
+        await helperControlPanelChannel.send({
+            embeds: [helperControlPanelEmbed],
             components: [buttonRow1, buttonRow2]
         });
-        await interaction.editReply(SuccessMessages.createdHelperMenu(helperMenuChannel));
+        await interaction.editReply(
+            SuccessMessages.createdHelperControlPanel(helperControlPanelChannel)
+        );
     }
 }
 

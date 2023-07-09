@@ -186,7 +186,7 @@ export const SuccessMessages = {
             EmbedColor.KindaBad,
             roleLogs
         ),
-    createdHelperMenu: (channel: TextChannel) =>
+    createdHelperControlPanel: (channel: TextChannel) =>
         SimpleEmbed(
             `Successfully created the helper menu in #${channel.name}\n`,
             EmbedColor.Success,
