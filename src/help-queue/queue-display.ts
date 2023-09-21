@@ -17,7 +17,7 @@ import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
-import { globalLogger } from '../global-states.js';
+import { LOGGER } from '../global-states.js';
 import type { Logger } from 'pino';
 
 /** Wrapper for discord embeds to be sent to the queue */
@@ -94,7 +94,7 @@ class QueueDisplayV2 {
 
     constructor(private readonly queueChannel: QueueChannel) {
         // starts the render loop
-        this.logger = globalLogger.child({ queueDisplay: this.queueChannel.queueName });
+        this.logger = LOGGER.child({ queueDisplay: this.queueChannel.queueName });
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
             // if there's nothing new or a render is already happening, stop

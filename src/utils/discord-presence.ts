@@ -1,5 +1,5 @@
 import { ActivityType } from 'discord.js';
-import { client, globalLogger } from '../global-states.js';
+import { client, LOGGER } from '../global-states.js';
 
 // You can't set the presence of a bot to Custom Status, so we can't use the general type of ActivityType
 // If you give the presence type of Streaming, it shows up on discord as "Playing" instead of "Streaming"
@@ -161,7 +161,7 @@ function updatePresence(): void {
         activities: [newPresence]
     });
     previousPresence = newPresence;
-    globalLogger.info(
+    LOGGER.info(
         `Updated presence to ${presenceTypeMap.get(newPresence.type)}: ${
             newPresence.name
         }`

@@ -15,12 +15,12 @@ import {
     VoiceChannel,
     VoiceState
 } from 'discord.js';
-import { black, cyan, magenta, red, yellow } from './command-line-colors.js';
+import { black, cyan, magenta, yellow } from './command-line-colors.js';
 import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 import { extractComponentName } from './component-id-factory.js';
-import { globalLogger } from '../global-states.js';
+import { LOGGER } from '../global-states.js';
 
 // #region Util Functions
 
@@ -29,8 +29,8 @@ import { globalLogger } from '../global-states.js';
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
-    globalLogger.info(`Environment: ${cyan(environment.env)}`);
-    globalLogger.info(
+    LOGGER.info(`Environment: ${cyan(environment.env)}`);
+    LOGGER.info(
         `${black(
             magenta(
                 ' '.repeat(
@@ -44,7 +44,7 @@ function printTitleString(): void {
             )
         )}`
     );
-    globalLogger.info('Scanning servers I am a part of...');
+    LOGGER.info('Scanning servers I am a part of...');
 }
 
 /**
@@ -256,16 +256,13 @@ function longestCommonSubsequence(str1: string, str2: string): number {
  * @param interaction
  */
 function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n` +
-            ` - Command Used: ${magenta(interaction.toString())}`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            serverId: interaction.guildId,
+            command: interaction.toString()
+        },
+        `Command used in ${yellow(interaction.guild.name)}`
     );
 }
 
@@ -280,17 +277,14 @@ function logButtonPress(
     buttonName: string,
     queueName?: string
 ): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.guild?.name ?? 'DM')}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n` +
-            ` - Button Pressed: ${magenta(buttonName)}` +
-            (queueName ? `\n - In Queue: ${queueName}` : '')
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            serverId: interaction.guildId,
+            button: buttonName,
+            queueName: queueName
+        },
+        `Button pressed in ${yellow(interaction.guild?.name)}`
     );
 }
 
@@ -300,16 +294,12 @@ function logButtonPress(
  * @param buttonName
  */
 function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.user.username)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Button Pressed: ${magenta(buttonName)}\n` +
-            ` - In DM`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            buttonPressed: buttonName
+        },
+        'Button pressed in DM channel'
     );
 }
 
@@ -322,16 +312,13 @@ function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
     modalName: string
 ): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n` +
-            ` - Modal Used: ${magenta(modalName)}`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            serverId: interaction.guildId,
+            modal: modalName
+        },
+        `Modal submitted in ${yellow(interaction.guild.name)}`
     );
 }
 
@@ -341,17 +328,12 @@ function logModalSubmit(
  * @param modalName
  */
 function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.user.username)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Related Server Id: ${interaction.guildId}\n` +
-            ` - Modal Used: ${magenta(modalName)}` +
-            ` - In DM`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            modal: modalName
+        },
+        'Modal submitted in DM Channel'
     );
 }
 
@@ -364,17 +346,14 @@ function logSelectMenuSelection(
     interaction: StringSelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.guild.name)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Server Id: ${interaction.guildId}\n` +
-            ` - Select Menu Used: ${magenta(selectMenuName)}\n` +
-            ` - Selected Options: ${magenta(interaction.values.join(', '))}`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            serverId: interaction.guildId,
+            selectMenu: selectMenuName,
+            selectedOptions: interaction.values.join(', ')
+        },
+        `Select menu used in ${yellow(interaction.guild.name)}`
     );
 }
 
@@ -387,18 +366,14 @@ function logDMSelectMenuSelection(
     interaction: StringSelectMenuInteraction,
     selectMenuName: string
 ): void {
-    globalLogger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.user.username)}]\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Related Server Id: ${interaction.guildId}\n` +
-            ` - Select Menu Used: ${magenta(selectMenuName)}` +
-            ` - Selected Options: ${magenta(interaction.values.join(', '))}` +
-            ` - In DM`
+    LOGGER.info(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            serverId: interaction.guildId,
+            selectMenu: selectMenuName,
+            selectedOptions: interaction.values.join(', ')
+        },
+        'Select menu used in DM channel'
     );
 }
 
@@ -408,12 +383,12 @@ function logDMSelectMenuSelection(
  * @param error
  */
 function logExpectedErrors(interaction: Interaction, error: Error): void {
-    globalLogger.error(
-        `${yellow(interaction.user.username)}\n` +
-            ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
-            ` - Related Server Id: ${interaction.guildId}\n` +
-            ` - ${red(`Error: ${error.name}`)}\n` +
-            ` - Error Message: ${error.message}`
+    LOGGER.error(
+        {
+            user: `${interaction.user.username} (${interaction.user.id})`,
+            relatedServerId: `${interaction.guildId}\n`
+        },
+        `Error Message: ${error.message}`
     );
 }
 

@@ -22,7 +22,7 @@ import { AccessLevelRole } from '../models/access-level-roles.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
 import { yellow } from '../utils/command-line-colors.js';
 import { CategoryChannelId } from '../utils/type-aliases.js';
-import { globalLogger } from '../global-states.js';
+import { LOGGER } from '../global-states.js';
 
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
@@ -54,7 +54,7 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
     }
     // TODO: temporary solution, move this somewhere else
-    globalLogger.info(` - In Queue: ${yellow(queueChannel.queueName)}`);
+    LOGGER.info(` - In Queue: ${yellow(queueChannel.queueName)}`);
     return queueChannel;
 }
 
