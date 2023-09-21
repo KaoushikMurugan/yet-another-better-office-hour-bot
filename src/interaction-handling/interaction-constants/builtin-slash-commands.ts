@@ -376,6 +376,12 @@ const createHelperControlPanelCommand = new SlashCommandBuilder()
             .setDescription('The channel to create the helper menu in')
             .setRequired(true)
             .addChannelTypes(ChannelType.GuildText)
+    )
+    .addBooleanOption(option =>
+        option
+            .setName('verbose')
+            .setDescription('Whether to show a detailed message, defaults to true')
+            .setRequired(false)
     );
 
 /** The raw data that can be sent to Discord */

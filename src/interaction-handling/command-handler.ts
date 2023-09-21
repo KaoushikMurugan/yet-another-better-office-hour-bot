@@ -713,7 +713,9 @@ async function createHelperControlPanel(
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
 
-    const helperControlPanelChannel = interaction.options.getChannel('channel', true);
+    const targetChannel = interaction.options.getChannel('channel', true);
+
+    const isVerbose = interaction.options.getBoolean('verbose') ?? true;
 
     const startCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.start
@@ -725,106 +727,109 @@ async function createHelperControlPanel(
         command => command.name === CommandNames.announce
     )?.id;
 
-    if (!isTextChannel(helperControlPanelChannel)) {
-        await interaction.editReply(
-            ExpectedParseErrors.notTextChannel(helperControlPanelChannel.name)
+    if (!isTextChannel(targetChannel)) {
+        throw ExpectedParseErrors.notTextChannel(targetChannel.name);
+    }
+
+    const channelId = targetChannel.id;
+    const helperControlPanelEmbed = new EmbedBuilder().setColor(EmbedColor.Aqua);
+
+    if (isVerbose) {
+        helperControlPanelEmbed.setDescription(
+            `## Helper Control Panel\n` +
+                `### Button Guide\n` +
+                `- Press **▶️ Start** to start helping\n` +
+                `- Press **⏭️ Next** button to pull out the next person from the queue\n` +
+                `- Press **⏹️ Stop** button to stop helping\n` +
+                `- Press **⏸️ Pause** button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n` +
+                `- Press **⏯️ Resume** button to reopen the queue if they are closed.\n` +
+                `- Press **📢 Announce** button to send a message to all the students in your queues.\n` +
+                `### Command Variants\n` +
+                `- </start:${startCommandId}>: \`mute_notif\` - prevents notifying people who signed up for queue-opening notifications\n` +
+                `- </next:${nextCommandId}>: \`queue_name\` - pulls the next person from a specific queue\n` +
+                `- </next:${nextCommandId}>: \`user\` - pulls a specific user out of the queue\n` +
+                `- </announce:${announceCommandId}>: \`queue_name\` - sends an announcement to all the students in a specific queue`
         );
     } else {
-        const channelId = helperControlPanelChannel.id;
-        const helperControlPanelEmbed = new EmbedBuilder()
-            .setDescription(
-                `## Helper Control Panel\n` +
-                    `Press **▶️ Start** to start helping\n` +
-                    `Press **⏭️ Next** button to pull out the next person from the queue\n` +
-                    `Press **⏹️ Stop** button to stop helping\n` +
-                    `Press **⏸️ Pause** button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n` +
-                    `Press **⏯️ Resume** button to reopen the queue if they are closed.\n\n` +
-                    `### Command Variants\n` +
-                    `- </start:${startCommandId}>: \`mute_notif\` - prevent pinging people who signed up for notifications for queues that you may open when you start helping\n` +
-                    `- </next:${nextCommandId}>: \`queue_name\` - pull the next person from a specific queue, or \`user\` - pull a specific user out of the queue they're in\n` +
-                    `- </announce:${announceCommandId}>: Send a message to all students in queues that you help for. \`queue_name\` - send an announcement to all students in a specific queue`
-            )
-            .setColor(EmbedColor.Aqua);
-
-        const startButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Start,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('▶️')
-            .setLabel('Start')
-            .setStyle(ButtonStyle.Success);
-
-        const nextButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Next,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('⏭️')
-            .setLabel('Next')
-            .setStyle(ButtonStyle.Primary);
-
-        const stopButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Stop,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('⏹️')
-            .setLabel('Stop')
-            .setStyle(ButtonStyle.Danger);
-
-        const pauseButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Pause,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('⏸️')
-            .setLabel('Pause')
-            .setStyle(ButtonStyle.Secondary);
-
-        const resumeButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Resume,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('⏯️')
-            .setLabel('Resume')
-            .setStyle(ButtonStyle.Secondary);
-
-        const announceButton = buildComponent(new ButtonBuilder(), [
-            'other',
-            ButtonNames.Announce,
-            server.guild.id,
-            channelId
-        ])
-            .setEmoji('📢')
-            .setLabel('Announce')
-            .setStyle(ButtonStyle.Secondary);
-
-        const buttonRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            startButton,
-            nextButton,
-            stopButton
-        );
-        const buttonRow2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            pauseButton,
-            resumeButton,
-            announceButton
-        );
-
-        await helperControlPanelChannel.send({
-            embeds: [helperControlPanelEmbed],
-            components: [buttonRow1, buttonRow2]
-        });
-        await interaction.editReply(
-            SuccessMessages.createdHelperControlPanel(helperControlPanelChannel)
-        );
+        helperControlPanelEmbed.setTitle('Helper Control Panel');
     }
+
+    const startButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Start,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('▶️')
+        .setLabel('Start')
+        .setStyle(ButtonStyle.Success);
+
+    const nextButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Next,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('⏭️')
+        .setLabel('Next')
+        .setStyle(ButtonStyle.Primary);
+
+    const stopButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Stop,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('⏹️')
+        .setLabel('Stop')
+        .setStyle(ButtonStyle.Danger);
+
+    const pauseButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Pause,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('⏸️')
+        .setLabel('Pause')
+        .setStyle(ButtonStyle.Secondary);
+
+    const resumeButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Resume,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('⏯️')
+        .setLabel('Resume')
+        .setStyle(ButtonStyle.Secondary);
+
+    const announceButton = buildComponent(new ButtonBuilder(), [
+        'other',
+        ButtonNames.Announce,
+        server.guild.id,
+        channelId
+    ])
+        .setEmoji('📢')
+        .setLabel('Announce')
+        .setStyle(ButtonStyle.Secondary);
+
+    const buttonRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        startButton,
+        nextButton,
+        stopButton
+    );
+    const buttonRow2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        pauseButton,
+        resumeButton,
+        announceButton
+    );
+
+    await targetChannel.send({
+        embeds: [helperControlPanelEmbed],
+        components: [buttonRow1, buttonRow2]
+    });
+    await interaction.editReply(SuccessMessages.createdHelperControlPanel(targetChannel));
 }
 
 /**
