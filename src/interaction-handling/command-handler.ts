@@ -71,7 +71,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.assign_helpers_roles]: assignHelpersRoles,
         [CommandNames.quick_start]: quickStart,
         [CommandNames.set_time_zone]: setTimeZone,
-        [CommandNames.create_helper_control_panel]: createhelperControlPanel
+        [CommandNames.create_helper_control_panel]: createHelperControlPanel
     },
     skipProgressMessageCommands: new Set([CommandNames.enqueue])
 };
@@ -459,8 +459,7 @@ async function cleanupHelpChannel(
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    const accessLevel =
-        (await server.getHighestAccessLevelRole(interaction.member)) ?? 'student';
+    const accessLevel = server.getHighestAccessLevelRole(interaction.member) ?? 'student';
     await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
 
@@ -709,7 +708,7 @@ async function quickStart(
  * The `/create_helper_control_panel` command
  * @param interaction
  */
-async function createhelperControlPanel(
+async function createHelperControlPanel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
@@ -733,16 +732,14 @@ async function createhelperControlPanel(
     } else {
         const channelId = helperControlPanelChannel.id;
         const helperControlPanelEmbed = new EmbedBuilder()
-            //.setTitle('Helper Menu')
             .setDescription(
-                `# Helper Control Panel\n` +
-                    `**Description to be update**\n` +
+                `## Helper Control Panel\n` +
                     `Press **▶️ Start** to start helping\n` +
                     `Press **⏭️ Next** button to pull out the next person from the queue\n` +
                     `Press **⏹️ Stop** button to stop helping\n` +
                     `Press **⏸️ Pause** button to close the queue while you're still helping (only works on queues where you're the only one tutoring for)\n` +
                     `Press **⏯️ Resume** button to reopen the queue if they are closed.\n\n` +
-                    `## Commands alternatives not in menu (yet)\n` +
+                    `### Command Variants\n` +
                     `- </start:${startCommandId}>: \`mute_notif\` - prevent pinging people who signed up for notifications for queues that you may open when you start helping\n` +
                     `- </next:${nextCommandId}>: \`queue_name\` - pull the next person from a specific queue, or \`user\` - pull a specific user out of the queue they're in\n` +
                     `- </announce:${announceCommandId}>: Send a message to all students in queues that you help for. \`queue_name\` - send an announcement to all students in a specific queue`
@@ -799,6 +796,16 @@ async function createhelperControlPanel(
             .setLabel('Resume')
             .setStyle(ButtonStyle.Secondary);
 
+        const announceButton = buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.Announce,
+            server.guild.id,
+            channelId
+        ])
+            .setEmoji('📢')
+            .setLabel('Announce')
+            .setStyle(ButtonStyle.Secondary);
+
         const buttonRow1 = new ActionRowBuilder<ButtonBuilder>().addComponents(
             startButton,
             nextButton,
@@ -806,7 +813,8 @@ async function createhelperControlPanel(
         );
         const buttonRow2 = new ActionRowBuilder<ButtonBuilder>().addComponents(
             pauseButton,
-            resumeButton
+            resumeButton,
+            announceButton
         );
 
         await helperControlPanelChannel.send({

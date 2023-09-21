@@ -20,6 +20,7 @@ import { ButtonNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     AfterSessionMessageModal,
+    AnnouncementModal,
     PromptHelpTopicModal,
     QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
@@ -48,6 +49,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
             [ButtonNames.Stop]: stop,
             [ButtonNames.Pause]: pause,
             [ButtonNames.Resume]: resume,
+            [ButtonNames.Announce]: showAnnounceModal,
             [ButtonNames.ReturnToMainMenu]: showSettingsMainMenu,
             [ButtonNames.ServerRoleConfig1SM]: interaction =>
                 createAccessLevelRoles(interaction, false, false, 'settings'),
@@ -125,6 +127,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
+        ButtonNames.Announce,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1SM,
         ButtonNames.ServerRoleConfig1aSM,
@@ -332,6 +335,17 @@ async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
     );
     await server.resumeHelping(member);
     await interaction.editReply(SuccessMessages.resumedHelping);
+}
+
+async function showAnnounceModal(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ButtonNames.Announce,
+        'staff'
+    );
+    await interaction.showModal(AnnouncementModal(server.guild.id));
 }
 
 /**

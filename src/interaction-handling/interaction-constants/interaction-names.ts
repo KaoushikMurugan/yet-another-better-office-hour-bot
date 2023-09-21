@@ -47,6 +47,7 @@ enum ButtonNames {
     Stop = 'Stop',
     Pause = 'Pause',
     Resume = 'Resume',
+    Announce = 'Announce',
     RemoveNotif = 'RemoveNotif',
     ReturnToMainMenu = 'ReturnToMainMenu',
     ServerRoleConfig1SM = 'ServerRoleConfig1SM',
@@ -92,7 +93,8 @@ enum ModalNames {
     AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
     QueueAutoClearModal = 'QueueAutoClearModal',
     QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion',
-    PromptHelpTopicModal = 'PromptHelpTopicModal'
+    PromptHelpTopicModal = 'PromptHelpTopicModal',
+    AnnouncementModal = 'AnnouncementModal'
 }
 
 /** Known base yabob select menu names */

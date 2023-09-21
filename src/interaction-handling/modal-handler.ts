@@ -15,6 +15,7 @@ const baseYabobModalMap: ModalSubmitHandlerProps = {
         queue: {},
         other: {
             [ModalNames.PromptHelpTopicModal]: submitHelpTopic,
+            [ModalNames.AnnouncementModal]: announce,
             [ModalNames.AfterSessionMessageModal]: interaction =>
                 setAfterSessionMessage(interaction, false),
             [ModalNames.AfterSessionMessageModalMenuVersion]: interaction =>
@@ -121,6 +122,19 @@ async function setQueueAutoClear(
                   : SuccessMessages.queueAutoClear.disabled),
               ephemeral: true
           }));
+}
+
+async function announce(interaction: ModalSubmitInteraction<'cached'>): Promise<void> {
+    const server = AttendingServerV2.get(interaction.guildId);
+    const announcement = interaction.fields.getTextInputValue('announcement');
+    if (announcement.length >= 4096) {
+        throw ExpectedParseErrors.messageIsTooLong;
+    }
+    await server.announceToStudentsInQueue(interaction.member, announcement);
+    await interaction.reply({
+        ...SuccessMessages.announced(announcement),
+        ephemeral: true
+    });
 }
 
 export { baseYabobModalMap };
