@@ -5,7 +5,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
 import { yellow, blue } from '../../utils/command-line-colors.js';
 import { ServerExtension } from '../extension-interface.js';
-import { client, firebaseDB } from '../../global-states.js';
+import { client, firebaseDB, logger } from '../../global-states.js';
 import { z } from 'zod';
 import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { loadSheetById } from './shared-sheet-functions.js';
@@ -96,8 +96,8 @@ class GoogleSheetExtensionState {
         );
         // add the new state to the static collection
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
-        console.log(
-            `[${blue('Google Sheet Logging')}] ` +
+        logger.info(
+            `[Google Sheet Logging] ` +
                 `successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );

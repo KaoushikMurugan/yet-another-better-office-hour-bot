@@ -3,6 +3,7 @@ import { BaseServerExtension } from '../extension-interface.js';
 import { FrozenServer } from '../extension-utils.js';
 import { CalendarExtensionState } from './calendar-states.js';
 import { blue } from '../../utils/command-line-colors.js';
+import { logger } from '../../global-states.js';
 
 /**
  * Server extension of session calendar
@@ -33,8 +34,8 @@ class CalendarServerExtension extends BaseServerExtension {
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);
         await CalendarExtensionState.load(guild, instance);
-        console.log(
-            `[${blue('Session Calendar')}] successfully loaded for '${guild.name}'!`
+        logger.info(
+            `[Session Calendar] successfully loaded for '${guild.name}'!`
         );
         return instance;
     }

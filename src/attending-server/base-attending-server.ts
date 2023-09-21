@@ -60,6 +60,7 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
+import { logger } from '../global-states.js';
 
 /**
  * Wrapper for TextChannel
@@ -338,7 +339,7 @@ class AttendingServerV2 {
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         AttendingServerV2.allServers.set(guild.id, server);
-        console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
+        logger.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
 
@@ -452,7 +453,7 @@ class AttendingServerV2 {
             ...helper,
             helpEnd: new Date()
         };
-        console.log(
+        logger.info(
             ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
@@ -515,10 +516,10 @@ class AttendingServerV2 {
             console.error('Failed to update help channel visibilities.', err)
         );
         createdRoles.length > 0
-            ? console.log(blue('Created roles:'), createdRoles)
-            : console.log(green(`All required roles exist in ${this.guild.name}!`));
+            ? logger.info('Created roles: ', createdRoles)
+            : logger.info(`All required roles exist in ${this.guild.name}!`);
         if (foundRoles.length > 0) {
-            console.log('Found roles:', foundRoles);
+            logger.info('Found roles:', foundRoles);
         }
     }
 
@@ -660,7 +661,6 @@ class AttendingServerV2 {
         );
         const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
-            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
@@ -1229,7 +1229,7 @@ class AttendingServerV2 {
                 );
             })
         );
-        console.log(
+        logger.info(
             `All queues in '${this.guild.name}' successfully created ${
                 environment.disableExtensions ? '' : blue('with their extensions')
             }!`
@@ -1247,7 +1247,7 @@ class AttendingServerV2 {
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
-        console.log(cyan(`Restoring external backup for ${this.guild.name}.`));
+        logger.info(`Restoring external backup for ${this.guild.name}.`);
         this.settings = {
             ...backup,
             accessLevelRoleIds: {
