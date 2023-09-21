@@ -12,8 +12,7 @@ import { environment } from '../../environment/environment-manager.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { calendarLogger, checkCalendarConnection } from './shared-calendar-functions.js';
-import { blue, yellow } from '../../utils/command-line-colors.js';
-import { LOGGER } from '../../global-states.js';
+import { yellow } from '../../utils/command-line-colors.js';
 
 class SessionCalendarInteractionExtension extends BaseInteractionExtension {
     override buttonMap = calendarButtonMap;

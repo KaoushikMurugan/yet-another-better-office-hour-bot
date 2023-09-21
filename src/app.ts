@@ -4,7 +4,7 @@ import {
 } from './interaction-handling/interaction-entry-point.js';
 import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
-import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
+import { magenta, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
@@ -58,9 +58,7 @@ client.on(Events.GuildCreate, async guild => {
     LOGGER.info(`Got invited to: ${guild.name}`);
     await joinGuild(guild).catch(err => {
         LOGGER.error(err);
-        LOGGER.error(
-            `${red('Please give me the highest role in:')} '${guild.name}'.`
-        );
+        LOGGER.error(`${red('Please give me the highest role in:')} '${guild.name}'.`);
     });
 });
 
