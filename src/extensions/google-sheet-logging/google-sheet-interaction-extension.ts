@@ -1,6 +1,6 @@
 import { environment } from '../../environment/environment-manager.js';
-import { logger } from '../../global-states.js';
-import { blue, yellow } from '../../utils/command-line-colors.js';
+import { globalLogger } from '../../global-states.js';
+import { yellow } from '../../utils/command-line-colors.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import {
     BaseInteractionExtension,
@@ -62,7 +62,7 @@ class GoogleSheetInteractionExtension
         const googleSheet = await loadSheetById(
             environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
         );
-        logger.info(
+        globalLogger.info(
             `[Google Sheet Logging] Using ${yellow(
                 googleSheet.title
             )} as the default google sheet.`

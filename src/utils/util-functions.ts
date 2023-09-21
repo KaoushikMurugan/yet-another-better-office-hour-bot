@@ -20,7 +20,7 @@ import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 import { extractComponentName } from './component-id-factory.js';
-import { logger } from '../global-states.js';
+import { globalLogger } from '../global-states.js';
 
 // #region Util Functions
 
@@ -29,8 +29,8 @@ import { logger } from '../global-states.js';
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
-    logger.info(`Environment: ${cyan(environment.env)}`);
-    logger.info(
+    globalLogger.info(`Environment: ${cyan(environment.env)}`);
+    globalLogger.info(
         `${black(
             magenta(
                 ' '.repeat(
@@ -44,7 +44,7 @@ function printTitleString(): void {
             )
         )}`
     );
-    logger.info('Scanning servers I am a part of...');
+    globalLogger.info('Scanning servers I am a part of...');
 }
 
 /**
@@ -57,25 +57,6 @@ function centered(text: string): string {
         return text;
     }
     return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
-}
-
-/**
- * Attaches a timestamp before the logging message
- * @param guildName where the logger was used
- * @param params anything, same params as regular console log
- */
-function logWithTimeStamp(
-    guildName = '',
-    ...params: Parameters<typeof logger.info>
-): void {
-    logger.info(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ${yellow(guildName)}]\n`,
-        ...params
-    );
 }
 
 function padTo2Digits(num: number): string {
@@ -275,7 +256,7 @@ function longestCommonSubsequence(str1: string, str2: string): number {
  * @param interaction
  */
 function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -299,7 +280,7 @@ function logButtonPress(
     buttonName: string,
     queueName?: string
 ): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -319,7 +300,7 @@ function logButtonPress(
  * @param buttonName
  */
 function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -341,7 +322,7 @@ function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
     modalName: string
 ): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -360,7 +341,7 @@ function logModalSubmit(
  * @param modalName
  */
 function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -383,7 +364,7 @@ function logSelectMenuSelection(
     interaction: StringSelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -406,7 +387,7 @@ function logDMSelectMenuSelection(
     interaction: StringSelectMenuInteraction,
     selectMenuName: string
 ): void {
-    logger.info(
+    globalLogger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -427,7 +408,7 @@ function logDMSelectMenuSelection(
  * @param error
  */
 function logExpectedErrors(interaction: Interaction, error: Error): void {
-    logger.error(
+    globalLogger.error(
         `${yellow(interaction.user.username)}\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Related Server Id: ${interaction.guildId}\n` +
@@ -533,7 +514,6 @@ export {
     addTimeOffset,
     centered,
     printTitleString,
-    logWithTimeStamp,
     longestCommonSubsequence,
     padTo2Digits,
     range,

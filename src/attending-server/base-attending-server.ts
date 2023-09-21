@@ -31,7 +31,7 @@ import {
     backupQueueData
 } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
-import { blue, cyan, green, red } from '../utils/command-line-colors.js';
+import { blue, green, red } from '../utils/command-line-colors.js';
 import {
     convertMsToTime,
     isCategoryChannel,
@@ -60,7 +60,8 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
-import { logger } from '../global-states.js';
+import { globalLogger } from '../global-states.js';
+import type { Logger } from 'pino';
 
 /**
  * Wrapper for TextChannel
@@ -163,10 +164,14 @@ class AttendingServerV2 {
         }
     };
 
+    private logger: Logger;
+
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<ServerExtension>
-    ) {}
+    ) {
+        this.logger = globalLogger.child({ guild: this.guild.name });
+    }
 
     /**
      * Number of correctly initialized AttendingServers
@@ -332,14 +337,16 @@ class AttendingServerV2 {
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
-            console.error(err);
+            globalLogger.error(err);
             throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
         });
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         AttendingServerV2.allServers.set(guild.id, server);
-        logger.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
+        globalLogger.info(
+            `⭐ ${green(`Initialization for ${guild.name} is successful!`)}`
+        );
         return server;
     }
 
@@ -453,7 +460,7 @@ class AttendingServerV2 {
             ...helper,
             helpEnd: new Date()
         };
-        logger.info(
+        this.logger.info(
             ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
@@ -513,13 +520,13 @@ class AttendingServerV2 {
             createdRoles[newRole.position] = newRole.name;
         }
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
-            console.error('Failed to update help channel visibilities.', err)
+            this.logger.error('Failed to update help channel visibilities.', err)
         );
         createdRoles.length > 0
-            ? logger.info('Created roles: ', createdRoles)
-            : logger.info(`All required roles exist in ${this.guild.name}!`);
+            ? this.logger.info('Created roles: ', createdRoles)
+            : this.logger.info(`All required roles exist in ${this.guild.name}!`);
         if (foundRoles.length > 0) {
-            logger.info('Found roles:', foundRoles);
+            this.logger.info('Found roles:', foundRoles);
         }
     }
 
@@ -992,9 +999,7 @@ class AttendingServerV2 {
         if (this.loggingChannel) {
             this.loggingChannel
                 .send(message)
-                .catch(err =>
-                    console.error(red(`Failed to send logs to ${this.guild.name}.`), err)
-                );
+                .catch(err => this.logger.error(`Failed to send logs.`, err));
         }
     }
 
@@ -1009,7 +1014,7 @@ class AttendingServerV2 {
         Promise.all([
             setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds)
         ]).catch(err => {
-            console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+            this.logger.error('Failed to set roles', err);
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
         });
     }
@@ -1229,7 +1234,7 @@ class AttendingServerV2 {
                 );
             })
         );
-        logger.info(
+        this.logger.info(
             `All queues in '${this.guild.name}' successfully created ${
                 environment.disableExtensions ? '' : blue('with their extensions')
             }!`
@@ -1247,7 +1252,7 @@ class AttendingServerV2 {
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
-        logger.info(`Restoring external backup for ${this.guild.name}.`);
+        this.logger.info(`Restoring external backup for ${this.guild.name}.`);
         this.settings = {
             ...backup,
             accessLevelRoleIds: {

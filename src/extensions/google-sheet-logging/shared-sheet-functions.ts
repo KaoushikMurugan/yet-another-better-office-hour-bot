@@ -1,6 +1,7 @@
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { environment } from '../../environment/environment-manager.js';
+import { globalLogger } from '../../global-states.js';
 
 /**
  * Loads a google sheet object by sheet id
@@ -15,4 +16,6 @@ async function loadSheetById(sheetId: string): Promise<GoogleSpreadsheet> {
     return googleSheet;
 }
 
-export { loadSheetById };
+const googleSheetLogger = globalLogger.child({ extension: 'Google Sheet' });
+
+export { loadSheetById, googleSheetLogger };

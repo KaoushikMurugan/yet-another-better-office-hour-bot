@@ -3,11 +3,11 @@ import { GoogleSheetServerExtension } from './google-sheet-server-extension.js';
 import { GuildId, Optional } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
-import { yellow, blue } from '../../utils/command-line-colors.js';
+import { yellow } from '../../utils/command-line-colors.js';
 import { ServerExtension } from '../extension-interface.js';
-import { client, firebaseDB, logger } from '../../global-states.js';
+import { client, firebaseDB } from '../../global-states.js';
+import { googleSheetLogger } from './shared-sheet-functions.js';
 import { z } from 'zod';
-import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { loadSheetById } from './shared-sheet-functions.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 
@@ -96,9 +96,8 @@ class GoogleSheetExtensionState {
         );
         // add the new state to the static collection
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
-        logger.info(
-            `[Google Sheet Logging] ` +
-                `successfully loaded for '${yellow(guild.name)}'!\n` +
+        googleSheetLogger.info(
+            `Successfully loaded for '${yellow(guild.name)}'!\n` +
                 ` - Using this google sheet: ${yellow(googleSheet.title)}`
         );
         return instance;
@@ -146,13 +145,16 @@ class GoogleSheetExtensionState {
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                logWithTimeStamp(
+                googleSheetLogger.info(
                     this.guild.name,
                     '- Google sheet config backup successful.'
                 )
             )
             .catch((err: Error) =>
-                console.error('Firebase calendar backup failed.', err.message)
+                googleSheetLogger.error(
+                    'Firebase google sheet backup failed.',
+                    err.message
+                )
             );
     }
 }
