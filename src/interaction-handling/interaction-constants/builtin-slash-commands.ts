@@ -16,7 +16,7 @@ import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
 import { range } from '../../utils/util-functions.js';
-import { globalLogger } from '../../global-states.js';
+import { LOGGER } from '../../global-states.js';
 import { calendarLogger } from '../../extensions/session-calendar/shared-calendar-functions.js';
 
 // /queue {add | remove} [queue_name]
@@ -442,7 +442,7 @@ async function postSlashCommands(
         .catch(e =>
             calendarLogger.error(`Failed to post slash command to ${guild.name}`, e)
         );
-    globalLogger.info(`✓ Updated slash commands on '${guild.name}' ✓`);
+    LOGGER.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 
 export { postSlashCommands };

@@ -3,7 +3,7 @@ import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups
 import { red } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
-import { client, firebaseDB, globalLogger } from '../global-states.js';
+import { client, firebaseDB, LOGGER } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { HelpQueueV2 } from '../help-queue/help-queue.js';
 import { AttendingServerV2 } from './base-attending-server.js';
@@ -89,13 +89,13 @@ function fullServerBackup(server: FrozenServer): void {
         .doc(server.guild.id)
         .set(serverBackup)
         .then(() =>
-            globalLogger.info(
+            LOGGER.info(
                 server.guild.name,
                 '- Server & queue data backup successful'
             )
         )
         .catch((err: Error) =>
-            globalLogger.error('Firebase server backup failed.', err.message)
+            LOGGER.error('Firebase server backup failed.', err.message)
         );
     server.sendLogMessage(
         SimpleLogEmbed(`All Server Data and Queues Backed-up to Firebase`)
@@ -134,20 +134,20 @@ function backupServerSettings(server: FrozenServer): void {
                         timezone: server.timezone
                     })
                     .then(() =>
-                        globalLogger.info(
+                        LOGGER.info(
                             server.guild.name,
                             '- Server settings backup successful'
                         )
                     )
                     .catch((err: Error) =>
-                        globalLogger.error('Firebase server backup failed.', err.message)
+                        LOGGER.error('Firebase server backup failed.', err.message)
                     );
                 server.sendLogMessage(
                     SimpleLogEmbed('Settings for this server backed-up in firebase')
                 );
             }
         })
-        .catch(err => globalLogger.error('Failed to fetch firebase doc', err));
+        .catch(err => LOGGER.error('Failed to fetch firebase doc', err));
 }
 
 /**
@@ -183,17 +183,17 @@ function backupQueueData(queue: HelpQueueV2): void {
                     queues: data.queues
                 })
                 .then(() =>
-                    globalLogger.info(
+                    LOGGER.info(
                         queue.channelObject.guild.name,
                         '- Queue backup successful'
                     )
                 )
                 .catch((err: Error) =>
-                    globalLogger.error('Firebase queue backup failed.', err.message)
+                    LOGGER.error('Firebase queue backup failed.', err.message)
                 );
         })
         .catch((err: Error) =>
-            globalLogger.error('Failed to fetch firebase document.', err.message)
+            LOGGER.error('Failed to fetch firebase document.', err.message)
         );
 }
 

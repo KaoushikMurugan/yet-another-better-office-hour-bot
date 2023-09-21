@@ -15,7 +15,7 @@ import {
     VoiceBasedChannel
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { client, globalLogger } from '../global-states.js';
+import { client, LOGGER } from '../global-states.js';
 import { cyan, yellow, magenta, red } from '../utils/command-line-colors.js';
 import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
@@ -73,7 +73,7 @@ async function updateCommandHelpChannels(
     );
     // If no help category is found, initialize
     if (!existingHelpCategory) {
-        globalLogger.info(
+        LOGGER.info(
             cyan(`Found no help channels in ${guild.name}. Creating new ones.`)
         );
         const helpCategory = await guild.channels.create({
@@ -93,11 +93,11 @@ async function updateCommandHelpChannels(
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
             .then(() =>
-                globalLogger.info(magenta(`✓ Updated help channels on ${guild.name} ✓`))
+                LOGGER.info(magenta(`✓ Updated help channels on ${guild.name} ✓`))
             )
-            .catch(err => globalLogger.error('Failed to update help messages', err));
+            .catch(err => LOGGER.error('Failed to update help messages', err));
     } else {
-        globalLogger.info(
+        LOGGER.info(
             `Found existing help channels in ${yellow(
                 guild.name
             )}, updating command help files`
@@ -106,8 +106,8 @@ async function updateCommandHelpChannels(
             sendHelpChannelMessages(existingHelpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
-            .then(() => globalLogger.info(`✓ Updated help channels on ${guild.name} ✓`))
-            .catch(err => globalLogger.error('Failed to update help messages', err));
+            .then(() => LOGGER.info(`✓ Updated help channels on ${guild.name} ✓`))
+            .catch(err => LOGGER.error('Failed to update help messages', err));
     }
 }
 
@@ -141,7 +141,7 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );
-    globalLogger.info(
+    LOGGER.info(
         `Successfully updated help messages in ${yellow(helpCategory.name)} in ${yellow(
             helpCategory.guild.name
         )}!`
@@ -300,7 +300,7 @@ async function sendInvite(
             .find(overwrite => overwrite.id === student.id)
             ?.delete()
             .catch(() =>
-                globalLogger.error(
+                LOGGER.error(
                     `Failed to delete overwrite for ${student.displayName}`
                 )
             );

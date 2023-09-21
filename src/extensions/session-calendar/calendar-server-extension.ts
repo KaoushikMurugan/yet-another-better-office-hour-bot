@@ -2,8 +2,7 @@ import { Guild } from 'discord.js';
 import { BaseServerExtension } from '../extension-interface.js';
 import { FrozenServer } from '../extension-utils.js';
 import { CalendarExtensionState } from './calendar-states.js';
-import { blue } from '../../utils/command-line-colors.js';
-import { globalLogger } from '../../global-states.js';
+import { calendarLogger } from './shared-calendar-functions.js';
 
 /**
  * Server extension of session calendar
@@ -34,9 +33,7 @@ class CalendarServerExtension extends BaseServerExtension {
     static async load(guild: Guild): Promise<CalendarServerExtension> {
         const instance = new CalendarServerExtension(guild);
         await CalendarExtensionState.load(guild, instance);
-        globalLogger.info(
-            `[Session Calendar] successfully loaded for '${guild.name}'!`
-        );
+        calendarLogger.info(`Successfully loaded for '${guild.name}'!`);
         return instance;
     }
 

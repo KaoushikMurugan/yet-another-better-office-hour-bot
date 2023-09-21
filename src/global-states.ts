@@ -4,9 +4,12 @@ import { yellow, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
-import { pino } from 'pino';
+import { pino, destination } from 'pino';
 
-const globalLogger = pino();
+const LOGGER =
+    environment.env === 'development'
+        ? pino()
+        : pino(destination('./yabob-prod-application-log.log'));
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -22,7 +25,7 @@ if (
     throw new Error(red('Missing firebase credentials.'));
 }
 if (environment.disableExtensions) {
-    globalLogger.warn('Running without extensions.');
+    LOGGER.warn('Running without extensions.');
 }
 if (getApps().length === 0) {
     initializeApp({
@@ -67,10 +70,10 @@ const client: Client<true> = new Client({
 /** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
-    .then(() => globalLogger.info(`Logged in as ${yellow(client.user.username)}!`))
+    .then(() => LOGGER.info(`Logged in as ${yellow(client.user.username)}!`))
     .catch((err: Error) => {
-        globalLogger.error('Login Unsuccessful. Check YABOBs credentials.');
+        LOGGER.error('Login Unsuccessful. Check YABOBs credentials.');
         throw err;
     });
 
-export { client, firebaseDB, globalLogger };
+export { client, firebaseDB, LOGGER };

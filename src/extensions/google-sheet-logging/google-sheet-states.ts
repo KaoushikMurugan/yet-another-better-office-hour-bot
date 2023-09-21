@@ -97,8 +97,8 @@ class GoogleSheetExtensionState {
         // add the new state to the static collection
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
         googleSheetLogger.info(
-            `Successfully loaded for '${yellow(guild.name)}'!\n` +
-                ` - Using this google sheet: ${yellow(googleSheet.title)}`
+            { googleSheet: googleSheet.title },
+            `Successfully loaded for '${yellow(guild.name)}'!`
         );
         return instance;
     }

@@ -11,7 +11,7 @@ import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { Snowflake } from 'discord.js';
 import { z } from 'zod';
-import { globalLogger } from '../../global-states.js';
+import { LOGGER } from '../../global-states.js';
 
 /**
  * ViewModel for 1 tutor's upcoming session
@@ -69,7 +69,7 @@ const calendarDataSchema = z.object({
     description: z.string()
 });
 
-const calendarLogger = globalLogger.child({ extension: 'Google Calendar' });
+const calendarLogger = LOGGER.child({ extension: 'Google Calendar' });
 
 /**
  * Attempts to connect to the google calendar

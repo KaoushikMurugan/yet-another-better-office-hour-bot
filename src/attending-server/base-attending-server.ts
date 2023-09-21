@@ -60,7 +60,7 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
-import { globalLogger } from '../global-states.js';
+import { LOGGER } from '../global-states.js';
 import type { Logger } from 'pino';
 
 /**
@@ -170,7 +170,7 @@ class AttendingServerV2 {
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<ServerExtension>
     ) {
-        this.logger = globalLogger.child({ guild: this.guild.name });
+        this.logger = LOGGER.child({ guild: this.guild.name });
     }
 
     /**
@@ -337,14 +337,14 @@ class AttendingServerV2 {
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
-            globalLogger.error(err);
+            LOGGER.error(err);
             throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
         });
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         AttendingServerV2.allServers.set(guild.id, server);
-        globalLogger.info(
+        LOGGER.info(
             `⭐ ${green(`Initialization for ${guild.name} is successful!`)}`
         );
         return server;
