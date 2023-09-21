@@ -1,3 +1,4 @@
+import { TextChannel } from 'discord.js';
 import { Helper } from '../../models/member-states.js';
 import { SimpleEmbed, EmbedColor } from '../../utils/embed-helper.js';
 import { SimpleTimeZone } from '../../utils/type-aliases.js';
@@ -184,5 +185,11 @@ export const SuccessMessages = {
             `There were some errors assigning the respective queue roles to the helpers. Please check the logs below.`,
             EmbedColor.KindaBad,
             roleLogs
+        ),
+    createdHelperControlPanel: (channel: TextChannel) =>
+        SimpleEmbed(
+            `Successfully created the helper menu in #${channel.name}\n`,
+            EmbedColor.Success,
+            `You can safely delete the menu that was created by deleting the message.`
         )
 } as const;

@@ -271,7 +271,7 @@ class AttendingServerV2 {
     }
 
     /**
-     * Returns the highest access level role of a member. 
+     * Returns the highest access level role of a member.
      * Undefined if the member doesn't have any
      */
     getHighestAccessLevelRole(member: GuildMember): Optional<AccessLevelRole> {

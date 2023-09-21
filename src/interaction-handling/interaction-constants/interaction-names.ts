@@ -31,6 +31,7 @@ enum CommandNames {
     set_time_zone = 'set_time_zone',
     settings = 'settings',
     assign_helpers_roles = 'assign_helpers_roles',
+    create_helper_control_panel = 'create_helper_control_panel',
     quick_start = 'quick_start'
 }
 
@@ -41,6 +42,12 @@ enum ButtonNames {
     Join = 'Join',
     Leave = 'Leave',
     Notif = 'Notif',
+    Start = 'Start',
+    Next = 'Next',
+    Stop = 'Stop',
+    Pause = 'Pause',
+    Resume = 'Resume',
+    Announce = 'Announce',
     RemoveNotif = 'RemoveNotif',
     ReturnToMainMenu = 'ReturnToMainMenu',
     ServerRoleConfig1SM = 'ServerRoleConfig1SM',
@@ -86,7 +93,8 @@ enum ModalNames {
     AfterSessionMessageModalMenuVersion = 'AfterSessionMessageModalMenuVersion',
     QueueAutoClearModal = 'QueueAutoClearModal',
     QueueAutoClearModalMenuVersion = 'QueueAutoClearModalMenuVersion',
-    PromptHelpTopicModal = 'PromptHelpTopicModal'
+    PromptHelpTopicModal = 'PromptHelpTopicModal',
+    AnnouncementModal = 'AnnouncementModal'
 }
 
 /** Known base yabob select menu names */

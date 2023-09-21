@@ -122,4 +122,30 @@ function PromptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     return modal;
 }
 
-export { QueueAutoClearModal, AfterSessionMessageModal, PromptHelpTopicModal };
+function AnnouncementModal(serverId: Snowflake): ModalBuilder {
+    return buildComponent(new ModalBuilder(), [
+        'other',
+        ModalNames.AnnouncementModal,
+        serverId,
+        UnknownId
+    ])
+        .setTitle('What do you want to announce?')
+        .setComponents(
+            new ActionRowBuilder<ModalActionRowComponentBuilder>().addComponents(
+                new TextInputBuilder()
+                    .setCustomId('announcement')
+                    .setLabel('Announcement')
+                    .setPlaceholder('Type what you want to announce here')
+                    .setStyle(TextInputStyle.Paragraph)
+                    .setMinLength(1)
+                    .setRequired(true)
+            )
+        );
+}
+
+export {
+    QueueAutoClearModal,
+    AfterSessionMessageModal,
+    PromptHelpTopicModal,
+    AnnouncementModal
+};

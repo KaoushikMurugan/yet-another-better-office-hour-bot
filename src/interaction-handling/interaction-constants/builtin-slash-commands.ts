@@ -366,6 +366,24 @@ const assignHelpersRolesCommand = new SlashCommandBuilder()
             .setRequired(true)
     );
 
+// /create_helper_control_panel [channel]
+const createHelperControlPanelCommand = new SlashCommandBuilder()
+    .setName(CommandNames.create_helper_control_panel)
+    .setDescription('Creates a helper menu in the specified channel')
+    .addChannelOption(option =>
+        option
+            .setName('channel')
+            .setDescription('The channel to create the helper menu in')
+            .setRequired(true)
+            .addChannelTypes(ChannelType.GuildText)
+    )
+    .addBooleanOption(option =>
+        option
+            .setName('verbose')
+            .setDescription('Whether to show a detailed message, defaults to true')
+            .setRequired(false)
+    );
+
 /** The raw data that can be sent to Discord */
 const commandData = [
     queueCommand.toJSON(),
@@ -391,7 +409,8 @@ const commandData = [
     helpCommand.toJSON(),
     assignHelpersRolesCommand.toJSON(),
     quickStartCommand.toJSON(),
-    setTimeZoneCommand.toJSON()
+    setTimeZoneCommand.toJSON(),
+    createHelperControlPanelCommand.toJSON()
 ];
 
 async function postSlashCommands(
