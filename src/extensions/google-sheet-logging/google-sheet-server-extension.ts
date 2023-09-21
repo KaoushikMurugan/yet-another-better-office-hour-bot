@@ -6,7 +6,7 @@ import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord
 import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
-import { logWithTimeStamp, padTo2Digits } from '../../utils/util-functions.js';
+import { padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import {
@@ -15,6 +15,7 @@ import {
     attendanceHeaders,
     helpSessionHeaders
 } from './google-sheet-constants/column-enums.js';
+import { googleSheetLogger } from './shared-sheet-functions.js';
 
 /**
  * Additional attendance info for each helper
@@ -237,7 +238,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
-                console.error(red('Cannot update help sessions.'), err.name, err.message)
+                googleSheetLogger.error(
+                    red('Cannot update help sessions.'),
+                    err.name,
+                    err.message
+                )
             );
     }
 
@@ -310,7 +315,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             attendanceSheet.loadHeaderRow()
         ])
             .then(() => {
-                logWithTimeStamp(
+                googleSheetLogger.info(
                     this.guild.name,
                     `- Successfully updated ${updatedCountSnapshot} attendance entries.`
                 );
@@ -318,13 +323,13 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
-                logWithTimeStamp(
+                googleSheetLogger.info(
                     this.guild.name,
                     `- ${this.attendanceEntries.length} entries still remain.`
                 );
             })
             .catch((err: Error) => {
-                console.error(
+                googleSheetLogger.error(
                     red(
                         `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
                     ),
@@ -334,9 +339,9 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
-                    console.error(rest);
+                    googleSheetLogger.error(rest);
                     for (const helpedMember of helpedMembers) {
-                        console.error(helpedMember.member.nickname);
+                        googleSheetLogger.error(helpedMember.member.nickname);
                     }
                 }
             });
@@ -397,7 +402,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
-            console.error(
+            googleSheetLogger.error(
                 red('Error when updating help session: '),
                 entries,
                 err.name,

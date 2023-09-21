@@ -6,7 +6,7 @@ import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { magenta, cyan, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { client, logger } from './global-states.js';
+import { client, globalLogger } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import {
@@ -37,16 +37,16 @@ client.on(Events.ClientReady, async () => {
     // create all the AttendingServerV2 objects
     const setupResults = await Promise.allSettled(completeGuilds.map(joinGuild));
     setupResults.forEach(
-        result => result.status === 'rejected' && logger.error(`${result.reason}`)
+        result => result.status === 'rejected' && globalLogger.error(`${result.reason}`)
     );
     if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
-        logger.error('All server setups failed. Aborting.');
+        globalLogger.error('All server setups failed. Aborting.');
         process.exit(1);
     }
-    logger.info(
+    globalLogger.info(
         `✅ Ready to go! (${AttendingServerV2.activeServersCount} servers created) ✅`
     );
-    logger.info(centered('-------- Begin Server Logs --------'));
+    globalLogger.info(centered('-------- Begin Server Logs --------'));
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
 });
@@ -55,10 +55,12 @@ client.on(Events.ClientReady, async () => {
  * Server joining procedure
  */
 client.on(Events.GuildCreate, async guild => {
-    logger.info(`Got invited to: ${guild.name}`);
+    globalLogger.info(`Got invited to: ${guild.name}`);
     await joinGuild(guild).catch(err => {
-        logger.error(err);
-        logger.error(`${red('Please give me the highest role in:')} '${guild.name}'.`);
+        globalLogger.error(err);
+        globalLogger.error(
+            `${red('Please give me the highest role in:')} '${guild.name}'.`
+        );
     });
 });
 
@@ -73,7 +75,7 @@ client.on(Events.GuildDelete, async guild => {
         return;
     }
     await server.gracefulDelete();
-    logger.info(`Leaving ${guild.name}. Backups will be saved by the extensions.`);
+    globalLogger.info(`Leaving ${guild.name}. Backups will be saved by the extensions.`);
 });
 
 /**
@@ -84,10 +86,10 @@ client.on(Events.GuildDelete, async guild => {
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     getHandler(interaction)(interaction).catch((err: Error) => {
-        logger.error('Uncaught Error:', err);
+        globalLogger.error('Uncaught Error:', err);
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
-            .catch(console.error);
+            .catch(globalLogger.error);
     });
 });
 
@@ -108,14 +110,14 @@ client.on(Events.GuildMemberAdd, async member => {
         studentRole.id !== server.guild.roles.everyone.id
     ) {
         member.roles.add(studentRole).catch(err => {
-            logger.error('Failed to add student role', err);
+            globalLogger.error('Failed to add student role', err);
             member
                 .send(
                     SimpleEmbed(
                         `I can't give you the ${studentRole.name} at the moment. Please contact the server admin to manually give you ${studentRole.name}.`
                     )
                 )
-                .catch(err => console.error('Failed to send member Dm', err));
+                .catch(err => globalLogger.error('Failed to send member Dm', err));
         });
     }
 });
@@ -133,7 +135,7 @@ client.on(Events.GuildRoleUpdate, async role => {
         role.name === client.user.username &&
         role.guild.roles.highest.name === client.user.username
     ) {
-        logger.info('Got the highest Role! Starting server initialization');
+        globalLogger.info('Got the highest Role! Starting server initialization');
         const owner = await role.guild.fetchOwner();
         await Promise.all([
             joinGuild(role.guild),
@@ -194,8 +196,8 @@ client.on(Events.Warn, warning => {
  * Neatly separate server log and error stack trace
  */
 process.on('exit', () => {
-    logger.info(centered('-------- End of Server Log --------'));
-    logger.info(`${centered('-------- Begin Error Stack Trace --------')}\n`);
+    globalLogger.info(centered('-------- End of Server Log --------'));
+    globalLogger.info(`${centered('-------- Begin Error Stack Trace --------')}\n`);
 });
 
 /**
@@ -205,7 +207,7 @@ process.on('exit', () => {
  * @throws ServerError if the AttendingServerV2.create failed
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
-    logger.info(`Joining guild: ${yellow(guild.name)}`);
+    globalLogger.info(`Joining guild: ${yellow(guild.name)}`);
     const externalCommandData = environment.disableExtensions
         ? []
         : interactionExtensions.flatMap(ext => ext.slashCommandData);

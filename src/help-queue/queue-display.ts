@@ -17,7 +17,8 @@ import { EmbedColor } from '../utils/embed-helper.js';
 import { RenderIndex, MessageId } from '../utils/type-aliases.js';
 import { buildComponent } from '../utils/component-id-factory.js';
 import { ButtonNames } from '../interaction-handling/interaction-constants/interaction-names.js';
-import { red } from '../utils/command-line-colors.js';
+import { globalLogger } from '../global-states.js';
+import type { Logger } from 'pino';
 
 /** Wrapper for discord embeds to be sent to the queue */
 type QueueChannelEmbed = {
@@ -84,6 +85,8 @@ class QueueDisplayV2 {
      */
     private writeOnlyMode = false;
 
+    private logger: Logger;
+
     /**
      * Saved for queue delete. Stop the timer when a queue is deleted.
      */
@@ -91,6 +94,7 @@ class QueueDisplayV2 {
 
     constructor(private readonly queueChannel: QueueChannel) {
         // starts the render loop
+        this.logger = globalLogger.child({ queueDisplay: this.queueChannel.queueName });
         this.renderLoopTimerId = setInterval(async () => {
             // every second, check if there are any fresh embeds
             // if there's nothing new or a render is already happening, stop
@@ -106,10 +110,8 @@ class QueueDisplayV2 {
                     this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
                 })
                 .catch(err => {
-                    console.error(
-                        red(`Failed to render in ${this.queueChannel.queueName}`),
-                        err
-                    ); // don't change embed.stale to true so we can try again after 1 second
+                    this.logger.error('Failed to render', err);
+                    // don't change embed.stale to true so we can try again after 1 second
                     // this line is technically not necessary but it's nice and symmetric
                     this.queueChannelEmbeds.forEach(embed => (embed.stale = false));
                 });

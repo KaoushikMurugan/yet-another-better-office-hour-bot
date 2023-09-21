@@ -6,6 +6,7 @@ import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
+    calendarLogger,
     checkCalendarConnection,
     fetchUpcomingSessions,
     restorePublicEmbedURL
@@ -13,7 +14,6 @@ import {
 import { Collection, Guild, Snowflake } from 'discord.js';
 import { client, firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
-import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { ServerExtension } from '../extension-interface.js';
@@ -244,10 +244,12 @@ class CalendarExtensionState {
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                logWithTimeStamp(this.guild.name, '- Calendar config backup successful')
+                calendarLogger.info(
+                    `Calendar config backup successful for ${this.guild.name}`
+                )
             )
             .catch((err: Error) =>
-                console.error('Firebase calendar backup failed.', err.message)
+                calendarLogger.error('Firebase calendar backup failed.', err.message)
             );
     }
 }
