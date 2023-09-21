@@ -13,6 +13,7 @@ import { ExtensionSetupError } from '../../utils/error-types.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { checkCalendarConnection } from './shared-calendar-functions.js';
 import { blue, yellow } from '../../utils/command-line-colors.js';
+import { logger } from '../../global-states.js';
 
 class SessionCalendarInteractionExtension extends BaseInteractionExtension {
     override buttonMap = calendarButtonMap;
@@ -50,8 +51,8 @@ class SessionCalendarInteractionExtension extends BaseInteractionExtension {
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });
-        console.log(
-            `[${blue('Session Calendar')}] Using ${yellow(
+        logger.info(
+            `[Session Calendar] Using ${yellow(
                 calendarName
             )} as the default calendar`
         );

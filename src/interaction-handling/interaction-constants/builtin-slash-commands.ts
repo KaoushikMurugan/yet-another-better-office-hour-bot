@@ -17,6 +17,7 @@ import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
 import { range } from '../../utils/util-functions.js';
+import { logger } from '../../global-states.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -441,7 +442,7 @@ async function postSlashCommands(
         .catch(e =>
             console.error(red(`Failed to post slash command to ${guild.name}`), e)
         );
-    console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
+    logger.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 
 export { postSlashCommands };

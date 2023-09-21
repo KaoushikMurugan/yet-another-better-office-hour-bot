@@ -20,6 +20,7 @@ import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { environment } from '../environment/environment-manager.js';
 import { extractComponentName } from './component-id-factory.js';
+import { logger } from '../global-states.js';
 
 // #region Util Functions
 
@@ -28,9 +29,9 @@ import { extractComponentName } from './component-id-factory.js';
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
-    console.log(`Environment: ${cyan(environment.env)}`);
-    console.log(
-        `\n${black(
+    logger.info(`Environment: ${cyan(environment.env)}`);
+    logger.info(
+        `${black(
             magenta(
                 ' '.repeat(
                     Math.max((process.stdout.columns - titleString.length) / 2, 0)
@@ -41,9 +42,9 @@ function printTitleString(): void {
                     ),
                 'Bg'
             )
-        )}\n`
+        )}`
     );
-    console.log('Scanning servers I am a part of...');
+    logger.info('Scanning servers I am a part of...');
 }
 
 /**
@@ -65,9 +66,9 @@ function centered(text: string): string {
  */
 function logWithTimeStamp(
     guildName = '',
-    ...params: Parameters<typeof console.log>
+    ...params: Parameters<typeof logger.info>
 ): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -274,7 +275,7 @@ function longestCommonSubsequence(str1: string, str2: string): number {
  * @param interaction
  */
 function logSlashCommand(interaction: ChatInputCommandInteraction<'cached'>): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -298,7 +299,7 @@ function logButtonPress(
     buttonName: string,
     queueName?: string
 ): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -318,7 +319,7 @@ function logButtonPress(
  * @param buttonName
  */
 function logDMButtonPress(interaction: ButtonInteraction, buttonName: string): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -340,7 +341,7 @@ function logModalSubmit(
     interaction: ModalSubmitInteraction<'cached'>,
     modalName: string
 ): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -359,7 +360,7 @@ function logModalSubmit(
  * @param modalName
  */
 function logDMModalSubmit(interaction: ModalSubmitInteraction, modalName: string): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -382,7 +383,7 @@ function logSelectMenuSelection(
     interaction: StringSelectMenuInteraction<'cached'>,
     selectMenuName: string
 ): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -405,7 +406,7 @@ function logDMSelectMenuSelection(
     interaction: StringSelectMenuInteraction,
     selectMenuName: string
 ): void {
-    console.log(
+    logger.info(
         `[${cyan(
             new Date().toLocaleString('en-US', {
                 timeZone: 'PST8PDT'
@@ -426,13 +427,8 @@ function logDMSelectMenuSelection(
  * @param error
  */
 function logExpectedErrors(interaction: Interaction, error: Error): void {
-    console.log(
-        `[${cyan(
-            new Date().toLocaleString('en-US', {
-                timeZone: 'PST8PDT'
-            })
-        )} ` +
-            `${yellow(interaction.user.username)}]\n` +
+    logger.error(
+        `${yellow(interaction.user.username)}\n` +
             ` - User: ${interaction.user.username} (${interaction.user.id})\n` +
             ` - Related Server Id: ${interaction.guildId}\n` +
             ` - ${red(`Error: ${error.name}`)}\n` +
