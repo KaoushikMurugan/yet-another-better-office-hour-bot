@@ -69,7 +69,7 @@ const calendarDataSchema = z.object({
     description: z.string()
 });
 
-const calendarLogger = LOGGER.child({ extension: 'Google Calendar' });
+const CALENDAR_LOGGER = LOGGER.child({ extension: 'Google Calendar' });
 
 /**
  * Attempts to connect to the google calendar
@@ -328,5 +328,5 @@ export {
     checkCalendarConnection,
     restorePublicEmbedURL,
     buildUpcomingSessionsEmbedBody,
-    calendarLogger
+    CALENDAR_LOGGER
 };

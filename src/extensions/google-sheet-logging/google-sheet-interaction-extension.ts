@@ -14,7 +14,7 @@ import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slas
 import { googleSheetButtonMap } from './interaction-handling/button-handler.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
 import { googleSheetModalMap } from './interaction-handling/modal-handler.js';
-import { googleSheetLogger, loadSheetById } from './shared-sheet-functions.js';
+import { GOOGLE_SHEET_LOGGER, loadSheetById } from './shared-sheet-functions.js';
 
 class GoogleSheetInteractionExtension
     extends BaseInteractionExtension
@@ -61,7 +61,7 @@ class GoogleSheetInteractionExtension
         const googleSheet = await loadSheetById(
             environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
         );
-        googleSheetLogger.info(
+        GOOGLE_SHEET_LOGGER.info(
             `Using ${yellow(googleSheet.title)} as the default google sheet.`
         );
     }

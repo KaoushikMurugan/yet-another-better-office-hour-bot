@@ -1,6 +1,5 @@
 /** @module FirebaseServerBackup */
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
-import { red } from '../utils/command-line-colors.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { client, firebaseDB, LOGGER } from '../global-states.js';

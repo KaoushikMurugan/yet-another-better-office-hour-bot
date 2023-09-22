@@ -1,7 +1,6 @@
 /** @module GoogleSheetLogging */
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
-import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
 import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
@@ -15,7 +14,7 @@ import {
     attendanceHeaders,
     helpSessionHeaders
 } from './google-sheet-constants/column-enums.js';
-import { googleSheetLogger } from './shared-sheet-functions.js';
+import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 
 /**
  * Additional attendance info for each helper
@@ -238,7 +237,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
-                googleSheetLogger.error(err, 'Cannot update help sessions.')
+                GOOGLE_SHEET_LOGGER.error(err, 'Cannot update help sessions.')
             );
     }
 
@@ -311,7 +310,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             attendanceSheet.loadHeaderRow()
         ])
             .then(() => {
-                googleSheetLogger.info(
+                GOOGLE_SHEET_LOGGER.info(
                     this.guild.name,
                     `- Successfully updated ${updatedCountSnapshot} attendance entries.`
                 );
@@ -319,22 +318,22 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
-                googleSheetLogger.info(
+                GOOGLE_SHEET_LOGGER.info(
                     this.guild.name,
                     `- ${this.attendanceEntries.length} entries still remain.`
                 );
             })
             .catch((err: Error) => {
-                googleSheetLogger.error(
+                GOOGLE_SHEET_LOGGER.error(
                     err,
                     `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
                 );
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
-                    googleSheetLogger.error(rest);
+                    GOOGLE_SHEET_LOGGER.error(rest);
                     for (const helpedMember of helpedMembers) {
-                        googleSheetLogger.error(helpedMember.member.nickname);
+                        GOOGLE_SHEET_LOGGER.error(helpedMember.member.nickname);
                     }
                 }
             });
@@ -395,7 +394,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
-            googleSheetLogger.error(
+            GOOGLE_SHEET_LOGGER.error(
                 { err, entries },
                 'Error when updating these help sessions'
             )

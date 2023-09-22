@@ -6,7 +6,7 @@ import { environment } from '../../environment/environment-manager.js';
 import { yellow } from '../../utils/command-line-colors.js';
 import { ServerExtension } from '../extension-interface.js';
 import { client, firebaseDB } from '../../global-states.js';
-import { googleSheetLogger } from './shared-sheet-functions.js';
+import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 import { z } from 'zod';
 import { loadSheetById } from './shared-sheet-functions.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
@@ -96,7 +96,7 @@ class GoogleSheetExtensionState {
         );
         // add the new state to the static collection
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
-        googleSheetLogger.info(
+        GOOGLE_SHEET_LOGGER.info(
             { googleSheet: googleSheet.title },
             `Successfully loaded for '${yellow(guild.name)}'!`
         );
@@ -145,12 +145,12 @@ class GoogleSheetExtensionState {
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                googleSheetLogger.info(
+                GOOGLE_SHEET_LOGGER.info(
                     `Google sheet config backup successful for ${this.guild.name}.`
                 )
             )
             .catch((err: Error) =>
-                googleSheetLogger.error(err, 'Firebase google sheet backup failed.')
+                GOOGLE_SHEET_LOGGER.error(err, 'Firebase google sheet backup failed.')
             );
     }
 }
