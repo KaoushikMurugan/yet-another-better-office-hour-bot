@@ -766,11 +766,9 @@ class AttendingServerV2 {
             .map(queue => queue.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);
         if (duplicateQueues.length > 0) {
-            console.warn(`Server['${this.guild.name}'] contains these duplicate queues:`);
-            console.warn(duplicateQueues);
-            console.warn(
-                `This might lead to unexpected behaviors.\n
-                Please update category names as soon as possible.`
+            this.logger.warn(
+                `Server['${this.guild.name}'] contains these duplicate queues: ${duplicateQueues} 
+                This might lead to unexpected behaviors. Please update category names as soon as possible.`
             );
         }
         return this.queueChannelsCache;
