@@ -1,5 +1,4 @@
 import { environment } from '../../environment/environment-manager.js';
-import { LOGGER } from '../../global-states.js';
 import { yellow } from '../../utils/command-line-colors.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import {
@@ -15,7 +14,7 @@ import { googleSheetsCommands } from './google-sheet-constants/google-sheet-slas
 import { googleSheetButtonMap } from './interaction-handling/button-handler.js';
 import { googleSheetCommandMap } from './interaction-handling/command-handler.js';
 import { googleSheetModalMap } from './interaction-handling/modal-handler.js';
-import { loadSheetById } from './shared-sheet-functions.js';
+import { googleSheetLogger, loadSheetById } from './shared-sheet-functions.js';
 
 class GoogleSheetInteractionExtension
     extends BaseInteractionExtension
@@ -62,10 +61,8 @@ class GoogleSheetInteractionExtension
         const googleSheet = await loadSheetById(
             environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
         );
-        LOGGER.info(
-            `[Google Sheet Logging] Using ${yellow(
-                googleSheet.title
-            )} as the default google sheet.`
+        googleSheetLogger.info(
+            `Using ${yellow(googleSheet.title)} as the default google sheet.`
         );
     }
 }
