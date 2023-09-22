@@ -98,7 +98,7 @@ class GoogleSheetExtensionState {
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
         GOOGLE_SHEET_LOGGER.info(
             { googleSheet: googleSheet.title },
-            `Successfully loaded for '${yellow(guild.name)}'!`
+            `Successfully loaded for ${guild.name}!`
         );
         return instance;
     }

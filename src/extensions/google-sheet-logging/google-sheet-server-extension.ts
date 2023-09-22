@@ -311,23 +311,18 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         ])
             .then(() => {
                 GOOGLE_SHEET_LOGGER.info(
-                    this.guild.name,
-                    `- Successfully updated ${updatedCountSnapshot} attendance entries.`
+                    `Successfully updated ${updatedCountSnapshot} attendance entries for ${this.guild.name}.`
                 );
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
                 GOOGLE_SHEET_LOGGER.info(
-                    this.guild.name,
-                    `- ${this.attendanceEntries.length} entries still remain.`
+                    `${this.attendanceEntries.length} entries still remain for ${this.guild.name}.`
                 );
             })
             .catch((err: Error) => {
-                GOOGLE_SHEET_LOGGER.error(
-                    err,
-                    `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
-                );
+                GOOGLE_SHEET_LOGGER.error(err, 'Error when updating attendance');
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {

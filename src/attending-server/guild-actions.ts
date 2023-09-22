@@ -73,9 +73,7 @@ async function updateCommandHelpChannels(
     );
     // If no help category is found, initialize
     if (!existingHelpCategory) {
-        LOGGER.info(
-            cyan(`Found no help channels in ${guild.name}. Creating new ones.`)
-        );
+        LOGGER.info(`Found no help channels in ${guild.name}. Creating new ones.`);
         const helpCategory = await guild.channels.create({
             name: 'Bot Commands Help',
             type: ChannelType.GuildCategory
@@ -98,9 +96,7 @@ async function updateCommandHelpChannels(
             .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     } else {
         LOGGER.info(
-            `Found existing help channels in ${yellow(
-                guild.name
-            )}, updating command help files`
+            `Found existing help channels in ${guild.name}, updating command help files`
         );
         Promise.all([
             sendHelpChannelMessages(existingHelpCategory),
@@ -142,9 +138,7 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
         )
     );
     LOGGER.info(
-        `Successfully updated help messages in ${yellow(helpCategory.name)} in ${yellow(
-            helpCategory.guild.name
-        )}!`
+        `Successfully updated help messages in ${helpCategory.name} in ${helpCategory.guild.name}!`
     );
 }
 
@@ -300,9 +294,7 @@ async function sendInvite(
             .find(overwrite => overwrite.id === student.id)
             ?.delete()
             .catch(() =>
-                LOGGER.error(
-                    `Failed to delete overwrite for ${student.displayName}`
-                )
+                LOGGER.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
     try {
