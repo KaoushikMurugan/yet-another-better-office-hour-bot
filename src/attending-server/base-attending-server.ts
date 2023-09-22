@@ -459,7 +459,7 @@ class AttendingServerV2 {
             helpEnd: new Date()
         };
         this.logger.info(
-            ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
+            `Help time of ${helper.member.displayName} is ${convertMsToTime(
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
         );
@@ -1231,8 +1231,8 @@ class AttendingServerV2 {
             })
         );
         this.logger.info(
-            `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue('with their extensions')
+            `All queues successfully created${
+                environment.disableExtensions ? '' : blue(' with their extensions')
             }!`
         );
         await Promise.all(
