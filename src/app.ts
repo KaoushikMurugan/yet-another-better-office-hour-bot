@@ -182,7 +182,7 @@ client.on(Events.GuildMemberRemove, async member => {
  * Discord.js warning handling
  */
 client.on(Events.Warn, warning => {
-    console.warn(magenta('Uncaught DiscordJS Warning: '), warning);
+    LOGGER.warn(magenta('Uncaught DiscordJS Warning: '), warning);
 });
 
 /**
