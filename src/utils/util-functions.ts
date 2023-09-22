@@ -361,9 +361,9 @@ function logExpectedErrors(interaction: Interaction, error: Error): void {
     LOGGER.error(
         {
             user: `${interaction.user.username} (${interaction.user.id})`,
-            relatedServerId: `${interaction.guildId}\n`
+            relatedServer: `${interaction.guild?.name} (${interaction.guildId})`
         },
-        `Error Message: ${error.message}`
+        error.message
     );
 }
 

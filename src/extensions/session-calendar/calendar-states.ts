@@ -249,7 +249,7 @@ class CalendarExtensionState {
                 )
             )
             .catch((err: Error) =>
-                calendarLogger.error('Firebase calendar backup failed.', err.message)
+                calendarLogger.error(err, 'Firebase calendar backup failed.')
             );
     }
 }

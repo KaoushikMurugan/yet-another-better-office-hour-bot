@@ -138,7 +138,11 @@ async function processButton(interaction: Interaction): Promise<void> {
         });
     }
     if (interaction.inCachedGuild() && type !== 'dm') {
-        logButtonPress(interaction, buttonName);
+        logButtonPress(
+            interaction,
+            buttonName,
+            server.getQueueChannelById(interaction.channel?.parent?.id ?? '')?.queueName
+        );
         const handleButton = completeButtonMap.guildMethodMap[type][buttonName];
         await handleButton?.(interaction).catch(async (err: Error) => {
             logExpectedErrors(interaction, err);

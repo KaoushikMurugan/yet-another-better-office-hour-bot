@@ -344,9 +344,7 @@ class AttendingServerV2 {
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         AttendingServerV2.allServers.set(guild.id, server);
-        LOGGER.info(
-            `⭐ ${green(`Initialization for ${guild.name} is successful!`)}`
-        );
+        LOGGER.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
 
@@ -520,13 +518,13 @@ class AttendingServerV2 {
             createdRoles[newRole.position] = newRole.name;
         }
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
-            this.logger.error('Failed to update help channel visibilities.', err)
+            this.logger.error(err, 'Failed to update help channel visibilities.')
         );
         createdRoles.length > 0
-            ? this.logger.info('Created roles: ', createdRoles)
+            ? this.logger.info(`Created roles: ${createdRoles}`)
             : this.logger.info(`All required roles exist in ${this.guild.name}!`);
         if (foundRoles.length > 0) {
-            this.logger.info('Found roles:', foundRoles);
+            this.logger.info(`Found roles: ${foundRoles}`);
         }
     }
 
@@ -999,7 +997,7 @@ class AttendingServerV2 {
         if (this.loggingChannel) {
             this.loggingChannel
                 .send(message)
-                .catch(err => this.logger.error(`Failed to send logs.`, err));
+                .catch(err => this.logger.error(err, 'Failed to send logs.'));
         }
     }
 
@@ -1014,7 +1012,7 @@ class AttendingServerV2 {
         Promise.all([
             setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds)
         ]).catch(err => {
-            this.logger.error('Failed to set roles', err);
+            this.logger.error(err, 'Failed to set roles');
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
         });
     }

@@ -90,13 +90,11 @@ function fullServerBackup(server: FrozenServer): void {
         .set(serverBackup)
         .then(() =>
             LOGGER.info(
-                server.guild.name,
-                '- Server & queue data backup successful'
+                { guild: server.guild.name },
+                'Server & queue data backup successful'
             )
         )
-        .catch((err: Error) =>
-            LOGGER.error('Firebase server backup failed.', err.message)
-        );
+        .catch((err: Error) => LOGGER.error(err, 'Firebase server backup failed.'));
     server.sendLogMessage(
         SimpleLogEmbed(`All Server Data and Queues Backed-up to Firebase`)
     );
@@ -134,20 +132,17 @@ function backupServerSettings(server: FrozenServer): void {
                         timezone: server.timezone
                     })
                     .then(() =>
-                        LOGGER.info(
-                            server.guild.name,
-                            '- Server settings backup successful'
-                        )
+                        LOGGER.info(`${server.guild.name} settings backup successful`)
                     )
                     .catch((err: Error) =>
-                        LOGGER.error('Firebase server backup failed.', err.message)
+                        LOGGER.error(err, 'Firebase server backup failed.')
                     );
                 server.sendLogMessage(
                     SimpleLogEmbed('Settings for this server backed-up in firebase')
                 );
             }
         })
-        .catch(err => LOGGER.error('Failed to fetch firebase doc', err));
+        .catch(err => LOGGER.error(err, 'Failed to fetch firebase doc'));
 }
 
 /**
@@ -189,12 +184,10 @@ function backupQueueData(queue: HelpQueueV2): void {
                     )
                 )
                 .catch((err: Error) =>
-                    LOGGER.error('Firebase queue backup failed.', err.message)
+                    LOGGER.error(err, 'Firebase queue backup failed.')
                 );
         })
-        .catch((err: Error) =>
-            LOGGER.error('Failed to fetch firebase document.', err.message)
-        );
+        .catch((err: Error) => LOGGER.error(err, 'Failed to fetch firebase document.'));
 }
 
 // The following functions are method decorators

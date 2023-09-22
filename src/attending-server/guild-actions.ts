@@ -95,7 +95,7 @@ async function updateCommandHelpChannels(
             .then(() =>
                 LOGGER.info(magenta(`✓ Updated help channels on ${guild.name} ✓`))
             )
-            .catch(err => LOGGER.error('Failed to update help messages', err));
+            .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     } else {
         LOGGER.info(
             `Found existing help channels in ${yellow(
@@ -107,7 +107,7 @@ async function updateCommandHelpChannels(
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
             .then(() => LOGGER.info(`✓ Updated help channels on ${guild.name} ✓`))
-            .catch(err => LOGGER.error('Failed to update help messages', err));
+            .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     }
 }
 
