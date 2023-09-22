@@ -79,7 +79,7 @@ client.on(Events.GuildDelete, async guild => {
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     getHandler(interaction)(interaction).catch((err: Error) => {
-        LOGGER.error('Uncaught Error:', err);
+        LOGGER.error(err, 'Uncaught Error');
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(LOGGER.error);
@@ -103,14 +103,14 @@ client.on(Events.GuildMemberAdd, async member => {
         studentRole.id !== server.guild.roles.everyone.id
     ) {
         member.roles.add(studentRole).catch(err => {
-            LOGGER.error('Failed to add student role', err);
+            LOGGER.error(err, 'Failed to add student role');
             member
                 .send(
                     SimpleEmbed(
                         `I can't give you the ${studentRole.name} at the moment. Please contact the server admin to manually give you ${studentRole.name}.`
                     )
                 )
-                .catch(err => LOGGER.error('Failed to send member Dm', err));
+                .catch(e => LOGGER.error(e, 'Failed to send member Dm'));
         });
     }
 });
@@ -190,7 +190,7 @@ client.on(Events.Warn, warning => {
  */
 process.on('exit', () => {
     LOGGER.info('-------- End of Server Log --------');
-    LOGGER.info(`${'-------- Begin Error Stack Trace --------'}\n`);
+    LOGGER.info('-------- Begin Error Stack Trace --------\n');
 });
 
 /**

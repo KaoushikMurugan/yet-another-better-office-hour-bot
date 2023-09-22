@@ -146,15 +146,11 @@ class GoogleSheetExtensionState {
             .set(backupData)
             .then(() =>
                 googleSheetLogger.info(
-                    this.guild.name,
-                    '- Google sheet config backup successful.'
+                    `Google sheet config backup successful for ${this.guild.name}.`
                 )
             )
             .catch((err: Error) =>
-                googleSheetLogger.error(
-                    'Firebase google sheet backup failed.',
-                    err.message
-                )
+                googleSheetLogger.error(err, 'Firebase google sheet backup failed.')
             );
     }
 }

@@ -109,8 +109,8 @@ class QueueDisplayV2 {
                 .then(() => {
                     this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
                 })
-                .catch(err => {
-                    this.logger.error('Failed to render', err);
+                .catch((err: Error) => {
+                    this.logger.error(err, 'Failed to render');
                     // don't change embed.stale to true so we can try again after 1 second
                     // this line is technically not necessary but it's nice and symmetric
                     this.queueChannelEmbeds.forEach(embed => (embed.stale = false));

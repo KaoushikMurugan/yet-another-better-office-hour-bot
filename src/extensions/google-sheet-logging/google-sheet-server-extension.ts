@@ -238,11 +238,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
-                googleSheetLogger.error(
-                    red('Cannot update help sessions.'),
-                    err.name,
-                    err.message
-                )
+                googleSheetLogger.error(err, 'Cannot update help sessions.')
             );
     }
 
@@ -330,11 +326,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             })
             .catch((err: Error) => {
                 googleSheetLogger.error(
-                    red(
-                        `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
-                    ),
-                    err.name,
-                    err.message
+                    err,
+                    `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
                 );
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -403,10 +396,8 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
             googleSheetLogger.error(
-                red('Error when updating help session: '),
-                entries,
-                err.name,
-                err.message
+                { err, entries },
+                'Error when updating these help sessions'
             )
         );
     }

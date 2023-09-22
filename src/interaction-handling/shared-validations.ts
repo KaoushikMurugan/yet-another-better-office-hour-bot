@@ -20,9 +20,7 @@ import { ExpectedParseErrors } from './interaction-constants/expected-interactio
 import { FrozenServer } from '../extensions/extension-utils.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { decompressComponentId } from '../utils/component-id-factory.js';
-import { yellow } from '../utils/command-line-colors.js';
 import { CategoryChannelId } from '../utils/type-aliases.js';
-import { LOGGER } from '../global-states.js';
 
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
@@ -53,8 +51,6 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
     if (!queueChannel) {
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
     }
-    // TODO: temporary solution, move this somewhere else
-    LOGGER.info(` - In Queue: ${yellow(queueChannel.queueName)}`);
     return queueChannel;
 }
 
