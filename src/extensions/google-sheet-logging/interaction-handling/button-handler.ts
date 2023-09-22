@@ -34,7 +34,7 @@ async function resetGoogleSheetSettings(
     const server = AttendingServerV2.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     await Promise.all([
-        state.setGoogleSheet(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
+        state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
         server.sendLogMessage(
             GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
         )
@@ -44,7 +44,7 @@ async function resetGoogleSheetSettings(
             server,
             interaction.channelId,
             false,
-            'Successfully reset all calendar settings.'
+            'Successfully reset google sheet settings.'
         )
     );
 }
