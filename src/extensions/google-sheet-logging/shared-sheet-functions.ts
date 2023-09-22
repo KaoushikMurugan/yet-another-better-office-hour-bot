@@ -16,6 +16,6 @@ async function loadSheetById(sheetId: string): Promise<GoogleSpreadsheet> {
     return googleSheet;
 }
 
-const googleSheetLogger = LOGGER.child({ extension: 'Google Sheet' });
+const GOOGLE_SHEET_LOGGER = LOGGER.child({ extension: 'Google Sheet' });
 
-export { loadSheetById, googleSheetLogger };
+export { loadSheetById, GOOGLE_SHEET_LOGGER };

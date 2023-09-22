@@ -6,7 +6,7 @@ import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
-    calendarLogger,
+    CALENDAR_LOGGER,
     checkCalendarConnection,
     fetchUpcomingSessions,
     restorePublicEmbedURL
@@ -244,12 +244,12 @@ class CalendarExtensionState {
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                calendarLogger.info(
+                CALENDAR_LOGGER.info(
                     `Calendar config backup successful for ${this.guild.name}`
                 )
             )
             .catch((err: Error) =>
-                calendarLogger.error(err, 'Firebase calendar backup failed.')
+                CALENDAR_LOGGER.error(err, 'Firebase calendar backup failed.')
             );
     }
 }
