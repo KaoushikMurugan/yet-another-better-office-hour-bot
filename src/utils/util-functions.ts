@@ -30,33 +30,8 @@ import { LOGGER } from '../global-states.js';
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
     LOGGER.info(`Environment: ${cyan(environment.env)}`);
-    LOGGER.info(
-        `${black(
-            magenta(
-                ' '.repeat(
-                    Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                ) +
-                    titleString +
-                    ' '.repeat(
-                        Math.max((process.stdout.columns - titleString.length) / 2, 0)
-                    ),
-                'Bg'
-            )
-        )}`
-    );
+    LOGGER.info(`${black(magenta(titleString, 'Bg'))}`);
     LOGGER.info('Scanning servers I am a part of...');
-}
-
-/**
- * Centers a string for the console/terminal by padding it with spaces
- * @param text
- */
-function centered(text: string): string {
-    const padding = (process.stdout.columns - text.length) / 2;
-    if (padding <= 0) {
-        return text;
-    }
-    return `${' '.repeat(padding)}${text}${' '.repeat(padding)}`;
 }
 
 function padTo2Digits(num: number): string {
@@ -487,7 +462,6 @@ function isJoinVC(
 export {
     /** Util Functions */
     addTimeOffset,
-    centered,
     printTitleString,
     longestCommonSubsequence,
     padTo2Digits,

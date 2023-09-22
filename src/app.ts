@@ -9,12 +9,7 @@ import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
-import {
-    centered,
-    printTitleString,
-    isLeaveVC,
-    isJoinVC
-} from './utils/util-functions.js';
+import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
@@ -46,7 +41,7 @@ client.on(Events.ClientReady, async () => {
     LOGGER.info(
         `✅ Ready to go! (${AttendingServerV2.activeServersCount} servers created) ✅`
     );
-    LOGGER.info(centered('-------- Begin Server Logs --------'));
+    LOGGER.info('-------- Begin Server Logs --------');
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
 });
@@ -194,8 +189,8 @@ client.on(Events.Warn, warning => {
  * Neatly separate server log and error stack trace
  */
 process.on('exit', () => {
-    LOGGER.info(centered('-------- End of Server Log --------'));
-    LOGGER.info(`${centered('-------- Begin Error Stack Trace --------')}\n`);
+    LOGGER.info('-------- End of Server Log --------');
+    LOGGER.info(`${'-------- Begin Error Stack Trace --------'}\n`);
 });
 
 /**

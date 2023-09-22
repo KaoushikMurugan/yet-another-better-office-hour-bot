@@ -5,10 +5,19 @@ import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { pino, destination } from 'pino';
+import pretty from 'pino-pretty';
 
 const LOGGER =
     environment.env === 'development'
-        ? pino()
+        ? pino({
+              transport: {
+                  target: 'pino-pretty',
+                  options: {
+                      colorize: true,
+                      ignore: 'pid,hostname'
+                  }
+              }
+          })
         : pino(destination('./yabob-prod-application-log.log'));
 
 if (
