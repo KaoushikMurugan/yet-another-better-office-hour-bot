@@ -3,6 +3,8 @@ import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-err
 import { environment } from '../../environment/environment-manager.js';
 import { LOGGER } from '../../global-states.js';
 
+const GOOGLE_SHEET_LOGGER = LOGGER.child({ extension: 'Google Sheet' });
+
 /**
  * Loads a google sheet object by sheet id
  * @param sheetId id found in the url
@@ -10,12 +12,11 @@ import { LOGGER } from '../../global-states.js';
 async function loadSheetById(sheetId: string): Promise<GoogleSpreadsheet> {
     const googleSheet = new GoogleSpreadsheet(sheetId);
     await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
-    await googleSheet.loadInfo().catch(() => {
+    await googleSheet.loadInfo().catch(err => {
+        GOOGLE_SHEET_LOGGER.error(err, `bad id ${sheetId}`);
         throw ExpectedSheetErrors.badGoogleSheetId;
     });
     return googleSheet;
 }
-
-const GOOGLE_SHEET_LOGGER = LOGGER.child({ extension: 'Google Sheet' });
 
 export { loadSheetById, GOOGLE_SHEET_LOGGER };

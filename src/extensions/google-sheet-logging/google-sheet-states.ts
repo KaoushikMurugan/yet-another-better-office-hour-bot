@@ -3,7 +3,6 @@ import { GoogleSheetServerExtension } from './google-sheet-server-extension.js';
 import { GuildId, Optional } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
-import { yellow } from '../../utils/command-line-colors.js';
 import { ServerExtension } from '../extension-interface.js';
 import { client, firebaseDB } from '../../global-states.js';
 import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';

@@ -16,7 +16,7 @@ import {
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client, LOGGER } from '../global-states.js';
-import { cyan, yellow, magenta, red } from '../utils/command-line-colors.js';
+import { red } from '../utils/command-line-colors.js';
 import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
@@ -90,9 +90,7 @@ async function updateCommandHelpChannels(
             sendHelpChannelMessages(helpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
-            .then(() =>
-                LOGGER.info(magenta(`✓ Updated help channels on ${guild.name} ✓`))
-            )
+            .then(() => LOGGER.info(`✓ Updated help channels on ${guild.name} ✓`))
             .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     } else {
         LOGGER.info(
