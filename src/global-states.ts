@@ -19,6 +19,10 @@ const LOGGER =
           })
         : pino(destination('./yabob-prod-application-log.log'));
 
+if (environment.env === 'production') {
+    console.log('We are in prod, logs are written to ./yabob-prod-application-log.log');
+}
+
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
     environment.discordBotCredentials.YABOB_APP_ID.length === 0
