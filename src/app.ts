@@ -4,7 +4,7 @@ import {
 } from './interaction-handling/interaction-entry-point.js';
 import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
-import { magenta, red, yellow } from './utils/command-line-colors.js';
+import { red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
@@ -35,7 +35,7 @@ client.on(Events.ClientReady, async () => {
         result => result.status === 'rejected' && LOGGER.error(`${result.reason}`)
     );
     if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
-        LOGGER.error('All server setups failed. Aborting.');
+        LOGGER.fatal('All server setups failed. Aborting.');
         process.exit(1);
     }
     LOGGER.info(
@@ -79,7 +79,7 @@ client.on(Events.GuildDelete, async guild => {
  */
 client.on(Events.InteractionCreate, async (interaction: Interaction) => {
     getHandler(interaction)(interaction).catch((err: Error) => {
-        LOGGER.error(err, 'Uncaught Error');
+        LOGGER.fatal(err, 'Uncaught Error');
         interaction.user
             .send(UnexpectedParseErrors.unexpectedError(interaction, err))
             .catch(LOGGER.error);
@@ -182,7 +182,7 @@ client.on(Events.GuildMemberRemove, async member => {
  * Discord.js warning handling
  */
 client.on(Events.Warn, warning => {
-    LOGGER.warn(magenta('Uncaught DiscordJS Warning: '), warning);
+    LOGGER.warn('Uncaught DiscordJS Warning: ', warning);
 });
 
 /**
