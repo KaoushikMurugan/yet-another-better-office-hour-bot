@@ -16,4 +16,4 @@ src/extensions/session-calendar/google_client_id.json
 src/extensions/session-calendar/token.json
 src/extensions/attendance/attendance-config.ts
 src/extensions/session-calendar/calendar-config.ts
-yabob-prod-application-log.log
+yabob-prod-application-log*.log

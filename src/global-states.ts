@@ -5,6 +5,9 @@ import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { pino, destination } from 'pino';
+import path from 'node:path';
+
+const LOG_FILE_NAME = `yabob-prod-application-log-${new Date().valueOf()}.log`;
 
 const LOGGER =
     environment.env === 'development'
@@ -17,10 +20,14 @@ const LOGGER =
                   }
               }
           })
-        : pino(destination('./yabob-prod-application-log.log'));
+        : pino(destination(`./${LOG_FILE_NAME}`));
 
 if (environment.env === 'production') {
-    console.log('We are in prod, logs are written to ./yabob-prod-application-log.log');
+    console.log(
+        `We are in prod, logs are written to ${path.dirname(
+            import.meta.url
+        )}${LOG_FILE_NAME}`
+    );
 }
 
 if (
