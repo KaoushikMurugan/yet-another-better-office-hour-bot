@@ -5,12 +5,12 @@
     "type": "module",
     "scripts": {
         "lint": "eslint src/",
-        "build": "npx tsc",
+        "build": "tsup",
         "test": "nyc mocha -r ts-node/register test/*.ts",
         "format": "npx prettier -w .",
         "start": "node dist/src/app.js",
-        "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
-        "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
+        "dev": "tsup && NODE_ENV=development node dist/app.js",
+        "devWithProfile": "tsup && NODE_ENV=development node --inspect dist/src/app.js",
         "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
         "makeDoc": "npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
@@ -21,17 +21,13 @@
         "@types/node-fetch": "^2.6.1",
         "@typescript-eslint/eslint-plugin": "^4.29.3",
         "@typescript-eslint/parser": "^4.29.3",
-        "chai": "^4.3.4",
-        "chai-as-promised": "^7.1.1",
         "eslint": "^7.32.0",
-        "mocha": "^9.1.0",
-        "nyc": "^15.1.0",
         "pino-pretty": "^10.2.0",
         "prettier": "2.7.1",
-        "ts-mockito": "^2.6.1",
         "typedoc": "^0.23.17",
         "typedoc-plugin-merge-modules": "^4.0.1",
-        "typescript": "^5.0.0"
+        "typescript": "^5.0.0",
+        "tsup": "^6.2.1"
     },
     "dependencies": {
         "ascii-table3": "^0.9.0",
@@ -53,5 +49,19 @@
     },
     "engines": {
         "node": ">=18.12.0"
+    },
+    "tsup": {
+        "entry": [
+            "src/app.ts"
+        ],
+        "splitting": false,
+        "sourcemap": true,
+        "clean": true,
+        "minify": false,
+        "format": "esm",
+        "target": "node18",
+        "banner": {
+            "js": "import { createRequire } from 'module'; const require = createRequire(import.meta.url);"
+        }
     }
 }

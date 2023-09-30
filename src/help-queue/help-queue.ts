@@ -82,7 +82,10 @@ class HelpQueueV2 {
      * Keeps track of all the setTimeout / setIntervals we started
      * - Timers can be from setInterval or setTimeout
      */
-    private timers: Collection<QueueTimerType, NodeJS.Timer> = new Collection();
+    private timers: Collection<
+        QueueTimerType,
+        Parameters<typeof clearInterval>[0] | Parameters<typeof clearTimeout>[0]
+    > = new Collection();
 
     /**
      * @param queueChannel the #queue text channel to manage

@@ -5,6 +5,7 @@ import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { pino, destination } from 'pino';
+import { ReacordDiscordJs } from 'reacord';
 import path from 'node:path';
 
 const LOG_FILE_NAME = `yabob-prod-application-log-${new Date().valueOf()}.log`;
