@@ -11,12 +11,13 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
 import { ChannelType, Guild } from 'discord.js';
-import { magenta, red } from '../../utils/command-line-colors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
 import { range } from '../../utils/util-functions.js';
+import { LOGGER } from '../../global-states.js';
+import { CALENDAR_LOGGER } from '../../extensions/session-calendar/shared-calendar-functions.js';
 
 // /queue {add | remove} [queue_name]
 const queueCommand = new SlashCommandBuilder()
@@ -438,10 +439,10 @@ async function postSlashCommands(
                 )
             }
         )
-        .catch(e =>
-            console.error(red(`Failed to post slash command to ${guild.name}`), e)
+        .catch(err =>
+            CALENDAR_LOGGER.error(err, `Failed to post slash command to ${guild.name}`)
         );
-    console.log(magenta(`✓ Updated slash commands on '${guild.name}' ✓`));
+    LOGGER.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 
 export { postSlashCommands };

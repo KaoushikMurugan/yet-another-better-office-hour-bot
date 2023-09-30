@@ -31,7 +31,7 @@ import {
     backupQueueData
 } from './firebase-backup.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
-import { blue, cyan, green, red } from '../utils/command-line-colors.js';
+import { blue, green, red } from '../utils/command-line-colors.js';
 import {
     convertMsToTime,
     isCategoryChannel,
@@ -60,6 +60,8 @@ import {
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
 import { UnknownId } from '../utils/component-id-factory.js';
+import { LOGGER } from '../global-states.js';
+import type { Logger } from 'pino';
 
 /**
  * Wrapper for TextChannel
@@ -162,10 +164,14 @@ class AttendingServerV2 {
         }
     };
 
+    private logger: Logger;
+
     protected constructor(
         readonly guild: Guild,
         readonly serverExtensions: ReadonlyArray<ServerExtension>
-    ) {}
+    ) {
+        this.logger = LOGGER.child({ guild: this.guild.name });
+    }
 
     /**
      * Number of correctly initialized AttendingServers
@@ -331,14 +337,14 @@ class AttendingServerV2 {
             server.createQueueRoles(),
             updateCommandHelpChannels(guild, server.accessLevelRoleIds)
         ]).catch(err => {
-            console.error(err);
+            LOGGER.error(err);
             throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
         });
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
         AttendingServerV2.allServers.set(guild.id, server);
-        console.log(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
+        LOGGER.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
 
@@ -452,8 +458,8 @@ class AttendingServerV2 {
             ...helper,
             helpEnd: new Date()
         };
-        console.log(
-            ` - Help time of ${helper.member.displayName} is ${convertMsToTime(
+        this.logger.info(
+            `Help time of ${helper.member.displayName} is ${convertMsToTime(
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
         );
@@ -512,13 +518,13 @@ class AttendingServerV2 {
             createdRoles[newRole.position] = newRole.name;
         }
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
-            console.error('Failed to update help channel visibilities.', err)
+            this.logger.error(err, 'Failed to update help channel visibilities.')
         );
         createdRoles.length > 0
-            ? console.log(blue('Created roles:'), createdRoles)
-            : console.log(green(`All required roles exist in ${this.guild.name}!`));
+            ? this.logger.info(`Created roles: ${createdRoles}`)
+            : this.logger.info(`All required roles exist in ${this.guild.name}!`);
         if (foundRoles.length > 0) {
-            console.log('Found roles:', foundRoles);
+            this.logger.info(`Found roles: ${foundRoles}`);
         }
     }
 
@@ -660,7 +666,6 @@ class AttendingServerV2 {
         );
         const helperObject = this._helpers.get(helperMember.id);
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
-            console.log(currentlyHelpingQueues.size, helperObject);
             throw ExpectedServerErrors.notHosting;
         }
         const helperVoiceChannel = helperMember.voice.channel;
@@ -761,11 +766,9 @@ class AttendingServerV2 {
             .map(queue => queue.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);
         if (duplicateQueues.length > 0) {
-            console.warn(`Server['${this.guild.name}'] contains these duplicate queues:`);
-            console.warn(duplicateQueues);
-            console.warn(
-                `This might lead to unexpected behaviors.\n
-                Please update category names as soon as possible.`
+            this.logger.warn(
+                `Server['${this.guild.name}'] contains these duplicate queues: ${duplicateQueues} 
+                This might lead to unexpected behaviors. Please update category names as soon as possible.`
             );
         }
         return this.queueChannelsCache;
@@ -992,9 +995,7 @@ class AttendingServerV2 {
         if (this.loggingChannel) {
             this.loggingChannel
                 .send(message)
-                .catch(err =>
-                    console.error(red(`Failed to send logs to ${this.guild.name}.`), err)
-                );
+                .catch(err => this.logger.error(err, 'Failed to send logs.'));
         }
     }
 
@@ -1009,7 +1010,7 @@ class AttendingServerV2 {
         Promise.all([
             setHelpChannelVisibility(this.guild, this.settings.accessLevelRoleIds)
         ]).catch(err => {
-            console.error(red(`Failed to set roles in ${this.guild.name}`), err);
+            this.logger.error(err, 'Failed to set roles');
             this.sendLogMessage(`Failed to set roles in ${this.guild.name}`);
         });
     }
@@ -1229,9 +1230,9 @@ class AttendingServerV2 {
                 );
             })
         );
-        console.log(
-            `All queues in '${this.guild.name}' successfully created ${
-                environment.disableExtensions ? '' : blue('with their extensions')
+        this.logger.info(
+            `All queues successfully created${
+                environment.disableExtensions ? '' : blue(' with their extensions')
             }!`
         );
         await Promise.all(
@@ -1247,7 +1248,7 @@ class AttendingServerV2 {
      * @param backup the data to load
      */
     private loadBackup(backup: ServerBackup): void {
-        console.log(cyan(`Restoring external backup for ${this.guild.name}.`));
+        this.logger.info(`Restoring external backup for ${this.guild.name}.`);
         this.settings = {
             ...backup,
             accessLevelRoleIds: {

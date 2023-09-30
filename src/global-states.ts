@@ -1,9 +1,34 @@
 import { environment } from './environment/environment-manager.js';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
-import { yellow, black, red } from './utils/command-line-colors.js';
+import { yellow, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
+import { pino, destination } from 'pino';
+import path from 'node:path';
+
+const LOG_FILE_NAME = `yabob-prod-application-log-${new Date().valueOf()}.log`;
+
+const LOGGER =
+    environment.env === 'development'
+        ? pino({
+              transport: {
+                  target: 'pino-pretty',
+                  options: {
+                      colorize: true,
+                      ignore: 'pid,hostname'
+                  }
+              }
+          })
+        : pino(destination(`./${LOG_FILE_NAME}`));
+
+if (environment.env === 'production') {
+    console.log(
+        `We are in prod, logs are written to ${path.dirname(
+            import.meta.url
+        )}${LOG_FILE_NAME}`
+    );
+}
 
 if (
     environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
@@ -19,7 +44,7 @@ if (
     throw new Error(red('Missing firebase credentials.'));
 }
 if (environment.disableExtensions) {
-    console.log(yellow(black('Running without extensions.'), 'Bg'));
+    LOGGER.warn('Running without extensions.');
 }
 if (getApps().length === 0) {
     initializeApp({
@@ -64,10 +89,10 @@ const client: Client<true> = new Client({
 /** Login before export */
 await client
     .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
-    .then(() => console.log(`\nLogged in as ${yellow(client.user.username)}!`))
+    .then(() => LOGGER.info(`Logged in as ${yellow(client.user.username)}!`))
     .catch((err: Error) => {
-        console.error('Login Unsuccessful. Check YABOBs credentials.');
+        LOGGER.error('Login Unsuccessful. Check YABOBs credentials.');
         throw err;
     });
 
-export { client, firebaseDB };
+export { client, firebaseDB, LOGGER };

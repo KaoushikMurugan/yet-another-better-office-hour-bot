@@ -11,7 +11,7 @@
         "start": "node dist/src/app.js",
         "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
         "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
-        "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production node dist/src/app.js",
+        "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
         "makeDoc": "npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
     "devDependencies": {
@@ -26,11 +26,12 @@
         "eslint": "^7.32.0",
         "mocha": "^9.1.0",
         "nyc": "^15.1.0",
+        "pino-pretty": "^10.2.0",
         "prettier": "2.7.1",
         "ts-mockito": "^2.6.1",
         "typedoc": "^0.23.17",
-        "typescript": "^5.0.0",
-        "typedoc-plugin-merge-modules": "^4.0.1"
+        "typedoc-plugin-merge-modules": "^4.0.1",
+        "typescript": "^5.0.0"
     },
     "dependencies": {
         "ascii-table3": "^0.7.7",
@@ -45,6 +46,7 @@
         "googleapis": "^100.0.0",
         "lru-cache": "^7.14.0",
         "lz-string": "^1.4.4",
+        "pino": "^8.15.1",
         "zod": "^3.19.1"
     },
     "engines": {

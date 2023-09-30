@@ -15,8 +15,8 @@ import {
     VoiceBasedChannel
 } from 'discord.js';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
-import { client } from '../global-states.js';
-import { cyan, yellow, magenta, red } from '../utils/command-line-colors.js';
+import { client, LOGGER } from '../global-states.js';
+import { red } from '../utils/command-line-colors.js';
 import { helpChannelConfigurations } from './command-ch-constants.js';
 import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
@@ -73,7 +73,7 @@ async function updateCommandHelpChannels(
     );
     // If no help category is found, initialize
     if (!existingHelpCategory) {
-        console.log(cyan(`Found no help channels in ${guild.name}. Creating new ones.`));
+        LOGGER.info(`Found no help channels in ${guild.name}. Creating new ones.`);
         const helpCategory = await guild.channels.create({
             name: 'Bot Commands Help',
             type: ChannelType.GuildCategory
@@ -90,24 +90,18 @@ async function updateCommandHelpChannels(
             sendHelpChannelMessages(helpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
-            .then(() =>
-                console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`))
-            )
-            .catch(err => console.error('Failed to update help messages', err));
+            .then(() => LOGGER.info(`✓ Updated help channels on ${guild.name} ✓`))
+            .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     } else {
-        console.log(
-            `Found existing help channels in ${yellow(
-                guild.name
-            )}, updating command help files`
+        LOGGER.info(
+            `Found existing help channels in ${guild.name}, updating command help files`
         );
         Promise.all([
             sendHelpChannelMessages(existingHelpCategory),
             setHelpChannelVisibility(guild, accessLevelRoleIds)
         ])
-            .then(() =>
-                console.log(magenta(`✓ Updated help channels on ${guild.name} ✓`))
-            )
-            .catch(err => console.error('Failed to update help messages', err));
+            .then(() => LOGGER.info(`✓ Updated help channels on ${guild.name} ✓`))
+            .catch(err => LOGGER.error(err, 'Failed to update help messages'));
     }
 }
 
@@ -141,10 +135,8 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
                 .map(helpMessage => channel.send(helpMessage.message))
         )
     );
-    console.log(
-        `Successfully updated help messages in ${yellow(helpCategory.name)} in ${yellow(
-            helpCategory.guild.name
-        )}!`
+    LOGGER.info(
+        `Successfully updated help messages in ${helpCategory.name} in ${helpCategory.guild.name}!`
     );
 }
 
@@ -300,7 +292,7 @@ async function sendInvite(
             .find(overwrite => overwrite.id === student.id)
             ?.delete()
             .catch(() =>
-                console.error(`Failed to delete overwrite for ${student.displayName}`)
+                LOGGER.error(`Failed to delete overwrite for ${student.displayName}`)
             );
     }, 15 * 60 * 1000);
     try {

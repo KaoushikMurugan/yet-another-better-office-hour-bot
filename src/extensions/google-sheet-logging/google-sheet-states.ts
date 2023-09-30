@@ -3,11 +3,10 @@ import { GoogleSheetServerExtension } from './google-sheet-server-extension.js';
 import { GuildId, Optional } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { environment } from '../../environment/environment-manager.js';
-import { yellow, blue } from '../../utils/command-line-colors.js';
 import { ServerExtension } from '../extension-interface.js';
 import { client, firebaseDB } from '../../global-states.js';
+import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 import { z } from 'zod';
-import { logWithTimeStamp } from '../../utils/util-functions.js';
 import { loadSheetById } from './shared-sheet-functions.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 
@@ -96,10 +95,9 @@ class GoogleSheetExtensionState {
         );
         // add the new state to the static collection
         GoogleSheetExtensionState.allStates.set(guild.id, instance);
-        console.log(
-            `[${blue('Google Sheet Logging')}] ` +
-                `successfully loaded for '${yellow(guild.name)}'!\n` +
-                ` - Using this google sheet: ${yellow(googleSheet.title)}`
+        GOOGLE_SHEET_LOGGER.info(
+            { googleSheet: googleSheet.title },
+            `Successfully loaded for ${guild.name}!`
         );
         return instance;
     }
@@ -146,13 +144,12 @@ class GoogleSheetExtensionState {
             .doc(this.guild.id)
             .set(backupData)
             .then(() =>
-                logWithTimeStamp(
-                    this.guild.name,
-                    '- Google sheet config backup successful.'
+                GOOGLE_SHEET_LOGGER.info(
+                    `Google sheet config backup successful for ${this.guild.name}.`
                 )
             )
             .catch((err: Error) =>
-                console.error('Firebase calendar backup failed.', err.message)
+                GOOGLE_SHEET_LOGGER.error(err, 'Firebase google sheet backup failed.')
             );
     }
 }

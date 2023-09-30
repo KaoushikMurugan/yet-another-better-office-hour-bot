@@ -18,7 +18,7 @@ import {
     CalendarSuccessMessages
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
-import { buildUpcomingSessionsEmbedBody } from '../shared-calendar-functions.js';
+import { buildUpcomingSessionsEmbedBody, CALENDAR_LOGGER } from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
     isTriggeredByMemberWithRoles,
@@ -133,7 +133,7 @@ async function makeParsableCalendarTitle(
     state
         .updateNameDiscordIdMap(calendarDisplayName, memberToUpdate.user.id)
         .catch(() =>
-            console.error(
+            CALENDAR_LOGGER.error(
                 `Calendar refresh timed out from ${red(
                     'updateNameDiscordIdMap'
                 )} triggered by ${memberToUpdate.displayName}`

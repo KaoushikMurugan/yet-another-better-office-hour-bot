@@ -11,6 +11,7 @@ import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { Snowflake } from 'discord.js';
 import { z } from 'zod';
+import { LOGGER } from '../../global-states.js';
 
 /**
  * ViewModel for 1 tutor's upcoming session
@@ -67,6 +68,8 @@ const calendarDataSchema = z.object({
     }),
     description: z.string()
 });
+
+const CALENDAR_LOGGER = LOGGER.child({ extension: 'Google Calendar' });
 
 /**
  * Attempts to connect to the google calendar
@@ -324,5 +327,6 @@ export {
     buildCalendarURL,
     checkCalendarConnection,
     restorePublicEmbedURL,
-    buildUpcomingSessionsEmbedBody
+    buildUpcomingSessionsEmbedBody,
+    CALENDAR_LOGGER
 };

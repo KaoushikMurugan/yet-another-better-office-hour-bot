@@ -1,12 +1,11 @@
 /** @module GoogleSheetLogging */
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
-import { red } from '../../utils/command-line-colors.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
 import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
-import { logWithTimeStamp, padTo2Digits } from '../../utils/util-functions.js';
+import { padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 import {
@@ -15,6 +14,8 @@ import {
     attendanceHeaders,
     helpSessionHeaders
 } from './google-sheet-constants/column-enums.js';
+import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
+import { Logger } from 'pino';
 
 /**
  * Additional attendance info for each helper
@@ -73,8 +74,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
 
+    private logger: Logger;
+
     constructor(private readonly guild: Guild) {
         super();
+        this.logger = GOOGLE_SHEET_LOGGER.child({ guild: guild.name });
     }
 
     /**
@@ -237,7 +241,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         this.updateHelpSession(completeHelpSessionEntries)
             .then(() => this.helpSessionEntries.delete(studentMember.id))
             .catch((err: Error) =>
-                console.error(red('Cannot update help sessions.'), err.name, err.message)
+                this.logger.error(err, 'Cannot update help sessions.')
             );
     }
 
@@ -310,33 +314,25 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             attendanceSheet.loadHeaderRow()
         ])
             .then(() => {
-                logWithTimeStamp(
-                    this.guild.name,
-                    `- Successfully updated ${updatedCountSnapshot} attendance entries.`
+                this.logger.info(
+                    `Successfully updated ${updatedCountSnapshot} attendance entries for ${this.guild.name}.`
                 );
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
-                logWithTimeStamp(
-                    this.guild.name,
-                    `- ${this.attendanceEntries.length} entries still remain.`
+                this.logger.info(
+                    `${this.attendanceEntries.length} entries still remain for ${this.guild.name}.`
                 );
             })
             .catch((err: Error) => {
-                console.error(
-                    red(
-                        `Error when updating attendance for this batch at ${new Date().toLocaleString()}`
-                    ),
-                    err.name,
-                    err.message
-                );
+                this.logger.error(err, 'Error when updating attendance');
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
-                    console.error(rest);
+                    this.logger.error(rest);
                     for (const helpedMember of helpedMembers) {
-                        console.error(helpedMember.member.nickname);
+                        this.logger.error(helpedMember.member.nickname);
                     }
                 }
             });
@@ -397,12 +393,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             ),
             helpSessionSheet.loadHeaderRow()
         ]).catch((err: Error) =>
-            console.error(
-                red('Error when updating help session: '),
-                entries,
-                err.name,
-                err.message
-            )
+            this.logger.error({ err, entries }, 'Error when updating these help sessions')
         );
     }
 
