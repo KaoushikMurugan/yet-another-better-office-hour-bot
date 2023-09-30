@@ -52,7 +52,7 @@
     },
     "tsup": {
         "entry": [
-            "src/app.ts"
+            "src/app.tsx"
         ],
         "splitting": false,
         "sourcemap": true,
