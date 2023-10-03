@@ -23,7 +23,10 @@ import {
     SimpleEmbed,
     SlashCommandLogEmbed
 } from '../utils/embed-helper.js';
-import { decompressComponentId } from '../utils/component-id-factory.js';
+import {
+    decompressComponentId,
+    safeDecompressComponentId
+} from '../utils/component-id-factory.js';
 import {
     logButtonPress,
     logDMButtonPress,
@@ -124,7 +127,11 @@ async function processButton(interaction: Interaction): Promise<void> {
     if (!interaction.isButton()) {
         return;
     }
-    const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
+    const result = safeDecompressComponentId(interaction.customId);
+    if (!result.ok) {
+        return;
+    }
+    const [type, buttonName, serverId] = result.value;
     // serverId might be unknown
     // TODO: Maybe require all buildComponent calls to accept only valid server id's
     const server = AttendingServerV2.get(interaction.guildId ?? serverId);
@@ -166,7 +173,11 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     if (!interaction.isStringSelectMenu()) {
         return;
     }
-    const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
+    const result = safeDecompressComponentId(interaction.customId);
+    if (!result.ok) {
+        return;
+    }
+    const [type, selectMenuName, serverId] = result.value;
     const server = AttendingServerV2.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         SelectMenuLogEmbed(

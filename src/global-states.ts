@@ -96,4 +96,6 @@ await client
         throw err;
     });
 
-export { client, firebaseDB, LOGGER };
+const reacord = new ReacordDiscordJs(client, { maxInstances: 1000 });
+
+export { client, firebaseDB, LOGGER, reacord };

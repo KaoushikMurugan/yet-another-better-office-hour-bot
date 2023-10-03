@@ -1,3 +1,4 @@
+import React from 'react';
 import {
     getHandler,
     interactionExtensions
@@ -6,7 +7,7 @@ import { Guild, Interaction, Events } from 'discord.js';
 import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
-import { client, LOGGER } from './global-states.js';
+import { client, LOGGER, reacord } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js';

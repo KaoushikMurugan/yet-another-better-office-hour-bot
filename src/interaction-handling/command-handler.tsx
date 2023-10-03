@@ -1,3 +1,4 @@
+import React from 'react';
 import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { CommandParseError } from '../utils/error-types.js';
 import {
@@ -42,6 +43,8 @@ import { parse } from 'csv-string';
 import { quickStartPages } from '../attending-server/quick-start-pages.js';
 import { SimpleTimeZone } from '../utils/type-aliases.js';
 import { buildComponent } from '../utils/component-id-factory.js';
+import { reacord } from '../global-states.js';
+import { QuickStartRoot } from '../components/quick-start/quick-start-pages.js';
 
 const baseYabobCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -72,7 +75,7 @@ const baseYabobCommandMap: CommandHandlerProps = {
         [CommandNames.set_time_zone]: setTimeZone,
         [CommandNames.create_helper_control_panel]: createHelperControlPanel
     },
-    skipProgressMessageCommands: new Set([CommandNames.enqueue])
+    skipProgressMessageCommands: new Set([CommandNames.enqueue, CommandNames.quick_start])
 };
 
 /**
@@ -693,14 +696,10 @@ async function quickStart(
         CommandNames.quick_start,
         'botAdmin'
     );
-
-    const firstQuickStartPage = quickStartPages[0];
-
-    if (firstQuickStartPage === undefined) {
-        throw new CommandParseError('Invalid quick start page.');
-    }
-
-    await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
+    reacord.reply(
+        interaction,
+        <QuickStartRoot serverId={interaction.guildId} />
+    );
 }
 
 /**

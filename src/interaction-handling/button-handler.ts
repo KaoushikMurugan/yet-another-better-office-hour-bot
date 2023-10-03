@@ -59,14 +59,6 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
                 createAccessLevelRoles(interaction, true, false, 'settings'),
             [ButtonNames.ServerRoleConfig2aSM]: interaction =>
                 createAccessLevelRoles(interaction, true, true, 'settings'),
-            [ButtonNames.ServerRoleConfig1QS]: interaction =>
-                createAccessLevelRoles(interaction, false, false, 'quickStart'),
-            [ButtonNames.ServerRoleConfig1aQS]: interaction =>
-                createAccessLevelRoles(interaction, false, true, 'quickStart'),
-            [ButtonNames.ServerRoleConfig2QS]: interaction =>
-                createAccessLevelRoles(interaction, true, false, 'quickStart'),
-            [ButtonNames.ServerRoleConfig2aQS]: interaction =>
-                createAccessLevelRoles(interaction, true, true, 'quickStart'),
             [ButtonNames.DisableAfterSessionMessage]: disableAfterSessionMessage,
             [ButtonNames.DisableQueueAutoClear]: disableQueueAutoClear,
             [ButtonNames.DisableLoggingChannelSM]: interaction =>
@@ -109,10 +101,6 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
                 returnToHelpSubMenu(interaction, 'staff'),
             [ButtonNames.ReturnToHelpStudentSubMenu]: interaction =>
                 returnToHelpSubMenu(interaction, 'student'),
-            [ButtonNames.QuickStartBack]: interaction =>
-                shiftQuickStartPage(interaction, 'back'),
-            [ButtonNames.QuickStartNext]: interaction =>
-                shiftQuickStartPage(interaction, 'next')
         }
     },
     dmMethodMap: {

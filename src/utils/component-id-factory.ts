@@ -124,7 +124,6 @@ function extractComponentName(
  * ```
  */
 function safeDecompressComponentId<T extends ComponentLocation>(
-    expectedComponentType: T,
     compressedId: string
 ): Result<CustomIdTuple<T>, CommandParseError> {
     const rawDecompressed = LZString.decompressFromUTF16(compressedId);
