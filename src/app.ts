@@ -11,7 +11,7 @@ import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
-import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
+import { postGuildSlashCommands, postGlobalSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
 import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
@@ -44,6 +44,17 @@ client.on(Events.ClientReady, async () => {
     LOGGER.info('-------- Begin Server Logs --------');
     updatePresence();
     setInterval(updatePresence, 1000 * 60 * 30);
+    if(environment.env === 'production') {
+        const externalCommandData = environment.disableExtensions
+            ? []
+            : interactionExtensions.flatMap(ext => ext.slashCommandData);
+        await postGlobalSlashCommands(externalCommandData);
+    }
+    else
+    {
+        // remove global commands during development
+        await client.application.commands.set([]);
+    }
 });
 
 /**
@@ -201,10 +212,16 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     LOGGER.info(`Joining guild: ${yellow(guild.name)}`);
-    const externalCommandData = environment.disableExtensions
-        ? []
-        : interactionExtensions.flatMap(ext => ext.slashCommandData);
-    await postSlashCommands(guild, externalCommandData);
+    if(environment.env === 'development') {
+        const externalCommandData = environment.disableExtensions
+            ? []
+            : interactionExtensions.flatMap(ext => ext.slashCommandData);
+        await postGuildSlashCommands(guild, externalCommandData);
+    }
+    else { // production
+        // clear all guild commands
+        await guild.commands.set([]);
+    }
     await guild.commands.fetch(); // populate cache
     // Extensions for server & queue are loaded inside the create method
     const server = await AttendingServerV2.create(guild);
