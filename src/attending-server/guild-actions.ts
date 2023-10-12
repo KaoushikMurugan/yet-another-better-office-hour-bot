@@ -22,7 +22,7 @@ import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
 import type { ServerError } from '../utils/error-types.js';
-import type { Result } from '../utils/type-aliases.js';
+import { Err, Ok, type Result } from '../utils/type-aliases.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -211,7 +211,7 @@ async function setHelpChannelVisibility(
  * @param categoryName the name of the category containing the voice channels
  * @param officeNamePrefix prefix of each voice channel
  * @param numberOfOffices number of offices to create
- * @param permittedRoleIds the Snowflakes of Bot Admin and Staff
+ * @param permittedRoleIds the Snowflakes of Bot Admin and Staff, order doesn't matter
  * @example
  * createOfficeCategory('Office Hours', 'Office', 3)  will create a
  * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
@@ -303,12 +303,9 @@ async function sendInvite(
             )
         );
     } catch {
-        return {
-            ok: false,
-            error: ExpectedServerErrors.studentBlockedDm(student.id)
-        };
+        return Err(ExpectedServerErrors.studentBlockedDm(student.id));
     }
-    return { ok: true, value: undefined };
+    return Ok(undefined);
 }
 
 export {
