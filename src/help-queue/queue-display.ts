@@ -1,5 +1,4 @@
 /** @module HelpQueueV2 */
-// @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { QueueState, QueueViewModel } from './help-queue.js';
 import { QueueChannel } from '../attending-server/base-attending-server.js';
