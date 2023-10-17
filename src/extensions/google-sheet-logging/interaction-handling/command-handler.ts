@@ -1,4 +1,3 @@
-// @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { ChatInputCommandInteraction, EmbedBuilder, Guild, User } from 'discord.js';
 import { CommandHandlerProps } from '../../../interaction-handling/handler-interface.js';

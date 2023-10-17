@@ -34,7 +34,7 @@
         "typescript": "^5.0.0"
     },
     "dependencies": {
-        "ascii-table3": "^0.7.7",
+        "ascii-table3": "^0.9.0",
         "axios": "^0.27.2",
         "csv-string": "^4.1.1",
         "discord-api": "^0.0.1",
@@ -50,6 +50,6 @@
         "zod": "^3.19.1"
     },
     "engines": {
-        "node": "^18.12.0"
+        "node": ">=18.12.0"
     }
 }

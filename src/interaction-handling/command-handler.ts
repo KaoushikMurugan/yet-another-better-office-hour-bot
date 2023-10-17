@@ -7,7 +7,6 @@ import {
     isValidChannelName
 } from '../utils/util-functions.js';
 import { CommandHandlerProps } from './handler-interface.js';
-// @ts-expect-error the ascii table lib has no type
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { ButtonNames, CommandNames } from './interaction-constants/interaction-names.js';
 import {
