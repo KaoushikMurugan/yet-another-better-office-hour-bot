@@ -10,8 +10,10 @@
         "format": "npx prettier -w .",
         "start": "node dist/src/app.js",
         "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
+        "dev_precompiled": "NODE_ENV=development node dist/src/app.js",
         "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
         "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
+        "prod_precompiled": "NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
         "makeDoc": "npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
     "devDependencies": {
