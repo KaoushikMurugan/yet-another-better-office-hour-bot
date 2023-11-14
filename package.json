@@ -13,7 +13,7 @@
         "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
         "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
         "prod_precompiled": "NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
-        "makeDoc": "npx typedoc ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
+        "makeDoc": "npx typedoc --plugin typedoc-plugin-merge-modules ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
     "devDependencies": {
         "@types/google-spreadsheet": "^3.1.5",
