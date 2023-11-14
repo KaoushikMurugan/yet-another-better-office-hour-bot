@@ -2,6 +2,7 @@ import { GoogleSpreadsheet } from 'google-spreadsheet';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { environment } from '../../environment/environment-manager.js';
 import { LOGGER } from '../../global-states.js';
+import { JWT } from 'google-auth-library';
 
 const GOOGLE_SHEET_LOGGER = LOGGER.child({ extension: 'Google Sheet' });
 
@@ -10,8 +11,15 @@ const GOOGLE_SHEET_LOGGER = LOGGER.child({ extension: 'Google Sheet' });
  * @param sheetId id found in the url
  */
 async function loadSheetById(sheetId: string): Promise<GoogleSpreadsheet> {
-    const googleSheet = new GoogleSpreadsheet(sheetId);
-    await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
+    const googleSheet = new GoogleSpreadsheet(
+        sheetId,
+        new JWT({
+            email: environment.googleCloudCredentials.client_email,
+            key: environment.googleCloudCredentials.private_key,
+            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+        })
+    );
+    // await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
     await googleSheet.loadInfo().catch(err => {
         GOOGLE_SHEET_LOGGER.error(err, `bad id ${sheetId}`);
         throw ExpectedSheetErrors.badGoogleSheetId;

@@ -89,7 +89,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
         maxResults: 2
     });
-    const response = await axios.default
+    const response = await axios
         .get(calendarUrl, {
             timeout: 5000, // 5 second timeout
             method: 'GET'
@@ -223,7 +223,7 @@ async function fetchUpcomingSessions(
         timeMax: nextWeek,
         maxResults: 100 // change this value to fetch more
     });
-    const response = await axios.default
+    const response = await axios
         .get(calendarUrl, {
             timeout: 5000,
             method: 'GET'

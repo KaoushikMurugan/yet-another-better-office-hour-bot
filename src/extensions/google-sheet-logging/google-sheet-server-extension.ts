@@ -16,6 +16,7 @@ import {
 } from './google-sheet-constants/column-enums.js';
 import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 import { Logger } from 'pino';
+import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
 
 /**
  * Additional attendance info for each helper
@@ -246,6 +247,34 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
+     * Checks is the spreadsheet is safe to write to.
+     * All requiredHeaders need to be present
+     *
+     * @param sheet worksheet
+     * @param requiredHeaders headers
+     * @returns bool
+     */
+    private async isSafeToWrite(
+        sheet: GoogleSpreadsheetWorksheet,
+        requiredHeaders: string[]
+    ): Promise<boolean> {
+        // the headerValues getter can throw, so we need to use try catch
+        try {
+            return (
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                sheet.headerValues && // this need to be checked, the library has the wrong type
+                sheet.headerValues.length === requiredHeaders.length &&
+                sheet.headerValues.every(
+                    // finally check if all headers exist both the previous conditions are true
+                    header => requiredHeaders.includes(header)
+                )
+            );
+        } catch {
+            return false;
+        }
+    }
+
+    /**
      * Updates all the cached attendance entries
      */
     private async batchUpdateAttendance(): Promise<void> {
@@ -253,6 +282,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         if (this.attendanceEntries.length === 0 || !googleSheet) {
             return;
         }
+        
         // try to find existing sheet
         // if not created, make a new one, also trim off colon because google api bug
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Attendance`.replace(
@@ -265,18 +295,12 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 title: sheetTitle,
                 headerValues: attendanceHeaders
             }));
-        const safeToUpdate =
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === attendanceHeaders.length &&
-            attendanceSheet.headerValues.every(
-                // finally check if all headers exist both the previous conditions are true
-                header => (attendanceHeaders as string[]).includes(header)
-            );
+
+        const safeToUpdate = await this.isSafeToWrite(attendanceSheet, attendanceHeaders);
         if (!safeToUpdate) {
-            // very slow, O(n^2 * m) string array comparison is faster than this
             await attendanceSheet.setHeaderRow(attendanceHeaders);
         }
+
         const updatedCountSnapshot = this.attendanceEntries.length;
         // Use callbacks to not block the parent function
         Promise.all([
@@ -349,6 +373,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         if (entries.length === 0 || !googleSheet) {
             return; // do nothing if there's nothing to update
         }
+
         // trim off colon because google api bug, then trim off any excess spaces
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
             /\s{2,}/g,
@@ -360,15 +385,14 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 title: sheetTitle,
                 headerValues: helpSessionHeaders
             }));
-        const safeToUpdate = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            helpSessionSheet.headerValues && // this is necessary, could be undefined
-            helpSessionSheet.headerValues.length === helpSessionHeaders.length &&
-            helpSessionSheet.headerValues.every(header =>
-                (helpSessionHeaders as string[]).includes(header)
-            );
+        const safeToUpdate = await this.isSafeToWrite(
+            helpSessionSheet,
+            helpSessionHeaders
+        );
         if (!safeToUpdate) {
             await helpSessionSheet.setHeaderRow(helpSessionHeaders);
         }
+
         Promise.all([
             helpSessionSheet.addRows(
                 entries.map(entry => ({
