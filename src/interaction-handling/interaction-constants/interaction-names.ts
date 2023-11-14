@@ -5,6 +5,8 @@
  * Values and enum names should the same because values are also used as keys
  */
 
+import { EnsureCorrectEnum } from '../../utils/type-aliases.js';
+
 /** Known base yabob slash command names */
 enum CommandNames {
     announce = 'announce',
@@ -104,5 +106,11 @@ enum SelectMenuNames {
     SelectLoggingChannelQS = 'SelectLoggingChannelQS',
     HelpMenu = 'HelpMenu'
 }
+
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+type AllEnumsCorrect = EnsureCorrectEnum<typeof CommandNames> &
+    EnsureCorrectEnum<typeof ButtonNames> &
+    EnsureCorrectEnum<typeof ModalNames> &
+    EnsureCorrectEnum<typeof SelectMenuNames>;
 
 export { CommandNames, ButtonNames, ModalNames, SelectMenuNames };

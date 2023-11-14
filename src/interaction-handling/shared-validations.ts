@@ -77,7 +77,7 @@ function isFromQueueChannelWithParentIdOnly(
  * Based on Role IDs instead of Role Names
  * @param server the server where the interaction was called
  * @param member the member who triggered the interaction
- * @param commandName the command used
+ * @param commandName the command name, only used in the error message
  * @param lowestRequiredRole the minimum role required to use the command
  * @returns GuildMember object of the trigger-er
  */

@@ -18,7 +18,10 @@ import {
     CalendarSuccessMessages
 } from '../calendar-constants/calendar-success-messsages.js';
 import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-errors.js';
-import { buildUpcomingSessionsEmbedBody, CALENDAR_LOGGER } from '../shared-calendar-functions.js';
+import {
+    buildUpcomingSessionsEmbedBody,
+    CALENDAR_LOGGER
+} from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
     isTriggeredByMemberWithRoles,
@@ -88,7 +91,7 @@ async function makeParsableCalendarTitle(
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
-        'make_calendar_string',
+        interaction.commandName,
         'staff'
     );
     const calendarDisplayName = interaction.options.getString('calendar_name', true);
