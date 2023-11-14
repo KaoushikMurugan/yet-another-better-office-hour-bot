@@ -36,6 +36,7 @@ if (
 ) {
     throw new Error(red('Missing token or bot ID. Aborting setup.'));
 }
+
 if (
     environment.firebaseCredentials.clientEmail === '' ||
     environment.firebaseCredentials.privateKey === '' ||
@@ -43,27 +44,27 @@ if (
 ) {
     throw new Error(red('Missing firebase credentials.'));
 }
+
 if (environment.disableExtensions) {
     LOGGER.warn('Running without extensions.');
 }
+
 if (getApps().length === 0) {
     initializeApp({
         credential: cert(environment.firebaseCredentials)
     });
 }
 
-/** The following are global constant references */
+// The following are global constants
 
-/** Database object used for backups, shared across base yabob and extensions */
+/**
+ * Database object used for backups, shared across base yabob and extensions
+ */
 const firebaseDB: Firestore = getFirestore();
 
 /**
  * The discord user object.
- * @remarks Top level await finally works with es-modules
- * - The `true` type parameter asserts that the client has successfully initialized
- * - Asserted because this file handles discord login.
- *  If this object is exported,
- *  then the client is guaranteed have successfully logged in.
+ * If this object is exported, then the client is guaranteed have successfully logged in.
  */
 const client: Client<true> = new Client({
     intents: [
