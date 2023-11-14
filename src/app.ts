@@ -20,7 +20,7 @@ import { studentCommandHelpMessages } from '../help-channel-messages/StudentComm
 /**
  * After login startup sequence
  */
-client.on(Events.ClientReady, async () => {
+client.once(Events.ClientReady, async () => {
     printTitleString();
     // do the global initialization checks and collect static data
     await Promise.all(interactionExtensions.map(ext => ext.initializationCheck()));
@@ -31,9 +31,11 @@ client.on(Events.ClientReady, async () => {
     );
     // create all the AttendingServerV2 objects
     const setupResults = await Promise.allSettled(completeGuilds.map(joinGuild));
-    setupResults.forEach(
-        result => result.status === 'rejected' && LOGGER.error(`${result.reason}`)
-    );
+    setupResults.forEach(result => {
+        if (result.status === 'rejected') {
+            LOGGER.error(`${result.reason}`);
+        }
+    });
     if (setupResults.filter(result => result.status === 'fulfilled').length === 0) {
         LOGGER.fatal('All server setups failed. Aborting.');
         process.exit(1);
@@ -218,6 +220,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
  * Combines all the extension help messages and settings menu options
  * - if we have more static data in interaction level extensions, collect them here
  * - extensions only need to specify the corresponding properties
+ * - This should be called exactly ONCE
  */
 function collectInteractionExtensionStaticData(): void {
     const documentationLink = {
