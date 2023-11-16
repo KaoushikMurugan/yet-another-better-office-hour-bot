@@ -16,12 +16,18 @@ async function loadSheetById(sheetId: string): Promise<GoogleSpreadsheet> {
         new JWT({
             email: environment.googleCloudCredentials.client_email,
             key: environment.googleCloudCredentials.private_key,
-            scopes: ['https://www.googleapis.com/auth/spreadsheets']
+            scopes: [
+                // google sheets scope
+                'https://www.googleapis.com/auth/spreadsheets',
+                // scopes for checking permission
+                'https://www.googleapis.com/auth/drive.file',
+                'https://www.googleapis.com/auth/drive',
+                'https://www.googleapis.com/auth/drive.readonly'
+            ]
         })
     );
-    // await googleSheet.useServiceAccountAuth(environment.googleCloudCredentials);
     await googleSheet.loadInfo().catch(err => {
-        GOOGLE_SHEET_LOGGER.error(err, `bad id ${sheetId}`);
+        GOOGLE_SHEET_LOGGER.error(err, `Bad google sheet id: ${sheetId}`);
         throw ExpectedSheetErrors.badGoogleSheetId;
     });
     return googleSheet;

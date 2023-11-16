@@ -55,6 +55,9 @@ const ExpectedSheetErrors = {
                   'I can only accept server based interactions. ' +
                       `Are you sure ${guildName} has a initialized YABOB with the google sheets extension?`
               ),
+    noWriteAccess: new GoogleSheetConnectionError(
+        'YABOB does not have write access to the google sheet for this server, please contact the server admins to get your help time recorded.'
+    ),
     badNumericalValues: (sheetName: string, column?: string) =>
         new CommandParseError(
             `Some numbers in ${sheetName}${
