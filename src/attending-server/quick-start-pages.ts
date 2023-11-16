@@ -75,8 +75,8 @@ function QuickStartSetRoles(
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
             : id === SpecialRoleValues.Deleted
-            ? '@deleted-role'
-            : `<@&${id}>`;
+              ? '@deleted-role'
+              : `<@&${id}>`;
     };
     const setRolesCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.set_roles

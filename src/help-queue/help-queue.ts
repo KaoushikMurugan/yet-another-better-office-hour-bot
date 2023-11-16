@@ -404,8 +404,8 @@ class HelpQueueV2 {
         return this.activeHelperIds.size === 0 && this.pausedHelperIds.size === 0
             ? 'closed' // queue is Closed if 0 helpers is here
             : this.pausedHelperIds.size > 0 && this.activeHelperIds.size === 0
-            ? 'paused' // paused if everyone paused
-            : 'open'; // open if at least 1 helper is active
+              ? 'paused' // paused if everyone paused
+              : 'open'; // open if at least 1 helper is active
     }
 
     /**
@@ -508,13 +508,14 @@ class HelpQueueV2 {
         // this assumes that if an error comes back when we call send, it's because the helper closed dm
         const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
-            [...this.activeHelperIds].map(helperId =>
-                this.queueChannel.channelObj.members
-                    .get(helperId)
-                    ?.send(embed)
-                    .catch(() => {
-                        helpersThatClosedDM.push(helperId);
-                    })
+            [...this.activeHelperIds].map(
+                helperId =>
+                    this.queueChannel.channelObj.members
+                        .get(helperId)
+                        ?.send(embed)
+                        .catch(() => {
+                            helpersThatClosedDM.push(helperId);
+                        })
             )
         );
         if (helpersThatClosedDM.length > 0) {
@@ -693,16 +694,20 @@ class HelpQueueV2 {
         }
         this.timers.set(
             'QUEUE_AUTO_CLEAR',
-            setTimeout(async () => {
-                // if the queue is open when the timer finishes, do nothing
-                // if auto clear is disabled half way, do nothing
-                if (
-                    this.getQueueState() === 'closed' &&
-                    this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
-                ) {
-                    await this.removeAllStudents();
-                }
-            }, this._timeUntilAutoClear.hours * 1000 * 60 * 60 + this._timeUntilAutoClear.minutes * 1000 * 60)
+            setTimeout(
+                async () => {
+                    // if the queue is open when the timer finishes, do nothing
+                    // if auto clear is disabled half way, do nothing
+                    if (
+                        this.getQueueState() === 'closed' &&
+                        this.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED'
+                    ) {
+                        await this.removeAllStudents();
+                    }
+                },
+                this._timeUntilAutoClear.hours * 1000 * 60 * 60 +
+                    this._timeUntilAutoClear.minutes * 1000 * 60
+            )
         );
         await this.triggerRender();
     }

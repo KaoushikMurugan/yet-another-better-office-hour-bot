@@ -21,9 +21,8 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
     const unpack = serverBackupSchema.safeParse(backupDocument.data());
     if (!unpack.success) {
         LOGGER.warn(
-            `External backups were found for ${
-                client.guilds.cache.get(serverId)?.name
-            } but contains invalid data. Creating new instance.`
+            `External backups were found for ${client.guilds.cache.get(serverId)
+                ?.name} but contains invalid data. Creating new instance.`
         );
         return undefined;
     }

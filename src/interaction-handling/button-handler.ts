@@ -337,7 +337,13 @@ async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
     await interaction.editReply(SuccessMessages.resumedHelping);
 }
 
-async function showAnnounceModal(interaction: ButtonInteraction<'cached'>): Promise<void> {
+/**
+ * Shows the announcement modal after [ANNOUNCE] button is pressed
+ * @param interaction 
+ */
+async function showAnnounceModal(
+    interaction: ButtonInteraction<'cached'>
+): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,

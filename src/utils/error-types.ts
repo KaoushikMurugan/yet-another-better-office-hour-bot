@@ -6,7 +6,10 @@
  */
 class CommandParseError extends Error {
     readonly type = 'CommandParseError' as const;
-    constructor(message: string, public description?: string) {
+    constructor(
+        message: string,
+        public description?: string
+    ) {
         super(message);
         this.name = 'CommandParseError';
     }
@@ -21,7 +24,10 @@ class CommandParseError extends Error {
  */
 class ServerError extends Error {
     readonly type = 'ServerError' as const;
-    constructor(message: string, public description?: string) {
+    constructor(
+        message: string,
+        public description?: string
+    ) {
         super(message);
         this.name = 'ServerError';
     }
@@ -35,7 +41,11 @@ class ServerError extends Error {
  */
 class QueueError extends Error {
     readonly type = 'QueueError' as const;
-    constructor(message: string, public queueName: string, public description?: string) {
+    constructor(
+        message: string,
+        public queueName: string,
+        public description?: string
+    ) {
         super(message);
         this.name = 'QueueError';
     }

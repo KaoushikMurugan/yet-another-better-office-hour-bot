@@ -359,10 +359,13 @@ class QueueDisplayV2 {
             }
         } else {
             await Promise.all(
-                this.queueChannelEmbeds.map(embed =>
-                    existingEmbeds
-                        .get(this.renderIndexMessageIdMap.get(embed.renderIndex) ?? '')
-                        ?.edit(embed.contents)
+                this.queueChannelEmbeds.map(
+                    embed =>
+                        existingEmbeds
+                            .get(
+                                this.renderIndexMessageIdMap.get(embed.renderIndex) ?? ''
+                            )
+                            ?.edit(embed.contents)
                 )
             );
         }

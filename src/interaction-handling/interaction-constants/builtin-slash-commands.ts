@@ -438,9 +438,7 @@ async function postSlashCommands(
                 )
             }
         )
-        .catch(err =>
-            LOGGER.error(err, `Failed to post slash command to ${guild.name}`)
-        );
+        .catch(err => LOGGER.error(err, `Failed to post slash command to ${guild.name}`));
     LOGGER.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 

@@ -120,8 +120,8 @@ function HelpSubMenuEmbed(
         subMenu === 'botAdmin'
             ? adminCommandHelpMessages
             : subMenu === 'staff'
-            ? helperCommandHelpMessages
-            : studentCommandHelpMessages
+              ? helperCommandHelpMessages
+              : studentCommandHelpMessages
     ).filter(helpMessage => helpMessage.useInHelpCommand === true);
 
     const embed = new EmbedBuilder()
@@ -130,8 +130,8 @@ function HelpSubMenuEmbed(
                 subMenu === 'botAdmin'
                     ? '👮 Bot Admin'
                     : subMenu === 'staff'
-                    ? '👨‍🏫 Staff'
-                    : '👨‍🎓 Student'
+                      ? '👨‍🏫 Staff'
+                      : '👨‍🎓 Student'
             } Help Menu`
         )
         .setColor(EmbedColor.Pink)
@@ -213,8 +213,8 @@ function HelpMenuSelectMenu(
         subMenu === 'botAdmin'
             ? adminCommandHelpMessages
             : subMenu === 'staff'
-            ? helperCommandHelpMessages
-            : studentCommandHelpMessages
+              ? helperCommandHelpMessages
+              : studentCommandHelpMessages
     ).filter(helpMessage => helpMessage.useInHelpCommand === true);
 
     const pageHelpMessages = allHelpMessages.slice(page * 25, (page + 1) * 25);
@@ -285,8 +285,8 @@ function ReturnToHelpMainAndSubMenuButton(
                 subMenu === 'botAdmin'
                     ? ButtonNames.ReturnToHelpAdminSubMenu
                     : subMenu === 'staff'
-                    ? ButtonNames.ReturnToHelpStaffSubMenu
-                    : ButtonNames.ReturnToHelpStudentSubMenu,
+                      ? ButtonNames.ReturnToHelpStaffSubMenu
+                      : ButtonNames.ReturnToHelpStudentSubMenu,
                 server.guild.id,
                 UnknownId
             ])
@@ -296,8 +296,8 @@ function ReturnToHelpMainAndSubMenuButton(
                         subMenu === 'botAdmin'
                             ? 'Admin'
                             : subMenu === 'staff'
-                            ? 'Staff'
-                            : 'Student'
+                              ? 'Staff'
+                              : 'Student'
                     } Help Menu`
                 )
                 .setEmoji('🏠')
