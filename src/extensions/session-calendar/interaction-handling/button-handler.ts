@@ -1,4 +1,5 @@
 import { ButtonInteraction } from 'discord.js';
+import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { CalendarButtonNames } from '../calendar-constants/calendar-interaction-names.js';
 import { CalendarSettingsModal } from '../calendar-constants/calendar-modal-objects.js';
@@ -36,7 +37,7 @@ async function resetCalendarSettings(
     const state = CalendarExtensionState.get(interaction.guildId);
     const server = AttendingServerV2.get(interaction.guildId);
     await Promise.all([
-        state.setCalendarId(process.env.DEFAULT_CALENDAR_ID),
+        state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)
     ]);
     await interaction.update(

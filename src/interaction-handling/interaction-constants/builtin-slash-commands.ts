@@ -11,6 +11,7 @@ import { SlashCommandBuilder } from '@discordjs/builders';
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
 import { ChannelType, Guild } from 'discord.js';
+import { environment } from '../../environment/environment-manager.js';
 import { CommandNames } from './interaction-names.js';
 import { CommandData } from '../../utils/type-aliases.js';
 import { serverSettingsMainMenuOptions } from '../../attending-server/server-settings-menus.js';
@@ -416,13 +417,30 @@ async function postSlashCommands(
     guild: Guild,
     externalCommands: CommandData = []
 ): Promise<void> {
-    const rest = new REST().setToken(process.env.BOT_TOKEN);
+    if (environment.discordBotCredentials.YABOB_APP_ID.length === 0) {
+        throw new Error('Failed to post commands. APP_ID is undefined');
+    }
+    if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0) {
+        throw new Error('Failed to post commands. BOT_TOKEN is undefined');
+    }
+    const rest = new REST().setToken(environment.discordBotCredentials.YABOB_BOT_TOKEN);
     await rest
-        .put(Routes.applicationGuildCommands(process.env.APP_ID, guild.id), {
-            // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
-            body: commandData.concat(externalCommands, generateSettingsCommand().toJSON())
-        })
-        .catch(err => LOGGER.error(err, `Failed to post slash command to ${guild.name}`));
+        .put(
+            Routes.applicationGuildCommands(
+                environment.discordBotCredentials.YABOB_APP_ID,
+                guild.id
+            ),
+            {
+                // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
+                body: commandData.concat(
+                    externalCommands,
+                    generateSettingsCommand().toJSON()
+                )
+            }
+        )
+        .catch(err =>
+            LOGGER.error(err, `Failed to post slash command to ${guild.name}`)
+        );
     LOGGER.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 

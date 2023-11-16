@@ -2,6 +2,7 @@ import { Collection, Guild, Snowflake } from 'discord.js';
 import { GoogleSheetServerExtension } from './google-sheet-server-extension.js';
 import { GuildId, Optional } from '../../utils/type-aliases.js';
 import { GoogleSpreadsheet } from 'google-spreadsheet';
+import { environment } from '../../environment/environment-manager.js';
 import { ServerExtension } from '../extension-interface.js';
 import { client, firebaseDB } from '../../global-states.js';
 import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
@@ -123,13 +124,13 @@ class GoogleSheetExtensionState {
             .doc(serverId)
             .get();
         if (backupDoc.data() === undefined) {
-            return { sheetId: process.env.GOOGLE_SHEET_ID };
+            return { sheetId: environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID };
         }
         const backupData = GoogleSheetExtensionState.backupSchema.safeParse(
             backupDoc.data()
         );
         if (!backupData.success) {
-            return { sheetId: process.env.GOOGLE_SHEET_ID };
+            return { sheetId: environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID };
         }
         return backupData.data;
     }

@@ -8,6 +8,7 @@ import type { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.
 import { Collection } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplayV2 } from './queue-display.js';
+import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
 import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
@@ -190,16 +191,15 @@ class HelpQueueV2 {
     ): Promise<HelpQueueV2> {
         const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
         const display = new QueueDisplayV2(queueChannel);
-        const queueExtensions: QueueExtension[] =
-            process.env.NO_EXTENSION === 'true'
-                ? []
-                : await Promise.all([
-                      CalendarQueueExtension.load(
-                          1, // renderIndex
-                          queueChannel,
-                          display // let extensions also have the reference
-                      )
-                  ]);
+        const queueExtensions: QueueExtension[] = environment.disableExtensions
+            ? []
+            : await Promise.all([
+                  CalendarQueueExtension.load(
+                      1, // renderIndex
+                      queueChannel,
+                      display // let extensions also have the reference
+                  )
+              ]);
         const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {

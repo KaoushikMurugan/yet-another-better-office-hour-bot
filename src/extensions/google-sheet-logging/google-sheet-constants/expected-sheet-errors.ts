@@ -1,5 +1,6 @@
 /** @module ExpectedErrors */
 
+import { environment } from '../../../environment/environment-manager.js';
 import { CommandParseError } from '../../../utils/error-types.js';
 
 class AttendanceError extends Error {
@@ -34,7 +35,7 @@ const ExpectedSheetErrors = {
             'Please contact @Bot Admin to manually update.'
     ),
     badGoogleSheetId: new GoogleSheetConnectionError(
-        `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${process.env.GOOGLE_CLOUD_CLIENT_EMAIL}\``
+        `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
     ),
     missingSheet: (type: 'Help Session' | 'Attendance') =>
         new GoogleSheetConnectionError(
