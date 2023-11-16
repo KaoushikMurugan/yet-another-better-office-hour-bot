@@ -1,7 +1,7 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
-import LRU from 'lru-cache';
+import { LRUCache as LRU } from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
