@@ -1,7 +1,7 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
-import LRU from 'lru-cache';
+import { LRUCache } from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
@@ -66,7 +66,9 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 100 });
+    calendarNameDiscordIdMap: LRUCache<string, GuildMemberId> = new LRUCache({
+        max: 100
+    });
     /**
      * When was the upcomingSessions cache last updated
      */
