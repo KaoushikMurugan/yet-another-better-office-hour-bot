@@ -13,8 +13,8 @@ enum HelpSessionHeaders {
 
 enum AttendanceHeaders {
     HelperUserName = 'Helper Username',
-    TimeInLocal = 'Time In (Local Time)',
-    TimeOutLocal = 'Time Out (Local Time)',
+    LocalTimeIn = 'Time In (Local Time)',
+    LocalTimeOut = 'Time Out (Local Time)',
     HelpedStudents = 'Helped Students',
     HelperDiscordId = 'Helper Discord ID',
     OfficeHourTimeMs = 'Office Hour Time (ms)',

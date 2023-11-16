@@ -1190,12 +1190,13 @@ class AttendingServerV2 {
         );
         // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
-            queueNames.map(roleToCreate => {
-                !existingRoles.has(roleToCreate) &&
-                    this.guild.roles.create({
+            queueNames.map(async roleToCreate => {
+                if (!existingRoles.has(roleToCreate)) {
+                    await this.guild.roles.create({
                         name: roleToCreate,
                         position: 1
                     });
+                }
             })
         );
     }

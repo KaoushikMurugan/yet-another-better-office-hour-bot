@@ -2,7 +2,10 @@
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
-import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
+import {
+    GuildMemberId,
+    SimpleTimeZone
+} from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { padTo2Digits } from '../../utils/util-functions.js';
@@ -16,6 +19,8 @@ import {
 } from './google-sheet-constants/column-enums.js';
 import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 import { Logger } from 'pino';
+import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
+import { environment } from '../../environment/environment-manager.js';
 
 /**
  * Additional attendance info for each helper
@@ -137,9 +142,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         if (activeTimeEntry === undefined) {
             throw ExpectedSheetErrors.unknownEntry;
         }
+
         for (const student of helper.helpedMembers) {
             this.studentsJustDequeued.delete(student.member.id);
         }
+
         this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
         if (!this.attendanceUpdateIsScheduled) {
             // if nothing is scheduled, start a timer
@@ -151,6 +158,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 await this.batchUpdateAttendance();
             }, 1000);
         }
+
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -202,9 +210,12 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 queueName: student.queue.queueName,
                 waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
-            this.helpSessionEntries.has(studentId)
-                ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
-                : this.helpSessionEntries.set(studentId, [helpSessionEntry]);
+            if (this.helpSessionEntries.has(studentId)) {
+                this.helpSessionEntries.get(studentId)?.push(helpSessionEntry);
+            } else {
+                this.helpSessionEntries.set(studentId, [helpSessionEntry]);
+            }
+
             if (this.activeTimeEntries.has(helper.member.id)) {
                 // ts doesn't recognize map.has
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
@@ -246,6 +257,48 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
+     * Checks is the spreadsheet is safe to write to.
+     * All requiredHeaders need to be present
+     *
+     * @param sheet worksheet
+     * @param requiredHeaders headers
+     * @returns bool
+     */
+    private async hasRequiredHeaders(
+        sheet: GoogleSpreadsheetWorksheet,
+        requiredHeaders: string[]
+    ): Promise<boolean> {
+        // the headerValues getter can throw, so we need to use try catch
+        try {
+            return (
+                // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+                sheet.headerValues && // this need to be checked, the library has the wrong type
+                sheet.headerValues.length === requiredHeaders.length && // no need to do the comparison if the length don't even match
+                sheet.headerValues.every(header => requiredHeaders.includes(header)) // finally check if all headers exist
+            );
+        } catch {
+            return false;
+        }
+    }
+
+    private async hasWriteAccess(): Promise<boolean> {
+        try {
+            const permissions = await GoogleSheetExtensionState.get(
+                this.guild.id
+            ).googleSheet.listPermissions();
+            return permissions.some(
+                permission =>
+                    permission.type === 'user' &&
+                    permission.emailAddress ===
+                        environment.googleCloudCredentials.client_email &&
+                    permission.role === 'writer'
+            );
+        } catch {
+            return false;
+        }
+    }
+
+    /**
      * Updates all the cached attendance entries
      */
     private async batchUpdateAttendance(): Promise<void> {
@@ -265,29 +318,33 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 title: sheetTitle,
                 headerValues: attendanceHeaders
             }));
-        const safeToUpdate =
-            // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            attendanceSheet.headerValues && // this need to be checked, the library has the wrong type
-            attendanceSheet.headerValues.length === attendanceHeaders.length &&
-            attendanceSheet.headerValues.every(
-                // finally check if all headers exist both the previous conditions are true
-                header => (attendanceHeaders as string[]).includes(header)
-            );
-        if (!safeToUpdate) {
-            // very slow, O(n^2 * m) string array comparison is faster than this
+
+        const [hasWriteAccess, hasRequiredHeaders] = await Promise.all([
+            this.hasWriteAccess(),
+            this.hasRequiredHeaders(attendanceSheet, attendanceHeaders)
+        ]);
+
+        if (!hasWriteAccess) {
+            // TODO: should we throw ExpectedSheetErrors.noWriteAccess?;
+            return;
+        }
+
+        if (!hasRequiredHeaders) {
+            // correctable
             await attendanceSheet.setHeaderRow(attendanceHeaders);
         }
+
         const updatedCountSnapshot = this.attendanceEntries.length;
         // Use callbacks to not block the parent function
         Promise.all([
             attendanceSheet.addRows(
                 this.attendanceEntries.map(entry => ({
                     [AttendanceHeaders.HelperUserName]: entry.member.user.username,
-                    [AttendanceHeaders.TimeInLocal]: this.timeFormula(
+                    [AttendanceHeaders.LocalTimeIn]: this.timeFormula(
                         entry.helpStart,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
-                    [AttendanceHeaders.TimeOutLocal]: this.timeFormula(
+                    [AttendanceHeaders.LocalTimeOut]: this.timeFormula(
                         entry.helpEnd,
                         AttendingServerV2.get(this.guild.id).timezone
                     ),
@@ -320,6 +377,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 // there might be new elements in the array during the update
                 // so we can only delete the ones that have been updated
                 // it's safe to splice on arrays with length < updatedCountSnapshot
+                //!TODO this logic is incorrect, new entries could have been written during the update
                 this.attendanceEntries.splice(0, updatedCountSnapshot);
                 this.logger.info(
                     `${this.attendanceEntries.length} entries still remain for ${this.guild.name}.`
@@ -329,7 +387,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 this.logger.error(err, 'Error when updating attendance');
                 // have to manually manuever this, otherwise we only get [object Object]
                 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-                for (const { member, helpedMembers, ...rest } of this.attendanceEntries) {
+                for (const { helpedMembers, ...rest } of this.attendanceEntries) {
                     this.logger.error(rest);
                     for (const helpedMember of helpedMembers) {
                         this.logger.error(helpedMember.member.nickname);
@@ -349,6 +407,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         if (entries.length === 0 || !googleSheet) {
             return; // do nothing if there's nothing to update
         }
+
         // trim off colon because google api bug, then trim off any excess spaces
         const sheetTitle = `${this.guild.name.replace(/:/g, ' ')} Help Sessions`.replace(
             /\s{2,}/g,
@@ -360,15 +419,21 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 title: sheetTitle,
                 headerValues: helpSessionHeaders
             }));
-        const safeToUpdate = // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-            helpSessionSheet.headerValues && // this is necessary, could be undefined
-            helpSessionSheet.headerValues.length === helpSessionHeaders.length &&
-            helpSessionSheet.headerValues.every(header =>
-                (helpSessionHeaders as string[]).includes(header)
-            );
-        if (!safeToUpdate) {
+        const [hasWriteAccess, hasRequiredHeaders] = await Promise.all([
+            this.hasWriteAccess(),
+            this.hasRequiredHeaders(helpSessionSheet, helpSessionHeaders)
+        ]);
+
+        if (!hasWriteAccess) {
+            // TODO: fow now if we fail to write, ignore the help session data
+            return;
+        }
+
+        if (!hasRequiredHeaders) {
+            // correctable
             await helpSessionSheet.setHeaderRow(helpSessionHeaders);
         }
+
         Promise.all([
             helpSessionSheet.addRows(
                 entries.map(entry => ({

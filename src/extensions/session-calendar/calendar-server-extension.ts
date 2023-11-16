@@ -12,7 +12,7 @@ class CalendarServerExtension extends BaseServerExtension {
     /**
      * Timer id of the setInterval call in the constructor, cleared on server delete
      */
-    private readonly timerId: NodeJS.Timer;
+    private readonly timerId: ReturnType<typeof setInterval>;
 
     constructor(public readonly guild: Guild) {
         super();

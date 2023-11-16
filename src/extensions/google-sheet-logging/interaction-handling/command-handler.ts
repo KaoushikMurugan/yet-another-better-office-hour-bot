@@ -163,15 +163,15 @@ async function getStatistics(
     const timeFilter = getTimeFilter(timeFrame);
     for (const row of helpSessionRows) {
         // if helper is specified, only look for rows that has this helper's id
-        if (helper && row[HelpSessionHeaders.HelperDiscordId] !== helper.id) {
+        if (helper && row.get(HelpSessionHeaders.HelperDiscordId) !== helper.id) {
             continue;
         }
         // now we are in a row that we are interested in
         // whether it's for server or helper doesn't matter anymore
         const [start, end, waitTime] = [
-            parseInt(row[HelpSessionHeaders.SessionStartUnix]),
-            parseInt(row[HelpSessionHeaders.SessionEndUnix]),
-            parseInt(row[HelpSessionHeaders.WaitTimeMs])
+            parseInt(row.get(HelpSessionHeaders.SessionStartUnix)),
+            parseInt(row.get(HelpSessionHeaders.SessionEndUnix)),
+            parseInt(row.get(HelpSessionHeaders.WaitTimeMs))
         ];
         if ([start, end, waitTime].some(val => isNaN(val) || val < 0)) {
             throw ExpectedSheetErrors.badNumericalValues(title);
@@ -182,12 +182,12 @@ async function getStatistics(
         }
         buffer.totalSessionTime += end - start;
         buffer.returningStudents += buffer.uniqueStudentIds.has(
-            row[HelpSessionHeaders.StudentDiscordId]
+            row.get(HelpSessionHeaders.StudentDiscordId)
         )
             ? 1
             : 0;
         buffer.totalWaitTime += waitTime;
-        buffer.uniqueStudentIds.add(row[HelpSessionHeaders.StudentDiscordId]);
+        buffer.uniqueStudentIds.add(row.get(HelpSessionHeaders.StudentDiscordId));
         buffer.sessions += 1;
     }
     return {
@@ -278,7 +278,7 @@ async function getWeeklyReports(
         throw ExpectedSheetErrors.missingSheet('Attendance');
     }
     const rowsToSearch = helper
-        ? allRows.filter(row => row[AttendanceHeaders.HelperDiscordId] === helper.id)
+        ? allRows.filter(row => row.get(AttendanceHeaders.HelperDiscordId) === helper.id)
         : allRows;
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
     const reports: [string, WeeklyReport][] = [];
@@ -290,8 +290,8 @@ async function getWeeklyReports(
         const rowsInWeek = rowsToSearch
             .filter(row => {
                 const [timeIn, timeOut] = [
-                    parseInt(row[AttendanceHeaders.UnixTimeIn]),
-                    parseInt(row[AttendanceHeaders.UnixTimeOut])
+                    parseInt(row.get(AttendanceHeaders.UnixTimeIn)),
+                    parseInt(row.get(AttendanceHeaders.UnixTimeOut))
                 ];
                 if ([timeIn, timeOut].some(val => isNaN(val) || val < 0)) {
                     throw ExpectedSheetErrors.badNumericalValues(
@@ -305,7 +305,7 @@ async function getWeeklyReports(
                 const result = {
                     sessions: 1,
                     students: 0,
-                    totalTimeMs: parseInt(row[AttendanceHeaders.OfficeHourTimeMs])
+                    totalTimeMs: parseInt(row.get(AttendanceHeaders.OfficeHourTimeMs))
                 };
                 if (isNaN(result.totalTimeMs) || result.totalTimeMs < 0) {
                     throw ExpectedSheetErrors.badNumericalValues(
@@ -315,7 +315,7 @@ async function getWeeklyReports(
                 }
                 try {
                     result.students = JSON.parse(
-                        row[AttendanceHeaders.HelpedStudents]
+                        row.get(AttendanceHeaders.HelpedStudents)
                     )?.length;
                     if (typeof result.students !== 'number' || result.students < 0) {
                         // this error is unused, it's here just to skip to the catch block

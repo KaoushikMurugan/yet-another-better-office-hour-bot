@@ -48,21 +48,6 @@ function SettingsSwitcher(
     );
 }
 
-/** This creates an empty embed field in embeds */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const EmptyEmbedField = {
-    name: '\u200b',
-    value: '\u200b'
-} as const;
-
-/** Use this string to force a trailing new line in an embed field */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const trailingNewLine = '\n\u200b' as const;
-
-/** Use this string to force a leading new line in an embed field */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-const leadingNewLine = '\u200b\n' as const;
-
 /**
  * Options for the main menu of server settings
  */

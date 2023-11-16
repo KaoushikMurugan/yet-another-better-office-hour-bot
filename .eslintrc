@@ -16,6 +16,7 @@
         "semi": [2, "always"],
         "eqeqeq": 2,
         "no-throw-literal": "error",
-        "@typescript-eslint/no-unnecessary-condition": "error"
+        "@typescript-eslint/no-unnecessary-condition": "error",
+        "@typescript-eslint/no-unused-vars": "warn"
     }
 }
