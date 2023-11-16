@@ -1,6 +1,5 @@
 import { ButtonInteraction } from 'discord.js';
 import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
-import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { GoogleSheetButtonNames } from '../google-sheet-constants/google-sheet-interaction-names.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
@@ -34,7 +33,7 @@ async function resetGoogleSheetSettings(
     const server = AttendingServerV2.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     await Promise.all([
-        state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
+        state.setGoogleSheet(process.env.GOOGLE_SHEET_ID),
         server.sendLogMessage(
             GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
         )

@@ -49,7 +49,6 @@ import {
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
-import { environment } from '../environment/environment-manager.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
 import {
@@ -300,16 +299,18 @@ class AttendingServerV2 {
     static async create(guild: Guild): Promise<AttendingServerV2> {
         await initializationCheck(guild);
         // Load ServerExtensions here
-        const serverExtensions: ServerExtension[] = environment.disableExtensions
-            ? []
-            : await Promise.all([
-                  GoogleSheetServerExtension.load(guild),
-                  CalendarServerExtension.load(guild)
-              ]);
+        const serverExtensions: ServerExtension[] =
+            process.env.NO_EXTENSION === 'true'
+                ? []
+                : await Promise.all([
+                      GoogleSheetServerExtension.load(guild),
+                      CalendarServerExtension.load(guild)
+                  ]);
         const server = new AttendingServerV2(guild, serverExtensions);
-        const externalBackup = environment.disableExtensions
-            ? undefined
-            : await loadExternalServerData(guild.id);
+        const externalBackup =
+            process.env.NO_EXTENSION === 'true'
+                ? undefined
+                : await loadExternalServerData(guild.id);
         if (externalBackup !== undefined) {
             server.loadBackup(externalBackup);
         }
@@ -1233,7 +1234,7 @@ class AttendingServerV2 {
         );
         this.logger.info(
             `All queues successfully created${
-                environment.disableExtensions ? '' : blue(' with their extensions')
+                process.env.NO_EXTENSION === 'true' ? '' : blue(' with their extensions')
             }!`
         );
         await Promise.all(

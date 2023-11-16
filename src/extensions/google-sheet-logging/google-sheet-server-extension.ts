@@ -2,10 +2,7 @@
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
-import {
-    GuildMemberId,
-    SimpleTimeZone
-} from '../../utils/type-aliases.js';
+import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { padTo2Digits } from '../../utils/util-functions.js';
@@ -20,7 +17,6 @@ import {
 import { GOOGLE_SHEET_LOGGER } from './shared-sheet-functions.js';
 import { Logger } from 'pino';
 import { GoogleSpreadsheetWorksheet } from 'google-spreadsheet';
-import { environment } from '../../environment/environment-manager.js';
 
 /**
  * Additional attendance info for each helper
@@ -289,8 +285,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             return permissions.some(
                 permission =>
                     permission.type === 'user' &&
-                    permission.emailAddress ===
-                        environment.googleCloudCredentials.client_email &&
+                    permission.emailAddress === process.env.GOOGLE_CLOUD_CLIENT_EMAIL &&
                     permission.role === 'writer'
             );
         } catch {

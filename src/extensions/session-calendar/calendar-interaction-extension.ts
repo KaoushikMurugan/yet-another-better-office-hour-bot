@@ -8,7 +8,6 @@ import {
     calendarStudentHelpMessages
 } from './calendar-constants/CalendarCommands.js';
 import { calendarSettingsMainMenuOptions } from './calendar-constants/calendar-settings-menu.js';
-import { environment } from '../../environment/environment-manager.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { CALENDAR_LOGGER, checkCalendarConnection } from './shared-calendar-functions.js';
@@ -40,13 +39,13 @@ class SessionCalendarInteractionExtension extends BaseInteractionExtension {
      */
     override async initializationCheck(): Promise<void> {
         if (
-            environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID.length === 0 ||
-            environment.sessionCalendar.YABOB_GOOGLE_API_KEY.length === 0
+            process.env.DEFAULT_CALENDAR_ID.length === 0 ||
+            process.env.GOOGLE_API_KEY.length === 0
         ) {
             throw new ExtensionSetupError('Make sure you have Calendar ID and API key');
         }
         const calendarName = await checkCalendarConnection(
-            environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
+            process.env.DEFAULT_CALENDAR_ID
         ).catch(() => {
             throw ExpectedCalendarErrors.badId.defaultId;
         });

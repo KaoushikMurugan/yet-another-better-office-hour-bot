@@ -1,4 +1,3 @@
-import { environment } from './environment/environment-manager.js';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
 import { yellow, red } from './utils/command-line-colors.js';
 import { Firestore } from 'firebase-admin/firestore';
@@ -7,7 +6,7 @@ import { getFirestore } from 'firebase-admin/firestore';
 import { pino, destination } from 'pino';
 
 const LOGGER =
-    environment.env === 'development'
+    process.env.NODE_ENV === 'development'
         ? pino({
               transport: {
                   target: 'pino-pretty',
@@ -19,32 +18,34 @@ const LOGGER =
           })
         : pino(destination(process.stdout)); // write to stdout to let pm2 handle log rotation
 
-if (environment.env === 'production') {
+if (process.env.NODE_ENV === 'production') {
     console.log(`We are in prod, logs are written to PM2's log files`);
 }
 
-if (
-    environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0 ||
-    environment.discordBotCredentials.YABOB_APP_ID.length === 0
-) {
+if (process.env.BOT_TOKEN.length === 0 || process.env.APP_ID.length === 0) {
     throw new Error(red('Missing token or bot ID. Aborting setup.'));
 }
 
 if (
-    environment.firebaseCredentials.clientEmail === '' ||
-    environment.firebaseCredentials.privateKey === '' ||
-    environment.firebaseCredentials.projectId === ''
+    process.env.FIREBASE_CLIENT_EMAIL === '' ||
+    process.env.FIREBASE_PRIVATE_KEY === '' ||
+    process.env.FIREBASE_PROJECT_ID === ''
 ) {
     throw new Error(red('Missing firebase credentials.'));
 }
 
-if (environment.disableExtensions) {
+if (process.env.NO_EXTENSION === 'true') {
     LOGGER.warn('Running without extensions.');
 }
 
+
 if (getApps().length === 0) {
     initializeApp({
-        credential: cert(environment.firebaseCredentials)
+        credential: cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: JSON.parse(process.env.FIREBASE_PRIVATE_KEY)
+        })
     });
 }
 
@@ -82,7 +83,7 @@ const client: Client<true> = new Client({
 
 /** Login before export */
 await client
-    .login(environment.discordBotCredentials.YABOB_BOT_TOKEN)
+    .login(process.env.BOT_TOKEN)
     .then(() => LOGGER.info(`Logged in as ${yellow(client.user.username)}!`))
     .catch((err: Error) => {
         LOGGER.error('Login Unsuccessful. Check YABOBs credentials.');

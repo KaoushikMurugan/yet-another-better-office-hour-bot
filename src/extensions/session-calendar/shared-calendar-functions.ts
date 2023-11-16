@@ -6,7 +6,6 @@
 import type { calendar_v3 } from 'googleapis/build/src/apis/calendar';
 import { CalendarExtensionState } from './calendar-states.js';
 import axios from 'axios';
-import { environment } from '../../environment/environment-manager.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { Snowflake } from 'discord.js';
@@ -86,7 +85,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
         calendarId: newCalendarId,
         timeMin: new Date(),
         timeMax: nextWeek,
-        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
+        apiKey: process.env.GOOGLE_API_KEY,
         maxResults: 2
     });
     const response = await axios
@@ -218,7 +217,7 @@ async function fetchUpcomingSessions(
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
         calendarId: CalendarExtensionState.get(serverId).calendarId,
-        apiKey: environment.sessionCalendar.YABOB_GOOGLE_API_KEY,
+        apiKey: process.env.GOOGLE_API_KEY,
         timeMin: new Date(),
         timeMax: nextWeek,
         maxResults: 100 // change this value to fetch more

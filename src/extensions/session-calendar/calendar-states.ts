@@ -2,7 +2,6 @@
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import LRU from 'lru-cache';
-import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
     UpComingSessionViewModel,
@@ -61,7 +60,7 @@ class CalendarExtensionState {
      * Which calendar to read from
      * - See the setup guide for how to find this id
      */
-    calendarId = environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+    calendarId = process.env.DEFAULT_CALENDAR_ID;
     /**
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
@@ -160,10 +159,7 @@ class CalendarExtensionState {
         if (!calendarBackup.success) {
             return;
         }
-        if (
-            calendarBackup.data.calendarId !==
-            environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
-        ) {
+        if (calendarBackup.data.calendarId !== process.env.DEFAULT_CALENDAR_ID) {
             // check if bob still has access to the backup calendarId
             // we can only guarantee that the default id works
             await checkCalendarConnection(calendarBackup.data.calendarId)
@@ -171,8 +167,7 @@ class CalendarExtensionState {
                     this.calendarId = calendarBackup.data.calendarId;
                 })
                 .catch(() => {
-                    this.calendarId =
-                        environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
+                    this.calendarId = process.env.DEFAULT_CALENDAR_ID;
                 });
         }
         this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;

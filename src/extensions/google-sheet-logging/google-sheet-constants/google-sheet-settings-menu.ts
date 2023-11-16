@@ -6,7 +6,6 @@ import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import { GoogleSheetButtonNames } from './google-sheet-interaction-names.js';
-import { environment } from '../../../environment/environment-manager.js';
 
 /**
  * Options for the server settings main menu
@@ -44,7 +43,7 @@ function GoogleSheetSettingsConfigMenu(
         .setFields(
             {
                 name: 'Description',
-                value: `This setting controls which google sheet this server will be used for logging.\n- Make sure to share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
+                value: `This setting controls which google sheet this server will be used for logging.\n- Make sure to share the google sheet with this YABOB's email: \`${process.env.GOOGLE_CLOUD_CLIENT_EMAIL}\``
             },
             {
                 name: 'Documentation',

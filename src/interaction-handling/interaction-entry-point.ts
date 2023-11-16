@@ -40,7 +40,6 @@ import { baseYabobSelectMenuMap } from './select-menu-handler.js';
 import { baseYabobModalMap } from './modal-handler.js';
 import { InteractionExtension } from '../extensions/extension-interface.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
-import { environment } from '../environment/environment-manager.js';
 import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
 import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
 
@@ -49,7 +48,7 @@ import { AttendingServerV2 } from '../attending-server/base-attending-server.js'
  * - states are loaded in joinGuild() in app.ts
  */
 const interactionExtensions: ReadonlyArray<InteractionExtension> =
-    environment.disableExtensions
+    process.env.NO_EXTENSION === 'true'
         ? []
         : [
               // Do not use async creation methods here for now bc it conflicts with client login

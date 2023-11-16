@@ -7,7 +7,6 @@ import { AttendingServerV2 } from './attending-server/base-attending-server.js';
 import { green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
-import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
@@ -206,9 +205,10 @@ process.on('exit', () => {
  */
 async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     LOGGER.info(`Joining guild: ${yellow(guild.name)}`);
-    const externalCommandData = environment.disableExtensions
-        ? []
-        : interactionExtensions.flatMap(ext => ext.slashCommandData);
+    const externalCommandData =
+        process.env.NO_EXTENSION === 'true'
+            ? []
+            : interactionExtensions.flatMap(ext => ext.slashCommandData);
     await postSlashCommands(guild, externalCommandData);
     await guild.commands.fetch(); // populate cache
     // Extensions for server & queue are loaded inside the create method

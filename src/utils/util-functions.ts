@@ -18,7 +18,6 @@ import {
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
 import { WithRequired } from './type-aliases.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
-import { environment } from '../environment/environment-manager.js';
 import { extractComponentName } from './component-id-factory.js';
 import { LOGGER } from '../global-states.js';
 
@@ -29,7 +28,7 @@ import { LOGGER } from '../global-states.js';
  */
 function printTitleString(): void {
     const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
-    LOGGER.info(`Environment: ${cyan(environment.env)}`);
+    LOGGER.info(`Environment: ${cyan(process.env.NODE_ENV)}`);
     LOGGER.info(`${black(magenta(titleString, 'Bg'))}`);
     LOGGER.info('Scanning servers I am a part of...');
 }
