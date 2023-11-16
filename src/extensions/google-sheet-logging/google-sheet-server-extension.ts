@@ -3,10 +3,7 @@ import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
 import {
-    Err,
     GuildMemberId,
-    Ok,
-    Result,
     SimpleTimeZone
 } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
@@ -213,9 +210,12 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 queueName: student.queue.queueName,
                 waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
-            this.helpSessionEntries.has(studentId)
-                ? this.helpSessionEntries.get(studentId)?.push(helpSessionEntry)
-                : this.helpSessionEntries.set(studentId, [helpSessionEntry]);
+            if (this.helpSessionEntries.has(studentId)) {
+                this.helpSessionEntries.get(studentId)?.push(helpSessionEntry);
+            } else {
+                this.helpSessionEntries.set(studentId, [helpSessionEntry]);
+            }
+
             if (this.activeTimeEntries.has(helper.member.id)) {
                 // ts doesn't recognize map.has
                 // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
