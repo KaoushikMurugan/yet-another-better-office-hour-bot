@@ -5,7 +5,7 @@ import { LRUCache as LRU } from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
-    UpComingSessionViewModel,
+    UpcomingSessionViewModel,
     CALENDAR_LOGGER,
     checkCalendarConnection,
     fetchUpcomingSessions,
@@ -83,7 +83,7 @@ class CalendarExtensionState {
     /**
      * All upcoming sessions of this server
      */
-    upcomingSessions: UpComingSessionViewModel[] = [];
+    upcomingSessions: UpcomingSessionViewModel[] = [];
 
     private logger: Logger;
 

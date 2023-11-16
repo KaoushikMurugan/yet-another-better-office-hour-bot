@@ -320,14 +320,18 @@ class AttendingServerV2 {
                 !guild.roles.cache.has(role.id)
         );
         if (missingRoles.length > 0) {
-            const owner = await guild.fetchOwner();
-            await owner.send(
-                RoleConfigMenuForServerInit(
-                    server,
-                    owner.dmChannel?.id ?? UnknownId,
-                    false
+            guild
+                .fetchOwner()
+                .then(owner =>
+                    owner.send(
+                        RoleConfigMenuForServerInit(
+                            server,
+                            owner.dmChannel?.id ?? UnknownId,
+                            false
+                        )
+                    )
                 )
-            );
+                .catch(err => LOGGER.error(err));
         }
         await Promise.all([
             server.initializeAllQueues(
