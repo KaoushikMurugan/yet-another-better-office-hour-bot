@@ -176,7 +176,6 @@ type SettingsMenuOption = {
 
 type QuickStartPageFunctions = (
     server: AttendingServerV2,
-    channelId: string,
     updateMessage?: string
 ) => YabobEmbed;
 

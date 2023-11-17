@@ -695,7 +695,7 @@ async function quickStart(
     );
 
     const firstQuickStartPage = quickStartPages[0];
-    await interaction.editReply(firstQuickStartPage());
+    await interaction.editReply(firstQuickStartPage(server));
 }
 
 /**

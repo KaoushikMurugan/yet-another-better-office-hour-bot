@@ -19,12 +19,6 @@ type CustomIdTuple<T extends ComponentLocation> = [
 const ExpectedLength: CustomIdTuple<ComponentLocation>['length'] = 3 as const;
 
 /**
- * Placeholder value for the CustomIdTuple if server id or channel id is not available
- * - Try to avoid this as much as possible
- */
-const UnknownId = '0' as const;
-
-/**
  * Wraps over the discord js builder constructor and sets a compressed id
  *  that encodes [type, componentName, serverId, channelId]
  * @param builder builder method that has 'setCustomId'
@@ -145,6 +139,5 @@ export {
     YabobModal,
     buildComponent,
     decompressComponentId,
-    extractComponentName,
-    UnknownId
+    extractComponentName
 };

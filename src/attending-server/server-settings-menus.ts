@@ -13,7 +13,7 @@ import {
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 import { AttendingServerV2 } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 import {
@@ -36,7 +36,7 @@ function SettingsSwitcher(
         buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
-            UnknownId
+            '' // unused
         ])
             .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
             .addOptions(
@@ -280,7 +280,6 @@ function RoleConfigMenu(
  */
 function RoleConfigMenuForServerInit(
     server: AttendingServerV2,
-    channelId: string,
     completed = false
 ): YabobEmbed {
     const generatePing = (id: Snowflake) =>

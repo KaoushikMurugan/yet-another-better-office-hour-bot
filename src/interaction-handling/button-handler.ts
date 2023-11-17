@@ -409,9 +409,7 @@ async function createServerRolesDM(
 ): Promise<void> {
     const server = isValidDMInteraction(interaction);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
-    await interaction.update(
-        RoleConfigMenuForServerInit(server, interaction.channelId, true)
-    );
+    await interaction.update(RoleConfigMenuForServerInit(server, true));
 }
 
 /**

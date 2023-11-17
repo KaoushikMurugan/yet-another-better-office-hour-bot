@@ -59,7 +59,6 @@ import {
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
-import { UnknownId } from '../utils/component-id-factory.js';
 import { LOGGER } from '../global-states.js';
 import type { Logger } from 'pino';
 
@@ -322,15 +321,7 @@ class AttendingServerV2 {
         if (missingRoles.length > 0) {
             guild
                 .fetchOwner()
-                .then(owner =>
-                    owner.send(
-                        RoleConfigMenuForServerInit(
-                            server,
-                            owner.dmChannel?.id ?? UnknownId,
-                            false
-                        )
-                    )
-                )
+                .then(owner => owner.send(RoleConfigMenuForServerInit(server, false)))
                 .catch(err => LOGGER.error(err));
         }
         await Promise.all([

@@ -11,7 +11,7 @@ import {
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { UnknownId, buildComponent } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 import {
     ButtonNames,
     CommandNames,
@@ -33,7 +33,7 @@ const quickStartPages = [
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
     QuickStartLastPage
-] as const;
+] as const satisfies readonly QuickStartPageFunctions[];
 
 function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${
@@ -41,7 +41,7 @@ function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     }`;
 }
 
-function QuickStartFirstPage(): YabobEmbed {
+function QuickStartFirstPage(server: AttendingServerV2): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start')
         .setColor(EmbedColor.Aqua)
@@ -52,12 +52,12 @@ function QuickStartFirstPage(): YabobEmbed {
                 'Use the **Skip** button to skip a page. '
         )
         .setFooter({
-            text: generatePageNumber(QuickStartFirstPage)
+            text: '1'
         });
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(false),
-        quickStartNextButton(true)
+        quickStartBackButton(false, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -66,11 +66,7 @@ function QuickStartFirstPage(): YabobEmbed {
     };
 }
 
-function QuickStartSetRoles(
-    server: AttendingServerV2,
-
-    updateMessage = ''
-): YabobEmbed {
+function QuickStartSetRoles(server: AttendingServerV2, updateMessage = ''): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
@@ -167,8 +163,8 @@ function QuickStartSetRoles(
     // if the user manually sets up all the roles with set_roles
     // we don't have a way to update this menu
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
     return {
         embeds: [embed.data],
@@ -196,8 +192,8 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
         });
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -260,8 +256,8 @@ function QuickStartAutoGiveStudentRole(
     );
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -356,8 +352,8 @@ function QuickStartLoggingChannel(
     );
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -383,8 +379,8 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
             text: generatePageNumber(QuickStartLastPage)
         });
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(false)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(false, server.guild.id)
     );
     return {
         embeds: [embed],
@@ -392,11 +388,11 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
     };
 }
 
-function quickStartBackButton(enable: boolean): ButtonBuilder {
+function quickStartBackButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartBack,
-        UnknownId
+        serverId
     ])
         .setEmoji('⬅️')
         .setLabel('Back')
@@ -404,11 +400,11 @@ function quickStartBackButton(enable: boolean): ButtonBuilder {
         .setDisabled(!enable);
 }
 
-function quickStartNextButton(enable: boolean): ButtonBuilder {
+function quickStartNextButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartNext,
-        UnknownId
+        serverId
     ])
         .setEmoji('➡️')
         .setLabel('Next')
