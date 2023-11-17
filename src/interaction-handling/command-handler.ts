@@ -695,12 +695,7 @@ async function quickStart(
     );
 
     const firstQuickStartPage = quickStartPages[0];
-
-    if (firstQuickStartPage === undefined) {
-        throw new CommandParseError('Invalid quick start page.');
-    }
-
-    await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
+    await interaction.editReply(firstQuickStartPage());
 }
 
 /**

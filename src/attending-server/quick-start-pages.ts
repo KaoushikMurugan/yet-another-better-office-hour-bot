@@ -26,14 +26,14 @@ import {
 } from '../utils/documentation-helper.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
-const quickStartPages: QuickStartPageFunctions[] = [
+const quickStartPages = [
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartCreateAQueue,
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
     QuickStartLastPage
-];
+] as const;
 
 function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${

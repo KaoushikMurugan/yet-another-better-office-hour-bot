@@ -94,7 +94,7 @@ async function stats(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const timeFrame = interaction.options.getString('time_frame', true) as
         | 'all_time'
         | 'past_month'
-        | 'past_week';
+        | 'past_week'; // type is enforced in the slash command options
     const helper =
         interaction.options.getSubcommand() === 'helper'
             ? interaction.options.getUser('user') ?? interaction.user
