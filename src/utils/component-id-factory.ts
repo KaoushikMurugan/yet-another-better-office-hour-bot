@@ -1,11 +1,4 @@
-import {
-    GuildId,
-    ComponentLocation,
-    Result,
-    Err,
-    Ok,
-    Optional
-} from './type-aliases.js';
+import { GuildId, ComponentLocation, Optional } from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
@@ -15,7 +8,6 @@ type CustomIdTuple<T extends ComponentLocation> = [
     type: T,
     componentName: string,
     serverId: GuildId
-    // channelId: TextBasedChannelId
 ];
 
 /**
@@ -41,7 +33,7 @@ const UnknownId = '0' as const;
  * @example
  * ```ts
  * // type is inferred as buildComponent<'dm', ButtonBuilder>
- * const a = buildComponent(new ButtonBuilder(), ['dm', 'bruh', '11', '22']);
+ * const a = buildComponent(new ButtonBuilder(), ['dm', 'bruh', 'guildId11']);
  * ```
  */
 function buildComponent<
@@ -114,33 +106,6 @@ function extractComponentName(
     return parsed[1];
 }
 
-/**
- * Non exception based version of {@link decompressComponentId}
- * @example
- * ```ts
- * const decompressed = safeDecompressComponentId<'queue'>('some id');
- * decompressed.ok ? doForOk(decompressed.value) : doForErr(decompressed.error)
- * ```
- */
-function safeDecompressComponentId<T extends ComponentLocation>(
-    expectedComponentType: T,
-    compressedId: string
-): Result<CustomIdTuple<T>, CommandParseError> {
-    const rawDecompressed = LZString.decompressFromUTF16(compressedId);
-    if (!rawDecompressed) {
-        return Err(new CommandParseError('Cannot decompress this component id'));
-    }
-    try {
-        const parsed = JSON.parse(rawDecompressed);
-        if (!isValidCustomIdTuple(parsed)) {
-            return Err(new CommandParseError('Invalid Component ID Tuple'));
-        }
-        return Ok(JSON.parse(rawDecompressed) as CustomIdTuple<T>);
-    } catch {
-        return Err(new CommandParseError('Failed to parse component JSON'));
-    }
-}
-
 class YabobButton<T extends ComponentLocation> extends ButtonBuilder {
     constructor(idInfo: CustomIdTuple<T>) {
         super();
@@ -180,7 +145,6 @@ export {
     YabobModal,
     buildComponent,
     decompressComponentId,
-    safeDecompressComponentId,
     extractComponentName,
     UnknownId
 };
