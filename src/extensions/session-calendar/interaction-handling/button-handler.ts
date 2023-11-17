@@ -43,7 +43,6 @@ async function resetCalendarSettings(
     await interaction.update(
         CalendarSettingsConfigMenu(
             server,
-            interaction.channelId,
             false,
             'Successfully reset all calendar settings.'
         )

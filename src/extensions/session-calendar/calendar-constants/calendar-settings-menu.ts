@@ -28,7 +28,6 @@ const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
 /** Compose the calendar settings settings menu */
 function CalendarSettingsConfigMenu(
     server: FrozenServer,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {

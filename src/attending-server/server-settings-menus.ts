@@ -36,7 +36,7 @@ function SettingsSwitcher(
         buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
-            '' // unused
+            '0' // unused
         ])
             .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
             .addOptions(
@@ -170,7 +170,6 @@ function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
  */
 function RoleConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     _isDm: boolean, // not used
     updateMessage = ''
 ): YabobEmbed {
@@ -386,7 +385,6 @@ function RoleConfigMenuForServerInit(
  */
 function AfterSessionMessageConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -451,7 +449,6 @@ function AfterSessionMessageConfigMenu(
  */
 function QueueAutoClearConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -514,7 +511,6 @@ function QueueAutoClearConfigMenu(
  */
 function LoggingChannelConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -615,7 +611,6 @@ function LoggingChannelConfigMenu(
  */
 function AutoGiveStudentRoleConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -675,7 +670,6 @@ function AutoGiveStudentRoleConfigMenu(
  */
 function PromptHelpTopicConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -735,7 +729,6 @@ function PromptHelpTopicConfigMenu(
  */
 function SeriousModeConfigMenu(
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {

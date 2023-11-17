@@ -615,9 +615,7 @@ async function settingsMenu(
         throw new CommandParseError('Invalid sub menu jump.');
     }
 
-    await interaction.editReply(
-        subMenuOptions.menu(server, interaction.channelId, false, undefined)
-    );
+    await interaction.editReply(subMenuOptions.menu(server, false, undefined));
 }
 
 /**

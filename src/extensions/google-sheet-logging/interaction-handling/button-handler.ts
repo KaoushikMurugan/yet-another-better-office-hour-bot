@@ -42,7 +42,6 @@ async function resetGoogleSheetSettings(
     await interaction.update(
         GoogleSheetSettingsConfigMenu(
             server,
-            interaction.channelId,
             false,
             'Successfully reset google sheet settings.'
         )

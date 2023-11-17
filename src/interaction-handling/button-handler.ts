@@ -381,7 +381,6 @@ async function createAccessLevelRoles(
         parent === 'settings'
             ? RoleConfigMenu(
                   server,
-                  interaction.channelId,
                   false,
                   forceCreate
                       ? 'New roles have been created!'
@@ -433,7 +432,6 @@ async function disableAfterSessionMessage(
     await interaction.update(
         AfterSessionMessageConfigMenu(
             server,
-            interaction.channelId,
             false,
             'Successfully disabled after session message.'
         )
@@ -461,7 +459,6 @@ async function disableQueueAutoClear(
     await interaction.update(
         QueueAutoClearConfigMenu(
             server,
-            interaction.channelId,
             false,
             `Successfully disabled queue auto clear on ${server.guild.name}`
         )
@@ -481,7 +478,6 @@ async function disableLoggingChannel(
         await interaction.update(
             LoggingChannelConfigMenu(
                 server,
-                interaction.channelId,
                 false,
                 `Successfully disabled logging on ${server.guild.name}`
             )
@@ -511,7 +507,6 @@ async function toggleAutoGiveStudentRole(
         await interaction.update(
             AutoGiveStudentRoleConfigMenu(
                 server,
-                interaction.channelId,
                 false,
                 `Successfully turned ${
                     autoGiveStudentRole ? 'on' : 'off'
@@ -544,7 +539,6 @@ async function togglePromptHelpTopic(
     await interaction.update(
         PromptHelpTopicConfigMenu(
             server,
-            interaction.channelId,
             false,
             `Successfully turned ${
                 enablePromptHelpTopic ? 'on' : 'off'
@@ -567,7 +561,6 @@ async function toggleSeriousMode(
     await interaction.update(
         SeriousModeConfigMenu(
             server,
-            interaction.channelId,
             false,
             `Successfully turned ${enableSeriousMode ? 'on' : 'off'} serious mode.`
         )
@@ -616,7 +609,7 @@ async function returnToHelpMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServerV2.get(interaction.guildId);
-    const viewMode = await server.getHighestAccessLevelRole(interaction.member);
+    const viewMode = server.getHighestAccessLevelRole(interaction.member);
     await interaction.update(HelpMainMenuEmbed(server, viewMode));
 }
 
@@ -652,7 +645,7 @@ async function shiftQuickStartPage(
     if (quickStartEmbed === undefined) {
         return;
     }
-    await interaction.update(quickStartEmbed(server, interaction.channelId));
+    await interaction.update(quickStartEmbed(server));
 }
 
 export { baseYabobButtonMethodMap };

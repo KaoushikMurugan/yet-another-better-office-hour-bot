@@ -41,7 +41,6 @@ async function updateGoogleSheetSettings(
         await interaction.update(
             GoogleSheetSettingsConfigMenu(
                 server,
-                interaction.channelId,
                 false,
                 'Google Sheet settings have been saved!'
             )

@@ -61,7 +61,6 @@ async function updateCalendarSettings(
         ? interaction.update(
               CalendarSettingsConfigMenu(
                   server,
-                  interaction.channel?.id ?? '0',
                   false,
                   'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
               )

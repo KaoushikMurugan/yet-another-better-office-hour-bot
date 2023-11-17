@@ -48,9 +48,7 @@ async function showSettingsSubMenu(
     if (!callbackMenu) {
         throw new Error(`Invalid option selected: ${selectedOption}`);
     }
-    await interaction.update(
-        callbackMenu(server, interaction.channelId, false, undefined)
-    );
+    await interaction.update(callbackMenu(server, false, undefined));
 }
 
 /**
@@ -78,7 +76,6 @@ async function selectLoggingChannel(
         await interaction.update(
             callbackMenu.menu(
                 server,
-                interaction.channelId,
                 false,
                 'Logging channel has been updated!'
             )

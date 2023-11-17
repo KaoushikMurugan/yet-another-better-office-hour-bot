@@ -70,7 +70,6 @@ async function setAfterSessionMessage(
         ? interaction.update(
               AfterSessionMessageConfigMenu(
                   server,
-                  interaction.channelId,
                   false,
                   message.length === 0
                       ? 'Successfully disabled after session message.'
@@ -109,7 +108,6 @@ async function setQueueAutoClear(
         ? interaction.update(
               QueueAutoClearConfigMenu(
                   server,
-                  interaction.channelId,
                   false,
                   enable
                       ? 'Queue auto clear configuration has been updated!'

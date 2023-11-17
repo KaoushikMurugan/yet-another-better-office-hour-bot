@@ -101,7 +101,6 @@ type HelpMessage = {
  */
 type SettingsMenuConstructor = (
     server: AttendingServerV2,
-    channelId: string,
     isDm: boolean,
     updateMessage: Optional<string>
 ) => BaseMessageOptions;

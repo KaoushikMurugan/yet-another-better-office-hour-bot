@@ -52,7 +52,7 @@ function QuickStartFirstPage(server: AttendingServerV2): YabobEmbed {
                 'Use the **Skip** button to skip a page. '
         )
         .setFooter({
-            text: '1'
+            text: generatePageNumber(QuickStartFirstPage)
         });
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(

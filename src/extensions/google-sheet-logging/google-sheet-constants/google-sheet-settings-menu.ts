@@ -28,7 +28,6 @@ const googleSheetSettingsMainMenuOptions: SettingsMenuOption[] = [
 /** Compose the Google Sheet Logging settings settings menu */
 function GoogleSheetSettingsConfigMenu(
     server: FrozenServer,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
