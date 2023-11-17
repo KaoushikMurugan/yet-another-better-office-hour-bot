@@ -63,8 +63,7 @@ const ExpectedParseErrors = {
         'Invalid Button or Command. Make sure this #queue channel has a parent category.'
     ),
     removeInsideQueue: new CommandParseError(
-        `Please use the remove command outside this category.` +
-            ` Otherwise Discord API will reject.`
+        "Please use the `queue remove` command outside this category. Discord API doesn't like it :(."
     ),
     noPermission: {
         clear: (queueName: string) =>

@@ -63,7 +63,7 @@ class GoogleSheetExtensionState {
     static get(serverId: Snowflake): GoogleSheetExtensionState {
         const state = GoogleSheetExtensionState.allStates.get(serverId);
         if (!state) {
-            throw ExpectedSheetErrors.nonServerInteraction(
+            throw ExpectedSheetErrors.notInitialized(
                 client.guilds.cache.get(serverId)?.name
             );
         }

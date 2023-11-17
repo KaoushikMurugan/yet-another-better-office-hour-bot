@@ -50,7 +50,7 @@ class CalendarExtensionState {
     static get(serverId: Snowflake): CalendarExtensionState {
         const state = CalendarExtensionState.allStates.get(serverId);
         if (!state) {
-            throw ExpectedCalendarErrors.nonServerInteraction(
+            throw ExpectedCalendarErrors.notInitialized(
                 client.guilds.cache.get(serverId)?.name
             );
         }
