@@ -7,7 +7,7 @@ import {
     TextInputStyle,
     Snowflake
 } from 'discord.js';
-import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
+import { buildComponent } from '../../utils/component-id-factory.js';
 import { ModalNames } from './interaction-names.js';
 import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
 
@@ -26,8 +26,7 @@ function QueueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder
         useMenu
             ? ModalNames.QueueAutoClearModalMenuVersion
             : ModalNames.QueueAutoClearModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Set Queue Auto Clear')
         .setComponents(
@@ -76,8 +75,7 @@ function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
         useMenu
             ? ModalNames.AfterSessionMessageModalMenuVersion
             : ModalNames.AfterSessionMessageModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Set After Session Message')
         .setComponents(
@@ -105,8 +103,7 @@ function PromptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.PromptHelpTopicModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('What do you need help with?')
         .setComponents(
@@ -126,8 +123,7 @@ function AnnouncementModal(serverId: Snowflake): ModalBuilder {
     return buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.AnnouncementModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('What do you want to announce?')
         .setComponents(

@@ -64,8 +64,7 @@ function GoogleSheetSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('📊')
             .setLabel('Change Google Sheet')
@@ -73,8 +72,7 @@ function GoogleSheetSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ResetGoogleSheetSettings,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔗')
             .setLabel('Reset Google Sheet')

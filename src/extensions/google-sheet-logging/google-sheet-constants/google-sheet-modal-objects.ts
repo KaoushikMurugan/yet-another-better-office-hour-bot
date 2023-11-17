@@ -6,7 +6,7 @@ import {
     TextInputBuilder,
     TextInputStyle
 } from 'discord.js';
-import { buildComponent, UnknownId } from '../../../utils/component-id-factory.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { GoogleSheetModalNames } from './google-sheet-interaction-names.js';
 
@@ -23,8 +23,7 @@ function googleSheetSettingsModal(serverId: Snowflake, useMenu = false): ModalBu
         useMenu
             ? GoogleSheetModalNames.GoogleSheetSettingsModalMenuVersion
             : GoogleSheetModalNames.GoogleSheetSettingsModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Google Sheet Logging Settings')
         .setComponents(

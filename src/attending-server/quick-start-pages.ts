@@ -68,7 +68,7 @@ function QuickStartFirstPage(): YabobEmbed {
 
 function QuickStartSetRoles(
     server: AttendingServerV2,
-    channelId: string,
+
     updateMessage = ''
 ): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
@@ -130,8 +130,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1QS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles')
@@ -139,8 +138,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1aQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles (@everyone is student)')
@@ -150,8 +148,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2QS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles')
@@ -159,8 +156,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2aQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles (@everyone is student)')
@@ -212,7 +208,7 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
 
 function QuickStartAutoGiveStudentRole(
     server: AttendingServerV2,
-    channelId: string,
+
     updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
@@ -248,8 +244,7 @@ function QuickStartAutoGiveStudentRole(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.AutoGiveStudentRoleConfig1QS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -257,8 +252,7 @@ function QuickStartAutoGiveStudentRole(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.AutoGiveStudentRoleConfig2QS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -278,7 +272,7 @@ function QuickStartAutoGiveStudentRole(
 
 function QuickStartLoggingChannel(
     server: AttendingServerV2,
-    channelId: string,
+
     updateMessage = ''
 ): YabobEmbed {
     const setLoggingChannelCommandId = server.guild.commands.cache.find(
@@ -337,8 +331,7 @@ function QuickStartLoggingChannel(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
                 SelectMenuNames.SelectLoggingChannelQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setPlaceholder('Select a Text Channel')
                 .addOptions(
@@ -355,8 +348,7 @@ function QuickStartLoggingChannel(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.DisableLoggingChannelQS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -404,7 +396,6 @@ function quickStartBackButton(enable: boolean): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartBack,
-        UnknownId,
         UnknownId
     ])
         .setEmoji('⬅️')
@@ -417,7 +408,6 @@ function quickStartNextButton(enable: boolean): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartNext,
-        UnknownId,
         UnknownId
     ])
         .setEmoji('➡️')

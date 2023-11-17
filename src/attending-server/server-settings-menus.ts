@@ -36,7 +36,6 @@ function SettingsSwitcher(
         buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
-            UnknownId,
             UnknownId
         ])
             .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
@@ -232,8 +231,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1SM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 // this emoji string must be free of any other characters
                 // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
@@ -243,8 +241,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1aSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles (@everyone is student)')
@@ -254,8 +251,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2SM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles')
@@ -263,8 +259,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2aSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles (@everyone is student)')
@@ -341,8 +336,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig1SM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       // this emoji string must be free of any other characters
                       // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
@@ -352,8 +346,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig1aSM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🔵')
                       .setLabel('Use Existing Roles (@everyone is student)')
@@ -363,8 +356,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig2SM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🟠')
                       .setLabel('Create New Roles')
@@ -372,8 +364,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig2aSM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🟠')
                       .setLabel('Create New Roles (@everyone is student)')
@@ -429,8 +420,7 @@ function AfterSessionMessageConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.ShowAfterSessionMessageModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('⚙️')
             .setLabel('Edit Message')
@@ -438,8 +428,7 @@ function AfterSessionMessageConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableAfterSessionMessage,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -497,8 +486,7 @@ function QueueAutoClearConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.ShowQueueAutoClearModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('⚙️')
             .setLabel('Set Auto Clear Time')
@@ -506,8 +494,7 @@ function QueueAutoClearConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableQueueAutoClear,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -539,8 +526,7 @@ function LoggingChannelConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableLoggingChannelSM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -598,8 +584,7 @@ function LoggingChannelConfigMenu(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
                 SelectMenuNames.SelectLoggingChannelSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setPlaceholder('Select a Text Channel')
                 .addOptions(
@@ -661,8 +646,7 @@ function AutoGiveStudentRoleConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.AutoGiveStudentRoleConfig1SM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -670,8 +654,7 @@ function AutoGiveStudentRoleConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.AutoGiveStudentRoleConfig2SM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -723,8 +706,7 @@ function PromptHelpTopicConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.PromptHelpTopicConfig1,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -732,8 +714,7 @@ function PromptHelpTopicConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.PromptHelpTopicConfig2,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -794,8 +775,7 @@ function SeriousModeConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.SeriousModeConfig1,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -803,8 +783,7 @@ function SeriousModeConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.SeriousModeConfig2,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')

@@ -162,7 +162,6 @@ class QueueDisplayV2 {
      */
     requestQueueEmbedRender(viewModel: QueueViewModel): void {
         const guildId = this.queueChannel.channelObj.guild.id;
-        const channelId = this.queueChannel.channelObj.id;
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
@@ -193,22 +192,12 @@ class QueueDisplayV2 {
             });
         }
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buildComponent(new ButtonBuilder(), [
-                'queue',
-                ButtonNames.Join,
-                guildId,
-                channelId
-            ])
+            buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Join, guildId])
                 .setEmoji('✅')
                 .setDisabled(viewModel.state !== 'open')
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
-            buildComponent(new ButtonBuilder(), [
-                'queue',
-                ButtonNames.Leave,
-                guildId,
-                channelId
-            ])
+            buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Leave, guildId])
                 .setDisabled(viewModel.studentDisplayNames.length === 0)
                 .setEmoji('❎')
                 .setLabel('Leave')
@@ -222,20 +211,14 @@ class QueueDisplayV2 {
                 )
         );
         const notifButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-            buildComponent(new ButtonBuilder(), [
-                'queue',
-                ButtonNames.Notif,
-                guildId,
-                channelId
-            ])
+            buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Notif, guildId])
                 .setEmoji('🔔')
                 .setLabel('Get Notified')
                 .setStyle(ButtonStyle.Primary),
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 ButtonNames.RemoveNotif,
-                guildId,
-                channelId
+                guildId
             ])
                 .setEmoji('🔕')
                 .setLabel('Remove Notifications')

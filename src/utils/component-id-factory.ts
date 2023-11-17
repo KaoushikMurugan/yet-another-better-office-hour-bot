@@ -1,5 +1,4 @@
 import {
-    TextBasedChannelId,
     GuildId,
     ComponentLocation,
     Result,
@@ -15,8 +14,8 @@ import { CommandParseError } from './error-types.js';
 type CustomIdTuple<T extends ComponentLocation> = [
     type: T,
     componentName: string,
-    serverId: GuildId,
-    channelId: TextBasedChannelId
+    serverId: GuildId
+    // channelId: TextBasedChannelId
 ];
 
 /**
@@ -25,7 +24,7 @@ type CustomIdTuple<T extends ComponentLocation> = [
  * - there will be only 1 possible value
  * - can be extracted as `type TupleLength<T extends unknown[]> = T['length']`
  */
-const ExpectedLength: CustomIdTuple<ComponentLocation>['length'] = 4 as const;
+const ExpectedLength: CustomIdTuple<ComponentLocation>['length'] = 3 as const;
 
 /**
  * Placeholder value for the CustomIdTuple if server id or channel id is not available
@@ -68,7 +67,7 @@ function isValidCustomIdTuple(
         !!decompressedTuple[0] && ['dm', 'queue', 'other'].includes(decompressedTuple[0]);
     const snowflakesAreValid = // snowflakes should only have numbers
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        /^[0-9]+$/.test(decompressedTuple[2]!) && /^[0-9]+$/.test(decompressedTuple[3]!);
+        /^[0-9]+$/.test(decompressedTuple[2]!);
     return lengthMatch && isValidType && snowflakesAreValid;
 }
 

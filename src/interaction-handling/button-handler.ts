@@ -339,7 +339,7 @@ async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
 
 /**
  * Shows the announcement modal after [ANNOUNCE] button is pressed
- * @param interaction 
+ * @param interaction
  */
 async function showAnnounceModal(
     interaction: ButtonInteraction<'cached'>
@@ -389,7 +389,6 @@ async function createAccessLevelRoles(
               )
             : QuickStartSetRoles(
                   server,
-                  interaction.channelId,
                   forceCreate
                       ? 'New roles have been created!'
                       : 'Role configurations have been updated!'
@@ -493,7 +492,6 @@ async function disableLoggingChannel(
         await interaction.update(
             QuickStartLoggingChannel(
                 server,
-                interaction.channelId,
                 `Successfully disabled logging on ${server.guild.name}`
             )
         );
@@ -526,7 +524,6 @@ async function toggleAutoGiveStudentRole(
         await interaction.update(
             QuickStartAutoGiveStudentRole(
                 server,
-                interaction.channelId,
                 `Successfully turned ${
                     autoGiveStudentRole ? 'on' : 'off'
                 } auto give student role.`

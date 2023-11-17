@@ -725,7 +725,6 @@ async function createHelperControlPanel(
         throw ExpectedParseErrors.notTextChannel(targetChannel.name);
     }
 
-    const channelId = targetChannel.id;
     const helperControlPanelEmbed = new EmbedBuilder().setColor(EmbedColor.Aqua);
 
     if (isVerbose) {
@@ -751,8 +750,7 @@ async function createHelperControlPanel(
     const startButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Start,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('▶️')
         .setLabel('Start')
@@ -761,8 +759,7 @@ async function createHelperControlPanel(
     const nextButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Next,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏭️')
         .setLabel('Next')
@@ -771,8 +768,7 @@ async function createHelperControlPanel(
     const stopButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Stop,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏹️')
         .setLabel('Stop')
@@ -781,8 +777,7 @@ async function createHelperControlPanel(
     const pauseButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Pause,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏸️')
         .setLabel('Pause')
@@ -791,8 +786,7 @@ async function createHelperControlPanel(
     const resumeButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Resume,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏯️')
         .setLabel('Resume')
@@ -801,8 +795,7 @@ async function createHelperControlPanel(
     const announceButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Announce,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('📢')
         .setLabel('Announce')

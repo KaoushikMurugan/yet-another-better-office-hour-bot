@@ -85,11 +85,7 @@ async function selectLoggingChannel(
         );
     } else {
         await interaction.update(
-            QuickStartLoggingChannel(
-                server,
-                interaction.channelId,
-                'Logging channel has been updated!'
-            )
+            QuickStartLoggingChannel(server, 'Logging channel has been updated!')
         );
     }
 }
