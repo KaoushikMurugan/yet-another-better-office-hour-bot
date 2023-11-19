@@ -16,7 +16,7 @@ import { LOGGER } from '../../global-states.js';
 /**
  * ViewModel for 1 tutor's upcoming session
  */
-type UpComingSessionViewModel = {
+type UpcomingSessionViewModel = {
     /**
      * start time
      */
@@ -115,7 +115,7 @@ async function checkCalendarConnection(newCalendarId: string): Promise<string> {
  * @param viewModel
  * @returns the formatted string
  */
-function transformViewModelToString(viewModel: UpComingSessionViewModel): string {
+function transformViewModelToString(viewModel: UpcomingSessionViewModel): string {
     const spacer = '\u3000'; // ideographic space character, extra wide
     return (
         `**${
@@ -136,7 +136,7 @@ function transformViewModelToString(viewModel: UpComingSessionViewModel): string
  * @returns string that goes into the embed
  */
 function buildUpcomingSessionsEmbedBody(
-    viewModels: UpComingSessionViewModel[],
+    viewModels: UpcomingSessionViewModel[],
     title: string,
     lastUpdatedTimeStamp: Date,
     returnCount: number | 'max' = 5
@@ -213,7 +213,7 @@ function restorePublicEmbedURL(calendarId: string): string {
  */
 async function fetchUpcomingSessions(
     serverId: Snowflake
-): Promise<UpComingSessionViewModel[]> {
+): Promise<UpcomingSessionViewModel[]> {
     const nextWeek = new Date();
     nextWeek.setDate(nextWeek.getDate() + 7);
     const calendarUrl = buildCalendarURL({
@@ -238,7 +238,7 @@ async function fetchUpcomingSessions(
     if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
-    const viewModels: UpComingSessionViewModel[] = [];
+    const viewModels: UpcomingSessionViewModel[] = [];
     for (const rawEvent of rawEvents) {
         const unpack = calendarDataSchema.safeParse(rawEvent);
         if (!unpack.success) {
@@ -287,7 +287,7 @@ function composeViewModelsByString(
     start: Date,
     end: Date,
     location?: string
-): UpComingSessionViewModel[] {
+): UpcomingSessionViewModel[] {
     // parsingString example: 'Tutor Name - ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B'
     // words will be ['TutorName ', ' ECS 20, ECS 36A, ECS 36B, ECS 122A, ECS 122B']
     const words = parsingString.split('-');
@@ -321,7 +321,7 @@ function composeViewModelsByString(
 }
 
 export {
-    UpComingSessionViewModel,
+    UpcomingSessionViewModel,
     CalendarConfigBackup,
     fetchUpcomingSessions,
     buildCalendarURL,

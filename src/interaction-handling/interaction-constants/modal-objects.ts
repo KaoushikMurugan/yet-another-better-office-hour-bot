@@ -7,9 +7,9 @@ import {
     TextInputStyle,
     Snowflake
 } from 'discord.js';
-import { buildComponent, UnknownId } from '../../utils/component-id-factory.js';
+import { buildComponent } from '../../utils/component-id-factory.js';
 import { ModalNames } from './interaction-names.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../attending-server/base-attending-server.js';
 
 /**
  * Creates a modal for the user to set the queue auto clear time.
@@ -20,14 +20,13 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server.
  * @returns
  */
 function QueueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
-    const oldTimeout = AttendingServerV2.get(serverId).queueAutoClearTimeout;
+    const oldTimeout = AttendingServer.get(serverId).queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu
             ? ModalNames.QueueAutoClearModalMenuVersion
             : ModalNames.QueueAutoClearModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Set Queue Auto Clear')
         .setComponents(
@@ -76,8 +75,7 @@ function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
         useMenu
             ? ModalNames.AfterSessionMessageModalMenuVersion
             : ModalNames.AfterSessionMessageModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Set After Session Message')
         .setComponents(
@@ -86,7 +84,7 @@ function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
                     .setCustomId('after_session_msg')
                     .setLabel('Leave blank to disable') // There is a character limit for labels
                     .setPlaceholder('Enter your message here')
-                    .setValue(AttendingServerV2.get(serverId).afterSessionMessage)
+                    .setValue(AttendingServer.get(serverId).afterSessionMessage)
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false)
             )
@@ -105,8 +103,7 @@ function PromptHelpTopicModal(serverId: Snowflake): ModalBuilder {
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.PromptHelpTopicModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('What do you need help with?')
         .setComponents(
@@ -126,8 +123,7 @@ function AnnouncementModal(serverId: Snowflake): ModalBuilder {
     return buildComponent(new ModalBuilder(), [
         'other',
         ModalNames.AnnouncementModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('What do you want to announce?')
         .setComponents(

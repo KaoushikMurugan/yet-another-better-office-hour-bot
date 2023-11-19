@@ -1,7 +1,7 @@
 /** @module MemberStates */
 
 import { GuildMember } from 'discord.js';
-import { HelpQueueV2 } from '../help-queue/help-queue.js';
+import { HelpQueue } from '../help-queue/help-queue.js';
 
 /**
  * Represents a student in the queue.
@@ -17,7 +17,7 @@ type Helpee = {
     /**
      * HelpQueueV2 object backref
      */
-    queue: HelpQueueV2;
+    queue: HelpQueue;
     /**
      * GuildMember object backref
      */

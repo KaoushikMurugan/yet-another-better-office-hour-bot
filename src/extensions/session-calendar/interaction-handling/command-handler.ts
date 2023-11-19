@@ -27,7 +27,7 @@ import {
     isTriggeredByMemberWithRoles,
     hasValidQueueArgument
 } from '../../../interaction-handling/shared-validations.js';
-import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { CalendarExtensionState } from '../calendar-states.js';
 
 const calendarCommandMap: CommandHandlerProps = {
@@ -50,7 +50,7 @@ const calendarCommandMap: CommandHandlerProps = {
 async function listUpComingHours(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const state = CalendarExtensionState.get(interaction.guildId);
     await state.refreshCalendarEvents();
     const showAll = interaction.options.getBoolean('show_all');
@@ -86,7 +86,7 @@ async function makeParsableCalendarTitle(
     interaction: ChatInputCommandInteraction<'cached'>,
     generateAll: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const state = CalendarExtensionState.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,

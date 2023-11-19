@@ -11,14 +11,14 @@ import {
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { UnknownId, buildComponent } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 import {
     ButtonNames,
     CommandNames,
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 import { EmbedColor } from '../utils/embed-helper.js';
-import { AttendingServerV2 } from './base-attending-server.js';
+import { AttendingServer } from './base-attending-server.js';
 import {
     documentationLinks,
     supportServerInviteLink,
@@ -26,14 +26,14 @@ import {
 } from '../utils/documentation-helper.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 
-const quickStartPages: QuickStartPageFunctions[] = [
+const quickStartPages = [
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartCreateAQueue,
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
     QuickStartLastPage
-];
+] as const satisfies readonly QuickStartPageFunctions[];
 
 function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${
@@ -41,7 +41,15 @@ function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     }`;
 }
 
-function QuickStartFirstPage(): YabobEmbed {
+function generatePing(id: Snowflake | SpecialRoleValues) {
+    return id === SpecialRoleValues.NotSet
+        ? 'Not Set'
+        : id === SpecialRoleValues.Deleted
+          ? '@deleted-role'
+          : `<@&${id}>`;
+}
+
+function QuickStartFirstPage(server: AttendingServer): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start')
         .setColor(EmbedColor.Aqua)
@@ -56,8 +64,8 @@ function QuickStartFirstPage(): YabobEmbed {
         });
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(false),
-        quickStartNextButton(true)
+        quickStartBackButton(false, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -66,18 +74,7 @@ function QuickStartFirstPage(): YabobEmbed {
     };
 }
 
-function QuickStartSetRoles(
-    server: AttendingServerV2,
-    channelId: string,
-    updateMessage = ''
-): YabobEmbed {
-    const generatePing = (id: Snowflake | SpecialRoleValues) => {
-        return id === SpecialRoleValues.NotSet
-            ? 'Not Set'
-            : id === SpecialRoleValues.Deleted
-            ? '@deleted-role'
-            : `<@&${id}>`;
-    };
+function QuickStartSetRoles(server: AttendingServer, updateMessage = ''): YabobEmbed {
     const setRolesCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.set_roles
     )?.id;
@@ -130,8 +127,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1QS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles')
@@ -139,8 +135,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1aQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles (@everyone is student)')
@@ -150,8 +145,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2QS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles')
@@ -159,8 +153,7 @@ function QuickStartSetRoles(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2aQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles (@everyone is student)')
@@ -171,8 +164,8 @@ function QuickStartSetRoles(
     // if the user manually sets up all the roles with set_roles
     // we don't have a way to update this menu
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
     return {
         embeds: [embed.data],
@@ -180,7 +173,7 @@ function QuickStartSetRoles(
     };
 }
 
-function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
+function QuickStartCreateAQueue(server: AttendingServer): YabobEmbed {
     // get the queue add command id
     const queueAddCommandId = server.guild.commands.cache.find(
         command =>
@@ -200,8 +193,8 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
         });
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -211,8 +204,8 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
 }
 
 function QuickStartAutoGiveStudentRole(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
+
     updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
@@ -248,8 +241,7 @@ function QuickStartAutoGiveStudentRole(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.AutoGiveStudentRoleConfig1QS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -257,8 +249,7 @@ function QuickStartAutoGiveStudentRole(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.AutoGiveStudentRoleConfig2QS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -266,8 +257,8 @@ function QuickStartAutoGiveStudentRole(
     );
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -277,8 +268,8 @@ function QuickStartAutoGiveStudentRole(
 }
 
 function QuickStartLoggingChannel(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
+
     updateMessage = ''
 ): YabobEmbed {
     const setLoggingChannelCommandId = server.guild.commands.cache.find(
@@ -337,8 +328,7 @@ function QuickStartLoggingChannel(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
                 SelectMenuNames.SelectLoggingChannelQS,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setPlaceholder('Select a Text Channel')
                 .addOptions(
@@ -355,8 +345,7 @@ function QuickStartLoggingChannel(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.DisableLoggingChannelQS,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -364,8 +353,8 @@ function QuickStartLoggingChannel(
     );
 
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(true)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(true, server.guild.id)
     );
 
     return {
@@ -374,7 +363,7 @@ function QuickStartLoggingChannel(
     };
 }
 
-function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
+function QuickStartLastPage(server: AttendingServer): YabobEmbed {
     const settingsCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.settings
     )?.id;
@@ -391,8 +380,8 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
             text: generatePageNumber(QuickStartLastPage)
         });
     const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true),
-        quickStartNextButton(false)
+        quickStartBackButton(true, server.guild.id),
+        quickStartNextButton(false, server.guild.id)
     );
     return {
         embeds: [embed],
@@ -400,12 +389,11 @@ function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
     };
 }
 
-function quickStartBackButton(enable: boolean): ButtonBuilder {
+function quickStartBackButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartBack,
-        UnknownId,
-        UnknownId
+        serverId
     ])
         .setEmoji('⬅️')
         .setLabel('Back')
@@ -413,12 +401,11 @@ function quickStartBackButton(enable: boolean): ButtonBuilder {
         .setDisabled(!enable);
 }
 
-function quickStartNextButton(enable: boolean): ButtonBuilder {
+function quickStartNextButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
     return buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.QuickStartNext,
-        UnknownId,
-        UnknownId
+        serverId
     ])
         .setEmoji('➡️')
         .setLabel('Next')

@@ -28,7 +28,6 @@ const calendarSettingsMainMenuOptions: SettingsMenuOption[] = [
 /** Compose the calendar settings settings menu */
 function CalendarSettingsConfigMenu(
     server: FrozenServer,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -66,8 +65,7 @@ function CalendarSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             CalendarButtonNames.ShowCalendarSettingsModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🗓')
             .setLabel('Change Calendar Settings')
@@ -75,8 +73,7 @@ function CalendarSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             CalendarButtonNames.ResetCalendarSettings,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔗')
             .setLabel('Reset Calendar Settings')

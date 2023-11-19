@@ -23,7 +23,7 @@ const ExpectedCalendarErrors = {
                   `Are you sure ${guildName} has a initialized YABOB with the calendar extension?`
               )
             : new ServerError("The state object doesn't exist"),
-    nonServerInteraction: (guildName?: string) =>
+    notInitialized: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(
                   'I can only accept server based interactions. Please use this interaction inside a server.'

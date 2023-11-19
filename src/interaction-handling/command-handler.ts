@@ -35,7 +35,7 @@ import {
     isTriggeredByMemberWithRoles,
     channelsAreUnderLimit
 } from './shared-validations.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { HelpMainMenuEmbed } from './shared-interaction-functions.js';
 import { HelperRolesData } from '../utils/type-aliases.js';
 import { parse } from 'csv-string';
@@ -82,7 +82,7 @@ async function enqueue(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         hasValidQueueArgument(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -109,7 +109,7 @@ async function enqueue(
  * The `/next` command, both with arguments or without arguments
  */
 async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const helperMember = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -148,7 +148,7 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
  * @returns success message
  */
 async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(server, interaction.member, CommandNames.queue, 'staff');
     const subcommand = interaction.options.getSubcommand();
     switch (subcommand) {
@@ -183,7 +183,7 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
  * The `/start` command
  */
 async function start(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -199,7 +199,7 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
  * The `/stop` command
  */
 async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -214,7 +214,7 @@ async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise
  * The `/pause` command
  */
 async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -229,7 +229,7 @@ async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promis
  * The `/resume` command
  */
 async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -245,7 +245,7 @@ async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promi
  */
 async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const [server, queue] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         hasValidQueueArgument(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -263,7 +263,7 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
  */
 async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const [server, queue] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         hasValidQueueArgument(interaction, true)
     ];
     const member = isTriggeredByMemberWithRoles(
@@ -289,7 +289,7 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
 async function clearAll(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -310,7 +310,7 @@ async function clearAll(
 async function listHelpers(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const helpers = server.helpers;
     if (helpers.size === 0) {
         await interaction.editReply(SimpleEmbed('No one is currently helping.'));
@@ -373,7 +373,7 @@ async function listHelpers(
 async function announce(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -401,7 +401,7 @@ async function cleanup(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server, queue] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         hasValidQueueArgument(interaction, true)
     ];
     isTriggeredByMemberWithRoles(
@@ -420,7 +420,7 @@ async function cleanup(
 async function cleanupAllQueues(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -442,7 +442,7 @@ async function cleanupAllQueues(
 async function cleanupHelpChannel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -457,7 +457,7 @@ async function cleanupHelpChannel(
  * The `/help` command
  */
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const accessLevel = server.getHighestAccessLevelRole(interaction.member) ?? 'student';
     await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
@@ -468,7 +468,7 @@ async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise
 async function setLoggingChannel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -494,7 +494,7 @@ async function setLoggingChannel(
 async function stopLogging(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -511,7 +511,7 @@ async function stopLogging(
 async function createOffices(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -547,7 +547,7 @@ async function createOffices(
 async function setRoles(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -591,7 +591,7 @@ async function setRoles(
 async function settingsMenu(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -615,9 +615,7 @@ async function settingsMenu(
         throw new CommandParseError('Invalid sub menu jump.');
     }
 
-    await interaction.editReply(
-        subMenuOptions.menu(server, interaction.channelId, false, undefined)
-    );
+    await interaction.editReply(subMenuOptions.menu(server, false, undefined));
 }
 
 /**
@@ -627,7 +625,7 @@ async function joinQueueNotify(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const [server, queue] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         hasValidQueueArgument(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -657,7 +655,7 @@ async function joinQueueNotify(
 async function setTimeZone(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -686,7 +684,7 @@ async function setTimeZone(
 async function quickStart(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -695,12 +693,7 @@ async function quickStart(
     );
 
     const firstQuickStartPage = quickStartPages[0];
-
-    if (firstQuickStartPage === undefined) {
-        throw new CommandParseError('Invalid quick start page.');
-    }
-
-    await interaction.editReply(firstQuickStartPage(server, interaction.channelId));
+    await interaction.editReply(firstQuickStartPage(server));
 }
 
 /**
@@ -710,7 +703,7 @@ async function quickStart(
 async function createHelperControlPanel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
 
     const targetChannel = interaction.options.getChannel('channel', true);
 
@@ -730,7 +723,6 @@ async function createHelperControlPanel(
         throw ExpectedParseErrors.notTextChannel(targetChannel.name);
     }
 
-    const channelId = targetChannel.id;
     const helperControlPanelEmbed = new EmbedBuilder().setColor(EmbedColor.Aqua);
 
     if (isVerbose) {
@@ -756,8 +748,7 @@ async function createHelperControlPanel(
     const startButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Start,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('▶️')
         .setLabel('Start')
@@ -766,8 +757,7 @@ async function createHelperControlPanel(
     const nextButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Next,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏭️')
         .setLabel('Next')
@@ -776,8 +766,7 @@ async function createHelperControlPanel(
     const stopButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Stop,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏹️')
         .setLabel('Stop')
@@ -786,8 +775,7 @@ async function createHelperControlPanel(
     const pauseButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Pause,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏸️')
         .setLabel('Pause')
@@ -796,8 +784,7 @@ async function createHelperControlPanel(
     const resumeButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Resume,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('⏯️')
         .setLabel('Resume')
@@ -806,8 +793,7 @@ async function createHelperControlPanel(
     const announceButton = buildComponent(new ButtonBuilder(), [
         'other',
         ButtonNames.Announce,
-        server.guild.id,
-        channelId
+        server.guild.id
     ])
         .setEmoji('📢')
         .setLabel('Announce')
@@ -838,7 +824,7 @@ async function createHelperControlPanel(
 async function assignHelpersRoles(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,

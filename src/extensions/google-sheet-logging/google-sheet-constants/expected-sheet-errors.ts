@@ -46,7 +46,7 @@ const ExpectedSheetErrors = {
         new CommandParseError(
             `Hmmm...YABOB cannot parse the data stored in ${sheetName} at column ${column}. Is the data format altered?`
         ),
-    nonServerInteraction: (guildName?: string) =>
+    notInitialized: (guildName?: string) =>
         guildName === undefined
             ? new CommandParseError(
                   'I can only accept server based interactions. Please use this interaction inside a server.'

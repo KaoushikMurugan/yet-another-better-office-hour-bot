@@ -1,12 +1,4 @@
-import {
-    TextBasedChannelId,
-    GuildId,
-    ComponentLocation,
-    Result,
-    Err,
-    Ok,
-    Optional
-} from './type-aliases.js';
+import { GuildId, ComponentLocation, Optional, Ok, Result, Err } from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
@@ -15,8 +7,7 @@ import { CommandParseError } from './error-types.js';
 type CustomIdTuple<T extends ComponentLocation> = [
     type: T,
     componentName: string,
-    serverId: GuildId,
-    channelId: TextBasedChannelId
+    serverId: GuildId
 ];
 
 /**
@@ -25,13 +16,7 @@ type CustomIdTuple<T extends ComponentLocation> = [
  * - there will be only 1 possible value
  * - can be extracted as `type TupleLength<T extends unknown[]> = T['length']`
  */
-const ExpectedLength: CustomIdTuple<ComponentLocation>['length'] = 4 as const;
-
-/**
- * Placeholder value for the CustomIdTuple if server id or channel id is not available
- * - Try to avoid this as much as possible
- */
-const UnknownId = '0' as const;
+const ExpectedLength: CustomIdTuple<ComponentLocation>['length'] = 3 as const;
 
 /**
  * Wraps over the discord js builder constructor and sets a compressed id
@@ -42,7 +27,7 @@ const UnknownId = '0' as const;
  * @example
  * ```ts
  * // type is inferred as buildComponent<'dm', ButtonBuilder>
- * const a = buildComponent(new ButtonBuilder(), ['dm', 'bruh', '11', '22']);
+ * const a = buildComponent(new ButtonBuilder(), ['dm', 'bruh', 'guildId11']);
  * ```
  */
 function buildComponent<
@@ -68,7 +53,7 @@ function isValidCustomIdTuple(
         !!decompressedTuple[0] && ['dm', 'queue', 'other'].includes(decompressedTuple[0]);
     const snowflakesAreValid = // snowflakes should only have numbers
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
-        /^[0-9]+$/.test(decompressedTuple[2]!) && /^[0-9]+$/.test(decompressedTuple[3]!);
+        /^[0-9]+$/.test(decompressedTuple[2]!);
     return lengthMatch && isValidType && snowflakesAreValid;
 }
 
@@ -89,6 +74,25 @@ function decompressComponentId(compressedId: string): CustomIdTuple<ComponentLoc
     }
     // returns CustomIdTuple<'queue'>, CustomIdTuple<'other'>, or CustomIdTuple<'dm'>
     return parsed;
+}
+
+function safeDecompressComponentId(
+    compressedId: string
+): Result<CustomIdTuple<ComponentLocation>, Error> {
+    try {
+        const rawDecompressed = LZString.decompressFromUTF16(compressedId);
+        const parsed = JSON.parse(rawDecompressed);
+
+        if (!isValidCustomIdTuple(parsed)) {
+            return Err(
+                new CommandParseError('Decompressed id is not a valid custom id tuple.')
+            );
+        }
+
+        return Ok(parsed);
+    } catch {
+        return Err(new CommandParseError('Cannot decompress this component id.'));
+    }
 }
 
 /**
@@ -113,33 +117,6 @@ function extractComponentName(
     }
     const parsed = JSON.parse(rawDecompressed);
     return parsed[1];
-}
-
-/**
- * Non exception based version of {@link decompressComponentId}
- * @example
- * ```ts
- * const decompressed = safeDecompressComponentId<'queue'>('some id');
- * decompressed.ok ? doForOk(decompressed.value) : doForErr(decompressed.error)
- * ```
- */
-function safeDecompressComponentId<T extends ComponentLocation>(
-    expectedComponentType: T,
-    compressedId: string
-): Result<CustomIdTuple<T>, CommandParseError> {
-    const rawDecompressed = LZString.decompressFromUTF16(compressedId);
-    if (!rawDecompressed) {
-        return Err(new CommandParseError('Cannot decompress this component id'));
-    }
-    try {
-        const parsed = JSON.parse(rawDecompressed);
-        if (!isValidCustomIdTuple(parsed)) {
-            return Err(new CommandParseError('Invalid Component ID Tuple'));
-        }
-        return Ok(JSON.parse(rawDecompressed) as CustomIdTuple<T>);
-    } catch {
-        return Err(new CommandParseError('Failed to parse component JSON'));
-    }
 }
 
 class YabobButton<T extends ComponentLocation> extends ButtonBuilder {
@@ -180,8 +157,7 @@ export {
     YabobSelectMenu,
     YabobModal,
     buildComponent,
-    decompressComponentId,
-    safeDecompressComponentId,
     extractComponentName,
-    UnknownId
+    decompressComponentId,
+    safeDecompressComponentId
 };

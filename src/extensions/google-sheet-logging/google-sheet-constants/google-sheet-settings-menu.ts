@@ -28,7 +28,6 @@ const googleSheetSettingsMainMenuOptions: SettingsMenuOption[] = [
 /** Compose the Google Sheet Logging settings settings menu */
 function GoogleSheetSettingsConfigMenu(
     server: FrozenServer,
-    channelId: string,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -64,8 +63,7 @@ function GoogleSheetSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('📊')
             .setLabel('Change Google Sheet')
@@ -73,8 +71,7 @@ function GoogleSheetSettingsConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ResetGoogleSheetSettings,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔗')
             .setLabel('Reset Google Sheet')

@@ -2,15 +2,12 @@
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
 import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
-import {
-    GuildMemberId,
-    SimpleTimeZone
-} from '../../utils/type-aliases.js';
+import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
 import { padTo2Digits } from '../../utils/util-functions.js';
 import { GoogleSheetExtensionState } from './google-sheet-states.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../attending-server/base-attending-server.js';
 import {
     AttendanceHeaders,
     HelpSessionHeaders,
@@ -342,11 +339,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     [AttendanceHeaders.HelperUserName]: entry.member.user.username,
                     [AttendanceHeaders.LocalTimeIn]: this.timeFormula(
                         entry.helpStart,
-                        AttendingServerV2.get(this.guild.id).timezone
+                        AttendingServer.get(this.guild.id).timezone
                     ),
                     [AttendanceHeaders.LocalTimeOut]: this.timeFormula(
                         entry.helpEnd,
-                        AttendingServerV2.get(this.guild.id).timezone
+                        AttendingServer.get(this.guild.id).timezone
                     ),
                     [AttendanceHeaders.HelpedStudents]: JSON.stringify(
                         entry.helpedMembers.map(student => ({
@@ -443,11 +440,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     [HelpSessionHeaders.HelperDiscordId]: entry.helperDiscordId,
                     [HelpSessionHeaders.SessionStartLocal]: this.timeFormula(
                         entry.sessionStart,
-                        AttendingServerV2.get(this.guild.id).timezone
+                        AttendingServer.get(this.guild.id).timezone
                     ),
                     [HelpSessionHeaders.SessionEndLocal]: this.timeFormula(
                         entry.sessionEnd,
-                        AttendingServerV2.get(this.guild.id).timezone
+                        AttendingServer.get(this.guild.id).timezone
                     ),
                     [HelpSessionHeaders.QueueName]: entry.queueName,
                     [HelpSessionHeaders.WaitTimeMs]: entry.waitTimeMs,

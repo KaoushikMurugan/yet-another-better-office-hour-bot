@@ -6,7 +6,7 @@ import {
     TextInputStyle,
     Snowflake
 } from 'discord.js';
-import { buildComponent, UnknownId } from '../../../utils/component-id-factory.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { CalendarExtensionState } from '../calendar-states.js';
 import { CalendarModalNames } from './calendar-interaction-names.js';
 
@@ -23,8 +23,7 @@ function CalendarSettingsModal(serverId: Snowflake, useMenu = false): ModalBuild
         useMenu
             ? CalendarModalNames.CalendarSettingsModalMenuVersion
             : CalendarModalNames.CalendarSettingsModal,
-        serverId,
-        UnknownId
+        serverId
     ])
         .setTitle('Calendar Settings')
         .setComponents(

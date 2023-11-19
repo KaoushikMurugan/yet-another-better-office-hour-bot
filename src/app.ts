@@ -2,8 +2,8 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Interaction, Events } from 'discord.js';
-import { AttendingServerV2 } from './attending-server/base-attending-server.js';
+import { Guild, Events } from 'discord.js';
+import { AttendingServer } from './attending-server/base-attending-server.js';
 import { green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
@@ -42,7 +42,7 @@ client.once(Events.ClientReady, async () => {
     }
     LOGGER.info(
         green(
-            `✅ Ready to go! (${AttendingServerV2.activeServersCount} servers created) ✅`,
+            `✅ Ready to go! (${AttendingServer.activeServersCount} servers created) ✅`,
             'Bg'
         )
     );
@@ -68,7 +68,7 @@ client.on(Events.GuildCreate, async guild => {
  * - Deletes server from server map
  */
 client.on(Events.GuildDelete, async guild => {
-    const server = AttendingServerV2.safeGet(guild.id);
+    const server = AttendingServer.safeGet(guild.id);
     if (!server) {
         return;
     }
@@ -82,7 +82,7 @@ client.on(Events.GuildDelete, async guild => {
  * - Button presses
  * - Modal submissions
  */
-client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+client.on(Events.InteractionCreate, async interaction => {
     getHandler(interaction)(interaction).catch((err: Error) => {
         LOGGER.fatal(err, 'Uncaught Error');
         interaction.user
@@ -95,7 +95,7 @@ client.on(Events.InteractionCreate, async (interaction: Interaction) => {
  * Gives the student role to new members if auto_give_student_role is set to true
  */
 client.on(Events.GuildMemberAdd, async member => {
-    const server = AttendingServerV2.safeGet(member.guild.id);
+    const server = AttendingServer.safeGet(member.guild.id);
     if (!server || !server.autoGiveStudentRole) {
         return;
     }
@@ -126,7 +126,7 @@ client.on(Events.GuildMemberAdd, async member => {
  */
 client.on(Events.GuildRoleUpdate, async role => {
     // if id exists, then we ignore
-    if (AttendingServerV2.safeGet(role.guild.id)) {
+    if (AttendingServer.safeGet(role.guild.id)) {
         return;
     }
     if (
@@ -151,7 +151,7 @@ client.on(Events.GuildRoleUpdate, async role => {
  * Track when members join or leave a voice channel
  */
 client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
-    const server = AttendingServerV2.safeGet(oldVoiceState.guild.id);
+    const server = AttendingServer.safeGet(oldVoiceState.guild.id);
     if (newVoiceState.member === null || !server) {
         // don't throw error here, just ignore it, otherwise it's uncaught
         return;
@@ -167,11 +167,11 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
  * Emit the on role delete event
  */
 client.on(Events.GuildRoleDelete, async role => {
-    await AttendingServerV2.safeGet(role.guild.id)?.onRoleDelete(role);
+    await AttendingServer.safeGet(role.guild.id)?.onRoleDelete(role);
 });
 
 client.on(Events.GuildMemberRemove, async member => {
-    const server = AttendingServerV2.safeGet(member.guild.id);
+    const server = AttendingServer.safeGet(member.guild.id);
     if (server !== undefined) {
         await Promise.allSettled(
             server.queues
@@ -204,7 +204,7 @@ process.on('exit', () => {
  * @returns AttendingServerV2 if successfully initialized
  * @throws ServerError if the AttendingServerV2.create failed
  */
-async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
+async function joinGuild(guild: Guild): Promise<AttendingServer> {
     LOGGER.info(`Joining guild: ${yellow(guild.name)}`);
     const externalCommandData = environment.disableExtensions
         ? []
@@ -212,7 +212,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServerV2> {
     await postSlashCommands(guild, externalCommandData);
     await guild.commands.fetch(); // populate cache
     // Extensions for server & queue are loaded inside the create method
-    const server = await AttendingServerV2.create(guild);
+    const server = await AttendingServer.create(guild);
     return server;
 }
 

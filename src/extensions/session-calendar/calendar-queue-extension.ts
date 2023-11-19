@@ -112,8 +112,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 CalendarButtonNames.Refresh,
-                this.queueChannel.channelObj.guildId,
-                this.queueChannel.channelObj.id
+                this.queueChannel.channelObj.guildId
             ])
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')

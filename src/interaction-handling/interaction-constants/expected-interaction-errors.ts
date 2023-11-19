@@ -63,8 +63,7 @@ const ExpectedParseErrors = {
         'Invalid Button or Command. Make sure this #queue channel has a parent category.'
     ),
     removeInsideQueue: new CommandParseError(
-        `Please use the remove command outside this category.` +
-            ` Otherwise Discord API will reject.`
+        "Please use the `queue remove` command outside this category. Discord API doesn't like it :(."
     ),
     noPermission: {
         clear: (queueName: string) =>
@@ -122,18 +121,7 @@ includes at least one non-whitespace character.`
             `The channel with id ${channelId} does not exist on this server.`
         ),
     invalidContentType: (contentType: string | null) =>
-        new CommandParseError(`The content type ${contentType} is not supported.`),
-    csvParseError: new CommandParseError(
-        'Sorry, I could not parse the CSV file you sent. Please make sure the file is a valid CSV file.'
-    ),
-    invalidDiscordId: (discordId: string | undefined) =>
-        new CommandParseError(
-            `The Discord ID ${discordId} is not a valid Discord ID. Please make sure you are using a valid Discord ID.`
-        ),
-    noQueueNames: (discordId: string) =>
-        new CommandParseError(
-            `The Discord ID ${discordId} does not have any queues associated to them in the .csv.`
-        )
+        new CommandParseError(`The content type ${contentType} is not supported.`)
 } as const;
 
 const UnexpectedParseErrors = {

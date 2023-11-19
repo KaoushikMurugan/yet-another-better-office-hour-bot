@@ -11,7 +11,7 @@ import {
     checkCalendarConnection,
     restorePublicEmbedURL
 } from '../shared-calendar-functions.js';
-import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { CalendarExtensionState } from '../calendar-states.js';
 
 const calendarModalMap: ModalSubmitHandlerProps = {
@@ -37,7 +37,7 @@ async function updateCalendarSettings(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const state = CalendarExtensionState.get(interaction.guildId);
     const calendarId = interaction.fields.getTextInputValue('calendar_id');
     const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
@@ -61,7 +61,6 @@ async function updateCalendarSettings(
         ? interaction.update(
               CalendarSettingsConfigMenu(
                   server,
-                  interaction.channel?.id ?? '0',
                   false,
                   'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
               )

@@ -9,7 +9,7 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
 import { GuildMember, VoiceChannel } from 'discord.js';
-import { HelpQueueV2 } from '../help-queue/help-queue.js';
+import { HelpQueue } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
 import { HelpMessage, Optional, SettingsMenuOption } from '../utils/type-aliases.js';
@@ -78,7 +78,7 @@ interface ServerExtension {
      */
     onAllQueuesInit: (
         server: FrozenServer,
-        allQueues: ReadonlyArray<HelpQueueV2>
+        allQueues: ReadonlyArray<HelpQueue>
     ) => Promise<void>;
     /**
      * When a student is dequeued
@@ -149,7 +149,6 @@ interface ServerExtension {
     loadExternalServerData: (serverId: string) => Promise<Optional<ServerBackup>>;
     /**
      * When the server requests backups.
-     * Currently, only queue related changes will trigger this call
      * @param server the server to backup
      */
     onServerRequestBackup: (server: FrozenServer) => Promise<void>;
@@ -277,7 +276,7 @@ abstract class BaseServerExtension implements ServerExtension {
     }
     onAllQueuesInit(
         server: FrozenServer,
-        allQueues: ReadonlyArray<HelpQueueV2>
+        allQueues: ReadonlyArray<HelpQueue>
     ): Promise<void> {
         return Promise.resolve();
     }

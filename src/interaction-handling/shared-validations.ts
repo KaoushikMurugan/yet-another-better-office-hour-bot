@@ -8,7 +8,7 @@ import {
     StringSelectMenuInteraction
 } from 'discord.js';
 import {
-    AttendingServerV2,
+    AttendingServer,
     QueueChannel
 } from '../attending-server/base-attending-server.js';
 import {
@@ -25,16 +25,16 @@ import { CategoryChannelId } from '../utils/type-aliases.js';
 /**
  * Checks if the command came from a dm with correctly initialized YABOB
  * - Extensions that wish to do additional checks can use this as a base
- * @returns the {@link AttendingServerV2} object
+ * @returns the {@link AttendingServer} object
  */
 function isValidDMInteraction(
     interaction: ButtonInteraction | ModalSubmitInteraction | StringSelectMenuInteraction
-): AttendingServerV2 {
+): AttendingServer {
     const [type, , serverId] = decompressComponentId(interaction.customId);
     if (type !== 'dm') {
         throw ExpectedParseErrors.nonYabobInteraction;
     }
-    const server = AttendingServerV2.get(serverId);
+    const server = AttendingServer.get(serverId);
     return server;
 }
 /**
@@ -46,7 +46,7 @@ function isFromQueueChannelWithParent(interaction: Interaction<'cached'>): Queue
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const queueChannel = server.getQueueChannelById(interaction.channel.parent.id);
     if (!queueChannel) {
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
@@ -65,7 +65,7 @@ function isFromQueueChannelWithParentIdOnly(
     if (!isTextChannel(interaction.channel) || interaction.channel.parent === null) {
         throw ExpectedParseErrors.queueHasNoParent;
     }
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     if (!server.getQueueChannelById(interaction.channel.parent.id)) {
         throw ExpectedParseErrors.unrecognizedQueue(interaction.channel.parent.name);
     }
@@ -116,7 +116,7 @@ function isTriggeredByMemberWithRoles(
  * @param required
  * - If true, check if the **command argument** is a valid queue category
  * - If false, check if the **current channel**'s parent category is a valid queue category
- * @returns the complete QueueChannel that {@link AttendingServerV2} accepts
+ * @returns the complete QueueChannel that {@link AttendingServer} accepts
  */
 function hasValidQueueArgument(
     interaction: ChatInputCommandInteraction<'cached'>,

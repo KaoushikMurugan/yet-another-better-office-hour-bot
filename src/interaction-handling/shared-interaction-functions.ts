@@ -8,14 +8,14 @@ import {
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
-import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
+import { buildComponent } from '../utils/component-id-factory.js';
 import { EmbedColor } from '../utils/embed-helper.js';
 import { YabobEmbed } from '../utils/type-aliases.js';
 import {
     ButtonNames,
     SelectMenuNames
 } from './interaction-constants/interaction-names.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 
 /**
@@ -25,7 +25,7 @@ import { AccessLevelRole } from '../models/access-level-roles.js';
  * @returns
  */
 function HelpMainMenuEmbed(
-    server: AttendingServerV2,
+    server: AttendingServer,
     viewMode: AccessLevelRole = 'student'
 ): YabobEmbed {
     // If student, jump to student help menu since it is the only one they can see
@@ -51,8 +51,7 @@ function HelpMainMenuEmbed(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.HelpMenuBotAdmin,
-                server.guild.id,
-                UnknownId
+                server.guild.id
             ])
                 .setStyle(ButtonStyle.Primary)
                 .setLabel('Bot Admin Commands')
@@ -71,8 +70,7 @@ function HelpMainMenuEmbed(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.HelpMenuStaff,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ])
             .setStyle(ButtonStyle.Primary)
             .setLabel('Helper Commands')
@@ -91,8 +89,7 @@ function HelpMainMenuEmbed(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.HelpMenuStudent,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ])
             .setStyle(ButtonStyle.Primary)
             .setLabel('Student Commands')
@@ -110,7 +107,7 @@ function HelpMainMenuEmbed(
  * @param page The page number of the help menu. 0 is home page
  */
 function HelpSubMenuEmbed(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     subMenu: AccessLevelRole = 'student'
 ): YabobEmbed {
@@ -120,8 +117,8 @@ function HelpSubMenuEmbed(
         subMenu === 'botAdmin'
             ? adminCommandHelpMessages
             : subMenu === 'staff'
-            ? helperCommandHelpMessages
-            : studentCommandHelpMessages
+              ? helperCommandHelpMessages
+              : studentCommandHelpMessages
     ).filter(helpMessage => helpMessage.useInHelpCommand === true);
 
     const embed = new EmbedBuilder()
@@ -130,8 +127,8 @@ function HelpSubMenuEmbed(
                 subMenu === 'botAdmin'
                     ? '👮 Bot Admin'
                     : subMenu === 'staff'
-                    ? '👨‍🏫 Staff'
-                    : '👨‍🎓 Student'
+                      ? '👨‍🏫 Staff'
+                      : '👨‍🎓 Student'
             } Help Menu`
         )
         .setColor(EmbedColor.Pink)
@@ -170,7 +167,7 @@ function HelpSubMenuEmbed(
  * Creates the buttons for the help menu
  */
 function HelpMenuButtons(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     maxPage: number
 ): ActionRowBuilder<ButtonBuilder> {
@@ -178,21 +175,19 @@ function HelpMenuButtons(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.HelpMenuLeft,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ])
             .setStyle(ButtonStyle.Primary)
-            .setLabel('Previvous Page')
+            .setLabel('Previous')
             .setEmoji('⬅️')
             .setDisabled(page === 0),
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.HelpMenuRight,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ])
             .setStyle(ButtonStyle.Primary)
-            .setLabel('Next Page')
+            .setLabel('Next')
             .setEmoji('➡️')
             .setDisabled(page === maxPage)
     );
@@ -205,7 +200,7 @@ function HelpMenuButtons(
  * @returns
  */
 function HelpMenuSelectMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     subMenu: AccessLevelRole = 'student'
 ): ActionRowBuilder<StringSelectMenuBuilder> {
@@ -213,9 +208,9 @@ function HelpMenuSelectMenu(
         subMenu === 'botAdmin'
             ? adminCommandHelpMessages
             : subMenu === 'staff'
-            ? helperCommandHelpMessages
-            : studentCommandHelpMessages
-    ).filter(helpMessage => helpMessage.useInHelpCommand === true);
+              ? helperCommandHelpMessages
+              : studentCommandHelpMessages
+    ).filter(helpMessage => helpMessage.useInHelpCommand);
 
     const pageHelpMessages = allHelpMessages.slice(page * 25, (page + 1) * 25);
 
@@ -223,8 +218,7 @@ function HelpMenuSelectMenu(
         buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.HelpMenu,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ]).addOptions(
             pageHelpMessages.map(helpMessage => {
                 return {
@@ -246,14 +240,13 @@ function HelpMenuSelectMenu(
  * @returns
  */
 function ReturnToHelpMainMenuButton(
-    server: AttendingServerV2
+    server: AttendingServer
 ): ActionRowBuilder<ButtonBuilder> {
     const button = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             'other',
             ButtonNames.ReturnToHelpMainMenu,
-            server.guild.id,
-            UnknownId
+            server.guild.id
         ])
             .setStyle(ButtonStyle.Primary)
             .setLabel('Return to Main Menu')
@@ -264,7 +257,7 @@ function ReturnToHelpMainMenuButton(
 }
 
 function ReturnToHelpMainAndSubMenuButton(
-    server: AttendingServerV2,
+    server: AttendingServer,
     subMenu: AccessLevelRole = 'student'
 ): ActionRowBuilder<ButtonBuilder> {
     const buttons = new ActionRowBuilder<ButtonBuilder>()
@@ -272,8 +265,7 @@ function ReturnToHelpMainAndSubMenuButton(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ReturnToHelpMainMenu,
-                server.guild.id,
-                UnknownId
+                server.guild.id
             ])
                 .setStyle(ButtonStyle.Primary)
                 .setLabel('Return to Main Menu')
@@ -285,10 +277,9 @@ function ReturnToHelpMainAndSubMenuButton(
                 subMenu === 'botAdmin'
                     ? ButtonNames.ReturnToHelpAdminSubMenu
                     : subMenu === 'staff'
-                    ? ButtonNames.ReturnToHelpStaffSubMenu
-                    : ButtonNames.ReturnToHelpStudentSubMenu,
-                server.guild.id,
-                UnknownId
+                      ? ButtonNames.ReturnToHelpStaffSubMenu
+                      : ButtonNames.ReturnToHelpStudentSubMenu,
+                server.guild.id
             ])
                 .setStyle(ButtonStyle.Primary)
                 .setLabel(
@@ -296,8 +287,8 @@ function ReturnToHelpMainAndSubMenuButton(
                         subMenu === 'botAdmin'
                             ? 'Admin'
                             : subMenu === 'staff'
-                            ? 'Staff'
-                            : 'Student'
+                              ? 'Staff'
+                              : 'Student'
                     } Help Menu`
                 )
                 .setEmoji('🏠')

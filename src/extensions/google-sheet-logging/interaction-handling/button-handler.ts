@@ -1,5 +1,5 @@
 import { ButtonInteraction } from 'discord.js';
-import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { ButtonHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { GoogleSheetButtonNames } from '../google-sheet-constants/google-sheet-interaction-names.js';
@@ -31,7 +31,7 @@ const googleSheetButtonMap: ButtonHandlerProps = {
 async function resetGoogleSheetSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     await Promise.all([
         state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
@@ -42,7 +42,6 @@ async function resetGoogleSheetSettings(
     await interaction.update(
         GoogleSheetSettingsConfigMenu(
             server,
-            interaction.channelId,
             false,
             'Successfully reset google sheet settings.'
         )
@@ -56,7 +55,7 @@ async function resetGoogleSheetSettings(
 async function showGoogleSheetSettingsModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.showModal(googleSheetSettingsModal(server.guild.id, true));
 }
 

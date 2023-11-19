@@ -23,7 +23,7 @@ import {
     SimpleEmbed,
     SlashCommandLogEmbed
 } from '../utils/embed-helper.js';
-import { decompressComponentId } from '../utils/component-id-factory.js';
+import { safeDecompressComponentId } from '../utils/component-id-factory.js';
 import {
     logButtonPress,
     logDMButtonPress,
@@ -42,7 +42,7 @@ import { InteractionExtension } from '../extensions/extension-interface.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
 import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 
 /**
  * Create the interaction extension instances here
@@ -94,12 +94,15 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
     if (!interaction.inCachedGuild() || !interaction.isChatInputCommand()) {
         return;
     }
+    
     const commandName = interaction.commandName;
     const possibleSubcommands = interaction.options.getSubcommand(false);
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const handleCommand = completeCommandMap.methodMap[commandName];
+
     logSlashCommand(interaction);
     server.sendLogMessage(SlashCommandLogEmbed(interaction));
+
     if (!completeCommandMap.skipProgressMessageCommands.has(commandName)) {
         await interaction.reply({
             ...SimpleEmbed(
@@ -124,19 +127,25 @@ async function processButton(interaction: Interaction): Promise<void> {
     if (!interaction.isButton()) {
         return;
     }
-    const [type, buttonName, serverId] = decompressComponentId(interaction.customId);
-    // serverId might be unknown
-    // TODO: Maybe require all buildComponent calls to accept only valid server id's
-    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
+
+    const parseResult = safeDecompressComponentId(interaction.customId);
+    if (!parseResult.ok) {
+        return;
+    }
+
+    const [type, buttonName, serverId] = parseResult.value;
+    const server = AttendingServer.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, buttonName, interaction.channel as TextChannel)
     );
+
     if (!completeButtonMap.skipProgressMessageButtons.has(buttonName)) {
         await interaction.reply({
             ...SimpleEmbed(`Processing button \`${buttonName}\`...`),
             ephemeral: true
         });
     }
+
     if (interaction.inCachedGuild() && type !== 'dm') {
         logButtonPress(
             interaction,
@@ -166,8 +175,14 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
     if (!interaction.isStringSelectMenu()) {
         return;
     }
-    const [type, selectMenuName, serverId] = decompressComponentId(interaction.customId);
-    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
+
+    const parseResult = safeDecompressComponentId(interaction.customId);
+    if (!parseResult.ok) {
+        return;
+    }
+
+    const [type, selectMenuName, serverId] = parseResult.value;
+    const server = AttendingServer.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         SelectMenuLogEmbed(
             interaction.user,
@@ -176,12 +191,14 @@ async function processSelectMenu(interaction: Interaction): Promise<void> {
             interaction.channel as TextChannel
         )
     );
+
     if (!completeSelectMenuMap.skipProgressMessageSelectMenus.has(selectMenuName)) {
         await interaction.reply({
             ...SimpleEmbed(`Processing button \`${selectMenuName}\``),
             ephemeral: true
         });
     }
+
     if (interaction.inCachedGuild() && type !== 'dm') {
         logSelectMenuSelection(interaction, selectMenuName);
         const handleSelectMenu =
@@ -208,11 +225,18 @@ async function processModalSubmit(interaction: Interaction): Promise<void> {
     if (!interaction.isModalSubmit()) {
         return;
     }
-    const [type, modalName, serverId] = decompressComponentId(interaction.customId);
-    const server = AttendingServerV2.get(interaction.guildId ?? serverId);
+
+    const parseResult = safeDecompressComponentId(interaction.customId);
+    if (!parseResult.ok) {
+        return;
+    }
+
+    const [type, modalName, serverId] = parseResult.value;
+    const server = AttendingServer.get(interaction.guildId ?? serverId);
     server.sendLogMessage(
         ButtonLogEmbed(interaction.user, modalName, interaction.channel as TextChannel)
     );
+
     if (interaction.inCachedGuild() && type !== 'dm') {
         logModalSubmit(interaction, modalName);
         const handleModalSubmit = completeModalMap.guildMethodMap[type][modalName];

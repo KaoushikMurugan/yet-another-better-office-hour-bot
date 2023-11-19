@@ -1,11 +1,11 @@
 /** @module SessionCalendar */
 import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
-import LRU from 'lru-cache';
+import { LRUCache as LRU } from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
 import {
     CalendarConfigBackup,
-    UpComingSessionViewModel,
+    UpcomingSessionViewModel,
     CALENDAR_LOGGER,
     checkCalendarConnection,
     fetchUpcomingSessions,
@@ -50,7 +50,7 @@ class CalendarExtensionState {
     static get(serverId: Snowflake): CalendarExtensionState {
         const state = CalendarExtensionState.allStates.get(serverId);
         if (!state) {
-            throw ExpectedCalendarErrors.nonServerInteraction(
+            throw ExpectedCalendarErrors.notInitialized(
                 client.guilds.cache.get(serverId)?.name
             );
         }
@@ -83,7 +83,7 @@ class CalendarExtensionState {
     /**
      * All upcoming sessions of this server
      */
-    upcomingSessions: UpComingSessionViewModel[] = [];
+    upcomingSessions: UpcomingSessionViewModel[] = [];
 
     private logger: Logger;
 

@@ -13,8 +13,8 @@ import {
     SpecialRoleValues,
     YabobEmbed
 } from '../utils/type-aliases.js';
-import { buildComponent, UnknownId } from '../utils/component-id-factory.js';
-import { AttendingServerV2 } from './base-attending-server.js';
+import { buildComponent } from '../utils/component-id-factory.js';
+import { AttendingServer } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 import {
     ButtonNames,
@@ -36,8 +36,7 @@ function SettingsSwitcher(
         buildComponent(new StringSelectMenuBuilder(), [
             'other',
             SelectMenuNames.ServerSettings,
-            UnknownId,
-            UnknownId
+            '0' // unused
         ])
             .setPlaceholder('Traverse the server settings menu') // * Find a better placeholder
             .addOptions(
@@ -141,7 +140,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
  * @param isDm is it in dm?
  * @returns the setting menu embed object
  */
-function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
+function SettingsMainMenu(server: AttendingServer): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
         .setColor(EmbedColor.Aqua)
@@ -170,8 +169,7 @@ function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
  * @returns
  */
 function RoleConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     _isDm: boolean, // not used
     updateMessage = ''
 ): YabobEmbed {
@@ -179,8 +177,8 @@ function RoleConfigMenu(
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
             : id === SpecialRoleValues.Deleted
-            ? '@deleted-role'
-            : `<@&${id}>`;
+              ? '@deleted-role'
+              : `<@&${id}>`;
     };
     const setRolesCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.set_roles
@@ -232,8 +230,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1SM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 // this emoji string must be free of any other characters
                 // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
@@ -243,8 +240,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig1aSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🔵')
                 .setLabel('Use Existing Roles (@everyone is student)')
@@ -254,8 +250,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2SM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles')
@@ -263,8 +258,7 @@ function RoleConfigMenu(
             buildComponent(new ButtonBuilder(), [
                 'other',
                 ButtonNames.ServerRoleConfig2aSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setEmoji('🟠')
                 .setLabel('Create New Roles (@everyone is student)')
@@ -284,8 +278,7 @@ function RoleConfigMenu(
  * @param completed whether the roles have been setup with this menu. Hide the buttons if true
  */
 function RoleConfigMenuForServerInit(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     completed = false
 ): YabobEmbed {
     const generatePing = (id: Snowflake) =>
@@ -341,8 +334,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig1SM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       // this emoji string must be free of any other characters
                       // otherwise it will throw a InteractionNotReplied Error, and discord js doesn't validate this
@@ -352,8 +344,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig1aSM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🔵')
                       .setLabel('Use Existing Roles (@everyone is student)')
@@ -363,8 +354,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig2SM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🟠')
                       .setLabel('Create New Roles')
@@ -372,8 +362,7 @@ function RoleConfigMenuForServerInit(
                   buildComponent(new ButtonBuilder(), [
                       'dm',
                       ButtonNames.ServerRoleConfig2aSM,
-                      server.guild.id,
-                      channelId
+                      server.guild.id
                   ])
                       .setEmoji('🟠')
                       .setLabel('Create New Roles (@everyone is student)')
@@ -395,8 +384,7 @@ function RoleConfigMenuForServerInit(
  * @returns
  */
 function AfterSessionMessageConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -429,8 +417,7 @@ function AfterSessionMessageConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.ShowAfterSessionMessageModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('⚙️')
             .setLabel('Edit Message')
@@ -438,8 +425,7 @@ function AfterSessionMessageConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableAfterSessionMessage,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -462,8 +448,7 @@ function AfterSessionMessageConfigMenu(
  * @returns
  */
 function QueueAutoClearConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -497,8 +482,7 @@ function QueueAutoClearConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.ShowQueueAutoClearModal,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('⚙️')
             .setLabel('Set Auto Clear Time')
@@ -506,8 +490,7 @@ function QueueAutoClearConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableQueueAutoClear,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -527,8 +510,7 @@ function QueueAutoClearConfigMenu(
  * @returns
  */
 function LoggingChannelConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -539,8 +521,7 @@ function LoggingChannelConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.DisableLoggingChannelSM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -598,8 +579,7 @@ function LoggingChannelConfigMenu(
             buildComponent(new StringSelectMenuBuilder(), [
                 'other',
                 SelectMenuNames.SelectLoggingChannelSM,
-                server.guild.id,
-                channelId
+                server.guild.id
             ])
                 .setPlaceholder('Select a Text Channel')
                 .addOptions(
@@ -630,8 +610,7 @@ function LoggingChannelConfigMenu(
  * @returns
  */
 function AutoGiveStudentRoleConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -661,8 +640,7 @@ function AutoGiveStudentRoleConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.AutoGiveStudentRoleConfig1SM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -670,8 +648,7 @@ function AutoGiveStudentRoleConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.AutoGiveStudentRoleConfig2SM,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -692,8 +669,7 @@ function AutoGiveStudentRoleConfigMenu(
  * @returns
  */
 function PromptHelpTopicConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -723,8 +699,7 @@ function PromptHelpTopicConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.PromptHelpTopicConfig1,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -732,8 +707,7 @@ function PromptHelpTopicConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.PromptHelpTopicConfig2,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')
@@ -754,8 +728,7 @@ function PromptHelpTopicConfigMenu(
  * @returns
  */
 function SeriousModeConfigMenu(
-    server: AttendingServerV2,
-    channelId: string,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -794,8 +767,7 @@ function SeriousModeConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.SeriousModeConfig1,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔓')
             .setLabel('Enable')
@@ -803,8 +775,7 @@ function SeriousModeConfigMenu(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             ButtonNames.SeriousModeConfig2,
-            server.guild.id,
-            channelId
+            server.guild.id
         ])
             .setEmoji('🔒')
             .setLabel('Disable')

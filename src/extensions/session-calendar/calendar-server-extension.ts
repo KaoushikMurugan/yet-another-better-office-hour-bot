@@ -17,13 +17,16 @@ class CalendarServerExtension extends BaseServerExtension {
     constructor(public readonly guild: Guild) {
         super();
         // sets up the refresh timer
-        this.timerId = setInterval(async () => {
-            const state = CalendarExtensionState.allStates.get(guild.id);
-            if (state) {
-                await state.refreshCalendarEvents();
-                await state.emitStateChangeEvent();
-            }
-        }, 60 * 60 * 1000);
+        this.timerId = setInterval(
+            async () => {
+                const state = CalendarExtensionState.allStates.get(guild.id);
+                if (state) {
+                    await state.refreshCalendarEvents();
+                    await state.emitStateChangeEvent();
+                }
+            },
+            60 * 60 * 1000
+        );
     }
 
     /**
