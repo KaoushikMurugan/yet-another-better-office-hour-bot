@@ -2,7 +2,7 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Interaction, Events } from 'discord.js';
+import { Guild, Events } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
 import { green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
@@ -82,7 +82,7 @@ client.on(Events.GuildDelete, async guild => {
  * - Button presses
  * - Modal submissions
  */
-client.on(Events.InteractionCreate, async (interaction: Interaction) => {
+client.on(Events.InteractionCreate, async interaction => {
     getHandler(interaction)(interaction).catch((err: Error) => {
         LOGGER.fatal(err, 'Uncaught Error');
         interaction.user

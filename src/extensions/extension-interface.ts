@@ -149,7 +149,6 @@ interface ServerExtension {
     loadExternalServerData: (serverId: string) => Promise<Optional<ServerBackup>>;
     /**
      * When the server requests backups.
-     * Currently, only queue related changes will trigger this call
      * @param server the server to backup
      */
     onServerRequestBackup: (server: FrozenServer) => Promise<void>;
