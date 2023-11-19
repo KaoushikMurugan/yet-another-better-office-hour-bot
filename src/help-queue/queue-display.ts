@@ -55,7 +55,7 @@ const queueStateStyles: {
  * Class that handles the rendering of the queue
  * i.e. displaying and updating the queue embeds
  */
-class QueueDisplayV2 {
+class QueueDisplay {
     /**
      * The collection of message ids that are safe to edit
      * - binds the render index with a specific message
@@ -370,4 +370,4 @@ class QueueDisplayV2 {
     }
 }
 
-export { QueueDisplayV2 };
+export { QueueDisplay };

@@ -11,7 +11,7 @@ import {
     Role,
     Snowflake
 } from 'discord.js';
-import { AutoClearTimeout, HelpQueueV2 } from '../help-queue/help-queue.js';
+import { AutoClearTimeout, HelpQueue } from '../help-queue/help-queue.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import {
     AccessLevelRole,
@@ -41,6 +41,7 @@ import {
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
+    GuildId,
     GuildMemberId,
     HelperRolesData,
     Optional,
@@ -98,37 +99,19 @@ type ServerSettings = {
     timezone: SimpleTimeZone;
 };
 
-type SortedAccessLevelRolesTuple = readonly [
-    botAdmin: {
-        key: 'botAdmin';
-        displayName: string;
-        id: OptionalRoleId;
-    },
-    staff: {
-        key: 'staff';
-        displayName: string;
-        id: OptionalRoleId;
-    },
-    student: {
-        key: 'student';
-        displayName: string;
-        id: OptionalRoleId;
-    }
-];
-
 /**
  * Represents 1 server that this YABOB is a member of.
  * - Public functions can be accessed by the command handler
  * - Variables with an underscore has a public getter, but only mutable inside the class
  */
-class AttendingServerV2 {
+class AttendingServer {
     /**
      * All the servers that YABOB is managing
-     * @remark Do NOT call the {@link AttendingServerV2} methods (except getters)
+     * @remark Do NOT call the {@link AttendingServer} methods (except getters)
      * without passing through a interaction handler first
      * - equivalent to the old attendingServers global object
      */
-    private static readonly allServers: Collection<Snowflake, AttendingServerV2> =
+    private static readonly allServers: Collection<GuildId, AttendingServer> =
         new Collection();
     /**
      * Unique helpers (both active and paused)
@@ -139,7 +122,7 @@ class AttendingServerV2 {
      * All the queues of this server
      * - Key is CategoryChannel.id of the parent category of #queue
      */
-    private _queues: Collection<CategoryChannelId, HelpQueueV2> = new Collection();
+    private _queues: Collection<CategoryChannelId, HelpQueue> = new Collection();
     /**
      * Cached result of {@link getQueueChannels}
      */
@@ -176,7 +159,7 @@ class AttendingServerV2 {
      * Number of correctly initialized AttendingServers
      */
     static get activeServersCount(): number {
-        return AttendingServerV2.allServers.size;
+        return AttendingServer.allServers.size;
     }
 
     /** All the access level role ids */
@@ -233,14 +216,14 @@ class AttendingServerV2 {
     }
 
     /** List of queues on this server */
-    get queues(): ReadonlyArray<HelpQueueV2> {
+    get queues(): ReadonlyArray<HelpQueue> {
         return [...this._queues.values()];
     }
 
     /**
      * Returns an array of the roles for this server in the order [Bot Admin, Helper, Student]
      */
-    get sortedAccessLevelRoles(): SortedAccessLevelRolesTuple {
+    get sortedAccessLevelRoles() {
         return [
             {
                 key: 'botAdmin',
@@ -296,7 +279,7 @@ class AttendingServerV2 {
      * @returns a created instance of YABOB
      * @throws {Error} if any setup functions fail (uncaught)
      */
-    static async create(guild: Guild): Promise<AttendingServerV2> {
+    static async create(guild: Guild): Promise<AttendingServer> {
         await initializationCheck(guild);
         // Load ServerExtensions here
         const serverExtensions: ServerExtension[] = environment.disableExtensions
@@ -305,7 +288,7 @@ class AttendingServerV2 {
                   GoogleSheetServerExtension.load(guild),
                   CalendarServerExtension.load(guild)
               ]);
-        const server = new AttendingServerV2(guild, serverExtensions);
+        const server = new AttendingServer(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
             ? undefined
             : await loadExternalServerData(guild.id);
@@ -338,7 +321,7 @@ class AttendingServerV2 {
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
-        AttendingServerV2.allServers.set(guild.id, server);
+        AttendingServer.allServers.set(guild.id, server);
         LOGGER.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
         return server;
     }
@@ -349,8 +332,8 @@ class AttendingServerV2 {
      * @returns the corresponding server object
      * @throws {ServerError} if no server with this server id exists
      */
-    static get(serverId: Snowflake): AttendingServerV2 {
-        const server = AttendingServerV2.allServers.get(serverId);
+    static get(serverId: Snowflake): AttendingServer {
+        const server = AttendingServer.allServers.get(serverId);
         if (!server) {
             throw ExpectedServerErrors.notInitialized;
         }
@@ -362,8 +345,8 @@ class AttendingServerV2 {
      * @param serverId guild id
      * @returns ServerError if no such AttendingServerV2 exists, otherwise the server object
      */
-    static safeGet(serverId: Snowflake): Optional<AttendingServerV2> {
-        return AttendingServerV2.allServers.get(serverId);
+    static safeGet(serverId: Snowflake): Optional<AttendingServer> {
+        return AttendingServer.allServers.get(serverId);
     }
 
     /**
@@ -515,9 +498,11 @@ class AttendingServerV2 {
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
             this.logger.error(err, 'Failed to update help channel visibilities.')
         );
-        createdRoles.length > 0
-            ? this.logger.info(`Created roles: ${createdRoles}`)
-            : this.logger.info(`All required roles exist in ${this.guild.name}!`);
+        this.logger.info(
+            createdRoles.length > 0
+                ? `Created roles: ${createdRoles}`
+                : `All required roles exist in ${this.guild.name}!`
+        );
         if (foundRoles.length > 0) {
             this.logger.info(`Found roles: ${foundRoles}`);
         }
@@ -549,7 +534,7 @@ class AttendingServerV2 {
             parentCategoryId: parentCategory.id
         };
         const [helpQueue] = await Promise.all([
-            HelpQueueV2.create(queueChannel),
+            HelpQueue.create(queueChannel),
             this.createQueueRoles()
         ]);
         this._queues.set(parentCategory.id, helpQueue);
@@ -617,7 +602,7 @@ class AttendingServerV2 {
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
         }
-        const queueToDequeue = nonEmptyQueues.reduce<HelpQueueV2>(
+        const queueToDequeue = nonEmptyQueues.reduce<HelpQueue>(
             (prev, curr) =>
                 prev.first &&
                 curr.first &&
@@ -712,7 +697,7 @@ class AttendingServerV2 {
      * @returns the queue object
      * @throws {ServerError} if no such queue
      */
-    getQueueById(parentCategoryId: Snowflake): HelpQueueV2 {
+    getQueueById(parentCategoryId: Snowflake): HelpQueue {
         const queue = this._queues.get(parentCategoryId);
         if (!queue) {
             throw ExpectedServerErrors.queueDoesNotExist;
@@ -779,7 +764,7 @@ class AttendingServerV2 {
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
         );
-        return AttendingServerV2.allServers.delete(this.guild.id);
+        return AttendingServer.allServers.delete(this.guild.id);
     }
 
     /**
@@ -1222,7 +1207,7 @@ class AttendingServerV2 {
                     : undefined;
                 this._queues.set(
                     channel.parentCategoryId,
-                    await HelpQueueV2.create(channel, completeBackup)
+                    await HelpQueue.create(channel, completeBackup)
                 );
             })
         );
@@ -1262,4 +1247,4 @@ class AttendingServerV2 {
     }
 }
 
-export { AttendingServerV2, QueueChannel };
+export { AttendingServer, QueueChannel };

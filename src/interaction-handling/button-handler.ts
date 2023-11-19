@@ -25,7 +25,7 @@ import {
     QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
 import { SimpleEmbed } from '../utils/embed-helper.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
 import {
@@ -170,7 +170,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
  */
 async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.Join, 'student');
@@ -193,7 +193,7 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
  */
 async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -213,7 +213,7 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
  */
 async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -233,7 +233,7 @@ async function joinNotifGroup(interaction: ButtonInteraction<'cached'>): Promise
  */
 async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     isTriggeredByMemberWithRoles(
@@ -253,7 +253,7 @@ async function leaveNotifGroup(interaction: ButtonInteraction<'cached'>): Promis
  * @param interaction
  */
 async function start(interaction: ButtonInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -268,7 +268,7 @@ async function start(interaction: ButtonInteraction<'cached'>): Promise<void> {
  * The `/next` command, both with arguments or without arguments
  */
 async function next(interaction: ButtonInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const helperMember = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -296,7 +296,7 @@ async function next(interaction: ButtonInteraction<'cached'>): Promise<void> {
  * @param interaction
  */
 async function stop(interaction: ButtonInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -311,7 +311,7 @@ async function stop(interaction: ButtonInteraction<'cached'>): Promise<void> {
  * The `/pause` command
  */
 async function pause(interaction: ButtonInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -326,7 +326,7 @@ async function pause(interaction: ButtonInteraction<'cached'>): Promise<void> {
  * The `/resume` command
  */
 async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const member = isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -344,7 +344,7 @@ async function resume(interaction: ButtonInteraction<'cached'>): Promise<void> {
 async function showAnnounceModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(
         server,
         interaction.member,
@@ -360,7 +360,7 @@ async function showAnnounceModal(
 async function showSettingsMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.update(SettingsMainMenu(server));
 }
 
@@ -375,7 +375,7 @@ async function createAccessLevelRoles(
     everyoneIsStudent: boolean,
     parent: 'settings' | 'quickStart'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.createAccessLevelRoles(forceCreate, everyoneIsStudent);
     await interaction.update(
         parent === 'settings'
@@ -417,7 +417,7 @@ async function createServerRolesDM(
 async function showAfterSessionMessageModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.showModal(AfterSessionMessageModal(server.guild.id, true));
 }
 
@@ -427,7 +427,7 @@ async function showAfterSessionMessageModal(
 async function disableAfterSessionMessage(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setAfterSessionMessage('');
     await interaction.update(
         AfterSessionMessageConfigMenu(
@@ -444,7 +444,7 @@ async function disableAfterSessionMessage(
 async function showQueueAutoClearModal(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.showModal(QueueAutoClearModal(server.guild.id, true));
 }
 
@@ -454,7 +454,7 @@ async function showQueueAutoClearModal(
 async function disableQueueAutoClear(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setQueueAutoClear(0, 0, false);
     await interaction.update(
         QueueAutoClearConfigMenu(
@@ -472,7 +472,7 @@ async function disableLoggingChannel(
     interaction: ButtonInteraction<'cached'>,
     parent: 'settings' | 'quickStart'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setLoggingChannel(undefined);
     if (parent === 'settings') {
         await interaction.update(
@@ -501,7 +501,7 @@ async function toggleAutoGiveStudentRole(
     autoGiveStudentRole: boolean,
     parent: 'settings' | 'quickStart'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setAutoGiveStudentRole(autoGiveStudentRole);
     if (parent === 'settings') {
         await interaction.update(
@@ -534,7 +534,7 @@ async function togglePromptHelpTopic(
     interaction: ButtonInteraction<'cached'>,
     enablePromptHelpTopic: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setPromptHelpTopic(enablePromptHelpTopic);
     await interaction.update(
         PromptHelpTopicConfigMenu(
@@ -556,7 +556,7 @@ async function toggleSeriousMode(
     interaction: ButtonInteraction<'cached'>,
     enableSeriousMode: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await server.setSeriousServer(enableSeriousMode);
     await interaction.update(
         SeriousModeConfigMenu(
@@ -577,7 +577,7 @@ async function switchHelpMenuPage(
     interaction: ButtonInteraction<'cached'>,
     leftOrRight: 'left' | 'right'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const footerText = interaction.message.embeds[0]?.footer?.text.split(' ')[1];
     const oldPage = Number(footerText?.split('/')[0]);
     const maxPage = Number(footerText?.split('/')[1]);
@@ -601,14 +601,14 @@ async function showHelpSubMenu(
     interaction: ButtonInteraction<'cached'>,
     viewMode: AccessLevelRole
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
 }
 
 async function returnToHelpMainMenu(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const viewMode = server.getHighestAccessLevelRole(interaction.member);
     await interaction.update(HelpMainMenuEmbed(server, viewMode));
 }
@@ -617,7 +617,7 @@ async function returnToHelpSubMenu(
     interaction: ButtonInteraction<'cached'>,
     viewMode: AccessLevelRole
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await interaction.update(HelpSubMenuEmbed(server, 0, viewMode));
 }
 
@@ -625,7 +625,7 @@ async function shiftQuickStartPage(
     interaction: ButtonInteraction<'cached'>,
     buttonPressed: 'back' | 'next'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const footerText = interaction.message.embeds[0]?.footer?.text.split(' ')[1];
     const oldPage = Number(footerText?.split('/')[0]);
     const maxPage = Number(footerText?.split('/')[1]);

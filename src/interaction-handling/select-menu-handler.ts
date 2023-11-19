@@ -4,7 +4,7 @@ import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
 import { SelectMenuNames } from './interaction-constants/interaction-names.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
@@ -40,7 +40,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
 async function showSettingsSubMenu(
     interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const selectedOption = interaction.values[0];
     const callbackMenu = serverSettingsMainMenuOptions.find(
         option => option.selectMenuOptionData.value === selectedOption
@@ -59,7 +59,7 @@ async function selectLoggingChannel(
     interaction: StringSelectMenuInteraction<'cached'>,
     parent: 'settings' | 'quickStart'
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const channelId = interaction.values[0];
     const loggingChannel = server.guild.channels.cache.get(channelId ?? '');
     const callbackMenu = serverSettingsMainMenuOptions.find(
@@ -94,7 +94,7 @@ async function selectLoggingChannel(
 async function selectHelpCommand(
     interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const selectedOption = interaction.values[0];
     const allHelpMessages = adminCommandHelpMessages.concat(
         helperCommandHelpMessages.concat(studentCommandHelpMessages)

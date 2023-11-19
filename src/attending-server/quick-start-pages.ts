@@ -18,7 +18,7 @@ import {
     SelectMenuNames
 } from '../interaction-handling/interaction-constants/interaction-names.js';
 import { EmbedColor } from '../utils/embed-helper.js';
-import { AttendingServerV2 } from './base-attending-server.js';
+import { AttendingServer } from './base-attending-server.js';
 import {
     documentationLinks,
     supportServerInviteLink,
@@ -41,7 +41,7 @@ function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     }`;
 }
 
-function QuickStartFirstPage(server: AttendingServerV2): YabobEmbed {
+function QuickStartFirstPage(server: AttendingServer): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start')
         .setColor(EmbedColor.Aqua)
@@ -66,7 +66,7 @@ function QuickStartFirstPage(server: AttendingServerV2): YabobEmbed {
     };
 }
 
-function QuickStartSetRoles(server: AttendingServerV2, updateMessage = ''): YabobEmbed {
+function QuickStartSetRoles(server: AttendingServer, updateMessage = ''): YabobEmbed {
     const generatePing = (id: Snowflake | SpecialRoleValues) => {
         return id === SpecialRoleValues.NotSet
             ? 'Not Set'
@@ -172,7 +172,7 @@ function QuickStartSetRoles(server: AttendingServerV2, updateMessage = ''): Yabo
     };
 }
 
-function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
+function QuickStartCreateAQueue(server: AttendingServer): YabobEmbed {
     // get the queue add command id
     const queueAddCommandId = server.guild.commands.cache.find(
         command =>
@@ -203,7 +203,7 @@ function QuickStartCreateAQueue(server: AttendingServerV2): YabobEmbed {
 }
 
 function QuickStartAutoGiveStudentRole(
-    server: AttendingServerV2,
+    server: AttendingServer,
 
     updateMessage = ''
 ): YabobEmbed {
@@ -267,7 +267,7 @@ function QuickStartAutoGiveStudentRole(
 }
 
 function QuickStartLoggingChannel(
-    server: AttendingServerV2,
+    server: AttendingServer,
 
     updateMessage = ''
 ): YabobEmbed {
@@ -362,7 +362,7 @@ function QuickStartLoggingChannel(
     };
 }
 
-function QuickStartLastPage(server: AttendingServerV2): YabobEmbed {
+function QuickStartLastPage(server: AttendingServer): YabobEmbed {
     const settingsCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.settings
     )?.id;

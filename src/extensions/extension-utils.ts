@@ -1,12 +1,12 @@
-import type { AttendingServerV2 } from '../attending-server/base-attending-server.js';
-import type { HelpQueueV2 } from '../help-queue/help-queue.js';
-import type { QueueDisplayV2 } from '../help-queue/queue-display.js';
+import type { AttendingServer } from '../attending-server/base-attending-server.js';
+import type { HelpQueue } from '../help-queue/help-queue.js';
+import type { QueueDisplay } from '../help-queue/queue-display.js';
 import type { ConstNoMethod } from '../utils/type-aliases.js';
 
 /**
  * Removes all public methods from HelpQueueV2 and marks everything readonly
  */
-type FrozenQueue = Omit<ConstNoMethod<HelpQueueV2>, 'timers'>;
+type FrozenQueue = Omit<ConstNoMethod<HelpQueue>, 'timers'>;
 
 /**
  * Removes all public methods from AttendingServerV2 and marks everything readonly
@@ -14,12 +14,12 @@ type FrozenQueue = Omit<ConstNoMethod<HelpQueueV2>, 'timers'>;
  * - getQueueChannels
  * - sendLogMessage
  */
-type FrozenServer = ConstNoMethod<AttendingServerV2> &
-    Pick<AttendingServerV2, 'getQueueChannels' | 'sendLogMessage'>;
+type FrozenServer = ConstNoMethod<AttendingServer> &
+    Pick<AttendingServer, 'getQueueChannels' | 'sendLogMessage'>;
 
 /**
  * Only exposes the requestExtensionEmbedRender method for extensions
  */
-type FrozenDisplay = Pick<QueueDisplayV2, 'requestExtensionEmbedRender'>;
+type FrozenDisplay = Pick<QueueDisplay, 'requestExtensionEmbedRender'>;
 
 export type { FrozenServer, FrozenQueue, FrozenDisplay };

@@ -9,7 +9,7 @@ import {
 } from 'discord.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
 import { ModalNames } from './interaction-names.js';
-import { AttendingServerV2 } from '../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../attending-server/base-attending-server.js';
 
 /**
  * Creates a modal for the user to set the queue auto clear time.
@@ -20,7 +20,7 @@ import { AttendingServerV2 } from '../../attending-server/base-attending-server.
  * @returns
  */
 function QueueAutoClearModal(serverId: Snowflake, useMenu = false): ModalBuilder {
-    const oldTimeout = AttendingServerV2.get(serverId).queueAutoClearTimeout;
+    const oldTimeout = AttendingServer.get(serverId).queueAutoClearTimeout;
     const modal = buildComponent(new ModalBuilder(), [
         'other',
         useMenu
@@ -84,7 +84,7 @@ function AfterSessionMessageModal(serverId: Snowflake, useMenu = false): ModalBu
                     .setCustomId('after_session_msg')
                     .setLabel('Leave blank to disable') // There is a character limit for labels
                     .setPlaceholder('Enter your message here')
-                    .setValue(AttendingServerV2.get(serverId).afterSessionMessage)
+                    .setValue(AttendingServer.get(serverId).afterSessionMessage)
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(false)
             )

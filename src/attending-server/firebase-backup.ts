@@ -4,8 +4,8 @@ import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
 import { client, firebaseDB, LOGGER } from '../global-states.js';
 import { FrozenServer } from '../extensions/extension-utils.js';
-import { HelpQueueV2 } from '../help-queue/help-queue.js';
-import { AttendingServerV2 } from './base-attending-server.js';
+import { HelpQueue } from '../help-queue/help-queue.js';
+import { AttendingServer } from './base-attending-server.js';
 import util from 'util';
 
 /**
@@ -145,7 +145,7 @@ function backupServerSettings(server: FrozenServer): void {
  * Runs the backup for 1 queue only
  * @param queue the queue to backup
  */
-function backupQueueData(queue: HelpQueueV2): void {
+function backupQueueData(queue: HelpQueue): void {
     const queueBackup: QueueBackup = {
         studentsInQueue: queue.students.map(student => ({
             waitStart: student.waitStart,
@@ -202,14 +202,14 @@ function useFullBackup(
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
         // this parameter specifies the context of the decorator
-        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+        descriptor.value = async function (this: AttendingServer, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = await original.apply(this, args);
             fullServerBackup(this);
             return res;
         };
     } else {
-        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+        descriptor.value = function (this: AttendingServer, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = original.apply(this, args);
             fullServerBackup(this);
@@ -232,14 +232,14 @@ function useSettingsBackup(
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
         // this parameter specifies the context of the decorator
-        descriptor.value = async function (this: AttendingServerV2, ...args: unknown[]) {
+        descriptor.value = async function (this: AttendingServer, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = await original.apply(this, args);
             backupServerSettings(this);
             return res;
         };
     } else {
-        descriptor.value = function (this: AttendingServerV2, ...args: unknown[]) {
+        descriptor.value = function (this: AttendingServer, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = original.apply(this, args);
             backupServerSettings(this);
@@ -262,14 +262,14 @@ function useQueueBackup(
     const original = descriptor.value;
     if (util.types.isAsyncFunction(original)) {
         // this parameter specifies the context of the decorator
-        descriptor.value = async function (this: HelpQueueV2, ...args: unknown[]) {
+        descriptor.value = async function (this: HelpQueue, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = await original.apply(this, args);
             backupQueueData(this);
             return res;
         };
     } else {
-        descriptor.value = function (this: HelpQueueV2, ...args: unknown[]) {
+        descriptor.value = function (this: HelpQueue, ...args: unknown[]) {
             // .apply accepts 'this' as the first parameter to specify the context of the function call
             const res = original.apply(this, args);
             backupQueueData(this);

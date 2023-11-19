@@ -1,7 +1,7 @@
 import { ModalSubmitInteraction } from 'discord.js';
 import { ModalSubmitHandlerProps } from '../../../interaction-handling/handler-interface.js';
 import { GoogleSheetModalNames } from '../google-sheet-constants/google-sheet-interaction-names.js';
-import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 import { GoogleSheetSettingsConfigMenu } from '../google-sheet-constants/google-sheet-settings-menu.js';
@@ -28,7 +28,7 @@ async function updateGoogleSheetSettings(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     const googleSheetID = interaction.fields.getTextInputValue('google_sheet_id');
     await state.setGoogleSheet(googleSheetID);

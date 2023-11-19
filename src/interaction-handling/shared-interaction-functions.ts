@@ -15,7 +15,7 @@ import {
     ButtonNames,
     SelectMenuNames
 } from './interaction-constants/interaction-names.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 
 /**
@@ -25,7 +25,7 @@ import { AccessLevelRole } from '../models/access-level-roles.js';
  * @returns
  */
 function HelpMainMenuEmbed(
-    server: AttendingServerV2,
+    server: AttendingServer,
     viewMode: AccessLevelRole = 'student'
 ): YabobEmbed {
     // If student, jump to student help menu since it is the only one they can see
@@ -107,7 +107,7 @@ function HelpMainMenuEmbed(
  * @param page The page number of the help menu. 0 is home page
  */
 function HelpSubMenuEmbed(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     subMenu: AccessLevelRole = 'student'
 ): YabobEmbed {
@@ -167,7 +167,7 @@ function HelpSubMenuEmbed(
  * Creates the buttons for the help menu
  */
 function HelpMenuButtons(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     maxPage: number
 ): ActionRowBuilder<ButtonBuilder> {
@@ -200,7 +200,7 @@ function HelpMenuButtons(
  * @returns
  */
 function HelpMenuSelectMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     page: number,
     subMenu: AccessLevelRole = 'student'
 ): ActionRowBuilder<StringSelectMenuBuilder> {
@@ -240,7 +240,7 @@ function HelpMenuSelectMenu(
  * @returns
  */
 function ReturnToHelpMainMenuButton(
-    server: AttendingServerV2
+    server: AttendingServer
 ): ActionRowBuilder<ButtonBuilder> {
     const button = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
@@ -257,7 +257,7 @@ function ReturnToHelpMainMenuButton(
 }
 
 function ReturnToHelpMainAndSubMenuButton(
-    server: AttendingServerV2,
+    server: AttendingServer,
     subMenu: AccessLevelRole = 'student'
 ): ActionRowBuilder<ButtonBuilder> {
     const buttons = new ActionRowBuilder<ButtonBuilder>()

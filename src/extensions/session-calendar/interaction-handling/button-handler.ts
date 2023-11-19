@@ -10,7 +10,7 @@ import {
 } from '../calendar-constants/calendar-success-messsages.js';
 import { isFromQueueChannelWithParent } from '../../../interaction-handling/shared-validations.js';
 import { CalendarExtensionState } from '../calendar-states.js';
-import { AttendingServerV2 } from '../../../attending-server/base-attending-server.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 
 const calendarButtonMap: ButtonHandlerProps = {
     guildMethodMap: {
@@ -35,7 +35,7 @@ async function resetCalendarSettings(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const state = CalendarExtensionState.get(interaction.guildId);
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     await Promise.all([
         state.setCalendarId(environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID),
         server.sendLogMessage(CalendarLogMessages.backedUpToFirebase)

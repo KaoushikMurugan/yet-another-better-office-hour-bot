@@ -8,7 +8,7 @@ import {
     SelectMenuComponentOptionData,
     Snowflake
 } from 'discord.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { QueueError, ServerError } from './error-types.js';
 
 /**
@@ -100,7 +100,7 @@ type HelpMessage = {
  * A function that builds the settings menu embed
  */
 type SettingsMenuConstructor = (
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage: Optional<string>
 ) => BaseMessageOptions;
@@ -174,7 +174,7 @@ type SettingsMenuOption = {
 };
 
 type QuickStartPageFunctions = (
-    server: AttendingServerV2,
+    server: AttendingServer,
     updateMessage?: string
 ) => YabobEmbed;
 

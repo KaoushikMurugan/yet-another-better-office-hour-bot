@@ -7,7 +7,7 @@ import type { Helpee } from '../models/member-states.js';
 import type { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
 import { Collection } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import { QueueDisplayV2 } from './queue-display.js';
+import { QueueDisplay } from './queue-display.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
@@ -49,7 +49,7 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  * - Each queue must be inside a category where the name is the queue's name
  * - Each queue category must have only 1 #queue text channel where all embed will be sent
  */
-class HelpQueueV2 {
+class HelpQueue {
     /**
      * Set of active helpers' ids
      * - This is synchronized with the helpers that are marked 'active' in AttendingServerV2
@@ -94,7 +94,7 @@ class HelpQueueV2 {
     protected constructor(
         public readonly queueChannel: QueueChannel,
         private readonly queueExtensions: QueueExtension[],
-        private readonly display: QueueDisplayV2,
+        private readonly display: QueueDisplay,
         backupData?: QueueBackup & {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
@@ -188,9 +188,9 @@ class HelpQueueV2 {
             timeUntilAutoClear: AutoClearTimeout;
             seriousModeEnabled: boolean;
         }
-    ): Promise<HelpQueueV2> {
+    ): Promise<HelpQueue> {
         const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
-        const display = new QueueDisplayV2(queueChannel);
+        const display = new QueueDisplay(queueChannel);
         const queueExtensions: QueueExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
@@ -200,7 +200,7 @@ class HelpQueueV2 {
                       display // let extensions also have the reference
                   )
               ]);
-        const queue = new HelpQueueV2(queueChannel, queueExtensions, display, backupData);
+        const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
@@ -713,4 +713,4 @@ class HelpQueueV2 {
     }
 }
 
-export { HelpQueueV2, QueueViewModel, AutoClearTimeout, QueueState };
+export { HelpQueue, QueueViewModel, AutoClearTimeout, QueueState };

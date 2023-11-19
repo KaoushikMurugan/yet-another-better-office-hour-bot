@@ -14,7 +14,7 @@ import {
     YabobEmbed
 } from '../utils/type-aliases.js';
 import { buildComponent } from '../utils/component-id-factory.js';
-import { AttendingServerV2 } from './base-attending-server.js';
+import { AttendingServer } from './base-attending-server.js';
 import { isTextChannel, longestCommonSubsequence } from '../utils/util-functions.js';
 import {
     ButtonNames,
@@ -140,7 +140,7 @@ const serverSettingsMainMenuOptions: SettingsMenuOption[] = [
  * @param isDm is it in dm?
  * @returns the setting menu embed object
  */
-function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
+function SettingsMainMenu(server: AttendingServer): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle(`🛠 Server Settings for ${server.guild.name} 🛠`)
         .setColor(EmbedColor.Aqua)
@@ -169,7 +169,7 @@ function SettingsMainMenu(server: AttendingServerV2): YabobEmbed {
  * @returns
  */
 function RoleConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     _isDm: boolean, // not used
     updateMessage = ''
 ): YabobEmbed {
@@ -278,7 +278,7 @@ function RoleConfigMenu(
  * @param completed whether the roles have been setup with this menu. Hide the buttons if true
  */
 function RoleConfigMenuForServerInit(
-    server: AttendingServerV2,
+    server: AttendingServer,
     completed = false
 ): YabobEmbed {
     const generatePing = (id: Snowflake) =>
@@ -384,7 +384,7 @@ function RoleConfigMenuForServerInit(
  * @returns
  */
 function AfterSessionMessageConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -448,7 +448,7 @@ function AfterSessionMessageConfigMenu(
  * @returns
  */
 function QueueAutoClearConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -510,7 +510,7 @@ function QueueAutoClearConfigMenu(
  * @returns
  */
 function LoggingChannelConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -610,7 +610,7 @@ function LoggingChannelConfigMenu(
  * @returns
  */
 function AutoGiveStudentRoleConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -669,7 +669,7 @@ function AutoGiveStudentRoleConfigMenu(
  * @returns
  */
 function PromptHelpTopicConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
@@ -728,7 +728,7 @@ function PromptHelpTopicConfigMenu(
  * @returns
  */
 function SeriousModeConfigMenu(
-    server: AttendingServerV2,
+    server: AttendingServer,
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {

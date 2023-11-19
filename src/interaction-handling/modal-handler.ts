@@ -8,7 +8,7 @@ import { ExpectedParseErrors } from './interaction-constants/expected-interactio
 import { ModalNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import { isFromQueueChannelWithParent } from './shared-validations.js';
-import { AttendingServerV2 } from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
 
 const baseYabobModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
@@ -37,7 +37,7 @@ async function submitHelpTopic(
     interaction: ModalSubmitInteraction<'cached'>
 ): Promise<void> {
     const [server, queueChannel] = [
-        AttendingServerV2.get(interaction.guildId),
+        AttendingServer.get(interaction.guildId),
         isFromQueueChannelWithParent(interaction)
     ];
     const topic = interaction.fields.getTextInputValue('help_topic');
@@ -60,7 +60,7 @@ async function setAfterSessionMessage(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const message = interaction.fields.getTextInputValue('after_session_msg');
     if (message.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
@@ -91,7 +91,7 @@ async function setQueueAutoClear(
     interaction: ModalSubmitInteraction<'cached'>,
     useMenu: boolean
 ): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
     let hours = hoursInput === '' ? 0 : parseInt(hoursInput, 10); // only accept base 10 inputs
@@ -123,7 +123,7 @@ async function setQueueAutoClear(
 }
 
 async function announce(interaction: ModalSubmitInteraction<'cached'>): Promise<void> {
-    const server = AttendingServerV2.get(interaction.guildId);
+    const server = AttendingServer.get(interaction.guildId);
     const announcement = interaction.fields.getTextInputValue('announcement');
     if (announcement.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
