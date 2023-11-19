@@ -267,9 +267,6 @@ class AttendingServer {
             .map(role => role.id)
             .filter(roleId => member.roles.cache.has(roleId))
             .at(0);
-        if (highestRole === undefined) {
-            return undefined;
-        }
         return this.sortedAccessLevelRoles.find(role => role.id === highestRole)?.key;
     }
 

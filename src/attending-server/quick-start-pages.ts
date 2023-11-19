@@ -41,6 +41,14 @@ function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     }`;
 }
 
+function generatePing(id: Snowflake | SpecialRoleValues) {
+    return id === SpecialRoleValues.NotSet
+        ? 'Not Set'
+        : id === SpecialRoleValues.Deleted
+          ? '@deleted-role'
+          : `<@&${id}>`;
+}
+
 function QuickStartFirstPage(server: AttendingServer): YabobEmbed {
     const embed = new EmbedBuilder()
         .setTitle('Quick Start')
@@ -67,13 +75,6 @@ function QuickStartFirstPage(server: AttendingServer): YabobEmbed {
 }
 
 function QuickStartSetRoles(server: AttendingServer, updateMessage = ''): YabobEmbed {
-    const generatePing = (id: Snowflake | SpecialRoleValues) => {
-        return id === SpecialRoleValues.NotSet
-            ? 'Not Set'
-            : id === SpecialRoleValues.Deleted
-              ? '@deleted-role'
-              : `<@&${id}>`;
-    };
     const setRolesCommandId = server.guild.commands.cache.find(
         command => command.name === CommandNames.set_roles
     )?.id;

@@ -1,4 +1,4 @@
-import { GuildId, ComponentLocation, Optional } from './type-aliases.js';
+import { GuildId, ComponentLocation, Optional, Ok, Result, Err } from './type-aliases.js';
 import LZString from 'lz-string';
 import { ButtonBuilder, ModalBuilder, StringSelectMenuBuilder } from 'discord.js';
 import { CommandParseError } from './error-types.js';
@@ -76,6 +76,25 @@ function decompressComponentId(compressedId: string): CustomIdTuple<ComponentLoc
     return parsed;
 }
 
+function safeDecompressComponentId(
+    compressedId: string
+): Result<CustomIdTuple<ComponentLocation>, Error> {
+    try {
+        const rawDecompressed = LZString.decompressFromUTF16(compressedId);
+        const parsed = JSON.parse(rawDecompressed);
+
+        if (!isValidCustomIdTuple(parsed)) {
+            return Err(
+                new CommandParseError('Decompressed id is not a valid custom id tuple.')
+            );
+        }
+
+        return Ok(parsed);
+    } catch {
+        return Err(new CommandParseError('Cannot decompress this component id.'));
+    }
+}
+
 /**
  * Decompresses the component id and extract the component name
  * - this is kind of a duplicate of decompressComponentId but skips the validation step
@@ -138,6 +157,7 @@ export {
     YabobSelectMenu,
     YabobModal,
     buildComponent,
+    extractComponentName,
     decompressComponentId,
-    extractComponentName
+    safeDecompressComponentId
 };
