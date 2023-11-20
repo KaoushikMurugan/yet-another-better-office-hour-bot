@@ -13,9 +13,9 @@ import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
-import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
+import { adminCommandHelpMessages } from './help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from './help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from './help-channel-messages/StudentCommands.js';
 
 /**
  * After login startup sequence

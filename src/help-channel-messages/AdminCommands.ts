@@ -1,6 +1,6 @@
-import { client } from '../src/global-states.js';
-import { EmbedColor } from '../src/utils/embed-helper.js';
-import { HelpMessage } from '../src/utils/type-aliases.js';
+import { client } from '../global-states.js';
+import { EmbedColor } from '../utils/embed-helper.js';
+import { HelpMessage } from '../utils/type-aliases.js';
 
 const adminCommandsTitleMessage: HelpMessage = {
     nameValuePair: {
