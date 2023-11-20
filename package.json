@@ -4,10 +4,10 @@
     "description": "Yet another better discord bot for managing office hours",
     "type": "module",
     "scripts": {
-        "lint": "eslint src/",
-        "build": "npx tsc",
-        "format": "npx prettier -w .",
+        "build": "echo 'Compiling...' && npx tsc",
         "start": "node dist/src/app.js",
+        "lint": "eslint src/",
+        "format": "npx prettier -w .",
         "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
         "dev_precompiled": "NODE_ENV=development node dist/src/app.js",
         "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
