@@ -2,9 +2,9 @@
  * @packageDocumentation
  * @module AttendingServerV2
  */
-import { adminCommandHelpMessages } from '../../help-channel-messages/AdminCommands.js';
-import { helperCommandHelpMessages } from '../../help-channel-messages/HelperCommands.js';
-import { studentCommandHelpMessages } from '../../help-channel-messages/StudentCommands.js';
+import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
+import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
+import { studentCommandHelpMessages } from '../help-channel-messages/StudentCommands.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMessage } from '../utils/type-aliases.js';
 
