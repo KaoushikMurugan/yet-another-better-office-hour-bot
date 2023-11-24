@@ -16,6 +16,7 @@ import { UnexpectedParseErrors } from './interaction-handling/interaction-consta
 import { adminCommandHelpMessages } from './help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from './help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from './help-channel-messages/StudentCommands.js';
+import { quickStartPages } from './attending-server/quick-start-pages.js';
 
 /**
  * After login startup sequence
@@ -254,5 +255,10 @@ function collectInteractionExtensionStaticData(): void {
     );
     serverSettingsMainMenuOptions.push(
         ...interactionExtensions.flatMap(ext => ext.settingsMainMenuOptions)
+    );
+    quickStartPages.splice(
+        quickStartPages.length - 1, // insert before the last page
+        0,
+        ...interactionExtensions.flatMap(ext => ext.quickStartPages)
     );
 }

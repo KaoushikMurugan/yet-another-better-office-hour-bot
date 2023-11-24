@@ -33,7 +33,7 @@ const quickStartPages = [
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
     QuickStartLastPage
-] as const satisfies readonly QuickStartPageFunctions[];
+] satisfies readonly QuickStartPageFunctions[];
 
 function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${
@@ -205,7 +205,6 @@ function QuickStartCreateAQueue(server: AttendingServer): YabobEmbed {
 
 function QuickStartAutoGiveStudentRole(
     server: AttendingServer,
-
     updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
@@ -269,7 +268,6 @@ function QuickStartAutoGiveStudentRole(
 
 function QuickStartLoggingChannel(
     server: AttendingServer,
-
     updateMessage = ''
 ): YabobEmbed {
     const setLoggingChannelCommandId = server.guild.commands.cache.find(
@@ -415,6 +413,9 @@ function quickStartNextButton(enable: boolean, serverId: Snowflake): ButtonBuild
 
 export {
     quickStartPages,
+    quickStartBackButton,
+    quickStartNextButton,
+    generatePageNumber,
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartAutoGiveStudentRole,

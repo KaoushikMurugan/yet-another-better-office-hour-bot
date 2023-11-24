@@ -692,7 +692,7 @@ async function quickStart(
         'botAdmin'
     );
 
-    const firstQuickStartPage = quickStartPages[0];
+    const firstQuickStartPage = quickStartPages[0]!; // null assert, this is hard coded
     await interaction.editReply(firstQuickStartPage(server));
 }
 
