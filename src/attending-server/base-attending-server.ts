@@ -182,6 +182,10 @@ class AttendingServer {
         return this.settings.accessLevelRoleIds.botAdmin;
     }
 
+    get guildId(): Snowflake {
+        return this.guild.id;
+    }
+
     /** All the helpers on this server, both active and paused */
     get helpers(): ReadonlyMap<string, Helper> {
         return this._helpers;

@@ -4,8 +4,7 @@ import { QuickStartPageFunctions, YabobEmbed } from '../../../utils/type-aliases
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import {
     generatePageNumber,
-    quickStartBackButton,
-    quickStartNextButton
+    navigationRow
 } from '../../../attending-server/quick-start-pages.js';
 
 function TestCalQS(server: AttendingServer, updateMessage = ''): YabobEmbed {
@@ -27,14 +26,10 @@ function TestCalQS(server: AttendingServer, updateMessage = ''): YabobEmbed {
             .setLabel('BTN2')
             .setStyle(ButtonStyle.Secondary)
     );
-    const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
-    );
 
     return {
         embeds: [embed],
-        components: [buttons, navRow]
+        components: [buttons, navigationRow(server.guild.id)]
     };
 }
 
