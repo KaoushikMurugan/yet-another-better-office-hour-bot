@@ -64,7 +64,7 @@ function CalendarSettingsConfigMenu(
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
-            CalendarButtonNames.ShowCalendarModalFromMenu,
+            CalendarButtonNames.ShowCalendarModalFromSettings,
             server.guild.id
         ])
             .setEmoji('🗓')

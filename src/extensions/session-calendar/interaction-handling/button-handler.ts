@@ -17,15 +17,15 @@ const calendarButtonMap: ButtonHandlerProps = {
         queue: { [CalendarButtonNames.Refresh]: requestCalendarRefresh },
         other: {
             [CalendarButtonNames.ResetCalendarSettings]: resetCalendarSettings,
-            [CalendarButtonNames.ShowCalendarModalFromMenu]: i =>
-                showCalendarSettingsModal(i, 'settings'),
-            [CalendarButtonNames.ShowCalendarModalFromQuickStart]: i =>
-                showCalendarSettingsModal(i, 'quickStart')
+            [CalendarButtonNames.ShowCalendarModalFromSettings]: interaction =>
+                showCalendarSettingsModal(interaction, 'settings'),
+            [CalendarButtonNames.ShowCalendarModalFromQuickStart]: interaction =>
+                showCalendarSettingsModal(interaction, 'quickStart')
         }
     },
     dmMethodMap: {},
     skipProgressMessageButtons: new Set([
-        CalendarButtonNames.ShowCalendarModalFromMenu,
+        CalendarButtonNames.ShowCalendarModalFromSettings,
         CalendarButtonNames.ResetCalendarSettings,
         CalendarButtonNames.ShowCalendarModalFromQuickStart
     ])

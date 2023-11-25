@@ -24,13 +24,13 @@ function CalendarSettingsModal(
     let modalId: CalendarModalNames;
     switch (source) {
         case 'command':
-            modalId = CalendarModalNames.CalendarSettingsModal;
+            modalId = CalendarModalNames.CalendarIdModal;
             break;
         case 'settings':
-            modalId = CalendarModalNames.CalendarSettingsModalMenuVersion;
+            modalId = CalendarModalNames.CalendarIdModalSettingsVersion;
             break;
         case 'quickStart':
-            modalId = CalendarModalNames.CalendarSettingsModalQuickStartVersion;
+            modalId = CalendarModalNames.CalendarIdModalQuickStartVersion;
             break;
     }
 

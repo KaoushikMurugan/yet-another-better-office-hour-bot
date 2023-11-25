@@ -19,11 +19,11 @@ const calendarModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
-            [CalendarModalNames.CalendarSettingsModal]: interaction =>
+            [CalendarModalNames.CalendarIdModal]: interaction =>
                 updateCalendarSettings(interaction, 'command'),
-            [CalendarModalNames.CalendarSettingsModalMenuVersion]: interaction =>
+            [CalendarModalNames.CalendarIdModalSettingsVersion]: interaction =>
                 updateCalendarSettings(interaction, 'settings'),
-            [CalendarModalNames.CalendarSettingsModalQuickStartVersion]: interaction =>
+            [CalendarModalNames.CalendarIdModalQuickStartVersion]: interaction =>
                 updateCalendarSettings(interaction, 'quickStart')
         }
     },

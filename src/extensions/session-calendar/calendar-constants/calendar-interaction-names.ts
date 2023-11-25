@@ -15,17 +15,17 @@ enum CalendarCommandNames {
 enum CalendarButtonNames {
     Refresh = 'Refresh',
     ResetCalendarSettings = 'ResetCalendarSettings',
-    ShowCalendarModalFromMenu = 'ShowCalendarModalFromMenu',
+    ShowCalendarModalFromSettings = 'ShowCalendarModalFromSettings',
     ShowCalendarModalFromQuickStart = 'ShowCalendarModalFromQuickStart'
 }
 
 enum CalendarModalNames {
     // this returns a success message
-    CalendarSettingsModal = 'CalendarSettingsModal',
+    CalendarIdModal = 'CalendarIdModal',
     // this shows a menu
-    CalendarSettingsModalMenuVersion = 'CalendarSettingsModalMenuVersion',
+    CalendarIdModalSettingsVersion = 'CalendarIdModalSettingsVersion',
     // this shows the quick start menu
-    CalendarSettingsModalQuickStartVersion = 'CalendarSettingsModalQuickStartVersion'
+    CalendarIdModalQuickStartVersion = 'CalendarIdModalQuickStartVersion'
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
