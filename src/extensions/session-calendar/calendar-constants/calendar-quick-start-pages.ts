@@ -4,7 +4,7 @@ import { QuickStartPageFunctions, YabobEmbed } from '../../../utils/type-aliases
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import {
     generatePageNumber,
-    navigationRow
+    NavigationRow
 } from '../../../attending-server/quick-start-pages.js';
 
 function TestCalQS(server: AttendingServer, updateMessage = ''): YabobEmbed {
@@ -29,7 +29,7 @@ function TestCalQS(server: AttendingServer, updateMessage = ''): YabobEmbed {
 
     return {
         embeds: [embed],
-        components: [buttons, navigationRow(server.guild.id)]
+        components: [buttons, NavigationRow(server.guild.id)]
     };
 }
 

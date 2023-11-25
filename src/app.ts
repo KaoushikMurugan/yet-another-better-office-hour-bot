@@ -221,7 +221,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServer> {
  * Combines all the extension help messages and settings menu options
  * - if we have more static data in interaction level extensions, collect them here
  * - extensions only need to specify the corresponding properties
- * - This should be called exactly ONCE
+ * - This should be called exactly ONCE in client.on('ready')
  */
 function collectInteractionExtensionStaticData(): void {
     const documentationLink = {
@@ -258,7 +258,7 @@ function collectInteractionExtensionStaticData(): void {
     );
     quickStartPages.splice(
         quickStartPages.length - 1, // insert before the last page
-        0,
+        0, // don't delete any elements
         ...interactionExtensions.flatMap(ext => ext.quickStartPages)
     );
 }

@@ -90,7 +90,10 @@ type HelpMessage = {
     useInHelpCommand: boolean;
     /** The actual message to be displayed */
     message: MessageCreateOptions;
-    /** Emoji corresponding to the command. Used in select menus */
+    /** 
+     * Emoji corresponding to the command. Used in select menus.
+     * - This should be a string of exactly 1 emoji character
+     */
     emoji?: string;
 };
 

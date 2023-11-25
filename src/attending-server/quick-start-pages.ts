@@ -171,7 +171,7 @@ function QuickStartSetRoles(server: AttendingServer, updateMessage = ''): YabobE
     // we don't have a way to update this menu
     return {
         embeds: [embed.data],
-        components: [...buttons, navigationRow(server.guild.id)]
+        components: [...buttons, NavigationRow(server.guild.id)]
     };
 }
 
@@ -196,7 +196,7 @@ function QuickStartCreateAQueue(server: AttendingServer): YabobEmbed {
 
     return {
         embeds: [embed],
-        components: [navigationRow(server.guild.id)]
+        components: [NavigationRow(server.guild.id)]
     };
 }
 
@@ -253,7 +253,7 @@ function QuickStartAutoGiveStudentRole(
     );
     return {
         embeds: [embed],
-        components: [settingsButtons, navigationRow(server.guild.id)]
+        components: [settingsButtons, NavigationRow(server.guild.id)]
     };
 }
 
@@ -342,7 +342,7 @@ function QuickStartLoggingChannel(
     );
     return {
         embeds: [embed],
-        components: [channelsSelectMenu, buttons, navigationRow(server.guild.id)]
+        components: [channelsSelectMenu, buttons, NavigationRow(server.guild.id)]
     };
 }
 
@@ -364,11 +364,11 @@ function QuickStartLastPage(server: AttendingServer): YabobEmbed {
         });
     return {
         embeds: [embed],
-        components: [navigationRow(server.guild.id)]
+        components: [NavigationRow(server.guild.id)]
     };
 }
 
-function navigationRow(serverId: Snowflake): ActionRowBuilder<ButtonBuilder> {
+function NavigationRow(serverId: Snowflake): ActionRowBuilder<ButtonBuilder> {
     return new ActionRowBuilder<ButtonBuilder>().addComponents(
         buildComponent(new ButtonBuilder(), [
             'other',
@@ -391,7 +391,7 @@ function navigationRow(serverId: Snowflake): ActionRowBuilder<ButtonBuilder> {
 
 export {
     quickStartPages,
-    navigationRow,
+    NavigationRow,
     generatePageNumber,
     QuickStartFirstPage,
     QuickStartSetRoles,
