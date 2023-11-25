@@ -4,7 +4,7 @@ import {
 } from './interaction-handling/interaction-entry-point.js';
 import { Guild, Events } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
-import { green, red, yellow } from './utils/command-line-colors.js';
+import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
@@ -42,9 +42,11 @@ client.once(Events.ClientReady, async () => {
         process.exit(1);
     }
     LOGGER.info(
-        green(
-            `✅ Ready to go! (${AttendingServer.activeServersCount} servers created) ✅`,
-            'Bg'
+        black(
+            green(
+                `✅ Ready to go! (${AttendingServer.activeServersCount} servers created) ✅`,
+                'Bg'
+            )
         )
     );
     LOGGER.info('-------- Begin Server Logs --------');

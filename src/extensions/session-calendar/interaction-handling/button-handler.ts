@@ -17,13 +17,17 @@ const calendarButtonMap: ButtonHandlerProps = {
         queue: { [CalendarButtonNames.Refresh]: requestCalendarRefresh },
         other: {
             [CalendarButtonNames.ResetCalendarSettings]: resetCalendarSettings,
-            [CalendarButtonNames.ShowCalendarSettingsModal]: showCalendarSettingsModal
+            [CalendarButtonNames.ShowCalendarModalFromMenu]: i =>
+                showCalendarSettingsModal(i, 'settings'),
+            [CalendarButtonNames.ShowCalendarModalFromQuickStart]: i =>
+                showCalendarSettingsModal(i, 'quickStart')
         }
     },
     dmMethodMap: {},
     skipProgressMessageButtons: new Set([
-        CalendarButtonNames.ShowCalendarSettingsModal,
-        CalendarButtonNames.ResetCalendarSettings
+        CalendarButtonNames.ShowCalendarModalFromMenu,
+        CalendarButtonNames.ResetCalendarSettings,
+        CalendarButtonNames.ShowCalendarModalFromQuickStart
     ])
 };
 
@@ -70,9 +74,10 @@ async function requestCalendarRefresh(
  * @param interaction
  */
 async function showCalendarSettingsModal(
-    interaction: ButtonInteraction<'cached'>
+    interaction: ButtonInteraction<'cached'>,
+    source: 'settings' | 'quickStart' | 'command'
 ): Promise<void> {
-    await interaction.showModal(CalendarSettingsModal(interaction.guildId, true));
+    await interaction.showModal(CalendarSettingsModal(interaction.guildId, source));
 }
 
 export { calendarButtonMap };
