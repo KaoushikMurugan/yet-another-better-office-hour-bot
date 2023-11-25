@@ -362,9 +362,19 @@ function QuickStartLastPage(server: AttendingServer): YabobEmbed {
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
         });
+    const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.QuickStartBack,
+            server.guild.id
+        ])
+            .setEmoji('⬅️')
+            .setLabel('Back')
+            .setStyle(ButtonStyle.Primary)
+    );
     return {
         embeds: [embed],
-        components: [NavigationRow(server.guild.id)]
+        components: [navRow]
     };
 }
 
