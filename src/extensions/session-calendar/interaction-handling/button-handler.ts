@@ -70,8 +70,11 @@ async function requestCalendarRefresh(
 
 /**
  * Prompts the calendar settings modal
- * @remark follow up to a menu button
- * @param interaction
+ *
+ * @param interaction  button interaction
+ * @param source where the button was pressed. Either the settings menu or the quick start page
+ * - This controls how the message is updated on modal submit.
+ * - 'settings': the modal was invoked from the settings menu, so on modal submit we reply with the updated settings menu
  */
 async function showCalendarSettingsModal(
     interaction: ButtonInteraction<'cached'>,
