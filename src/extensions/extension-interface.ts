@@ -12,7 +12,12 @@ import { GuildMember, VoiceChannel } from 'discord.js';
 import { HelpQueue } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
-import { HelpMessage, Optional, SettingsMenuOption } from '../utils/type-aliases.js';
+import {
+    HelpMessage,
+    Optional,
+    QuickStartPageFunctions,
+    SettingsMenuOption
+} from '../utils/type-aliases.js';
 import { FrozenDisplay, FrozenQueue, FrozenServer } from './extension-utils.js';
 import {
     ButtonHandlerProps,
@@ -37,14 +42,18 @@ interface InteractionExtension {
      * Help messages to be combined with base yabob help messages
      */
     helpMessages: {
-        botAdmin: ReadonlyArray<HelpMessage>;
-        staff: ReadonlyArray<HelpMessage>;
-        student: ReadonlyArray<HelpMessage>;
+        botAdmin: readonly HelpMessage[];
+        staff: readonly HelpMessage[];
+        student: readonly HelpMessage[];
     };
     /**
      * These options appear in the select menu of the main menu of /settings
      */
-    settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption>;
+    settingsMainMenuOptions: readonly SettingsMenuOption[];
+    /**
+     * The list of quick start pages to inject for this extension
+     */
+    quickStartPages: readonly QuickStartPageFunctions[];
     /**
      * Command method map
      */
@@ -235,6 +244,7 @@ abstract class BaseInteractionExtension implements InteractionExtension {
     };
     settingsMainMenuOptions: ReadonlyArray<SettingsMenuOption> = [];
     slashCommandData: CommandData = [];
+    quickStartPages: readonly QuickStartPageFunctions[] = [];
     commandMap: CommandHandlerProps = {
         methodMap: {},
         skipProgressMessageCommands: new Set()

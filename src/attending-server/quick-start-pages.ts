@@ -33,7 +33,7 @@ const quickStartPages = [
     QuickStartAutoGiveStudentRole,
     QuickStartLoggingChannel,
     QuickStartLastPage
-] as const satisfies readonly QuickStartPageFunctions[];
+] satisfies readonly QuickStartPageFunctions[];
 
 function generatePageNumber(targetPage: QuickStartPageFunctions): string {
     return `Page ${quickStartPages.findIndex(page => page === targetPage) + 1}/${
@@ -63,14 +63,20 @@ function QuickStartFirstPage(server: AttendingServer): YabobEmbed {
             text: generatePageNumber(QuickStartFirstPage)
         });
 
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(false, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
+    const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.QuickStartNext,
+            server.guild.id
+        ])
+            .setEmoji('➡️')
+            .setLabel('Next')
+            .setStyle(ButtonStyle.Primary)
     );
 
     return {
         embeds: [embed],
-        components: [quickStartButtons]
+        components: [navRow]
     };
 }
 
@@ -163,13 +169,9 @@ function QuickStartSetRoles(server: AttendingServer, updateMessage = ''): YabobE
     // always make Next available, because we can't detect if /set_roles is used
     // if the user manually sets up all the roles with set_roles
     // we don't have a way to update this menu
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
-    );
     return {
         embeds: [embed.data],
-        components: [...buttons, quickStartButtons]
+        components: [...buttons, NavigationRow(server.guild.id)]
     };
 }
 
@@ -192,20 +194,14 @@ function QuickStartCreateAQueue(server: AttendingServer): YabobEmbed {
             text: generatePageNumber(QuickStartCreateAQueue)
         });
 
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
-    );
-
     return {
         embeds: [embed],
-        components: [quickStartButtons]
+        components: [NavigationRow(server.guild.id)]
     };
 }
 
 function QuickStartAutoGiveStudentRole(
     server: AttendingServer,
-
     updateMessage = ''
 ): YabobEmbed {
     const embed = new EmbedBuilder()
@@ -255,21 +251,14 @@ function QuickStartAutoGiveStudentRole(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
-    );
-
     return {
         embeds: [embed],
-        components: [settingsButtons, quickStartButtons]
+        components: [settingsButtons, NavigationRow(server.guild.id)]
     };
 }
 
 function QuickStartLoggingChannel(
     server: AttendingServer,
-
     updateMessage = ''
 ): YabobEmbed {
     const setLoggingChannelCommandId = server.guild.commands.cache.find(
@@ -351,15 +340,9 @@ function QuickStartLoggingChannel(
             .setLabel('Disable')
             .setStyle(ButtonStyle.Secondary)
     );
-
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(true, server.guild.id)
-    );
-
     return {
         embeds: [embed],
-        components: [channelsSelectMenu, buttons, quickStartButtons]
+        components: [channelsSelectMenu, buttons, NavigationRow(server.guild.id)]
     };
 }
 
@@ -379,42 +362,47 @@ function QuickStartLastPage(server: AttendingServer): YabobEmbed {
         .setFooter({
             text: generatePageNumber(QuickStartLastPage)
         });
-    const quickStartButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
-        quickStartBackButton(true, server.guild.id),
-        quickStartNextButton(false, server.guild.id)
+    const navRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.QuickStartBack,
+            server.guild.id
+        ])
+            .setEmoji('⬅️')
+            .setLabel('Back')
+            .setStyle(ButtonStyle.Primary)
     );
     return {
         embeds: [embed],
-        components: [quickStartButtons]
+        components: [navRow]
     };
 }
 
-function quickStartBackButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
-    return buildComponent(new ButtonBuilder(), [
-        'other',
-        ButtonNames.QuickStartBack,
-        serverId
-    ])
-        .setEmoji('⬅️')
-        .setLabel('Back')
-        .setStyle(ButtonStyle.Primary)
-        .setDisabled(!enable);
-}
-
-function quickStartNextButton(enable: boolean, serverId: Snowflake): ButtonBuilder {
-    return buildComponent(new ButtonBuilder(), [
-        'other',
-        ButtonNames.QuickStartNext,
-        serverId
-    ])
-        .setEmoji('➡️')
-        .setLabel('Next')
-        .setStyle(ButtonStyle.Primary)
-        .setDisabled(!enable);
+function NavigationRow(serverId: Snowflake): ActionRowBuilder<ButtonBuilder> {
+    return new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.QuickStartBack,
+            serverId
+        ])
+            .setEmoji('⬅️')
+            .setLabel('Back')
+            .setStyle(ButtonStyle.Primary),
+        buildComponent(new ButtonBuilder(), [
+            'other',
+            ButtonNames.QuickStartNext,
+            serverId
+        ])
+            .setEmoji('➡️')
+            .setLabel('Next')
+            .setStyle(ButtonStyle.Primary)
+    );
 }
 
 export {
     quickStartPages,
+    NavigationRow,
+    generatePageNumber,
     QuickStartFirstPage,
     QuickStartSetRoles,
     QuickStartAutoGiveStudentRole,

@@ -59,7 +59,7 @@ const firebaseDB: Firestore = getFirestore();
  * The discord user object.
  * If this object is exported, then the client is guaranteed have successfully logged in.
  */
-const client: Client<true> = new Client({
+const client = new Client<true>({
     intents: [
         GatewayIntentBits.Guilds,
         GatewayIntentBits.GuildMembers,

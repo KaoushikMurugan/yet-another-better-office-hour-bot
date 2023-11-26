@@ -13,15 +13,18 @@ import {
 } from '../shared-calendar-functions.js';
 import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { CalendarExtensionState } from '../calendar-states.js';
+import { CalendarIdQuickStart } from '../calendar-constants/calendar-quick-start-pages.js';
 
 const calendarModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
-            [CalendarModalNames.CalendarSettingsModal]: interaction =>
-                updateCalendarSettings(interaction, false),
-            [CalendarModalNames.CalendarSettingsModalMenuVersion]: interaction =>
-                updateCalendarSettings(interaction, true)
+            [CalendarModalNames.CalendarIdModal]: interaction =>
+                updateCalendarSettings(interaction, 'command'),
+            [CalendarModalNames.CalendarIdModalSettingsVersion]: interaction =>
+                updateCalendarSettings(interaction, 'settings'),
+            [CalendarModalNames.CalendarIdModalQuickStartVersion]: interaction =>
+                updateCalendarSettings(interaction, 'quickStart')
         }
     },
     dmMethodMap: {}
@@ -30,21 +33,27 @@ const calendarModalMap: ModalSubmitHandlerProps = {
 /**
  * Sets the calendar id and public embed url
  * @param interaction
- * @param useMenu if true, then returns the menu embed. else returns the success embed
+ * @param source where the modal was invoked, controls how the message is updated
  * @returns
  */
 async function updateCalendarSettings(
     interaction: ModalSubmitInteraction<'cached'>,
-    useMenu: boolean
+    source: 'settings' | 'quickStart' | 'command'
 ): Promise<void> {
+    if (!interaction.isFromMessage()) {
+        return;
+    }
+
     const server = AttendingServer.get(interaction.guildId);
     const state = CalendarExtensionState.get(interaction.guildId);
     const calendarId = interaction.fields.getTextInputValue('calendar_id');
     const publicEmbedUrl = interaction.fields.getTextInputValue('public_embed_url');
+
     await checkCalendarConnection(calendarId).catch(() => {
         throw ExpectedCalendarErrors.badId.newId;
     });
     await state.setCalendarId(calendarId);
+
     if (publicEmbedUrl !== '') {
         try {
             new URL(publicEmbedUrl);
@@ -56,22 +65,36 @@ async function updateCalendarSettings(
     } else {
         await state.setPublicEmbedUrl(restorePublicEmbedURL(state.calendarId));
     }
+
     server.sendLogMessage(CalendarLogMessages.backedUpToFirebase);
-    await (useMenu && interaction.isFromMessage()
-        ? interaction.update(
-              CalendarSettingsConfigMenu(
-                  server,
-                  false,
-                  'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
-              )
-          )
-        : interaction.reply({
-              ...CalendarSuccessMessages.updatedCalendarSettings(
-                  calendarId,
-                  publicEmbedUrl
-              ),
-              ephemeral: true
-          }));
+
+    switch (source) {
+        case 'settings':
+            await interaction.update(
+                CalendarSettingsConfigMenu(
+                    server,
+                    false,
+                    'Calendar settings have been saved! The embeds in #queue channels will refresh soon.'
+                )
+            );
+            return;
+
+        case 'quickStart':
+            await interaction.update(
+                CalendarIdQuickStart(server, 'Calendar settings have been saved!')
+            );
+            return;
+
+        case 'command':
+            await interaction.reply({
+                ...CalendarSuccessMessages.updatedCalendarSettings(
+                    calendarId,
+                    publicEmbedUrl
+                ),
+                ephemeral: true
+            });
+            return;
+    }
 }
 
 export { calendarModalMap };

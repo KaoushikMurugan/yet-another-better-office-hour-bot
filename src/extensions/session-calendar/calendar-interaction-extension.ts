@@ -13,6 +13,7 @@ import { ExtensionSetupError } from '../../utils/error-types.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { CALENDAR_LOGGER, checkCalendarConnection } from './shared-calendar-functions.js';
 import { yellow } from '../../utils/command-line-colors.js';
+import { quickStartPages } from './calendar-constants/calendar-quick-start-pages.js';
 
 class SessionCalendarInteractionExtension extends BaseInteractionExtension {
     override buttonMap = calendarButtonMap;
@@ -24,6 +25,8 @@ class SessionCalendarInteractionExtension extends BaseInteractionExtension {
         staff: calendarHelperHelpMessages,
         student: calendarStudentHelpMessages
     };
+
+    override quickStartPages = quickStartPages;
 
     override modalMap = calendarModalMap;
 

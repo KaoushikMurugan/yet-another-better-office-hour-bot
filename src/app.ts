@@ -4,7 +4,7 @@ import {
 } from './interaction-handling/interaction-entry-point.js';
 import { Guild, Events } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
-import { green, red, yellow } from './utils/command-line-colors.js';
+import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
@@ -16,6 +16,7 @@ import { UnexpectedParseErrors } from './interaction-handling/interaction-consta
 import { adminCommandHelpMessages } from './help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from './help-channel-messages/HelperCommands.js';
 import { studentCommandHelpMessages } from './help-channel-messages/StudentCommands.js';
+import { quickStartPages } from './attending-server/quick-start-pages.js';
 
 /**
  * After login startup sequence
@@ -41,9 +42,11 @@ client.once(Events.ClientReady, async () => {
         process.exit(1);
     }
     LOGGER.info(
-        green(
-            `✅ Ready to go! (${AttendingServer.activeServersCount} servers created) ✅`,
-            'Bg'
+        black(
+            green(
+                `✅ Ready to go! (${AttendingServer.activeServersCount} servers created) ✅`,
+                'Bg'
+            )
         )
     );
     LOGGER.info('-------- Begin Server Logs --------');
@@ -220,7 +223,7 @@ async function joinGuild(guild: Guild): Promise<AttendingServer> {
  * Combines all the extension help messages and settings menu options
  * - if we have more static data in interaction level extensions, collect them here
  * - extensions only need to specify the corresponding properties
- * - This should be called exactly ONCE
+ * - This should be called exactly ONCE in client.on('ready')
  */
 function collectInteractionExtensionStaticData(): void {
     const documentationLink = {
@@ -254,5 +257,10 @@ function collectInteractionExtensionStaticData(): void {
     );
     serverSettingsMainMenuOptions.push(
         ...interactionExtensions.flatMap(ext => ext.settingsMainMenuOptions)
+    );
+    quickStartPages.splice(
+        quickStartPages.length - 1, // insert before the last page
+        0, // don't delete any elements
+        ...interactionExtensions.flatMap(ext => ext.quickStartPages)
     );
 }

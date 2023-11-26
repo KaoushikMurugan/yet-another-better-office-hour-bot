@@ -28,7 +28,7 @@ import { LOGGER } from '../global-states.js';
  * Prints the title message for the console upon startup
  */
 function printTitleString(): void {
-    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.3';
+    const titleString = 'YABOB: Yet-Another-Better-OH-Bot V4.4.1';
     LOGGER.info(`Environment: ${cyan(environment.env)}`);
     LOGGER.info(`${black(magenta(titleString, 'Bg'))}`);
     LOGGER.info('Scanning servers I am a part of...');
