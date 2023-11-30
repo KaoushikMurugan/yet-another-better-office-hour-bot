@@ -729,7 +729,7 @@ class HelpQueue {
                     this._timeUntilAutoClear.minutes * 1000 * 60
             )
         );
-        
+
         await this.triggerRender();
     }
 }

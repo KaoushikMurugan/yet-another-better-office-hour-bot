@@ -104,6 +104,7 @@ class QueueDisplay {
             ) {
                 return;
             }
+
             this.render()
                 .then(() => {
                     this.queueChannelEmbeds.forEach(embed => (embed.stale = true));
@@ -171,6 +172,7 @@ class QueueDisplay {
             )
             .setDescription(this.getQueueAsciiTable(viewModel))
             .setColor(queueStateStyles[viewModel.state].color);
+
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
             viewModel.state === 'closed' &&
@@ -191,6 +193,7 @@ class QueueDisplay {
                 If you are already in the queue, helpers can still dequeue you.`
             });
         }
+
         const joinLeaveButtons = new ActionRowBuilder<ButtonBuilder>().addComponents(
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Join, guildId])
                 .setEmoji('✅')
@@ -224,7 +227,9 @@ class QueueDisplay {
                 .setLabel('Remove Notifications')
                 .setStyle(ButtonStyle.Primary)
         );
+
         const embedList = [embedTableMsg];
+
         if (viewModel.activeHelperIDs.length + viewModel.pausedHelperIDs.length > 0) {
             const helperList = new EmbedBuilder();
             helperList
@@ -249,6 +254,7 @@ class QueueDisplay {
             }
             embedList.push(helperList);
         }
+
         this.queueChannelEmbeds.set(Infinity, {
             contents: {
                 embeds: embedList,
@@ -266,6 +272,7 @@ class QueueDisplay {
      */
     private getQueueAsciiTable(viewModel: QueueViewModel): string {
         const table = new AsciiTable3();
+
         if (viewModel.studentDisplayNames.length > 0) {
             table
                 .setHeading('Position', 'Student Name')
@@ -296,6 +303,7 @@ class QueueDisplay {
                 }
             }
         }
+
         return '```\n' + table.toString() + '\n```';
     }
 
@@ -308,11 +316,13 @@ class QueueDisplay {
         const queueChannelExists = this.queueChannel.channelObj.guild.channels.cache.has(
             this.queueChannel.channelObj.id
         );
+
         if (!queueChannelExists) {
             // temporary fix, do nothing if #queue doesn't exist
             this.isRendering = false;
             return;
         }
+
         // this avoids the ephemeral reply being counted as a 'message'
         const allMessages = await this.queueChannel.channelObj.messages.fetch({
             cache: false
@@ -325,6 +335,7 @@ class QueueDisplay {
         const safeToEdit =
             existingEmbeds.size === this.queueChannelEmbeds.size &&
             allMessages.size === this.queueChannelEmbeds.size;
+
         if (!safeToEdit || force) {
             const allMessages = await this.queueChannel.channelObj.messages.fetch();
             await Promise.all(allMessages.map(msg => msg.delete()));
@@ -332,6 +343,7 @@ class QueueDisplay {
             const sortedEmbeds = this.queueChannelEmbeds.sort(
                 (embed1, embed2) => embed1.renderIndex - embed2.renderIndex
             );
+
             // Cannot promise all here, contents need to be sent in order
             for (const embed of sortedEmbeds.values()) {
                 const newEmbedMessage = await this.queueChannel.channelObj.send({
