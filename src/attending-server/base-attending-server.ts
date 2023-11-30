@@ -113,20 +113,24 @@ class AttendingServer {
      */
     private static readonly allServers: Collection<GuildId, AttendingServer> =
         new Collection();
+
     /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
      */
     private _helpers: Collection<GuildMemberId, Helper> = new Collection();
+
     /**
      * All the queues of this server
      * - Key is CategoryChannel.id of the parent category of #queue
      */
     private _queues: Collection<CategoryChannelId, HelpQueue> = new Collection();
+
     /**
      * Cached result of {@link getQueueChannels}
      */
     private queueChannelsCache: QueueChannel[] = [];
+
     /**
      * Server settings. An firebase update is requested as soon as this changes
      */
@@ -282,6 +286,7 @@ class AttendingServer {
      */
     static async create(guild: Guild): Promise<AttendingServer> {
         await initializationCheck(guild);
+
         // Load ServerExtensions here
         const serverExtensions: ServerExtension[] = environment.disableExtensions
             ? []
@@ -290,12 +295,14 @@ class AttendingServer {
                   CalendarServerExtension.load(guild)
               ]);
         const server = new AttendingServer(guild, serverExtensions);
+
         const externalBackup = environment.disableExtensions
             ? undefined
             : await loadExternalServerData(guild.id);
         if (externalBackup !== undefined) {
             server.loadBackup(externalBackup);
         }
+
         const missingRoles = server.sortedAccessLevelRoles.filter(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
@@ -308,6 +315,7 @@ class AttendingServer {
                 .then(owner => owner.send(RoleConfigMenuForServerInit(server, false)))
                 .catch(err => LOGGER.error(err));
         }
+
         await Promise.all([
             server.initializeAllQueues(
                 externalBackup?.queues,
@@ -319,11 +327,14 @@ class AttendingServer {
             LOGGER.error(err);
             throw new Error(`❗ ${red(`Initialization for ${guild.name} failed.`)}`);
         });
+
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
+
         AttendingServer.allServers.set(guild.id, server);
         LOGGER.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
+
         return server;
     }
 
@@ -369,9 +380,11 @@ class AttendingServer {
                 role =>
                     role.name === targetQueue.queueName || role.id === this.botAdminRoleID
             );
+
             if (!queueToAnnounce || !hasQueueRole) {
                 throw ExpectedServerErrors.noAnnouncePerm(targetQueue.queueName);
             }
+
             const announcementEmbed = SimpleEmbed(
                 `Staff member ${helperMember.displayName} announced:\n${announcement}`,
                 EmbedColor.Aqua,
@@ -384,6 +397,7 @@ class AttendingServer {
             );
             return;
         }
+
         // from this.queues select queue where helper roles has queue name
         const studentsToAnnounceTo = this.queues
             .filter(queue =>
@@ -393,6 +407,7 @@ class AttendingServer {
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
+
         const announcementEmbed = SimpleEmbed(
             `Staff member ${helperMember.displayName} announced:`,
             EmbedColor.Aqua,
@@ -432,6 +447,7 @@ class AttendingServer {
         if (helper === undefined) {
             throw ExpectedServerErrors.notHosting;
         }
+
         this._helpers.delete(helperMember.id);
         const completeHelper: Required<Helper> = {
             ...helper,
@@ -442,6 +458,7 @@ class AttendingServer {
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
         );
+
         // this filter does not rely on user roles anymore
         // close all queues that has this user as a helper
         const closableQueues = this._queues.filter(queue =>
@@ -471,6 +488,7 @@ class AttendingServer {
         const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
+
         for (const { key, displayName, id } of this.sortedAccessLevelRoles) {
             // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
@@ -496,9 +514,11 @@ class AttendingServer {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
+
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
             this.logger.error(err, 'Failed to update help channel visibilities.')
         );
+
         this.logger.info(
             createdRoles.length > 0
                 ? `Created roles: ${createdRoles}`
@@ -521,6 +541,7 @@ class AttendingServer {
         if (queueWithSameName !== undefined) {
             throw ExpectedServerErrors.queueAlreadyExists(newQueueName);
         }
+
         const parentCategory = await this.guild.channels.create({
             name: newQueueName,
             type: ChannelType.GuildCategory
@@ -538,6 +559,7 @@ class AttendingServer {
             HelpQueue.create(queueChannel),
             this.createQueueRoles()
         ]);
+
         this._queues.set(parentCategory.id, helpQueue);
         await this.getQueueChannels(false);
     }
@@ -553,9 +575,11 @@ class AttendingServer {
         if (queue === undefined) {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
+
         // delete queue data model no matter if the category was deleted by the user
         // now only the queue variable holds the queue channel
         this._queues.delete(parentCategoryId);
+
         const allChannels = await this.guild.channels.fetch();
         const parentCategory = allChannels.find(
             (channel): channel is CategoryChannel =>
@@ -566,6 +590,7 @@ class AttendingServer {
             // but we need to pass ts check
             throw ExpectedServerErrors.queueDoesNotExist;
         }
+
         // delete child channels first
         await Promise.all(parentCategory.children.cache.map(child => child.delete()));
         // now delete category, role, and let queue call onQueueDelete
@@ -593,16 +618,19 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
+
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
+
         const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays without initial value will throw an error
         // in this case there's no valid initial value if there's no queue to dequeue from at all
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
         }
+
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueue>(
             (prev, curr) =>
                 prev.first &&
@@ -619,6 +647,7 @@ class AttendingServer {
                 extension.onDequeueFirst(this, student)
             )
         ]);
+
         if (!inviteStatus.ok) {
             throw inviteStatus.error;
         }
@@ -649,10 +678,12 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
+
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
+
         let student: Readonly<Helpee>;
         if (targetQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
@@ -679,6 +710,7 @@ class AttendingServer {
         } else {
             throw ExpectedServerErrors.badDequeueArguments;
         }
+
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
             sendInvite(student.member, helperVoiceChannel),
@@ -686,6 +718,7 @@ class AttendingServer {
                 extension.onDequeueFirst(this, student)
             )
         ]);
+
         if (!inviteStatus.ok) {
             throw inviteStatus.error;
         }
@@ -725,8 +758,8 @@ class AttendingServer {
         if (useCache && this.queueChannelsCache.length !== 0) {
             return this.queueChannelsCache;
         }
+
         const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request, likely triggers GC
         this.queueChannelsCache = [];
         for (const categoryChannel of allChannels.values()) {
             if (!isCategoryChannel(categoryChannel)) {
@@ -743,6 +776,7 @@ class AttendingServer {
                 parentCategoryId: categoryChannel.id
             });
         }
+
         const duplicateQueues = this.queueChannelsCache
             .map(queue => queue.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);
@@ -752,6 +786,7 @@ class AttendingServer {
                 This might lead to unexpected behaviors. Please update category names as soon as possible.`
             );
         }
+
         return this.queueChannelsCache;
     }
 
@@ -783,6 +818,7 @@ class AttendingServer {
         if (!isVoiceChannel(newVoiceState.channel)) {
             return;
         }
+
         const voiceChannel = newVoiceState.channel;
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
@@ -790,6 +826,7 @@ class AttendingServer {
             )
         );
         const memberIsHelper = this._helpers.has(member.id);
+
         if (memberIsStudent) {
             const queuesToRerender = this.queues.filter(queue =>
                 newVoiceState.channel.members.some(vcMember =>
@@ -803,6 +840,7 @@ class AttendingServer {
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
+
         if (memberIsHelper) {
             await Promise.all(
                 this.queues.map(
@@ -829,6 +867,7 @@ class AttendingServer {
             )
         );
         const memberIsHelper = this._helpers.has(member.id);
+
         if (memberIsStudent) {
             // filter queues where some member of that voice channel is a helper of that queue
             const queuesToRerender = this.queues.filter(queue =>
@@ -848,6 +887,7 @@ class AttendingServer {
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
+
         if (memberIsHelper) {
             // the filter is removed because
             // the overwrite will die in 15 minutes after the invite was sent
@@ -873,6 +913,7 @@ class AttendingServer {
                 accessLevelRoleDeleted = true;
             }
         }
+
         if (!accessLevelRoleDeleted) {
             return;
         }
@@ -893,6 +934,7 @@ class AttendingServer {
         if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
+
         const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
             helperRoles.includes(queue.queueName)
@@ -900,6 +942,7 @@ class AttendingServer {
         if (openableQueues.size === 0) {
             throw ExpectedServerErrors.noQueueRole;
         }
+
         // create this object after all checks have passed
         const helper: Helper = {
             helpStart: new Date(),
@@ -908,6 +951,7 @@ class AttendingServer {
             member: helperMember
         };
         this._helpers.set(helperMember.id, helper);
+
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
         );
@@ -934,6 +978,7 @@ class AttendingServer {
         if (helper.activeState === 'paused') {
             throw ExpectedServerErrors.alreadyPaused;
         }
+
         helper.activeState = 'paused';
         const pauseableQueues = this._queues.filter(queue =>
             queue.activeHelperIds.has(helperMember.id)
@@ -953,12 +998,14 @@ class AttendingServer {
      */
     async resumeHelping(helperMember: GuildMember): Promise<void> {
         const helper = this._helpers.get(helperMember.id);
+
         if (!helper) {
             throw ExpectedServerErrors.notHosting;
         }
         if (helper.activeState === 'active') {
             throw ExpectedServerErrors.alreadyActive;
         }
+
         helper.activeState = 'active';
         const resumableQueues = this._queues.filter(queue =>
             queue.pausedHelperIds.has(helperMember.id)
@@ -1060,6 +1107,7 @@ class AttendingServer {
         if (seriousState === enableSeriousMode) {
             return false;
         }
+
         await Promise.all(
             this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
         );
@@ -1096,6 +1144,7 @@ class AttendingServer {
             .filter((role): role is Role => role !== undefined);
         const logMap: Map<string, string> = new Map();
         const errorMap: Map<string, string> = new Map();
+
         if (this.accessLevelRoleIds.staff === 'NotSet') {
             errorMap.set('Warning', 'Staff role has not been set up yet.');
         }
@@ -1105,6 +1154,7 @@ class AttendingServer {
                 "Staff role has been deleted. Wasn't able to assign staff role to helpers."
             );
         }
+
         await Promise.all(
             helpersRolesData.map(async helperRolesData => {
                 if (!this.guild.members.cache.has(helperRolesData.helperId)) {
@@ -1114,6 +1164,7 @@ class AttendingServer {
                     );
                     return;
                 }
+
                 const helper = await this.guild.members.fetch(helperRolesData.helperId);
                 // give the helper the staff role if they don't have it
                 if (!helper.roles.cache.has(this.settings.accessLevelRoleIds.staff)) {
@@ -1125,6 +1176,7 @@ class AttendingServer {
                         )}`
                     );
                 }
+
                 // remove old queue roles
                 await helper.roles.remove(queueRoles);
                 // get the queue roles from the helperRolesData
@@ -1134,6 +1186,7 @@ class AttendingServer {
                         `No queues were provided for helper with id ${helperRolesData.helperId}.`
                     );
                 }
+
                 const helperQueueRoles = helperRolesData.queues
                     .map(queueName => {
                         if (!queueNames.includes(queueName)) {
@@ -1150,6 +1203,7 @@ class AttendingServer {
                 if (helperQueueRoles.length > 0) {
                     await helper.roles.add(helperQueueRoles);
                 }
+
                 logMap.set(
                     helperRolesData.helperId,
                     helperQueueRoles.map(role => role.toString()).join(' ')
