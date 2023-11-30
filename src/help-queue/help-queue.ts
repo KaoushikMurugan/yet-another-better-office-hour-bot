@@ -253,11 +253,14 @@ class HelpQueue {
         if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
+
         this._activeHelperIds.delete(helperMember.id);
         this._pausedHelperIds.delete(helperMember.id);
+
         if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
+
         await Promise.all([
             ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
@@ -288,6 +291,7 @@ class HelpQueue {
         if (this._students.length === 0) {
             throw ExpectedQueueErrors.dequeue.empty(this.queueName);
         }
+
         if (targetStudentMember !== undefined) {
             const studentIndex = this._students.findIndex(
                 student => student.member.id === targetStudentMember.id
@@ -298,6 +302,7 @@ class HelpQueue {
                     this.queueName
                 );
             }
+
             // already checked for idx === -1
             // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             const foundStudent = this._students[studentIndex]!;
@@ -308,8 +313,10 @@ class HelpQueue {
                 ),
                 this.triggerRender()
             ]);
+
             return foundStudent;
         }
+
         // assertion is safe because we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this._students.shift()!;
@@ -341,6 +348,7 @@ class HelpQueue {
         if (this.hasHelper(studentMember.id)) {
             throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
         }
+
         const student: Helpee = {
             waitStart: new Date(),
             member: studentMember,
@@ -348,6 +356,7 @@ class HelpQueue {
             helpTopic: undefined
         };
         this._students.push(student);
+
         await Promise.all([
             this.notifyHelpersOn('joinQueue', studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
@@ -435,6 +444,7 @@ class HelpQueue {
         if (this.activeHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyActive(this.queueName);
         }
+
         this._pausedHelperIds.delete(helperMember.id);
         this._activeHelperIds.add(helperMember.id);
         await this.triggerRender();
@@ -450,6 +460,7 @@ class HelpQueue {
         if (this.pausedHelperIds.has(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyPaused(this.queueName);
         }
+
         this._activeHelperIds.delete(helperMember.id);
         this._pausedHelperIds.add(helperMember.id);
         await this.triggerRender();
@@ -505,6 +516,7 @@ class HelpQueue {
                 studentAction = 'submitted what you need help with';
                 break;
         }
+
         // this assumes that if an error comes back when we call send, it's because the helper closed dm
         const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
@@ -518,6 +530,7 @@ class HelpQueue {
                         })
             )
         );
+
         if (helpersThatClosedDM.length > 0) {
             throw ExpectedQueueErrors.staffBlockedDm(
                 this.queueName,
@@ -537,15 +550,18 @@ class HelpQueue {
         if (this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
+
         // default the helper to 'active' state
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
+
         if (!notify) {
             return;
         }
+
         // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
         void Promise.allSettled(
             this.notifGroup.map(
@@ -604,6 +620,7 @@ class HelpQueue {
                 this.queueName
             );
         }
+
         // we checked for idx === -1, so it will not be null
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const removedStudent = this._students[index]!;
@@ -629,6 +646,7 @@ class HelpQueue {
         if (existingTimerId !== undefined) {
             clearInterval(existingTimerId);
         }
+
         if (enable) {
             this._timeUntilAutoClear = {
                 hours: hours,
@@ -686,12 +704,14 @@ class HelpQueue {
      */
     private async startAutoClearTimer(): Promise<void> {
         const existingTimer = this.timers.get('QUEUE_AUTO_CLEAR');
+
         if (existingTimer !== undefined) {
             clearTimeout(existingTimer);
         }
         if (this._timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
+
         this.timers.set(
             'QUEUE_AUTO_CLEAR',
             setTimeout(
@@ -709,6 +729,7 @@ class HelpQueue {
                     this._timeUntilAutoClear.minutes * 1000 * 60
             )
         );
+        
         await this.triggerRender();
     }
 }
