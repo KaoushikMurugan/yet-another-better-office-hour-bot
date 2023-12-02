@@ -449,7 +449,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     [HelpSessionHeaders.QueueName]: entry.queueName,
                     [HelpSessionHeaders.WaitTimeMs]: entry.waitTimeMs,
                     [HelpSessionHeaders.SessionStartUnix]: entry.sessionStart.getTime(),
-                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionStart.getTime()
+                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionEnd.getTime()
                 })),
                 { raw: false, insert: true }
             ),
