@@ -186,16 +186,20 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             studentMember.id,
             this.studentsJustDequeued.get(studentMember.id)
         ];
+
         if (helpersInVC.size === 0 || student === undefined) {
             return;
         }
+
         this.studentsJustDequeued.delete(studentId);
+
         for (const helper of helpersInVC.map(helperInVC =>
             server.helpers.get(helperInVC.id)
         )) {
             if (helper === undefined) {
                 continue;
             }
+
             const helpSessionEntry: HelpSessionEntry = {
                 studentUsername: student.member.user.username,
                 studentDiscordId: studentId,
@@ -207,6 +211,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 queueName: student.queue.queueName,
                 waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
+
             if (this.helpSessionEntries.has(studentId)) {
                 this.helpSessionEntries.get(studentId)?.push(helpSessionEntry);
             } else {
