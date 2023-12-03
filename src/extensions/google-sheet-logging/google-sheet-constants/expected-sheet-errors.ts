@@ -37,6 +37,10 @@ const ExpectedSheetErrors = {
     badGoogleSheetId: new GoogleSheetConnectionError(
         `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
     ),
+    noDataYet: (type: 'Help Session' | 'Attendance') =>
+        new CommandParseError(
+            `There are no rows in the ${type} sheet yet. Try running this command again after a ${type.toLowerCase()} entry has been written.`
+        ),
     missingSheet: (type: 'Help Session' | 'Attendance') =>
         new GoogleSheetConnectionError(
             `${type} google worksheet is missing in the google sheet document. This is expected if your server has never had any office hour sessions.` +

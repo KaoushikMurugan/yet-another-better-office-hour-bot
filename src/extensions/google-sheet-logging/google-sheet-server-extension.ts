@@ -237,15 +237,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         studentMember: GuildMember
     ): Promise<void> {
         const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
-        if (helpSessionEntries === undefined) {
+        if (!helpSessionEntries) {
             return;
         }
+
         for (const entry of this.activeTimeEntries.values()) {
-            if (entry.latestStudentJoinTimeStamp !== undefined) {
+            if (entry.latestStudentJoinTimeStamp) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
+
         const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
             helpSessionEntries.map(entry => ({
                 ...entry,
@@ -330,7 +332,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             // TODO: should we throw ExpectedSheetErrors.noWriteAccess?;
             return;
         }
-
         if (!hasRequiredHeaders) {
             // correctable
             await attendanceSheet.setHeaderRow(attendanceHeaders);
