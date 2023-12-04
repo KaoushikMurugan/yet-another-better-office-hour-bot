@@ -186,16 +186,20 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             studentMember.id,
             this.studentsJustDequeued.get(studentMember.id)
         ];
+
         if (helpersInVC.size === 0 || student === undefined) {
             return;
         }
+
         this.studentsJustDequeued.delete(studentId);
+
         for (const helper of helpersInVC.map(helperInVC =>
             server.helpers.get(helperInVC.id)
         )) {
             if (helper === undefined) {
                 continue;
             }
+
             const helpSessionEntry: HelpSessionEntry = {
                 studentUsername: student.member.user.username,
                 studentDiscordId: studentId,
@@ -207,6 +211,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                 queueName: student.queue.queueName,
                 waitTimeMs: new Date().getTime() - student.waitStart.getTime()
             };
+
             if (this.helpSessionEntries.has(studentId)) {
                 this.helpSessionEntries.get(studentId)?.push(helpSessionEntry);
             } else {
@@ -232,15 +237,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         studentMember: GuildMember
     ): Promise<void> {
         const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
-        if (helpSessionEntries === undefined) {
+        if (!helpSessionEntries) {
             return;
         }
+
         for (const entry of this.activeTimeEntries.values()) {
-            if (entry.latestStudentJoinTimeStamp !== undefined) {
+            if (entry.latestStudentJoinTimeStamp) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
+
         const completeHelpSessionEntries: Required<HelpSessionEntry>[] =
             helpSessionEntries.map(entry => ({
                 ...entry,
@@ -325,7 +332,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             // TODO: should we throw ExpectedSheetErrors.noWriteAccess?;
             return;
         }
-
         if (!hasRequiredHeaders) {
             // correctable
             await attendanceSheet.setHeaderRow(attendanceHeaders);
@@ -449,7 +455,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
                     [HelpSessionHeaders.QueueName]: entry.queueName,
                     [HelpSessionHeaders.WaitTimeMs]: entry.waitTimeMs,
                     [HelpSessionHeaders.SessionStartUnix]: entry.sessionStart.getTime(),
-                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionStart.getTime()
+                    [HelpSessionHeaders.SessionEndUnix]: entry.sessionEnd.getTime()
                 })),
                 { raw: false, insert: true }
             ),

@@ -148,19 +148,25 @@ async function getStatistics(
     const helpSessionRows = await GoogleSheetExtensionState.get(
         guild.id
     ).googleSheet.sheetsByTitle[title]?.getRows();
+    
     if (helpSessionRows === undefined) {
         throw ExpectedSheetErrors.missingSheet('Help Session');
     }
+    if (helpSessionRows.length === 0) {
+        throw ExpectedSheetErrors.noDataYet('Help Session');
+    }
+
     // object to accumulate results for the imperative for loop
     const buffer = {
         totalSessionTime: 0,
         uniqueStudentIds: new Set(),
-        returningStudents: 0,
+        returningStudents: new Set(),
         totalWaitTime: 0,
         numStudentsHelped: 0,
         sessions: 0
     };
     const timeFilter = getTimeFilter(timeFrame);
+
     for (const row of helpSessionRows) {
         // if helper is specified, only look for rows that has this helper's id
         if (helper && row.get(HelpSessionHeaders.HelperDiscordId) !== helper.id) {
@@ -168,11 +174,10 @@ async function getStatistics(
         }
         // now we are in a row that we are interested in
         // whether it's for server or helper doesn't matter anymore
-        const [start, end, waitTime] = [
-            parseInt(row.get(HelpSessionHeaders.SessionStartUnix)),
-            parseInt(row.get(HelpSessionHeaders.SessionEndUnix)),
-            parseInt(row.get(HelpSessionHeaders.WaitTimeMs))
-        ];
+        const start = parseInt(row.get(HelpSessionHeaders.SessionStartUnix));
+        const end = parseInt(row.get(HelpSessionHeaders.SessionEndUnix));
+        const waitTime = parseInt(row.get(HelpSessionHeaders.WaitTimeMs));
+
         if ([start, end, waitTime].some(val => isNaN(val) || val < 0)) {
             throw ExpectedSheetErrors.badNumericalValues(title);
         }
@@ -180,16 +185,24 @@ async function getStatistics(
             // skip if outside time frame
             continue;
         }
+
+        const studentId = row.get(HelpSessionHeaders.StudentDiscordId);
+        if (typeof studentId !== 'string') {
+            continue;
+        }
+
+        if (buffer.uniqueStudentIds.has(studentId)) {
+            // avoid counting the same returning student multiple times
+            buffer.returningStudents.add(studentId);
+        } else {
+            buffer.uniqueStudentIds.add(studentId);
+        }
+
         buffer.totalSessionTime += end - start;
-        buffer.returningStudents += buffer.uniqueStudentIds.has(
-            row.get(HelpSessionHeaders.StudentDiscordId)
-        )
-            ? 1
-            : 0;
         buffer.totalWaitTime += waitTime;
-        buffer.uniqueStudentIds.add(row.get(HelpSessionHeaders.StudentDiscordId));
         buffer.sessions += 1;
     }
+
     return {
         time: {
             totalSessionTime: buffer.totalSessionTime,
@@ -201,7 +214,7 @@ async function getStatistics(
         },
         count: {
             sessions: buffer.sessions,
-            returningStudents: buffer.returningStudents,
+            returningStudents: buffer.returningStudents.size,
             uniqueStudents: buffer.uniqueStudentIds.size
         }
     };
