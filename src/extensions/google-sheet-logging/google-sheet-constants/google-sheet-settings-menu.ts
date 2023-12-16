@@ -1,12 +1,12 @@
 import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
+import { environment } from '../../../environment/environment-manager.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
-import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
-import { buildComponent } from '../../../utils/component-id-factory.js';
 import { GoogleSheetButtonNames } from './google-sheet-interaction-names.js';
-import { environment } from '../../../environment/environment-manager.js';
 
 /**
  * Options for the server settings main menu
@@ -51,7 +51,9 @@ function GoogleSheetSettingsConfigMenu(
             },
             {
                 name: 'Current Google Sheet',
-                value: `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${state.googleSheet.title}`
+                value: `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${
+                    state.googleSheet.title
+                }\nTracking ${server.sheetTracking ? 'enabled' : 'disabled'}.`
             }
         );
 
@@ -60,6 +62,16 @@ function GoogleSheetSettingsConfigMenu(
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            GoogleSheetButtonNames.UpdateSheetTrackingStatus,
+            server.guild.id
+        ])
+            .setEmoji('🔗')
+            .setLabel(
+                `${!server.sheetTracking ? 'Enable' : 'Disable'} Google Sheet Tracking`
+            )
+            .setStyle(ButtonStyle.Secondary),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,
@@ -84,4 +96,4 @@ function GoogleSheetSettingsConfigMenu(
     };
 }
 
-export { googleSheetSettingsMainMenuOptions, GoogleSheetSettingsConfigMenu };
+export { GoogleSheetSettingsConfigMenu, googleSheetSettingsMainMenuOptions };
