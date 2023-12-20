@@ -15,6 +15,16 @@ import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQueueBackup } from '../attending-server/firebase-backup.js';
 
+/** 
+ * Student info for Queue Rendering
+ */
+
+type StudentQueueViewModel = {
+    displayName: string;
+    helpTopic?: string;
+    inVBC: boolean;
+};
+
 /**
  * Render props for the queue display.
  */
@@ -22,7 +32,7 @@ type QueueViewModel = {
     queueName: string;
     activeHelperIDs: Snowflake[];
     pausedHelperIDs: Snowflake[];
-    studentDisplayNames: string[];
+    students: StudentQueueViewModel[];
     state: QueueState;
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
@@ -377,8 +387,14 @@ class HelpQueue {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],
-            studentDisplayNames: this._students.map(
-                student => student.member.displayName
+            students: this._students.map(
+                student => {
+                    return {
+                        displayName: student.member.displayName,
+                        helpTopic: student.helpTopic,
+                        inVBC: student.member.voice.channelId !== null,
+                    };
+                }
             ),
             state: this.getQueueState(),
             seriousModeEnabled: this._seriousModeEnabled,
