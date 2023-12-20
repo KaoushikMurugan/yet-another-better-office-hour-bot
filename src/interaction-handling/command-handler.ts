@@ -128,17 +128,34 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
             ? await server.dequeueWithArguments(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
     const helpTopic = dequeuedStudent.helpTopic;
-    if (!helpTopic) {
-        await interaction.editReply(
-            SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
-        );
+    if(dequeuedStudent.member.voice.channelId === helperMember.voice.channelId) {
+        const vbcString = helperMember.voice.channel?.toString() ?? 'voice channel';
+        if (!helpTopic) {
+            await interaction.editReply(
+                SuccessMessages.alreadyInVBC(dequeuedStudent.member.displayName, vbcString)
+            );
+        } else {
+            await interaction.editReply(
+                SuccessMessages.alreadyInVBCAndShowHelpTopic(
+                    dequeuedStudent.member.displayName,
+                    vbcString,
+                    helpTopic
+                )
+            );
+        }
     } else {
-        await interaction.editReply(
-            SuccessMessages.inviteSentAndShowHelpTopic(
-                dequeuedStudent.member.displayName,
-                helpTopic
-            )
-        );
+        if (!helpTopic) {
+            await interaction.editReply(
+                SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
+            );
+        } else {
+            await interaction.editReply(
+                SuccessMessages.inviteSentAndShowHelpTopic(
+                    dequeuedStudent.member.displayName,
+                    helpTopic
+                )
+            );
+        }
     }
 }
 
