@@ -275,10 +275,13 @@ async function createOfficeVoiceBasedChannels(
  * @param helperVoiceBasedChannel which vc channel to invite the student to
  * @returns a tagged union of whether the invite is successfully sent
  */
-async function sendInvite(
+async function sendInviteIfNotInVBC(
     student: GuildMember,
     helperVoiceBasedChannel: VoiceBasedChannel
 ): Promise<Result<void, ServerError>> {
+    if (student.voice.channelId === helperVoiceBasedChannel.id) {
+        return { ok: true, value: undefined };
+    }
     const [invite] = await Promise.all([
         helperVoiceBasedChannel.createInvite({
             maxAge: 15 * 60,
@@ -322,5 +325,5 @@ export {
     updateCommandHelpChannels,
     setHelpChannelVisibility,
     createOfficeVoiceBasedChannels,
-    sendInvite
+    sendInviteIfNotInVBC
 };

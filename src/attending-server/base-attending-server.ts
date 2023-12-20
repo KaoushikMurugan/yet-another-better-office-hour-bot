@@ -55,7 +55,7 @@ import { ExpectedServerErrors } from './expected-server-errors.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
 import {
     initializationCheck,
-    sendInvite,
+    sendInviteIfNotInVBC,
     setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
@@ -614,7 +614,7 @@ class AttendingServer {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceBasedChannel),
+            sendInviteIfNotInVBC(student.member, helperVoiceBasedChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -681,7 +681,7 @@ class AttendingServer {
         }
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceBasedChannel),
+            sendInviteIfNotInVBC(student.member, helperVoiceBasedChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
