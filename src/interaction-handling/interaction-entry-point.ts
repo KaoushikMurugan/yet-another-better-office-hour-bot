@@ -94,7 +94,7 @@ async function processChatInputCommand(interaction: Interaction): Promise<void> 
     if (!interaction.inCachedGuild() || !interaction.isChatInputCommand()) {
         return;
     }
-    
+
     const commandName = interaction.commandName;
     const possibleSubcommands = interaction.options.getSubcommand(false);
     const server = AttendingServer.get(interaction.guildId);

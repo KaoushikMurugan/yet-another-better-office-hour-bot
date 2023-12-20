@@ -1,7 +1,7 @@
 /** @module GoogleSheetLogging */
 import { Helpee, Helper } from '../../models/member-states.js';
 import { BaseServerExtension, ServerExtension } from '../extension-interface.js';
-import { Collection, Guild, GuildMember, Snowflake, VoiceChannel } from 'discord.js';
+import { Collection, Guild, GuildMember, Snowflake, VoiceBasedChannel } from 'discord.js';
 import { GuildMemberId, SimpleTimeZone } from '../../utils/type-aliases.js';
 import { ExpectedSheetErrors } from './google-sheet-constants/expected-sheet-errors.js';
 import { FrozenServer } from '../extension-utils.js';
@@ -40,8 +40,8 @@ type HelpSessionEntry = {
     studentDiscordId: Snowflake;
     helperUsername: string;
     helperDiscordId: string;
-    sessionStart: Date; // time join VC, also wait start
-    sessionEnd?: Date; // time leave VC
+    sessionStart: Date; // time join VBC, also wait start
+    sessionEnd?: Date; // time leave VBC
     waitStart: Date; // Helpee.waitStart
     queueName: string;
     waitTimeMs: number; // wait end - wait start
@@ -71,7 +71,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
         new Collection();
     /**
-     * Students that just got dequeued but haven't joined the VC yet
+     * Students that just got dequeued but haven't joined the VBC yet
      * - Key is student member.id, value is corresponding helpee object
      */
     private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
@@ -111,7 +111,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
-     * Start logging the session time as soon as the helper joins VC
+     * Start logging the session time as soon as the helper joins VBC
      * @param _server unused
      * @param helper
      */
@@ -127,7 +127,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
-     * Sends the {@link AttendanceEntry} to google sheets after student leave VC
+     * Sends the {@link AttendanceEntry} to google sheets after student leave VBC
      * @param _server
      * @param helper
      */
@@ -169,17 +169,17 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
-     * Start logging the {@link HelpSessionEntry} as soon as the student joins VC
+     * Start logging the {@link HelpSessionEntry} as soon as the student joins VBC
      * @param server
-     * @param studentMember the student that joined the VC
-     * @param voiceChannel which VC the student joined
+     * @param studentMember the student that joined the VBC
+     * @param voiceBasedChannel which VBC the student joined
      */
-    override async onStudentJoinVC(
+    override async onStudentJoinVBC(
         server: FrozenServer,
         studentMember: GuildMember,
-        voiceChannel: VoiceChannel
+        voiceBasedChannel: VoiceBasedChannel
     ): Promise<void> {
-        const helpersInVC = voiceChannel.members.filter(member =>
+        const helpersInVBC = voiceBasedChannel.members.filter(member =>
             server.helpers.has(member.id)
         );
         const [studentId, student] = [
@@ -187,14 +187,14 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             this.studentsJustDequeued.get(studentMember.id)
         ];
 
-        if (helpersInVC.size === 0 || student === undefined) {
+        if (helpersInVBC.size === 0 || student === undefined) {
             return;
         }
 
         this.studentsJustDequeued.delete(studentId);
 
-        for (const helper of helpersInVC.map(helperInVC =>
-            server.helpers.get(helperInVC.id)
+        for (const helper of helpersInVBC.map(helperInVBC =>
+            server.helpers.get(helperInVBC.id)
         )) {
             if (helper === undefined) {
                 continue;
@@ -228,11 +228,11 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 
     /**
-     * Sends the help session data to google sheets after student leave VC
+     * Sends the help session data to google sheets after student leave VBC
      * @param studentMember
      * @noexcept error is logged to the console
      */
-    override async onStudentLeaveVC(
+    override async onStudentLeaveVBC(
         _server: FrozenServer,
         studentMember: GuildMember
     ): Promise<void> {

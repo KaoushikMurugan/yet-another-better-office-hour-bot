@@ -218,7 +218,7 @@ async function setHelpChannelVisibility(
  * createOfficeCategory('Office Hours', 'Office', 3)  will create a
  * category named 'Office Hours' with 3 voice channels named 'Office 1', 'Office 2' and 'Office 3'
  */
-async function createOfficeVoiceChannels(
+async function createOfficeVoiceBasedChannels(
     guild: Guild,
     categoryName: string,
     officeNamePrefix: string,
@@ -269,21 +269,22 @@ async function createOfficeVoiceChannels(
 }
 
 /**
- * Sends the VC invite to the student after successful dequeue
+ * Sends the VBC invite to the student after successful dequeue
+ * Only sends if student isn't in the vc already
  * @param student who will receive the invite
- * @param helperVoiceChannel which vc channel to invite the student to
+ * @param helperVoiceBasedChannel which vc channel to invite the student to
  * @returns a tagged union of whether the invite is successfully sent
  */
 async function sendInvite(
     student: GuildMember,
-    helperVoiceChannel: VoiceBasedChannel
+    helperVoiceBasedChannel: VoiceBasedChannel
 ): Promise<Result<void, ServerError>> {
     const [invite] = await Promise.all([
-        helperVoiceChannel.createInvite({
+        helperVoiceBasedChannel.createInvite({
             maxAge: 15 * 60,
             maxUses: 1
         }),
-        helperVoiceChannel.permissionOverwrites.create(student, {
+        helperVoiceBasedChannel.permissionOverwrites.create(student, {
             ViewChannel: true,
             Connect: true
         })
@@ -291,7 +292,7 @@ async function sendInvite(
     // remove the overwrite when the link dies
     setTimeout(
         () => {
-            helperVoiceChannel.permissionOverwrites.cache
+            helperVoiceBasedChannel.permissionOverwrites.cache
                 .find(overwrite => overwrite.id === student.id)
                 ?.delete()
                 .catch(() =>
@@ -320,6 +321,6 @@ export {
     initializationCheck,
     updateCommandHelpChannels,
     setHelpChannelVisibility,
-    createOfficeVoiceChannels,
+    createOfficeVoiceBasedChannels,
     sendInvite
 };

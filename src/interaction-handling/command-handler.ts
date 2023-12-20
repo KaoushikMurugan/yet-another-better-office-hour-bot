@@ -18,7 +18,7 @@ import {
 } from 'discord.js';
 import {
     updateCommandHelpChannels,
-    createOfficeVoiceChannels
+    createOfficeVoiceBasedChannels
 } from '../attending-server/guild-actions.js';
 import {
     SettingsMainMenu,
@@ -322,7 +322,7 @@ async function listHelpers(
             'Tutor name',
             'Available Queues',
             'Time Elapsed (hh:mm:ss)',
-            'VC Status'
+            'VBC Status'
         )
         .setAlign(1, AlignmentEnum.CENTER)
         .setAlign(2, AlignmentEnum.CENTER)
@@ -345,15 +345,15 @@ async function listHelpers(
                     .toString(), // Available Queues
                 convertMsToShortTime(new Date().getTime() - helper.helpStart.getTime()), // Time Elapsed
                 (() => {
-                    const voiceChannel = interaction.guild.voiceStates.cache.get(
+                    const voiceBasedChannel = interaction.guild.voiceStates.cache.get(
                         helper.member.id
                     )?.channel;
-                    if (!voiceChannel) {
+                    if (!voiceBasedChannel) {
                         return 'Not in voice channel';
                     }
-                    return voiceChannel.members.size > 1
-                        ? `Busy in [${voiceChannel.name}]`
-                        : `Idling in [${voiceChannel.name}]`;
+                    return voiceBasedChannel.members.size > 1
+                        ? `Busy in [${voiceBasedChannel.name}]`
+                        : `Idling in [${voiceBasedChannel.name}]`;
                 })() // Status, IIFE to cram in more logic
             ])
         )
@@ -534,10 +534,13 @@ async function createOffices(
         throw ExpectedParseErrors.accessLevelRoleDoesNotExist(['Staff']);
     }
     await channelsAreUnderLimit(interaction, 1, numOffices);
-    await createOfficeVoiceChannels(server.guild, categoryName, officeName, numOffices, [
-        server.botAdminRoleID,
-        server.staffRoleID
-    ]);
+    await createOfficeVoiceBasedChannels(
+        server.guild,
+        categoryName,
+        officeName,
+        numOffices,
+        [server.botAdminRoleID, server.staffRoleID]
+    );
     await interaction.editReply(SuccessMessages.createdOffices(numOffices));
 }
 

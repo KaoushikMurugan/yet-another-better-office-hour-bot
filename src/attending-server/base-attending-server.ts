@@ -37,7 +37,7 @@ import {
     isCategoryChannel,
     isQueueTextChannel,
     isTextChannel,
-    isVoiceChannel
+    isVoiceBasedChannel
 } from '../utils/util-functions.js';
 import {
     CategoryChannelId,
@@ -593,9 +593,9 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
-        const helperVoiceChannel = helperMember.voice.channel;
-        if (helperVoiceChannel === null) {
-            throw ExpectedServerErrors.notInVC;
+        const helperVoiceBasedChannel = helperMember.voice.channel;
+        if (helperVoiceBasedChannel === null) {
+            throw ExpectedServerErrors.notInVBC;
         }
         const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays without initial value will throw an error
@@ -614,7 +614,7 @@ class AttendingServer {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceBasedChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -649,9 +649,9 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
-        const helperVoiceChannel = helperMember.voice.channel;
-        if (helperVoiceChannel === null) {
-            throw ExpectedServerErrors.notInVC;
+        const helperVoiceBasedChannel = helperMember.voice.channel;
+        if (helperVoiceBasedChannel === null) {
+            throw ExpectedServerErrors.notInVBC;
         }
         let student: Readonly<Helpee>;
         if (targetQueue !== undefined) {
@@ -681,7 +681,7 @@ class AttendingServer {
         }
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendInvite(student.member, helperVoiceBasedChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -770,20 +770,20 @@ class AttendingServer {
 
     /**
      * Called when a member joins a voice channel
-     * - triggers onStudentJoinVC for all extensions if the member is a
+     * - triggers onStudentJoinVBC for all extensions if the member is a
      * student and was just removed from the queue
-     * @param member the guild member that just joined a VC
+     * @param member the guild member that just joined a VBC
      * @param newVoiceState voice state object with a guaranteed non-null channel
      */
-    async onMemberJoinVC(
+    async onMemberJoinVBC(
         member: GuildMember,
         newVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
         // temporary solution, stage channel is not currently supported
-        if (!isVoiceChannel(newVoiceState.channel)) {
+        if (!isVoiceBasedChannel(newVoiceState.channel)) {
             return;
         }
-        const voiceChannel = newVoiceState.channel;
+        const voiceBasedChannel = newVoiceState.channel;
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
@@ -798,7 +798,7 @@ class AttendingServer {
             );
             await Promise.all([
                 ...this.serverExtensions.map(extension =>
-                    extension.onStudentJoinVC(this, member, voiceChannel)
+                    extension.onStudentJoinVBC(this, member, voiceBasedChannel)
                 ),
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
@@ -814,12 +814,12 @@ class AttendingServer {
 
     /**
      * Called when a member leaves a voice channel
-     * - triggers onStudentLeaveVC for all extensions if the member is a
+     * - triggers onStudentLeaveVBC for all extensions if the member is a
      * student and was in a session
-     * @param member the guild member that just joined a VC
+     * @param member the guild member that just joined a VBC
      * @param oldVoiceState voice state object with a guaranteed non-null channel
      */
-    async onMemberLeaveVC(
+    async onMemberLeaveVBC(
         member: GuildMember,
         oldVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
@@ -841,7 +841,7 @@ class AttendingServer {
                     overwrite => overwrite.id === member.id && overwrite.delete()
                 ), // delete the student permission overwrite
                 ...this.serverExtensions.map(extension =>
-                    extension.onStudentLeaveVC(this, member)
+                    extension.onStudentLeaveVBC(this, member)
                 ),
                 this.afterSessionMessage !== '' &&
                     member.send(SimpleEmbed(this.afterSessionMessage)),

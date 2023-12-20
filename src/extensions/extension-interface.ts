@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { GuildMember, VoiceChannel } from 'discord.js';
+import { GuildMember, VoiceBasedChannel } from 'discord.js';
 import { HelpQueue } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
@@ -127,19 +127,22 @@ interface ServerExtension {
      * When a student that just dequeued joins the voice channel
      * @param server which server is this student from
      * @param studentMember the student guild member object
-     * @param voiceChannel non-null voice channel
+     * @param voiceBasedChannel non-null voice channel
      */
-    onStudentJoinVC: (
+    onStudentJoinVBC: (
         server: FrozenServer,
         studentMember: GuildMember,
-        voiceChannel: VoiceChannel
+        voiceBasedChannel: VoiceBasedChannel
     ) => Promise<void>;
     /**
      * When a student finishes receiving help and leaves the voice channel
      * @param server which server is this student from
      * @param studentMember the student guild member object
      */
-    onStudentLeaveVC: (server: FrozenServer, studentMember: GuildMember) => Promise<void>;
+    onStudentLeaveVBC: (
+        server: FrozenServer,
+        studentMember: GuildMember
+    ) => Promise<void>;
     /**
      * When YABOB is kicked from a server.
      * Extensions should override this method to do any necessary cleanup
@@ -311,14 +314,14 @@ abstract class BaseServerExtension implements ServerExtension {
     onServerPeriodicUpdate(server: FrozenServer, isFirstCall: boolean): Promise<void> {
         return Promise.resolve();
     }
-    onStudentJoinVC(
+    onStudentJoinVBC(
         server: FrozenServer,
         studentMember: GuildMember,
-        voiceChannel: VoiceChannel
+        voiceBasedChannel: VoiceBasedChannel
     ): Promise<void> {
         return Promise.resolve();
     }
-    onStudentLeaveVC(server: FrozenServer, studentMember: GuildMember): Promise<void> {
+    onStudentLeaveVBC(server: FrozenServer, studentMember: GuildMember): Promise<void> {
         return Promise.resolve();
     }
     onServerDelete(server: FrozenServer): Promise<void> {

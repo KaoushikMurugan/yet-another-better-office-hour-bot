@@ -15,7 +15,7 @@ const ExpectedServerErrors = {
         `There's no one left to help. You should get some coffee!`
     ),
     notHosting: new ServerError('You are not currently hosting.'),
-    notInVC: new ServerError(`You need to be in a voice channel first.`),
+    notInVBC: new ServerError(`You need to be in a voice channel first.`),
     alreadyHosting: new ServerError('You are already hosting.'),
     noQueueRole: new ServerError(
         `It seems like you don't have any queue roles.\n` +

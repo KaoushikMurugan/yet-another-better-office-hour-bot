@@ -357,14 +357,14 @@ class QueueDisplay {
 
     private getVcStatus(helperId: Snowflake): string {
         const spacer = '\u3000'; // ideographic space character, extra wide
-        const voiceChannel =
+        const voiceBasedChannel =
             this.queueChannel.channelObj.guild.voiceStates.cache.get(helperId)?.channel;
         // using # gives the same effect as if we use the id
         // bc students can't see the channel ping if they don't have permission
-        const vcStatus = voiceChannel
-            ? voiceChannel.members.size > 1
-                ? `🔴 Busy in \`#${voiceChannel.name}\``
-                : `🟢 Idling in \`#${voiceChannel.name}\``
+        const vcStatus = voiceBasedChannel
+            ? voiceBasedChannel.members.size > 1
+                ? `🔴 Busy in \`#${voiceBasedChannel.name}\``
+                : `🟢 Idling in \`#${voiceBasedChannel.name}\``
             : 'Not in voice channel';
         return `<@${helperId}>${spacer}${vcStatus}`;
     }
