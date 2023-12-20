@@ -779,7 +779,6 @@ class AttendingServer {
         member: GuildMember,
         newVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
-        // temporary solution, stage channel is not currently supported
         if (!isVoiceBasedChannel(newVoiceState.channel)) {
             return;
         }

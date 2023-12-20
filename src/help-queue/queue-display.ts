@@ -279,7 +279,7 @@ class QueueDisplay {
                                 ? '1 (Up Next)'
                                 : '(☞°∀°)☞ Up Next!'
                             : idx + 1,
-                        student.displayName + student.inVBC ? ' (In VBC)' : '' 
+                        student.displayName + (student.inVBC ? ' (In VBC)' : '') 
                     ])
                 ]);
         } else {

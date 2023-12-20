@@ -392,7 +392,14 @@ class HelpQueue {
                     return {
                         displayName: student.member.displayName,
                         helpTopic: student.helpTopic,
-                        inVBC: student.member.voice.channelId !== null,
+                        inVBC: this.allHelpers.some(helperId => {
+                            const helper = this.queueChannel.channelObj.members.get(helperId);
+                            return (
+                                helper !== undefined &&
+                                helper.voice.channelId ===
+                                    student.member.voice.channelId
+                            );
+                        }),
                     };
                 }
             ),
