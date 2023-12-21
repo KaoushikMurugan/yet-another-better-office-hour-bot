@@ -786,7 +786,7 @@ class AttendingServer {
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
-            )
+            ) || this.queues.some(queue => queue.hasStudent(member.id))
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {
@@ -825,7 +825,7 @@ class AttendingServer {
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
                 helpedMember => helpedMember.member.id === member.id
-            )
+            ) || this.queues.some(queue => queue.hasStudent(member.id))
         );
         const memberIsHelper = this._helpers.has(member.id);
         if (memberIsStudent) {

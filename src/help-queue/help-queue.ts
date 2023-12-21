@@ -188,6 +188,14 @@ class HelpQueue {
     }
 
     /**
+     * Returns true if there is a student in the queue with the given id
+     * @param id 
+     */
+    hasStudent(studentId: string): boolean {
+        return this._students.some(student => student.member.id === studentId);
+    }
+
+    /**
      * Asynchronously creates a new queue
      * @param queueChannel the corresponding text channel and its name
      * @param backupData backup queue data directly passed to the constructor
