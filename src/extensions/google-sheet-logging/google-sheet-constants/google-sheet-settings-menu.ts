@@ -67,7 +67,7 @@ function GoogleSheetSettingsConfigMenu(
             GoogleSheetButtonNames.UpdateSheetTrackingStatus,
             server.guild.id
         ])
-            .setEmoji('🔗')
+            .setEmoji(`${!server.sheetTracking ? '✔️' : '✖️'}`)
             .setLabel(
                 `${!server.sheetTracking ? 'Enable' : 'Disable'} Google Sheet Tracking`
             )
