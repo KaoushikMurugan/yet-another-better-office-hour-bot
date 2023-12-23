@@ -92,7 +92,7 @@ class HelpQueue {
      * @param backupData if defined, use this data to restore the students array
      */
     protected constructor(
-        public readonly queueChannel: QueueChannel,
+        public queueChannel: QueueChannel,
         private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplay,
         backupData?: QueueBackup & {
@@ -218,6 +218,13 @@ class HelpQueue {
             queueExtensions.map(extension => extension.onQueueCreate(queue))
         );
         return queue;
+    }
+
+    /**
+     * Edits the queue name in calendar extension
+     */
+    editCalendarName(oldName: string, newQueueChannel: QueueChannel) {
+        CalendarQueueExtension.rename(oldName, newQueueChannel);
     }
 
     /**

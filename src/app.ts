@@ -124,6 +124,23 @@ client.on(Events.GuildMemberAdd, async member => {
 });
 
 /**
+ * If a queue is renamed manually, it renames the queue name for queue embeds, roles, and calendar extension
+ */
+client.on(Events.ChannelUpdate, async (oldChannel, newChannel) => {
+    // check both input channels are a category channel type
+    if (
+        oldChannel.type === 4 &&
+        newChannel.type === 4 &&
+        oldChannel.name !== newChannel.name
+    ) {
+        const server = AttendingServer.safeGet(oldChannel.guild.id);
+        if (server) {
+            server.updateQueueName(oldChannel, newChannel);
+        }
+    }
+});
+
+/**
  * Used for inviting YABOB to a server with existing roles
  * Once YABOB has the highest role, start the initialization call
  */
