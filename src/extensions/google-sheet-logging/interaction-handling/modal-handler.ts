@@ -5,6 +5,7 @@ import { AttendingServer } from '../../../attending-server/base-attending-server
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { GoogleSheetSuccessMessages } from '../google-sheet-constants/sheet-success-messages.js';
 import { GoogleSheetSettingsConfigMenu } from '../google-sheet-constants/google-sheet-settings-menu.js';
+import { environment } from '../../../environment/environment-manager.js';
 
 const googleSheetModalMap: ModalSubmitHandlerProps = {
     guildMethodMap: {
@@ -32,6 +33,11 @@ async function updateGoogleSheetSettings(
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     const googleSheetID = interaction.fields.getTextInputValue('google_sheet_id');
     await state.setGoogleSheet(googleSheetID);
+
+    // Enable tracking when new sheet is not default sheet
+    if (googleSheetID !== environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID) {
+        await server.setSheetTracking(true);
+    }
 
     server.sendLogMessage(
         GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheet.title)

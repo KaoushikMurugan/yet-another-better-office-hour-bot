@@ -37,6 +37,18 @@ function GoogleSheetSettingsConfigMenu(
         throw new Error('Google Sheet Logging state for this server was not found');
     }
 
+    let currentSheet = {
+        name: 'Current Google Sheet',
+        value: ''
+    };
+
+    if (server.sheetTracking) {
+        currentSheet.value = `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${state.googleSheet.title}\nTracking enabled`;
+    } else {
+        currentSheet.value =
+            'Tracking disabled. Enable tracking or set a new Google sheet to track hours.';
+    }
+
     const embed = new EmbedBuilder()
         .setTitle(`📊 Google Sheet Logging Configuration for ${server.guild.name} 📊`)
         .setColor(EmbedColor.Aqua)
@@ -49,12 +61,7 @@ function GoogleSheetSettingsConfigMenu(
                 name: 'Documentation',
                 value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)`
             },
-            {
-                name: 'Current Google Sheet',
-                value: `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${
-                    state.googleSheet.title
-                }\nTracking ${server.sheetTracking ? 'enabled' : 'disabled'}.`
-            }
+            currentSheet
         );
 
     if (updateMessage.length > 0) {
@@ -71,7 +78,11 @@ function GoogleSheetSettingsConfigMenu(
             .setLabel(
                 `${!server.sheetTracking ? 'Enable' : 'Disable'} Google Sheet Tracking`
             )
-            .setStyle(ButtonStyle.Secondary),
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(
+                state.googleSheet.spreadsheetId ===
+                    environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
+            ),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,

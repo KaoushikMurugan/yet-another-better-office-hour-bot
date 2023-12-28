@@ -63,10 +63,12 @@ async function resetGoogleSheetSettings(
     const state = GoogleSheetExtensionState.get(interaction.guildId);
     await Promise.all([
         state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
+        server.setSheetTracking(false),
         server.sendLogMessage(
             GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
         )
     ]);
+
     await interaction.update(
         GoogleSheetSettingsConfigMenu(
             server,

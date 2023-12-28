@@ -441,7 +441,7 @@ class AttendingServer {
             throw ExpectedServerErrors.notHosting;
         }
         this._helpers.delete(helperMember.id);
-        const  completeHelper: Required<Helper> = {
+        const completeHelper: Required<Helper> = {
             ...helper,
             helpEnd: new Date()
         };
