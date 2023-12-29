@@ -567,6 +567,11 @@ class AttendingServer {
             const roleTaken = this.guild.roles.cache.find(
                 role => role.name === newChannel.name
             );
+            const cachedChannelIndex = this.queueChannelsCache.findIndex(
+                queueChannel => queueChannel.queueName === oldName
+            );
+            this.queueChannelsCache.splice(cachedChannelIndex, 1);
+            this.queueChannelsCache.push(newQueueChannel);
             if (nameTaken) {
                 newChannel.setName(oldName);
                 LOGGER.error(

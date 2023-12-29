@@ -135,7 +135,7 @@ client.on(Events.ChannelUpdate, async (oldChannel, newChannel) => {
     ) {
         const server = AttendingServer.safeGet(oldChannel.guild.id);
         if (server) {
-            server.updateQueueName(oldChannel, newChannel);
+            await server.updateQueueName(oldChannel, newChannel);
         }
     }
 });
