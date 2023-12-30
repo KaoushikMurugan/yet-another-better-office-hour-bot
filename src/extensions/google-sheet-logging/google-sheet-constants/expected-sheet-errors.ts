@@ -37,6 +37,9 @@ const ExpectedSheetErrors = {
     badGoogleSheetId: new GoogleSheetConnectionError(
         `YABOB cannot access this google sheet. Make sure you share the google sheet with this YABOB's email: \`${environment.googleCloudCredentials.client_email}\``
     ),
+    defaultGoogleSheetId: new GoogleSheetConnectionError(
+        'YABOB cannot write to this public sheet. Please use a different google sheet.'
+    ),
     noDataYet: (type: 'Help Session' | 'Attendance') =>
         new CommandParseError(
             `There are no rows in the ${type} sheet yet. Try running this command again after a ${type.toLowerCase()} entry has been written.`

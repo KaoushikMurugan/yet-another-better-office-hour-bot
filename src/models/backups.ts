@@ -1,9 +1,9 @@
 /** @module  Backups */
 
+import { z } from 'zod';
 import { AutoClearTimeout } from '../help-queue/help-queue.js';
 import { SimpleTimeZone } from '../utils/type-aliases.js';
 import { Helpee } from './member-states.js';
-import { z } from 'zod';
 
 /** Represent the data of 1 HelpQueue */
 type QueueBackup = {
@@ -51,6 +51,8 @@ type ServerBackup = {
     autoGiveStudentRole: boolean;
     /** whether to prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
+    /** Track data in Google sheet if true */
+    sheetTracking: boolean;
     /** timezone of this server */
     timezone: SimpleTimeZone;
 };
@@ -96,6 +98,7 @@ const serverBackupSchema = z.object({
     // ! Migration code, make this non-optional in 4.4
     autoGiveStudentRole: z.optional(z.boolean()),
     promptHelpTopic: z.optional(z.boolean()),
+    sheetTracking: z.optional(z.boolean()),
     timezone: z.optional(
         z.object({
             sign: z.union([z.literal('+'), z.literal('-')]),
@@ -105,4 +108,4 @@ const serverBackupSchema = z.object({
     )
 });
 
-export { QueueBackup, ServerBackup, serverBackupSchema, queueBackupSchema };
+export { QueueBackup, ServerBackup, queueBackupSchema, serverBackupSchema };
