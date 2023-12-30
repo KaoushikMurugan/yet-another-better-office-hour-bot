@@ -1,4 +1,4 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import { APIEmbedField, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
 import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
@@ -37,7 +37,7 @@ function GoogleSheetSettingsConfigMenu(
         throw new Error('Google Sheet Logging state for this server was not found');
     }
 
-    let currentSheet = {
+    const currentSheet: APIEmbedField = {
         name: 'Current Google Sheet',
         value: ''
     };
