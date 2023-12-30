@@ -36,6 +36,7 @@ import {
     convertMsToTime,
     isCategoryChannel,
     isQueueTextChannel,
+    isChatTextChannel,
     isTextChannel,
     isVoiceChannel
 } from '../utils/util-functions.js';
@@ -68,7 +69,8 @@ import type { Logger } from 'pino';
  * - Guarantees that a queueName and parentCategoryId exists
  */
 type QueueChannel = Readonly<{
-    channelObj: TextChannel;
+    queueChannelObj: TextChannel;
+    chatChannelObj: TextChannel;
     queueName: string;
     parentCategoryId: CategoryChannelId;
 }>;
@@ -217,6 +219,11 @@ class AttendingServer {
     /** Auto clear values of a queue, undefined if not set */
     get queueAutoClearTimeout(): Optional<AutoClearTimeout> {
         return this._queues.first()?.timeUntilAutoClear;
+    }
+
+    /** List of category channel IDs on this server */
+    get categoryChannelIDs(): ReadonlyArray<CategoryChannelId> {
+        return [...this._queues.keys()];
     }
 
     /** List of queues on this server */
@@ -525,12 +532,13 @@ class AttendingServer {
             name: newQueueName,
             type: ChannelType.GuildCategory
         });
-        const [queueTextChannel] = await Promise.all([
+        const [queueTextChannel, chatTextChannel] = await Promise.all([
             parentCategory.children.create({ name: 'queue' }),
             parentCategory.children.create({ name: 'chat' })
         ]);
         const queueChannel: QueueChannel = {
-            channelObj: queueTextChannel,
+            queueChannelObj: queueTextChannel,
+            chatChannelObj: chatTextChannel,
             queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
@@ -561,21 +569,20 @@ class AttendingServer {
             (channel): channel is CategoryChannel =>
                 isCategoryChannel(channel) && channel.id === parentCategoryId
         );
-        if (!parentCategory) {
-            // this shouldn't happen bc input type restriction on the command
-            // but we need to pass ts check
-            throw ExpectedServerErrors.queueDoesNotExist;
+        if (parentCategory) {
+            // if deleting through '/queue remove' command (whereas manual deleting already deletes the parent category)
+            // delete child channels first
+            await Promise.all(parentCategory.children.cache.map(child => child.delete()));
+            // now delete category and role
+            await Promise.all([
+                parentCategory.delete(),
+                this.guild.roles.cache
+                    .find(role => role.name === parentCategory.name)
+                    ?.delete()
+            ]);
         }
-        // delete child channels first
-        await Promise.all(parentCategory.children.cache.map(child => child.delete()));
-        // now delete category, role, and let queue call onQueueDelete
-        await Promise.all([
-            parentCategory.delete(),
-            this.guild.roles.cache
-                .find(role => role.name === parentCategory.name)
-                ?.delete(),
-            queue.gracefulDelete()
-        ]);
+        // let queue call onQueueDelete
+        await Promise.all([queue.gracefulDelete()]);
         await this.getQueueChannels(false);
     }
 
@@ -734,11 +741,14 @@ class AttendingServer {
             }
             const queueTextChannel =
                 categoryChannel.children.cache.find(isQueueTextChannel);
-            if (!queueTextChannel) {
+            const chatTextChannel =
+                categoryChannel.children.cache.find(isChatTextChannel);
+            if (!queueTextChannel || !chatTextChannel) {
                 continue;
             }
             this.queueChannelsCache.push({
-                channelObj: queueTextChannel,
+                queueChannelObj: queueTextChannel,
+                chatChannelObj: chatTextChannel,
                 queueName: categoryChannel.name,
                 parentCategoryId: categoryChannel.id
             });

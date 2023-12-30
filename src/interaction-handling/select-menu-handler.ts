@@ -74,11 +74,7 @@ async function selectLoggingChannel(
     await server.setLoggingChannel(loggingChannel);
     if (parent === 'settings') {
         await interaction.update(
-            callbackMenu.menu(
-                server,
-                false,
-                'Logging channel has been updated!'
-            )
+            callbackMenu.menu(server, false, 'Logging channel has been updated!')
         );
     } else {
         await interaction.update(

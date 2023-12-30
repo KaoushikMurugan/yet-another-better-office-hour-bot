@@ -2,14 +2,20 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Events } from 'discord.js';
+import { Guild, Events, TextChannel } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
 import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
-import { printTitleString, isLeaveVC, isJoinVC } from './utils/util-functions.js';
+import {
+    printTitleString,
+    isLeaveVC,
+    isJoinVC,
+    isCategoryChannel,
+    isTextChannel
+} from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
@@ -147,6 +153,39 @@ client.on(Events.GuildRoleUpdate, async role => {
                 )
             )
         ]);
+    }
+});
+
+/**
+ * Track if a channel has been deleted
+ * If a channel has been manually deleted, delete the queue
+ */
+client.on(Events.ChannelDelete, async channel => {
+    if (channel.isDMBased() || !isCategoryChannel(channel)) {
+        return;
+    }
+    const server = AttendingServer.safeGet(channel.guild.id);
+    if (server && server.categoryChannelIDs.includes(channel.id)) {
+        // if the category channels haven't been deleted already with the '/queue remove' command
+        // delete child text channels
+        const category = server.getQueueChannelById(channel.id);
+        if (category) {
+            const [queueTextChannel, chatTextChannel] = await Promise.all([
+                category.queueChannelObj,
+                category.chatChannelObj
+            ]);
+            const childChannels = [queueTextChannel, chatTextChannel].filter(
+                (ch): ch is TextChannel => isTextChannel(ch)
+            );
+            await Promise.all(
+                childChannels.map(ch => server.guild.channels.delete(ch.id))
+            );
+        }
+        // delete role
+        await Promise.all([
+            server.guild.roles.cache.find(role => role.name === channel.name)?.delete()
+        ]);
+        await server.deleteQueueById(channel.id);
     }
 });
 

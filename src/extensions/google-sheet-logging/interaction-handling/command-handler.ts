@@ -148,7 +148,7 @@ async function getStatistics(
     const helpSessionRows = await GoogleSheetExtensionState.get(
         guild.id
     ).googleSheet.sheetsByTitle[title]?.getRows();
-    
+
     if (helpSessionRows === undefined) {
         throw ExpectedSheetErrors.missingSheet('Help Session');
     }

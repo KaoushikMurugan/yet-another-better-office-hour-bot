@@ -45,7 +45,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
         queueChannel: QueueChannel,
         display: FrozenDisplay
     ): Promise<CalendarQueueExtension> {
-        const state = CalendarExtensionState.get(queueChannel.channelObj.guild.id);
+        const state = CalendarExtensionState.get(queueChannel.queueChannelObj.guild.id);
         const instance = new CalendarQueueExtension(renderIndex, queueChannel, display);
         state.queueExtensions.set(queueChannel.queueName, instance);
         return instance;
@@ -72,7 +72,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      */
     override async onQueueDelete(deletedQueue: FrozenQueue): Promise<void> {
         CalendarExtensionState.get(
-            this.queueChannel.channelObj.guild.id
+            this.queueChannel.queueChannelObj.guild.id
         ).queueExtensions.delete(deletedQueue.queueName);
     }
 
@@ -81,7 +81,9 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private renderCalendarEmbeds(): void {
-        const state = CalendarExtensionState.get(this.queueChannel.channelObj.guild.id);
+        const state = CalendarExtensionState.get(
+            this.queueChannel.queueChannelObj.guild.id
+        );
         const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
@@ -112,7 +114,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
             buildComponent(new ButtonBuilder(), [
                 'queue',
                 CalendarButtonNames.Refresh,
-                this.queueChannel.channelObj.guildId
+                this.queueChannel.queueChannelObj.guildId
             ])
                 .setEmoji('🔄')
                 .setLabel('Refresh Upcoming Sessions')

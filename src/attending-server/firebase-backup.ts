@@ -157,7 +157,7 @@ function backupQueueData(queue: HelpQueue): void {
     };
     const firebaseDoc = firebaseDB
         .collection('serverBackups')
-        .doc(queue.queueChannel.channelObj.guild.id);
+        .doc(queue.queueChannel.queueChannelObj.guild.id);
     // we are assuming the doc exists, since it's impossible to have a queue method call without a queue
     firebaseDoc
         .get()

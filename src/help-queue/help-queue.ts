@@ -108,7 +108,7 @@ class HelpQueue {
         this._seriousModeEnabled = backupData.seriousModeEnabled;
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
-            const correspondingMember = this.queueChannel.channelObj.members.get(
+            const correspondingMember = this.queueChannel.queueChannelObj.members.get(
                 studentBackup.memberId
             );
             if (correspondingMember !== undefined) {
@@ -134,7 +134,7 @@ class HelpQueue {
 
     /** #queue text channel object */
     get channelObject(): Readonly<TextChannel> {
-        return this.queueChannel.channelObj;
+        return this.queueChannel.queueChannelObj;
     }
 
     /** First student; undefined if no one is here */
@@ -189,7 +189,7 @@ class HelpQueue {
             seriousModeEnabled: boolean;
         }
     ): Promise<HelpQueue> {
-        const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
+        const everyoneRole = queueChannel.queueChannelObj.guild.roles.everyone;
         const display = new QueueDisplay(queueChannel);
         const queueExtensions: QueueExtension[] = environment.disableExtensions
             ? []
@@ -202,7 +202,7 @@ class HelpQueue {
               ]);
         const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
         await Promise.all([
-            queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
+            queueChannel.queueChannelObj.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
                 CreatePrivateThreads: false,
                 CreatePublicThreads: false,
@@ -510,7 +510,7 @@ class HelpQueue {
         await Promise.all(
             [...this.activeHelperIds].map(
                 helperId =>
-                    this.queueChannel.channelObj.members
+                    this.queueChannel.queueChannelObj.members
                         .get(helperId)
                         ?.send(embed)
                         .catch(() => {
