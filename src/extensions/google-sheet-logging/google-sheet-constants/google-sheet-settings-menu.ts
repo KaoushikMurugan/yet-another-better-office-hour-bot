@@ -1,4 +1,10 @@
-import { APIEmbedField, ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import {
+    APIEmbedField,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    EmbedBuilder
+} from 'discord.js';
 import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
 import { environment } from '../../../environment/environment-manager.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
