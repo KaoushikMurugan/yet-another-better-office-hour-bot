@@ -168,6 +168,7 @@ client.on(Events.ChannelDelete, async channel => {
     if (server && server.categoryChannelIDs.includes(channel.id)) {
         // if the category channels haven't been deleted already with the '/queue remove' command
         // delete child text channels
+        /*
         const category = server.getQueueChannelById(channel.id);
         if (category) {
             const [queueTextChannel, chatTextChannel] = await Promise.all([
@@ -181,6 +182,7 @@ client.on(Events.ChannelDelete, async channel => {
                 childChannels.map(ch => server.guild.channels.delete(ch.id))
             );
         }
+        */
         // delete role
         await Promise.all([
             server.guild.roles.cache.find(role => role.name === channel.name)?.delete()

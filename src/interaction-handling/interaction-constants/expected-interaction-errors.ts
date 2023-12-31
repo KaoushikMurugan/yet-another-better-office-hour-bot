@@ -56,6 +56,12 @@ const ExpectedParseErrors = {
                 `If you are an admin, you can use \`/queue add ${categoryName}\` ` +
                 `to generate one.`
         ),
+    noChatTextChannel: (categoryName: Optional<string>) =>
+        new CommandParseError(
+            `This category does not have a \`#chat\` text channel.\n` +
+            `If you are an admin, you can use \`/queue add ${categoryName}\` ` +
+            `to generate one.`
+        ),
     notGuildInteraction: new CommandParseError(
         'Sorry, I can only accept server server interactions right now.'
     ),

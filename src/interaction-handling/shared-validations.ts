@@ -137,6 +137,9 @@ function hasValidQueueArgument(
     if (queueTextChannel === undefined) {
         throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
     }
+    if (chatTextChannel === undefined) {
+        throw ExpectedParseErrors.noChatTextChannel(parentCategory.name);
+    }
     const queueChannel: QueueChannel = {
         queueChannelObj: queueTextChannel,
         chatChannelObj: chatTextChannel,
