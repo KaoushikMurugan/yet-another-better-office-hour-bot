@@ -145,7 +145,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         }
 
         this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
-        if (!this.attendanceUpdateIsScheduled) {
+        if (_server.sheetTracking && !this.attendanceUpdateIsScheduled) {
             // if nothing is scheduled, start a timer
             // otherwise the existing timer will update this entry
             // so no need to schedule another one

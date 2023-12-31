@@ -1,45 +1,32 @@
 /** @module AttendingServerV2 */
 import {
+    BaseMessageOptions,
     CategoryChannel,
+    ChannelType,
     Collection,
     Guild,
     GuildMember,
-    BaseMessageOptions,
-    TextChannel,
-    VoiceState,
-    ChannelType,
     Role,
-    Snowflake
+    Snowflake,
+    TextChannel,
+    VoiceState
 } from 'discord.js';
-import { AutoClearTimeout, HelpQueue } from '../help-queue/help-queue.js';
-import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
-import {
-    AccessLevelRole,
-    accessLevelRoleConfigs,
-    AccessLevelRoleIds
-} from '../models/access-level-roles.js';
-import { Helpee, Helper } from '../models/member-states.js';
+import type { Logger } from 'pino';
+import { environment } from '../environment/environment-manager.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
+import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
+import { LOGGER } from '../global-states.js';
+import { AutoClearTimeout, HelpQueue } from '../help-queue/help-queue.js';
 import {
-    // it is used idk why it complains
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    useSettingsBackup,
-    loadExternalServerData,
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    useFullBackup,
-    backupQueueData
-} from './firebase-backup.js';
+    AccessLevelRole,
+    AccessLevelRoleIds,
+    accessLevelRoleConfigs
+} from '../models/access-level-roles.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
+import { Helpee, Helper } from '../models/member-states.js';
 import { blue, green, red } from '../utils/command-line-colors.js';
-import {
-    convertMsToTime,
-    isCategoryChannel,
-    isQueueTextChannel,
-    isChatTextChannel,
-    isTextChannel,
-    isVoiceChannel
-} from '../utils/util-functions.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import {
     CategoryChannelId,
     GuildId,
@@ -51,18 +38,31 @@ import {
     SpecialRoleValues,
     WithRequired
 } from '../utils/type-aliases.js';
-import { environment } from '../environment/environment-manager.js';
+import {
+    convertMsToTime,
+    isCategoryChannel,
+    isQueueTextChannel,
+    isChatTextChannel,
+    isTextChannel,
+    isVoiceChannel
+} from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
-import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
+import {
+    backupQueueData,
+    loadExternalServerData,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    useFullBackup,
+    // it is used idk why it complains
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    useSettingsBackup
+} from './firebase-backup.js';
 import {
     initializationCheck,
     sendInvite,
     setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
-import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
-import { LOGGER } from '../global-states.js';
-import type { Logger } from 'pino';
+import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
 
 /**
  * Wrapper for TextChannel
@@ -87,6 +87,8 @@ type ServerSettings = {
     autoGiveStudentRole: boolean;
     /** Prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
+    /** Track data in Google sheet if true */
+    sheetTracking: boolean;
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
@@ -136,6 +138,7 @@ class AttendingServer {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
+        sheetTracking: false,
         accessLevelRoleIds: {
             botAdmin: SpecialRoleValues.NotSet,
             staff: SpecialRoleValues.NotSet,
@@ -214,6 +217,11 @@ class AttendingServer {
     /** whether to prompt modal asking for help topic when a user joins a queue */
     get promptHelpTopic(): boolean {
         return this.settings.promptHelpTopic;
+    }
+
+    /** Track data in Google sheet if true */
+    get sheetTracking(): boolean {
+        return this.settings.sheetTracking;
     }
 
     /** Auto clear values of a queue, undefined if not set */
@@ -1042,6 +1050,15 @@ class AttendingServer {
     @useSettingsBackup
     async setPromptHelpTopic(promptHelpTopic: boolean): Promise<void> {
         this.settings.promptHelpTopic = promptHelpTopic;
+    }
+
+    /**
+     * Sets the internal boolean value for sheetTracking
+     * @param sheetTracking
+     */
+    @useSettingsBackup
+    async setSheetTracking(sheetTracking: boolean): Promise<void> {
+        this.settings.sheetTracking = sheetTracking;
     }
 
     /**

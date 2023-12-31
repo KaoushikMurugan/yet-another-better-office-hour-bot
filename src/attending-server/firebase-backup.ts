@@ -1,12 +1,12 @@
 /** @module FirebaseServerBackup */
+import util from 'util';
+import { FrozenServer } from '../extensions/extension-utils.js';
+import { LOGGER, client, firebaseDB } from '../global-states.js';
+import { HelpQueue } from '../help-queue/help-queue.js';
 import { QueueBackup, ServerBackup, serverBackupSchema } from '../models/backups.js';
 import { SimpleLogEmbed } from '../utils/embed-helper.js';
 import { Optional } from '../utils/type-aliases.js';
-import { client, firebaseDB, LOGGER } from '../global-states.js';
-import { FrozenServer } from '../extensions/extension-utils.js';
-import { HelpQueue } from '../help-queue/help-queue.js';
 import { AttendingServer } from './base-attending-server.js';
-import util from 'util';
 
 /**
  * Loads the backup data in firebase given a server id
@@ -40,6 +40,7 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
         timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
         autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
         promptHelpTopic: unpack.data.promptHelpTopic ?? false,
+        sheetTracking: unpack.data.sheetTracking ?? false,
         staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set', // !Migration code
         timezone: unpack.data.timezone ?? {
             sign: '-',
@@ -78,6 +79,7 @@ function fullServerBackup(server: FrozenServer): void {
         studentRoleId: server.studentRoleID,
         autoGiveStudentRole: server.autoGiveStudentRole,
         promptHelpTopic: server.promptHelpTopic,
+        sheetTracking: server.sheetTracking,
         timezone: server.timezone
     };
     firebaseDB
@@ -280,9 +282,9 @@ function useQueueBackup(
 }
 
 export {
+    backupQueueData,
     loadExternalServerData,
-    useSettingsBackup,
-    useQueueBackup,
     useFullBackup,
-    backupQueueData
+    useQueueBackup,
+    useSettingsBackup
 };

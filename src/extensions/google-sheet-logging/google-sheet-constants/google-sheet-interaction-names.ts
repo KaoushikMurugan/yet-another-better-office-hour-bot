@@ -6,6 +6,7 @@ enum GoogleSheetCommandNames {
 }
 
 enum GoogleSheetButtonNames {
+    UpdateSheetTrackingStatus = 'UpdateSheetTrackingStatus',
     ResetGoogleSheetSettings = 'ResetGoogleSheetSettings',
     ShowGoogleSheetSettingsModal = 'ShowGoogleSheetSettingsModal'
 }
@@ -20,4 +21,4 @@ type AllEnumsCorrect = EnsureCorrectEnum<typeof GoogleSheetCommandNames> &
     EnsureCorrectEnum<typeof GoogleSheetButtonNames> &
     EnsureCorrectEnum<typeof GoogleSheetModalNames>; // checks if all names and values are the same
 
-export { GoogleSheetCommandNames, GoogleSheetButtonNames, GoogleSheetModalNames };
+export { GoogleSheetButtonNames, GoogleSheetCommandNames, GoogleSheetModalNames };
