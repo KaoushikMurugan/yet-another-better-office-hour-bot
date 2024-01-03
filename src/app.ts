@@ -167,26 +167,11 @@ client.on(Events.ChannelDelete, async channel => {
     const server = AttendingServer.safeGet(channel.guild.id);
     if (server && server.categoryChannelIDs.includes(channel.id)) {
         // if the category channels haven't been deleted already with the '/queue remove' command
-        // delete child text channels
-        /*
-        const category = server.getQueueChannelById(channel.id);
-        if (category) {
-            const [queueTextChannel, chatTextChannel] = await Promise.all([
-                category.queueChannelObj,
-                category.chatChannelObj
-            ]);
-            const childChannels = [queueTextChannel, chatTextChannel].filter(
-                (ch): ch is TextChannel => isTextChannel(ch)
-            );
-            await Promise.all(
-                childChannels.map(ch => server.guild.channels.delete(ch.id))
-            );
-        }
-        */
         // delete role
         await Promise.all([
             server.guild.roles.cache.find(role => role.name === channel.name)?.delete()
         ]);
+        // delete queue
         await server.deleteQueueById(channel.id);
     }
 });

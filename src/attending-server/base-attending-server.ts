@@ -578,7 +578,7 @@ class AttendingServer {
                 isCategoryChannel(channel) && channel.id === parentCategoryId
         );
         if (parentCategory) {
-            // if deleting through '/queue remove' command (whereas manual deleting already deletes the parent category)
+            // if deleting through '/queue remove' command
             // delete child channels first
             await Promise.all(parentCategory.children.cache.map(child => child.delete()));
             // now delete category and role
@@ -590,7 +590,7 @@ class AttendingServer {
             ]);
         }
         // let queue call onQueueDelete
-        await Promise.all([queue.gracefulDelete()]);
+        await queue.gracefulDelete();
         await this.getQueueChannels(false);
     }
 
