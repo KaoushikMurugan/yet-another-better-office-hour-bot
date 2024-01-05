@@ -408,17 +408,6 @@ function isQueueTextChannel(
 }
 
 /**
- * Narrows the type down to text channel and checks if the name is `chat`
- * @param channel any channel from a server
- * @returns type narrower
- */
-function isChatTextChannel(
-    channel: GuildBasedChannel | null | undefined
-): channel is TextChannel {
-    return !!channel && channel.type === ChannelType.GuildText && channel.name === 'chat';
-}
-
-/**
  * Narrows the type down to text channel
  * @param channel
  * @returns
@@ -483,7 +472,6 @@ export {
     isJoinVC,
     isCategoryChannel,
     isQueueTextChannel,
-    isChatTextChannel,
     isTextChannel,
     isVoiceChannel,
     /** Validators */

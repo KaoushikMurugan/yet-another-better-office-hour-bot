@@ -14,7 +14,6 @@ import {
 import {
     isCategoryChannel,
     isQueueTextChannel,
-    isChatTextChannel,
     isTextChannel
 } from '../utils/util-functions.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
@@ -133,16 +132,11 @@ function hasValidQueueArgument(
         throw ExpectedParseErrors.invalidQueueCategory(parentCategory?.name);
     }
     const queueTextChannel = parentCategory.children.cache.find(isQueueTextChannel);
-    const chatTextChannel = parentCategory.children.cache.find(isChatTextChannel);
     if (queueTextChannel === undefined) {
         throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
     }
-    if (chatTextChannel === undefined) {
-        throw ExpectedParseErrors.noChatTextChannel(parentCategory.name);
-    }
     const queueChannel: QueueChannel = {
-        queueChannelObj: queueTextChannel,
-        chatChannelObj: chatTextChannel,
+        channelObj: queueTextChannel,
         queueName: parentCategory.name,
         parentCategoryId: parentCategory.id
     };

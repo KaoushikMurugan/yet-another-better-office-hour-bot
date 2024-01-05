@@ -42,7 +42,6 @@ import {
     convertMsToTime,
     isCategoryChannel,
     isQueueTextChannel,
-    isChatTextChannel,
     isTextChannel,
     isVoiceChannel
 } from '../utils/util-functions.js';
@@ -69,8 +68,7 @@ import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
  * - Guarantees that a queueName and parentCategoryId exists
  */
 type QueueChannel = Readonly<{
-    queueChannelObj: TextChannel;
-    chatChannelObj: TextChannel;
+    channelObj: TextChannel;
     queueName: string;
     parentCategoryId: CategoryChannelId;
 }>;
@@ -540,13 +538,12 @@ class AttendingServer {
             name: newQueueName,
             type: ChannelType.GuildCategory
         });
-        const [queueTextChannel, chatTextChannel] = await Promise.all([
+        const [queueTextChannel] = await Promise.all([
             parentCategory.children.create({ name: 'queue' }),
             parentCategory.children.create({ name: 'chat' })
         ]);
         const queueChannel: QueueChannel = {
-            queueChannelObj: queueTextChannel,
-            chatChannelObj: chatTextChannel,
+            channelObj: queueTextChannel,
             queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
@@ -749,14 +746,11 @@ class AttendingServer {
             }
             const queueTextChannel =
                 categoryChannel.children.cache.find(isQueueTextChannel);
-            const chatTextChannel =
-                categoryChannel.children.cache.find(isChatTextChannel);
-            if (!queueTextChannel || !chatTextChannel) {
+            if (!queueTextChannel) {
                 continue;
             }
             this.queueChannelsCache.push({
-                queueChannelObj: queueTextChannel,
-                chatChannelObj: chatTextChannel,
+                channelObj: queueTextChannel,
                 queueName: categoryChannel.name,
                 parentCategoryId: categoryChannel.id
             });
