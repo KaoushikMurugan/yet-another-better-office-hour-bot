@@ -1124,7 +1124,8 @@ class AttendingServer {
         }
         await Promise.all(
             helpersRolesData.map(async helperRolesData => {
-                if (!this.guild.members.cache.has(helperRolesData.helperId)) {
+                // the fetch call refreshes the cache as a side effect
+                if (!(await this.guild.members.fetch()).has(helperRolesData.helperId)) {
                     errorMap.set(
                         helperRolesData.helperId,
                         `Failed to find member with id ${helperRolesData.helperId} in this server.`
