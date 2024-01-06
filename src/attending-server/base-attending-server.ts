@@ -551,43 +551,39 @@ class AttendingServer {
         const oldName = oldChannel.name;
         const newName = newChannel.name;
         const channelQueue = this._queues.get(oldChannel.id);
-        if (channelQueue) {
-            const role = this.guild.roles.cache.find(
-                role => role.name === oldChannel.name
-            );
-            const newQueueChannel: QueueChannel = {
-                channelObj: channelQueue.queueChannel.channelObj,
-                queueName: newName,
-                parentCategoryId: channelQueue.queueChannel.parentCategoryId
-            };
-            const nameTaken = this._queues.find(
-                queue =>
-                    queue.queueChannel.queueName === newName && queue !== channelQueue
-            );
-            const roleTaken = this.guild.roles.cache.find(
-                role => role.name === newChannel.name
-            );
-            const cachedChannelIndex = this.queueChannelsCache.findIndex(
-                queueChannel => queueChannel.queueName === oldName
-            );
-            this.queueChannelsCache.splice(cachedChannelIndex, 1);
-            this.queueChannelsCache.push(newQueueChannel);
-            if (nameTaken) {
-                newChannel.setName(oldName);
-                LOGGER.error(
-                    `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
-                );
-                return;
-            }
-            if (role && !roleTaken) {
-                await role.setName(newName);
-            }
-            await Promise.all([
-                (channelQueue.queueChannel = newQueueChannel),
-                channelQueue.triggerRender(),
-                channelQueue.editCalendarName(oldName, newQueueChannel)
-            ]);
+        if (!channelQueue) {
+            return;
         }
+        const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
+        const newQueueChannel: QueueChannel = {
+            channelObj: channelQueue.queueChannelObject.channelObj,
+            queueName: newName,
+            parentCategoryId: channelQueue.parentCategoryId
+        };
+        const nameTaken = this._queues.some(
+            queue => queue.queueName === newName && queue !== channelQueue
+        );
+        const roleTaken = this.guild.roles.cache.some(
+            role => role.name === newChannel.name
+        );
+        const cachedChannelIndex = this.queueChannelsCache.findIndex(
+            queueChannel => queueChannel.queueName === oldName
+        );
+        this.queueChannelsCache.splice(cachedChannelIndex, 1);
+        this.queueChannelsCache.push(newQueueChannel);
+        if (nameTaken) {
+            await newChannel.setName(oldName);
+            LOGGER.error(
+                `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
+            );
+            return;
+        }
+        if (role && !roleTaken) {
+            await role.setName(newName);
+        }
+        channelQueue.queueChannelObject = newQueueChannel;
+        await channelQueue.triggerRender();
+        channelQueue.editCalendarName(oldName, newQueueChannel);
     }
 
     /**
