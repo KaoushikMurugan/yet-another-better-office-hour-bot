@@ -855,7 +855,7 @@ async function assignHelpersRoles(
 
     data.forEach(record => {
         const recordDiscordID = record[0];
-        const recordQueueNames = record.slice(1);
+        const recordQueueNames = record.slice(1).map(name => name.trim());
         helpersRolesData.push({
             helperId: recordDiscordID ?? '0',
             queues: recordQueueNames
