@@ -168,9 +168,8 @@ client.on(Events.ChannelDelete, async channel => {
     if (server && server.categoryChannelIDs.includes(channel.id)) {
         // if the category channels haven't been deleted already with the '/queue remove' command
         // delete role
-        await Promise.all([
-            server.guild.roles.cache.find(role => role.name === channel.name)?.delete()
-        ]);
+        await server.guild.roles.fetch();
+        await server.guild.roles.cache.find(role => role.name === channel.name)?.delete();
         // delete queue
         await server.deleteQueueById(channel.id);
     }
