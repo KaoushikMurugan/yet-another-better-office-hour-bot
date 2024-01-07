@@ -17,6 +17,7 @@ import { z } from 'zod';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { ServerExtension } from '../extension-interface.js';
+import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import { Logger } from 'pino';
 
 /**
@@ -228,6 +229,24 @@ class CalendarExtensionState {
         }
         this.backupToFirebase();
         await this.emitStateChangeEvent();
+    }
+
+    /**
+     * Resets the name of the queue extension
+     * change the key(queue channel name) that maps to the value (queue extension object)
+     * @param oldName
+     * @param newQueueChannel
+     */
+    renameCalendar(oldName: string, newQueueChannel: QueueChannel) {
+        const newName = newQueueChannel.queueName;
+        const object = this.queueExtensions.find(
+            queueExtensions => queueExtensions.queueChannelObject.queueName === oldName
+        );
+        if (object) {
+            this.queueExtensions.set(newName, object);
+            this.queueExtensions.delete(oldName);
+            object.queueChannelObject = newQueueChannel;
+        }
     }
 
     /**

@@ -231,13 +231,6 @@ class HelpQueue {
     }
 
     /**
-     * Edits the queue name in calendar extension
-     */
-    editCalendarName(oldName: string, newQueueChannel: QueueChannel) {
-        CalendarQueueExtension.rename(oldName, newQueueChannel);
-    }
-
-    /**
      * Adds a student to the notification group. Used for JoinNotif button
      * @throws {QueueError} if student is already in the notif group
      */

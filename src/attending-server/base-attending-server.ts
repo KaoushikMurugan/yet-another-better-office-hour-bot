@@ -569,8 +569,10 @@ class AttendingServer {
         const cachedChannelIndex = this.queueChannelsCache.findIndex(
             queueChannel => queueChannel.queueName === oldName
         );
-        this.queueChannelsCache.splice(cachedChannelIndex, 1);
-        this.queueChannelsCache.push(newQueueChannel);
+        if(cachedChannelIndex !== -1){
+            this.queueChannelsCache.splice(cachedChannelIndex, 1);
+            this.queueChannelsCache.push(newQueueChannel);
+        }
         if (nameTaken) {
             await newChannel.setName(oldName);
             LOGGER.error(
@@ -583,7 +585,11 @@ class AttendingServer {
         }
         channelQueue.queueChannelObject = newQueueChannel;
         await channelQueue.triggerRender();
-        channelQueue.editCalendarName(oldName, newQueueChannel);
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
+            )
+        );
     }
 
     /**

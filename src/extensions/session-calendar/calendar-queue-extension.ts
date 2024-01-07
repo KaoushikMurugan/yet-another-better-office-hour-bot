@@ -51,23 +51,14 @@ class CalendarQueueExtension extends BaseQueueExtension {
         return instance;
     }
 
-    /**
-     * Resets the name of the queue extension
-     * change the key(queue channel name) that maps to the value (queue extension object)
-     * @param oldName
-     * @param newQueueChannel
-     */
-    static rename(oldName: string, newQueueChannel: QueueChannel) {
-        const newName = newQueueChannel.queueName;
-        const state = CalendarExtensionState.get(newQueueChannel.channelObj.guild.id);
-        const object = state.queueExtensions.find(
-            queueExtensions => queueExtensions.queueChannel.queueName === oldName
-        );
-        if (object) {
-            state.queueExtensions.set(newName, object);
-            state.queueExtensions.delete(oldName);
-            object.queueChannel = newQueueChannel;
-        }
+    /** Get queue channel object of the queue extension*/
+    get queueChannelObject(): QueueChannel {
+        return this.queueChannel;
+    }
+    
+    /** Set queue channel object of the queue extension*/
+    set queueChannelObject(newChannel: QueueChannel) {
+        this.queueChannel = newChannel;
     }
 
     /**
