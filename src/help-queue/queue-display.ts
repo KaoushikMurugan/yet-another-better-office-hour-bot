@@ -305,10 +305,9 @@ class QueueDisplay {
      */
     private async render(force = false): Promise<void> {
         this.isRendering = true;
-        const queueChannelExists =
-            this.queueChannel.channelObj.guild.channels.cache.has(
-                this.queueChannel.channelObj.id
-            );
+        const queueChannelExists = this.queueChannel.channelObj.guild.channels.cache.has(
+            this.queueChannel.channelObj.id
+        );
         if (!queueChannelExists) {
             // temporary fix, do nothing if #queue doesn't exist
             this.isRendering = false;
@@ -359,8 +358,7 @@ class QueueDisplay {
     private getVcStatus(helperId: Snowflake): string {
         const spacer = '\u3000'; // ideographic space character, extra wide
         const voiceChannel =
-            this.queueChannel.channelObj.guild.voiceStates.cache.get(helperId)
-                ?.channel;
+            this.queueChannel.channelObj.guild.voiceStates.cache.get(helperId)?.channel;
         // using # gives the same effect as if we use the id
         // bc students can't see the channel ping if they don't have permission
         const vcStatus = voiceChannel

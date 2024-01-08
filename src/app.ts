@@ -2,7 +2,7 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Events, TextChannel } from 'discord.js';
+import { Guild, Events } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
 import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
@@ -13,8 +13,7 @@ import {
     printTitleString,
     isLeaveVC,
     isJoinVC,
-    isCategoryChannel,
-    isTextChannel
+    isCategoryChannel
 } from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';

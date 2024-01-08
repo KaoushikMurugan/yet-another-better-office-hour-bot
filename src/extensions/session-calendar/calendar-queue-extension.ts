@@ -81,9 +81,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      * @param refreshCache whether to refresh the upcomingSessions cache
      */
     private renderCalendarEmbeds(): void {
-        const state = CalendarExtensionState.get(
-            this.queueChannel.channelObj.guild.id
-        );
+        const state = CalendarExtensionState.get(this.queueChannel.channelObj.guild.id);
         const queueName = this.queueChannel.queueName;
         const upcomingSessionsEmbed = new EmbedBuilder()
             .setTitle(`Upcoming Sessions for ${queueName}`)
