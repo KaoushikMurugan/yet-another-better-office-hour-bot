@@ -227,6 +227,11 @@ class AttendingServer {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
+    /** List of category channel IDs on this server */
+    get categoryChannelIDs(): ReadonlyArray<CategoryChannelId> {
+        return [...this._queues.keys()];
+    }
+
     /** List of queues on this server */
     get queues(): ReadonlyArray<HelpQueue> {
         return [...this._queues.values()];
@@ -569,21 +574,20 @@ class AttendingServer {
             (channel): channel is CategoryChannel =>
                 isCategoryChannel(channel) && channel.id === parentCategoryId
         );
-        if (!parentCategory) {
-            // this shouldn't happen bc input type restriction on the command
-            // but we need to pass ts check
-            throw ExpectedServerErrors.queueDoesNotExist;
+        if (parentCategory) {
+            // if deleting through '/queue remove' command
+            // delete child channels first
+            await Promise.all(parentCategory.children.cache.map(child => child.delete()));
+            // now delete category and role
+            await Promise.all([
+                parentCategory.delete(),
+                this.guild.roles.cache
+                    .find(role => role.name === parentCategory.name)
+                    ?.delete()
+            ]);
         }
-        // delete child channels first
-        await Promise.all(parentCategory.children.cache.map(child => child.delete()));
-        // now delete category, role, and let queue call onQueueDelete
-        await Promise.all([
-            parentCategory.delete(),
-            this.guild.roles.cache
-                .find(role => role.name === parentCategory.name)
-                ?.delete(),
-            queue.gracefulDelete()
-        ]);
+        // let queue call onQueueDelete
+        await queue.gracefulDelete();
         await this.getQueueChannels(false);
     }
 
