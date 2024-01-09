@@ -27,7 +27,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      */
     private constructor(
         private readonly renderIndex: RenderIndex,
-        private queueChannel: QueueChannel,
+        public queueChannel: QueueChannel,
         private readonly display: FrozenDisplay
     ) {
         super();
@@ -49,16 +49,6 @@ class CalendarQueueExtension extends BaseQueueExtension {
         const instance = new CalendarQueueExtension(renderIndex, queueChannel, display);
         state.queueExtensions.set(queueChannel.queueName, instance);
         return instance;
-    }
-
-    /** Get queue channel object of the queue extension*/
-    get queueChannelObject(): QueueChannel {
-        return this.queueChannel;
-    }
-    
-    /** Set queue channel object of the queue extension*/
-    set queueChannelObject(newChannel: QueueChannel) {
-        this.queueChannel = newChannel;
     }
 
     /**

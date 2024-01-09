@@ -556,7 +556,7 @@ class AttendingServer {
         }
         const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
         const newQueueChannel: QueueChannel = {
-            channelObj: channelQueue.queueChannelObject.channelObj,
+            channelObj: channelQueue.queueChannel.channelObj,
             queueName: newName,
             parentCategoryId: channelQueue.parentCategoryId
         };
@@ -569,7 +569,7 @@ class AttendingServer {
         const cachedChannelIndex = this.queueChannelsCache.findIndex(
             queueChannel => queueChannel.queueName === oldName
         );
-        if(cachedChannelIndex !== -1){
+        if (cachedChannelIndex !== -1){
             this.queueChannelsCache.splice(cachedChannelIndex, 1);
             this.queueChannelsCache.push(newQueueChannel);
         }
@@ -583,7 +583,7 @@ class AttendingServer {
         if (role && !roleTaken) {
             await role.setName(newName);
         }
-        channelQueue.queueChannelObject = newQueueChannel;
+        channelQueue.queueChannel = newQueueChannel;
         await channelQueue.triggerRender();
         await Promise.all(
             this.serverExtensions.map(extension =>

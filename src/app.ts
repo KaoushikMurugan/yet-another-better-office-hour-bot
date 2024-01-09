@@ -132,10 +132,7 @@ client.on(Events.ChannelUpdate, async (oldChannel, newChannel) => {
         newChannel.type === ChannelType.GuildCategory &&
         oldChannel.name !== newChannel.name
     ) {
-        const server = AttendingServer.safeGet(oldChannel.guild.id);
-        if (server) {
-            await server.updateQueueName(oldChannel, newChannel);
-        }
+        await AttendingServer.safeGet(oldChannel.guild.id)?.updateQueueName(oldChannel, newChannel);
     }
 });
 

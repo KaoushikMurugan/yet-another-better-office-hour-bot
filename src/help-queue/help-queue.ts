@@ -177,16 +177,6 @@ class HelpQueue {
         return this._timeUntilAutoClear;
     }
 
-    /** Get queue channel object of the help queue */
-    get queueChannelObject(): QueueChannel {
-        return this.queueChannel;
-    }
-
-    /** Set queue channel object of the help queue */
-    set queueChannelObject(newChannel: QueueChannel) {
-        this.queueChannel = newChannel;
-    }
-
     /**
      * Asynchronously creates a new queue
      * @param queueChannel the corresponding text channel and its name
