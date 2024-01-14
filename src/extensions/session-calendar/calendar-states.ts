@@ -237,14 +237,14 @@ class CalendarExtensionState {
      * @param oldName
      * @param newQueueChannel
      */
-    renameCalendar(oldName: string, newQueueChannel: QueueChannel) {
+    async renameCalendar(oldName: string, newQueueChannel: QueueChannel) {
         const newName = newQueueChannel.queueName;
         const object = this.queueExtensions.get(oldName);
         if (object) {
             this.queueExtensions.set(newName, object);
             this.queueExtensions.delete(oldName);
             object.queueChannel = newQueueChannel;
-            this.emitStateChangeEvent();
+            await this.emitStateChangeEvent();
         }
     }
 

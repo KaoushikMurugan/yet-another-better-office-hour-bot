@@ -64,7 +64,7 @@ class CalendarServerExtension extends BaseServerExtension {
         newChannel: QueueChannel
     ): Promise<void> {
         const state = CalendarExtensionState.get(server.guild.id);
-        state.renameCalendar(oldName, newChannel);
+        await state.renameCalendar(oldName, newChannel);
     }
 }
 
