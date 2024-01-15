@@ -104,8 +104,10 @@ class HelpQueue {
             // if no backup then we are done initializing
             return;
         }
+
         this._timeUntilAutoClear = backupData.timeUntilAutoClear;
         this._seriousModeEnabled = backupData.seriousModeEnabled;
+
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
             const correspondingMember = this.queueChannel.channelObj.members.get(
@@ -201,6 +203,7 @@ class HelpQueue {
                   )
               ]);
         const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
+       
         await Promise.all([
             queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
@@ -210,13 +213,16 @@ class HelpQueue {
             }),
             queue.triggerRender()
         ]);
+
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
+       
         // Emit events after queue is done creating
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
         );
+
         return queue;
     }
 
@@ -253,11 +259,14 @@ class HelpQueue {
         if (!this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.notActiveHelper(this.queueName);
         }
+
         this._activeHelperIds.delete(helperMember.id);
         this._pausedHelperIds.delete(helperMember.id);
+        
         if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
+
         await Promise.all([
             ...this.queueExtensions.map(extension => extension.onQueueClose(this)),
             this.triggerRender()
@@ -288,6 +297,7 @@ class HelpQueue {
         if (this._students.length === 0) {
             throw ExpectedQueueErrors.dequeue.empty(this.queueName);
         }
+
         if (targetStudentMember !== undefined) {
             const studentIndex = this._students.findIndex(
                 student => student.member.id === targetStudentMember.id
@@ -310,6 +320,7 @@ class HelpQueue {
             ]);
             return foundStudent;
         }
+
         // assertion is safe because we already checked for length
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const firstStudent = this._students.shift()!;
@@ -319,6 +330,7 @@ class HelpQueue {
             ),
             this.triggerRender()
         ]);
+
         return firstStudent;
     }
 
@@ -341,6 +353,7 @@ class HelpQueue {
         if (this.hasHelper(studentMember.id)) {
             throw ExpectedQueueErrors.cannotEnqueueHelper(this.queueName);
         }
+
         const student: Helpee = {
             waitStart: new Date(),
             member: studentMember,
@@ -348,6 +361,7 @@ class HelpQueue {
             helpTopic: undefined
         };
         this._students.push(student);
+
         await Promise.all([
             this.notifyHelpersOn('joinQueue', studentMember),
             ...this.queueExtensions.map(extension => extension.onEnqueue(this, student)),
@@ -505,6 +519,7 @@ class HelpQueue {
                 studentAction = 'submitted what you need help with';
                 break;
         }
+
         // this assumes that if an error comes back when we call send, it's because the helper closed dm
         const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
@@ -518,6 +533,7 @@ class HelpQueue {
                         })
             )
         );
+
         if (helpersThatClosedDM.length > 0) {
             throw ExpectedQueueErrors.staffBlockedDm(
                 this.queueName,
@@ -537,15 +553,18 @@ class HelpQueue {
         if (this.hasHelper(helperMember.id)) {
             throw ExpectedQueueErrors.alreadyOpen(this.queueName);
         }
+
         // default the helper to 'active' state
         this._activeHelperIds.add(helperMember.id);
         await Promise.all([
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
+       
         if (!notify) {
             return;
         }
+
         // void because Promise.allSettled never rejects, but eslint is angry that we didn't .catch() it
         void Promise.allSettled(
             this.notifGroup.map(
@@ -604,16 +623,19 @@ class HelpQueue {
                 this.queueName
             );
         }
+
         // we checked for idx === -1, so it will not be null
         // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
         const removedStudent = this._students[index]!;
         this._students.splice(index, 1);
+
         await Promise.all([
             ...this.queueExtensions.map(extension =>
                 extension.onStudentRemove(this, removedStudent)
             ),
             this.triggerRender()
         ]);
+
         return removedStudent;
     }
 
@@ -629,6 +651,7 @@ class HelpQueue {
         if (existingTimerId !== undefined) {
             clearInterval(existingTimerId);
         }
+
         if (enable) {
             this._timeUntilAutoClear = {
                 hours: hours,
@@ -657,6 +680,7 @@ class HelpQueue {
     async triggerForceRender(): Promise<void> {
         this.display.enterWriteOnlyMode();
         this.display.requestQueueEmbedRender(this.getViewModel());
+
         await Promise.all(
             this.queueExtensions.map(extension =>
                 // TODO: temporary solution
@@ -664,6 +688,7 @@ class HelpQueue {
                 extension.onQueueRender(this, this.display)
             )
         );
+
         this.display.exitWriteOnlyMode();
         await this.display.requestForceRender();
     }
@@ -692,6 +717,7 @@ class HelpQueue {
         if (this._timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
+
         this.timers.set(
             'QUEUE_AUTO_CLEAR',
             setTimeout(
@@ -709,6 +735,7 @@ class HelpQueue {
                     this._timeUntilAutoClear.minutes * 1000 * 60
             )
         );
+        
         await this.triggerRender();
     }
 }

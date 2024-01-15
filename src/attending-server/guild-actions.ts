@@ -40,6 +40,7 @@ async function initializationCheck(guild: Guild): Promise<void> {
         await guild.leave();
         throw Error(red("YABOB doesn't have admin permission."));
     }
+
     if (guild.members.me.roles.highest.comparePositionTo(guild.roles.highest) < 0) {
         const owner = await guild.fetchOwner();
         await owner.send(
@@ -159,6 +160,7 @@ async function setHelpChannelVisibility(
     if (!helpCategory) {
         return;
     }
+
     const helpChannels = (await helpCategory.fetch()).children.cache.filter(
         isTextChannel
     );
@@ -171,6 +173,7 @@ async function setHelpChannelVisibility(
             )
             .flat()
     );
+
     if (!guild.roles.cache.hasAll(...Object.values(accessLevelRoleIds))) {
         // if some of the roles are not set, all channels visible to everyone
         // temporary solution
@@ -183,6 +186,7 @@ async function setHelpChannelVisibility(
         );
         return;
     }
+
     // make the channel invisible to @everyone first
     await Promise.all(
         helpChannels.map(channel =>
@@ -288,6 +292,7 @@ async function sendInvite(
             Connect: true
         })
     ]);
+
     // remove the overwrite when the link dies
     setTimeout(
         () => {
@@ -313,6 +318,7 @@ async function sendInvite(
             error: ExpectedServerErrors.studentBlockedDm(student.id)
         };
     }
+
     return { ok: true, value: undefined };
 }
 
