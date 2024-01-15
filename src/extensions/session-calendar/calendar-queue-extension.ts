@@ -27,7 +27,7 @@ class CalendarQueueExtension extends BaseQueueExtension {
      */
     private constructor(
         private readonly renderIndex: RenderIndex,
-        private readonly queueChannel: QueueChannel,
+        public queueChannel: QueueChannel,
         private readonly display: FrozenDisplay
     ) {
         super();

@@ -556,6 +556,56 @@ class AttendingServer {
     }
 
     /**
+     * Updates the queue name for queue embeds, roles, and calendar extension
+     * @param oldChannel Old category channel before the name was updated
+     * @param newChannel New category channel after the name was updated
+     */
+    async updateQueueName(oldChannel: CategoryChannel, newChannel: CategoryChannel) {
+        const oldName = oldChannel.name;
+        const newName = newChannel.name;
+        const channelQueue = this._queues.get(oldChannel.id);
+        if (!channelQueue) {
+            return;
+        }
+        const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
+        const newQueueChannel: QueueChannel = {
+            channelObj: channelQueue.queueChannel.channelObj,
+            queueName: newName,
+            parentCategoryId: channelQueue.parentCategoryId
+        };
+        const nameTaken = this._queues.some(
+            queue => queue.queueName === newName && queue !== channelQueue
+        );
+        const roleTaken = this.guild.roles.cache.some(
+            role => role.name === newChannel.name
+        );
+        const cachedChannelIndex = this.queueChannelsCache.findIndex(
+            queueChannel => queueChannel.queueName === oldName
+        );
+        if (cachedChannelIndex !== -1){
+            this.queueChannelsCache.splice(cachedChannelIndex, 1);
+            this.queueChannelsCache.push(newQueueChannel);
+        }
+        if (nameTaken) {
+            await newChannel.setName(oldName);
+            LOGGER.error(
+                `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
+            );
+            return;
+        }
+        if (role && !roleTaken) {
+            await role.setName(newName);
+        }
+        channelQueue.queueChannel = newQueueChannel;
+        await channelQueue.triggerRender();
+        await Promise.all(
+            this.serverExtensions.map(extension =>
+                extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
+            )
+        );
+    }
+
+    /**
      * Deletes a queue by categoryID
      * @param parentCategoryId CategoryChannel.id of the target queue
      * @throws {ServerError} if no queue with ths parentCategoryId exists

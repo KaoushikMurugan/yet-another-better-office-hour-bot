@@ -3,6 +3,7 @@ import { BaseServerExtension } from '../extension-interface.js';
 import { FrozenServer } from '../extension-utils.js';
 import { CalendarExtensionState } from './calendar-states.js';
 import { CALENDAR_LOGGER } from './shared-calendar-functions.js';
+import { QueueChannel } from '../../attending-server/base-attending-server.js';
 
 /**
  * Server extension of session calendar
@@ -49,6 +50,21 @@ class CalendarServerExtension extends BaseServerExtension {
         // otherwise the timer arrow func will still hold the reference to the deleted instance
         clearInterval(this.timerId);
         CalendarExtensionState.allStates.delete(server.guild.id);
+    }
+
+    /**
+     * If a queue channel name is changed on discord, update the calendar name
+     * @param server the server of the changed queue channel
+     * @param oldName new name of queue channel
+     * @param newChannel new queue channel object
+     */
+    override async onQueueChannelUpdate(
+        server: FrozenServer,
+        oldName: string,
+        newChannel: QueueChannel
+    ): Promise<void> {
+        const state = CalendarExtensionState.get(server.guild.id);
+        await state.renameCalendar(oldName, newChannel);
     }
 }
 

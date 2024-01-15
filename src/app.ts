@@ -2,7 +2,7 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Events } from 'discord.js';
+import { Guild, Events, ChannelType } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
 import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
@@ -125,6 +125,19 @@ client.on(Events.GuildMemberAdd, async member => {
                 )
                 .catch(e => LOGGER.error(e, 'Failed to send member Dm'));
         });
+    }
+});
+
+/**
+ * If a queue is renamed manually, it renames the queue name for queue embeds, roles, and calendar extension
+ */
+client.on(Events.ChannelUpdate, async (oldChannel, newChannel) => {
+    if (
+        oldChannel.type === ChannelType.GuildCategory &&
+        newChannel.type === ChannelType.GuildCategory &&
+        oldChannel.name !== newChannel.name
+    ) {
+        await AttendingServer.safeGet(oldChannel.guild.id)?.updateQueueName(oldChannel, newChannel);
     }
 });
 

@@ -26,6 +26,7 @@ import {
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
 import { CommandData } from '../utils/type-aliases.js';
+import { QueueChannel } from '../attending-server/base-attending-server.js';
 
 interface InteractionExtension {
     /**
@@ -161,6 +162,14 @@ interface ServerExtension {
      * @param server the server to backup
      */
     onServerRequestBackup: (server: FrozenServer) => Promise<void>;
+    /**
+     * When a queue category channel is updated
+     * @param server the server of the category queue
+     * @param oldName old name of queue category channel
+     * @param newChannel new queue category channel object
+     * @returns 
+     */
+    onQueueChannelUpdate: (server: FrozenServer, oldName: string, newChannel: QueueChannel) => Promise<void>;
 }
 
 /** Extensions for individual queues */
@@ -331,6 +340,9 @@ abstract class BaseServerExtension implements ServerExtension {
         return Promise.resolve(undefined);
     }
     onServerRequestBackup(server: FrozenServer): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueueChannelUpdate(server: FrozenServer, oldName: string, newChannel: QueueChannel): Promise<void>{
         return Promise.resolve();
     }
 }
