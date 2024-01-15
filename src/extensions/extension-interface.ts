@@ -167,9 +167,13 @@ interface ServerExtension {
      * @param server the server of the category queue
      * @param oldName old name of queue category channel
      * @param newChannel new queue category channel object
-     * @returns 
+     * @returns
      */
-    onQueueChannelUpdate: (server: FrozenServer, oldName: string, newChannel: QueueChannel) => Promise<void>;
+    onQueueChannelUpdate: (
+        server: FrozenServer,
+        oldName: string,
+        newChannel: QueueChannel
+    ) => Promise<void>;
 }
 
 /** Extensions for individual queues */
@@ -342,7 +346,11 @@ abstract class BaseServerExtension implements ServerExtension {
     onServerRequestBackup(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
-    onQueueChannelUpdate(server: FrozenServer, oldName: string, newChannel: QueueChannel): Promise<void>{
+    onQueueChannelUpdate(
+        server: FrozenServer,
+        oldName: string,
+        newChannel: QueueChannel
+    ): Promise<void> {
         return Promise.resolve();
     }
 }

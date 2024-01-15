@@ -306,9 +306,11 @@ class AttendingServer {
         const externalBackup = environment.disableExtensions
             ? undefined
             : await loadExternalServerData(guild.id);
+
         if (externalBackup !== undefined) {
             server.loadBackup(externalBackup);
         }
+
         const missingRoles = server.sortedAccessLevelRoles.filter(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
@@ -321,6 +323,7 @@ class AttendingServer {
                 .then(owner => owner.send(RoleConfigMenuForServerInit(server, false)))
                 .catch(err => LOGGER.error(err));
         }
+
         await Promise.all([
             server.initializeAllQueues(
                 externalBackup?.queues,
@@ -335,8 +338,10 @@ class AttendingServer {
         await Promise.all(
             serverExtensions.map(extension => extension.onServerInitSuccess(server))
         );
+
         AttendingServer.allServers.set(guild.id, server);
         LOGGER.info(`⭐ ${green(`Initialization for ${guild.name} is successful!`)}`);
+
         return server;
     }
 
@@ -351,6 +356,7 @@ class AttendingServer {
         if (!server) {
             throw ExpectedServerErrors.notInitialized;
         }
+
         return server;
     }
 
@@ -397,6 +403,7 @@ class AttendingServer {
             );
             return;
         }
+
         // from this.queues select queue where helper roles has queue name
         const studentsToAnnounceTo = this.queues
             .filter(queue =>
@@ -406,6 +413,7 @@ class AttendingServer {
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
+
         const announcementEmbed = SimpleEmbed(
             `Staff member ${helperMember.displayName} announced:`,
             EmbedColor.Aqua,
@@ -445,7 +453,9 @@ class AttendingServer {
         if (helper === undefined) {
             throw ExpectedServerErrors.notHosting;
         }
+
         this._helpers.delete(helperMember.id);
+
         const completeHelper: Required<Helper> = {
             ...helper,
             helpEnd: new Date()
@@ -455,6 +465,7 @@ class AttendingServer {
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
         );
+
         // this filter does not rely on user roles anymore
         // close all queues that has this user as a helper
         const closableQueues = this._queues.filter(queue =>
@@ -466,6 +477,7 @@ class AttendingServer {
                 extension.onHelperStopHelping(this, completeHelper)
             )
         );
+
         return completeHelper;
     }
 
@@ -484,6 +496,7 @@ class AttendingServer {
         const everyoneRoleId = this.guild.roles.everyone.id;
         const foundRoles = []; // sorted low to high
         const createdRoles = []; // not typed bc we are only using it for logging
+
         for (const { key, displayName, id } of this.sortedAccessLevelRoles) {
             // do the search in allRoles if it's NotSet, Deleted, or @everyone
             // so if existingRole is not undefined, it's one of @Bot Admin, @Staff or @Student
@@ -509,6 +522,7 @@ class AttendingServer {
             // ! do NOT do this with important arrays bc there will be 'empty items'
             createdRoles[newRole.position] = newRole.name;
         }
+
         setHelpChannelVisibility(this.guild, this.accessLevelRoleIds).catch(err =>
             this.logger.error(err, 'Failed to update help channel visibilities.')
         );
@@ -517,6 +531,7 @@ class AttendingServer {
                 ? `Created roles: ${createdRoles}`
                 : `All required roles exist in ${this.guild.name}!`
         );
+
         if (foundRoles.length > 0) {
             this.logger.info(`Found roles: ${foundRoles}`);
         }
@@ -534,6 +549,7 @@ class AttendingServer {
         if (queueWithSameName !== undefined) {
             throw ExpectedServerErrors.queueAlreadyExists(newQueueName);
         }
+
         const parentCategory = await this.guild.channels.create({
             name: newQueueName,
             type: ChannelType.GuildCategory
@@ -551,6 +567,7 @@ class AttendingServer {
             HelpQueue.create(queueChannel),
             this.createQueueRoles()
         ]);
+
         this._queues.set(parentCategory.id, helpQueue);
         await this.getQueueChannels(false);
     }
@@ -564,9 +581,11 @@ class AttendingServer {
         const oldName = oldChannel.name;
         const newName = newChannel.name;
         const channelQueue = this._queues.get(oldChannel.id);
+
         if (!channelQueue) {
             return;
         }
+
         const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
         const newQueueChannel: QueueChannel = {
             channelObj: channelQueue.queueChannel.channelObj,
@@ -582,7 +601,8 @@ class AttendingServer {
         const cachedChannelIndex = this.queueChannelsCache.findIndex(
             queueChannel => queueChannel.queueName === oldName
         );
-        if (cachedChannelIndex !== -1){
+
+        if (cachedChannelIndex !== -1) {
             this.queueChannelsCache.splice(cachedChannelIndex, 1);
             this.queueChannelsCache.push(newQueueChannel);
         }
@@ -596,6 +616,7 @@ class AttendingServer {
         if (role && !roleTaken) {
             await role.setName(newName);
         }
+
         channelQueue.queueChannel = newQueueChannel;
         await channelQueue.triggerRender();
         await Promise.all(
@@ -616,6 +637,7 @@ class AttendingServer {
         if (queue === undefined) {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
+
         // delete queue data model no matter if the category was deleted by the user
         // now only the queue variable holds the queue channel
         this._queues.delete(parentCategoryId);
@@ -624,6 +646,7 @@ class AttendingServer {
             (channel): channel is CategoryChannel =>
                 isCategoryChannel(channel) && channel.id === parentCategoryId
         );
+
         if (parentCategory) {
             // if deleting through '/queue remove' command
             // delete child channels first
@@ -636,6 +659,7 @@ class AttendingServer {
                     ?.delete()
             ]);
         }
+
         // let queue call onQueueDelete
         await queue.gracefulDelete();
         await this.getQueueChannels(false);
@@ -655,16 +679,19 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
+
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
+
         const nonEmptyQueues = currentlyHelpingQueues.filter(queue => queue.length !== 0);
         // check must happen before reduce, reduce on empty arrays without initial value will throw an error
         // in this case there's no valid initial value if there's no queue to dequeue from at all
         if (nonEmptyQueues.size === 0) {
             throw ExpectedServerErrors.noOneToHelp;
         }
+
         const queueToDequeue = nonEmptyQueues.reduce<HelpQueue>(
             (prev, curr) =>
                 prev.first &&
@@ -681,9 +708,11 @@ class AttendingServer {
                 extension.onDequeueFirst(this, student)
             )
         ]);
+
         if (!inviteStatus.ok) {
             throw inviteStatus.error;
         }
+
         return student;
     }
 
@@ -711,10 +740,12 @@ class AttendingServer {
         if (currentlyHelpingQueues.size === 0 || !helperObject) {
             throw ExpectedServerErrors.notHosting;
         }
+
         const helperVoiceChannel = helperMember.voice.channel;
         if (helperVoiceChannel === null) {
             throw ExpectedServerErrors.notInVC;
         }
+
         let student: Readonly<Helpee>;
         if (targetQueue !== undefined) {
             // if queue is specified, find the queue and let queue dequeue
@@ -741,6 +772,7 @@ class AttendingServer {
         } else {
             throw ExpectedServerErrors.badDequeueArguments;
         }
+
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
             sendInvite(student.member, helperVoiceChannel),
@@ -748,6 +780,7 @@ class AttendingServer {
                 extension.onDequeueFirst(this, student)
             )
         ]);
+
         if (!inviteStatus.ok) {
             throw inviteStatus.error;
         }
@@ -765,6 +798,7 @@ class AttendingServer {
         if (!queue) {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
+
         return queue;
     }
 
@@ -787,6 +821,7 @@ class AttendingServer {
         if (useCache && this.queueChannelsCache.length !== 0) {
             return this.queueChannelsCache;
         }
+
         const allChannels = await this.guild.channels.fetch();
         // cache again on a fresh request, likely triggers GC
         this.queueChannelsCache = [];
@@ -805,6 +840,7 @@ class AttendingServer {
                 parentCategoryId: categoryChannel.id
             });
         }
+
         const duplicateQueues = this.queueChannelsCache
             .map(queue => queue.queueName)
             .filter((item, index, arr) => arr.indexOf(item) !== index);
@@ -814,6 +850,7 @@ class AttendingServer {
                 This might lead to unexpected behaviors. Please update category names as soon as possible.`
             );
         }
+
         return this.queueChannelsCache;
     }
 
@@ -845,6 +882,7 @@ class AttendingServer {
         if (!isVoiceChannel(newVoiceState.channel)) {
             return;
         }
+
         const voiceChannel = newVoiceState.channel;
         const memberIsStudent = this._helpers.some(helper =>
             helper.helpedMembers.some(
@@ -852,6 +890,7 @@ class AttendingServer {
             )
         );
         const memberIsHelper = this._helpers.has(member.id);
+
         if (memberIsStudent) {
             const queuesToRerender = this.queues.filter(queue =>
                 newVoiceState.channel.members.some(vcMember =>
@@ -865,6 +904,7 @@ class AttendingServer {
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
+
         if (memberIsHelper) {
             await Promise.all(
                 this.queues.map(
@@ -891,6 +931,7 @@ class AttendingServer {
             )
         );
         const memberIsHelper = this._helpers.has(member.id);
+
         if (memberIsStudent) {
             // filter queues where some member of that voice channel is a helper of that queue
             const queuesToRerender = this.queues.filter(queue =>
@@ -910,6 +951,7 @@ class AttendingServer {
                 ...queuesToRerender.map(queue => queue.triggerRender())
             ]);
         }
+
         if (memberIsHelper) {
             // the filter is removed because
             // the overwrite will die in 15 minutes after the invite was sent
@@ -935,6 +977,7 @@ class AttendingServer {
                 accessLevelRoleDeleted = true;
             }
         }
+
         if (!accessLevelRoleDeleted) {
             return;
         }
@@ -955,13 +998,16 @@ class AttendingServer {
         if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
         }
+
         const helperRoles = helperMember.roles.cache.map(role => role.name);
         const openableQueues = this._queues.filter(queue =>
             helperRoles.includes(queue.queueName)
         );
+
         if (openableQueues.size === 0) {
             throw ExpectedServerErrors.noQueueRole;
         }
+
         // create this object after all checks have passed
         const helper: Helper = {
             helpStart: new Date(),
@@ -969,6 +1015,7 @@ class AttendingServer {
             activeState: 'active', // always start with active state
             member: helperMember
         };
+
         this._helpers.set(helperMember.id, helper);
         await Promise.all(
             openableQueues.map(queue => queue.openQueue(helperMember, notify))
@@ -996,6 +1043,7 @@ class AttendingServer {
         if (helper.activeState === 'paused') {
             throw ExpectedServerErrors.alreadyPaused;
         }
+
         helper.activeState = 'paused';
         const pauseableQueues = this._queues.filter(queue =>
             queue.activeHelperIds.has(helperMember.id)
@@ -1021,6 +1069,7 @@ class AttendingServer {
         if (helper.activeState === 'active') {
             throw ExpectedServerErrors.alreadyActive;
         }
+
         helper.activeState = 'active';
         const resumableQueues = this._queues.filter(queue =>
             queue.pausedHelperIds.has(helperMember.id)
@@ -1168,73 +1217,72 @@ class AttendingServer {
         const logMap: Map<string, string> = new Map();
         const errorMap: Map<string, string> = new Map();
 
-        if (this.accessLevelRoleIds.staff === 'NotSet') {
+        if (this.accessLevelRoleIds.staff === SpecialRoleValues.NotSet) {
             errorMap.set('Warning', 'Staff role has not been set up yet.');
         }
-        if (this.accessLevelRoleIds.staff === 'Deleted') {
+        if (this.accessLevelRoleIds.staff === SpecialRoleValues.Deleted) {
             errorMap.set(
                 'Warning',
                 "Staff role has been deleted. Wasn't able to assign staff role to helpers."
             );
         }
 
-        await Promise.all(
-            helpersRolesData.map(async helperRolesData => {
-                // the fetch call refreshes the cache as a side effect
-                if (!(await this.guild.members.fetch()).has(helperRolesData.helperId)) {
-                    errorMap.set(
-                        helperRolesData.helperId,
-                        `Failed to find member with id ${helperRolesData.helperId} in this server.`
-                    );
-                    return;
-                }
+        const promises = helpersRolesData.map(async helperRolesData => {
+            // the fetch call refreshes the cache as a side effect
+            if (!(await this.guild.members.fetch()).has(helperRolesData.helperId)) {
+                errorMap.set(
+                    helperRolesData.helperId,
+                    `Failed to find member with id ${helperRolesData.helperId} in this server.`
+                );
+                return;
+            }
 
-                const helper = await this.guild.members.fetch(helperRolesData.helperId);
-                // give the helper the staff role if they don't have it
-                if (!helper.roles.cache.has(this.staffRoleID)) {
-                    await helper.roles.add(this.staffRoleID);
-                    logMap.set(
-                        helperRolesData.helperId,
-                        `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
-                            helperRolesData.helperId
-                        )}`
-                    );
-                }
-
-                // remove old queue roles
-                await helper.roles.remove(queueRoles);
-                // get the queue roles from the helperRolesData
-                if (helperRolesData.queues.length === 0) {
-                    errorMap.set(
-                        helperRolesData.helperId,
-                        `No queues were provided for helper with id ${helperRolesData.helperId}.`
-                    );
-                }
-
-                const helperQueueRoles = helperRolesData.queues
-                    .map(queueName => {
-                        if (!queueNames.includes(queueName)) {
-                            errorMap.set(
-                                helperRolesData.helperId,
-                                `Failed to find queue with name ${queueName}.`
-                            );
-                            return undefined;
-                        }
-                        return queueRoles.find(role => role.name === queueName);
-                    })
-                    .filter((role): role is Role => role !== undefined);
-
-                // add the new queue roles
-                if (helperQueueRoles.length > 0) {
-                    await helper.roles.add(helperQueueRoles);
-                }
-
+            const helper = await this.guild.members.fetch(helperRolesData.helperId);
+            // give the helper the staff role if they don't have it
+            if (!helper.roles.cache.has(this.staffRoleID)) {
+                await helper.roles.add(this.staffRoleID);
                 logMap.set(
                     helperRolesData.helperId,
-                    helperQueueRoles.map(role => role.toString()).join(' ')
+                    `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
+                        helperRolesData.helperId
+                    )}`
                 );
-            })
-        );
+            }
+
+            // remove old queue roles
+            await helper.roles.remove(queueRoles);
+            // get the queue roles from the helperRolesData
+            if (helperRolesData.queues.length === 0) {
+                errorMap.set(
+                    helperRolesData.helperId,
+                    `No queues were provided for helper with id ${helperRolesData.helperId}.`
+                );
+            }
+
+            const helperQueueRoles = helperRolesData.queues
+                .map(queueName => {
+                    if (!queueNames.includes(queueName)) {
+                        errorMap.set(
+                            helperRolesData.helperId,
+                            `Failed to find queue with name ${queueName}.`
+                        );
+                        return undefined;
+                    }
+                    return queueRoles.find(role => role.name === queueName);
+                })
+                .filter((role): role is Role => role !== undefined);
+
+            // add the new queue roles
+            if (helperQueueRoles.length > 0) {
+                await helper.roles.add(helperQueueRoles);
+            }
+
+            logMap.set(
+                helperRolesData.helperId,
+                helperQueueRoles.map(role => role.toString()).join(' ')
+            );
+        });
+        await Promise.all(promises);
 
         return [logMap, errorMap];
     }
