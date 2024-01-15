@@ -308,11 +308,9 @@ async function getWeeklyReports(
         ];
         const rowsInWeek = rowsToSearch
             .filter(row => {
-                const [timeIn, timeOut] = [
-                    parseInt(row.get(AttendanceHeaders.UnixTimeIn)),
-                    parseInt(row.get(AttendanceHeaders.UnixTimeOut))
-                ];
-                
+                const timeIn = parseInt(row.get(AttendanceHeaders.UnixTimeIn));
+                const timeOut = parseInt(row.get(AttendanceHeaders.UnixTimeOut));
+
                 if (isNaN(timeIn) || timeIn < 0) {
                     throw ExpectedSheetErrors.badNumericalValues(
                         title,
@@ -340,6 +338,7 @@ async function getWeeklyReports(
                         AttendanceHeaders.OfficeHourTimeMs
                     );
                 }
+
                 try {
                     result.students = JSON.parse(
                         row.get(AttendanceHeaders.HelpedStudents)
@@ -354,8 +353,10 @@ async function getWeeklyReports(
                         AttendanceHeaders.HelpedStudents
                     );
                 }
+
                 return result;
             });
+
         if (rowsInWeek.length === 0) {
             continue;
         }
