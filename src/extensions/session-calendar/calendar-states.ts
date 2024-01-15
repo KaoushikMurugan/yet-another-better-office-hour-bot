@@ -161,6 +161,7 @@ class CalendarExtensionState {
         if (!calendarBackup.success) {
             return;
         }
+
         if (
             calendarBackup.data.calendarId !==
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
@@ -176,10 +177,13 @@ class CalendarExtensionState {
                         environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
                 });
         }
+
         this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
+        // if a public url is not specified, reconstruct one using the calendar id
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
         }
+        
         this.calendarNameDiscordIdMap.load(
             Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]
@@ -239,11 +243,11 @@ class CalendarExtensionState {
      */
     async renameCalendar(oldName: string, newQueueChannel: QueueChannel) {
         const newName = newQueueChannel.queueName;
-        const object = this.queueExtensions.get(oldName);
-        if (object) {
-            this.queueExtensions.set(newName, object);
+        const queueExtension = this.queueExtensions.get(oldName);
+        if (queueExtension) {
+            this.queueExtensions.set(newName, queueExtension);
             this.queueExtensions.delete(oldName);
-            object.queueChannel = newQueueChannel;
+            queueExtension.queueChannel = newQueueChannel;
             await this.emitStateChangeEvent();
         }
     }
