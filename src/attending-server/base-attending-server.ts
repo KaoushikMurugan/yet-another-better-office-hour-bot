@@ -1,4 +1,7 @@
 /** @module AttendingServerV2 */
+import type { Logger } from 'pino';
+import type { QueueChannel } from '../models/queue-channel.js';
+
 import {
     BaseMessageOptions,
     CategoryChannel,
@@ -11,7 +14,6 @@ import {
     TextChannel,
     VoiceState
 } from 'discord.js';
-import type { Logger } from 'pino';
 import { environment } from '../environment/environment-manager.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
@@ -57,21 +59,11 @@ import {
 } from './firebase-backup.js';
 import {
     initializationCheck,
-    sendInvite,
+    sendVoiceChannelInvite,
     setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
-
-/**
- * Wrapper for TextChannel
- * - Guarantees that a queueName and parentCategoryId exists
- */
-type QueueChannel = Readonly<{
-    channelObj: TextChannel;
-    queueName: string;
-    parentCategoryId: CategoryChannelId;
-}>;
 
 /**
  * The possible settings of each server
@@ -559,7 +551,7 @@ class AttendingServer {
             parentCategory.children.create({ name: 'chat' })
         ]);
         const queueChannel: QueueChannel = {
-            channelObj: queueTextChannel,
+            textChannel: queueTextChannel,
             queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
@@ -588,7 +580,7 @@ class AttendingServer {
 
         const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
         const newQueueChannel: QueueChannel = {
-            channelObj: channelQueue.queueChannel.channelObj,
+            textChannel: channelQueue.queueChannel.channelObj,
             queueName: newName,
             parentCategoryId: channelQueue.parentCategoryId
         };
@@ -703,7 +695,7 @@ class AttendingServer {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendVoiceChannelInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -775,7 +767,7 @@ class AttendingServer {
 
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendVoiceChannelInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -835,7 +827,7 @@ class AttendingServer {
                 continue;
             }
             this.queueChannelsCache.push({
-                channelObj: queueTextChannel,
+                textChannel: queueTextChannel,
                 queueName: categoryChannel.name,
                 parentCategoryId: categoryChannel.id
             });
@@ -1375,4 +1367,4 @@ class AttendingServer {
     }
 }
 
-export { AttendingServer, QueueChannel };
+export { AttendingServer };
