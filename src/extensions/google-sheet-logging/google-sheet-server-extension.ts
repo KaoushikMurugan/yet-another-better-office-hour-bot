@@ -431,7 +431,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             // TODO: fow now if we fail to write, ignore the help session data
             return;
         }
-
         if (!hasRequiredHeaders) {
             // correctable
             await helpSessionSheet.setHeaderRow(helpSessionHeaders);
