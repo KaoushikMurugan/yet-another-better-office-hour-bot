@@ -196,7 +196,7 @@ class AttendingServer {
      * @returns boolean, defaults to false if no queues exist on this server
      */
     get isSerious(): boolean {
-        return this.queues[0]?.isSerious ?? false;
+        return HelpQueue.sharedSettings.get(this.guildId)?.seriousModeEnabled ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -576,20 +576,20 @@ class AttendingServer {
     async updateQueueName(oldChannel: CategoryChannel, newChannel: CategoryChannel) {
         const oldName = oldChannel.name;
         const newName = newChannel.name;
-        const channelQueue = this._queues.get(oldChannel.id);
+        const queue = this._queues.get(oldChannel.id);
 
-        if (!channelQueue) {
+        if (!queue) {
             return;
         }
 
         const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
         const newQueueChannel: QueueChannel = {
-            textChannel: channelQueue.queueChannel.textChannel,
+            textChannel: queue.queueChannel.textChannel,
             queueName: newName,
-            parentCategoryId: channelQueue.parentCategoryId
+            parentCategoryId: queue.parentCategoryId
         };
         const nameTaken = this._queues.some(
-            queue => queue.queueName === newName && queue !== channelQueue
+            queue => queue.queueName === newName && queue !== queue
         );
         const roleTaken = this.guild.roles.cache.some(
             role => role.name === newChannel.name
@@ -613,8 +613,8 @@ class AttendingServer {
             await role.setName(newName);
         }
 
-        channelQueue.queueChannel = newQueueChannel;
-        await channelQueue.triggerRender();
+        queue.queueChannel = newQueueChannel;
+        await queue.triggerRender();
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
@@ -1123,19 +1123,16 @@ class AttendingServer {
 
     /**
      * Sets the serious server flag, and updates the queues if seriousness is changed
-     * @param enableSeriousMode turn on or off serious mode
+     * @param enable turn on or off serious mode
      * @returns True if triggered renders for all queues
      */
     @useSettingsBackup
-    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const seriousState = this.queues[0]?.isSerious ?? false;
-        if (seriousState === enableSeriousMode) {
-            return false;
+    async setSeriousServer(enable: boolean): Promise<void> {
+        const setting = HelpQueue.sharedSettings.get(this.guildId);
+        if (setting) {
+            setting.seriousModeEnabled = enable;
+            await Promise.all(this._queues.map(queue => queue.triggerRender()));
         }
-        await Promise.all(
-            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
-        );
-        return true;
     }
 
     @useSettingsBackup
@@ -1272,7 +1269,7 @@ class AttendingServer {
      */
     private async initializeAllQueues(
         queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
     ): Promise<void> {
         const queueChannels = await getExistingQueueChannels(this.guild);
@@ -1281,21 +1278,19 @@ class AttendingServer {
             throw queueChannels.error;
         }
 
+        HelpQueue.sharedSettings.set(this.guildId, {
+            timeUntilAutoClear,
+            seriousModeEnabled
+        });
+
         await Promise.all(
             queueChannels.value.map(async channel => {
                 const backup = queueBackups?.find(
                     backup => backup.parentCategoryId === channel.parentCategoryId
                 );
-                const completeBackup = backup
-                    ? {
-                          ...backup,
-                          timeUntilAutoClear: hoursUntilAutoClear,
-                          seriousModeEnabled: seriousModeEnabled
-                      }
-                    : undefined;
                 this._queues.set(
                     channel.parentCategoryId,
-                    await HelpQueue.create(channel, completeBackup)
+                    await HelpQueue.create(channel, backup)
                 );
             })
         );
