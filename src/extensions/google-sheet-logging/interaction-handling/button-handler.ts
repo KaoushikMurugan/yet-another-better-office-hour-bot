@@ -35,7 +35,7 @@ async function updateSheetTrackingStatus(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const newTrackingStatus = !server.sheetTracking;
-    
+
     await Promise.all([
         server.setSheetTracking(newTrackingStatus),
         server.sendLogMessage(
@@ -62,7 +62,7 @@ async function resetGoogleSheetSettings(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
-    
+
     await Promise.all([
         state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
         server.setSheetTracking(false),

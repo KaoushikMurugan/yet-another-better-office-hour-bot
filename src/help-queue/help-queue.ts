@@ -203,7 +203,7 @@ class HelpQueue {
                   )
               ]);
         const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
-       
+
         await Promise.all([
             queueChannel.textChannel.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
@@ -217,7 +217,7 @@ class HelpQueue {
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
-       
+
         // Emit events after queue is done creating
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
@@ -262,7 +262,7 @@ class HelpQueue {
 
         this._activeHelperIds.delete(helperMember.id);
         this._pausedHelperIds.delete(helperMember.id);
-        
+
         if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
@@ -560,7 +560,7 @@ class HelpQueue {
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
-       
+
         if (!notify) {
             return;
         }
@@ -735,7 +735,7 @@ class HelpQueue {
                     this._timeUntilAutoClear.minutes * 1000 * 60
             )
         );
-        
+
         await this.triggerRender();
     }
 }

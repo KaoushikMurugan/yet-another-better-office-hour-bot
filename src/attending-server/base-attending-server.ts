@@ -219,7 +219,7 @@ class AttendingServer {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
-    get queueChannels(): readonly QueueChannel[]{
+    get queueChannels(): readonly QueueChannel[] {
         return this._queues.map(queue => queue.queueChannel);
     }
 
@@ -1253,16 +1253,14 @@ class AttendingServer {
 
         // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
-            queueChannels.value
-                .map(channel => channel.queueName)
-                .map(async roleToCreate => {
-                    if (!existingRoles.has(roleToCreate)) {
-                        await this.guild.roles.create({
-                            name: roleToCreate,
-                            position: 1
-                        });
-                    }
-                })
+            queueChannels.value.map(async channel => {
+                if (!existingRoles.has(channel.queueName)) {
+                    await this.guild.roles.create({
+                        name: channel.queueName,
+                        position: 1
+                    });
+                }
+            })
         );
     }
 

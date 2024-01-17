@@ -183,7 +183,7 @@ class CalendarExtensionState {
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
         }
-        
+
         this.calendarNameDiscordIdMap.load(
             Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]
