@@ -17,7 +17,7 @@ import { z } from 'zod';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { ServerExtension } from '../extension-interface.js';
-import { QueueChannel } from '../../attending-server/base-attending-server.js';
+import { QueueChannel } from '../../models/queue-channel.js';
 import { Logger } from 'pino';
 
 /**

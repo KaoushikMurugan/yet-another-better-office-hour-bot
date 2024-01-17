@@ -7,10 +7,8 @@ import {
     PermissionsBitField,
     StringSelectMenuInteraction
 } from 'discord.js';
-import {
-    AttendingServer,
-    QueueChannel
-} from '../attending-server/base-attending-server.js';
+import { AttendingServer } from '../attending-server/base-attending-server.js';
+import { QueueChannel } from '../models/queue-channel.js';
 import {
     isCategoryChannel,
     isQueueTextChannel,
@@ -136,7 +134,7 @@ function hasValidQueueArgument(
         throw ExpectedParseErrors.noQueueTextChannel(parentCategory.name);
     }
     const queueChannel: QueueChannel = {
-        channelObj: queueTextChannel,
+        textChannel: queueTextChannel,
         queueName: parentCategory.name,
         parentCategoryId: parentCategory.id
     };

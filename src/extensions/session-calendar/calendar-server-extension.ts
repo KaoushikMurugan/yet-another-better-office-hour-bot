@@ -3,7 +3,7 @@ import { BaseServerExtension } from '../extension-interface.js';
 import { FrozenServer } from '../extension-utils.js';
 import { CalendarExtensionState } from './calendar-states.js';
 import { CALENDAR_LOGGER } from './shared-calendar-functions.js';
-import { QueueChannel } from '../../attending-server/base-attending-server.js';
+import { QueueChannel } from '../../models/queue-channel.js';
 
 /**
  * Server extension of session calendar

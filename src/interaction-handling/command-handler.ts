@@ -308,9 +308,8 @@ async function clearAll(
         CommandNames.clear_all,
         'botAdmin'
     );
-    const allQueues = await server.getQueueChannels();
 
-    if (allQueues.length === 0) {
+    if (server.queues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
     }
 
@@ -332,7 +331,6 @@ async function listHelpers(
         return;
     }
 
-    const allQueues = await server.getQueueChannels();
     const table = new AsciiTable3()
         .setHeading(
             'Tutor name',
@@ -354,8 +352,9 @@ async function listHelpers(
                 helper.member.roles.cache
                     .filter(
                         role =>
-                            allQueues.find(queue => queue.queueName === role.name) !==
-                            undefined
+                            server.queueChannels.find(
+                                queue => queue.queueName === role.name
+                            ) !== undefined
                     )
                     .map(role => role.name)
                     .toString(), // Available Queues
@@ -448,10 +447,8 @@ async function cleanupAllQueues(
         CommandNames.cleanup_all,
         'botAdmin'
     );
-
-    const allQueues = await server.getQueueChannels();
     await Promise.all(
-        allQueues.map(queueChannel =>
+        server.queueChannels.map(queueChannel =>
             server.getQueueById(queueChannel.parentCategoryId).triggerForceRender()
         )
     );

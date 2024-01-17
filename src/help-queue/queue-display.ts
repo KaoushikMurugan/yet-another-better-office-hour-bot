@@ -1,7 +1,7 @@
 /** @module HelpQueueV2 */
 import { AsciiTable3, AlignmentEnum } from 'ascii-table3';
 import { QueueState, QueueViewModel } from './help-queue.js';
-import { QueueChannel } from '../attending-server/base-attending-server.js';
+import { QueueChannel } from '../models/queue-channel.js';
 import {
     Collection,
     ActionRowBuilder,
@@ -161,7 +161,7 @@ class QueueDisplay {
      * @param viewModel
      */
     requestQueueEmbedRender(viewModel: QueueViewModel): void {
-        const guildId = this.queueChannel.channelObj.guild.id;
+        const guildId = this.queueChannel.textChannel.guild.id;
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
             .setTitle(
@@ -305,8 +305,8 @@ class QueueDisplay {
      */
     private async render(force = false): Promise<void> {
         this.isRendering = true;
-        const queueChannelExists = this.queueChannel.channelObj.guild.channels.cache.has(
-            this.queueChannel.channelObj.id
+        const queueChannelExists = this.queueChannel.textChannel.guild.channels.cache.has(
+            this.queueChannel.textChannel.id
         );
         if (!queueChannelExists) {
             // temporary fix, do nothing if #queue doesn't exist
@@ -314,7 +314,7 @@ class QueueDisplay {
             return;
         }
         // this avoids the ephemeral reply being counted as a 'message'
-        const allMessages = await this.queueChannel.channelObj.messages.fetch({
+        const allMessages = await this.queueChannel.textChannel.messages.fetch({
             cache: false
         });
         // from all messages select message whose id exists in embedMessageIdMap
@@ -326,7 +326,7 @@ class QueueDisplay {
             existingEmbeds.size === this.queueChannelEmbeds.size &&
             allMessages.size === this.queueChannelEmbeds.size;
         if (!safeToEdit || force) {
-            const allMessages = await this.queueChannel.channelObj.messages.fetch();
+            const allMessages = await this.queueChannel.textChannel.messages.fetch();
             await Promise.all(allMessages.map(msg => msg.delete()));
             // sort by render index
             const sortedEmbeds = this.queueChannelEmbeds.sort(
@@ -334,7 +334,7 @@ class QueueDisplay {
             );
             // Cannot promise all here, contents need to be sent in order
             for (const embed of sortedEmbeds.values()) {
-                const newEmbedMessage = await this.queueChannel.channelObj.send({
+                const newEmbedMessage = await this.queueChannel.textChannel.send({
                     ...embed.contents,
                     flags: MessageFlags.SuppressNotifications
                 });
@@ -358,7 +358,7 @@ class QueueDisplay {
     private getVcStatus(helperId: Snowflake): string {
         const spacer = '\u3000'; // ideographic space character, extra wide
         const voiceChannel =
-            this.queueChannel.channelObj.guild.voiceStates.cache.get(helperId)?.channel;
+            this.queueChannel.textChannel.guild.voiceStates.cache.get(helperId)?.channel;
         // using # gives the same effect as if we use the id
         // bc students can't see the channel ping if they don't have permission
         const vcStatus = voiceChannel

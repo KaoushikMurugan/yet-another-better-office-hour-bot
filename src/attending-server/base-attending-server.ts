@@ -43,7 +43,6 @@ import {
 import {
     convertMsToTime,
     isCategoryChannel,
-    isQueueTextChannel,
     isTextChannel,
     isVoiceChannel
 } from '../utils/util-functions.js';
@@ -58,6 +57,7 @@ import {
     useSettingsBackup
 } from './firebase-backup.js';
 import {
+    getExistingQueueChannels,
     initializationCheck,
     sendVoiceChannelInvite,
     setHelpChannelVisibility,
@@ -219,6 +219,10 @@ class AttendingServer {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
+    get queueChannels(): readonly QueueChannel[]{
+        return this._queues.map(queue => queue.queueChannel);
+    }
+
     /** List of category channel IDs on this server */
     get categoryChannelIDs(): ReadonlyArray<CategoryChannelId> {
         return [...this._queues.keys()];
@@ -288,7 +292,7 @@ class AttendingServer {
     static async create(guild: Guild): Promise<AttendingServer> {
         await initializationCheck(guild);
         // Load ServerExtensions here
-        const serverExtensions: ServerExtension[] = environment.disableExtensions
+        const serverExtensions: readonly ServerExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
@@ -309,6 +313,7 @@ class AttendingServer {
                 role.id === SpecialRoleValues.Deleted ||
                 !guild.roles.cache.has(role.id)
         );
+
         if (missingRoles.length > 0) {
             guild
                 .fetchOwner()
@@ -561,7 +566,6 @@ class AttendingServer {
         ]);
 
         this._queues.set(parentCategory.id, helpQueue);
-        await this.getQueueChannels(false);
     }
 
     /**
@@ -580,7 +584,7 @@ class AttendingServer {
 
         const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
         const newQueueChannel: QueueChannel = {
-            textChannel: channelQueue.queueChannel.channelObj,
+            textChannel: channelQueue.queueChannel.textChannel,
             queueName: newName,
             parentCategoryId: channelQueue.parentCategoryId
         };
@@ -654,7 +658,6 @@ class AttendingServer {
 
         // let queue call onQueueDelete
         await queue.gracefulDelete();
-        await this.getQueueChannels(false);
     }
 
     /**
@@ -801,49 +804,6 @@ class AttendingServer {
      */
     getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
         return this._queues.get(parentCategoryId)?.queueChannel;
-    }
-
-    /**
-     * Gets all the queue channels on the server.
-     * if nothing is found, returns empty array
-     * @param useCache whether to read from existing cache, defaults to true
-     * - unless queues change often, prefer cache for fast response
-     */
-    async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
-        if (useCache && this.queueChannelsCache.length !== 0) {
-            return this.queueChannelsCache;
-        }
-
-        const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request, likely triggers GC
-        this.queueChannelsCache = [];
-        for (const categoryChannel of allChannels.values()) {
-            if (!isCategoryChannel(categoryChannel)) {
-                continue;
-            }
-            const queueTextChannel =
-                categoryChannel.children.cache.find(isQueueTextChannel);
-            if (!queueTextChannel) {
-                continue;
-            }
-            this.queueChannelsCache.push({
-                textChannel: queueTextChannel,
-                queueName: categoryChannel.name,
-                parentCategoryId: categoryChannel.id
-            });
-        }
-
-        const duplicateQueues = this.queueChannelsCache
-            .map(queue => queue.queueName)
-            .filter((item, index, arr) => arr.indexOf(item) !== index);
-        if (duplicateQueues.length > 0) {
-            this.logger.warn(
-                `Server['${this.guild.name}'] contains these duplicate queues: ${duplicateQueues} 
-                This might lead to unexpected behaviors. Please update category names as soon as possible.`
-            );
-        }
-
-        return this.queueChannelsCache;
     }
 
     /**
@@ -1285,19 +1245,24 @@ class AttendingServer {
     private async createQueueRoles(): Promise<void> {
         // use a set to collect the unique role names
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
-        const queueNames = (await this.getQueueChannels(false)).map(
-            channel => channel.queueName
-        );
+        const queueChannels = await getExistingQueueChannels(this.guild);
+        if (!queueChannels.ok) {
+            // TODO: temporary solution, this error should propagate somewhere
+            return;
+        }
+
         // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
-            queueNames.map(async roleToCreate => {
-                if (!existingRoles.has(roleToCreate)) {
-                    await this.guild.roles.create({
-                        name: roleToCreate,
-                        position: 1
-                    });
-                }
-            })
+            queueChannels.value
+                .map(channel => channel.queueName)
+                .map(async roleToCreate => {
+                    if (!existingRoles.has(roleToCreate)) {
+                        await this.guild.roles.create({
+                            name: roleToCreate,
+                            position: 1
+                        });
+                    }
+                })
         );
     }
 
@@ -1312,9 +1277,14 @@ class AttendingServer {
         hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
     ): Promise<void> {
-        const queueChannels = await this.getQueueChannels(false);
+        const queueChannels = await getExistingQueueChannels(this.guild);
+        if (!queueChannels.ok) {
+            // since this happens during initialization, we should abort
+            throw queueChannels.error;
+        }
+
         await Promise.all(
-            queueChannels.map(async channel => {
+            queueChannels.value.map(async channel => {
                 const backup = queueBackups?.find(
                     backup => backup.parentCategoryId === channel.parentCategoryId
                 );
@@ -1331,15 +1301,16 @@ class AttendingServer {
                 );
             })
         );
-        this.logger.info(
-            `All queues successfully created${
-                environment.disableExtensions ? '' : blue(' with their extensions')
-            }!`
-        );
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onAllQueuesInit(this, this.queues)
             )
+        );
+
+        this.logger.info(
+            `All queues successfully created${
+                environment.disableExtensions ? '' : blue(' with their extensions')
+            }!`
         );
     }
 

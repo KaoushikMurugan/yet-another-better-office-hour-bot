@@ -26,7 +26,7 @@ import {
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
 import { CommandData } from '../utils/type-aliases.js';
-import { QueueChannel } from '../attending-server/base-attending-server.js';
+import { QueueChannel } from '../models/queue-channel.js';
 
 interface InteractionExtension {
     /**
