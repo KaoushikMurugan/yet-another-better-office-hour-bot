@@ -75,12 +75,12 @@ class HelpQueue {
      * Set of active helpers' ids
      * - This is synchronized with the helpers that are marked 'active' in AttendingServerV2
      */
-    private _activeHelperIds: Set<Snowflake> = new Set();
+    private _activeHelperIds = new Set<Snowflake>();
     /**
      * Set of helpers ids that have paused helping
      * - This is synchronized with the helpers that are marked 'paused' in AttendingServerV2
      */
-    private _pausedHelperIds: Set<Snowflake> = new Set();
+    private _pausedHelperIds = new Set<Snowflake>();
     /**
      * The actual queue of students
      */
@@ -103,7 +103,7 @@ class HelpQueue {
      * @param backupData if defined, use this data to restore the students array
      */
     protected constructor(
-        public queueChannel: Readonly<QueueChannel>,
+        private _queueChannel: Readonly<QueueChannel>,
         private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplay,
         backupData?: QueueBackup
@@ -127,6 +127,10 @@ class HelpQueue {
                 });
             }
         }
+    }
+
+    get queueChannel(): QueueChannel {
+        return this._queueChannel;
     }
 
     /** Set of helper IDs. Enforce readonly */
@@ -193,7 +197,7 @@ class HelpQueue {
     }
 
     /** All students */
-    get students(): ReadonlyArray<Helpee> {
+    get students(): readonly Helpee[] {
         return this._students;
     }
 
@@ -674,6 +678,11 @@ class HelpQueue {
         ]);
 
         return removedStudent;
+    }
+
+    async updateQueueChannel(newChannel: QueueChannel): Promise<void> {
+        this._queueChannel = newChannel;
+        await this.triggerRender();
     }
 
     /**

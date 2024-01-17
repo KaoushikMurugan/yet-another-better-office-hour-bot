@@ -177,7 +177,7 @@ function backupQueueData(queue: HelpQueue): void {
                 })
                 .then(() =>
                     LOGGER.info(
-                        queue.textChannelect.guild.name,
+                        queue.textChannel.guild.name,
                         '- Queue backup successful'
                     )
                 )

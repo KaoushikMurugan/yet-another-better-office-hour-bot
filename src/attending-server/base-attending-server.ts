@@ -613,8 +613,8 @@ class AttendingServer {
             await role.setName(newName);
         }
 
-        queue.queueChannel = newQueueChannel;
-        await queue.triggerRender();
+        await queue.updateQueueChannel(newQueueChannel);
+
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
