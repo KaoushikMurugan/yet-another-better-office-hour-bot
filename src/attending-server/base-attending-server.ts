@@ -1102,7 +1102,7 @@ class AttendingServer {
      * @param sheetTracking
      */
     @useSettingsBackup
-    async setSheetTracking(sheetTracking: boolean): Promise<void> {
+    setSheetTracking(sheetTracking: boolean): void {
         this.settings.sheetTracking = sheetTracking;
     }
 
