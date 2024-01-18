@@ -681,7 +681,13 @@ class HelpQueue {
     }
 
     async updateQueueChannel(newChannel: QueueChannel): Promise<void> {
+        const oldChannel = this.queueChannel;
         this._queueChannel = newChannel;
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                extension.onQueueChannelUpdate(this, oldChannel, newChannel)
+            )
+        );
         await this.triggerRender();
     }
 

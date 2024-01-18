@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { GuildMember, VoiceChannel } from 'discord.js';
+import { GuildMember, TextChannel, VoiceChannel } from 'discord.js';
 import { HelpQueue } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
@@ -162,18 +162,6 @@ interface ServerExtension {
      * @param server the server to backup
      */
     onServerRequestBackup: (server: FrozenServer) => Promise<void>;
-    /**
-     * When a queue category channel is updated
-     * @param server the server of the category queue
-     * @param oldName old name of queue category channel
-     * @param newChannel new queue category channel object
-     * @returns
-     */
-    onQueueChannelUpdate: (
-        server: FrozenServer,
-        oldName: string,
-        newChannel: QueueChannel
-    ) => Promise<void>;
 }
 
 /** Extensions for individual queues */
@@ -219,6 +207,18 @@ interface QueueExtension {
     onRemoveAllStudents: (
         queue: FrozenQueue,
         students: ReadonlyArray<Helpee>
+    ) => Promise<void>;
+    /**
+     * When the category channel of this queue is changed (mostly name changes)
+     * @param queue
+     * @param oldQueueChannel
+     * @param newQueueChannel
+     * @returns
+     */
+    onQueueChannelUpdate: (
+        queue: FrozenQueue,
+        oldQueueChannel: QueueChannel,
+        newQueueChannel: QueueChannel
     ) => Promise<void>;
     /**
      * When a queue re-render happens
@@ -346,13 +346,6 @@ abstract class BaseServerExtension implements ServerExtension {
     onServerRequestBackup(server: FrozenServer): Promise<void> {
         return Promise.resolve();
     }
-    onQueueChannelUpdate(
-        server: FrozenServer,
-        oldName: string,
-        newChannel: QueueChannel
-    ): Promise<void> {
-        return Promise.resolve();
-    }
 }
 
 /**
@@ -386,6 +379,13 @@ abstract class BaseQueueExtension implements QueueExtension {
     onRemoveAllStudents(
         queue: FrozenQueue,
         students: ReadonlyArray<Helpee>
+    ): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueueChannelUpdate(
+        queue: FrozenQueue,
+        oldQueueChannel: QueueChannel,
+        newQueueChannel: QueueChannel
     ): Promise<void> {
         return Promise.resolve();
     }

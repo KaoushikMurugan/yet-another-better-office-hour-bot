@@ -602,12 +602,6 @@ class AttendingServer {
         }
 
         await queue.updateQueueChannel(newQueueChannel);
-
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
-            )
-        );
     }
 
     /**
