@@ -61,8 +61,7 @@ class QueueDisplay {
      * - binds the render index with a specific message
      * - if the message doesn't exist, send and re-bind. Avoids the unknown message issue
      */
-    private renderIndexMessageIdMap: Collection<RenderIndex, MessageId> =
-        new Collection();
+    private renderIndexMessageIdMap = new Collection<RenderIndex, MessageId>();
 
     /**
      * The mutex that locks the render method during render
@@ -76,8 +75,7 @@ class QueueDisplay {
      * - queue has render index 0
      * - immediately updated in both requestQueueRender and requestNonQueueEmbedRender
      */
-    private queueChannelEmbeds: Collection<RenderIndex, QueueChannelEmbed> =
-        new Collection();
+    private queueChannelEmbeds = new Collection<RenderIndex, QueueChannelEmbed>();
 
     /**
      * Whether the display has temporarily paused rendering
