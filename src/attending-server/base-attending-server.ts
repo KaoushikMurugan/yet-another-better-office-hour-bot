@@ -117,10 +117,6 @@ class AttendingServer {
      */
     private _queues = new Collection<CategoryChannelId, HelpQueue>();
     /**
-     * Cached result of {@link getQueueChannels}
-     */
-    private queueChannelsCache: QueueChannel[] = [];
-    /**
      * Server settings. An firebase update is requested as soon as this changes
      */
     private settings: ServerSettings = {
@@ -569,19 +565,19 @@ class AttendingServer {
 
     /**
      * Updates the queue name for queue embeds, roles, and calendar extension
-     * @param oldChannel Old category channel before the name was updated
-     * @param newChannel New category channel after the name was updated
+     * @param oldCategory Old category channel before the name was updated
+     * @param newCategory New category channel after the name was updated
      */
-    async updateQueueName(oldChannel: CategoryChannel, newChannel: CategoryChannel) {
-        const oldName = oldChannel.name;
-        const newName = newChannel.name;
-        const queue = this._queues.get(oldChannel.id);
+    async updateQueueName(oldCategory: CategoryChannel, newCategory: CategoryChannel) {
+        const oldName = oldCategory.name;
+        const newName = newCategory.name;
+        const queue = this._queues.get(oldCategory.id);
 
         if (!queue) {
             return;
         }
 
-        const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
+        const role = this.guild.roles.cache.find(role => role.name === oldCategory.name);
         const newQueueChannel: QueueChannel = {
             textChannel: queue.queueChannel.textChannel,
             queueName: newName,
@@ -591,18 +587,11 @@ class AttendingServer {
             queue => queue.queueName === newName && queue !== queue
         );
         const roleTaken = this.guild.roles.cache.some(
-            role => role.name === newChannel.name
-        );
-        const cachedChannelIndex = this.queueChannelsCache.findIndex(
-            queueChannel => queueChannel.queueName === oldName
+            role => role.name === newCategory.name
         );
 
-        if (cachedChannelIndex !== -1) {
-            this.queueChannelsCache.splice(cachedChannelIndex, 1);
-            this.queueChannelsCache.push(newQueueChannel);
-        }
         if (nameTaken) {
-            await newChannel.setName(oldName);
+            await newCategory.setName(oldName);
             LOGGER.error(
                 `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
             );
