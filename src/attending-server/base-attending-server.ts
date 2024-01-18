@@ -105,18 +105,17 @@ class AttendingServer {
      * without passing through a interaction handler first
      * - equivalent to the old attendingServers global object
      */
-    private static readonly allServers: Collection<GuildId, AttendingServer> =
-        new Collection();
+    private static readonly allServers = new Collection<GuildId, AttendingServer>();
     /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
      */
-    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
+    private _helpers = new Collection<GuildMemberId, Helper>();
     /**
      * All the queues of this server
      * - Key is CategoryChannel.id of the parent category of #queue
      */
-    private _queues: Collection<CategoryChannelId, HelpQueue> = new Collection();
+    private _queues = new Collection<CategoryChannelId, HelpQueue>();
     /**
      * Cached result of {@link getQueueChannels}
      */
@@ -145,7 +144,7 @@ class AttendingServer {
 
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: ReadonlyArray<ServerExtension>
+        readonly serverExtensions: readonly ServerExtension[]
     ) {
         this.logger = LOGGER.child({ guild: this.guild.name });
     }
@@ -224,12 +223,12 @@ class AttendingServer {
     }
 
     /** List of category channel IDs on this server */
-    get categoryChannelIDs(): ReadonlyArray<CategoryChannelId> {
+    get categoryChannelIDs(): readonly CategoryChannelId[] {
         return [...this._queues.keys()];
     }
 
     /** List of queues on this server */
-    get queues(): ReadonlyArray<HelpQueue> {
+    get queues(): readonly HelpQueue[] {
         return [...this._queues.values()];
     }
 
