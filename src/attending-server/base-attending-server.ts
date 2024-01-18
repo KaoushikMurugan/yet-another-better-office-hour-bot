@@ -1125,7 +1125,7 @@ class AttendingServer {
      */
     async assignHelpersRoles(
         helpersRolesData: HelperRolesData[]
-    ): Promise<[Map<string, string>, Map<string, string>]> {
+    ): Promise<[logMap: Map<string, string>, errorMap: Map<string, string>]> {
         // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
         const queueNames = this.queues.map(queue => queue.queueName);
         // ensure the queue roles exist so that queueRoles is guaranteed to not contain undefined
