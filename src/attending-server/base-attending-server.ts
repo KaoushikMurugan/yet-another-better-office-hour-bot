@@ -569,7 +569,6 @@ class AttendingServer {
      * @param newCategory New category channel after the name was updated
      */
     async updateQueueName(oldCategory: CategoryChannel, newCategory: CategoryChannel) {
-        const oldName = oldCategory.name;
         const newName = newCategory.name;
         const queue = this._queues.get(oldCategory.id);
 
@@ -591,11 +590,7 @@ class AttendingServer {
         );
 
         if (nameTaken) {
-            await newCategory.setName(oldName);
-            LOGGER.error(
-                `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
-            );
-            return;
+            throw ExpectedServerErrors.queueAlreadyExists(newName);
         }
         if (role && !roleTaken) {
             await role.setName(newName);
