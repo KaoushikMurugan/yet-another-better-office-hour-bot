@@ -302,14 +302,14 @@ class AttendingServer {
             server.loadBackup(externalBackup);
         }
 
-        const missingRoles = server.sortedAccessLevelRoles.filter(
+        const accessLevelRolesAreMissing = server.sortedAccessLevelRoles.some(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
                 role.id === SpecialRoleValues.Deleted ||
                 !guild.roles.cache.has(role.id)
         );
 
-        if (missingRoles.length > 0) {
+        if (accessLevelRolesAreMissing) {
             guild
                 .fetchOwner()
                 .then(owner => owner.send(RoleConfigMenuForServerInit(server, false)))
@@ -1105,11 +1105,7 @@ class AttendingServer {
      */
     @useSettingsBackup
     async setSeriousServer(enable: boolean): Promise<void> {
-        const setting = HelpQueue.sharedSettings.get(this.guildId);
-        if (setting) {
-            setting.seriousModeEnabled = enable;
-            await Promise.all(this._queues.map(queue => queue.triggerRender()));
-        }
+        this._queues.forEach(queue => queue.setSeriousMode(enable));
     }
 
     @useSettingsBackup
