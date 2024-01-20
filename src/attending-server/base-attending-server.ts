@@ -581,7 +581,6 @@ class AttendingServer {
             ...queueToRename.queueChannel,
             queueName: newName
         };
-        // TODO: this doesn't seem necessary
         const queueNameTaken = this._queues.some(
             queue => queue.queueName === newName
         );
