@@ -570,33 +570,33 @@ class AttendingServer {
      */
     async updateQueueName(oldCategory: CategoryChannel, newCategory: CategoryChannel) {
         const newName = newCategory.name;
-        const queue = this._queues.get(oldCategory.id);
+        const queueToRename = this._queues.get(oldCategory.id);
 
-        if (!queue) {
+        if (!queueToRename) {
             return;
         }
 
         const role = this.guild.roles.cache.find(role => role.name === oldCategory.name);
         const newQueueChannel: QueueChannel = {
-            textChannel: queue.queueChannel.textChannel,
-            queueName: newName,
-            parentCategoryId: queue.parentCategoryId
+            ...queueToRename.queueChannel,
+            queueName: newName
         };
-        const nameTaken = this._queues.some(
-            queue => queue.queueName === newName && queue !== queue
+        // TODO: this doesn't seem necessary
+        const queueNameTaken = this._queues.some(
+            queue => queue.queueName === newName
         );
-        const roleTaken = this.guild.roles.cache.some(
+        const roleNameTaken = this.guild.roles.cache.some(
             role => role.name === newCategory.name
         );
 
-        if (nameTaken) {
+        if (queueNameTaken) {
             throw ExpectedServerErrors.queueAlreadyExists(newName);
         }
-        if (role && !roleTaken) {
+        if (role && !roleNameTaken) {
             await role.setName(newName);
         }
 
-        await queue.updateQueueChannel(newQueueChannel);
+        await queueToRename.updateQueueChannel(newQueueChannel);
     }
 
     /**
