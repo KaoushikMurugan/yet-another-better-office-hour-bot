@@ -581,9 +581,7 @@ class AttendingServer {
             ...queueToRename.queueChannel,
             queueName: newName
         };
-        const queueNameTaken = this._queues.some(
-            queue => queue.queueName === newName
-        );
+        const queueNameTaken = this._queues.some(queue => queue.queueName === newName);
         const roleNameTaken = this.guild.roles.cache.some(
             role => role.name === newCategory.name
         );
@@ -1148,24 +1146,25 @@ class AttendingServer {
             );
         }
 
-        const promises = helpersRolesData.map(async helperRolesData => {
-            // the fetch call refreshes the cache as a side effect
-            if (!(await this.guild.members.fetch()).has(helperRolesData.helperId)) {
+        // the fetch call refreshes the cache as a side effect
+        const guildMembers = await this.guild.members.fetch();
+        const promises = helpersRolesData.map(async data => {
+            if (!guildMembers.has(data.helperId)) {
                 errorMap.set(
-                    helperRolesData.helperId,
-                    `Failed to find member with id ${helperRolesData.helperId} in this server.`
+                    data.helperId,
+                    `Failed to find member with id ${data.helperId} in this server.`
                 );
                 return;
             }
 
-            const helper = await this.guild.members.fetch(helperRolesData.helperId);
+            const helper = await this.guild.members.fetch(data.helperId);
             // give the helper the staff role if they don't have it
             if (!helper.roles.cache.has(this.staffRoleID)) {
                 await helper.roles.add(this.staffRoleID);
                 logMap.set(
-                    helperRolesData.helperId,
+                    data.helperId,
                     `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
-                        helperRolesData.helperId
+                        data.helperId
                     )}`
                 );
             }
@@ -1173,18 +1172,18 @@ class AttendingServer {
             // remove old queue roles
             await helper.roles.remove(queueRoles);
             // get the queue roles from the helperRolesData
-            if (helperRolesData.queues.length === 0) {
+            if (data.queues.length === 0) {
                 errorMap.set(
-                    helperRolesData.helperId,
-                    `No queues were provided for helper with id ${helperRolesData.helperId}.`
+                    data.helperId,
+                    `No queues were provided for helper with id ${data.helperId}.`
                 );
             }
 
-            const helperQueueRoles = helperRolesData.queues
+            const helperQueueRoles = data.queues
                 .map(queueName => {
                     if (!queueNames.includes(queueName)) {
                         errorMap.set(
-                            helperRolesData.helperId,
+                            data.helperId,
                             `Failed to find queue with name ${queueName}.`
                         );
                         return undefined;
@@ -1199,7 +1198,7 @@ class AttendingServer {
             }
 
             logMap.set(
-                helperRolesData.helperId,
+                data.helperId,
                 helperQueueRoles.map(role => role.toString()).join(' ')
             );
         });
