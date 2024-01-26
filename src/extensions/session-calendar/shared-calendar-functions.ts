@@ -146,11 +146,11 @@ function buildUpcomingSessionsEmbedBody(
     const lastUpdatedTimeStampString = `${divider}Last updated: <t:${Math.floor(
         lastUpdatedTimeStamp.getTime() / 1000
     )}:R>`;
-    
+
     if (viewModels.length === 0) {
         return `**There are no upcoming sessions for ${title} in the next 7 days.**${lastUpdatedTimeStampString}`;
     }
-    
+
     if (returnCount === 'max') {
         let currLength = lastUpdatedTimeStampString.length; // current embed message length
         const upcomingSessionStrings: string[] = [];

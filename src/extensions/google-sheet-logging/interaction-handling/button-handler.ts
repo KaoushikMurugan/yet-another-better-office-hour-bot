@@ -35,13 +35,12 @@ async function updateSheetTrackingStatus(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const newTrackingStatus = !server.sheetTracking;
-    
-    await Promise.all([
-        server.setSheetTracking(newTrackingStatus),
-        server.sendLogMessage(
-            GoogleSheetSuccessMessages.updatedSheetTracking(newTrackingStatus)
-        )
-    ]);
+
+    server.setSheetTracking(newTrackingStatus);
+    server.sendLogMessage(
+        GoogleSheetSuccessMessages.updatedSheetTracking(newTrackingStatus)
+    );
+
     await interaction.update(
         GoogleSheetSettingsConfigMenu(
             server,
@@ -62,14 +61,13 @@ async function resetGoogleSheetSettings(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const state = GoogleSheetExtensionState.get(interaction.guildId);
-    
-    await Promise.all([
-        state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID),
-        server.setSheetTracking(false),
-        server.sendLogMessage(
-            GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
-        )
-    ]);
+
+    await state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID);
+   
+    server.setSheetTracking(false);
+    server.sendLogMessage(
+        GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
+    );
 
     await interaction.update(
         GoogleSheetSettingsConfigMenu(

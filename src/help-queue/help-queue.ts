@@ -1,10 +1,15 @@
 /** @module HelpQueueV2 */
 import type { GuildMember, TextChannel, Snowflake, PartialGuildMember } from 'discord.js';
-import type { QueueChannel } from '../attending-server/base-attending-server.js';
+import type { QueueChannel } from '../models/queue-channel.js';
 import type { QueueExtension } from '../extensions/extension-interface.js';
 import type { QueueBackup } from '../models/backups.js';
 import type { Helpee } from '../models/member-states.js';
-import type { GuildMemberId, Optional, YabobEmbed } from '../utils/type-aliases.js';
+import type {
+    GuildId,
+    GuildMemberId,
+    Optional,
+    YabobEmbed
+} from '../utils/type-aliases.js';
 import { Collection } from 'discord.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { QueueDisplay } from './queue-display.js';
@@ -26,6 +31,17 @@ type QueueViewModel = {
     state: QueueState;
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
+};
+
+type SharedQueueSettings = {
+    /**
+     * Why so serious? If true, no emoticons will be shown
+     */
+    seriousModeEnabled: boolean;
+    /**
+     * When to automatically remove everyone
+     */
+    timeUntilAutoClear: AutoClearTimeout;
 };
 
 /**
@@ -51,39 +67,34 @@ type AutoClearTimeout = { hours: number; minutes: number } | 'AUTO_CLEAR_DISABLE
  */
 class HelpQueue {
     /**
+     * Queue settings that is shared across all queues of the same server
+     * - key is guild id
+     */
+    static sharedSettings = new Collection<GuildId, SharedQueueSettings>();
+    /**
      * Set of active helpers' ids
      * - This is synchronized with the helpers that are marked 'active' in AttendingServerV2
      */
-    private _activeHelperIds: Set<Snowflake> = new Set();
+    private _activeHelperIds = new Set<Snowflake>();
     /**
      * Set of helpers ids that have paused helping
      * - This is synchronized with the helpers that are marked 'paused' in AttendingServerV2
      */
-    private _pausedHelperIds: Set<Snowflake> = new Set();
-    /**
-     * Why so serious?
-     * - if true, no emoticons will be shown
-     */
-    private _seriousModeEnabled = false;
+    private _pausedHelperIds = new Set<Snowflake>();
     /**
      * The actual queue of students
      */
     private _students: Helpee[] = [];
     /**
-     * When to automatically remove everyone
-     */
-    private _timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED';
-    /**
      * The set of students to notify when queue opens
      * - Key is GuildMember.id
      */
-    private notifGroup: Collection<GuildMemberId, GuildMember> = new Collection();
+    private notifGroup = new Collection<GuildMemberId, GuildMember>();
     /**
      * Keeps track of all the setTimeout / setIntervals we started
      * - Timers can be from setInterval or setTimeout
      */
-    private timers: Collection<QueueTimerType, ReturnType<typeof setInterval>> =
-        new Collection();
+    private timers = new Collection<QueueTimerType, ReturnType<typeof setInterval>>();
 
     /**
      * @param queueChannel the #queue text channel to manage
@@ -92,25 +103,19 @@ class HelpQueue {
      * @param backupData if defined, use this data to restore the students array
      */
     protected constructor(
-        public queueChannel: QueueChannel,
+        private _queueChannel: Readonly<QueueChannel>,
         private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplay,
-        backupData?: QueueBackup & {
-            timeUntilAutoClear: AutoClearTimeout;
-            seriousModeEnabled: boolean;
-        }
+        backupData?: QueueBackup
     ) {
         if (backupData === undefined) {
             // if no backup then we are done initializing
             return;
         }
 
-        this._timeUntilAutoClear = backupData.timeUntilAutoClear;
-        this._seriousModeEnabled = backupData.seriousModeEnabled;
-
         for (const studentBackup of backupData.studentsInQueue) {
             // forEach backup, if there's a corresponding channel member, push it into queue
-            const correspondingMember = this.queueChannel.channelObj.members.get(
+            const correspondingMember = this.queueChannel.textChannel.members.get(
                 studentBackup.memberId
             );
             if (correspondingMember !== undefined) {
@@ -124,6 +129,10 @@ class HelpQueue {
         }
     }
 
+    get queueChannel(): QueueChannel {
+        return this._queueChannel;
+    }
+
     /** Set of helper IDs. Enforce readonly */
     get activeHelperIds(): ReadonlySet<Snowflake> {
         return this._activeHelperIds;
@@ -135,8 +144,8 @@ class HelpQueue {
     }
 
     /** #queue text channel object */
-    get channelObject(): Readonly<TextChannel> {
-        return this.queueChannel.channelObj;
+    get textChannel(): Readonly<TextChannel> {
+        return this.queueChannel.textChannel;
     }
 
     /** First student; undefined if no one is here */
@@ -145,8 +154,26 @@ class HelpQueue {
     }
 
     /** The seriousness of the queue, synced with the enclosing AttendingServer */
-    get isSerious(): boolean {
-        return this._seriousModeEnabled;
+    get seriousModeEnabled(): boolean {
+        return (
+            HelpQueue.sharedSettings.get(this.queueChannel.textChannel.guildId)
+                ?.seriousModeEnabled ?? false
+        );
+    }
+
+    set seriousModeEnabled(newValue: boolean) {
+        const setting = HelpQueue.sharedSettings.get(
+            this.queueChannel.textChannel.guildId
+        );
+        if (setting) {
+            setting.seriousModeEnabled = newValue;
+        } else {
+            // this path should never happen, but we'll leave this here just in case
+            HelpQueue.sharedSettings.set(this.queueChannel.textChannel.guildId, {
+                seriousModeEnabled: newValue,
+                timeUntilAutoClear: this.timeUntilAutoClear
+            });
+        }
     }
 
     /** Number of students */
@@ -170,13 +197,30 @@ class HelpQueue {
     }
 
     /** All students */
-    get students(): ReadonlyArray<Helpee> {
+    get students(): readonly Helpee[] {
         return this._students;
     }
 
     /** Time until auto clear happens */
     get timeUntilAutoClear(): AutoClearTimeout {
-        return this._timeUntilAutoClear;
+        return (
+            HelpQueue.sharedSettings.get(this.queueChannel.textChannel.guildId)
+                ?.timeUntilAutoClear ?? 'AUTO_CLEAR_DISABLED'
+        );
+    }
+
+    set timeUntilAutoClear(newValue: AutoClearTimeout) {
+        const setting = HelpQueue.sharedSettings.get(
+            this.queueChannel.textChannel.guildId
+        );
+        if (setting) {
+            setting.timeUntilAutoClear = newValue;
+        } else {
+            HelpQueue.sharedSettings.set(this.queueChannel.textChannel.guildId, {
+                seriousModeEnabled: this.seriousModeEnabled,
+                timeUntilAutoClear: newValue
+            });
+        }
     }
 
     /**
@@ -186,12 +230,9 @@ class HelpQueue {
      */
     static async create(
         queueChannel: QueueChannel,
-        backupData?: QueueBackup & {
-            timeUntilAutoClear: AutoClearTimeout;
-            seriousModeEnabled: boolean;
-        }
+        backupData?: QueueBackup
     ): Promise<HelpQueue> {
-        const everyoneRole = queueChannel.channelObj.guild.roles.everyone;
+        const everyoneRole = queueChannel.textChannel.guild.roles.everyone;
         const display = new QueueDisplay(queueChannel);
         const queueExtensions: QueueExtension[] = environment.disableExtensions
             ? []
@@ -203,9 +244,9 @@ class HelpQueue {
                   )
               ]);
         const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
-       
+
         await Promise.all([
-            queueChannel.channelObj.permissionOverwrites.create(everyoneRole, {
+            queueChannel.textChannel.permissionOverwrites.create(everyoneRole, {
                 SendMessages: false,
                 CreatePrivateThreads: false,
                 CreatePublicThreads: false,
@@ -217,7 +258,7 @@ class HelpQueue {
         if (queue.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED') {
             await queue.startAutoClearTimer();
         }
-       
+
         // Emit events after queue is done creating
         await Promise.all(
             queueExtensions.map(extension => extension.onQueueCreate(queue))
@@ -262,7 +303,7 @@ class HelpQueue {
 
         this._activeHelperIds.delete(helperMember.id);
         this._pausedHelperIds.delete(helperMember.id);
-        
+
         if (this.getQueueState() === 'closed') {
             await this.startAutoClearTimer();
         }
@@ -395,7 +436,7 @@ class HelpQueue {
                 student => student.member.displayName
             ),
             state: this.getQueueState(),
-            seriousModeEnabled: this._seriousModeEnabled,
+            seriousModeEnabled: this.seriousModeEnabled,
             timeUntilAutoClear:
                 this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED'
                     ? 'AUTO_CLEAR_DISABLED'
@@ -525,7 +566,7 @@ class HelpQueue {
         await Promise.all(
             [...this.activeHelperIds].map(
                 helperId =>
-                    this.queueChannel.channelObj.members
+                    this.queueChannel.textChannel.members
                         .get(helperId)
                         ?.send(embed)
                         .catch(() => {
@@ -560,7 +601,7 @@ class HelpQueue {
             ...this.queueExtensions.map(extension => extension.onQueueOpen(this)),
             this.triggerRender()
         ]);
-       
+
         if (!notify) {
             return;
         }
@@ -639,6 +680,17 @@ class HelpQueue {
         return removedStudent;
     }
 
+    async updateQueueChannel(newChannel: QueueChannel): Promise<void> {
+        const oldChannel = this.queueChannel;
+        this._queueChannel = newChannel;
+        await Promise.all(
+            this.queueExtensions.map(extension =>
+                extension.onQueueChannelUpdate(this, oldChannel, newChannel)
+            )
+        );
+        await this.triggerRender();
+    }
+
     /**
      * Sets up auto clear parameters
      * - The timer won't start until startAutoClearTimer is called
@@ -653,13 +705,13 @@ class HelpQueue {
         }
 
         if (enable) {
-            this._timeUntilAutoClear = {
+            this.timeUntilAutoClear = {
                 hours: hours,
                 minutes: minutes
             };
             await this.startAutoClearTimer();
         } else {
-            this._timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
+            this.timeUntilAutoClear = 'AUTO_CLEAR_DISABLED';
             this.timers.delete('QUEUE_AUTO_CLEAR');
             await this.triggerRender();
         }
@@ -670,7 +722,7 @@ class HelpQueue {
      * @param seriousMode on or off
      */
     async setSeriousMode(seriousMode: boolean): Promise<void> {
-        this._seriousModeEnabled = seriousMode;
+        this.seriousModeEnabled = seriousMode;
         await this.triggerRender();
     }
 
@@ -683,7 +735,6 @@ class HelpQueue {
 
         await Promise.all(
             this.queueExtensions.map(extension =>
-                // TODO: temporary solution
                 // this assumes extensions will make a render request onQueueRender
                 extension.onQueueRender(this, this.display)
             )
@@ -714,7 +765,7 @@ class HelpQueue {
         if (existingTimer !== undefined) {
             clearTimeout(existingTimer);
         }
-        if (this._timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
+        if (this.timeUntilAutoClear === 'AUTO_CLEAR_DISABLED') {
             return;
         }
 
@@ -731,11 +782,11 @@ class HelpQueue {
                         await this.removeAllStudents();
                     }
                 },
-                this._timeUntilAutoClear.hours * 1000 * 60 * 60 +
-                    this._timeUntilAutoClear.minutes * 1000 * 60
+                this.timeUntilAutoClear.hours * 1000 * 60 * 60 +
+                    this.timeUntilAutoClear.minutes * 1000 * 60
             )
         );
-        
+
         await this.triggerRender();
     }
 }

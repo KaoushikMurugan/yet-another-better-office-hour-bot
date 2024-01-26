@@ -18,11 +18,16 @@ import { SimpleEmbed, EmbedColor } from '../utils/embed-helper.js';
 import { client, LOGGER } from '../global-states.js';
 import { red } from '../utils/command-line-colors.js';
 import { helpChannelConfigurations } from './command-ch-constants.js';
-import { isCategoryChannel, isTextChannel } from '../utils/util-functions.js';
+import {
+    isCategoryChannel,
+    isQueueTextChannel,
+    isTextChannel
+} from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import { AccessLevelRoleIds } from '../models/access-level-roles.js';
-import type { ServerError } from '../utils/error-types.js';
-import type { Result } from '../utils/type-aliases.js';
+import { ServerError } from '../utils/error-types.js';
+import { Err, Ok, type Result } from '../utils/type-aliases.js';
+import { QueueChannel } from '../models/queue-channel.js';
 
 /**
  * The very first check to perform when creating a new AttendingServerV2 instance
@@ -278,7 +283,7 @@ async function createOfficeVoiceChannels(
  * @param helperVoiceChannel which vc channel to invite the student to
  * @returns a tagged union of whether the invite is successfully sent
  */
-async function sendInvite(
+async function sendVoiceChannelInvite(
     student: GuildMember,
     helperVoiceChannel: VoiceBasedChannel
 ): Promise<Result<void, ServerError>> {
@@ -322,10 +327,55 @@ async function sendInvite(
     return { ok: true, value: undefined };
 }
 
+/**
+ * Scans all channels in a server and grabs categories that have a child text channel named "queue"
+ * @param guild
+ * @returns list of QueueChannels
+ */
+async function getExistingQueueChannels(
+    guild: Guild
+): Promise<Result<QueueChannel[], ServerError>> {
+    const allChannels = await guild.channels.fetch();
+    const queueChannels: QueueChannel[] = [];
+
+    for (const categoryChannel of allChannels.values()) {
+        if (!isCategoryChannel(categoryChannel)) {
+            continue;
+        }
+
+        const queueTextChannel = categoryChannel.children.cache.find(isQueueTextChannel);
+        if (!queueTextChannel) {
+            continue;
+        }
+
+        queueChannels.push({
+            textChannel: queueTextChannel,
+            queueName: categoryChannel.name,
+            parentCategoryId: categoryChannel.id
+        });
+    }
+
+    const duplicatesExist = queueChannels
+        .map(queue => queue.queueName)
+        .some((item, index, arr) => arr.indexOf(item) !== index);
+
+    if (duplicatesExist) {
+        return Err(
+            new ServerError(
+                `Queue categories with the same exist. 
+                Initialization will be aborted if this error occurs.`
+            )
+        );
+    }
+
+    return Ok(queueChannels);
+}
+
 export {
     initializationCheck,
     updateCommandHelpChannels,
     setHelpChannelVisibility,
     createOfficeVoiceChannels,
-    sendInvite
+    sendVoiceChannelInvite,
+    getExistingQueueChannels
 };

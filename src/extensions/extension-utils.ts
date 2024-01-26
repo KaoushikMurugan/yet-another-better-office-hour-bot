@@ -15,7 +15,7 @@ type FrozenQueue = Omit<ConstNoMethod<HelpQueue>, 'timers'>;
  * - sendLogMessage
  */
 type FrozenServer = ConstNoMethod<AttendingServer> &
-    Pick<AttendingServer, 'getQueueChannels' | 'sendLogMessage'>;
+    Pick<AttendingServer, 'queueChannels' | 'sendLogMessage'>;
 
 /**
  * Only exposes the requestExtensionEmbedRender method for extensions

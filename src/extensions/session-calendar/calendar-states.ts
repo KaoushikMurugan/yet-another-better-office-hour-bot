@@ -17,7 +17,6 @@ import { z } from 'zod';
 import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { ServerExtension } from '../extension-interface.js';
-import { QueueChannel } from '../../attending-server/base-attending-server.js';
 import { Logger } from 'pino';
 
 /**
@@ -67,7 +66,7 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 100 });
+    calendarNameDiscordIdMap = new LRU<string, GuildMemberId>({ max: 100 });
     /**
      * When was the upcomingSessions cache last updated
      */
@@ -80,7 +79,7 @@ class CalendarExtensionState {
      * Corresponding queue extensions, their onCalendarStateChange will be called
      * - key is queue name
      */
-    queueExtensions: Collection<string, CalendarQueueExtension> = new Collection();
+    queueExtensions = new Collection<string, CalendarQueueExtension>();
     /**
      * All upcoming sessions of this server
      */
@@ -183,7 +182,7 @@ class CalendarExtensionState {
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
         }
-        
+
         this.calendarNameDiscordIdMap.load(
             Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]
@@ -233,23 +232,6 @@ class CalendarExtensionState {
         }
         this.backupToFirebase();
         await this.emitStateChangeEvent();
-    }
-
-    /**
-     * Resets the name of the queue extension
-     * change the key(queue channel name) that maps to the value (queue extension object)
-     * @param oldName
-     * @param newQueueChannel
-     */
-    async renameCalendar(oldName: string, newQueueChannel: QueueChannel) {
-        const newName = newQueueChannel.queueName;
-        const queueExtension = this.queueExtensions.get(oldName);
-        if (queueExtension) {
-            this.queueExtensions.set(newName, queueExtension);
-            this.queueExtensions.delete(oldName);
-            queueExtension.queueChannel = newQueueChannel;
-            await this.emitStateChangeEvent();
-        }
     }
 
     /**

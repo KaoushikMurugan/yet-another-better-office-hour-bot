@@ -1,4 +1,7 @@
 /** @module AttendingServerV2 */
+import type { Logger } from 'pino';
+import type { QueueChannel } from '../models/queue-channel.js';
+
 import {
     BaseMessageOptions,
     CategoryChannel,
@@ -11,7 +14,6 @@ import {
     TextChannel,
     VoiceState
 } from 'discord.js';
-import type { Logger } from 'pino';
 import { environment } from '../environment/environment-manager.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
@@ -41,7 +43,6 @@ import {
 import {
     convertMsToTime,
     isCategoryChannel,
-    isQueueTextChannel,
     isTextChannel,
     isVoiceChannel
 } from '../utils/util-functions.js';
@@ -56,22 +57,13 @@ import {
     useSettingsBackup
 } from './firebase-backup.js';
 import {
+    getExistingQueueChannels,
     initializationCheck,
-    sendInvite,
+    sendVoiceChannelInvite,
     setHelpChannelVisibility,
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
-
-/**
- * Wrapper for TextChannel
- * - Guarantees that a queueName and parentCategoryId exists
- */
-type QueueChannel = Readonly<{
-    channelObj: TextChannel;
-    queueName: string;
-    parentCategoryId: CategoryChannelId;
-}>;
 
 /**
  * The possible settings of each server
@@ -113,22 +105,17 @@ class AttendingServer {
      * without passing through a interaction handler first
      * - equivalent to the old attendingServers global object
      */
-    private static readonly allServers: Collection<GuildId, AttendingServer> =
-        new Collection();
+    private static readonly allServers = new Collection<GuildId, AttendingServer>();
     /**
      * Unique helpers (both active and paused)
      * - Key is GuildMember.id
      */
-    private _helpers: Collection<GuildMemberId, Helper> = new Collection();
+    private _helpers = new Collection<GuildMemberId, Helper>();
     /**
      * All the queues of this server
      * - Key is CategoryChannel.id of the parent category of #queue
      */
-    private _queues: Collection<CategoryChannelId, HelpQueue> = new Collection();
-    /**
-     * Cached result of {@link getQueueChannels}
-     */
-    private queueChannelsCache: QueueChannel[] = [];
+    private _queues = new Collection<CategoryChannelId, HelpQueue>();
     /**
      * Server settings. An firebase update is requested as soon as this changes
      */
@@ -153,7 +140,7 @@ class AttendingServer {
 
     protected constructor(
         readonly guild: Guild,
-        readonly serverExtensions: ReadonlyArray<ServerExtension>
+        readonly serverExtensions: readonly ServerExtension[]
     ) {
         this.logger = LOGGER.child({ guild: this.guild.name });
     }
@@ -204,7 +191,7 @@ class AttendingServer {
      * @returns boolean, defaults to false if no queues exist on this server
      */
     get isSerious(): boolean {
-        return this.queues[0]?.isSerious ?? false;
+        return HelpQueue.sharedSettings.get(this.guildId)?.seriousModeEnabled ?? false;
     }
 
     /** The logging channel on this server. undefined if not set */
@@ -227,13 +214,17 @@ class AttendingServer {
         return this._queues.first()?.timeUntilAutoClear;
     }
 
+    get queueChannels(): readonly QueueChannel[] {
+        return this._queues.map(queue => queue.queueChannel);
+    }
+
     /** List of category channel IDs on this server */
-    get categoryChannelIDs(): ReadonlyArray<CategoryChannelId> {
+    get categoryChannelIDs(): readonly CategoryChannelId[] {
         return [...this._queues.keys()];
     }
 
     /** List of queues on this server */
-    get queues(): ReadonlyArray<HelpQueue> {
+    get queues(): readonly HelpQueue[] {
         return [...this._queues.values()];
     }
 
@@ -296,7 +287,7 @@ class AttendingServer {
     static async create(guild: Guild): Promise<AttendingServer> {
         await initializationCheck(guild);
         // Load ServerExtensions here
-        const serverExtensions: ServerExtension[] = environment.disableExtensions
+        const serverExtensions: readonly ServerExtension[] = environment.disableExtensions
             ? []
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
@@ -311,13 +302,14 @@ class AttendingServer {
             server.loadBackup(externalBackup);
         }
 
-        const missingRoles = server.sortedAccessLevelRoles.filter(
+        const accessLevelRolesAreMissing = server.sortedAccessLevelRoles.some(
             role =>
                 role.id === SpecialRoleValues.NotSet ||
                 role.id === SpecialRoleValues.Deleted ||
                 !guild.roles.cache.has(role.id)
         );
-        if (missingRoles.length > 0) {
+
+        if (accessLevelRolesAreMissing) {
             guild
                 .fetchOwner()
                 .then(owner => owner.send(RoleConfigMenuForServerInit(server, false)))
@@ -559,7 +551,7 @@ class AttendingServer {
             parentCategory.children.create({ name: 'chat' })
         ]);
         const queueChannel: QueueChannel = {
-            channelObj: queueTextChannel,
+            textChannel: queueTextChannel,
             queueName: newQueueName,
             parentCategoryId: parentCategory.id
         };
@@ -569,61 +561,39 @@ class AttendingServer {
         ]);
 
         this._queues.set(parentCategory.id, helpQueue);
-        await this.getQueueChannels(false);
     }
 
     /**
      * Updates the queue name for queue embeds, roles, and calendar extension
-     * @param oldChannel Old category channel before the name was updated
-     * @param newChannel New category channel after the name was updated
+     * @param oldCategory Old category channel before the name was updated
+     * @param newCategory New category channel after the name was updated
      */
-    async updateQueueName(oldChannel: CategoryChannel, newChannel: CategoryChannel) {
-        const oldName = oldChannel.name;
-        const newName = newChannel.name;
-        const channelQueue = this._queues.get(oldChannel.id);
+    async updateQueueName(oldCategory: CategoryChannel, newCategory: CategoryChannel) {
+        const newName = newCategory.name;
+        const queueToRename = this._queues.get(oldCategory.id);
 
-        if (!channelQueue) {
+        if (!queueToRename) {
             return;
         }
 
-        const role = this.guild.roles.cache.find(role => role.name === oldChannel.name);
+        const role = this.guild.roles.cache.find(role => role.name === oldCategory.name);
         const newQueueChannel: QueueChannel = {
-            channelObj: channelQueue.queueChannel.channelObj,
-            queueName: newName,
-            parentCategoryId: channelQueue.parentCategoryId
+            ...queueToRename.queueChannel,
+            queueName: newName
         };
-        const nameTaken = this._queues.some(
-            queue => queue.queueName === newName && queue !== channelQueue
-        );
-        const roleTaken = this.guild.roles.cache.some(
-            role => role.name === newChannel.name
-        );
-        const cachedChannelIndex = this.queueChannelsCache.findIndex(
-            queueChannel => queueChannel.queueName === oldName
+        const queueNameTaken = this._queues.some(queue => queue.queueName === newName);
+        const roleNameTaken = this.guild.roles.cache.some(
+            role => role.name === newCategory.name
         );
 
-        if (cachedChannelIndex !== -1) {
-            this.queueChannelsCache.splice(cachedChannelIndex, 1);
-            this.queueChannelsCache.push(newQueueChannel);
+        if (queueNameTaken) {
+            throw ExpectedServerErrors.queueAlreadyExists(newName);
         }
-        if (nameTaken) {
-            await newChannel.setName(oldName);
-            LOGGER.error(
-                `Queue name '${newName}' already exists. Rename '${oldName}' to a different name.`
-            );
-            return;
-        }
-        if (role && !roleTaken) {
+        if (role && !roleNameTaken) {
             await role.setName(newName);
         }
 
-        channelQueue.queueChannel = newQueueChannel;
-        await channelQueue.triggerRender();
-        await Promise.all(
-            this.serverExtensions.map(extension =>
-                extension.onQueueChannelUpdate(this, oldName, newQueueChannel)
-            )
-        );
+        await queueToRename.updateQueueChannel(newQueueChannel);
     }
 
     /**
@@ -662,7 +632,6 @@ class AttendingServer {
 
         // let queue call onQueueDelete
         await queue.gracefulDelete();
-        await this.getQueueChannels(false);
     }
 
     /**
@@ -703,7 +672,7 @@ class AttendingServer {
         const student = await queueToDequeue.dequeueWithHelper(helperMember);
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendVoiceChannelInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -775,7 +744,7 @@ class AttendingServer {
 
         helperObject.helpedMembers.push(student);
         const [inviteStatus] = await Promise.all([
-            sendInvite(student.member, helperVoiceChannel),
+            sendVoiceChannelInvite(student.member, helperVoiceChannel),
             ...this.serverExtensions.map(extension =>
                 extension.onDequeueFirst(this, student)
             )
@@ -809,49 +778,6 @@ class AttendingServer {
      */
     getQueueChannelById(parentCategoryId: Snowflake): Optional<QueueChannel> {
         return this._queues.get(parentCategoryId)?.queueChannel;
-    }
-
-    /**
-     * Gets all the queue channels on the server.
-     * if nothing is found, returns empty array
-     * @param useCache whether to read from existing cache, defaults to true
-     * - unless queues change often, prefer cache for fast response
-     */
-    async getQueueChannels(useCache = true): Promise<QueueChannel[]> {
-        if (useCache && this.queueChannelsCache.length !== 0) {
-            return this.queueChannelsCache;
-        }
-
-        const allChannels = await this.guild.channels.fetch();
-        // cache again on a fresh request, likely triggers GC
-        this.queueChannelsCache = [];
-        for (const categoryChannel of allChannels.values()) {
-            if (!isCategoryChannel(categoryChannel)) {
-                continue;
-            }
-            const queueTextChannel =
-                categoryChannel.children.cache.find(isQueueTextChannel);
-            if (!queueTextChannel) {
-                continue;
-            }
-            this.queueChannelsCache.push({
-                channelObj: queueTextChannel,
-                queueName: categoryChannel.name,
-                parentCategoryId: categoryChannel.id
-            });
-        }
-
-        const duplicateQueues = this.queueChannelsCache
-            .map(queue => queue.queueName)
-            .filter((item, index, arr) => arr.indexOf(item) !== index);
-        if (duplicateQueues.length > 0) {
-            this.logger.warn(
-                `Server['${this.guild.name}'] contains these duplicate queues: ${duplicateQueues} 
-                This might lead to unexpected behaviors. Please update category names as soon as possible.`
-            );
-        }
-
-        return this.queueChannelsCache;
     }
 
     /**
@@ -1150,7 +1076,7 @@ class AttendingServer {
      * @param sheetTracking
      */
     @useSettingsBackup
-    async setSheetTracking(sheetTracking: boolean): Promise<void> {
+    setSheetTracking(sheetTracking: boolean): void {
         this.settings.sheetTracking = sheetTracking;
     }
 
@@ -1171,19 +1097,12 @@ class AttendingServer {
 
     /**
      * Sets the serious server flag, and updates the queues if seriousness is changed
-     * @param enableSeriousMode turn on or off serious mode
+     * @param enable turn on or off serious mode
      * @returns True if triggered renders for all queues
      */
     @useSettingsBackup
-    async setSeriousServer(enableSeriousMode: boolean): Promise<boolean> {
-        const seriousState = this.queues[0]?.isSerious ?? false;
-        if (seriousState === enableSeriousMode) {
-            return false;
-        }
-        await Promise.all(
-            this._queues.map(queue => queue.setSeriousMode(enableSeriousMode))
-        );
-        return true;
+    async setSeriousServer(enable: boolean): Promise<void> {
+        this._queues.forEach(queue => queue.setSeriousMode(enable));
     }
 
     @useSettingsBackup
@@ -1203,7 +1122,7 @@ class AttendingServer {
      */
     async assignHelpersRoles(
         helpersRolesData: HelperRolesData[]
-    ): Promise<[Map<string, string>, Map<string, string>]> {
+    ): Promise<[logMap: Map<string, string>, errorMap: Map<string, string>]> {
         // for each helper id in helpersRolesData, remove preexisting queue roles and assign the queues roles using the queue name listed in the data array
         const queueNames = this.queues.map(queue => queue.queueName);
         // ensure the queue roles exist so that queueRoles is guaranteed to not contain undefined
@@ -1227,24 +1146,25 @@ class AttendingServer {
             );
         }
 
-        const promises = helpersRolesData.map(async helperRolesData => {
-            // the fetch call refreshes the cache as a side effect
-            if (!(await this.guild.members.fetch()).has(helperRolesData.helperId)) {
+        // the fetch call refreshes the cache as a side effect
+        const guildMembers = await this.guild.members.fetch();
+        const promises = helpersRolesData.map(async data => {
+            if (!guildMembers.has(data.helperId)) {
                 errorMap.set(
-                    helperRolesData.helperId,
-                    `Failed to find member with id ${helperRolesData.helperId} in this server.`
+                    data.helperId,
+                    `Failed to find member with id ${data.helperId} in this server.`
                 );
                 return;
             }
 
-            const helper = await this.guild.members.fetch(helperRolesData.helperId);
+            const helper = await this.guild.members.fetch(data.helperId);
             // give the helper the staff role if they don't have it
             if (!helper.roles.cache.has(this.staffRoleID)) {
                 await helper.roles.add(this.staffRoleID);
                 logMap.set(
-                    helperRolesData.helperId,
+                    data.helperId,
                     `<@&${this.settings.accessLevelRoleIds.staff}> ${logMap.get(
-                        helperRolesData.helperId
+                        data.helperId
                     )}`
                 );
             }
@@ -1252,18 +1172,18 @@ class AttendingServer {
             // remove old queue roles
             await helper.roles.remove(queueRoles);
             // get the queue roles from the helperRolesData
-            if (helperRolesData.queues.length === 0) {
+            if (data.queues.length === 0) {
                 errorMap.set(
-                    helperRolesData.helperId,
-                    `No queues were provided for helper with id ${helperRolesData.helperId}.`
+                    data.helperId,
+                    `No queues were provided for helper with id ${data.helperId}.`
                 );
             }
 
-            const helperQueueRoles = helperRolesData.queues
+            const helperQueueRoles = data.queues
                 .map(queueName => {
                     if (!queueNames.includes(queueName)) {
                         errorMap.set(
-                            helperRolesData.helperId,
+                            data.helperId,
                             `Failed to find queue with name ${queueName}.`
                         );
                         return undefined;
@@ -1278,7 +1198,7 @@ class AttendingServer {
             }
 
             logMap.set(
-                helperRolesData.helperId,
+                data.helperId,
                 helperQueueRoles.map(role => role.toString()).join(' ')
             );
         });
@@ -1293,15 +1213,18 @@ class AttendingServer {
     private async createQueueRoles(): Promise<void> {
         // use a set to collect the unique role names
         const existingRoles = new Set(this.guild.roles.cache.map(role => role.name));
-        const queueNames = (await this.getQueueChannels(false)).map(
-            channel => channel.queueName
-        );
+        const queueChannels = await getExistingQueueChannels(this.guild);
+        if (!queueChannels.ok) {
+            // TODO: temporary solution, this error should propagate somewhere
+            return;
+        }
+
         // for each queueName, if it's not in existingRoles, create it
         await Promise.all(
-            queueNames.map(async roleToCreate => {
-                if (!existingRoles.has(roleToCreate)) {
+            queueChannels.value.map(async channel => {
+                if (!existingRoles.has(channel.queueName)) {
                     await this.guild.roles.create({
-                        name: roleToCreate,
+                        name: channel.queueName,
                         position: 1
                     });
                 }
@@ -1317,37 +1240,41 @@ class AttendingServer {
      */
     private async initializeAllQueues(
         queueBackups?: QueueBackup[],
-        hoursUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
+        timeUntilAutoClear: AutoClearTimeout = 'AUTO_CLEAR_DISABLED',
         seriousModeEnabled = false
     ): Promise<void> {
-        const queueChannels = await this.getQueueChannels(false);
+        const queueChannels = await getExistingQueueChannels(this.guild);
+        if (!queueChannels.ok) {
+            // since this happens during initialization, we should abort
+            throw queueChannels.error;
+        }
+
+        HelpQueue.sharedSettings.set(this.guildId, {
+            timeUntilAutoClear,
+            seriousModeEnabled
+        });
+
         await Promise.all(
-            queueChannels.map(async channel => {
+            queueChannels.value.map(async channel => {
                 const backup = queueBackups?.find(
                     backup => backup.parentCategoryId === channel.parentCategoryId
                 );
-                const completeBackup = backup
-                    ? {
-                          ...backup,
-                          timeUntilAutoClear: hoursUntilAutoClear,
-                          seriousModeEnabled: seriousModeEnabled
-                      }
-                    : undefined;
                 this._queues.set(
                     channel.parentCategoryId,
-                    await HelpQueue.create(channel, completeBackup)
+                    await HelpQueue.create(channel, backup)
                 );
             })
-        );
-        this.logger.info(
-            `All queues successfully created${
-                environment.disableExtensions ? '' : blue(' with their extensions')
-            }!`
         );
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onAllQueuesInit(this, this.queues)
             )
+        );
+
+        this.logger.info(
+            `All queues successfully created${
+                environment.disableExtensions ? '' : blue(' with their extensions')
+            }!`
         );
     }
 
@@ -1375,4 +1302,4 @@ class AttendingServer {
     }
 }
 
-export { AttendingServer, QueueChannel };
+export { AttendingServer };
