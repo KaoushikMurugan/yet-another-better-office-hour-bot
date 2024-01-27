@@ -196,9 +196,15 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
         CommandNames.start,
         'staff'
     );
+
+    const setting = interaction.options.getString('setting', true) as
+        | 'in-person'
+        | 'hybrid'
+        | 'virtual';
+
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
 
-    await server.openAllOpenableQueues(member, !muteNotif);
+    await server.openAllOpenableQueues(member, setting, !muteNotif);
     await interaction.editReply(SuccessMessages.startedHelping);
 }
 

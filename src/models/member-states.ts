@@ -50,6 +50,10 @@ type Helper = {
      */
     activeState: 'active' | 'paused';
     /**
+     * Where the helper is meeting students
+     */
+    helpSetting: 'in-person' | 'hybrid' | 'virtual';
+    /**
      * The members dequeued from `/next`
      */
     helpedMembers: Helpee[];

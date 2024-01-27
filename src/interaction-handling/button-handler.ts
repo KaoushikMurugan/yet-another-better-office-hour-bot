@@ -260,7 +260,7 @@ async function start(interaction: ButtonInteraction<'cached'>): Promise<void> {
         ButtonNames.Start,
         'staff'
     );
-    await server.openAllOpenableQueues(member, true);
+    await server.openAllOpenableQueues(member, "virtual", true);
     await interaction.editReply(SuccessMessages.startedHelping);
 }
 

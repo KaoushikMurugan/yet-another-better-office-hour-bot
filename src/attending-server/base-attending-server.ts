@@ -919,6 +919,7 @@ class AttendingServer {
      */
     async openAllOpenableQueues(
         helperMember: GuildMember,
+        setting: 'in-person' | 'hybrid' | 'virtual',
         notify: boolean
     ): Promise<void> {
         if (this._helpers.has(helperMember.id)) {
@@ -939,6 +940,7 @@ class AttendingServer {
             helpStart: new Date(),
             helpedMembers: [],
             activeState: 'active', // always start with active state
+            helpSetting: setting,
             member: helperMember
         };
 

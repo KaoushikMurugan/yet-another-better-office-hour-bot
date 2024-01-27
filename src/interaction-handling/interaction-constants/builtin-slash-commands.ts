@@ -77,6 +77,19 @@ const dequeueCommand = new SlashCommandBuilder()
 const startCommand = new SlashCommandBuilder()
     .setName(CommandNames.start)
     .setDescription('Start helping students')
+    .addStringOption(option =>
+        option
+            .setName('setting')
+            .setDescription(
+                'The setting in which you want to help students'
+            )
+            .setRequired(true)
+            .addChoices(
+                { name: 'In-Person', value: 'in-person' },
+                { name: 'Hybrid', value: 'hybrid' },
+                { name: 'Remote', value: 'remote' }
+            )
+    )
     .addBooleanOption(option =>
         option
             .setName('mute_notif')
