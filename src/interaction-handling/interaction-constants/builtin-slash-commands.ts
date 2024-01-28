@@ -87,8 +87,16 @@ const startCommand = new SlashCommandBuilder()
             .addChoices(
                 { name: 'In-Person', value: 'in-person' },
                 { name: 'Hybrid', value: 'hybrid' },
-                { name: 'Remote', value: 'remote' }
+                { name: 'Virtual', value: 'virtual' }
             )
+    )
+    .addStringOption(option =>
+        option
+            .setName('room')
+            .setDescription(
+                'Required if in-person or hybrid. The room in which you want to help students'
+            )
+            .setRequired(false)
     )
     .addBooleanOption(option =>
         option
