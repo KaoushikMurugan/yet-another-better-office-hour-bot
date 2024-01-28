@@ -26,7 +26,7 @@ import {
     accessLevelRoleConfigs
 } from '../models/access-level-roles.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
-import { Helpee, Helper } from '../models/member-states.js';
+import { Helpee, BaseHelper, Helper } from '../models/member-states.js';
 import { blue, green, red } from '../utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import {
@@ -920,6 +920,7 @@ class AttendingServer {
     async openAllOpenableQueues(
         helperMember: GuildMember,
         setting: 'in-person' | 'hybrid' | 'virtual',
+        room: string,
         notify: boolean
     ): Promise<void> {
         if (this._helpers.has(helperMember.id)) {
@@ -936,12 +937,20 @@ class AttendingServer {
         }
 
         // create this object after all checks have passed
-        const helper: Helper = {
+        const baseHelper: BaseHelper = {
             helpStart: new Date(),
             helpedMembers: [],
             activeState: 'active', // always start with active state
-            helpSetting: setting,
             member: helperMember
+        };
+
+        const helper: Helper = (setting !== 'virtual') ? {
+            helpSetting: setting,
+            room: room,
+            ...baseHelper
+        } : {
+            helpSetting: setting,
+            ...baseHelper
         };
 
         this._helpers.set(helperMember.id, helper);

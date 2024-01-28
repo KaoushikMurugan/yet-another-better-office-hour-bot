@@ -34,7 +34,7 @@ type Helpee = {
  * - Created when a staff member uses `/start`
  * - Removed when a staff member uses `/close`
  */
-type Helper = {
+type BaseHelper = {
     /**
      * time when /start is used
      */
@@ -50,10 +50,6 @@ type Helper = {
      */
     activeState: 'active' | 'paused';
     /**
-     * Where the helper is meeting students
-     */
-    helpSetting: 'in-person' | 'hybrid' | 'virtual';
-    /**
      * The members dequeued from `/next`
      */
     helpedMembers: Helpee[];
@@ -63,4 +59,20 @@ type Helper = {
     readonly member: GuildMember;
 };
 
-export { Helpee, Helper };
+type Helper = (BaseHelper & {
+    /**
+     * How the helper is meeting students
+     */
+    helpSetting: 'in-person' | 'hybrid'
+    /**
+     * The room where the helper is meeting students
+     */
+    room: string
+}) | (BaseHelper & {
+    /**
+     * How the helper is meeting students
+     */
+    helpSetting: 'virtual'
+})
+
+export { Helpee, BaseHelper, Helper };
