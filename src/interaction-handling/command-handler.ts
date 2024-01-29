@@ -106,6 +106,7 @@ async function enqueue(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
 }
+// FIXME: if they want to do in-person
 
 /**
  * The `/next` command, both with arguments or without arguments

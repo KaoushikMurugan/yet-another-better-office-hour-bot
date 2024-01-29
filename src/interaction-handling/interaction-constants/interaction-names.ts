@@ -42,6 +42,7 @@ enum CommandNames {
  */
 enum ButtonNames {
     Join = 'Join',
+    JoinInPerson = 'JoinInPerson',
     Leave = 'Leave',
     Notif = 'Notif',
     Start = 'Start',
@@ -104,6 +105,7 @@ enum SelectMenuNames {
     ServerSettings = 'ServerSettings',
     SelectLoggingChannelSM = 'SelectLoggingChannelSM',
     SelectLoggingChannelQS = 'SelectLoggingChannelQS',
+    InPersonRoomMenu = 'InPersonRoomMenu',
     HelpMenu = 'HelpMenu'
 }
 

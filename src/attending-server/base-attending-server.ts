@@ -485,7 +485,9 @@ class AttendingServer {
                             if (inPersonCollection.has(helper.room)) {
                                 const inPersonQueue = inPersonCollection.get(helper.room);
                                 await inPersonQueue?.closeQueue(helperMember);
-                                console.log("closed queue " , inPersonQueue?.activeHelperIds);
+                                if (inPersonQueue?.activeHelperIds.size === 0) {
+                                    inPersonCollection.delete(helper.room);
+                                }
                             }
                         }
                     }
@@ -802,6 +804,42 @@ class AttendingServer {
         }
 
         return queue;
+    }
+
+    /**
+     * Gets an in-person help queue by parent category id and room
+     * @param parentCategoryId the associated parent category id
+     * @param room the associated room string
+     * @returns the queue object
+     * @throws {ServerError} if no such queue
+     */
+    getInPersonQueueById(parentCategoryId: Snowflake, room: string): HelpQueue {
+        const collection = this._in_person_queues.get(parentCategoryId);
+        if (!collection) {
+            console.log("no collection");
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        const queue = collection.get(room);
+        if (!queue) {
+            console.log("no queue");
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        return queue;
+    }
+
+
+    /**
+     * Gets a list of in-person rooms by parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns the list of string rooms
+     * @throws {ServerError} if no such queue
+     */
+    getInPersonLocationsById(parentCategoryId: Snowflake): string[] {
+        const collection = this._in_person_queues.get(parentCategoryId);
+        if (!collection) {
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        return collection.map((queue, room) => room);
     }
 
     /**
