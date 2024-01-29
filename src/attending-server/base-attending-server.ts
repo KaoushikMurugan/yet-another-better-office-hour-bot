@@ -26,7 +26,7 @@ import {
     accessLevelRoleConfigs
 } from '../models/access-level-roles.js';
 import { QueueBackup, ServerBackup } from '../models/backups.js';
-import { Helpee, Helper } from '../models/member-states.js';
+import { Helpee, BaseHelper, Helper } from '../models/member-states.js';
 import { blue, green, red } from '../utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import {
@@ -116,6 +116,12 @@ class AttendingServer {
      * - Key is CategoryChannel.id of the parent category of #queue
      */
     private _queues = new Collection<CategoryChannelId, HelpQueue>();
+    /**
+     * All the in-person queues of this server
+     * - Key is CategoryChannel.id of the parent category of #queue
+     * - Value is Collection: Key is string for room, Value is HelpQueue
+     */
+    private _in_person_queues = new Collection<CategoryChannelId, Collection<string, HelpQueue>>();
     /**
      * Server settings. An firebase update is requested as soon as this changes
      */
@@ -263,6 +269,7 @@ class AttendingServer {
 
     /** All the students that are currently in a queue */
     get studentsInAllQueues(): ReadonlyArray<Helpee> {
+        // FIXME: in_person_queues too
         return this.queues.flatMap(queue => queue.students);
     }
 
@@ -402,6 +409,7 @@ class AttendingServer {
                 helperMember.roles.cache.some(role => role.name === queue.queueName)
             )
             .flatMap(queueToAnnounce => queueToAnnounce.students);
+        // FIXME: if nonvirtual, also from inpersonqueues
         if (studentsToAnnounceTo.length === 0) {
             throw ExpectedServerErrors.noStudentToAnnounce(announcement);
         }
@@ -422,6 +430,7 @@ class AttendingServer {
      */
     @useFullBackup
     async clearAllQueues(): Promise<void> {
+        // FIXME: in_person_queues too
         await Promise.all(this._queues.map(queue => queue.removeAllStudents()));
     }
 
@@ -457,13 +466,34 @@ class AttendingServer {
                 completeHelper.helpEnd.getTime() - completeHelper.helpStart.getTime()
             )}`
         );
-
         // this filter does not rely on user roles anymore
-        // close all queues that has this user as a helper
+        // close all virtual queues that has this user as a helper
         const closableQueues = this._queues.filter(queue =>
             queue.hasHelper(helperMember.id)
         );
         await Promise.all(closableQueues.map(queue => queue.closeQueue(helperMember)));
+
+        // close in-person queues that has this user as a helper
+        if (helper.helpSetting !== 'virtual') {
+            const helperRoles = helperMember.roles.cache.map(role => role.name);
+            // for each helper role, close the in-person queue for room
+            helperRoles.forEach((role) => {
+                this._queues.map(async (virtualQueue, id) => {
+                    if (virtualQueue.queueName === role) {
+                        const inPersonCollection = this._in_person_queues.get(id);
+                        if (inPersonCollection) {
+                            if (inPersonCollection.has(helper.room)) {
+                                const inPersonQueue = inPersonCollection.get(helper.room);
+                                await inPersonQueue?.closeQueue(helperMember);
+                                if (inPersonQueue?.activeHelperIds.size === 0) {
+                                    inPersonCollection.delete(helper.room);
+                                }
+                            }
+                        }
+                    }
+                });
+            });
+        }
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onHelperStopHelping(this, completeHelper)
@@ -561,6 +591,10 @@ class AttendingServer {
         ]);
 
         this._queues.set(parentCategory.id, helpQueue);
+
+        const emptyCollection = new Collection<string, HelpQueue>();
+        this._in_person_queues.set(parentCategory.id, emptyCollection);
+        // currently empty until a helper chooses in-person or hybrid
     }
 
     /**
@@ -611,6 +645,7 @@ class AttendingServer {
         // delete queue data model no matter if the category was deleted by the user
         // now only the queue variable holds the queue channel
         this._queues.delete(parentCategoryId);
+        this._in_person_queues.delete(parentCategoryId);
         const allChannels = await this.guild.channels.fetch();
         const parentCategory = allChannels.find(
             (channel): channel is CategoryChannel =>
@@ -772,6 +807,42 @@ class AttendingServer {
     }
 
     /**
+     * Gets an in-person help queue by parent category id and room
+     * @param parentCategoryId the associated parent category id
+     * @param room the associated room string
+     * @returns the queue object
+     * @throws {ServerError} if no such queue
+     */
+    getInPersonQueueById(parentCategoryId: Snowflake, room: string): HelpQueue {
+        const collection = this._in_person_queues.get(parentCategoryId);
+        if (!collection) {
+            console.log("no collection");
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        const queue = collection.get(room);
+        if (!queue) {
+            console.log("no queue");
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        return queue;
+    }
+
+
+    /**
+     * Gets a list of in-person rooms by parent category id
+     * @param parentCategoryId the associated parent category id
+     * @returns the list of string rooms
+     * @throws {ServerError} if no such queue
+     */
+    getInPersonLocationsById(parentCategoryId: Snowflake): string[] {
+        const collection = this._in_person_queues.get(parentCategoryId);
+        if (!collection) {
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        return collection.map((queue, room) => room);
+    }
+
+    /**
      * Gets a queue channel by the parent category id
      * @param parentCategoryId the associated parent category id
      * @returns queue channel object if it exists, undefined otherwise
@@ -786,6 +857,7 @@ class AttendingServer {
      * @returns true if this server existed and has been removed, or false if the element does not exist.
      */
     async gracefulDelete(): Promise<boolean> {
+        // FIXME: in_person_queues too
         this._queues.forEach(queue => queue.clearAllQueueTimers());
         await Promise.all(
             this.serverExtensions.map(extension => extension.onServerDelete(this))
@@ -818,6 +890,7 @@ class AttendingServer {
         const memberIsHelper = this._helpers.has(member.id);
 
         if (memberIsStudent) {
+            // FIXME: in_person_queues too
             const queuesToRerender = this.queues.filter(queue =>
                 newVoiceState.channel.members.some(vcMember =>
                     queue.hasHelper(vcMember.id)
@@ -832,6 +905,7 @@ class AttendingServer {
         }
 
         if (memberIsHelper) {
+            // FIXME: in_person_queues too
             await Promise.all(
                 this.queues.map(
                     queue => queue.hasHelper(member.id) && queue.triggerRender()
@@ -860,6 +934,7 @@ class AttendingServer {
 
         if (memberIsStudent) {
             // filter queues where some member of that voice channel is a helper of that queue
+            // FIXME: in_person_queues too
             const queuesToRerender = this.queues.filter(queue =>
                 oldVoiceState.channel.members.some(vcMember =>
                     queue.hasHelper(vcMember.id)
@@ -882,6 +957,7 @@ class AttendingServer {
             // the filter is removed because
             // the overwrite will die in 15 minutes after the invite was sent
             await Promise.all(
+                // FIXME: in_person_queues too
                 this.queues.map(
                     queue => queue.hasHelper(member.id) && queue.triggerRender()
                 )
@@ -919,6 +995,8 @@ class AttendingServer {
      */
     async openAllOpenableQueues(
         helperMember: GuildMember,
+        setting: 'in-person' | 'hybrid' | 'virtual',
+        room: string,
         notify: boolean
     ): Promise<void> {
         if (this._helpers.has(helperMember.id)) {
@@ -926,26 +1004,72 @@ class AttendingServer {
         }
 
         const helperRoles = helperMember.roles.cache.map(role => role.name);
-        const openableQueues = this._queues.filter(queue =>
-            helperRoles.includes(queue.queueName)
-        );
-
-        if (openableQueues.size === 0) {
-            throw ExpectedServerErrors.noQueueRole;
-        }
 
         // create this object after all checks have passed
-        const helper: Helper = {
+        const baseHelper: BaseHelper = {
             helpStart: new Date(),
             helpedMembers: [],
             activeState: 'active', // always start with active state
             member: helperMember
         };
 
+        const helper: Helper = (setting !== 'virtual') ? {
+            helpSetting: setting,
+            room: room,
+            ...baseHelper
+        } : {
+            helpSetting: setting,
+            ...baseHelper
+        };
+
         this._helpers.set(helperMember.id, helper);
-        await Promise.all(
-            openableQueues.map(queue => queue.openQueue(helperMember, notify))
-        );
+
+        // if helper is hybrid or virtual, open virtual queues
+        if (setting !== 'in-person') {
+            const openableQueues = this._queues.filter(queue =>
+                helperRoles.includes(queue.queueName)
+            );
+            if (openableQueues.size === 0) {
+                throw ExpectedServerErrors.noQueueRole;
+            }
+            await Promise.all(
+                openableQueues.map(queue => queue.openQueue(helperMember, notify))
+            );
+        }
+
+        // todo: shorten this. probably move to a new function
+        // if helper is in-person or hybrid, open in-person queues
+        if (setting !== 'virtual') {
+            // for each helper role, open an in-person queue for room
+            helperRoles.forEach((role) => {
+                this._queues.map(async (virtualQueue, id) => {
+                    if (virtualQueue.queueName === role) {
+                        const inPersonCollection = this._in_person_queues.get(id);
+                        if (inPersonCollection) {
+                            // if in_person_queues already has a queue for room, open queue
+                            // else, create and open queue for room
+                            if (inPersonCollection.has(room)) {
+                                const inPersonQueue = inPersonCollection.get(room);
+                                await inPersonQueue?.openQueue(helperMember, notify);
+                            } else {
+                                const queueChannel: QueueChannel = {
+                                    textChannel: virtualQueue.queueChannel.textChannel,
+                                    queueName: virtualQueue.queueName,
+                                    parentCategoryId: virtualQueue.parentCategoryId
+                                };
+                                const [helpQueue] = await Promise.all([
+                                    HelpQueue.create(queueChannel),
+                                ]);
+                                inPersonCollection.set(room, helpQueue);
+                                const inPersonQueue = inPersonCollection.get(room);
+                                await inPersonQueue?.openQueue(helperMember, notify);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+
         await Promise.all(
             this.serverExtensions.map(extension =>
                 extension.onHelperStartHelping(this, helper)
@@ -970,6 +1094,7 @@ class AttendingServer {
             throw ExpectedServerErrors.alreadyPaused;
         }
 
+        // FIXME: pause in-person queues too
         helper.activeState = 'paused';
         const pauseableQueues = this._queues.filter(queue =>
             queue.activeHelperIds.has(helperMember.id)
@@ -996,6 +1121,7 @@ class AttendingServer {
             throw ExpectedServerErrors.alreadyActive;
         }
 
+        // FIXME: resume in-person queues
         helper.activeState = 'active';
         const resumableQueues = this._queues.filter(queue =>
             queue.pausedHelperIds.has(helperMember.id)
@@ -1263,6 +1389,8 @@ class AttendingServer {
                     channel.parentCategoryId,
                     await HelpQueue.create(channel, backup)
                 );
+                const emptyCollection = new Collection<string, HelpQueue>();
+                this._in_person_queues.set(channel.parentCategoryId, emptyCollection);
             })
         );
         await Promise.all(

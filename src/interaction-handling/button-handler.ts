@@ -1,4 +1,9 @@
-import { ButtonInteraction } from 'discord.js';
+import {
+    ButtonInteraction,
+    ActionRowBuilder,
+    StringSelectMenuBuilder,
+    EmbedBuilder
+} from 'discord.js';
 import {
     SettingsMainMenu,
     RoleConfigMenu,
@@ -16,7 +21,7 @@ import {
     isTriggeredByMemberWithRoles,
     isValidDMInteraction
 } from './shared-validations.js';
-import { ButtonNames } from './interaction-constants/interaction-names.js';
+import { ButtonNames, SelectMenuNames } from './interaction-constants/interaction-names.js';
 import { SuccessMessages } from './interaction-constants/success-messages.js';
 import {
     AfterSessionMessageModal,
@@ -24,7 +29,7 @@ import {
     PromptHelpTopicModal,
     QueueAutoClearModal
 } from './interaction-constants/modal-objects.js';
-import { SimpleEmbed } from '../utils/embed-helper.js';
+import { EmbedColor, SimpleEmbed } from '../utils/embed-helper.js';
 import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { AccessLevelRole } from '../models/access-level-roles.js';
 import { HelpMainMenuEmbed, HelpSubMenuEmbed } from './shared-interaction-functions.js';
@@ -34,11 +39,15 @@ import {
     quickStartPages,
     QuickStartSetRoles
 } from '../attending-server/quick-start-pages.js';
+import { buildComponent } from "../utils/component-id-factory.js";
+import { YabobEmbed } from "../utils/type-aliases.js";
+import { QueueChannel } from "../models/queue-channel.js";
 
 const baseYabobButtonMethodMap: ButtonHandlerProps = {
     guildMethodMap: {
         queue: {
             [ButtonNames.Join]: join,
+            [ButtonNames.JoinInPerson]: joinInPerson,
             [ButtonNames.Leave]: leave,
             [ButtonNames.Notif]: joinNotifGroup,
             [ButtonNames.RemoveNotif]: leaveNotifGroup
@@ -127,6 +136,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     },
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
+        ButtonNames.JoinInPerson,
         ButtonNames.Announce,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1SM,
@@ -186,6 +196,60 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
         : await interaction.editReply(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
+}
+
+/**
+ * Create an in-person select menu
+ * FIXME: move to a different file for select menus
+ * FIXME: make select menu ephemeral
+ * FIXME: clicking join causes interaction to fail sometimes
+ */
+function inPersonRoomMenu(
+    interaction: ButtonInteraction<'cached'>,
+    server: AttendingServer,
+    queueChannel: QueueChannel
+): YabobEmbed {
+    const rooms = server.getInPersonLocationsById(queueChannel.parentCategoryId);
+    const embed = new EmbedBuilder()
+        .setTitle('Choose a Room for In-Person Help')
+        .setColor(EmbedColor.Aqua);
+
+    const roomSelectMenu =
+        new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            buildComponent(new StringSelectMenuBuilder(), [
+                'other',
+                SelectMenuNames.InPersonRoomMenu,
+                server.guild.id
+            ])
+                .setPlaceholder('Select a Room')
+                .addOptions(
+                    // Cannot have more than 25 options
+                    rooms.map(room => ({
+                        label: room,
+                        value: room
+                    }))
+                )
+        );
+    return {
+        embeds: [embed.data],
+        components: [roomSelectMenu]
+    };
+}
+
+/**
+ * Join an in-person queue through button press
+ * FIXME: button does not appear in queuedisplay. currently testing by changing join button to joinInPerson button
+ * FIXME: if member is an active helper in this queue or anything, just skip
+ */
+async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const [server, queueChannel] = [
+        AttendingServer.get(interaction.guildId),
+        isFromQueueChannelWithParent(interaction)
+    ];
+    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.JoinInPerson, 'student');
+    await interaction.update(
+        inPersonRoomMenu(interaction, server, queueChannel)
+    );
 }
 
 /**
@@ -260,7 +324,7 @@ async function start(interaction: ButtonInteraction<'cached'>): Promise<void> {
         ButtonNames.Start,
         'staff'
     );
-    await server.openAllOpenableQueues(member, true);
+    await server.openAllOpenableQueues(member, "virtual", "", true);
     await interaction.editReply(SuccessMessages.startedHelping);
 }
 

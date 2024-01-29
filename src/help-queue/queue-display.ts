@@ -167,7 +167,11 @@ class QueueDisplay {
                     queueStateStyles[viewModel.state].statusText
                 }`
             )
-            .setDescription(this.getQueueAsciiTable(viewModel))
+            .setDescription(
+                this.getQueueAsciiTable(viewModel, true) +
+                // FIXME: for every in_person_queue that is not empty, getqueueasciitable
+                this.getQueueAsciiTable(viewModel, false)
+            )
             .setColor(queueStateStyles[viewModel.state].color);
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
@@ -262,8 +266,9 @@ class QueueDisplay {
      * @param viewModel the data to put into the table
      * @returns the ascii table as a `string` in a code block
      */
-    private getQueueAsciiTable(viewModel: QueueViewModel): string {
-        const table = new AsciiTable3();
+    private getQueueAsciiTable(viewModel: QueueViewModel, isVirtual: boolean): string {
+        const title = isVirtual ? 'Virtual' : 'In-Person';
+        const table = new AsciiTable3(title);
         if (viewModel.studentDisplayNames.length > 0) {
             table
                 .setHeading('Position', 'Student Name')

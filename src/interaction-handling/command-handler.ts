@@ -106,6 +106,7 @@ async function enqueue(
               SuccessMessages.joinedQueue(queueChannel.queueName)
           );
 }
+// FIXME: if they want to do in-person
 
 /**
  * The `/next` command, both with arguments or without arguments
@@ -196,9 +197,17 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
         CommandNames.start,
         'staff'
     );
+
+    const setting = interaction.options.getString('setting', true) as
+        | 'in-person'
+        | 'hybrid'
+        | 'virtual';
+
+    const room = setting !== 'virtual' ? interaction.options.getString('room', true) : "";
+
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
 
-    await server.openAllOpenableQueues(member, !muteNotif);
+    await server.openAllOpenableQueues(member, setting, room, !muteNotif);
     await interaction.editReply(SuccessMessages.startedHelping);
 }
 
@@ -309,6 +318,7 @@ async function clearAll(
         'botAdmin'
     );
 
+    // FIXME: in_person_queues too
     if (server.queues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
     }

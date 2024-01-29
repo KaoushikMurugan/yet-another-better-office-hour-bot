@@ -1,9 +1,12 @@
-import { StringSelectMenuInteraction } from 'discord.js';
-import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
-import { isTextChannel } from '../utils/util-functions.js';
+import {
+    ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder,
+    StringSelectMenuInteraction
+} from 'discord.js';
+import {serverSettingsMainMenuOptions, SettingsSwitcher} from '../attending-server/server-settings-menus.js';
+import {isTextChannel, longestCommonSubsequence} from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
-import { SelectMenuNames } from './interaction-constants/interaction-names.js';
+import { SelectMenuNames} from './interaction-constants/interaction-names.js';
 import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
@@ -21,6 +24,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
                 selectLoggingChannel(interaction, 'settings'),
             [SelectMenuNames.SelectLoggingChannelQS]: interaction =>
                 selectLoggingChannel(interaction, 'quickStart'),
+            [SelectMenuNames.InPersonRoomMenu]: selectInPersonRoom,
             [SelectMenuNames.HelpMenu]: selectHelpCommand
         }
     },
@@ -29,6 +33,7 @@ const baseYabobSelectMenuMap: SelectMenuHandlerProps = {
         SelectMenuNames.ServerSettings,
         SelectMenuNames.SelectLoggingChannelSM,
         SelectMenuNames.SelectLoggingChannelQS,
+        SelectMenuNames.InPersonRoomMenu,
         SelectMenuNames.HelpMenu
     ])
 };
@@ -81,6 +86,25 @@ async function selectLoggingChannel(
             QuickStartLoggingChannel(server, 'Logging channel has been updated!')
         );
     }
+}
+
+/**
+* Select an in-person room from the list of rooms
+* @param interaction
+*/
+async function selectInPersonRoom(
+    interaction: StringSelectMenuInteraction<'cached'>
+): Promise<void> {
+    const server = AttendingServer.get(interaction.guildId);
+    const selectedOption = interaction.values[0];
+    if (!selectedOption) {
+        throw new Error('Invalid option selected:');
+    }
+    const id = interaction.channel?.parent?.id;
+    if (!id) {
+        throw new Error('Invalid option selected:');
+    }
+    await server.getInPersonQueueById(id, selectedOption).enqueue(interaction.member);
 }
 
 /**

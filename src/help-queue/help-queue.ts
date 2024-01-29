@@ -428,7 +428,7 @@ class HelpQueue {
      * @returns QueueViewModel
      */
     getViewModel(): QueueViewModel {
-        return {
+        return { // FIXME: make viewModel for in-person too
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],

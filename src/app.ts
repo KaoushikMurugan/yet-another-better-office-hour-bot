@@ -223,6 +223,7 @@ client.on(Events.GuildMemberRemove, async member => {
                 )
                 .map(queue => queue.removeStudent(member))
         );
+        // FIXME: remove from in_person_queues too
     }
 });
 
