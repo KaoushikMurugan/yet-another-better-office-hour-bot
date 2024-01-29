@@ -317,6 +317,7 @@ async function clearAll(
         'botAdmin'
     );
 
+    // FIXME: in_person_queues too
     if (server.queues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
     }

@@ -57,6 +57,7 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
  * @param server the server object to backup
  */
 function fullServerBackup(server: FrozenServer): void {
+    // FIXME: in_person_queues too
     const queueBackups: QueueBackup[] = server.queues.map(queue => ({
         studentsInQueue: queue.students.map(student => ({
             waitStart: student.waitStart,

@@ -169,6 +169,7 @@ class QueueDisplay {
             )
             .setDescription(
                 this.getQueueAsciiTable(viewModel, true) +
+                // FIXME: for every in_person_queue that is not empty, getqueueasciitable
                 this.getQueueAsciiTable(viewModel, false)
             )
             .setColor(queueStateStyles[viewModel.state].color);

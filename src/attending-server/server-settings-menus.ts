@@ -732,6 +732,7 @@ function SeriousModeConfigMenu(
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
+    // FIXME: in_person_queues too
     const noQueues = server.queues.length === 0;
 
     const embed = new EmbedBuilder()
