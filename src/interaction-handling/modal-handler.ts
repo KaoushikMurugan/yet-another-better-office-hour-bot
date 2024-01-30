@@ -62,9 +62,11 @@ async function setAfterSessionMessage(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const message = interaction.fields.getTextInputValue('after_session_msg');
+
     if (message.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
     }
+
     await server.setAfterSessionMessage(message);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
@@ -94,15 +96,18 @@ async function setQueueAutoClear(
     const server = AttendingServer.get(interaction.guildId);
     const hoursInput = interaction.fields.getTextInputValue('auto_clear_hours');
     const minutesInput = interaction.fields.getTextInputValue('auto_clear_minutes');
+
     let hours = hoursInput === '' ? 0 : parseInt(hoursInput, 10); // only accept base 10 inputs
     let minutes = minutesInput === '' ? 0 : parseInt(minutesInput, 10);
     if (isNaN(hours) || isNaN(minutes)) {
         throw ExpectedParseErrors.badAutoClearValues;
     }
+
     // move the excess minutes into hours
     hours += Math.floor(minutes / 60);
     minutes %= 60;
     const enable = !(hours === 0 && minutes === 0);
+
     await server.setQueueAutoClear(hours, minutes, enable);
     await (useMenu && interaction.isFromMessage()
         ? interaction.update(
@@ -128,6 +133,7 @@ async function announce(interaction: ModalSubmitInteraction<'cached'>): Promise<
     if (announcement.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
     }
+
     await server.announceToStudentsInQueue(interaction.member, announcement);
     await interaction.reply({
         ...SuccessMessages.announced(announcement),

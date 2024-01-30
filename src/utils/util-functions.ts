@@ -126,10 +126,11 @@ function addTimeOffset(date: Date, hours: number, minutes: number): Date {
  * @returns list of queue roles
  */
 async function getQueueRoles(server: FrozenServer, member: GuildMember): Promise<Role[]> {
-    const queueChannels = await server.getQueueChannels();
     return [
         ...member.roles.cache
-            .filter(role => queueChannels.some(queue => queue.queueName === role.name))
+            .filter(role =>
+                server.queueChannels.some(queue => queue.queueName === role.name)
+            )
             .values()
     ];
 }

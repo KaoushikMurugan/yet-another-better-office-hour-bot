@@ -66,7 +66,7 @@ class CalendarExtensionState {
      * Save the data from /make_calendar_string,
      * - key is calendar display name, value is discord id
      */
-    calendarNameDiscordIdMap: LRU<string, GuildMemberId> = new LRU({ max: 100 });
+    calendarNameDiscordIdMap = new LRU<string, GuildMemberId>({ max: 100 });
     /**
      * When was the upcomingSessions cache last updated
      */
@@ -79,7 +79,7 @@ class CalendarExtensionState {
      * Corresponding queue extensions, their onCalendarStateChange will be called
      * - key is queue name
      */
-    queueExtensions: Collection<string, CalendarQueueExtension> = new Collection();
+    queueExtensions = new Collection<string, CalendarQueueExtension>();
     /**
      * All upcoming sessions of this server
      */
@@ -160,6 +160,7 @@ class CalendarExtensionState {
         if (!calendarBackup.success) {
             return;
         }
+
         if (
             calendarBackup.data.calendarId !==
             environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID
@@ -175,10 +176,13 @@ class CalendarExtensionState {
                         environment.sessionCalendar.YABOB_DEFAULT_CALENDAR_ID;
                 });
         }
+
         this.publicCalendarEmbedUrl = calendarBackup.data.publicCalendarEmbedUrl;
+        // if a public url is not specified, reconstruct one using the calendar id
         if (this.publicCalendarEmbedUrl.length === 0) {
             this.publicCalendarEmbedUrl = restorePublicEmbedURL(this.calendarId);
         }
+
         this.calendarNameDiscordIdMap.load(
             Object.entries(calendarBackup.data.calendarNameDiscordIdMap).map(
                 ([key, value]) => [key, { value: value }]

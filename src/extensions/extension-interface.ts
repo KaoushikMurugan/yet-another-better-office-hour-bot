@@ -8,7 +8,7 @@
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
 
-import { GuildMember, VoiceBasedChannel } from 'discord.js';
+import { GuildMember, TextChannel, VoiceBasedChannel } from 'discord.js';
 import { HelpQueue } from '../help-queue/help-queue.js';
 import { Helpee, Helper } from '../models/member-states.js';
 import { ServerBackup } from '../models/backups.js';
@@ -26,6 +26,7 @@ import {
     SelectMenuHandlerProps
 } from '../interaction-handling/handler-interface.js';
 import { CommandData } from '../utils/type-aliases.js';
+import { QueueChannel } from '../models/queue-channel.js';
 
 interface InteractionExtension {
     /**
@@ -211,6 +212,18 @@ interface QueueExtension {
         students: ReadonlyArray<Helpee>
     ) => Promise<void>;
     /**
+     * When the category channel of this queue is changed (mostly name changes)
+     * @param queue
+     * @param oldQueueChannel
+     * @param newQueueChannel
+     * @returns
+     */
+    onQueueChannelUpdate: (
+        queue: FrozenQueue,
+        oldQueueChannel: QueueChannel,
+        newQueueChannel: QueueChannel
+    ) => Promise<void>;
+    /**
      * When a queue re-render happens
      * @param queue queue that just requested a render
      * @param display the QueueDisplayV2 object that handles the rendering
@@ -369,6 +382,13 @@ abstract class BaseQueueExtension implements QueueExtension {
     onRemoveAllStudents(
         queue: FrozenQueue,
         students: ReadonlyArray<Helpee>
+    ): Promise<void> {
+        return Promise.resolve();
+    }
+    onQueueChannelUpdate(
+        queue: FrozenQueue,
+        oldQueueChannel: QueueChannel,
+        newQueueChannel: QueueChannel
     ): Promise<void> {
         return Promise.resolve();
     }

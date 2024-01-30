@@ -91,12 +91,14 @@ async function enqueue(
         CommandNames.enqueue,
         'student'
     );
+
     if (!server.promptHelpTopic) {
         await interaction.reply({
             ...SimpleEmbed(`Processing command \`/enqueue\` ...`),
             ephemeral: true
         });
     }
+
     await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
     server.promptHelpTopic
         ? await interaction.showModal(PromptHelpTopicModal(server.guild.id))
@@ -144,7 +146,8 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
             );
         }
     } else {
-        if (!helpTopic) {
+    
+    if (!helpTopic) {
             await interaction.editReply(
                 SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
             );
@@ -168,12 +171,14 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const server = AttendingServer.get(interaction.guildId);
     isTriggeredByMemberWithRoles(server, interaction.member, CommandNames.queue, 'staff');
     const subcommand = interaction.options.getSubcommand();
+
     switch (subcommand) {
         case 'add': {
             const queueName = interaction.options.getString('queue_name', true);
             if (!isValidCategoryName(queueName)) {
                 throw ExpectedParseErrors.invalidCategoryName(queueName);
             }
+
             await channelsAreUnderLimit(interaction, 1, 2);
             await server.createQueue(queueName);
             await interaction.editReply(SuccessMessages.createdQueue(queueName));
@@ -187,6 +192,7 @@ async function queue(interaction: ChatInputCommandInteraction<'cached'>): Promis
             if (interaction.channel.parentId === targetQueue.parentCategoryId) {
                 throw ExpectedParseErrors.removeInsideQueue;
             }
+
             await server.deleteQueueById(targetQueue.parentCategoryId);
             await interaction.editReply(
                 SuccessMessages.deletedQueue(targetQueue.queueName)
@@ -208,6 +214,7 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
         'staff'
     );
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
+
     await server.openAllOpenableQueues(member, !muteNotif);
     await interaction.editReply(SuccessMessages.startedHelping);
 }
@@ -224,6 +231,7 @@ async function stop(interaction: ChatInputCommandInteraction<'cached'>): Promise
         'staff'
     );
     const helpTimeEntry = await server.closeAllClosableQueues(member);
+
     await interaction.editReply(SuccessMessages.finishedHelping(helpTimeEntry));
 }
 
@@ -239,6 +247,7 @@ async function pause(interaction: ChatInputCommandInteraction<'cached'>): Promis
         'staff'
     );
     const existOtherActiveHelpers = await server.pauseHelping(member);
+
     await interaction.editReply(SuccessMessages.pausedHelping(existOtherActiveHelpers));
 }
 
@@ -253,6 +262,7 @@ async function resume(interaction: ChatInputCommandInteraction<'cached'>): Promi
         CommandNames.resume,
         'staff'
     );
+
     await server.resumeHelping(member);
     await interaction.editReply(SuccessMessages.resumedHelping);
 }
@@ -271,6 +281,7 @@ async function leave(interaction: ChatInputCommandInteraction<'cached'>): Promis
         CommandNames.leave,
         'student'
     );
+
     await server.getQueueById(queue.parentCategoryId).removeStudent(interaction.member);
     await interaction.editReply(SuccessMessages.leftQueue(queue.queueName));
 }
@@ -293,6 +304,7 @@ async function clear(interaction: ChatInputCommandInteraction<'cached'>): Promis
     const hasPermission = member.roles.cache.some(
         role => role.name === queue.queueName || role.id === server.botAdminRoleID
     );
+
     if (!hasPermission) {
         throw ExpectedParseErrors.noPermission.clear(queue.queueName);
     }
@@ -313,10 +325,11 @@ async function clearAll(
         CommandNames.clear_all,
         'botAdmin'
     );
-    const allQueues = await server.getQueueChannels();
-    if (allQueues.length === 0) {
+
+    if (server.queues.length === 0) {
         throw ExpectedParseErrors.serverHasNoQueue;
     }
+
     await server.clearAllQueues();
     await interaction.editReply(SuccessMessages.clearedAllQueues(server.guild.name));
 }
@@ -329,11 +342,12 @@ async function listHelpers(
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const helpers = server.helpers;
+
     if (helpers.size === 0) {
         await interaction.editReply(SimpleEmbed('No one is currently helping.'));
         return;
     }
-    const allQueues = await server.getQueueChannels();
+
     const table = new AsciiTable3()
         .setHeading(
             'Tutor name',
@@ -355,8 +369,9 @@ async function listHelpers(
                 helper.member.roles.cache
                     .filter(
                         role =>
-                            allQueues.find(queue => queue.queueName === role.name) !==
-                            undefined
+                            server.queueChannels.find(
+                                queue => queue.queueName === role.name
+                            ) !== undefined
                     )
                     .map(role => role.name)
                     .toString(), // Available Queues
@@ -379,6 +394,7 @@ async function listHelpers(
         .setWrapped(2)
         .setWrapped(3)
         .setWrapped(4);
+
     await interaction.editReply(
         SimpleEmbed('Current Helpers', EmbedColor.Aqua, '```' + table.toString() + '```')
     );
@@ -397,10 +413,12 @@ async function announce(
         CommandNames.announce,
         'staff'
     );
+
     const announcement = interaction.options.getString('message', true);
     if (announcement.length >= 4096) {
         throw ExpectedParseErrors.messageIsTooLong;
     }
+
     const optionalChannel = interaction.options.getChannel('queue_name', false);
     if (optionalChannel !== null) {
         const queueChannel = hasValidQueueArgument(interaction, true);
@@ -408,6 +426,7 @@ async function announce(
     } else {
         await server.announceToStudentsInQueue(member, announcement);
     }
+
     await interaction.editReply(SuccessMessages.announced(announcement));
 }
 
@@ -427,6 +446,7 @@ async function cleanup(
         CommandNames.cleanup_queue,
         'botAdmin'
     );
+
     await server.getQueueById(queue.parentCategoryId).triggerForceRender();
     await interaction.editReply(SuccessMessages.cleanedUp.queue(queue.queueName));
 }
@@ -444,9 +464,8 @@ async function cleanupAllQueues(
         CommandNames.cleanup_all,
         'botAdmin'
     );
-    const allQueues = await server.getQueueChannels();
     await Promise.all(
-        allQueues.map(queueChannel =>
+        server.queueChannels.map(queueChannel =>
             server.getQueueById(queueChannel.parentCategoryId).triggerForceRender()
         )
     );
@@ -466,6 +485,7 @@ async function cleanupHelpChannel(
         CommandNames.cleanup_help_channels,
         'botAdmin'
     );
+
     await updateCommandHelpChannels(server.guild, server.accessLevelRoleIds);
     await interaction.editReply(SuccessMessages.cleanedUp.helpChannels);
 }
@@ -476,6 +496,7 @@ async function cleanupHelpChannel(
 async function help(interaction: ChatInputCommandInteraction<'cached'>): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
     const accessLevel = server.getHighestAccessLevelRole(interaction.member) ?? 'student';
+
     await interaction.editReply(HelpMainMenuEmbed(server, accessLevel));
 }
 
@@ -493,12 +514,14 @@ async function setLoggingChannel(
         'botAdmin'
     );
     const loggingChannel = interaction.options.getChannel('channel', true);
+
     if (!isTextChannel(loggingChannel)) {
         throw ExpectedParseErrors.notTextChannel(loggingChannel.name);
     }
     if (loggingChannel.name === 'queue') {
         throw ExpectedParseErrors.cannotUseQueueChannelForLogging;
     }
+
     await server.setLoggingChannel(loggingChannel);
     await interaction.editReply(
         SuccessMessages.updatedLoggingChannel(loggingChannel.name)
@@ -518,6 +541,7 @@ async function stopLogging(
         CommandNames.stop_logging,
         'botAdmin'
     );
+
     await server.setLoggingChannel(undefined);
     await interaction.editReply(SuccessMessages.stoppedLogging);
 }
@@ -535,9 +559,11 @@ async function createOffices(
         CommandNames.create_offices,
         'botAdmin'
     );
+
     const categoryName = interaction.options.getString('category_name', true);
     const officeName = interaction.options.getString('office_name', true);
     const numOffices = interaction.options.getInteger('number_of_offices', true);
+
     if (!isValidCategoryName(categoryName)) {
         throw ExpectedParseErrors.invalidCategoryName(categoryName);
     }
@@ -547,9 +573,10 @@ async function createOffices(
     if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
         throw ExpectedParseErrors.accessLevelRoleDoesNotExist(['Bot Admin']);
     }
-    if (!interaction.guild.roles.cache.has(server.botAdminRoleID)) {
+    if (!interaction.guild.roles.cache.has(server.staffRoleID)) {
         throw ExpectedParseErrors.accessLevelRoleDoesNotExist(['Staff']);
     }
+
     await channelsAreUnderLimit(interaction, 1, numOffices);
     await createOfficeVoiceBasedChannels(
         server.guild,
@@ -574,14 +601,17 @@ async function setRoles(
         CommandNames.set_roles,
         'botAdmin'
     );
+
     const roleType = interaction.options.getString('role_name', true);
     const role = interaction.options.getRole('role', true);
     const roleIsBotRole = server.guild.roles.cache
         .get(role.id)
         ?.members.some(member => member.user.bot);
+
     if (roleIsBotRole) {
         throw ExpectedParseErrors.cannotUseBotRoleAsAccessLevelRole;
     }
+
     switch (roleType) {
         case 'bot_admin': {
             server.setAccessLevelRoleId('botAdmin', role.id);
@@ -691,6 +721,7 @@ async function setTimeZone(
         hours: interaction.options.getInteger('hours', true),
         minutes: interaction.options.getInteger('minutes', true)
     } as SimpleTimeZone;
+
     await server.setTimeZone(newTimeZone);
     await interaction.editReply(
         SuccessMessages.changedTimeZone(oldTimezone, newTimeZone)
@@ -724,9 +755,7 @@ async function createHelperControlPanel(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
-
     const targetChannel = interaction.options.getChannel('channel', true);
-
     const isVerbose = interaction.options.getBoolean('verbose') ?? true;
 
     const startCommandId = server.guild.commands.cache.find(
@@ -858,7 +887,6 @@ async function assignHelpersRoles(
     }
 
     const csvFile = await fetch(attachment.url);
-
     if (!csvFile.ok) {
         throw UnexpectedParseErrors.unexpectedFetchError(
             interaction,
@@ -868,26 +896,23 @@ async function assignHelpersRoles(
     }
 
     const csvText = await csvFile.text();
-
-    const helpersRolesData: HelperRolesData[] = [];
-
     const data = parse(csvText);
 
-    data.forEach(record => {
+    const helpersRolesData: HelperRolesData[] = [];
+    for (const record of data) {
         const recordDiscordID = record[0];
-        const recordQueueNames = record.slice(1);
+        const recordQueueNames = record.slice(1).map(name => name.trim());
         helpersRolesData.push({
             helperId: recordDiscordID ?? '0',
             queues: recordQueueNames
         });
-    });
+    }
 
     const [logMap, errorMap] = await server.assignHelpersRoles(helpersRolesData);
 
     let roleLogs = `Assigned roles to helpers:\n${Array.from(logMap.entries())
         .map(([helperId, roles]) => `<@${helperId}>: ${roles}`)
         .join('\n')}`;
-
     if (errorMap.size > 0) {
         roleLogs += `\n\nErrors:\n${Array.from(errorMap.entries())
             .map(([helperId, error]) => `<@${helperId}>: ${error}`)

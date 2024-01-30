@@ -2,14 +2,19 @@ import {
     getHandler,
     interactionExtensions
 } from './interaction-handling/interaction-entry-point.js';
-import { Guild, Events } from 'discord.js';
+import { Guild, Events, ChannelType } from 'discord.js';
 import { AttendingServer } from './attending-server/base-attending-server.js';
 import { black, green, red, yellow } from './utils/command-line-colors.js';
 import { EmbedColor, SimpleEmbed } from './utils/embed-helper.js';
 import { client, LOGGER } from './global-states.js';
 import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
-import { printTitleString, isLeaveVBC, isJoinVBC } from './utils/util-functions.js';
+import {
+    printTitleString,
+    isLeaveVBC,
+    isJoinVBC,
+    isCategoryChannel
+} from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
 import { postSlashCommands } from './interaction-handling/interaction-constants/builtin-slash-commands.js';
 import { UnexpectedParseErrors } from './interaction-handling/interaction-constants/expected-interaction-errors.js';
@@ -124,6 +129,22 @@ client.on(Events.GuildMemberAdd, async member => {
 });
 
 /**
+ * If a queue is renamed manually, it renames the queue name for queue embeds, roles, and calendar extension
+ */
+client.on(Events.ChannelUpdate, async (oldChannel, newChannel) => {
+    if (
+        oldChannel.type === ChannelType.GuildCategory &&
+        newChannel.type === ChannelType.GuildCategory &&
+        oldChannel.name !== newChannel.name
+    ) {
+        await AttendingServer.safeGet(oldChannel.guild.id)?.updateQueueName(
+            oldChannel,
+            newChannel
+        );
+    }
+});
+
+/**
  * Used for inviting YABOB to a server with existing roles
  * Once YABOB has the highest role, start the initialization call
  */
@@ -147,6 +168,25 @@ client.on(Events.GuildRoleUpdate, async role => {
                 )
             )
         ]);
+    }
+});
+
+/**
+ * Track if a channel has been deleted
+ * If a channel has been manually deleted, delete the queue
+ */
+client.on(Events.ChannelDelete, async channel => {
+    if (channel.isDMBased() || !isCategoryChannel(channel)) {
+        return;
+    }
+    const server = AttendingServer.safeGet(channel.guild.id);
+    if (server && server.categoryChannelIDs.includes(channel.id)) {
+        // if the category channels haven't been deleted already with the '/queue remove' command
+        // delete role
+        await server.guild.roles.fetch();
+        await server.guild.roles.cache.find(role => role.name === channel.name)?.delete();
+        // delete queue
+        await server.deleteQueueById(channel.id);
     }
 });
 

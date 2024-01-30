@@ -9,6 +9,7 @@ import {
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { GoogleSheetModalNames } from './google-sheet-interaction-names.js';
+import { environment } from '../../../environment/environment-manager.js';
 
 /**
  * Sets the Google Sheet URL for the server
@@ -34,7 +35,12 @@ function googleSheetSettingsModal(serverId: Snowflake, useMenu = false): ModalBu
                     .setPlaceholder('Enter Google Sheet ID')
                     .setStyle(TextInputStyle.Paragraph)
                     .setRequired(true)
-                    .setValue(state?.googleSheet.spreadsheetId ?? '')
+                    .setValue(
+                        state?.googleSheet.spreadsheetId !==
+                            environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
+                            ? state?.googleSheet.spreadsheetId ?? ''
+                            : ''
+                    )
             )
         );
     return modal;

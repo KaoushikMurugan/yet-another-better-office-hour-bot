@@ -53,7 +53,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * Used to compose the final attendance entry.
      * - Key is helper member.id, value is entry for this helper
      */
-    private activeTimeEntries: Collection<GuildMemberId, ActiveTime> = new Collection();
+    private activeTimeEntries = new Collection<GuildMemberId, ActiveTime>();
     /**
      * These are the attendance entries that are complete but haven't been sent to google sheets yet
      * - Cleared immediately after google sheet has been successfully updated
@@ -68,13 +68,12 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * Current active help session entries of each student
      * - key is student member.id, value is an array of entries to handle multiple helpers
      */
-    private helpSessionEntries: Collection<GuildMemberId, HelpSessionEntry[]> =
-        new Collection();
+    private helpSessionEntries = new Collection<GuildMemberId, HelpSessionEntry[]>();
     /**
      * Students that just got dequeued but haven't joined the VBC yet
      * - Key is student member.id, value is corresponding helpee object
      */
-    private studentsJustDequeued: Collection<GuildMemberId, Helpee> = new Collection();
+    private studentsJustDequeued = new Collection<GuildMemberId, Helpee>();
 
     private logger: Logger;
 
@@ -145,7 +144,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         }
 
         this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
-        if (!this.attendanceUpdateIsScheduled) {
+        if (_server.sheetTracking && !this.attendanceUpdateIsScheduled) {
             // if nothing is scheduled, start a timer
             // otherwise the existing timer will update this entry
             // so no need to schedule another one
@@ -431,7 +430,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
             // TODO: fow now if we fail to write, ignore the help session data
             return;
         }
-
         if (!hasRequiredHeaders) {
             // correctable
             await helpSessionSheet.setHeaderRow(helpSessionHeaders);

@@ -146,9 +146,11 @@ function buildUpcomingSessionsEmbedBody(
     const lastUpdatedTimeStampString = `${divider}Last updated: <t:${Math.floor(
         lastUpdatedTimeStamp.getTime() / 1000
     )}:R>`;
+
     if (viewModels.length === 0) {
         return `**There are no upcoming sessions for ${title} in the next 7 days.**${lastUpdatedTimeStampString}`;
     }
+
     if (returnCount === 'max') {
         let currLength = lastUpdatedTimeStampString.length; // current embed message length
         const upcomingSessionStrings: string[] = [];
@@ -162,8 +164,9 @@ function buildUpcomingSessionsEmbedBody(
                 upcomingSessionStrings.push(transformedString);
             }
         }
-        return upcomingSessionStrings.join(divider) + lastUpdatedTimeStampString;
+        return `${upcomingSessionStrings.join(divider)}${lastUpdatedTimeStampString}`;
     }
+
     return (
         viewModels
             // take the first `returnCount` number of sessions
@@ -234,10 +237,12 @@ async function fetchUpcomingSessions(
     if (response.status !== 200) {
         throw ExpectedCalendarErrors.inaccessibleCalendar;
     }
+
     const rawEvents = ((await response.data) as calendar_v3.Schema$Events).items;
     if (!rawEvents || rawEvents.length === 0) {
         return [];
     }
+
     const viewModels: UpcomingSessionViewModel[] = [];
     for (const rawEvent of rawEvents) {
         const unpack = calendarDataSchema.safeParse(rawEvent);
@@ -294,6 +299,7 @@ function composeViewModelsByString(
     if (words.length !== 2) {
         return [];
     }
+
     const punctuations = /[,]/g;
     const tutorName = words[0]?.trim();
     const eventQueueNames = words[1]
@@ -305,6 +311,7 @@ function composeViewModelsByString(
     if (!eventQueueNames || tutorName === undefined) {
         return [];
     }
+
     return eventQueueNames.map(queueName => ({
         start: start,
         end: end,

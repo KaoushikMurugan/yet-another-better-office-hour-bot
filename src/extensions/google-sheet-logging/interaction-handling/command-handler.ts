@@ -236,6 +236,7 @@ async function weeklyReport(
         Math.max(interaction.options.getInteger('num_weeks') ?? 1, 1),
         helper
     );
+
     if (reports.length === 0) {
         await interaction.editReply(
             SimpleEmbed(
@@ -246,6 +247,7 @@ async function weeklyReport(
         );
         return;
     }
+
     const table = new AsciiTable3()
         .setAlign(1, AlignmentEnum.CENTER)
         .setAlign(2, AlignmentEnum.CENTER)
@@ -268,6 +270,7 @@ async function weeklyReport(
         .setFooter({
             text: 'All time values are in the format HH:MM:SS. Weeks with no entries are omitted.'
         });
+
     await interaction.editReply({ embeds: [embed.data] });
 }
 
@@ -287,14 +290,17 @@ async function getWeeklyReports(
     const allRows = await GoogleSheetExtensionState.get(
         guild.id
     ).googleSheet.sheetsByTitle[title]?.getRows();
+
     if (allRows === undefined) {
         throw ExpectedSheetErrors.missingSheet('Attendance');
     }
+
     const rowsToSearch = helper
         ? allRows.filter(row => row.get(AttendanceHeaders.HelperDiscordId) === helper.id)
         : allRows;
     const msInWeek = 7 * 24 * 60 * 60 * 1000;
     const reports: [string, WeeklyReport][] = [];
+
     for (const week of range(numWeeks)) {
         const [weekStartUnix, weekEndUnix] = [
             new Date().getTime() - (week + 1) * msInWeek,
@@ -302,16 +308,22 @@ async function getWeeklyReports(
         ];
         const rowsInWeek = rowsToSearch
             .filter(row => {
-                const [timeIn, timeOut] = [
-                    parseInt(row.get(AttendanceHeaders.UnixTimeIn)),
-                    parseInt(row.get(AttendanceHeaders.UnixTimeOut))
-                ];
-                if ([timeIn, timeOut].some(val => isNaN(val) || val < 0)) {
+                const timeIn = parseInt(row.get(AttendanceHeaders.UnixTimeIn));
+                const timeOut = parseInt(row.get(AttendanceHeaders.UnixTimeOut));
+
+                if (isNaN(timeIn) || timeIn < 0) {
                     throw ExpectedSheetErrors.badNumericalValues(
                         title,
                         AttendanceHeaders.UnixTimeIn
                     );
                 }
+                if (isNaN(timeOut) || timeOut < 0) {
+                    throw ExpectedSheetErrors.badNumericalValues(
+                        title,
+                        AttendanceHeaders.UnixTimeOut
+                    );
+                }
+
                 return timeIn >= weekStartUnix && timeOut <= weekEndUnix;
             })
             .map(row => {
@@ -326,6 +338,7 @@ async function getWeeklyReports(
                         AttendanceHeaders.OfficeHourTimeMs
                     );
                 }
+
                 try {
                     result.students = JSON.parse(
                         row.get(AttendanceHeaders.HelpedStudents)
@@ -340,8 +353,10 @@ async function getWeeklyReports(
                         AttendanceHeaders.HelpedStudents
                     );
                 }
+
                 return result;
             });
+
         if (rowsInWeek.length === 0) {
             continue;
         }

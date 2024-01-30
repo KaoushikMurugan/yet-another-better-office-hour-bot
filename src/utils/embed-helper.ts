@@ -7,7 +7,9 @@ import {
     TextBasedChannel,
     User,
     ApplicationCommandOptionType,
-    EmbedBuilder
+    EmbedBuilder,
+    APIEmbedField,
+    RestOrArray
 } from 'discord.js';
 import { CommandParseError, QueueError, ServerError } from '../utils/error-types.js';
 import { client } from '../global-states.js';
@@ -237,7 +239,7 @@ function ErrorLogEmbed(err: Error, interaction: Interaction): EmbedData {
 
 function ErrorLogEmbed2(err: ExpectedError | Error, interaction: Interaction): EmbedData {
     const YABOB_PFP_URL = client.user.avatarURL() ?? DEFAULT_PFP;
-    const fields = [
+    const fields: RestOrArray<APIEmbedField> = [
         {
             name: 'User',
             value: interaction.user.toString(),

@@ -1,12 +1,18 @@
-import { ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder } from 'discord.js';
+import {
+    APIEmbedField,
+    ActionRowBuilder,
+    ButtonBuilder,
+    ButtonStyle,
+    EmbedBuilder
+} from 'discord.js';
+import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
+import { environment } from '../../../environment/environment-manager.js';
+import { buildComponent } from '../../../utils/component-id-factory.js';
 import { EmbedColor } from '../../../utils/embed-helper.js';
 import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
-import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
-import { buildComponent } from '../../../utils/component-id-factory.js';
 import { GoogleSheetButtonNames } from './google-sheet-interaction-names.js';
-import { environment } from '../../../environment/environment-manager.js';
 
 /**
  * Options for the server settings main menu
@@ -37,6 +43,18 @@ function GoogleSheetSettingsConfigMenu(
         throw new Error('Google Sheet Logging state for this server was not found');
     }
 
+    const currentSheet: APIEmbedField = {
+        name: 'Current Google Sheet',
+        value: ''
+    };
+
+    if (server.sheetTracking) {
+        currentSheet.value = `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${state.googleSheet.title}\nTracking enabled`;
+    } else {
+        currentSheet.value =
+            'Tracking disabled. Enable tracking or set a new Google sheet to track hours.';
+    }
+
     const embed = new EmbedBuilder()
         .setTitle(`📊 Google Sheet Logging Configuration for ${server.guild.name} 📊`)
         .setColor(EmbedColor.Aqua)
@@ -49,10 +67,7 @@ function GoogleSheetSettingsConfigMenu(
                 name: 'Documentation',
                 value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)`
             },
-            {
-                name: 'Current Google Sheet',
-                value: `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${state.googleSheet.title}`
-            }
+            currentSheet
         );
 
     if (updateMessage.length > 0) {
@@ -60,6 +75,20 @@ function GoogleSheetSettingsConfigMenu(
     }
 
     const buttons = new ActionRowBuilder<ButtonBuilder>().addComponents(
+        buildComponent(new ButtonBuilder(), [
+            isDm ? 'dm' : 'other',
+            GoogleSheetButtonNames.UpdateSheetTrackingStatus,
+            server.guild.id
+        ])
+            .setEmoji(`${!server.sheetTracking ? '✔️' : '✖️'}`)
+            .setLabel(
+                `${!server.sheetTracking ? 'Enable' : 'Disable'} Google Sheet Tracking`
+            )
+            .setStyle(ButtonStyle.Secondary)
+            .setDisabled(
+                state.googleSheet.spreadsheetId ===
+                    environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID
+            ),
         buildComponent(new ButtonBuilder(), [
             isDm ? 'dm' : 'other',
             GoogleSheetButtonNames.ShowGoogleSheetSettingsModal,
@@ -84,4 +113,4 @@ function GoogleSheetSettingsConfigMenu(
     };
 }
 
-export { googleSheetSettingsMainMenuOptions, GoogleSheetSettingsConfigMenu };
+export { GoogleSheetSettingsConfigMenu, googleSheetSettingsMainMenuOptions };
