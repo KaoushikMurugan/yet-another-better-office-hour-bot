@@ -456,7 +456,7 @@ class HelpQueue {
                         displayName: student.member.displayName,
                         helpTopic: student.helpTopic,
                         inVBC: this.allHelpers.some(helperId => {
-                            const helper = this.queueChannel.channelObj.members.get(helperId);
+                            const helper = this.queueChannel.textChannel.members.get(helperId);
                             return (
                                 helper !== undefined &&
                                 helper.voice.channelId ===

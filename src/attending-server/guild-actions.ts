@@ -380,6 +380,6 @@ export {
     updateCommandHelpChannels,
     setHelpChannelVisibility,
     createOfficeVoiceBasedChannels,
-    sendVoiceChannelInvite,
-    getExistingQueueChannelsIfNotInVBC
+    sendVoiceChannelInviteIfNotInVBC,
+    getExistingQueueChannels
 };

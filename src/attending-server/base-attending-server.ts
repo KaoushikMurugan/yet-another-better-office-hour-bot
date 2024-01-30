@@ -44,7 +44,7 @@ import {
     convertMsToTime,
     isCategoryChannel,
     isTextChannel,
-    isVoiceChannel
+    isVoiceBasedChannel
 } from '../utils/util-functions.js';
 import { ExpectedServerErrors } from './expected-server-errors.js';
 import {
