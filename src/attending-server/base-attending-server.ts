@@ -18,7 +18,7 @@ import { environment } from '../environment/environment-manager.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
 import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
-import { LOGGER } from '../global-states.js';
+import { LOGGER, firebaseDB } from '../global-states.js';
 import { AutoClearTimeout, HelpQueue } from '../help-queue/help-queue.js';
 import {
     AccessLevelRole,
@@ -64,6 +64,7 @@ import {
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
+import { FirebaseAttendanceLogging } from '../extensions/firebase-attendance/server-extension.js';
 
 /**
  * The possible settings of each server
@@ -291,7 +292,8 @@ class AttendingServer {
             ? []
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
-                  CalendarServerExtension.load(guild)
+                  CalendarServerExtension.load(guild),
+                  new FirebaseAttendanceLogging(guild, firebaseDB)
               ]);
         const server = new AttendingServer(guild, serverExtensions);
         const externalBackup = environment.disableExtensions
