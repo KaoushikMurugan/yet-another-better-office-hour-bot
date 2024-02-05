@@ -5,10 +5,10 @@ import { GuildMemberId } from '../../utils/type-aliases.js';
 import { BaseServerExtension } from '../extension-interface.js';
 import {
     AttendanceEntry,
-    HelpSessionEntry,
     ActiveTime,
     PartialHelpSessionEntry,
-    attendanceDocumentSchema
+    attendanceDocumentSchema,
+    helpSessionDocumentSchema
 } from './models.js';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
@@ -109,7 +109,7 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
 
         if (server.sheetTracking) {
             console.log('update', this.attendanceEntries);
-            await this.postAttendanceEntriesToDb().catch(() => {
+            await this.postEntriesToDb('attendance').catch(() => {
                 this.logger.error('Db update failed');
                 this.logger.error(this.attendanceEntries);
             });
@@ -181,7 +181,7 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
      * @noexcept error is logged to the console
      */
     override async onStudentLeaveVC(
-        _server: FrozenServer,
+        server: FrozenServer,
         studentMember: GuildMember
     ): Promise<void> {
         const helpSessionEntries = this.helpSessionEntries.get(studentMember.id);
@@ -196,42 +196,56 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
             }
         }
 
-        const completeHelpSessionEntries: HelpSessionEntry[] = helpSessionEntries.map(
-            entry => ({
-                ...entry,
-                sessionEndUnixMs: new Date().getTime()
-            })
-        );
-        console.log(completeHelpSessionEntries);
+        // if (server.sheetTracking) {
+        console.log('\nupdate help sessions\n');
+        await this.postEntriesToDb('helpSessions').catch(() => {
+            this.logger.error('Db update failed');
+            this.logger.error(this.helpSessionEntries);
+        });
+        this.attendanceEntries = [];
+        // }
     }
 
-    private async postAttendanceEntriesToDb(): Promise<void> {
-        const doc = await this.db.collection('attendance').doc(this.guild.id).get();
+    private async postEntriesToDb(
+        entryType: 'attendance' | 'helpSessions'
+    ): Promise<void> {
+        const [newEntries, schema] =
+            entryType === 'attendance'
+                ? [this.attendanceEntries.values(), attendanceDocumentSchema]
+                : [
+                      [...this.helpSessionEntries.values()].flat().map(entry => ({
+                          ...entry,
+                          sessionEndUnixMs: new Date().getTime()
+                      })),
+                      helpSessionDocumentSchema
+                  ];
+        const doc = await this.db.collection(entryType).doc(this.guild.id).get();
+
         if (!doc.exists) {
             this.logger.info(
-                `Creating new attendance doc for ${this.guild.name}, id=${this.guild.id}`
+                `Creating new ${entryType} doc for ${this.guild.name}, id=${this.guild.id}`
             );
             await this.db
-                .collection('attendance')
+                .collection(entryType)
                 .doc(this.guild.id)
-                .set({ entries: [...this.attendanceEntries.values()] });
+                .set({ entries: [...newEntries] });
             return;
         }
 
-        const unpack = attendanceDocumentSchema.safeParse(doc.data());
+        const unpack = schema.safeParse(doc.data());
         if (!unpack.success) {
-            this.logger.error('Attendance data is corrupted');
+            this.logger.error(`${entryType} data is corrupted`);
             return;
         }
 
         this.db
-            .collection('attendance')
+            .collection(entryType)
             .doc(this.guild.id)
             .update({
-                entries: [...unpack.data.entries, ...this.attendanceEntries]
+                entries: [...unpack.data.entries, ...newEntries]
             })
             .catch(err =>
-                this.logger.error(err, 'Failed to write attendance data to firebase db')
+                this.logger.error(err, `Failed to write ${entryType} data to firebase db`)
             );
     }
 }
