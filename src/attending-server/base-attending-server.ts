@@ -809,10 +809,11 @@ class AttendingServer {
         }
 
         const voiceBasedChannel = newVoiceState.channel;
-        const memberIsStudent = this._helpers.some(helper =>
-            helper.helpedMembers.some(
-                helpedMember => helpedMember.member.id === member.id
-            ) || this.queues.some(queue => queue.hasStudent(member.id))
+        const memberIsStudent = this._helpers.some(
+            helper =>
+                helper.helpedMembers.some(
+                    helpedMember => helpedMember.member.id === member.id
+                ) || this.queues.some(queue => queue.hasStudent(member.id))
         );
         const memberIsHelper = this._helpers.has(member.id);
 
@@ -850,10 +851,11 @@ class AttendingServer {
         member: GuildMember,
         oldVoiceState: WithRequired<VoiceState, 'channel'>
     ): Promise<void> {
-        const memberIsStudent = this._helpers.some(helper =>
-            helper.helpedMembers.some(
-                helpedMember => helpedMember.member.id === member.id
-            ) || this.queues.some(queue => queue.hasStudent(member.id))
+        const memberIsStudent = this._helpers.some(
+            helper =>
+                helper.helpedMembers.some(
+                    helpedMember => helpedMember.member.id === member.id
+                ) || this.queues.some(queue => queue.hasStudent(member.id))
         );
         const memberIsHelper = this._helpers.has(member.id);
 

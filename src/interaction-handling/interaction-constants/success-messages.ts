@@ -47,7 +47,11 @@ export const SuccessMessages = {
         ),
     alreadyInVBC: (studentName: string, vbcString: string) =>
         SimpleEmbed(`${studentName} is already in ${vbcString}`, EmbedColor.Success),
-    alreadyInVBCAndShowHelpTopic: (studentName: string, vbcString: string, helpTopic: string) =>
+    alreadyInVBCAndShowHelpTopic: (
+        studentName: string,
+        vbcString: string,
+        helpTopic: string
+    ) =>
         SimpleEmbed(
             `${studentName} is already in ${vbcString}`,
             EmbedColor.Success,

@@ -130,11 +130,14 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
             ? await server.dequeueWithArguments(helperMember, targetStudent, targetQueue)
             : await server.dequeueGlobalFirst(helperMember);
     const helpTopic = dequeuedStudent.helpTopic;
-    if(dequeuedStudent.member.voice.channelId === helperMember.voice.channelId) {
+    if (dequeuedStudent.member.voice.channelId === helperMember.voice.channelId) {
         const vbcString = helperMember.voice.channel?.toString() ?? 'voice channel';
         if (!helpTopic) {
             await interaction.editReply(
-                SuccessMessages.alreadyInVBC(dequeuedStudent.member.displayName, vbcString)
+                SuccessMessages.alreadyInVBC(
+                    dequeuedStudent.member.displayName,
+                    vbcString
+                )
             );
         } else {
             await interaction.editReply(
@@ -146,8 +149,7 @@ async function next(interaction: ChatInputCommandInteraction<'cached'>): Promise
             );
         }
     } else {
-    
-    if (!helpTopic) {
+        if (!helpTopic) {
             await interaction.editReply(
                 SuccessMessages.inviteSent(dequeuedStudent.member.displayName)
             );
@@ -353,7 +355,7 @@ async function listHelpers(
             'Tutor name',
             'Available Queues',
             'Time Elapsed (hh:mm:ss)',
-            'VBC Status'
+            'Voice Status'
         )
         .setAlign(1, AlignmentEnum.CENTER)
         .setAlign(2, AlignmentEnum.CENTER)

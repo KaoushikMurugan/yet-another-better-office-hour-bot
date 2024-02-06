@@ -20,7 +20,7 @@ import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQueueBackup } from '../attending-server/firebase-backup.js';
 
-/** 
+/**
  * Student info for Queue Rendering
  */
 
@@ -235,7 +235,7 @@ class HelpQueue {
 
     /**
      * Returns true if there is a student in the queue with the given id
-     * @param id 
+     * @param id
      */
     hasStudent(studentId: string): boolean {
         return this._students.some(student => student.member.id === studentId);
@@ -450,22 +450,17 @@ class HelpQueue {
             queueName: this.queueName,
             activeHelperIDs: [...this.activeHelperIds],
             pausedHelperIDs: [...this.pausedHelperIds],
-            students: this._students.map(
-                student => {
-                    return {
-                        displayName: student.member.displayName,
-                        helpTopic: student.helpTopic,
-                        inVBC: this.allHelpers.some(helperId => {
-                            const helper = this.queueChannel.textChannel.members.get(helperId);
-                            return (
-                                helper !== undefined &&
-                                helper.voice.channelId ===
-                                    student.member.voice.channelId
-                            );
-                        }),
-                    };
-                }
-            ),
+            students: this._students.map(student => ({
+                displayName: student.member.displayName,
+                helpTopic: student.helpTopic,
+                inVBC: this.allHelpers.some(helperId => {
+                    const helper = this.queueChannel.textChannel.members.get(helperId);
+                    return (
+                        helper !== undefined &&
+                        helper.voice.channelId === student.member.voice.channelId
+                    );
+                })
+            })),
             state: this.getQueueState(),
             seriousModeEnabled: this.seriousModeEnabled,
             timeUntilAutoClear:

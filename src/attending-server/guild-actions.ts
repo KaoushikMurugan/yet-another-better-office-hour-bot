@@ -289,7 +289,7 @@ async function sendVoiceChannelInviteIfNotInVBC(
     helperVoiceBasedChannel: VoiceBasedChannel
 ): Promise<Result<void, ServerError>> {
     if (student.voice.channelId === helperVoiceBasedChannel.id) {
-        return { ok: true, value: undefined };
+        return Ok(undefined);
     }
     const [invite] = await Promise.all([
         helperVoiceBasedChannel.createInvite({
