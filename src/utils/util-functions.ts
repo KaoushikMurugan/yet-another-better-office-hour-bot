@@ -12,7 +12,7 @@ import {
     Role,
     StringSelectMenuInteraction,
     TextChannel,
-    VoiceChannel,
+    VoiceBasedChannel,
     VoiceState
 } from 'discord.js';
 import { black, cyan, magenta, yellow } from './command-line-colors.js';
@@ -413,9 +413,9 @@ function isQueueTextChannel(
  * @param channel
  * @returns
  */
-function isVoiceChannel(
+function isVoiceBasedChannel(
     channel: GuildBasedChannel | null | undefined
-): channel is VoiceChannel {
+): channel is VoiceBasedChannel {
     return !!channel && channel.type === ChannelType.GuildVoice;
 }
 
@@ -444,14 +444,14 @@ function isValidCategoryName(categoryName: string): boolean {
     );
 }
 
-function isLeaveVC(
+function isLeaveVBC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
 ): oldVoiceState is WithRequired<VoiceState, 'channel'> {
     return oldVoiceState.channel !== null && newVoiceState.channel === null;
 }
 
-function isJoinVC(
+function isJoinVBC(
     oldVoiceState: VoiceState,
     newVoiceState: VoiceState
 ): newVoiceState is WithRequired<VoiceState, 'channel'> {
@@ -469,12 +469,12 @@ export {
     range,
     camelCaseToTitleCase,
     /** Type Guards */
-    isLeaveVC,
-    isJoinVC,
+    isLeaveVBC,
+    isJoinVBC,
     isCategoryChannel,
     isQueueTextChannel,
     isTextChannel,
-    isVoiceChannel,
+    isVoiceBasedChannel,
     /** Validators */
     isValidCategoryName,
     isValidChannelName,

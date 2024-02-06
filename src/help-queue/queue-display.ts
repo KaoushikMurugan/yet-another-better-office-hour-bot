@@ -172,7 +172,7 @@ class QueueDisplay {
         if (
             viewModel.timeUntilAutoClear !== 'AUTO_CLEAR_DISABLED' &&
             viewModel.state === 'closed' &&
-            viewModel.studentDisplayNames.length !== 0
+            viewModel.students.length !== 0
         ) {
             embedTableMsg.addFields({
                 name: 'Auto Clear',
@@ -196,7 +196,7 @@ class QueueDisplay {
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Leave, guildId])
-                .setDisabled(viewModel.studentDisplayNames.length === 0)
+                .setDisabled(viewModel.students.length === 0)
                 .setEmoji('❎')
                 .setLabel('Leave')
                 .setStyle(ButtonStyle.Danger),
@@ -264,20 +264,20 @@ class QueueDisplay {
      */
     private getQueueAsciiTable(viewModel: QueueViewModel): string {
         const table = new AsciiTable3();
-        if (viewModel.studentDisplayNames.length > 0) {
+        if (viewModel.students.length > 0) {
             table
                 .setHeading('Position', 'Student Name')
                 .setAlign(1, AlignmentEnum.CENTER)
                 .setAlign(2, AlignmentEnum.CENTER)
                 .setStyle('unicode-single')
                 .addRowMatrix([
-                    ...viewModel.studentDisplayNames.map((name, idx) => [
+                    ...viewModel.students.map((student, idx) => [
                         idx === 0
                             ? viewModel.seriousModeEnabled
                                 ? '1 (Up Next)'
                                 : '(☞°∀°)☞ Up Next!'
                             : idx + 1,
-                        name
+                        student.displayName + (student.inVBC ? ' (In VBC)' : '')
                     ])
                 ]);
         } else {
@@ -355,14 +355,14 @@ class QueueDisplay {
 
     private getVcStatus(helperId: Snowflake): string {
         const spacer = '\u3000'; // ideographic space character, extra wide
-        const voiceChannel =
+        const voiceBasedChannel =
             this.queueChannel.textChannel.guild.voiceStates.cache.get(helperId)?.channel;
         // using # gives the same effect as if we use the id
         // bc students can't see the channel ping if they don't have permission
-        const vcStatus = voiceChannel
-            ? voiceChannel.members.size > 1
-                ? `🔴 Busy in \`#${voiceChannel.name}\``
-                : `🟢 Idling in \`#${voiceChannel.name}\``
+        const vcStatus = voiceBasedChannel
+            ? voiceBasedChannel.members.size > 1
+                ? `🔴 Busy in \`#${voiceBasedChannel.name}\``
+                : `🟢 Idling in \`#${voiceBasedChannel.name}\``
             : 'Not in voice channel';
         return `<@${helperId}>${spacer}${vcStatus}`;
     }

@@ -11,8 +11,8 @@ import { environment } from './environment/environment-manager.js';
 import { updatePresence } from './utils/discord-presence.js';
 import {
     printTitleString,
-    isLeaveVC,
-    isJoinVC,
+    isLeaveVBC,
+    isJoinVBC,
     isCategoryChannel
 } from './utils/util-functions.js';
 import { serverSettingsMainMenuOptions } from './attending-server/server-settings-menus.js';
@@ -199,10 +199,10 @@ client.on(Events.VoiceStateUpdate, async (oldVoiceState, newVoiceState) => {
         // don't throw error here, just ignore it, otherwise it's uncaught
         return;
     }
-    if (isLeaveVC(oldVoiceState, newVoiceState)) {
-        await server.onMemberLeaveVC(newVoiceState.member, oldVoiceState);
-    } else if (isJoinVC(oldVoiceState, newVoiceState)) {
-        await server.onMemberJoinVC(newVoiceState.member, newVoiceState);
+    if (isLeaveVBC(oldVoiceState, newVoiceState)) {
+        await server.onMemberLeaveVBC(newVoiceState.member, oldVoiceState);
+    } else if (isJoinVBC(oldVoiceState, newVoiceState)) {
+        await server.onMemberJoinVBC(newVoiceState.member, newVoiceState);
     }
 });
 

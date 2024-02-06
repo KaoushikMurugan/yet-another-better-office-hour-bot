@@ -176,10 +176,7 @@ function backupQueueData(queue: HelpQueue): void {
                     queues: data.queues
                 })
                 .then(() =>
-                    LOGGER.info(
-                        queue.textChannel.guild.name,
-                        '- Queue backup successful'
-                    )
+                    LOGGER.info(queue.textChannel.guild.name, '- Queue backup successful')
                 )
                 .catch((err: Error) =>
                     LOGGER.error(err, 'Firebase queue backup failed.')

@@ -45,6 +45,18 @@ export const SuccessMessages = {
             EmbedColor.Success,
             `**${studentName}'s Help Topic**\n${helpTopic.slice(0, 4000)}` // in case the student's name is long
         ),
+    alreadyInVBC: (studentName: string, vbcString: string) =>
+        SimpleEmbed(`${studentName} is already in ${vbcString}`, EmbedColor.Success),
+    alreadyInVBCAndShowHelpTopic: (
+        studentName: string,
+        vbcString: string,
+        helpTopic: string
+    ) =>
+        SimpleEmbed(
+            `${studentName} is already in ${vbcString}`,
+            EmbedColor.Success,
+            `**${studentName}'s Help Topic**\n${helpTopic.slice(0, 4000)}` // in case the student's name is long
+        ),
     startedHelping: SimpleEmbed(
         'You have started helping! Have fun!',
         EmbedColor.Success
