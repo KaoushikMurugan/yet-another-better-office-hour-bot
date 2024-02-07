@@ -50,7 +50,7 @@ type AttendanceEntry = z.infer<typeof attendanceEntrySchema>;
 
 type HelpSessionEntry = z.infer<typeof helpSessionEntrySchema>;
 
-type PartialHelpSessionEntry = Omit<HelpSessionEntry, 'sessionEndUnixMs'>;
+type PartialHelpSessionEntry = Pick<Partial<HelpSessionEntry>, 'sessionEndUnixMs'> & Omit<HelpSessionEntry, 'sessionEndUnixMs'>;
 
 export {
     AttendanceEntry,

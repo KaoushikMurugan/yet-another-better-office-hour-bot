@@ -64,7 +64,7 @@ import {
     updateCommandHelpChannels
 } from './guild-actions.js';
 import { RoleConfigMenuForServerInit } from './server-settings-menus.js';
-import { FirebaseAttendanceLogging } from '../extensions/firebase-attendance/server-extension.js';
+import { HelperActivityTrackingExtension } from '../extensions/firebase-attendance/server-extension.js';
 
 /**
  * The possible settings of each server
@@ -293,7 +293,7 @@ class AttendingServer {
             : await Promise.all([
                   GoogleSheetServerExtension.load(guild),
                   CalendarServerExtension.load(guild),
-                  new FirebaseAttendanceLogging(guild, firebaseDB)
+                  new HelperActivityTrackingExtension(guild)
               ]);
         const server = new AttendingServer(guild, serverExtensions);
         const externalBackup = environment.disableExtensions

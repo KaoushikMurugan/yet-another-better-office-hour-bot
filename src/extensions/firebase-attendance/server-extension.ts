@@ -7,20 +7,19 @@ import {
     AttendanceEntry,
     ActiveTime,
     PartialHelpSessionEntry,
-    attendanceDocumentSchema,
-    helpSessionDocumentSchema
+    HelpSessionEntry
 } from './models.js';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
-import { type Firestore } from 'firebase-admin/firestore';
+import { FirebaseTrackingDataStore, TrackingDataStore } from './write-destinations.js';
+import { firebaseDB } from '../../global-states.js';
 
-class FirebaseAttendanceLogging extends BaseServerExtension {
-    private activeTimeEntries = new Collection<GuildMemberId, ActiveTime>();
+class HelperActivityTrackingExtension extends BaseServerExtension {
     /**
-     * These are the attendance entries that are complete but haven't been sent to google sheets yet
-     * - Cleared immediately after google sheet has been successfully updated
+     * Stores intermediate objects that track active ms of a helper
+     * - key is helper member.id
      */
-    private attendanceEntries: AttendanceEntry[] = [];
+    private activeTimeEntries = new Collection<GuildMemberId, ActiveTime>();
     /**
      * Current active help session entries of each student
      * - key is student member.id, value is an array of entries to handle multiple helpers
@@ -37,12 +36,12 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
 
     private logger: Logger;
 
-    constructor(
-        private readonly guild: Guild,
-        private readonly db: Firestore
-    ) {
+    private readonly destinations: TrackingDataStore[];
+
+    constructor(guild: Guild) {
         super();
         this.logger = ATTENDANCE_LOGGER.child({ guild: guild.name });
+        this.destinations = [new FirebaseTrackingDataStore(firebaseDB, guild)];
     }
 
     /**
@@ -74,7 +73,7 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
     }
 
     /**
-     * Sends the {@link AttendanceEntry} to google sheets after student leave VC
+     * Writes tracking data relevant to this helper to external data store
      * @param _server
      * @param helper
      */
@@ -93,7 +92,7 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
             this.studentsJustDequeued.delete(student.member.id);
         }
 
-        this.attendanceEntries.push({
+        const attendanceEntry: AttendanceEntry = {
             activeTimeMs: activeTimeEntry.activeTimeMs,
             helper: {
                 displayName: helper.member.displayName,
@@ -104,17 +103,32 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
                 id: member.id
             })),
             helpStartUnixMs: helper.helpStart.getTime(),
-            helpEndUnixMs: helper.helpStart.getTime()
-        });
+            helpEndUnixMs: helper.helpEnd.getTime()
+        };
+        //! Temporary solution, maybe throw an error here
+        const helpSessionEntries = this.helpSessionEntries.get(helper.member.id) ?? [];
 
-        if (server.sheetTracking) {
-            console.log('update', this.attendanceEntries);
-            await this.postEntriesToDb('attendance').catch(() => {
-                this.logger.error('Db update failed');
-                this.logger.error(this.attendanceEntries);
-            });
-            this.attendanceEntries = [];
+        // if (server.sheetTracking) {
+        const sessionEndUnix = new Date().getTime();
+        for (const entry of helpSessionEntries) {
+            entry.sessionEndUnixMs = sessionEndUnix;
         }
+
+        const writeResults = await Promise.allSettled(
+            this.destinations.map(destination =>
+                destination.write(
+                    attendanceEntry,
+                    // explicitly added sessionEndUnixMs
+                    helpSessionEntries as HelpSessionEntry[]
+                )
+            )
+        );
+        for (const result of writeResults) {
+            if (result.status === 'rejected') {
+                this.logger.error(result.reason, `Failed to write tracking Data`);
+            }
+        }
+        // }
 
         this.activeTimeEntries.delete(helper.member.id);
     }
@@ -195,59 +209,7 @@ class FirebaseAttendanceLogging extends BaseServerExtension {
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
             }
         }
-
-        // if (server.sheetTracking) {
-        console.log('\nupdate help sessions\n');
-        await this.postEntriesToDb('helpSessions').catch(() => {
-            this.logger.error('Db update failed');
-            this.logger.error(this.helpSessionEntries);
-        });
-        this.attendanceEntries = [];
-        // }
-    }
-
-    private async postEntriesToDb(
-        entryType: 'attendance' | 'helpSessions'
-    ): Promise<void> {
-        const [newEntries, schema] =
-            entryType === 'attendance'
-                ? [this.attendanceEntries.values(), attendanceDocumentSchema]
-                : [
-                      [...this.helpSessionEntries.values()].flat().map(entry => ({
-                          ...entry,
-                          sessionEndUnixMs: new Date().getTime()
-                      })),
-                      helpSessionDocumentSchema
-                  ];
-        const doc = await this.db.collection(entryType).doc(this.guild.id).get();
-
-        if (!doc.exists) {
-            this.logger.info(
-                `Creating new ${entryType} doc for ${this.guild.name}, id=${this.guild.id}`
-            );
-            await this.db
-                .collection(entryType)
-                .doc(this.guild.id)
-                .set({ entries: [...newEntries] });
-            return;
-        }
-
-        const unpack = schema.safeParse(doc.data());
-        if (!unpack.success) {
-            this.logger.error(`${entryType} data is corrupted`);
-            return;
-        }
-
-        this.db
-            .collection(entryType)
-            .doc(this.guild.id)
-            .update({
-                entries: [...unpack.data.entries, ...newEntries]
-            })
-            .catch(err =>
-                this.logger.error(err, `Failed to write ${entryType} data to firebase db`)
-            );
     }
 }
 
-export { FirebaseAttendanceLogging };
+export { HelperActivityTrackingExtension };
