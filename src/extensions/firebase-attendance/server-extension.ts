@@ -1,4 +1,10 @@
-import { Collection, Guild, GuildMember, VoiceChannel } from 'discord.js';
+import {
+    Collection,
+    Guild,
+    GuildMember,
+    VoiceBasedChannel,
+    VoiceChannel
+} from 'discord.js';
 import { Logger } from 'pino';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
@@ -103,25 +109,13 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             helpStartUnixMs: helper.helpStart.getTime(),
             helpEndUnixMs: helper.helpEnd.getTime()
         };
-        //! Temporary solution, maybe throw an error here
-        const helpSessionEntries = this.helpSessionEntries.get(helper.member.id) ?? [];
 
         if (server.sheetTracking) {
             this.logger.info(`Updating tracking info for ${helper.member.displayName}`);
 
-            const sessionEndUnix = new Date().getTime();
-            for (const entry of helpSessionEntries) {
-                entry.sessionEndUnixMs = sessionEndUnix;
-            }
-
             const writeResults = await Promise.allSettled(
                 this.destinations.map(destination =>
-                    destination.write(
-                        this.guild,
-                        attendanceEntry,
-                        // explicitly added sessionEndUnixMs
-                        helpSessionEntries as HelpSessionEntry[]
-                    )
+                    destination.writeAttendance(this.guild, attendanceEntry)
                 )
             );
             for (const [index, result] of writeResults.entries()) {
@@ -135,8 +129,6 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
                 }
             }
         }
-
-        this.helpSessionEntries.delete(helper.member.id);
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -149,7 +141,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
     override async onStudentJoinVBC(
         server: FrozenServer,
         studentMember: GuildMember,
-        voiceChannel: VoiceChannel
+        voiceChannel: VoiceBasedChannel
     ): Promise<void> {
         const helpersInVC = voiceChannel.members.filter(member =>
             server.helpers.has(member.id)
@@ -172,10 +164,14 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
 
             const sessionStartUnixMs = new Date().getTime();
             const helpSessionEntry: PartialHelpSessionEntry = {
-                studentUsername: student.member.user.username,
-                studentDiscordId: studentId,
-                helperUsername: helper.member.user.username,
-                helperDiscordId: helper.member.id,
+                student: {
+                    id: student.member.id,
+                    displayName: student.member.displayName
+                },
+                helper: {
+                    id: helper.member.id,
+                    displayName: helper.member.displayName
+                },
                 sessionStartUnixMs,
                 waitStart: student.waitStart.getTime(),
                 queueName: student.queue.queueName,
@@ -215,6 +211,35 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             if (entry.latestStudentJoinTimeStamp) {
                 entry.activeTimeMs +=
                     new Date().getTime() - entry.latestStudentJoinTimeStamp.getTime();
+            }
+        }
+
+        const sessionEndUnix = new Date().getTime();
+        for (const entry of helpSessionEntries) {
+            entry.sessionEndUnixMs = sessionEndUnix;
+        }
+
+        if (server.sheetTracking) {
+            this.logger.info(
+                `Updating help session info for ${studentMember.displayName}`
+            );
+            const writeResults = await Promise.allSettled(
+                this.destinations.map(destination =>
+                    destination.writeHelpSessions(
+                        this.guild,
+                        helpSessionEntries as HelpSessionEntry[] // checked
+                    )
+                )
+            );
+            for (const [index, result] of writeResults.entries()) {
+                if (result.status === 'rejected') {
+                    this.logger.error(
+                        result.reason,
+                        `Failed to write tracking data in destination ${
+                            this.destinations[index]!.name
+                        }`
+                    );
+                }
             }
         }
     }

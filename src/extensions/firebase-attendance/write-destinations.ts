@@ -3,7 +3,7 @@
  * that can be used by the attendance ext
  */
 
-import { Firestore, FirestoreDataConverter } from 'firebase-admin/firestore';
+import { Firestore, FirestoreDataConverter, FieldValue } from 'firebase-admin/firestore';
 import {
     AttendanceEntry,
     HelpSessionEntry,
@@ -25,15 +25,38 @@ type ReadOptions = {
 };
 
 interface TrackingDataStore {
+    /**
+     * Name of the datastore
+     */
     readonly name: string;
+    /**
+     * Reads attendance data from the DB
+     * @param guild which guild's data to read
+     * @param options optional, specify a custom filter
+     * @returns attendance data after filtering if specified, otherwise returns everything
+     */
     readAttendance: (guild: Guild, options?: ReadOptions) => Promise<AttendanceEntry[]>;
+    /**
+     * Reads help session data from the DB
+     * @param guild which guild's data to read
+     * @param options optional, specify a custom filter
+     * @returns session data after filtering if specified, otherwise returns everything
+     */
     readHelpSession?: (
         guild: Guild,
         options?: ReadOptions
     ) => Promise<HelpSessionEntry[]>;
-    write: (
+    /**
+     * Writes 1 attendance entry and a list of help session entries to the datastore
+     * - This is called after a helper uses /stop, so the data is only related to 1 helper
+     * - Avoids the additional complexity of writing at arbitrary intervals
+     * @param guild the guild where the data came from
+     * @param attendanceEntry complete attendance entry
+     * @param helpSessionEntries help session entries
+     */
+    writeAttendance: (guild: Guild, attendanceEntry: AttendanceEntry) => Promise<void>;
+    writeHelpSessions: (
         guild: Guild,
-        attendanceEntry: AttendanceEntry,
         helpSessionEntries: HelpSessionEntry[]
     ) => Promise<void>;
 }
@@ -75,17 +98,6 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         toFirestore: modelObject => modelObject
     };
 
-    async write(
-        guild: Guild,
-        attendanceEntry: AttendanceEntry,
-        helpSessionEntries: HelpSessionEntry[]
-    ): Promise<void> {
-        await Promise.allSettled([
-            this.writeAttendance(guild, attendanceEntry),
-            this.writeHelpSessions(guild, helpSessionEntries)
-        ]);
-    }
-
     async readAttendance(
         guild: Guild,
         options?: ReadOptions
@@ -109,7 +121,6 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
             options.dateRange?.startUnixMs ?? -Infinity,
             options.dateRange?.endUnixMs ?? Infinity
         ];
-
         return data.entries.filter(
             entry =>
                 (options.helperId === undefined ||
@@ -146,13 +157,13 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         return data.entries.filter(
             entry =>
                 (options.helperId === undefined ||
-                    entry.helperDiscordId === options.helperId) &&
+                    entry.helper.id === options.helperId) &&
                 (between(entry.sessionStartUnixMs, dateRangeStart, dateRangeEnd) ||
                     between(entry.sessionEndUnixMs, dateRangeStart, dateRangeEnd))
         );
     }
 
-    private async writeAttendance(guild: Guild, entry: AttendanceEntry) {
+    async writeAttendance(guild: Guild, entry: AttendanceEntry) {
         const doc = this.db
             .collection(this.ATTENDANCE_COLLECTION_NAME)
             .doc(guild.id)
@@ -167,18 +178,22 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
                 .collection(this.ATTENDANCE_COLLECTION_NAME)
                 .doc(guild.id)
                 .withConverter(FirebaseTrackingDataStore.attendanceConverter)
-                .set({ entries: [] });
+                .set({ entries: [entry] });
+            return;
+        }
+        doc.update({
+            entries: FieldValue.arrayUnion(entry)
+        }).catch(err => {
+            this.logger.error(err, 'Failed to write attendance data to firebase db');
+            this.logger.error(`The logs are ${entry}`);
+        });
+    }
+
+    async writeHelpSessions(guild: Guild, entries: HelpSessionEntry[]) {
+        if (entries.length === 0) {
             return;
         }
 
-        doc.update({
-            entries: [...data.entries, entry]
-        }).catch(err =>
-            this.logger.error(err, 'Failed to write attendance data to firebase db')
-        );
-    }
-
-    private async writeHelpSessions(guild: Guild, entries: HelpSessionEntry[]) {
         const doc = this.db
             .collection(this.HELP_SESSION_COLLECTION_NAME)
             .doc(guild.id)
@@ -193,20 +208,17 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
                 .collection(this.HELP_SESSION_COLLECTION_NAME)
                 .doc(guild.id)
                 .withConverter(FirebaseTrackingDataStore.helpSessionConverter)
-                .set({ entries: [] });
+                .set({ entries });
             return;
         }
+        console.log(entries);
 
-        this.db
-            .collection(this.HELP_SESSION_COLLECTION_NAME)
-            .doc(guild.id)
-            .withConverter(FirebaseTrackingDataStore.helpSessionConverter)
-            .update({
-                entries: [...data.entries, ...entries]
-            })
-            .catch(err =>
-                this.logger.error(err, 'Failed to write help session data to firebase db')
-            );
+        doc.update({
+            entries: FieldValue.arrayUnion(...entries)
+        }).catch(err => {
+            this.logger.error(err, 'Failed to write help session data to firebase db');
+            this.logger.error(`The logs are ${entries}`);
+        });
     }
 }
 

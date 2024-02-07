@@ -8,27 +8,22 @@ type ActiveTime = {
     activeTimeMs: number;
 };
 
+const simpleMemberSchema = z.object({
+    displayName: z.string(),
+    id: z.string()
+});
+
 const attendanceEntrySchema = z.object({
     activeTimeMs: z.number(),
-    helper: z.object({
-        displayName: z.string(),
-        id: z.string()
-    }),
+    helper: simpleMemberSchema,
     helpStartUnixMs: z.number(),
     helpEndUnixMs: z.number(),
-    helpedMembers: z.array(
-        z.object({
-            displayName: z.string(),
-            id: z.string()
-        })
-    )
+    helpedMembers: z.array(simpleMemberSchema)
 });
 
 const helpSessionEntrySchema = z.object({
-    studentUsername: z.string(),
-    studentDiscordId: z.string(),
-    helperUsername: z.string(),
-    helperDiscordId: z.string(),
+    student: simpleMemberSchema,
+    helper: simpleMemberSchema,
     sessionStartUnixMs: z.number(), // time join VC
     sessionEndUnixMs: z.number(), // time leave VC
     waitStart: z.number(), // Helpee.waitStart
@@ -50,7 +45,8 @@ type AttendanceEntry = z.infer<typeof attendanceEntrySchema>;
 
 type HelpSessionEntry = z.infer<typeof helpSessionEntrySchema>;
 
-type PartialHelpSessionEntry = Pick<Partial<HelpSessionEntry>, 'sessionEndUnixMs'> & Omit<HelpSessionEntry, 'sessionEndUnixMs'>;
+type PartialHelpSessionEntry = Pick<Partial<HelpSessionEntry>, 'sessionEndUnixMs'> &
+    Omit<HelpSessionEntry, 'sessionEndUnixMs'>;
 
 export {
     AttendanceEntry,
