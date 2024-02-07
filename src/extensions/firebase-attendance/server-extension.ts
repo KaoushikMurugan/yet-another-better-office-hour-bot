@@ -11,8 +11,7 @@ import {
 } from './models.js';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
-import { FirebaseTrackingDataStore, TrackingDataStore } from './write-destinations.js';
-import { firebaseDB } from '../../global-states.js';
+import { TrackingDataStore, firebaseTrackingDb } from './write-destinations.js';
 
 class HelperActivityTrackingExtension extends BaseServerExtension {
     /**
@@ -34,14 +33,13 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
      */
     private studentsJustDequeued = new Collection<GuildMemberId, Helpee>();
 
-    private logger: Logger;
+    private readonly logger: Logger;
 
-    private readonly destinations: TrackingDataStore[];
+    private readonly destinations: TrackingDataStore[] = [firebaseTrackingDb];
 
-    constructor(guild: Guild) {
+    constructor(private readonly guild: Guild) {
         super();
         this.logger = ATTENDANCE_LOGGER.child({ guild: guild.name });
-        this.destinations = [new FirebaseTrackingDataStore(firebaseDB, guild)];
     }
 
     /**
@@ -119,6 +117,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             const writeResults = await Promise.allSettled(
                 this.destinations.map(destination =>
                     destination.write(
+                        this.guild,
                         attendanceEntry,
                         // explicitly added sessionEndUnixMs
                         helpSessionEntries as HelpSessionEntry[]
