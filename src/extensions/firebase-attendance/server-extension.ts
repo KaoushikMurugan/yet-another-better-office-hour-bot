@@ -146,7 +146,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
      * @param studentMember the student that joined the VC
      * @param voiceChannel which VC the student joined
      */
-    override async onStudentJoinVC(
+    override async onStudentJoinVBC(
         server: FrozenServer,
         studentMember: GuildMember,
         voiceChannel: VoiceChannel
@@ -202,7 +202,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
      * @param studentMember
      * @noexcept error is logged to the console
      */
-    override async onStudentLeaveVC(
+    override async onStudentLeaveVBC(
         server: FrozenServer,
         studentMember: GuildMember
     ): Promise<void> {
