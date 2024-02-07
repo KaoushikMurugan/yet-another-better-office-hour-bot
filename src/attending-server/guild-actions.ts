@@ -322,13 +322,10 @@ async function sendVoiceChannelInviteIfNotInVBC(
             )
         );
     } catch {
-        return {
-            ok: false,
-            error: ExpectedServerErrors.studentBlockedDm(student.id)
-        };
+        return Err(ExpectedServerErrors.studentBlockedDm(student.id));
     }
 
-    return { ok: true, value: undefined };
+    return Ok(undefined);
 }
 
 /**

@@ -3,7 +3,6 @@ import {
     Guild,
     GuildMember,
     VoiceBasedChannel,
-    VoiceChannel
 } from 'discord.js';
 import { Logger } from 'pino';
 import { Helpee, Helper } from '../../models/member-states.js';
@@ -17,7 +16,7 @@ import {
 } from './models.js';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
-import { TrackingDataStore, firebaseTrackingDb } from './write-destinations.js';
+import { TrackingDataStore, firebaseTrackingDb } from './datastore.js';
 
 class HelperActivityTrackingExtension extends BaseServerExtension {
     /**
