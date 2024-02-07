@@ -79,7 +79,7 @@ type ServerSettings = {
     /** Prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
     /** Track data in Google sheet if true */
-    sheetTracking: boolean;
+    trackingEnabled: boolean;
     /**
      * Role IDs are always snowflake strings (i.e. they are strings that only consist of numbers)
      * @see https://discord.com/developers/docs/reference#snowflakes
@@ -124,7 +124,7 @@ class AttendingServer {
         afterSessionMessage: '',
         autoGiveStudentRole: false,
         promptHelpTopic: true,
-        sheetTracking: false,
+        trackingEnabled: false,
         accessLevelRoleIds: {
             botAdmin: SpecialRoleValues.NotSet,
             staff: SpecialRoleValues.NotSet,
@@ -206,8 +206,8 @@ class AttendingServer {
     }
 
     /** Track data in Google sheet if true */
-    get sheetTracking(): boolean {
-        return this.settings.sheetTracking;
+    get trackingEnabled(): boolean {
+        return this.settings.trackingEnabled;
     }
 
     /** Auto clear values of a queue, undefined if not set */
@@ -1076,11 +1076,11 @@ class AttendingServer {
 
     /**
      * Sets the internal boolean value for sheetTracking
-     * @param sheetTracking
+     * @param enabled
      */
     @useSettingsBackup
-    setSheetTracking(sheetTracking: boolean): void {
-        this.settings.sheetTracking = sheetTracking;
+    setTrackingEnabled(enabled: boolean): void {
+        this.settings.trackingEnabled = enabled;
     }
 
     /**
@@ -1302,6 +1302,7 @@ class AttendingServer {
         if (isTextChannel(loggingChannelFromBackup)) {
             this.settings.loggingChannel = loggingChannelFromBackup;
         }
+        console.log(this.settings);
     }
 }
 

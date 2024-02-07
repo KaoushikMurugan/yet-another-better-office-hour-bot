@@ -48,7 +48,7 @@ function GoogleSheetSettingsConfigMenu(
         value: ''
     };
 
-    if (server.sheetTracking) {
+    if (server.trackingEnabled) {
         currentSheet.value = `[Google Sheet Link](${state.googleSheetURL})\nSheet Name: ${state.googleSheet.title}\nTracking enabled`;
     } else {
         currentSheet.value =
@@ -80,9 +80,9 @@ function GoogleSheetSettingsConfigMenu(
             GoogleSheetButtonNames.UpdateSheetTrackingStatus,
             server.guild.id
         ])
-            .setEmoji(`${!server.sheetTracking ? '✔️' : '✖️'}`)
+            .setEmoji(`${!server.trackingEnabled ? '✔️' : '✖️'}`)
             .setLabel(
-                `${!server.sheetTracking ? 'Enable' : 'Disable'} Google Sheet Tracking`
+                `${!server.trackingEnabled ? 'Enable' : 'Disable'} Google Sheet Tracking`
             )
             .setStyle(ButtonStyle.Secondary)
             .setDisabled(

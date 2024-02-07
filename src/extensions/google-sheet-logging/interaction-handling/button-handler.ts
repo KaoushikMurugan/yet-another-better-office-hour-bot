@@ -34,9 +34,9 @@ async function updateSheetTrackingStatus(
     interaction: ButtonInteraction<'cached'>
 ): Promise<void> {
     const server = AttendingServer.get(interaction.guildId);
-    const newTrackingStatus = !server.sheetTracking;
+    const newTrackingStatus = !server.trackingEnabled;
 
-    server.setSheetTracking(newTrackingStatus);
+    server.setTrackingEnabled(newTrackingStatus);
     server.sendLogMessage(
         GoogleSheetSuccessMessages.updatedSheetTracking(newTrackingStatus)
     );
@@ -64,7 +64,7 @@ async function resetGoogleSheetSettings(
 
     await state.setGoogleSheet(environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID);
 
-    server.setSheetTracking(false);
+    server.setTrackingEnabled(false);
     server.sendLogMessage(
         GoogleSheetSuccessMessages.updatedGoogleSheet(state.googleSheetURL)
     );

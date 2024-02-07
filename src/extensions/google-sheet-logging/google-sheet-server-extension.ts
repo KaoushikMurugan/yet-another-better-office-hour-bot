@@ -131,7 +131,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
      * @param helper
      */
     override async onHelperStopHelping(
-        _server: FrozenServer,
+        server: FrozenServer,
         helper: Readonly<Required<Helper>>
     ): Promise<void> {
         const activeTimeEntry = this.activeTimeEntries.get(helper.member.id);
@@ -144,7 +144,7 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
         }
 
         this.attendanceEntries.push({ ...activeTimeEntry, ...helper });
-        if (_server.sheetTracking && !this.attendanceUpdateIsScheduled) {
+        if (server.trackingEnabled && !this.attendanceUpdateIsScheduled) {
             // if nothing is scheduled, start a timer
             // otherwise the existing timer will update this entry
             // so no need to schedule another one

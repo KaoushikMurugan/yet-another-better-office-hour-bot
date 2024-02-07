@@ -211,7 +211,6 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
                 .set({ entries });
             return;
         }
-        console.log(entries);
 
         doc.update({
             entries: FieldValue.arrayUnion(...entries)

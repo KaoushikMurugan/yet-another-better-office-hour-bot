@@ -1,9 +1,4 @@
-import {
-    Collection,
-    Guild,
-    GuildMember,
-    VoiceBasedChannel,
-} from 'discord.js';
+import { Collection, Guild, GuildMember, VoiceBasedChannel } from 'discord.js';
 import { Logger } from 'pino';
 import { Helpee, Helper } from '../../models/member-states.js';
 import { GuildMemberId } from '../../utils/type-aliases.js';
@@ -95,6 +90,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             this.studentsJustDequeued.delete(student.member.id);
         }
 
+        this.activeTimeEntries.delete(helper.member.id);
         const attendanceEntry: AttendanceEntry = {
             activeTimeMs: activeTimeEntry.activeTimeMs,
             helper: {
@@ -109,26 +105,26 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             helpEndUnixMs: helper.helpEnd.getTime()
         };
 
-        if (server.sheetTracking) {
-            this.logger.info(`Updating tracking info for ${helper.member.displayName}`);
+        if (!server.trackingEnabled) {
+            return;
+        }
 
-            const writeResults = await Promise.allSettled(
-                this.destinations.map(destination =>
-                    destination.writeAttendance(this.guild, attendanceEntry)
-                )
-            );
-            for (const [index, result] of writeResults.entries()) {
-                if (result.status === 'rejected') {
-                    this.logger.error(
-                        result.reason,
-                        `Failed to write tracking data in destination ${
-                            this.destinations[index]!.name
-                        }`
-                    );
-                }
+        this.logger.info(`Updating tracking info for ${helper.member.displayName}`);
+        const writeResults = await Promise.allSettled(
+            this.destinations.map(destination =>
+                destination.writeAttendance(this.guild, attendanceEntry)
+            )
+        );
+        for (const [index, result] of writeResults.entries()) {
+            if (result.status === 'rejected') {
+                this.logger.error(
+                    result.reason,
+                    `Failed to write tracking data to destination ${
+                        this.destinations[index]!.name
+                    }`
+                );
             }
         }
-        this.activeTimeEntries.delete(helper.member.id);
     }
 
     /**
@@ -218,29 +214,30 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
             entry.sessionEndUnixMs = sessionEndUnix;
         }
 
-        if (server.sheetTracking) {
-            this.logger.info(
-                `Updating help session info for ${studentMember.displayName}`
-            );
-            const writeResults = await Promise.allSettled(
-                this.destinations.map(destination =>
-                    destination.writeHelpSessions(
-                        this.guild,
-                        helpSessionEntries as HelpSessionEntry[] // checked
-                    )
+        if (!server.trackingEnabled) {
+            return;
+        }
+
+        this.logger.info(`Updating help session info for ${studentMember.displayName}`);
+        const writeResults = await Promise.allSettled(
+            this.destinations.map(destination =>
+                destination.writeHelpSessions(
+                    this.guild,
+                    helpSessionEntries as HelpSessionEntry[] // checked
                 )
-            );
-            for (const [index, result] of writeResults.entries()) {
-                if (result.status === 'rejected') {
-                    this.logger.error(
-                        result.reason,
-                        `Failed to write tracking data in destination ${
-                            this.destinations[index]!.name
-                        }`
-                    );
-                }
+            )
+        );
+        for (const [index, result] of writeResults.entries()) {
+            if (result.status === 'rejected') {
+                this.logger.error(
+                    result.reason,
+                    `Failed to write tracking data in destination ${
+                        this.destinations[index]!.name
+                    }`
+                );
             }
         }
+        this.helpSessionEntries.delete(studentMember.id);
     }
 }
 

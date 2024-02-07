@@ -45,7 +45,7 @@ async function updateGoogleSheetSettings(
     await state.setGoogleSheet(googleSheetID);
     // Enable tracking when new sheet is not default sheet
     if (googleSheetID !== environment.googleSheetLogging.YABOB_GOOGLE_SHEET_ID) {
-        server.setSheetTracking(true);
+        server.setTrackingEnabled(true);
     }
 
     server.sendLogMessage(
