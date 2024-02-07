@@ -108,28 +108,36 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
         //! Temporary solution, maybe throw an error here
         const helpSessionEntries = this.helpSessionEntries.get(helper.member.id) ?? [];
 
-        // if (server.sheetTracking) {
-        const sessionEndUnix = new Date().getTime();
-        for (const entry of helpSessionEntries) {
-            entry.sessionEndUnixMs = sessionEndUnix;
-        }
+        if (server.sheetTracking) {
+            this.logger.info(`Updating tracking info for ${helper.member.displayName}`);
 
-        const writeResults = await Promise.allSettled(
-            this.destinations.map(destination =>
-                destination.write(
-                    attendanceEntry,
-                    // explicitly added sessionEndUnixMs
-                    helpSessionEntries as HelpSessionEntry[]
+            const sessionEndUnix = new Date().getTime();
+            for (const entry of helpSessionEntries) {
+                entry.sessionEndUnixMs = sessionEndUnix;
+            }
+
+            const writeResults = await Promise.allSettled(
+                this.destinations.map(destination =>
+                    destination.write(
+                        attendanceEntry,
+                        // explicitly added sessionEndUnixMs
+                        helpSessionEntries as HelpSessionEntry[]
+                    )
                 )
-            )
-        );
-        for (const result of writeResults) {
-            if (result.status === 'rejected') {
-                this.logger.error(result.reason, `Failed to write tracking Data`);
+            );
+            for (const [index, result] of writeResults.entries()) {
+                if (result.status === 'rejected') {
+                    this.logger.error(
+                        result.reason,
+                        `Failed to write tracking data in destination ${
+                            this.destinations[index]!.name
+                        }`
+                    );
+                }
             }
         }
-        // }
 
+        this.helpSessionEntries.delete(helper.member.id);
         this.activeTimeEntries.delete(helper.member.id);
     }
 
@@ -163,15 +171,16 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
                 continue;
             }
 
+            const sessionStartUnixMs = new Date().getTime();
             const helpSessionEntry: PartialHelpSessionEntry = {
                 studentUsername: student.member.user.username,
                 studentDiscordId: studentId,
                 helperUsername: helper.member.user.username,
                 helperDiscordId: helper.member.id,
-                sessionStartUnixMs: new Date().getTime(),
+                sessionStartUnixMs,
                 waitStart: student.waitStart.getTime(),
                 queueName: student.queue.queueName,
-                waitTimeMs: new Date().getTime() - student.waitStart.getTime()
+                waitTimeMs: sessionStartUnixMs - student.waitStart.getTime()
             };
 
             if (this.helpSessionEntries.has(studentId)) {

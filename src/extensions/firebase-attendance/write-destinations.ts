@@ -15,6 +15,7 @@ import { Logger } from 'pino';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 
 interface TrackingDataStore {
+    readonly name: string;
     write: (
         attendanceEntry: AttendanceEntry,
         helpSessionEntries: HelpSessionEntry[]
@@ -22,6 +23,8 @@ interface TrackingDataStore {
 }
 
 class FirebaseTrackingDataStore implements TrackingDataStore {
+    readonly name = 'Firebase';
+
     private logger: Logger;
     private readonly ATTENDANCE_COLLECTION_NAME = 'attendance';
     private readonly HELP_SESSION_COLLECTION_NAME = 'helpSessions';
