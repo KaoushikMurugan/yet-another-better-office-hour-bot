@@ -1302,7 +1302,6 @@ class AttendingServer {
         if (isTextChannel(loggingChannelFromBackup)) {
             this.settings.loggingChannel = loggingChannelFromBackup;
         }
-        console.log(this.settings);
     }
 }
 
