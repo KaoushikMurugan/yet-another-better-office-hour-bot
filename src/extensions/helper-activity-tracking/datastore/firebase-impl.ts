@@ -15,6 +15,7 @@ import { Logger } from 'pino';
 import { LOGGER, firebaseDB } from '../../../global-states.js';
 import { between } from '../../../utils/util-functions.js';
 import { TrackingDataStore, ReadOptions } from './datastore-interface.js';
+import { ConstNoMethod } from '../../../utils/type-aliases.js';
 
 class FirebaseTrackingDataStore implements TrackingDataStore {
     readonly name = 'Firebase';
@@ -54,7 +55,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
     };
 
     async readAttendance(
-        guild: Guild,
+        guild: ConstNoMethod<Guild>,
         options?: ReadOptions
     ): Promise<AttendanceEntry[]> {
         const doc = await this.db
@@ -86,7 +87,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
     }
 
     async readHelpSessions(
-        guild: Guild,
+        guild: ConstNoMethod<Guild>,
         options?: ReadOptions
     ): Promise<HelpSessionEntry[]> {
         const doc = await this.db
@@ -118,7 +119,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         );
     }
 
-    async writeAttendance(guild: Guild, entry: AttendanceEntry) {
+    async writeAttendance(guild: ConstNoMethod<Guild>, entry: AttendanceEntry) {
         const doc = this.db
             .collection(this.ATTENDANCE_COLLECTION_NAME)
             .doc(guild.id)
@@ -144,7 +145,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         });
     }
 
-    async writeHelpSessions(guild: Guild, entries: HelpSessionEntry[]) {
+    async writeHelpSessions(guild: ConstNoMethod<Guild>, entries: HelpSessionEntry[]) {
         if (entries.length === 0) {
             return;
         }

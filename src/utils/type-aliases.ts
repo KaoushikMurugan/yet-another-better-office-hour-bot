@@ -31,7 +31,9 @@ type Optional<T> = T | undefined;
 type NoMethod<T> = Pick<
     T,
     {
-        [K in keyof T]: T[K] extends (...params: unknown[]) => unknown ? never : K;
+        // we want to remove anything that's function like
+        // eslint-disable-next-line @typescript-eslint/ban-types
+        [K in keyof T]: T[K] extends Function ? never : K;
     }[keyof T]
 >;
 

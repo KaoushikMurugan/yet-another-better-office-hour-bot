@@ -1,5 +1,5 @@
 import { Guild } from 'discord.js';
-import { GuildMemberId } from '../../../utils/type-aliases.js';
+import { ConstNoMethod, GuildMemberId } from '../../../utils/type-aliases.js';
 import { AttendanceEntry, HelpSessionEntry } from '../models.js';
 
 /**
@@ -36,7 +36,10 @@ interface TrackingDataStore {
      * @param options optional, specify a custom filter
      * @returns attendance data after filtering if specified, otherwise returns everything
      */
-    readAttendance: (guild: Guild, options?: ReadOptions) => Promise<AttendanceEntry[]>;
+    readAttendance: (
+        guild: ConstNoMethod<Guild>,
+        options?: ReadOptions
+    ) => Promise<AttendanceEntry[]>;
     /**
      * Reads help session data from the DB
      * @param guild which guild's data to read
@@ -44,7 +47,7 @@ interface TrackingDataStore {
      * @returns session data after filtering if specified, otherwise returns everything
      */
     readHelpSession?: (
-        guild: Guild,
+        guild: ConstNoMethod<Guild>,
         options?: ReadOptions
     ) => Promise<HelpSessionEntry[]>;
     /**
@@ -54,7 +57,10 @@ interface TrackingDataStore {
      * @param guild the guild where the data came from
      * @param attendanceEntry complete attendance entry
      */
-    writeAttendance: (guild: Guild, attendanceEntry: AttendanceEntry) => Promise<void>;
+    writeAttendance: (
+        guild: ConstNoMethod<Guild>,
+        attendanceEntry: AttendanceEntry
+    ) => Promise<void>;
     /**
      * Writes a list of help session entries to the datastore
      * - This is called in onStudentLeaveVBC, so the data is only related to 1 student
@@ -62,7 +68,7 @@ interface TrackingDataStore {
      * @param helpSessionEntries complete help session entries
      */
     writeHelpSessions: (
-        guild: Guild,
+        guild: ConstNoMethod<Guild>,
         helpSessionEntries: HelpSessionEntry[]
     ) => Promise<void>;
 }
