@@ -14,10 +14,10 @@ import { Guild } from 'discord.js';
 import { Logger } from 'pino';
 import { LOGGER, firebaseDB } from '../../../global-states.js';
 import { between } from '../../../utils/util-functions.js';
-import { TrackingDataStore, ReadOptions } from './datastore-interface.js';
+import { TrackingDatastore, ReadOptions } from './datastore-interface.js';
 import { ConstNoMethod } from '../../../utils/type-aliases.js';
 
-class FirebaseTrackingDataStore implements TrackingDataStore {
+class FirebaseTrackingDataStore implements TrackingDatastore {
     readonly name = 'Firebase';
 
     private logger: Logger;
@@ -28,7 +28,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         this.logger = LOGGER.child({ datastore: 'Firebase Tracking' });
     }
 
-    private static attendanceConverter: FirestoreDataConverter<{
+    private attendanceConverter: FirestoreDataConverter<{
         entries: AttendanceEntry[];
     }> = {
         fromFirestore: snapshot => {
@@ -41,7 +41,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         toFirestore: modelObject => modelObject
     };
 
-    private static helpSessionConverter: FirestoreDataConverter<{
+    private helpSessionConverter: FirestoreDataConverter<{
         entries: HelpSessionEntry[];
     }> = {
         fromFirestore: snapshot => {
@@ -61,7 +61,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         const doc = await this.db
             .collection(this.ATTENDANCE_COLLECTION_NAME)
             .doc(guild.id)
-            .withConverter(FirebaseTrackingDataStore.attendanceConverter)
+            .withConverter(this.attendanceConverter)
             .get();
         const data = doc.data();
 
@@ -93,7 +93,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         const doc = await this.db
             .collection(this.HELP_SESSION_COLLECTION_NAME)
             .doc(guild.id)
-            .withConverter(FirebaseTrackingDataStore.helpSessionConverter)
+            .withConverter(this.helpSessionConverter)
             .get();
         const data = doc.data();
 
@@ -123,7 +123,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         const doc = this.db
             .collection(this.ATTENDANCE_COLLECTION_NAME)
             .doc(guild.id)
-            .withConverter(FirebaseTrackingDataStore.attendanceConverter);
+            .withConverter(this.attendanceConverter);
         const data = (await doc.get()).data();
 
         if (data === undefined) {
@@ -133,7 +133,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
             await this.db
                 .collection(this.ATTENDANCE_COLLECTION_NAME)
                 .doc(guild.id)
-                .withConverter(FirebaseTrackingDataStore.attendanceConverter)
+                .withConverter(this.attendanceConverter)
                 .set({ entries: [entry] });
             return;
         }
@@ -153,7 +153,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
         const doc = this.db
             .collection(this.HELP_SESSION_COLLECTION_NAME)
             .doc(guild.id)
-            .withConverter(FirebaseTrackingDataStore.helpSessionConverter);
+            .withConverter(this.helpSessionConverter);
         const data = (await doc.get()).data();
 
         if (data === undefined) {
@@ -163,7 +163,7 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
             await this.db
                 .collection(this.HELP_SESSION_COLLECTION_NAME)
                 .doc(guild.id)
-                .withConverter(FirebaseTrackingDataStore.helpSessionConverter)
+                .withConverter(this.helpSessionConverter)
                 .set({ entries });
             return;
         }

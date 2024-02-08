@@ -25,7 +25,7 @@ type ReadOptions = {
     };
 };
 
-interface TrackingDataStore {
+interface TrackingDatastore {
     /**
      * Name of the datastore
      */
@@ -73,4 +73,4 @@ interface TrackingDataStore {
     ) => Promise<void>;
 }
 
-export { TrackingDataStore, ReadOptions };
+export { TrackingDatastore, ReadOptions };
