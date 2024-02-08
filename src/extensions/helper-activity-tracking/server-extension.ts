@@ -13,7 +13,6 @@ import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
 import { TrackingDataStore } from './datastore/datastore-interface.js';
 import { firebaseTrackingDb } from './datastore/firebase-impl.js';
-import { localTrackingDb } from './datastore/csv-impl.js';
 
 class HelperActivityTrackingExtension extends BaseServerExtension {
     /**
@@ -42,10 +41,7 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
      * - Called with Promise.allSettled
      * - Tracking data are printed to stdout if db write fails
      */
-    private readonly destinations: TrackingDataStore[] = [
-        firebaseTrackingDb,
-        localTrackingDb
-    ];
+    private readonly destination: TrackingDataStore = firebaseTrackingDb;
 
     constructor(private readonly guild: Guild) {
         super();
@@ -120,21 +116,14 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
         }
 
         this.logger.info(`Updating tracking info for ${helper.member.displayName}`);
-        const writeResults = await Promise.allSettled(
-            this.destinations.map(destination =>
-                destination.writeAttendance(this.guild, attendanceEntry)
-            )
-        );
-        for (const [index, result] of writeResults.entries()) {
-            if (result.status === 'rejected') {
+        await this.destination
+            .writeAttendance(this.guild, attendanceEntry)
+            .catch(err =>
                 this.logger.error(
-                    result.reason,
-                    `Failed to write tracking data to destination ${
-                        this.destinations[index]!.name
-                    }`
-                );
-            }
-        }
+                    err,
+                    `Failed to write tracking data to destination ${this.destination.name}`
+                )
+            );
     }
 
     /**
@@ -229,24 +218,17 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
         }
 
         this.logger.info(`Updating help session info for ${studentMember.displayName}`);
-        const writeResults = await Promise.allSettled(
-            this.destinations.map(destination =>
-                destination.writeHelpSessions(
-                    this.guild,
-                    helpSessionEntries as HelpSessionEntry[] // checked
-                )
+        await this.destination
+            .writeHelpSessions(
+                this.guild,
+                helpSessionEntries as HelpSessionEntry[] // checked
             )
-        );
-        for (const [index, result] of writeResults.entries()) {
-            if (result.status === 'rejected') {
+            .catch(err =>
                 this.logger.error(
-                    result.reason,
-                    `Failed to write tracking data in destination ${
-                        this.destinations[index]!.name
-                    }`
-                );
-            }
-        }
+                    err,
+                    `Failed to write tracking data to destination ${this.destination.name}`
+                )
+            );
         this.helpSessionEntries.delete(studentMember.id);
     }
 }
