@@ -11,7 +11,9 @@ import {
 } from './models.js';
 import { ATTENDANCE_LOGGER } from './shared-functions.js';
 import { FrozenServer } from '../extension-utils.js';
-import { TrackingDataStore, firebaseTrackingDb } from './datastore.js';
+import { TrackingDataStore } from './datastore/datastore-interface.js';
+import { firebaseTrackingDb } from './datastore/firebase-impl.js';
+
 
 class HelperActivityTrackingExtension extends BaseServerExtension {
     /**
@@ -35,6 +37,11 @@ class HelperActivityTrackingExtension extends BaseServerExtension {
 
     private readonly logger: Logger;
 
+    /**
+     * List of tracking datastores, or save destinations
+     * - Called with Promise.allSettled 
+     * - Tracking data are printed to stdout if db write fails
+     */
     private readonly destinations: TrackingDataStore[] = [firebaseTrackingDb];
 
     constructor(private readonly guild: Guild) {

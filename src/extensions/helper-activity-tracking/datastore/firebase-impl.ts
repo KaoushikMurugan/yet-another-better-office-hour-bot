@@ -9,57 +9,12 @@ import {
     HelpSessionEntry,
     attendanceDocumentSchema,
     helpSessionDocumentSchema
-} from './models.js';
-import { Logger } from 'pino';
-import { GuildMemberId } from '../../utils/type-aliases.js';
-import { between } from '../../utils/util-functions.js';
-import { LOGGER, firebaseDB } from '../../global-states.js';
+} from '../models.js';
 import { Guild } from 'discord.js';
-
-type ReadOptions = {
-    helperId?: GuildMemberId;
-    dateRange?: {
-        startUnixMs?: number;
-        endUnixMs?: number;
-    };
-};
-
-interface TrackingDataStore {
-    /**
-     * Name of the datastore
-     */
-    readonly name: string;
-    /**
-     * Reads attendance data from the DB
-     * @param guild which guild's data to read
-     * @param options optional, specify a custom filter
-     * @returns attendance data after filtering if specified, otherwise returns everything
-     */
-    readAttendance: (guild: Guild, options?: ReadOptions) => Promise<AttendanceEntry[]>;
-    /**
-     * Reads help session data from the DB
-     * @param guild which guild's data to read
-     * @param options optional, specify a custom filter
-     * @returns session data after filtering if specified, otherwise returns everything
-     */
-    readHelpSession?: (
-        guild: Guild,
-        options?: ReadOptions
-    ) => Promise<HelpSessionEntry[]>;
-    /**
-     * Writes 1 attendance entry and a list of help session entries to the datastore
-     * - This is called after a helper uses /stop, so the data is only related to 1 helper
-     * - Avoids the additional complexity of writing at arbitrary intervals
-     * @param guild the guild where the data came from
-     * @param attendanceEntry complete attendance entry
-     * @param helpSessionEntries help session entries
-     */
-    writeAttendance: (guild: Guild, attendanceEntry: AttendanceEntry) => Promise<void>;
-    writeHelpSessions: (
-        guild: Guild,
-        helpSessionEntries: HelpSessionEntry[]
-    ) => Promise<void>;
-}
+import { Logger } from 'pino';
+import { LOGGER, firebaseDB } from '../../../global-states.js';
+import { between } from '../../../utils/util-functions.js';
+import { TrackingDataStore, ReadOptions } from './datastore-interface.js';
 
 class FirebaseTrackingDataStore implements TrackingDataStore {
     readonly name = 'Firebase';
@@ -223,4 +178,4 @@ class FirebaseTrackingDataStore implements TrackingDataStore {
 
 const firebaseTrackingDb = new FirebaseTrackingDataStore(firebaseDB);
 
-export { TrackingDataStore, firebaseTrackingDb };
+export { firebaseTrackingDb };
