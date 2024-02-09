@@ -36,6 +36,7 @@
         "firebase-admin": "^11.5.0",
         "google-spreadsheet": "^4.1.1",
         "googleapis": "^128.0.0",
+        "json-2-csv": "^5.0.1",
         "lru-cache": "^10.0.2",
         "lz-string": "^1.4.4",
         "pino": "^8.15.1",
