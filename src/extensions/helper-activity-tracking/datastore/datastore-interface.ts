@@ -2,6 +2,8 @@ import { Guild } from 'discord.js';
 import { ConstNoMethod, GuildMemberId } from '../../../utils/type-aliases.js';
 import { AttendanceEntry, HelpSessionEntry } from '../models.js';
 
+type UnixMs = number;
+
 /**
  * Read options when reading from a tracking datastore
  */
@@ -17,11 +19,11 @@ type ReadOptions = {
         /**
          * defaults to -inf
          */
-        startUnixMs?: number;
+        startUnixMs?: UnixMs;
         /**
          * defaults to +inf
          */
-        endUnixMs?: number;
+        endUnixMs?: UnixMs;
     };
 };
 

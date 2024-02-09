@@ -7,6 +7,8 @@ import fs from 'fs/promises';
 import { ATTENDANCE_LOGGER } from '../shared-functions.js';
 import { SimpleEmbed } from '../../../utils/embed-helper.js';
 import { ExpectedActivityTrackingErrors } from '../constants/expected-errors.js';
+import { isTriggeredByMemberWithRoles } from '../../../interaction-handling/shared-validations.js';
+import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 
 const activityTrackingCommandMap: CommandHandlerProps = {
     methodMap: {
@@ -19,10 +21,17 @@ async function dumpTrackingData(
     interaction: ChatInputCommandInteraction<'cached'>
 ): Promise<void> {
     const guild = interaction.guild;
+    const server = AttendingServer.get(guild.id);
     const [attendanceData, helpSessionData] = await Promise.all([
         firebaseTrackingDb.readAttendance(guild),
         firebaseTrackingDb.readHelpSessions(guild)
     ]);
+    isTriggeredByMemberWithRoles(
+        server,
+        interaction.member,
+        ActivityTrackingCommandNames.dump_tracking_data,
+        'botAdmin'
+    );
 
     try {
         await fs.writeFile('./attendance.csv', json2csv(attendanceData));
@@ -37,7 +46,9 @@ async function dumpTrackingData(
     }
 
     Promise.all([fs.unlink('./attendance.csv'), fs.unlink('./helpSessions.csv')])
-        .then(() => ATTENDANCE_LOGGER.info('Successfully deleted all temporary csv files'))
+        .then(() =>
+            ATTENDANCE_LOGGER.info('Successfully deleted all temporary csv files')
+        )
         .catch(err =>
             ATTENDANCE_LOGGER.error(err, 'Failed to delete temporary csv files')
         );
