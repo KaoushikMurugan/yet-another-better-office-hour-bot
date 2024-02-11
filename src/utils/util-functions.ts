@@ -223,6 +223,10 @@ function longestCommonSubsequence(str1: string, str2: string): number {
     }
 }
 
+function between(x: number, low: number, high: number, strict = false) {
+    return strict ? low < x && x < high : low <= x && x <= high;
+}
+
 // #endregion Util Functions
 
 // #region Loggers
@@ -468,6 +472,7 @@ export {
     padTo2Digits,
     range,
     camelCaseToTitleCase,
+    between,
     /** Type Guards */
     isLeaveVBC,
     isJoinVBC,

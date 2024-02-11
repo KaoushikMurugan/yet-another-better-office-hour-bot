@@ -52,7 +52,7 @@ type ServerBackup = {
     /** whether to prompt modal asking for help topic when a user joins a queue */
     promptHelpTopic: boolean;
     /** Track data in Google sheet if true */
-    sheetTracking: boolean;
+    trackingEnabled: boolean;
     /** timezone of this server */
     timezone: SimpleTimeZone;
 };
@@ -98,7 +98,7 @@ const serverBackupSchema = z.object({
     // ! Migration code, make this non-optional in 4.4
     autoGiveStudentRole: z.optional(z.boolean()),
     promptHelpTopic: z.optional(z.boolean()),
-    sheetTracking: z.optional(z.boolean()),
+    trackingEnabled: z.optional(z.boolean()),
     timezone: z.optional(
         z.object({
             sign: z.union([z.literal('+'), z.literal('-')]),

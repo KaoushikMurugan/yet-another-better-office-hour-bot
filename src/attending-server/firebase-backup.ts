@@ -40,7 +40,7 @@ async function loadExternalServerData(serverId: string): Promise<Optional<Server
         timeStamp: new Date(unpack.data.timeStamp._seconds * 1000),
         autoGiveStudentRole: unpack.data.autoGiveStudentRole ?? false,
         promptHelpTopic: unpack.data.promptHelpTopic ?? false,
-        sheetTracking: unpack.data.sheetTracking ?? false,
+        trackingEnabled: unpack.data.trackingEnabled ?? false,
         staffRoleId: unpack.data.staffRoleId ?? unpack.data.helperRoleId ?? 'Not Set', // !Migration code
         timezone: unpack.data.timezone ?? {
             sign: '-',
@@ -79,7 +79,7 @@ function fullServerBackup(server: FrozenServer): void {
         studentRoleId: server.studentRoleID,
         autoGiveStudentRole: server.autoGiveStudentRole,
         promptHelpTopic: server.promptHelpTopic,
-        sheetTracking: server.sheetTracking,
+        trackingEnabled: server.trackingEnabled,
         timezone: server.timezone
     };
     firebaseDB
@@ -127,7 +127,8 @@ function backupServerSettings(server: FrozenServer): void {
                         studentRoleId: server.studentRoleID,
                         autoGiveStudentRole: server.autoGiveStudentRole,
                         promptHelpTopic: server.promptHelpTopic,
-                        timezone: server.timezone
+                        timezone: server.timezone,
+                        trackingEnabled: server.trackingEnabled
                     })
                     .then(() =>
                         LOGGER.info(`${server.guild.name} settings backup successful`)
