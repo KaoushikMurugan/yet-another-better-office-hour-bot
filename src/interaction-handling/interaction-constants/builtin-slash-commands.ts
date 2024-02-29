@@ -413,7 +413,7 @@ const commandData = [
     createHelperControlPanelCommand.toJSON()
 ];
 
-async function postSlashCommands(
+async function postGuildSlashCommands(
     guild: Guild,
     externalCommands: CommandData = []
 ): Promise<void> {
@@ -442,4 +442,23 @@ async function postSlashCommands(
     LOGGER.info(`✓ Updated slash commands on '${guild.name}' ✓`);
 }
 
-export { postSlashCommands };
+async function postGlobalSlashCommands(
+    externalCommands: CommandData = []
+): Promise<void> {
+    if (environment.discordBotCredentials.YABOB_APP_ID.length === 0) {
+        throw new Error('Failed to post commands. APP_ID is undefined');
+    }
+    if (environment.discordBotCredentials.YABOB_BOT_TOKEN.length === 0) {
+        throw new Error('Failed to post commands. BOT_TOKEN is undefined');
+    }
+    const rest = new REST().setToken(environment.discordBotCredentials.YABOB_BOT_TOKEN);
+    await rest
+        .put(Routes.applicationCommands(environment.discordBotCredentials.YABOB_APP_ID), {
+            // need to call generateHelpCommand() here because it needs to be called after the external help messages are added
+            body: commandData.concat(externalCommands, generateSettingsCommand().toJSON())
+        })
+        .catch(err => CALENDAR_LOGGER.error(err, `Failed to post slash command to`));
+    LOGGER.info(`✓ Updated slash commands ✓`);
+}
+
+export { postGuildSlashCommands, postGlobalSlashCommands };
