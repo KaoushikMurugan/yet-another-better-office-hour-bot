@@ -201,8 +201,6 @@ async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
 /**
  * Create an in-person select menu
  * FIXME: move to a different file for select menus
- * FIXME: make select menu ephemeral
- * FIXME: clicking join causes interaction to fail sometimes
  */
 function inPersonRoomMenu(
     interaction: ButtonInteraction<'cached'>,
@@ -238,8 +236,7 @@ function inPersonRoomMenu(
 
 /**
  * Join an in-person queue through button press
- * FIXME: button does not appear in queuedisplay. currently testing by changing join button to joinInPerson button
- * FIXME: if member is an active helper in this queue or anything, just skip
+ * FIXME: join in-person button does not appear in queue display. currently testing by changing join button to joinInPerson button
  */
 async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -247,9 +244,28 @@ async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<v
         isFromQueueChannelWithParent(interaction)
     ];
     isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.JoinInPerson, 'student');
-    await interaction.update(
-        inPersonRoomMenu(interaction, server, queueChannel)
-    );
+
+    await interaction.reply({
+        ...SimpleEmbed(`Processing button \`Join In-Person\` ...`),
+        ephemeral: true
+    });
+
+    const message = await interaction.editReply(inPersonRoomMenu(interaction, server, queueChannel));
+
+    const collector = message.createMessageComponentCollector({
+        filter: (u) => {
+            return u.user.id === interaction.user.id;
+        }
+    });
+
+    collector.on('collect', async (bi) => {
+        if (server.promptHelpTopic) {
+            await bi.showModal(PromptHelpTopicModal(server.guild.id));
+        }
+        else {
+            await bi.reply(SuccessMessages.joinedQueue(queueChannel.queueName));
+        }
+    });
 }
 
 /**
