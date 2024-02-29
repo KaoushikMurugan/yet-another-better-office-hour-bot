@@ -5,13 +5,12 @@
     "type": "module",
     "scripts": {
         "lint": "eslint src/",
-        "build": "npx tsc",
+        "build": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.'",
+        "test": "npx tsc && node --test dist/tests",
         "format": "npx prettier -w .",
-        "start": "node dist/src/app.js",
-        "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/app.js",
+        "dev": "npm run build && NODE_ENV=development node --no-warnings=ExperimentalWarning dist/app.js",
         "dev_precompiled": "NODE_ENV=development node dist/app.js",
-        "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/app.js",
-        "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
+        "prod": "npm run build && NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
         "prod_precompiled": "NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
         "makeDoc": "npx typedoc --plugin typedoc-plugin-merge-modules ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
