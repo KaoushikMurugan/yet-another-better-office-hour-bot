@@ -327,9 +327,9 @@ function composeViewModelsByString(
     }));
 }
 
+export type { UpcomingSessionViewModel, CalendarConfigBackup };
+
 export {
-    UpcomingSessionViewModel,
-    CalendarConfigBackup,
     fetchUpcomingSessions,
     buildCalendarURL,
     checkCalendarConnection,

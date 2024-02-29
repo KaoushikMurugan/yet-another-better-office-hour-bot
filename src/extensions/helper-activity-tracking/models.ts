@@ -48,11 +48,6 @@ type HelpSessionEntry = z.infer<typeof helpSessionEntrySchema>;
 type PartialHelpSessionEntry = Pick<Partial<HelpSessionEntry>, 'sessionEndUnixMs'> &
     Omit<HelpSessionEntry, 'sessionEndUnixMs'>;
 
-export {
-    AttendanceEntry,
-    HelpSessionEntry,
-    PartialHelpSessionEntry,
-    ActiveTime,
-    helpSessionDocumentSchema,
-    attendanceDocumentSchema
-};
+export type { AttendanceEntry, HelpSessionEntry, PartialHelpSessionEntry, ActiveTime };
+
+export { helpSessionDocumentSchema, attendanceDocumentSchema };

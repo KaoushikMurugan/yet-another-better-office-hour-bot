@@ -475,4 +475,6 @@ class GoogleSheetServerExtension extends BaseServerExtension implements ServerEx
     }
 }
 
-export { GoogleSheetServerExtension, ActiveTime, AttendanceEntry };
+export type { ActiveTime, AttendanceEntry };
+
+export { GoogleSheetServerExtension };

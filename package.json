@@ -8,41 +8,40 @@
         "build": "npx tsc",
         "format": "npx prettier -w .",
         "start": "node dist/src/app.js",
-        "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/src/app.js",
-        "dev_precompiled": "NODE_ENV=development node dist/src/app.js",
-        "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/src/app.js",
-        "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
-        "prod_precompiled": "NODE_ENV=production pm2 start dist/src/app.js --name YABOB_PROD",
+        "dev": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node dist/app.js",
+        "dev_precompiled": "NODE_ENV=development node dist/app.js",
+        "devWithProfile": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=development node --inspect dist/app.js",
+        "prod": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.' && NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
+        "prod_precompiled": "NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
         "makeDoc": "npx typedoc --plugin typedoc-plugin-merge-modules ./src --entryPointStrategy expand --mergeModulesMergeMode module --excludeInternal --name \"Yet Another Better Office-hour Bot\" --includeVersion"
     },
     "devDependencies": {
-        "@types/lz-string": "^1.3.34",
-        "@types/node-fetch": "^2.6.1",
-        "@typescript-eslint/eslint-plugin": "^6.11.0",
-        "@typescript-eslint/parser": "^6.11.0",
-        "eslint": "^8.53.0",
-        "pino-pretty": "^10.2.0",
-        "prettier": "^3.1.0",
-        "typedoc": "^0.25.3",
+        "@types/node-fetch": "^2.6.11",
+        "@typescript-eslint/eslint-plugin": "^7.1.0",
+        "@typescript-eslint/parser": "^7.1.0",
+        "eslint": "^8.57.0",
+        "pino-pretty": "^10.3.1",
+        "prettier": "^3.2.5",
+        "typedoc": "^0.25.9",
         "typedoc-plugin-merge-modules": "^5.1.0",
-        "typescript": "^5.2.2"
+        "typescript": "^5.3.3"
     },
     "dependencies": {
         "ascii-table3": "^0.9.0",
-        "axios": "^1.6.1",
+        "axios": "^1.6.7",
         "csv-string": "^4.1.1",
-        "discord-api-types": "^0.37.11",
-        "discord.js": "^14.8.0",
-        "firebase-admin": "^11.5.0",
+        "discord-api-types": "^0.37.71",
+        "discord.js": "^14.14.1",
+        "firebase-admin": "^12.0.0",
         "google-spreadsheet": "^4.1.1",
-        "googleapis": "^128.0.0",
-        "json-2-csv": "^5.0.1",
-        "lru-cache": "^10.0.2",
-        "lz-string": "^1.4.4",
-        "pino": "^8.15.1",
-        "zod": "^3.19.1"
+        "googleapis": "^133.0.0",
+        "json-2-csv": "^5.4.0",
+        "lru-cache": "^10.2.0",
+        "lz-string": "^1.5.0",
+        "pino": "^8.19.0",
+        "zod": "^3.22.4"
     },
     "engines": {
-        "node": ">=18.12.0"
+        "node": "20.11.1"
     }
 }

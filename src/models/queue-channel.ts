@@ -14,4 +14,4 @@ type QueueChannel = Readonly<{
     parentCategoryId: CategoryChannelId;
 }>;
 
-export { QueueChannel };
+export type { QueueChannel };

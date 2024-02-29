@@ -75,4 +75,4 @@ interface TrackingDatastore {
     ) => Promise<void>;
 }
 
-export { TrackingDatastore, ReadOptions };
+export type { TrackingDatastore, ReadOptions };

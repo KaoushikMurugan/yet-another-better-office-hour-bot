@@ -590,14 +590,13 @@ class HelpQueue {
         // this assumes that if an error comes back when we call send, it's because the helper closed dm
         const helpersThatClosedDM: Snowflake[] = [];
         await Promise.all(
-            [...this.activeHelperIds].map(
-                helperId =>
-                    this.queueChannel.textChannel.members
-                        .get(helperId)
-                        ?.send(embed)
-                        .catch(() => {
-                            helpersThatClosedDM.push(helperId);
-                        })
+            [...this.activeHelperIds].map(helperId =>
+                this.queueChannel.textChannel.members
+                    .get(helperId)
+                    ?.send(embed)
+                    .catch(() => {
+                        helpersThatClosedDM.push(helperId);
+                    })
             )
         );
 
@@ -817,4 +816,5 @@ class HelpQueue {
     }
 }
 
-export { HelpQueue, QueueViewModel, AutoClearTimeout, QueueState };
+export type { QueueViewModel, AutoClearTimeout, QueueState };
+export { HelpQueue };
