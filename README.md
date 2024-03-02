@@ -22,8 +22,8 @@ Based on original **OH-Bot, BOB V2, and BOB V3** created by [Kaoushik Murugan](h
 <div align="center">
       <span size="+2">
             <a href=#office-hour-protocol><b>Office Hour Protocol</b></a> •
-            <a href=https://github.com/KaoushikMurugan/YABOB/wiki><b>User Wiki</b></a> •
-            <a href=https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Development-Setup-Guide><b>Developer Documentation</b></a> •
+            <a href="https://tomli380576.github.io/yabob-docs/"><b>User Wiki</b></a> •
+            <a href="https://tomli380576.github.io/yabob-docs/"><b>Developer Documentation</b></a> •
             <a href=#license><b>License</b></a>
       </span>
 </div>

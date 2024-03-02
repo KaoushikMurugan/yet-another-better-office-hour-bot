@@ -6,9 +6,9 @@
     "scripts": {
         "lint": "eslint src/",
         "build": "echo 'Compiling...' && npx tsc && echo 'Successfully Compiled.'",
-        "test": "npx tsc && node --test dist/tests",
+        "test": "npx tsc && NODE_ENV=development node --test dist/tests",
         "format": "npx prettier -w .",
-        "dev": "npm run build && NODE_ENV=development node --no-warnings=ExperimentalWarning dist/app.js",
+        "dev": "npm run build && NODE_ENV=development node --no-warnings=ExperimentalWarning dist/src/app.js",
         "dev_precompiled": "NODE_ENV=development node dist/app.js",
         "prod": "npm run build && NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
         "prod_precompiled": "NODE_ENV=production pm2 start dist/app.js --name YABOB_PROD",
