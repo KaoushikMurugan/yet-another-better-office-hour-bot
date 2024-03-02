@@ -200,16 +200,19 @@ type HelperRolesData = {
 };
 
 export {
+    Ok, // these 2 arrow functions comes withe the Result<T, E> types so they are placed here
+    Err,
+    SpecialRoleValues
+};
+
+export type {
     /** Types */
     WithRequired,
     Optional,
     OptionalRoleId,
-    SpecialRoleValues,
     NoMethod,
     ConstNoMethod,
     Result,
-    Ok, // these 2 arrow functions comes withe the Result<T, E> types so they are placed here
-    Err,
     ServerResult,
     QueueResult,
     HelpMessage,

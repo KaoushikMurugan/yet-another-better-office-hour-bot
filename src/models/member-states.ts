@@ -59,4 +59,4 @@ type Helper = {
     readonly member: GuildMember;
 };
 
-export { Helpee, Helper };
+export type { Helpee, Helper };

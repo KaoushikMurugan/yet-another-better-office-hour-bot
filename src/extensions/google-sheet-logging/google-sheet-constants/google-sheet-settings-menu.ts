@@ -13,6 +13,7 @@ import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { GoogleSheetExtensionState } from '../google-sheet-states.js';
 import { GoogleSheetButtonNames } from './google-sheet-interaction-names.js';
+import { settingsDocBaseUrl } from '../../../utils/documentation-helper.js';
 
 /**
  * Options for the server settings main menu
@@ -65,7 +66,7 @@ function GoogleSheetSettingsConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about Google Sheet Logging settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#google-sheet-settings)`
+                value: `[Learn more about Google Sheet Logging settings here.](${settingsDocBaseUrl}#google-sheet-settings)`
             },
             currentSheet
         );

@@ -108,4 +108,5 @@ const serverBackupSchema = z.object({
     )
 });
 
-export { QueueBackup, ServerBackup, queueBackupSchema, serverBackupSchema };
+export type { QueueBackup, ServerBackup };
+export { queueBackupSchema, serverBackupSchema };

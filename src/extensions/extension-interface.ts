@@ -397,11 +397,6 @@ abstract class BaseQueueExtension implements QueueExtension {
     }
 }
 
-export {
-    InteractionExtension,
-    ServerExtension,
-    QueueExtension,
-    BaseInteractionExtension,
-    BaseServerExtension,
-    BaseQueueExtension
-};
+export type { InteractionExtension, ServerExtension, QueueExtension };
+
+export { BaseInteractionExtension, BaseServerExtension, BaseQueueExtension };

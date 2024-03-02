@@ -1,6 +1,6 @@
 import { red } from '../utils/command-line-colors.js';
-import development from './development.json' assert { type: 'json' };
-import production from './production.json' assert { type: 'json' };
+import development from './development.json' with { type: 'json' };
+import production from './production.json' with { type: 'json' };
 
 const configuration = {
     development,

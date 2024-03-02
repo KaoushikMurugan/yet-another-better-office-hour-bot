@@ -7,6 +7,7 @@ import { SettingsSwitcher } from '../../../attending-server/server-settings-menu
 import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { CalendarButtonNames } from './calendar-interaction-names.js';
+import { settingsDocBaseUrl } from '../../../utils/documentation-helper.js';
 
 /**
  * Options for the server settings main menu
@@ -45,7 +46,7 @@ function CalendarSettingsConfigMenu(
             },
             {
                 name: 'Documentation',
-                value: `[Learn more about calendar settings here.](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Configure-YABOB-Settings-For-Your-Server#calendar-settings)`
+                value: `[Learn more about calendar settings here.](${settingsDocBaseUrl}#calendar-settings)`
             },
             {
                 name: 'Current Office Hours Calendar',
