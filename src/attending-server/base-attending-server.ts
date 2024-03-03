@@ -11,7 +11,7 @@ import {
     GuildMember,
     Role,
     Snowflake,
-    TextChannel,
+    TextChannel, unorderedList,
     VoiceState
 } from 'discord.js';
 import { environment } from '../environment/environment-manager.js';
@@ -816,17 +816,14 @@ class AttendingServer {
     getInPersonQueueById(parentCategoryId: Snowflake, room: string): HelpQueue {
         const collection = this._in_person_queues.get(parentCategoryId);
         if (!collection) {
-            console.log("no collection");
             throw ExpectedServerErrors.queueDoesNotExist;
         }
         const queue = collection.get(room);
         if (!queue) {
-            console.log("no queue");
             throw ExpectedServerErrors.queueDoesNotExist;
         }
         return queue;
     }
-
 
     /**
      * Gets a list of in-person rooms by parent category id
@@ -840,6 +837,33 @@ class AttendingServer {
             throw ExpectedServerErrors.queueDoesNotExist;
         }
         return collection.map((queue, room) => room);
+    }
+
+    /**
+     * Gets a list of queues that the helpee is in
+     * @param parentCategoryId the associated parent category id
+     * @param member the helpee
+     * @returns the list of queues
+     * @throws {ServerError} if member is not in any queues
+     */
+    getAllQueuesWithHelpee(parentCategoryId: Snowflake, member: GuildMember): HelpQueue[] {
+        const inPersonCollection = this._in_person_queues.get(parentCategoryId);
+        const virtualQueue = this._queues.get(parentCategoryId);
+        if (!inPersonCollection) {
+            if (!virtualQueue) {
+                throw ExpectedServerErrors.memberNotFound(member.displayName);
+            }
+            else {
+                return [virtualQueue];
+            }
+        }
+        const queues = inPersonCollection.filter((queue) =>
+            queue.students.find((student) => student.member === member))
+            .map((queue) => queue);
+        if (!virtualQueue) {
+            return queues;
+        }
+        return [...queues, virtualQueue];
     }
 
     /**

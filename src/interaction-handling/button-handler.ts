@@ -269,7 +269,7 @@ async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<v
 }
 
 /**
- * Leave a queue through button press
+ * Leave queues through button press
  */
 async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -282,9 +282,10 @@ async function leave(interaction: ButtonInteraction<'cached'>): Promise<void> {
         ButtonNames.Leave,
         'student'
     );
-    await server
-        .getQueueById(queueChannel.parentCategoryId)
-        .removeStudent(interaction.member);
+    await Promise.all(
+        server.getAllQueuesWithHelpee(queueChannel.parentCategoryId, interaction.member)
+            .map(queue => queue.removeStudent(interaction.member))
+    );
     await interaction.editReply(SuccessMessages.leftQueue(queueChannel.queueName));
 }
 
