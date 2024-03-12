@@ -203,11 +203,15 @@ async function start(interaction: ChatInputCommandInteraction<'cached'>): Promis
         | 'hybrid'
         | 'virtual';
 
-    const room = setting !== 'virtual' ? interaction.options.getString('room', true) : "";
-
     const muteNotif = interaction.options.getBoolean('mute_notif') ?? false;
 
-    await server.openAllOpenableQueues(member, setting, room, !muteNotif);
+    if (setting === 'virtual') {
+        await server.openAllOpenableQueues(member, setting, !muteNotif);
+    }
+    else {
+        const room = interaction.options.getString('room', true);
+        await server.openAllOpenableQueues(member, setting, !muteNotif, room);
+    }
     await interaction.editReply(SuccessMessages.startedHelping);
 }
 

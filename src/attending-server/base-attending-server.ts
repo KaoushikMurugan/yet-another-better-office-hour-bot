@@ -477,7 +477,7 @@ class AttendingServer {
         if (helper.helpSetting !== 'virtual') {
             const helperRoles = helperMember.roles.cache.map(role => role.name);
             // for each helper role, close the in-person queue for room
-            helperRoles.forEach((role) => {
+            await Promise.all(helperRoles.map((role) => {
                 this._queues.map(async (virtualQueue, id) => {
                     if (virtualQueue.queueName === role) {
                         const inPersonCollection = this._in_person_queues.get(id);
@@ -492,7 +492,7 @@ class AttendingServer {
                         }
                     }
                 });
-            });
+            }));
         }
         await Promise.all(
             this.serverExtensions.map(extension =>
@@ -1019,9 +1019,20 @@ class AttendingServer {
      */
     async openAllOpenableQueues(
         helperMember: GuildMember,
-        setting: 'in-person' | 'hybrid' | 'virtual',
+        setting: 'virtual',
+        notify: boolean,
+    ): Promise<void>;
+    async openAllOpenableQueues(
+        helperMember: GuildMember,
+        setting: 'in-person' | 'hybrid',
+        notify: boolean,
         room: string,
-        notify: boolean
+    ): Promise<void>;
+    async openAllOpenableQueues(
+        helperMember: GuildMember,
+        setting: 'in-person' | 'hybrid' | 'virtual',
+        notify: boolean,
+        room?: string,
     ): Promise<void> {
         if (this._helpers.has(helperMember.id)) {
             throw ExpectedServerErrors.alreadyHosting;
@@ -1037,12 +1048,12 @@ class AttendingServer {
             member: helperMember
         };
 
-        const helper: Helper = (setting !== 'virtual') ? {
+        const helper: Helper = (setting === 'virtual') ? {
             helpSetting: setting,
-            room: room,
             ...baseHelper
         } : {
             helpSetting: setting,
+            room: room!,
             ...baseHelper
         };
 
@@ -1063,7 +1074,7 @@ class AttendingServer {
 
         // todo: shorten this. probably move to a new function
         // if helper is in-person or hybrid, open in-person queues
-        if (setting !== 'virtual') {
+        if (setting !== 'virtual' && room) {
             // for each helper role, open an in-person queue for room
             helperRoles.forEach((role) => {
                 this._queues.map(async (virtualQueue, id) => {
