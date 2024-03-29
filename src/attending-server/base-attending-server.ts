@@ -1082,11 +1082,13 @@ class AttendingServer {
                                     parentCategoryId: virtualQueue.parentCategoryId
                                 };
                                 const [helpQueue] = await Promise.all([
-                                    HelpQueue.create(queueChannel),
+                                    HelpQueue.create(queueChannel, undefined, room)
                                 ]);
                                 inPersonCollection.set(room, helpQueue);
                                 const inPersonQueue = inPersonCollection.get(room);
                                 await inPersonQueue?.openQueue(helperMember, notify);
+                                this.updateInPersonViewModels(virtualQueue.parentCategoryId);
+                                await virtualQueue.triggerRender();
                             }
                         }
                     }
@@ -1099,6 +1101,24 @@ class AttendingServer {
                 extension.onHelperStartHelping(this, helper)
             )
         );
+    }
+
+    /**
+     * Updates in-person view models stored in the virtual help queue
+     * @param parentCategoryId the parent category id of the virtual queue
+     * @throws {ServerError} if queue does not exisit
+     * #TODO: call the function before changes need to be made to the queue display / trigger render
+     */
+    updateInPersonViewModels(parentCategoryId: CategoryChannelId): void {
+        const virtualQueue = this.getQueueById(parentCategoryId);
+        const inPersonQueues = this._in_person_queues.get(parentCategoryId);
+        virtualQueue.inPersonViewModels.length = 0;
+        if (!inPersonQueues) {
+            throw ExpectedServerErrors.queueDoesNotExist;
+        }
+        inPersonQueues.forEach(queue => {
+            virtualQueue.inPersonViewModels.push(queue.getViewModel());
+        });
     }
 
     /**
