@@ -253,7 +253,7 @@ class HelpQueue {
                       display // let extensions also have the reference
                   )
               ]);
-        const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
+        const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData, location);
 
         await Promise.all([
             queueChannel.textChannel.permissionOverwrites.create(everyoneRole, {

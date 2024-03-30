@@ -205,7 +205,7 @@ class QueueDisplay {
                 .setLabel('Join In-Person')
                 .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Leave, guildId])
-                .setDisabled(viewModel.studentDisplayNames.length === 0)
+                .setDisabled(viewModel.studentDisplayNames.length === 0 && inPersonViewModels.every(queue => queue.studentDisplayNames.length === 0))
                 .setEmoji('❎')
                 .setLabel('Leave')
                 .setStyle(ButtonStyle.Danger),
