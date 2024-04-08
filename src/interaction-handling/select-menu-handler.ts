@@ -105,6 +105,8 @@ async function selectInPersonRoom(
         throw new Error('Invalid option selected:');
     }
     await server.getInPersonQueueById(id, selectedOption).enqueue(interaction.member);
+    server.updateInPersonViewModels(id);
+    await server.getQueueById(id).triggerRender();
 }
 
 /**

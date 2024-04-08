@@ -31,6 +31,7 @@ type QueueViewModel = {
     state: QueueState;
     seriousModeEnabled: boolean;
     timeUntilAutoClear: 'AUTO_CLEAR_DISABLED' | Date;
+    location: string;
 };
 
 type SharedQueueSettings = {
@@ -97,6 +98,13 @@ class HelpQueue {
     private timers = new Collection<QueueTimerType, ReturnType<typeof setInterval>>();
 
     /**
+     * Stores in person view models of the queue
+     * - updated before rendering queue display
+     * - only populated for virtual queue models
+     */
+    public inPersonViewModels: QueueViewModel[] = [];
+
+    /**
      * @param queueChannel the #queue text channel to manage
      * @param queueExtensions individual queue extensions to inject
      * @param display the queue display that sends the embeds to the #queue channel
@@ -106,7 +114,8 @@ class HelpQueue {
         private _queueChannel: Readonly<QueueChannel>,
         private readonly queueExtensions: QueueExtension[],
         private readonly display: QueueDisplay,
-        backupData?: QueueBackup
+        backupData?: QueueBackup,
+        private location: string = 'virtual'
     ) {
         if (backupData === undefined) {
             // if no backup then we are done initializing
@@ -230,11 +239,12 @@ class HelpQueue {
      */
     static async create(
         queueChannel: QueueChannel,
-        backupData?: QueueBackup
+        backupData?: QueueBackup,
+        location?: string
     ): Promise<HelpQueue> {
         const everyoneRole = queueChannel.textChannel.guild.roles.everyone;
         const display = new QueueDisplay(queueChannel);
-        const queueExtensions: QueueExtension[] = environment.disableExtensions
+        const queueExtensions: QueueExtension[] = environment.disableExtensions || location !== undefined
             ? []
             : await Promise.all([
                   CalendarQueueExtension.load(
@@ -243,7 +253,7 @@ class HelpQueue {
                       display // let extensions also have the reference
                   )
               ]);
-        const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData);
+        const queue = new HelpQueue(queueChannel, queueExtensions, display, backupData, location);
 
         await Promise.all([
             queueChannel.textChannel.permissionOverwrites.create(everyoneRole, {
@@ -444,7 +454,8 @@ class HelpQueue {
                           new Date(),
                           this.timeUntilAutoClear.hours,
                           this.timeUntilAutoClear.minutes
-                      )
+                      ),
+            location: this.location
         };
     }
 
@@ -731,7 +742,7 @@ class HelpQueue {
      */
     async triggerForceRender(): Promise<void> {
         this.display.enterWriteOnlyMode();
-        this.display.requestQueueEmbedRender(this.getViewModel());
+        this.display.requestQueueEmbedRender(this.getViewModel(), this.inPersonViewModels);
 
         await Promise.all(
             this.queueExtensions.map(extension =>
@@ -749,7 +760,10 @@ class HelpQueue {
      * Composes the queue view model, then sends it to QueueDisplay
      */
     async triggerRender(): Promise<void> {
-        this.display.requestQueueEmbedRender(this.getViewModel());
+        if (this.location !== 'virtual') {
+            return;
+        }
+        this.display.requestQueueEmbedRender(this.getViewModel(), this.inPersonViewModels);
         await Promise.all(
             this.queueExtensions.map(extension =>
                 extension.onQueueRender(this, this.display)

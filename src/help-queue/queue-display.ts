@@ -158,7 +158,7 @@ class QueueDisplay {
      * Request a render of the main queue embed (queue list + active helper list)
      * @param viewModel
      */
-    requestQueueEmbedRender(viewModel: QueueViewModel): void {
+    requestQueueEmbedRender(viewModel: QueueViewModel, inPersonViewModels: QueueViewModel[]): void {
         const guildId = this.queueChannel.textChannel.guild.id;
         const embedTableMsg = new EmbedBuilder();
         embedTableMsg
@@ -168,9 +168,9 @@ class QueueDisplay {
                 }`
             )
             .setDescription(
-                this.getQueueAsciiTable(viewModel, true) +
-                // FIXME: for every in_person_queue that is not empty, getqueueasciitable
-                this.getQueueAsciiTable(viewModel, false)
+                `${this.getQueueAsciiTable(viewModel)}\n${inPersonViewModels
+                    .map(queue => this.getQueueAsciiTable(queue))
+                    .join('\n')}`
             )
             .setColor(queueStateStyles[viewModel.state].color);
         if (
@@ -201,11 +201,11 @@ class QueueDisplay {
                 .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.JoinInPerson, guildId])
                 .setEmoji('✅')
-                .setDisabled(viewModel.state !== 'open')
+                .setDisabled(inPersonViewModels.every(queue => queue.state !== 'open'))
                 .setLabel('Join In-Person')
                 .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.Leave, guildId])
-                .setDisabled(viewModel.studentDisplayNames.length === 0)
+                .setDisabled(viewModel.studentDisplayNames.length === 0 && inPersonViewModels.every(queue => queue.studentDisplayNames.length === 0))
                 .setEmoji('❎')
                 .setLabel('Leave')
                 .setStyle(ButtonStyle.Danger),
@@ -271,9 +271,8 @@ class QueueDisplay {
      * @param viewModel the data to put into the table
      * @returns the ascii table as a `string` in a code block
      */
-    private getQueueAsciiTable(viewModel: QueueViewModel, isVirtual: boolean): string {
-        const title = isVirtual ? 'Virtual' : 'In-Person';
-        const table = new AsciiTable3(title);
+    private getQueueAsciiTable(viewModel: QueueViewModel): string {
+        const table = new AsciiTable3(`${viewModel.location} ${viewModel.location !== 'virtual' ? '(In-Person)' : ''}`);
         if (viewModel.studentDisplayNames.length > 0) {
             table
                 .setHeading('Position', 'Student Name')
