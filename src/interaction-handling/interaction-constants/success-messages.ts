@@ -69,7 +69,7 @@ export const SuccessMessages = {
             EmbedColor.Success
         ),
     clearedQueue: (queueName: string) =>
-        SimpleEmbed(`Everyone in  queue ${queueName} was removed.`, EmbedColor.Success),
+        SimpleEmbed(`Everyone in queue ${queueName} was removed.`, EmbedColor.Success),
     clearedAllQueues: (serverName: string) =>
         SimpleEmbed(`All queues on ${serverName} was cleared.`, EmbedColor.Success),
     announced: (announcement: string) =>

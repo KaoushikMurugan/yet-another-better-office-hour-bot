@@ -48,6 +48,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
         queue: {
             [ButtonNames.Join]: join,
             [ButtonNames.JoinInPerson]: joinInPerson,
+            [ButtonNames.JoinHybrid]: joinHybrid,
             [ButtonNames.Leave]: leave,
             [ButtonNames.Notif]: joinNotifGroup,
             [ButtonNames.RemoveNotif]: leaveNotifGroup
@@ -137,6 +138,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
     skipProgressMessageButtons: new Set([
         ButtonNames.Join,
         ButtonNames.JoinInPerson,
+        ButtonNames.JoinHybrid,
         ButtonNames.Announce,
         ButtonNames.ReturnToMainMenu,
         ButtonNames.ServerRoleConfig1SM,
@@ -176,7 +178,7 @@ const baseYabobButtonMethodMap: ButtonHandlerProps = {
 };
 
 /**
- * Join a queue through button press
+ * Join a virtual queue through button press
  */
 async function join(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -236,7 +238,6 @@ function inPersonRoomMenu(
 
 /**
  * Join an in-person queue through button press
- * FIXME: join in-person button does not appear in queue display. currently testing by changing join button to joinInPerson button
  */
 async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<void> {
     const [server, queueChannel] = [
@@ -258,12 +259,49 @@ async function joinInPerson(interaction: ButtonInteraction<'cached'>): Promise<v
         }
     });
 
-    collector.on('collect', async (bi) => {
+    collector.on('collect', async (buttonInteraction) => {
         if (server.promptHelpTopic) {
-            await bi.showModal(PromptHelpTopicModal(server.guild.id));
+            await buttonInteraction.showModal(PromptHelpTopicModal(server.guild.id));
         }
         else {
-            await bi.reply(SuccessMessages.joinedQueue(queueChannel.queueName));
+            await buttonInteraction.reply(SuccessMessages.joinedQueue(queueChannel.queueName));
+        }
+    });
+}
+
+/**
+ * Join virtual and in-person queues through button press
+ */
+async function joinHybrid(interaction: ButtonInteraction<'cached'>): Promise<void> {
+    const [server, queueChannel] = [
+        AttendingServer.get(interaction.guildId),
+        isFromQueueChannelWithParent(interaction)
+    ];
+    isTriggeredByMemberWithRoles(server, interaction.member, ButtonNames.JoinHybrid, 'student');
+
+    await interaction.reply({
+        ...SimpleEmbed(`Processing button \`Join In-Person\` ...`),
+        ephemeral: true
+    });
+
+    // Join virtual queue
+    await server.getQueueById(queueChannel.parentCategoryId).enqueue(interaction.member);
+
+    // Join in-person queue
+    const message = await interaction.editReply(inPersonRoomMenu(interaction, server, queueChannel));
+
+    const collector = message.createMessageComponentCollector({
+        filter: (u) => {
+            return u.user.id === interaction.user.id;
+        }
+    });
+
+    collector.on('collect', async (buttonInteraction) => {
+        if (server.promptHelpTopic) {
+            await buttonInteraction.showModal(PromptHelpTopicModal(server.guild.id));
+        }
+        else {
+            await buttonInteraction.reply(SuccessMessages.joinedQueue(queueChannel.queueName));
         }
     });
 }

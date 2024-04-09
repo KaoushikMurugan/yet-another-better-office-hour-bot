@@ -43,6 +43,7 @@ enum CommandNames {
 enum ButtonNames {
     Join = 'Join',
     JoinInPerson = 'JoinInPerson',
+    JoinHybrid = 'JoinHybrid',
     Leave = 'Leave',
     Notif = 'Notif',
     Start = 'Start',

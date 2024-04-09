@@ -199,6 +199,11 @@ class QueueDisplay {
                 .setDisabled(viewModel.state !== 'open')
                 .setLabel('Join')
                 .setStyle(ButtonStyle.Success),
+            buildComponent(new ButtonBuilder(), ['queue', ButtonNames.JoinHybrid, guildId])
+                .setEmoji('✅')
+                .setDisabled(viewModel.state !== 'open' || inPersonViewModels.every(queue => queue.state !== 'open'))
+                .setLabel('Join Hybrid')
+                .setStyle(ButtonStyle.Success),
             buildComponent(new ButtonBuilder(), ['queue', ButtonNames.JoinInPerson, guildId])
                 .setEmoji('✅')
                 .setDisabled(inPersonViewModels.every(queue => queue.state !== 'open'))
