@@ -1,7 +1,7 @@
 import { environment } from './environment/environment-manager.js';
 import { Client, GatewayIntentBits, Options } from 'discord.js';
 import { yellow, red } from './utils/command-line-colors.js';
-import { Firestore } from 'firebase-admin/firestore';
+import type { Firestore } from 'firebase-admin/firestore';
 import { cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 import { pino, destination } from 'pino';

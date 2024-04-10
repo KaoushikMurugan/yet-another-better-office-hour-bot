@@ -21,6 +21,7 @@
         "eslint": "^8.57.0",
         "pino-pretty": "^10.3.1",
         "prettier": "^3.2.5",
+        "ts-mockito": "^2.6.1",
         "typedoc": "^0.25.9",
         "typedoc-plugin-merge-modules": "^5.1.0",
         "typescript": "^5.3.3"
