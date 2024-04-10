@@ -49,4 +49,5 @@ const accessLevelRoleConfigs: {
     }
 };
 
-export { accessLevelRoleConfigs, AccessLevelRoleIds, AccessLevelRole };
+export type { AccessLevelRoleIds, AccessLevelRole };
+export { accessLevelRoleConfigs };

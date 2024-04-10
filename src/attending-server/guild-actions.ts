@@ -127,19 +127,18 @@ async function sendHelpChannelMessages(helpCategory: CategoryChannel): Promise<v
     );
     // send the messages we want to show in the help channels
     await Promise.all(
-        allHelpChannels.map(
-            channel =>
-                helpChannelConfigurations
-                    .find(val => val.channelName === channel.name)
-                    ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
-                    .map(helpMessage => ({
-                        ...helpMessage,
-                        message: {
-                            ...helpMessage.message,
-                            flags: MessageFlags.SuppressNotifications as const
-                        }
-                    }))
-                    .map(helpMessage => channel.send(helpMessage.message))
+        allHelpChannels.map(channel =>
+            helpChannelConfigurations
+                .find(val => val.channelName === channel.name)
+                ?.helpMessages.filter(helpMessage => helpMessage.useInHelpChannel)
+                .map(helpMessage => ({
+                    ...helpMessage,
+                    message: {
+                        ...helpMessage.message,
+                        flags: MessageFlags.SuppressNotifications as const
+                    }
+                }))
+                .map(helpMessage => channel.send(helpMessage.message))
         )
     );
     LOGGER.info(
@@ -201,16 +200,15 @@ async function setHelpChannelVisibility(
         )
     );
     await Promise.all(
-        helpChannels.map(
-            channel =>
-                helpChannelConfigurations
-                    .find(channelConfig => channelConfig.channelName === channel.name)
-                    ?.visibility.map(key => accessLevelRoleIds[key])
-                    ?.map(roleId =>
-                        channel.permissionOverwrites.create(roleId, {
-                            ViewChannel: true
-                        })
-                    )
+        helpChannels.map(channel =>
+            helpChannelConfigurations
+                .find(channelConfig => channelConfig.channelName === channel.name)
+                ?.visibility.map(key => accessLevelRoleIds[key])
+                .map(roleId =>
+                    channel.permissionOverwrites.create(roleId, {
+                        ViewChannel: true
+                    })
+                )
         )
     );
 }
