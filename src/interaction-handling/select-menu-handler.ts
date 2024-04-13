@@ -1,12 +1,9 @@
-import {
-    ActionRowBuilder, ButtonBuilder, ButtonStyle, EmbedBuilder, StringSelectMenuBuilder,
-    StringSelectMenuInteraction
-} from 'discord.js';
-import {serverSettingsMainMenuOptions, SettingsSwitcher} from '../attending-server/server-settings-menus.js';
-import {isTextChannel, longestCommonSubsequence} from '../utils/util-functions.js';
+import { StringSelectMenuInteraction } from 'discord.js';
+import { serverSettingsMainMenuOptions } from '../attending-server/server-settings-menus.js';
+import { isTextChannel } from '../utils/util-functions.js';
 import { SelectMenuHandlerProps } from './handler-interface.js';
 import { ExpectedParseErrors } from './interaction-constants/expected-interaction-errors.js';
-import { SelectMenuNames} from './interaction-constants/interaction-names.js';
+import { SelectMenuNames } from './interaction-constants/interaction-names.js';
 import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { adminCommandHelpMessages } from '../help-channel-messages/AdminCommands.js';
 import { helperCommandHelpMessages } from '../help-channel-messages/HelperCommands.js';
@@ -89,9 +86,9 @@ async function selectLoggingChannel(
 }
 
 /**
-* Select an in-person room from the list of rooms
-* @param interaction
-*/
+ * Select an in-person room from the list of rooms
+ * @param interaction
+ */
 async function selectInPersonRoom(
     interaction: StringSelectMenuInteraction<'cached'>
 ): Promise<void> {

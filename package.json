@@ -33,7 +33,7 @@
         "csv-string": "^4.1.1",
         "discord-api-types": "^0.37.11",
         "discord.js": "^14.8.0",
-        "firebase-admin": "^11.5.0",
+        "firebase-admin": "^12.0.0",
         "google-spreadsheet": "^4.1.1",
         "googleapis": "^128.0.0",
         "lru-cache": "^10.0.2",

@@ -11,7 +11,7 @@ import {
     GuildMember,
     Role,
     Snowflake,
-    TextChannel, unorderedList,
+    TextChannel,
     VoiceState
 } from 'discord.js';
 import { environment } from '../environment/environment-manager.js';
