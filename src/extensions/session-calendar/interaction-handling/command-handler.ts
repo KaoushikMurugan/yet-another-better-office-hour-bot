@@ -21,7 +21,7 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     buildUpcomingSessionsEmbedBody,
     CALENDAR_LOGGER
-} from '../shared-functions.js';
+} from '../shared-calendar-functions.js';
 import { ExpectedParseErrors } from '../../../interaction-handling/interaction-constants/expected-interaction-errors.js';
 import {
     isTriggeredByMemberWithRoles,

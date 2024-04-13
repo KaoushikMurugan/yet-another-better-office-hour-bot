@@ -16,7 +16,7 @@ import { QueueDisplay } from './queue-display.js';
 import { environment } from '../environment/environment-manager.js';
 import { ExpectedQueueErrors } from './expected-queue-errors.js';
 import { addTimeOffset } from '../utils/util-functions.js';
-import { CalendarQueueExtension } from '../extensions/session-calendar/queue-extension.js';
+import { CalendarQueueExtension } from '../extensions/session-calendar/calendar-queue-extension.js';
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 import { useQueueBackup } from '../attending-server/firebase-backup.js';
 

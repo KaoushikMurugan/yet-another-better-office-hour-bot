@@ -11,7 +11,7 @@ import { calendarSettingsMainMenuOptions } from './calendar-constants/calendar-s
 import { environment } from '../../environment/environment-manager.js';
 import { ExtensionSetupError } from '../../utils/error-types.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
-import { CALENDAR_LOGGER, checkCalendarConnection } from './shared-functions.js';
+import { CALENDAR_LOGGER, checkCalendarConnection } from './shared-calendar-functions.js';
 import { yellow } from '../../utils/command-line-colors.js';
 import { quickStartPages } from './calendar-constants/calendar-quick-start-pages.js';
 

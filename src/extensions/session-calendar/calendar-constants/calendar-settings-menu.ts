@@ -4,7 +4,7 @@ import { SettingsMenuOption, YabobEmbed } from '../../../utils/type-aliases.js';
 import { buildComponent } from '../../../utils/component-id-factory.js';
 import { CalendarExtensionState } from '../calendar-states.js';
 import { SettingsSwitcher } from '../../../attending-server/server-settings-menus.js';
-import { restorePublicEmbedURL } from '../shared-functions.js';
+import { restorePublicEmbedURL } from '../shared-calendar-functions.js';
 import { FrozenServer } from '../../extension-utils.js';
 import { CalendarButtonNames } from './calendar-interaction-names.js';
 

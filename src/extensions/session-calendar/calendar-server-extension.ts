@@ -2,7 +2,7 @@ import { Guild } from 'discord.js';
 import { BaseServerExtension } from '../extension-interface.js';
 import { FrozenServer } from '../extension-utils.js';
 import { CalendarExtensionState } from './calendar-states.js';
-import { CALENDAR_LOGGER } from './shared-functions.js';
+import { CALENDAR_LOGGER } from './shared-calendar-functions.js';
 
 /**
  * Server extension of session calendar

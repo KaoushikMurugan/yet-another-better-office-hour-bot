@@ -1,5 +1,5 @@
 /** @module SessionCalendar */
-import { CalendarQueueExtension } from './queue-extension.js';
+import { CalendarQueueExtension } from './calendar-queue-extension.js';
 import { GuildId, GuildMemberId } from '../../utils/type-aliases.js';
 import { LRUCache as LRU } from 'lru-cache';
 import { environment } from '../../environment/environment-manager.js';
@@ -10,11 +10,11 @@ import {
     checkCalendarConnection,
     fetchUpcomingSessions,
     restorePublicEmbedURL
-} from './shared-functions.js';
+} from './shared-calendar-functions.js';
 import { Collection, Guild, Snowflake } from 'discord.js';
 import { client, firebaseDB } from '../../global-states.js';
 import { z } from 'zod';
-import { CalendarServerExtension } from './server-extension.js';
+import { CalendarServerExtension } from './calendar-server-extension.js';
 import { ExpectedCalendarErrors } from './calendar-constants/expected-calendar-errors.js';
 import { ServerExtension } from '../extension-interface.js';
 import { Logger } from 'pino';

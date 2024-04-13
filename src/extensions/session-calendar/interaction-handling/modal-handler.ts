@@ -10,7 +10,7 @@ import { ExpectedCalendarErrors } from '../calendar-constants/expected-calendar-
 import {
     checkCalendarConnection,
     restorePublicEmbedURL
-} from '../shared-functions.js';
+} from '../shared-calendar-functions.js';
 import { AttendingServer } from '../../../attending-server/base-attending-server.js';
 import { CalendarExtensionState } from '../calendar-states.js';
 import { CalendarIdQuickStart } from '../calendar-constants/calendar-quick-start-pages.js';
