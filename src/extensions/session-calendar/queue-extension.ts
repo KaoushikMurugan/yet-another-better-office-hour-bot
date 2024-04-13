@@ -6,7 +6,7 @@ import { QueueChannel } from '../../models/queue-channel.js';
 import {
     buildUpcomingSessionsEmbedBody,
     restorePublicEmbedURL
-} from './shared-calendar-functions.js';
+} from './shared-functions.js';
 import { FrozenDisplay, FrozenQueue } from '../extension-utils.js';
 import { buildComponent } from '../../utils/component-id-factory.js';
 import { CalendarButtonNames } from './calendar-constants/calendar-interaction-names.js';

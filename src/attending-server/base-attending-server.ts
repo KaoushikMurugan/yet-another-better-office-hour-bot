@@ -17,7 +17,7 @@ import {
 import { environment } from '../environment/environment-manager.js';
 import { ServerExtension } from '../extensions/extension-interface.js';
 import { GoogleSheetServerExtension } from '../extensions/google-sheet-logging/google-sheet-server-extension.js';
-import { CalendarServerExtension } from '../extensions/session-calendar/calendar-server-extension.js';
+import { CalendarServerExtension } from '../extensions/session-calendar/server-extension.js';
 import { LOGGER } from '../global-states.js';
 import { AutoClearTimeout, HelpQueue } from '../help-queue/help-queue.js';
 import {
