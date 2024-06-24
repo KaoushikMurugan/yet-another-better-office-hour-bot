@@ -9,7 +9,7 @@ const googleSheetButtonMap: ButtonHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
-            [ActivityTrackingButtonNames.UpdateTrackingStatus]: updateTrackingStatus,
+            [ActivityTrackingButtonNames.UpdateTrackingStatus]: updateTrackingStatus
         }
     },
     dmMethodMap: {},

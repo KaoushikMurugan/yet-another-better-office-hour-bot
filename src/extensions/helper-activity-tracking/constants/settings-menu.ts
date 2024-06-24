@@ -35,7 +35,6 @@ function ActivityTrackingSettingsConfigMenu(
     isDm: boolean,
     updateMessage = ''
 ): YabobEmbed {
-
     const enabledField: APIEmbedField = {
         name: 'Activity Tracking Status',
         value: ''
@@ -44,8 +43,7 @@ function ActivityTrackingSettingsConfigMenu(
     if (server.trackingEnabled) {
         enabledField.value = `Tracking is enabled. Check [the CS Tutoring at UCD website](https://sites.google.com/view/cs-tutoring-ucd/) for attendance logs`;
     } else {
-        enabledField.value =
-            'Tracking disabled. Enable tracking to track helper hours.';
+        enabledField.value = 'Tracking disabled. Enable tracking to track helper hours.';
     }
 
     const embed = new EmbedBuilder()

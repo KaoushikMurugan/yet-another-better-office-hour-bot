@@ -5,10 +5,11 @@ enum ActivityTrackingCommandNames {
 }
 
 enum ActivityTrackingButtonNames {
-    UpdateTrackingStatus = 'UpdateTrackingStatus',
+    UpdateTrackingStatus = 'UpdateTrackingStatus'
 }
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-type A = EnsureCorrectEnum<typeof ActivityTrackingCommandNames> & EnsureCorrectEnum<typeof ActivityTrackingButtonNames>;
+type A = EnsureCorrectEnum<typeof ActivityTrackingCommandNames> &
+    EnsureCorrectEnum<typeof ActivityTrackingButtonNames>;
 
-export { ActivityTrackingCommandNames, ActivityTrackingButtonNames};
+export { ActivityTrackingCommandNames, ActivityTrackingButtonNames };
