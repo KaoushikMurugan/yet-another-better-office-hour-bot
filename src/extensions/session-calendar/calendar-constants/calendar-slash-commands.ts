@@ -31,8 +31,7 @@ const whenNext = new SlashCommandBuilder()
  * Generates the make_calendar_string command depending on the number of queues in the server
  * @returns
  */
-const makeCalendarStringCommand: SlashCommandOptionsOnlyBuilder
-     = (() => {
+const makeCalendarStringCommand: SlashCommandOptionsOnlyBuilder = (() => {
     const command = new SlashCommandBuilder()
         .setName(CalendarCommandNames.make_calendar_string)
         .setDescription('Generates a valid calendar string that can be parsed by YABOB')
