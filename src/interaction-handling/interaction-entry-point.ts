@@ -41,7 +41,6 @@ import { baseYabobModalMap } from './modal-handler.js';
 import { InteractionExtension } from '../extensions/extension-interface.js';
 import { SessionCalendarInteractionExtension } from '../extensions/session-calendar/calendar-interaction-extension.js';
 import { environment } from '../environment/environment-manager.js';
-import { GoogleSheetInteractionExtension } from '../extensions/google-sheet-logging/google-sheet-interaction-extension.js';
 import { AttendingServer } from '../attending-server/base-attending-server.js';
 import { HelperActivityTrackingInteractionExtension } from '../extensions/helper-activity-tracking/interaction-extension.js';
 
@@ -55,7 +54,6 @@ const interactionExtensions: ReadonlyArray<InteractionExtension> =
         : [
               // Do not use async creation methods here for now bc it conflicts with client login
               new SessionCalendarInteractionExtension(),
-              new GoogleSheetInteractionExtension(),
               new HelperActivityTrackingInteractionExtension()
           ];
 
