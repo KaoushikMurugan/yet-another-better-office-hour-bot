@@ -1,7 +1,7 @@
 /** @module SessionCalendar */
 
 import { SlashCommandBuilder } from '@discordjs/builders';
-import { ChannelType } from 'discord.js';
+import { ChannelType, SlashCommandOptionsOnlyBuilder } from 'discord.js';
 import { CalendarCommandNames } from './calendar-interaction-names.js';
 
 // /when_next [queue_name]
@@ -31,10 +31,8 @@ const whenNext = new SlashCommandBuilder()
  * Generates the make_calendar_string command depending on the number of queues in the server
  * @returns
  */
-const makeCalendarStringCommand: Omit<
-    SlashCommandBuilder,
-    'addSubcommand' | 'addSubcommandGroup'
-> = (() => {
+const makeCalendarStringCommand: SlashCommandOptionsOnlyBuilder
+     = (() => {
     const command = new SlashCommandBuilder()
         .setName(CalendarCommandNames.make_calendar_string)
         .setDescription('Generates a valid calendar string that can be parsed by YABOB')
