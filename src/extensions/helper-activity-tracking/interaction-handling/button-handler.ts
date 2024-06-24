@@ -5,7 +5,7 @@ import { ActivityTrackingButtonNames } from '../constants/interaction-names.js';
 import { ActivityTrackingSettingsConfigMenu } from '../constants/settings-menu.js';
 import { ActivityTrackingSuccessMessages } from '../constants/success-messages.js';
 
-const googleSheetButtonMap: ButtonHandlerProps = {
+const activityTrackingButtonMap: ButtonHandlerProps = {
     guildMethodMap: {
         queue: {},
         other: {
@@ -44,4 +44,4 @@ async function updateTrackingStatus(
     );
 }
 
-export { googleSheetButtonMap };
+export { activityTrackingButtonMap };
