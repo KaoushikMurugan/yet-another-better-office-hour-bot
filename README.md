@@ -80,7 +80,7 @@ Multiple staff members can help for the same queue. A queue will close **if and 
 4. Once they are pulled out of the queue, they will received a direct message from YABOB with a voice channel link. Click the link to join the voice channel with the staff member.
 5. Leave the voice channel at the end of the session.
 
-More commands can be found [here](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki/Built-in-Commands) in our [wiki](https://github.com/KaoushikMurugan/yet-another-better-office-hour-bot/wiki).
+More commands can be found [here](https://tomli380576.github.io/yabob-docs/user-docs/built-in-commands/) in our [wiki](https://tomli380576.github.io/yabob-docs/).
 
 # License
 
